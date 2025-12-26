@@ -5,6 +5,7 @@ import Contracts from './pages/Contracts';
 import Payments from './pages/Payments';
 import BankAccounts from './pages/BankAccounts';
 import Analytics from './pages/Analytics';
+import Tenants from './pages/Tenants';
 import __Layout from './Layout.jsx';
 
 
@@ -16,6 +17,7 @@ export const PAGES = {
     "Payments": Payments,
     "BankAccounts": BankAccounts,
     "Analytics": Analytics,
+    "Tenants": Tenants,
 }
 
 export const pagesConfig = {
