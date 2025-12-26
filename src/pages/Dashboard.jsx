@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Building2, Users, FileText, CreditCard, AlertCircle, TrendingUp, Home } from 'lucide-react';
+import { Building2, Users, FileText, CreditCard, AlertCircle, TrendingUp, Home, BarChart3 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, parseISO, isAfter, isBefore } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
