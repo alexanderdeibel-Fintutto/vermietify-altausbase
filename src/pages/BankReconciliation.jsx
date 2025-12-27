@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Landmark, CheckCircle, AlertCircle, TrendingUp, TrendingDown, Sparkles, Settings, Zap, Filter, X, Search } from 'lucide-react';
+import { parseISO, parse } from 'date-fns';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -376,18 +377,28 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
         });
     };
 
+    const parseDateSafely = (dateStr) => {
+        if (!dateStr) return new Date(0);
+        try {
+            // Versuche ISO-Format (YYYY-MM-DD)
+            if (dateStr.includes('-')) {
+                return parseISO(dateStr);
+            }
+            // Versuche deutsches Format (DD.MM.YYYY)
+            if (dateStr.includes('.')) {
+                return parse(dateStr, 'dd.MM.yyyy', new Date());
+            }
+            return new Date(dateStr);
+        } catch {
+            return new Date(0);
+        }
+    };
+
     const uncategorizedTransactions = applyFilters(transactions.filter(t => !t.is_categorized))
-        .sort((a, b) => {
-            const dateA = a.transaction_date ? new Date(a.transaction_date).getTime() : 0;
-            const dateB = b.transaction_date ? new Date(b.transaction_date).getTime() : 0;
-            return dateB - dateA;  // Neueste zuerst
-        });
+        .sort((a, b) => parseDateSafely(b.transaction_date).getTime() - parseDateSafely(a.transaction_date).getTime());
+    
     const categorizedTransactions = applyFilters(transactions.filter(t => t.is_categorized))
-        .sort((a, b) => {
-            const dateA = a.transaction_date ? new Date(a.transaction_date).getTime() : 0;
-            const dateB = b.transaction_date ? new Date(b.transaction_date).getTime() : 0;
-            return dateB - dateA;  // Neueste zuerst
-        });
+        .sort((a, b) => parseDateSafely(b.transaction_date).getTime() - parseDateSafely(a.transaction_date).getTime());
     const pendingPayments = payments.filter(p => p.status === 'pending' || p.status === 'partial');
 
     const totalUncategorized = uncategorizedTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
