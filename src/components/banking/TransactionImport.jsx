@@ -107,10 +107,12 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
                     return;
                 }
 
-                // Get all existing transactions for this account at once
-                const allExisting = await base44.entities.BankTransaction.filter({
-                    account_id: accountId
-                });
+                // Get all existing transactions for this account at once (no limit)
+                const allExisting = await base44.entities.BankTransaction.filter(
+                    { account_id: accountId },
+                    null,
+                    10000 // High limit to get all transactions
+                );
 
                 // Create a Set for fast duplicate checking
                 const existingKeys = new Set(
