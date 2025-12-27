@@ -30,70 +30,102 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
     });
     const [preview, setPreview] = useState([]);
 
-    const parseCSV = (text) => {
-        const lines = text.split('\n').filter(line => line.trim());
-        if (lines.length < 2) return [];
+    const detectDelimiter = (line) => {
+        const semicolonCount = (line.match(/;/g) || []).length;
+        const commaCount = (line.match(/,/g) || []).length;
+        return semicolonCount > commaCount ? ';' : ',';
+    };
 
-        // Handle different CSV delimiters and quoted values
-        const detectDelimiter = (line) => {
-            const semicolonCount = (line.match(/;/g) || []).length;
-            const commaCount = (line.match(/,/g) || []).length;
-            return semicolonCount > commaCount ? ';' : ',';
-        };
+    const parseLine = (line, delimiter) => {
+        const values = [];
+        let currentValue = '';
+        let inQuotes = false;
+
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === delimiter && !inQuotes) {
+                values.push(currentValue.trim());
+                currentValue = '';
+            } else {
+                currentValue += char;
+            }
+        }
+        values.push(currentValue.trim());
+        return values;
+    };
+
+    const parseCSVFile = (text) => {
+        const lines = text.split('\n').filter(line => line.trim());
+        if (lines.length < 2) return { headers: [], data: [] };
 
         const delimiter = detectDelimiter(lines[0]);
-        
-        const parseLine = (line) => {
-            const values = [];
-            let currentValue = '';
-            let inQuotes = false;
-
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
-                
-                if (char === '"') {
-                    inQuotes = !inQuotes;
-                } else if (char === delimiter && !inQuotes) {
-                    values.push(currentValue.trim());
-                    currentValue = '';
-                } else {
-                    currentValue += char;
-                }
-            }
-            values.push(currentValue.trim());
-            return values;
-        };
-
-        const headers = parseLine(lines[0]).map(h => h.trim().toLowerCase().replace(/^"|"$/g, ''));
-        const transactions = [];
+        const headers = parseLine(lines[0], delimiter).map(h => h.trim().replace(/^"|"$/g, ''));
+        const data = [];
 
         for (let i = 1; i < lines.length; i++) {
-            const values = parseLine(lines[i]).map(v => v.replace(/^"|"$/g, ''));
+            const values = parseLine(lines[i], delimiter).map(v => v.replace(/^"|"$/g, ''));
             const row = {};
-            
             headers.forEach((header, index) => {
                 row[header] = values[index] || '';
             });
+            data.push(row);
+        }
 
-            // Map common German CSV headers - more variations
-            const transactionDate = row['buchungstag'] || row['buchungsdatum'] || row['datum'] || row['date'] || '';
-            const valueDate = row['wertstellung'] || row['valuta'] || row['value_date'] || transactionDate || '';
+        return { headers, data };
+    };
 
+    const autoDetectMapping = (headers) => {
+        const newMapping = { ...mapping };
+        
+        headers.forEach(header => {
+            const h = header.toLowerCase();
+            if ((h.includes('buchungstag') || h.includes('buchungsdatum') || h === 'datum') && !newMapping.transaction_date) {
+                newMapping.transaction_date = header;
+            }
+            if ((h.includes('wertstellung') || h.includes('valuta')) && !newMapping.value_date) {
+                newMapping.value_date = header;
+            }
+            if ((h.includes('betrag') || h.includes('amount') || h.includes('umsatz')) && !newMapping.amount) {
+                newMapping.amount = header;
+            }
+            if (h.includes('buchungstext') && !newMapping.description) {
+                newMapping.description = header;
+            }
+            if ((h.includes('verwendungszweck') || h.includes('zweck') || h.includes('referenz')) && !newMapping.reference) {
+                newMapping.reference = header;
+            }
+            if ((h.includes('auftraggeber') || h.includes('empfänger') || h.includes('name')) && !newMapping.sender_receiver) {
+                newMapping.sender_receiver = header;
+            }
+            if (h.includes('iban') && !newMapping.iban) {
+                newMapping.iban = header;
+            }
+        });
+
+        return newMapping;
+    };
+
+    const buildTransactionsFromMapping = () => {
+        const transactions = [];
+
+        csvData.forEach(row => {
             const transaction = {
-                transaction_date: transactionDate.trim(),
-                value_date: valueDate.trim(),
-                amount: parseFloat((row['betrag'] || row['amount'] || row['umsatz'] || '0').replace(',', '.').replace(/[^\d.-]/g, '')),
-                description: row['buchungstext'] || row['verwendungszweck'] || row['beschreibung'] || row['description'] || row['zweck'] || '',
-                sender_receiver: row['auftraggeber'] || row['empfänger'] || row['name'] || row['sender_receiver'] || row['auftraggeber / empfänger'] || '',
-                iban: row['iban'] || row['kontonummer'] || row['account'] || '',
-                reference: row['verwendungszweck'] || row['referenz'] || row['reference'] || row['buchungstext'] || ''
+                transaction_date: mapping.transaction_date ? row[mapping.transaction_date]?.trim() : '',
+                value_date: mapping.value_date ? row[mapping.value_date]?.trim() : '',
+                amount: mapping.amount ? parseFloat((row[mapping.amount] || '0').replace(',', '.').replace(/[^\d.-]/g, '')) : 0,
+                description: mapping.description ? row[mapping.description]?.trim() : '',
+                sender_receiver: mapping.sender_receiver ? row[mapping.sender_receiver]?.trim() : '',
+                iban: mapping.iban ? row[mapping.iban]?.trim() : '',
+                reference: mapping.reference ? row[mapping.reference]?.trim() : ''
             };
 
-            // Only add if date is valid and not empty
-            if (transaction.transaction_date && transaction.transaction_date !== '' && !isNaN(transaction.amount)) {
+            if (transaction.transaction_date && !isNaN(transaction.amount)) {
                 transactions.push(transaction);
             }
-        }
+        });
 
         return transactions;
     };
