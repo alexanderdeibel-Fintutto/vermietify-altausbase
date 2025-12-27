@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'sonner';
 import TransactionCategoryCard from '@/components/banking/TransactionCategoryCard';
 import RuleManager from '@/components/banking/RuleManager';
+import RulePreviewDialog from '@/components/banking/RulePreviewDialog';
 
 const CATEGORY_LABELS = {
     rent_income: 'Mieteinnahmen',
@@ -34,7 +35,8 @@ const EXPENSE_CATEGORIES = [
 export default function BankReconciliation() {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [rulesOpen, setRulesOpen] = useState(false);
-    const [applyingRules, setApplyingRules] = useState(false);
+    const [previewOpen, setPreviewOpen] = useState(false);
+    const [ruleSuggestions, setRuleSuggestions] = useState([]);
     const queryClient = useQueryClient();
 
     const { data: transactions = [], isLoading: loadingTransactions } = useQuery({
@@ -97,7 +99,7 @@ export default function BankReconciliation() {
         }
     });
 
-    const applyRules = async () => {
+    const previewRuleApplication = async () => {
         const uncategorizedTxs = transactions.filter(t => !t.is_categorized);
         const activeRules = rules.filter(r => r.is_active && r.auto_apply);
         
@@ -111,55 +113,80 @@ export default function BankReconciliation() {
             return;
         }
 
-        setApplyingRules(true);
-        let matched = 0;
+        const suggestions = [];
 
-        try {
-            for (const tx of uncategorizedTxs) {
-                for (const rule of activeRules) {
-                    const conditions = rule.conditions || {};
-                    let matches = true;
+        for (const tx of uncategorizedTxs) {
+            for (const rule of activeRules) {
+                const conditions = rule.conditions || {};
+                let matches = true;
 
-                    if (conditions.sender_receiver_contains && 
-                        !tx.sender_receiver?.toLowerCase().includes(conditions.sender_receiver_contains.toLowerCase())) {
-                        matches = false;
-                    }
-                    if (conditions.description_contains && 
-                        !tx.description?.toLowerCase().includes(conditions.description_contains.toLowerCase())) {
-                        matches = false;
-                    }
-                    if (conditions.amount_min !== undefined && tx.amount < conditions.amount_min) {
-                        matches = false;
-                    }
-                    if (conditions.amount_max !== undefined && tx.amount > conditions.amount_max) {
-                        matches = false;
-                    }
-                    if (conditions.is_income !== undefined && (tx.amount > 0) !== conditions.is_income) {
-                        matches = false;
-                    }
-
-                    if (matches) {
-                        await categorizeMutation.mutateAsync({
-                            transactionId: tx.id,
-                            category: rule.target_category,
-                            paymentId: null
-                        });
-                        await base44.entities.CategorizationRule.update(rule.id, {
-                            match_count: (rule.match_count || 0) + 1
-                        });
-                        matched++;
-                        break;
-                    }
+                if (conditions.sender_receiver_contains && 
+                    !tx.sender_receiver?.toLowerCase().includes(conditions.sender_receiver_contains.toLowerCase())) {
+                    matches = false;
                 }
+                if (conditions.description_contains && 
+                    !tx.description?.toLowerCase().includes(conditions.description_contains.toLowerCase())) {
+                    matches = false;
+                }
+                if (conditions.reference_contains && 
+                    !tx.reference?.toLowerCase().includes(conditions.reference_contains.toLowerCase())) {
+                    matches = false;
+                }
+                if (conditions.iban_contains && 
+                    !tx.iban?.toLowerCase().includes(conditions.iban_contains.toLowerCase())) {
+                    matches = false;
+                }
+                if (conditions.amount_min !== undefined && tx.amount < conditions.amount_min) {
+                    matches = false;
+                }
+                if (conditions.amount_max !== undefined && tx.amount > conditions.amount_max) {
+                    matches = false;
+                }
+                if (conditions.is_income !== undefined && (tx.amount > 0) !== conditions.is_income) {
+                    matches = false;
+                }
+
+                if (matches) {
+                    suggestions.push({
+                        transaction: tx,
+                        category: rule.target_category,
+                        rule: rule
+                    });
+                    break;
+                }
+            }
+        }
+
+        if (suggestions.length === 0) {
+            toast.info('Keine passenden Transaktionen für bestehende Regeln gefunden');
+            return;
+        }
+
+        setRuleSuggestions(suggestions);
+        setPreviewOpen(true);
+    };
+
+    const confirmRuleSuggestions = async (confirmedSuggestions) => {
+        try {
+            for (const suggestion of confirmedSuggestions) {
+                await categorizeMutation.mutateAsync({
+                    transactionId: suggestion.transaction.id,
+                    category: suggestion.category,
+                    paymentId: null
+                });
+                
+                // Update rule match count
+                await base44.entities.CategorizationRule.update(suggestion.rule.id, {
+                    match_count: (suggestion.rule.match_count || 0) + 1
+                });
             }
 
             queryClient.invalidateQueries({ queryKey: ['categorization-rules'] });
-            toast.success(`${matched} Transaktionen durch Regeln kategorisiert`);
+            toast.success(`${confirmedSuggestions.length} Transaktionen kategorisiert`);
+            setPreviewOpen(false);
         } catch (error) {
             console.error('Rule application error:', error);
-            toast.error('Fehler beim Anwenden der Regeln');
-        } finally {
-            setApplyingRules(false);
+            toast.error('Fehler beim Kategorisieren');
         }
     };
 
@@ -320,16 +347,16 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                         className="gap-2"
                     >
                         <Settings className="w-4 h-4" />
-                        Regeln verwalten
+                        Regeln
                     </Button>
                     <Button 
-                        onClick={applyRules}
-                        disabled={applyingRules || uncategorizedTransactions.length === 0}
+                        onClick={previewRuleApplication}
+                        disabled={uncategorizedTransactions.length === 0}
                         variant="outline"
                         className="gap-2"
                     >
                         <Zap className="w-4 h-4" />
-                        {applyingRules ? 'Wende an...' : 'Regeln anwenden'}
+                        Zuordnungsregeln anwenden
                     </Button>
                     <Button 
                         onClick={handleAIAnalysis}
@@ -480,6 +507,15 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                 open={rulesOpen}
                 onOpenChange={setRulesOpen}
             />
-        </div>
-    );
-}
+
+            <RulePreviewDialog
+                open={previewOpen}
+                onOpenChange={setPreviewOpen}
+                suggestions={ruleSuggestions}
+                availableCategories={[...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES]}
+                categoryLabels={CATEGORY_LABELS}
+                onConfirm={confirmRuleSuggestions}
+            />
+            </div>
+            );
+            }

@@ -41,43 +41,66 @@ export default function TransactionCategoryCard({
                 paymentId: selectedCategory === 'rent_income' ? selectedPaymentId : null
             });
             
-            // Learn from this categorization - suggest creating a rule
+            // Check if a rule should be suggested
             if (transaction.sender_receiver && transaction.sender_receiver.trim() !== '') {
-                suggestRule();
+                await checkAndSuggestRule();
             }
         } finally {
             setIsProcessing(false);
         }
     };
 
-    const suggestRule = () => {
-        toast.info(
-            `Regel erstellen für "${transaction.sender_receiver}"?`,
-            {
-                action: {
-                    label: 'Regel erstellen',
-                    onClick: async () => {
-                        try {
-                            await base44.entities.CategorizationRule.create({
-                                name: `Auto: ${transaction.sender_receiver}`,
-                                is_active: true,
-                                priority: 0,
-                                auto_apply: true,
-                                conditions: {
-                                    sender_receiver_contains: transaction.sender_receiver
-                                },
-                                target_category: selectedCategory,
-                                match_count: 1
-                            });
-                            toast.success('Regel erstellt');
-                        } catch (error) {
-                            toast.error('Fehler beim Erstellen der Regel');
-                        }
-                    }
-                },
-                duration: 5000
+    const checkAndSuggestRule = async () => {
+        try {
+            // Check if a rule already exists
+            const existingRules = await base44.entities.CategorizationRule.filter({
+                is_active: true
+            });
+
+            const matchingRule = existingRules.find(rule => {
+                const conditions = rule.conditions || {};
+                return conditions.sender_receiver_contains?.toLowerCase() === transaction.sender_receiver.toLowerCase();
+            });
+
+            if (matchingRule) {
+                // Rule exists - just update match count
+                await base44.entities.CategorizationRule.update(matchingRule.id, {
+                    match_count: (matchingRule.match_count || 0) + 1
+                });
+                return;
             }
-        );
+
+            // No rule exists - suggest creating one
+            toast.info(
+                `Regel erstellen für "${transaction.sender_receiver}"?`,
+                {
+                    action: {
+                        label: 'Regel erstellen',
+                        onClick: async () => {
+                            try {
+                                await base44.entities.CategorizationRule.create({
+                                    name: `Auto: ${transaction.sender_receiver}`,
+                                    is_active: true,
+                                    priority: 0,
+                                    auto_apply: true,
+                                    conditions: {
+                                        sender_receiver_contains: transaction.sender_receiver
+                                    },
+                                    target_category: selectedCategory,
+                                    match_count: 1
+                                });
+                                toast.success('Regel erstellt - wird bei zukünftigen Transaktionen angewendet');
+                            } catch (error) {
+                                toast.error('Fehler beim Erstellen der Regel');
+                            }
+                        }
+                    },
+                    duration: 7000
+                }
+            );
+        } catch (error) {
+            console.error('Error checking rules:', error);
+        }
     };
 
     const handleUncategorize = async () => {
