@@ -2,13 +2,32 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Upload, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Upload, FileText, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 export default function TransactionImport({ open, onOpenChange, accountId, onSuccess }) {
     const [file, setFile] = useState(null);
     const [importing, setImporting] = useState(false);
+    const [step, setStep] = useState(1); // 1: upload, 2: mapping, 3: preview
+    const [csvHeaders, setCsvHeaders] = useState([]);
+    const [csvData, setCsvData] = useState([]);
+    const [mapping, setMapping] = useState({
+        transaction_date: '',
+        value_date: '',
+        amount: '',
+        description: '',
+        sender_receiver: '',
+        iban: '',
+        reference: ''
+    });
     const [preview, setPreview] = useState([]);
 
     const parseCSV = (text) => {
