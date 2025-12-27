@@ -14,9 +14,29 @@ Deno.serve(async (req) => {
         const body = await req.json();
         const { transactions, payments, tenants, units, buildings } = body;
 
+        // Limit data to prevent rate limits - only analyze unmatched transactions
+        const limitedTransactions = transactions
+            .filter(t => !t.is_matched)
+            .slice(0, 20); // Max 20 transactions at a time
+        
+        const limitedPayments = payments
+            .filter(p => p.status !== 'paid')
+            .slice(0, 20); // Max 20 payments at a time
+
+        if (limitedTransactions.length === 0) {
+            return Response.json({
+                success: true,
+                analysis: {
+                    missing_details_predictions: [],
+                    alternative_matches: [],
+                    discrepancies: []
+                }
+            });
+        }
+
         // Prepare context for AI
         const context = {
-            transactions: transactions.map(t => ({
+            transactions: limitedTransactions.map(t => ({
                 id: t.id,
                 date: t.transaction_date,
                 amount: t.amount,
@@ -26,7 +46,7 @@ Deno.serve(async (req) => {
                 iban: t.iban,
                 is_matched: t.is_matched
             })),
-            payments: payments.map(p => {
+            payments: limitedPayments.map(p => {
                 const tenant = tenants.find(t => t.id === p.tenant_id);
                 const unit = units.find(u => u.id === p.unit_id);
                 const building = unit ? buildings.find(b => b.id === unit.building_id) : null;
@@ -135,6 +155,15 @@ Gib deine Analyse im folgenden JSON-Format zurück (keine zusätzlichen Texte, n
 
     } catch (error) {
         console.error('AI Analysis error:', error);
+        
+        // Handle rate limit errors specifically
+        if (error.message && error.message.includes('rate limit')) {
+            return Response.json({ 
+                error: 'Zu viele Anfragen. Bitte warten Sie einen Moment und versuchen Sie es erneut.',
+                type: 'rate_limit'
+            }, { status: 429 });
+        }
+        
         return Response.json({ 
             error: 'KI-Analyse fehlgeschlagen',
             details: error.message

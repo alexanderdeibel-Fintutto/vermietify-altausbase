@@ -88,6 +88,15 @@ export default function BankReconciliation() {
     };
 
     const handleAIAnalysis = async () => {
+        if (unmatchedTransactions.length === 0) {
+            toast.info('Keine Transaktionen zum Analysieren');
+            return;
+        }
+
+        if (unmatchedTransactions.length > 20) {
+            toast.info('Analysiere die ersten 20 Transaktionen...');
+        }
+
         setIsAnalyzing(true);
         try {
             const response = await base44.functions.invoke('aiMatchAnalysis', {
@@ -99,7 +108,13 @@ export default function BankReconciliation() {
             });
 
             if (response.data.error) {
-                toast.error(response.data.error);
+                if (response.data.type === 'rate_limit') {
+                    toast.error(response.data.error, {
+                        description: 'Bitte warten Sie 30-60 Sekunden vor dem nächsten Versuch.'
+                    });
+                } else {
+                    toast.error(response.data.error);
+                }
                 return;
             }
 
