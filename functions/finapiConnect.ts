@@ -22,17 +22,11 @@ Deno.serve(async (req) => {
         }
 
         // Get client credentials token
-        const credentials = btoa(`${CLIENT_ID}:${CLIENT_SECRET}`);
-        const tokenResponse = await fetch(`${FINAPI_BASE_URL}/oauth/token`, {
+        const tokenResponse = await fetch(`${FINAPI_BASE_URL}/oauth/token?grant_type=client_credentials&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}`, {
             method: 'POST',
             headers: {
-                'Authorization': `Basic ${credentials}`,
-                'Content-Type': 'application/x-www-form-urlencoded',
                 'Accept': 'application/json'
-            },
-            body: new URLSearchParams({
-                grant_type: 'client_credentials'
-            })
+            }
         });
 
         if (!tokenResponse.ok) {
