@@ -1,10 +1,14 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-const FINAPI_BASE_URL = Deno.env.get("FINAPI_BASE_URL") || "https://sandbox.finapi.io";
+const FINAPI_BASE_URL = Deno.env.get("FINAPI_BASE_URL");
 const CLIENT_ID = Deno.env.get("FINAPI_CLIENT_ID");
 const CLIENT_SECRET = Deno.env.get("FINAPI_CLIENT_SECRET");
 
 async function getFinAPIToken() {
+    if (!FINAPI_BASE_URL || !CLIENT_ID || !CLIENT_SECRET) {
+        throw new Error('FinAPI Credentials nicht vollständig konfiguriert');
+    }
+
     const tokenResponse = await fetch(`${FINAPI_BASE_URL}/oauth/token`, {
         method: 'POST',
         headers: {
@@ -17,7 +21,7 @@ async function getFinAPIToken() {
     });
 
     if (!tokenResponse.ok) {
-        throw new Error(`FinAPI auth failed: ${await tokenResponse.text()}`);
+        throw new Error('FinAPI Authentifizierung fehlgeschlagen');
     }
 
     const data = await tokenResponse.json();
@@ -25,8 +29,11 @@ async function getFinAPIToken() {
 }
 
 async function syncBankAccount(base44, accessToken, bankAccount) {
+    console.log('Syncing account:', bankAccount.name);
+
     if (!bankAccount.finapi_connection_id) {
-        return { skipped: true, reason: 'No FinAPI connection' };
+        console.log('Skipping - no FinAPI connection');
+        return { skipped: true, reason: 'Keine FinAPI-Verbindung' };
     }
 
     // Get accounts for this connection
@@ -41,28 +48,34 @@ async function syncBankAccount(base44, accessToken, bankAccount) {
     );
 
     if (!accountsResponse.ok) {
-        throw new Error(`Failed to fetch accounts: ${await accountsResponse.text()}`);
+        const error = await accountsResponse.text();
+        throw new Error(`Konten konnten nicht abgerufen werden: ${error}`);
     }
 
     const accountsData = await accountsResponse.json();
     const accounts = accountsData.accounts || [];
 
+    console.log(`Found ${accounts.length} accounts`);
+
     if (accounts.length === 0) {
-        return { skipped: true, reason: 'No accounts found' };
+        return { skipped: true, reason: 'Keine Konten gefunden' };
     }
 
     let totalNewTransactions = 0;
+    let accountsUpdated = 0;
 
     for (const account of accounts) {
-        // Update account balance
+        // Update account balance and IBAN
         await base44.asServiceRole.entities.BankAccount.update(bankAccount.id, {
             current_balance: account.balance || 0,
-            iban: account.iban || bankAccount.iban
+            iban: account.iban || bankAccount.iban,
+            last_sync: new Date().toISOString()
         });
+        accountsUpdated++;
 
-        // Get transactions for this account
+        // Get transactions
         const transactionsResponse = await fetch(
-            `${FINAPI_BASE_URL}/api/v1/transactions?accountIds=${account.id}&perPage=100`,
+            `${FINAPI_BASE_URL}/api/v1/transactions?accountIds=${account.id}&perPage=500&order=desc`,
             {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -72,44 +85,53 @@ async function syncBankAccount(base44, accessToken, bankAccount) {
         );
 
         if (!transactionsResponse.ok) {
+            console.error('Failed to fetch transactions for account:', account.id);
             continue;
         }
 
         const transactionsData = await transactionsResponse.json();
         const transactions = transactionsData.transactions || [];
 
+        console.log(`Found ${transactions.length} transactions for account ${account.id}`);
+
         // Import transactions
         for (const tx of transactions) {
-            // Check if transaction already exists
+            // Check if exists (by unique combination)
             const existing = await base44.asServiceRole.entities.BankTransaction.filter({
                 account_id: bankAccount.id,
-                reference: tx.purpose || '',
+                transaction_date: tx.bankBookingDate,
                 amount: tx.amount,
-                transaction_date: tx.valueDate || tx.bankBookingDate
+                description: tx.purpose || ''
             });
 
             if (existing.length === 0) {
-                await base44.asServiceRole.entities.BankTransaction.create({
-                    account_id: bankAccount.id,
-                    transaction_date: tx.bankBookingDate,
-                    value_date: tx.valueDate,
-                    amount: tx.amount,
-                    description: tx.purpose || '',
-                    sender_receiver: tx.counterpartName || '',
-                    iban: tx.counterpartIban || '',
-                    reference: tx.purpose || '',
-                    is_matched: false,
-                    matched_payment_id: null
-                });
-                totalNewTransactions++;
+                try {
+                    await base44.asServiceRole.entities.BankTransaction.create({
+                        account_id: bankAccount.id,
+                        transaction_date: tx.bankBookingDate,
+                        value_date: tx.valueDate || tx.bankBookingDate,
+                        amount: tx.amount,
+                        description: tx.purpose || '',
+                        sender_receiver: tx.counterpartName || '',
+                        iban: tx.counterpartIban || '',
+                        reference: tx.purpose || '',
+                        is_matched: false,
+                        matched_payment_id: null
+                    });
+                    totalNewTransactions++;
+                } catch (err) {
+                    console.error('Failed to create transaction:', err);
+                }
             }
         }
     }
 
+    console.log(`Sync complete: ${totalNewTransactions} new transactions`);
+
     return { 
         success: true, 
         newTransactions: totalNewTransactions,
-        accountsProcessed: accounts.length
+        accountsUpdated
     };
 }
 
@@ -119,10 +141,13 @@ Deno.serve(async (req) => {
         const user = await base44.auth.me();
 
         if (!user) {
-            return Response.json({ error: 'Unauthorized' }, { status: 401 });
+            return Response.json({ error: 'Nicht autorisiert' }, { status: 401 });
         }
 
-        const { accountId } = await req.json().catch(() => ({}));
+        const body = await req.json().catch(() => ({}));
+        const { accountId } = body;
+
+        console.log('Starting sync for user:', user.id, 'accountId:', accountId);
 
         // Get FinAPI access token
         const accessToken = await getFinAPIToken();
@@ -130,11 +155,12 @@ Deno.serve(async (req) => {
         // Get bank accounts to sync
         let bankAccounts;
         if (accountId) {
-            const account = await base44.entities.BankAccount.filter({ id: accountId });
-            bankAccounts = account;
+            bankAccounts = await base44.entities.BankAccount.filter({ id: accountId });
         } else {
             bankAccounts = await base44.entities.BankAccount.list();
         }
+
+        console.log(`Syncing ${bankAccounts.length} accounts`);
 
         const results = [];
         let totalNewTransactions = 0;
@@ -151,6 +177,7 @@ Deno.serve(async (req) => {
                     totalNewTransactions += result.newTransactions;
                 }
             } catch (error) {
+                console.error(`Error syncing account ${account.id}:`, error);
                 results.push({
                     accountId: account.id,
                     accountName: account.name,
@@ -159,8 +186,9 @@ Deno.serve(async (req) => {
             }
         }
 
-        // Trigger auto-matching after sync
+        // Auto-match transactions if any were imported
         if (totalNewTransactions > 0) {
+            console.log('Triggering auto-match...');
             try {
                 await base44.functions.invoke('autoMatchTransactions', {});
             } catch (error) {
@@ -171,13 +199,15 @@ Deno.serve(async (req) => {
         return Response.json({
             success: true,
             totalNewTransactions,
+            accountsSynced: results.filter(r => r.success).length,
             results
         });
 
     } catch (error) {
         console.error('FinAPI sync error:', error);
         return Response.json({ 
-            error: error.message || 'Internal server error' 
+            error: error.message || 'Synchronisation fehlgeschlagen',
+            details: error.stack
         }, { status: 500 });
     }
 });
