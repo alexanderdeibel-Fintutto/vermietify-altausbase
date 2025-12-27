@@ -19,6 +19,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from 'lucide-react';
+import { generatePaymentsForContract } from './generatePayments';
 
 export default function ContractForm({ 
     open, 
@@ -57,8 +58,8 @@ export default function ContractForm({
         setValue('total_rent', baseRent + utilities + heating);
     }, [watchBaseRent, watchUtilities, watchHeating, setValue]);
 
-    const handleFormSubmit = (data) => {
-        onSubmit({
+    const handleFormSubmit = async (data) => {
+        const contractData = {
             ...data,
             base_rent: parseFloat(data.base_rent) || 0,
             utilities: parseFloat(data.utilities) || 0,
@@ -69,7 +70,19 @@ export default function ContractForm({
             notice_period_months: data.notice_period_months ? parseInt(data.notice_period_months) : null,
             end_date: data.is_unlimited ? null : data.end_date,
             handover_date: data.handover_date || null,
-        });
+        };
+
+        // Submit contract first
+        const result = await onSubmit(contractData);
+        
+        // If new contract (not editing), generate payments
+        if (!initialData && result) {
+            try {
+                await generatePaymentsForContract(result, [], 12);
+            } catch (error) {
+                console.error('Error generating payments:', error);
+            }
+        }
     };
 
     return (

@@ -57,9 +57,13 @@ export default function Contracts() {
     });
 
     const createMutation = useMutation({
-        mutationFn: (data) => base44.entities.LeaseContract.create(data),
+        mutationFn: async (data) => {
+            const contract = await base44.entities.LeaseContract.create(data);
+            return contract;
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['contracts'] });
+            queryClient.invalidateQueries({ queryKey: ['payments'] });
             setFormOpen(false);
         }
     });
@@ -81,11 +85,17 @@ export default function Contracts() {
         }
     });
 
-    const handleSubmit = (data) => {
+    const handleSubmit = async (data) => {
         if (editingContract) {
             updateMutation.mutate({ id: editingContract.id, data });
+            return null;
         } else {
-            createMutation.mutate(data);
+            return new Promise((resolve, reject) => {
+                createMutation.mutate(data, {
+                    onSuccess: (result) => resolve(result),
+                    onError: (error) => reject(error)
+                });
+            });
         }
     };
 

@@ -13,6 +13,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2 } from 'lucide-react';
+import { updateFuturePayments } from './generatePayments';
 
 export default function RentChangeForm({ open, onOpenChange, contract }) {
     const { register, handleSubmit, reset, watch } = useForm();
@@ -23,9 +24,20 @@ export default function RentChangeForm({ open, onOpenChange, contract }) {
     const watchHeating = watch('heating');
 
     const createMutation = useMutation({
-        mutationFn: (data) => base44.entities.RentChange.create(data),
+        mutationFn: async (data) => {
+            const rentChange = await base44.entities.RentChange.create(data);
+            
+            // Update future payments with new rent amounts
+            const allChanges = await base44.entities.RentChange.filter({ 
+                contract_id: contract.id 
+            });
+            await updateFuturePayments(contract, allChanges);
+            
+            return rentChange;
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['rent-changes'] });
+            queryClient.invalidateQueries({ queryKey: ['payments'] });
             reset();
             onOpenChange(false);
         }
