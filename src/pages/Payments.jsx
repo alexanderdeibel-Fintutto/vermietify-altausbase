@@ -36,7 +36,20 @@ export default function Payments() {
 
     const { data: payments = [], isLoading } = useQuery({
         queryKey: ['payments'],
-        queryFn: () => base44.entities.Payment.list('-payment_date')
+        queryFn: async () => {
+            const allPayments = await base44.entities.Payment.list('-payment_date');
+            const contracts = await base44.entities.LeaseContract.list();
+            const contractIds = new Set(contracts.map(c => c.id));
+            
+            // Zahlungen ohne existierenden Vertrag löschen
+            const orphanedPayments = allPayments.filter(p => !contractIds.has(p.contract_id));
+            for (const payment of orphanedPayments) {
+                await base44.entities.Payment.delete(payment.id);
+            }
+            
+            // Nur gültige Zahlungen zurückgeben
+            return allPayments.filter(p => contractIds.has(p.contract_id));
+        }
     });
 
     const { data: contracts = [] } = useQuery({
