@@ -1,12 +1,33 @@
 import { base44 } from '@/api/base44Client';
-import { addMonths, format, parseISO, isBefore, isAfter, setDate, startOfMonth } from 'date-fns';
+import { addMonths, format, parseISO, isBefore, isAfter, setDate, startOfMonth, getDaysInMonth, getDate } from 'date-fns';
+
+/**
+ * Calculates partial rent for mid-month start
+ */
+export function calculatePartialRent(contract, startDate) {
+    const dayOfMonth = getDate(startDate);
+    const daysInMonth = getDaysInMonth(startDate);
+    const remainingDays = daysInMonth - dayOfMonth + 1;
+    const dailyRate = contract.total_rent / daysInMonth;
+    return dailyRate * remainingDays;
+}
+
+/**
+ * Checks if contract needs partial rent dialog
+ */
+export function needsPartialRentDialog(contract) {
+    const startDate = parseISO(contract.start_date);
+    const dayOfMonth = getDate(startDate);
+    return dayOfMonth > 1;
+}
 
 /**
  * Generates monthly rent payment records for a lease contract
  * @param {Object} contract - The lease contract
  * @param {Array} rentChanges - Array of rent changes for this contract
+ * @param {Number} partialRentAmount - Optional partial rent for first month
  */
-export async function generatePaymentsForContract(contract, rentChanges = []) {
+export async function generatePaymentsForContract(contract, rentChanges = [], partialRentAmount = null) {
     const payments = [];
     const startDate = parseISO(contract.start_date);
     const endDate = contract.end_date ? parseISO(contract.end_date) : addMonths(new Date(), 24);
@@ -18,6 +39,8 @@ export async function generatePaymentsForContract(contract, rentChanges = []) {
 
     // Generate rent payments from start to end
     let currentDate = startOfMonth(startDate);
+    let isFirstMonth = true;
+    
     while (isBefore(currentDate, endDate) || format(currentDate, 'yyyy-MM') === format(endDate, 'yyyy-MM')) {
         const paymentMonth = format(currentDate, 'yyyy-MM');
         // Find applicable rent for this month
@@ -64,6 +87,7 @@ export async function generatePaymentsForContract(contract, rentChanges = []) {
             });
         }
         
+        isFirstMonth = false;
         currentDate = addMonths(currentDate, 1);
     }
 
@@ -222,14 +246,38 @@ export async function regenerateContractPayments(contractId) {
  */
 export async function regenerateAllPayments() {
     try {
-        // Get all contracts (not just active)
+        // Get all contracts
         const contracts = await base44.entities.LeaseContract.list();
         
         let totalGenerated = 0;
         
         for (const contract of contracts) {
-            const generated = await regenerateContractPayments(contract.id);
-            totalGenerated += generated;
+            // Determine contract status
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const startDate = new Date(contract.start_date);
+            const endDate = contract.end_date ? new Date(contract.end_date) : null;
+
+            let isActive = false;
+            if (startDate <= today) {
+                if (endDate) {
+                    isActive = endDate >= today;
+                } else {
+                    isActive = true;
+                }
+                if (contract.termination_date) {
+                    const terminationDate = new Date(contract.termination_date);
+                    if (terminationDate < today) {
+                        isActive = false;
+                    }
+                }
+            }
+
+            // Only generate payments for active contracts
+            if (isActive) {
+                const generated = await regenerateContractPayments(contract.id);
+                totalGenerated += generated;
+            }
         }
 
         return totalGenerated;

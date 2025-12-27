@@ -19,7 +19,8 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from 'lucide-react';
-import { generatePaymentsForContract, regenerateContractPayments } from './generatePayments';
+import { generatePaymentsForContract, regenerateContractPayments, needsPartialRentDialog, calculatePartialRent } from './generatePayments';
+import PartialRentDialog from './PartialRentDialog';
 
 export default function ContractForm({ 
     open, 
@@ -30,6 +31,10 @@ export default function ContractForm({
     units = [],
     tenants = []
 }) {
+    const [partialRentDialogOpen, setPartialRentDialogOpen] = React.useState(false);
+    const [pendingContract, setPendingContract] = React.useState(null);
+    const [suggestedPartialRent, setSuggestedPartialRent] = React.useState(0);
+    
     const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
         defaultValues: initialData || { status: 'active', is_unlimited: true, deposit_paid: false, deposit_installments: 1 }
     });
@@ -101,11 +106,30 @@ export default function ContractForm({
                     // If editing, regenerate all payments for this contract
                     await regenerateContractPayments(initialData.id);
                 } else {
-                    // If new contract, generate payments
-                    await generatePaymentsForContract(result, []);
+                    // If new contract, check if partial rent dialog is needed
+                    if (needsPartialRentDialog(contractData)) {
+                        const partialAmount = calculatePartialRent(contractData, new Date(contractData.start_date));
+                        setSuggestedPartialRent(partialAmount);
+                        setPendingContract(result);
+                        setPartialRentDialogOpen(true);
+                    } else {
+                        // Generate payments normally
+                        await generatePaymentsForContract(result, []);
+                    }
                 }
             } catch (error) {
                 console.error('Error generating payments:', error);
+            }
+        }
+    };
+
+    const handlePartialRentConfirm = async (partialAmount) => {
+        if (pendingContract) {
+            try {
+                await generatePaymentsForContract(pendingContract, [], partialAmount);
+                setPendingContract(null);
+            } catch (error) {
+                console.error('Error generating payments with partial rent:', error);
             }
         }
     };
@@ -394,6 +418,14 @@ export default function ContractForm({
                     </div>
                 </form>
             </DialogContent>
+
+            <PartialRentDialog
+                open={partialRentDialogOpen}
+                onOpenChange={setPartialRentDialogOpen}
+                contract={pendingContract}
+                partialAmount={suggestedPartialRent}
+                onConfirm={handlePartialRentConfirm}
+            />
         </Dialog>
     );
 }
