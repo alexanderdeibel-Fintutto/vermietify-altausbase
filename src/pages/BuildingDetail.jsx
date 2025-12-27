@@ -5,8 +5,15 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { 
     Building2, MapPin, Calendar, Euro, ArrowLeft, Plus, 
-    Home, MoreVertical, Pencil, Trash2, User
+    Home, MoreVertical, Pencil, Trash2, User, Eye, Droplet
 } from 'lucide-react';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
@@ -41,6 +48,8 @@ export default function BuildingDetail() {
     const [buildingFormOpen, setBuildingFormOpen] = useState(false);
     const [editingUnit, setEditingUnit] = useState(null);
     const [deleteUnit, setDeleteUnit] = useState(null);
+    const [bathroomFilter, setBathroomFilter] = useState('all');
+    const [statusFilter, setStatusFilter] = useState('all');
 
     const { data: building, isLoading: loadingBuilding } = useQuery({
         queryKey: ['building', buildingId],
@@ -214,18 +223,44 @@ export default function BuildingDetail() {
 
             {/* Units */}
             <div>
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                     <h2 className="text-xl font-semibold text-slate-800">Wohnungen</h2>
-                    <Button 
-                        onClick={() => {
-                            setEditingUnit(null);
-                            setUnitFormOpen(true);
-                        }}
-                        className="bg-emerald-600 hover:bg-emerald-700"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Wohnung hinzufügen
-                    </Button>
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger className="w-full sm:w-40">
+                                <SelectValue placeholder="Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Alle Status</SelectItem>
+                                <SelectItem value="occupied">Vermietet</SelectItem>
+                                <SelectItem value="vacant">Leer</SelectItem>
+                                <SelectItem value="renovation">Renovierung</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        
+                        <Select value={bathroomFilter} onValueChange={setBathroomFilter}>
+                            <SelectTrigger className="w-full sm:w-40">
+                                <SelectValue placeholder="Bad" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Alle Bäder</SelectItem>
+                                <SelectItem value="shower">Dusche</SelectItem>
+                                <SelectItem value="bathtub">Wanne</SelectItem>
+                                <SelectItem value="both">Wanne & Dusche</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <Button 
+                            onClick={() => {
+                                setEditingUnit(null);
+                                setUnitFormOpen(true);
+                            }}
+                            className="bg-emerald-600 hover:bg-emerald-700"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Hinzufügen
+                        </Button>
+                    </div>
                 </div>
 
                 {units.length === 0 ? (
@@ -249,7 +284,13 @@ export default function BuildingDetail() {
                     </Card>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {units.map((unit) => {
+                        {units
+                            .filter(unit => {
+                                const matchesStatus = statusFilter === 'all' || unit.status === statusFilter;
+                                const matchesBathroom = bathroomFilter === 'all' || unit.bathroom_type === bathroomFilter;
+                                return matchesStatus && matchesBathroom;
+                            })
+                            .map((unit) => {
                             const contract = getActiveContract(unit.id);
                             const tenant = contract ? getTenant(contract.tenant_id) : null;
                             const status = statusLabels[unit.status] || statusLabels.vacant;
@@ -273,6 +314,12 @@ export default function BuildingDetail() {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem asChild>
+                                                        <Link to={createPageUrl(`UnitDetail?id=${unit.id}`)}>
+                                                            <Eye className="w-4 h-4 mr-2" />
+                                                            Details anzeigen
+                                                        </Link>
+                                                    </DropdownMenuItem>
                                                     <DropdownMenuItem onClick={() => {
                                                         setEditingUnit(unit);
                                                         setUnitFormOpen(true);
@@ -323,7 +370,15 @@ export default function BuildingDetail() {
                                             </div>
                                         )}
 
-                                        <div className="flex gap-2 mt-4">
+                                        <div className="flex flex-wrap gap-2 mt-4">
+                                            {unit.bathroom_type && (
+                                                <Badge variant="outline" className="text-xs flex items-center gap-1">
+                                                    <Droplet className="w-3 h-3" />
+                                                    {unit.bathroom_type === 'shower' && 'Dusche'}
+                                                    {unit.bathroom_type === 'bathtub' && 'Wanne'}
+                                                    {unit.bathroom_type === 'both' && 'Wanne & Dusche'}
+                                                </Badge>
+                                            )}
                                             {unit.has_balcony && (
                                                 <Badge variant="outline" className="text-xs">Balkon</Badge>
                                             )}

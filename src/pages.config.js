@@ -8,6 +8,7 @@ import Analytics from './pages/Analytics';
 import Tenants from './pages/Tenants';
 import ContractDetail from './pages/ContractDetail';
 import BankReconciliation from './pages/BankReconciliation';
+import UnitDetail from './pages/UnitDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -22,6 +23,7 @@ export const PAGES = {
     "Tenants": Tenants,
     "ContractDetail": ContractDetail,
     "BankReconciliation": BankReconciliation,
+    "UnitDetail": UnitDetail,
 }
 
 export const pagesConfig = {
