@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Landmark, RefreshCw, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
+import { Landmark, RefreshCw, CheckCircle, AlertCircle, TrendingUp, Upload } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'sonner';
 import PageHeader from '@/components/shared/PageHeader';
 import TransactionMatchCard from '@/components/banking/TransactionMatchCard';
+import TransactionImporter from '@/components/banking/TransactionImporter';
 import { 
     matchTransactionWithPayment, 
     unmatchTransaction, 
@@ -43,6 +44,11 @@ export default function BankReconciliation() {
     const { data: buildings = [] } = useQuery({
         queryKey: ['buildings'],
         queryFn: () => base44.entities.Building.list()
+    });
+
+    const { data: accounts = [] } = useQuery({
+        queryKey: ['bankAccounts'],
+        queryFn: () => base44.entities.BankAccount.list()
     });
 
     const matchMutation = useMutation({
@@ -117,23 +123,32 @@ export default function BankReconciliation() {
                         Gleichen Sie Transaktionen mit Zahlungen ab
                     </p>
                 </div>
-                <Button 
-                    onClick={handleAutoMatch}
-                    disabled={isAutoMatching || unmatchedTransactions.length === 0}
-                    className="bg-emerald-600 hover:bg-emerald-700"
-                >
-                    {isAutoMatching ? (
-                        <>
-                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                            Wird abgeglichen...
-                        </>
-                    ) : (
-                        <>
-                            <RefreshCw className="w-4 h-4 mr-2" />
-                            Auto-Abgleich
-                        </>
-                    )}
-                </Button>
+                <div className="flex items-center gap-3">
+                    <Button 
+                        variant="outline"
+                        onClick={() => setImporterOpen(true)}
+                    >
+                        <Upload className="w-4 h-4 mr-2" />
+                        CSV importieren
+                    </Button>
+                    <Button 
+                        onClick={handleAutoMatch}
+                        disabled={isAutoMatching || unmatchedTransactions.length === 0}
+                        className="bg-emerald-600 hover:bg-emerald-700"
+                    >
+                        {isAutoMatching ? (
+                            <>
+                                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                Wird abgeglichen...
+                            </>
+                        ) : (
+                            <>
+                                <RefreshCw className="w-4 h-4 mr-2" />
+                                Auto-Abgleich
+                            </>
+                        )}
+                    </Button>
+                </div>
             </div>
 
             {/* Stats */}
@@ -305,6 +320,12 @@ export default function BankReconciliation() {
                     </div>
                 </TabsContent>
             </Tabs>
+
+            <TransactionImporter
+                open={importerOpen}
+                onOpenChange={setImporterOpen}
+                accounts={accounts}
+            />
         </div>
     );
 }
