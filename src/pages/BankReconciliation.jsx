@@ -1,26 +1,37 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Landmark, RefreshCw, CheckCircle, AlertCircle, TrendingUp, Sparkles, Eye } from 'lucide-react';
+import { Landmark, CheckCircle, AlertCircle, TrendingUp, TrendingDown, Sparkles } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { toast } from 'sonner';
-import PageHeader from '@/components/shared/PageHeader';
-import TransactionMatchCard from '@/components/banking/TransactionMatchCard';
-import AIMatchSuggestions from '@/components/banking/AIMatchSuggestions';
-import { 
-    matchTransactionWithPayment, 
-    unmatchTransaction, 
-    findMatchingPayment,
-    autoMatchAllTransactions 
-} from '@/components/banking/matchTransactions';
+import TransactionCategoryCard from '@/components/banking/TransactionCategoryCard';
+
+const CATEGORY_LABELS = {
+    rent_income: 'Mieteinnahmen',
+    other_income: 'Sonstige Einnahmen',
+    personnel_wages: 'Löhne und Gehälter',
+    personnel_social: 'Soziale Aufwendungen',
+    room_utilities: 'Gas, Strom, Wasser',
+    room_other: 'Sonstige Raumkosten',
+    tax_insurance: 'Steuern, Versicherungen, Beiträge',
+    marketing_travel: 'Werbe- und Reisekosten',
+    maintenance: 'Instandhaltung und Werkzeuge',
+    depreciation_assets: 'Abschreibungen Anlagevermögen',
+    depreciation_minor: 'Abschreibungen geringwertige Güter',
+    other_costs: 'Verschiedene Kosten'
+};
+
+const INCOME_CATEGORIES = ['rent_income', 'other_income'];
+const EXPENSE_CATEGORIES = [
+    'personnel_wages', 'personnel_social', 'room_utilities', 'room_other',
+    'tax_insurance', 'marketing_travel', 'maintenance', 
+    'depreciation_assets', 'depreciation_minor', 'other_costs'
+];
 
 export default function BankReconciliation() {
-    const [isAutoMatching, setIsAutoMatching] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [aiAnalysis, setAiAnalysis] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: transactions = [], isLoading: loadingTransactions } = useQuery({
@@ -48,78 +59,122 @@ export default function BankReconciliation() {
         queryFn: () => base44.entities.Building.list()
     });
 
-    const matchMutation = useMutation({
-        mutationFn: ({ transactionId, paymentId }) => 
-            matchTransactionWithPayment(transactionId, paymentId),
+    const categorizeMutation = useMutation({
+        mutationFn: ({ transactionId, category, paymentId }) => 
+            base44.entities.BankTransaction.update(transactionId, {
+                is_categorized: true,
+                category,
+                matched_payment_id: paymentId || null
+            }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
-            queryClient.invalidateQueries({ queryKey: ['payments'] });
-            toast.success('Transaktion erfolgreich abgeglichen');
-        },
-        onError: () => {
-            toast.error('Fehler beim Abgleichen');
+            if (categorizeMutation.variables.paymentId) {
+                queryClient.invalidateQueries({ queryKey: ['payments'] });
+            }
+            toast.success('Transaktion kategorisiert');
         }
     });
 
-    const unmatchMutation = useMutation({
-        mutationFn: (transactionId) => unmatchTransaction(transactionId),
+    const uncategorizeMutation = useMutation({
+        mutationFn: (transactionId) => 
+            base44.entities.BankTransaction.update(transactionId, {
+                is_categorized: false,
+                category: null,
+                matched_payment_id: null
+            }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
             queryClient.invalidateQueries({ queryKey: ['payments'] });
-            toast.success('Abgleich aufgehoben');
-        },
-        onError: () => {
-            toast.error('Fehler beim Aufheben des Abgleichs');
+            toast.success('Kategorisierung aufgehoben');
         }
     });
-
-    const handleAutoMatch = async () => {
-        setIsAutoMatching(true);
-        try {
-            const count = await autoMatchAllTransactions();
-            queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
-            queryClient.invalidateQueries({ queryKey: ['payments'] });
-            toast.success(`${count} Transaktionen automatisch abgeglichen`);
-        } catch (error) {
-            toast.error('Fehler beim automatischen Abgleich');
-        } finally {
-            setIsAutoMatching(false);
-        }
-    };
 
     const handleAIAnalysis = async () => {
-        if (unmatchedTransactions.length === 0) {
-            toast.info('Keine Transaktionen zum Analysieren');
+        const uncategorizedTxs = transactions.filter(t => !t.is_categorized);
+        
+        if (uncategorizedTxs.length === 0) {
+            toast.info('Alle Transaktionen sind bereits kategorisiert');
             return;
-        }
-
-        if (unmatchedTransactions.length > 20) {
-            toast.info('Analysiere die ersten 20 Transaktionen...');
         }
 
         setIsAnalyzing(true);
         try {
-            const response = await base44.functions.invoke('aiMatchAnalysis', {
-                transactions: unmatchedTransactions,
-                payments: pendingPayments,
-                tenants,
-                units,
-                buildings
+            const txsToAnalyze = uncategorizedTxs.slice(0, 20);
+            
+            const response = await base44.integrations.Core.InvokeLLM({
+                prompt: `Analysiere diese Banktransaktionen und ordne sie den passenden Kategorien zu.
+
+Verfügbare Kategorien für EINNAHMEN (amount > 0):
+- rent_income: Mieteinnahmen (Mietzahlungen von Mietern)
+- other_income: Sonstige Einnahmen
+
+Verfügbare Kategorien für AUSGABEN (amount < 0):
+- personnel_wages: Löhne und Gehälter
+- personnel_social: Gesetzliche soziale Aufwendungen
+- room_utilities: Gas, Strom und Wasser
+- room_other: Sonstige Raumkosten
+- tax_insurance: Steuern, Versicherungen und Beiträge
+- marketing_travel: Werbe- und Reisekosten
+- maintenance: Instandhaltung und Werkzeuge
+- depreciation_assets: Abschreibungen auf Anlagevermögen
+- depreciation_minor: Abschreibungen auf geringwertige Anlagegüter
+- other_costs: Verschiedene Kosten
+
+Transaktionen:
+${JSON.stringify(txsToAnalyze.map(t => ({
+    id: t.id,
+    date: t.transaction_date,
+    amount: t.amount,
+    description: t.description,
+    sender_receiver: t.sender_receiver,
+    reference: t.reference
+})), null, 2)}
+
+Mieter (für rent_income):
+${JSON.stringify(tenants.map(t => ({ id: t.id, name: `${t.first_name} ${t.last_name}` })), null, 2)}
+
+Offene Zahlungen (für rent_income):
+${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'partial').map(p => ({
+    id: p.id,
+    tenant_id: p.tenant_id,
+    amount: p.expected_amount,
+    month: p.payment_month
+})), null, 2)}`,
+                response_json_schema: {
+                    type: "object",
+                    properties: {
+                        suggestions: {
+                            type: "array",
+                            items: {
+                                type: "object",
+                                properties: {
+                                    transaction_id: { type: "string" },
+                                    category: { type: "string" },
+                                    payment_id: { type: "string" },
+                                    confidence: { type: "number" },
+                                    reason: { type: "string" }
+                                },
+                                required: ["transaction_id", "category", "confidence", "reason"]
+                            }
+                        }
+                    }
+                }
             });
 
-            if (response.data.error) {
-                if (response.data.type === 'rate_limit') {
-                    toast.error(response.data.error, {
-                        description: 'Bitte warten Sie 30-60 Sekunden vor dem nächsten Versuch.'
+            // Auto-apply high confidence suggestions
+            let applied = 0;
+            for (const suggestion of response.suggestions || []) {
+                if (suggestion.confidence >= 80) {
+                    await categorizeMutation.mutateAsync({
+                        transactionId: suggestion.transaction_id,
+                        category: suggestion.category,
+                        paymentId: suggestion.payment_id
                     });
-                } else {
-                    toast.error(response.data.error);
+                    applied++;
                 }
-                return;
             }
 
-            setAiAnalysis(response.data.analysis);
-            toast.success('KI-Analyse abgeschlossen');
+            toast.success(`${applied} Transaktionen automatisch kategorisiert`);
         } catch (error) {
             console.error('AI analysis error:', error);
             toast.error('KI-Analyse fehlgeschlagen');
@@ -128,21 +183,27 @@ export default function BankReconciliation() {
         }
     };
 
-    const unmatchedTransactions = transactions.filter(t => !t.is_matched && t.amount > 0);
-    const matchedTransactions = transactions.filter(t => t.is_matched);
+    const uncategorizedTransactions = transactions.filter(t => !t.is_categorized);
+    const categorizedTransactions = transactions.filter(t => t.is_categorized);
     const pendingPayments = payments.filter(p => p.status === 'pending' || p.status === 'partial');
 
-    // Calculate stats
-    const totalUnmatched = unmatchedTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    const totalMatched = matchedTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    const openPayments = pendingPayments.reduce((sum, p) => sum + (p.expected_amount - (p.amount || 0)), 0);
+    const totalUncategorized = uncategorizedTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    const totalCategorized = categorizedTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    
+    const totalIncome = categorizedTransactions
+        .filter(t => t.amount > 0)
+        .reduce((sum, t) => sum + t.amount, 0);
+    
+    const totalExpenses = categorizedTransactions
+        .filter(t => t.amount < 0)
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
     if (loadingTransactions || loadingPayments) {
         return (
             <div className="space-y-8">
                 <Skeleton className="h-8 w-48" />
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {[...Array(3)].map((_, i) => (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    {[...Array(4)].map((_, i) => (
                         <Skeleton key={i} className="h-32 rounded-2xl" />
                     ))}
                 </div>
@@ -158,61 +219,32 @@ export default function BankReconciliation() {
                         Bankenabgleich
                     </h1>
                     <p className="text-slate-500 mt-1">
-                        Gleichen Sie Transaktionen mit Zahlungen ab
+                        Kategorisieren Sie Ihre Transaktionen
                     </p>
                 </div>
-                <div className="flex gap-2">
-                    <Button 
-                        onClick={handleAIAnalysis}
-                        disabled={isAnalyzing || unmatchedTransactions.length === 0}
-                        variant="outline"
-                        className="gap-2"
-                    >
-                        {isAnalyzing ? (
-                            <>
-                                <RefreshCw className="w-4 h-4 animate-spin" />
-                                Analysiere...
-                            </>
-                        ) : (
-                            <>
-                                <Sparkles className="w-4 h-4" />
-                                KI-Analyse
-                            </>
-                        )}
-                    </Button>
-                    <Button 
-                        onClick={handleAutoMatch}
-                        disabled={isAutoMatching || unmatchedTransactions.length === 0}
-                        className="bg-emerald-600 hover:bg-emerald-700 gap-2"
-                    >
-                        {isAutoMatching ? (
-                            <>
-                                <RefreshCw className="w-4 h-4 animate-spin" />
-                                Wird abgeglichen...
-                            </>
-                        ) : (
-                            <>
-                                <RefreshCw className="w-4 h-4" />
-                                Auto-Abgleich
-                            </>
-                        )}
-                    </Button>
-                </div>
+                <Button 
+                    onClick={handleAIAnalysis}
+                    disabled={isAnalyzing || uncategorizedTransactions.length === 0}
+                    className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+                >
+                    <Sparkles className="w-4 h-4" />
+                    {isAnalyzing ? 'Analysiere...' : 'KI Auto-Kategorisierung'}
+                </Button>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="bg-white rounded-2xl p-6 border border-slate-200/50 shadow-sm">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
                             <AlertCircle className="w-6 h-6 text-amber-600" />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-slate-500">Nicht abgeglichen</p>
+                            <p className="text-sm font-medium text-slate-500">Nicht kategorisiert</p>
                             <p className="text-2xl font-bold text-slate-800">
-                                €{totalUnmatched.toFixed(2)}
+                                {uncategorizedTransactions.length}
                             </p>
-                            <p className="text-xs text-slate-400">{unmatchedTransactions.length} Transaktionen</p>
+                            <p className="text-xs text-slate-400">€{totalUncategorized.toFixed(2)}</p>
                         </div>
                     </div>
                 </div>
@@ -223,11 +255,11 @@ export default function BankReconciliation() {
                             <CheckCircle className="w-6 h-6 text-emerald-600" />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-slate-500">Abgeglichen</p>
+                            <p className="text-sm font-medium text-slate-500">Kategorisiert</p>
                             <p className="text-2xl font-bold text-slate-800">
-                                €{totalMatched.toFixed(2)}
+                                {categorizedTransactions.length}
                             </p>
-                            <p className="text-xs text-slate-400">{matchedTransactions.length} Transaktionen</p>
+                            <p className="text-xs text-slate-400">€{totalCategorized.toFixed(2)}</p>
                         </div>
                     </div>
                 </div>
@@ -238,97 +270,66 @@ export default function BankReconciliation() {
                             <TrendingUp className="w-6 h-6 text-blue-600" />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-slate-500">Offene Forderungen</p>
+                            <p className="text-sm font-medium text-slate-500">Einnahmen</p>
                             <p className="text-2xl font-bold text-slate-800">
-                                €{openPayments.toFixed(2)}
+                                €{totalIncome.toFixed(2)}
                             </p>
-                            <p className="text-xs text-slate-400">{pendingPayments.length} Zahlungen</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 border border-slate-200/50 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                            <TrendingDown className="w-6 h-6 text-red-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-500">Ausgaben</p>
+                            <p className="text-2xl font-bold text-slate-800">
+                                €{totalExpenses.toFixed(2)}
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* AI Analysis Results */}
-            {aiAnalysis && (
-                <AIMatchSuggestions 
-                    analysis={aiAnalysis}
-                    transactions={transactions}
-                    payments={payments}
-                    tenants={tenants}
-                    units={units}
-                    buildings={buildings}
-                    onMatch={(txId, payId) => matchMutation.mutate({ transactionId: txId, paymentId: payId })}
-                    onDismiss={() => setAiAnalysis(null)}
-                />
-            )}
-
             {/* Tabs */}
-            <Tabs defaultValue="unmatched" className="space-y-6">
+            <Tabs defaultValue="uncategorized" className="space-y-6">
                 <TabsList className="bg-white border border-slate-200">
-                    <TabsTrigger value="unmatched">
-                        Nicht abgeglichen ({unmatchedTransactions.length})
+                    <TabsTrigger value="uncategorized">
+                        Nicht kategorisiert ({uncategorizedTransactions.length})
                     </TabsTrigger>
-                    <TabsTrigger value="matched">
-                        Abgeglichen ({matchedTransactions.length})
-                    </TabsTrigger>
-                    <TabsTrigger value="pending">
-                        Offene Zahlungen ({pendingPayments.length})
+                    <TabsTrigger value="categorized">
+                        Kategorisiert ({categorizedTransactions.length})
                     </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="unmatched" className="space-y-4">
-                    {unmatchedTransactions.length === 0 ? (
+                <TabsContent value="uncategorized" className="space-y-4">
+                    {uncategorizedTransactions.length === 0 ? (
                         <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
                             <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
                             <h3 className="text-lg font-semibold text-slate-800 mb-2">
-                                Alle Transaktionen abgeglichen
+                                Alle Transaktionen kategorisiert
                             </h3>
                             <p className="text-slate-500">
-                                Es gibt keine offenen Transaktionen zum Abgleichen.
+                                Es gibt keine offenen Transaktionen mehr.
                             </p>
                         </div>
                     ) : (
-                        unmatchedTransactions.map(transaction => {
-                            const match = findMatchingPayment(transaction, pendingPayments);
-                            return (
-                                <TransactionMatchCard
-                                    key={transaction.id}
-                                    transaction={transaction}
-                                    suggestedPayment={match?.payment}
-                                    matchScore={match?.score}
-                                    availablePayments={pendingPayments}
-                                    onMatch={(transactionId, paymentId) => 
-                                        matchMutation.mutate({ transactionId, paymentId })
-                                    }
-                                    onUnmatch={() => {}}
-                                    tenants={tenants}
-                                    units={units}
-                                    buildings={buildings}
-                                />
-                            );
-                        })
-                    )}
-                </TabsContent>
-
-                <TabsContent value="matched" className="space-y-4">
-                    {matchedTransactions.length === 0 ? (
-                        <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
-                            <Landmark className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                            <h3 className="text-lg font-semibold text-slate-800 mb-2">
-                                Noch keine abgeglichenen Transaktionen
-                            </h3>
-                            <p className="text-slate-500">
-                                Abgeglichene Transaktionen werden hier angezeigt.
-                            </p>
-                        </div>
-                    ) : (
-                        matchedTransactions.map(transaction => (
-                            <TransactionMatchCard
+                        uncategorizedTransactions.map(transaction => (
+                            <TransactionCategoryCard
                                 key={transaction.id}
                                 transaction={transaction}
-                                availablePayments={[]}
-                                onMatch={() => {}}
-                                onUnmatch={(transactionId) => unmatchMutation.mutate(transactionId)}
+                                availableCategories={transaction.amount > 0 ? INCOME_CATEGORIES : EXPENSE_CATEGORIES}
+                                categoryLabels={CATEGORY_LABELS}
+                                availablePayments={transaction.amount > 0 ? pendingPayments : []}
+                                onCategorize={({ category, paymentId }) => 
+                                    categorizeMutation.mutate({ 
+                                        transactionId: transaction.id, 
+                                        category,
+                                        paymentId 
+                                    })
+                                }
                                 tenants={tenants}
                                 units={units}
                                 buildings={buildings}
@@ -337,50 +338,30 @@ export default function BankReconciliation() {
                     )}
                 </TabsContent>
 
-                <TabsContent value="pending" className="space-y-4">
-                    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-slate-50 border-b border-slate-200">
-                                    <tr>
-                                        <th className="text-left text-xs font-medium text-slate-600 px-4 py-3">Mieter</th>
-                                        <th className="text-left text-xs font-medium text-slate-600 px-4 py-3">Wohnung</th>
-                                        <th className="text-left text-xs font-medium text-slate-600 px-4 py-3">Monat</th>
-                                        <th className="text-left text-xs font-medium text-slate-600 px-4 py-3">Fällig</th>
-                                        <th className="text-right text-xs font-medium text-slate-600 px-4 py-3">Offen</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {pendingPayments.map(payment => {
-                                        const tenant = tenants.find(t => t.id === payment.tenant_id);
-                                        const unit = units.find(u => u.id === payment.unit_id);
-                                        const building = unit ? buildings.find(b => b.id === unit.building_id) : null;
-                                        const openAmount = payment.expected_amount - (payment.amount || 0);
-
-                                        return (
-                                            <tr key={payment.id} className="hover:bg-slate-50">
-                                                <td className="px-4 py-3 text-sm font-medium text-slate-800">
-                                                    {tenant ? `${tenant.first_name} ${tenant.last_name}` : '-'}
-                                                </td>
-                                                <td className="px-4 py-3 text-sm text-slate-600">
-                                                    {building && unit ? `${building.name} - ${unit.unit_number}` : '-'}
-                                                </td>
-                                                <td className="px-4 py-3 text-sm text-slate-600">
-                                                    {payment.payment_month}
-                                                </td>
-                                                <td className="px-4 py-3 text-sm text-slate-600">
-                                                    {payment.payment_date || '-'}
-                                                </td>
-                                                <td className="px-4 py-3 text-sm font-semibold text-right text-slate-800">
-                                                    €{openAmount.toFixed(2)}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                <TabsContent value="categorized" className="space-y-4">
+                    {categorizedTransactions.length === 0 ? (
+                        <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
+                            <Landmark className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+                            <h3 className="text-lg font-semibold text-slate-800 mb-2">
+                                Noch keine kategorisierten Transaktionen
+                            </h3>
+                            <p className="text-slate-500">
+                                Kategorisierte Transaktionen werden hier angezeigt.
+                            </p>
                         </div>
-                    </div>
+                    ) : (
+                        categorizedTransactions.map(transaction => (
+                            <TransactionCategoryCard
+                                key={transaction.id}
+                                transaction={transaction}
+                                categoryLabels={CATEGORY_LABELS}
+                                onUncategorize={() => uncategorizeMutation.mutate(transaction.id)}
+                                tenants={tenants}
+                                units={units}
+                                buildings={buildings}
+                            />
+                        ))
+                    )}
                 </TabsContent>
             </Tabs>
         </div>
