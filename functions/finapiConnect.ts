@@ -23,16 +23,16 @@ Deno.serve(async (req) => {
 
         console.log('Creating FinAPI Web Form Token for user:', user.email);
 
-        // Step 1: Get mandator access token
+        // Step 1: Get mandator access token using Basic Auth
+        const credentials = btoa(`${CLIENT_ID}:${CLIENT_SECRET}`);
         const tokenResponse = await fetch(`${FINAPI_BASE_URL}/oauth/token`, {
             method: 'POST',
             headers: {
+                'Authorization': `Basic ${credentials}`,
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: new URLSearchParams({
-                grant_type: 'client_credentials',
-                client_id: CLIENT_ID,
-                client_secret: CLIENT_SECRET
+                grant_type: 'client_credentials'
             })
         });
 
