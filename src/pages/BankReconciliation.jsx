@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Landmark, RefreshCw, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
+import { Landmark, RefreshCw, CheckCircle, AlertCircle, TrendingUp, Sparkles, Eye } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { toast } from 'sonner';
 import PageHeader from '@/components/shared/PageHeader';
 import TransactionMatchCard from '@/components/banking/TransactionMatchCard';
+import AIMatchSuggestions from '@/components/banking/AIMatchSuggestions';
 import { 
     matchTransactionWithPayment, 
     unmatchTransaction, 
@@ -17,6 +19,8 @@ import {
 
 export default function BankReconciliation() {
     const [isAutoMatching, setIsAutoMatching] = useState(false);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [aiAnalysis, setAiAnalysis] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: transactions = [], isLoading: loadingTransactions } = useQuery({
@@ -83,6 +87,32 @@ export default function BankReconciliation() {
         }
     };
 
+    const handleAIAnalysis = async () => {
+        setIsAnalyzing(true);
+        try {
+            const response = await base44.functions.invoke('aiMatchAnalysis', {
+                transactions: unmatchedTransactions,
+                payments: pendingPayments,
+                tenants,
+                units,
+                buildings
+            });
+
+            if (response.data.error) {
+                toast.error(response.data.error);
+                return;
+            }
+
+            setAiAnalysis(response.data.analysis);
+            toast.success('KI-Analyse abgeschlossen');
+        } catch (error) {
+            console.error('AI analysis error:', error);
+            toast.error('KI-Analyse fehlgeschlagen');
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
     const unmatchedTransactions = transactions.filter(t => !t.is_matched && t.amount > 0);
     const matchedTransactions = transactions.filter(t => t.is_matched);
     const pendingPayments = payments.filter(p => p.status === 'pending' || p.status === 'partial');
@@ -116,23 +146,43 @@ export default function BankReconciliation() {
                         Gleichen Sie Transaktionen mit Zahlungen ab
                     </p>
                 </div>
-                <Button 
-                    onClick={handleAutoMatch}
-                    disabled={isAutoMatching || unmatchedTransactions.length === 0}
-                    className="bg-emerald-600 hover:bg-emerald-700"
-                >
-                    {isAutoMatching ? (
-                        <>
-                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                            Wird abgeglichen...
-                        </>
-                    ) : (
-                        <>
-                            <RefreshCw className="w-4 h-4 mr-2" />
-                            Auto-Abgleich
-                        </>
-                    )}
-                </Button>
+                <div className="flex gap-2">
+                    <Button 
+                        onClick={handleAIAnalysis}
+                        disabled={isAnalyzing || unmatchedTransactions.length === 0}
+                        variant="outline"
+                        className="gap-2"
+                    >
+                        {isAnalyzing ? (
+                            <>
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                Analysiere...
+                            </>
+                        ) : (
+                            <>
+                                <Sparkles className="w-4 h-4" />
+                                KI-Analyse
+                            </>
+                        )}
+                    </Button>
+                    <Button 
+                        onClick={handleAutoMatch}
+                        disabled={isAutoMatching || unmatchedTransactions.length === 0}
+                        className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+                    >
+                        {isAutoMatching ? (
+                            <>
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                Wird abgeglichen...
+                            </>
+                        ) : (
+                            <>
+                                <RefreshCw className="w-4 h-4" />
+                                Auto-Abgleich
+                            </>
+                        )}
+                    </Button>
+                </div>
             </div>
 
             {/* Stats */}
@@ -182,6 +232,20 @@ export default function BankReconciliation() {
                     </div>
                 </div>
             </div>
+
+            {/* AI Analysis Results */}
+            {aiAnalysis && (
+                <AIMatchSuggestions 
+                    analysis={aiAnalysis}
+                    transactions={transactions}
+                    payments={payments}
+                    tenants={tenants}
+                    units={units}
+                    buildings={buildings}
+                    onMatch={(txId, payId) => matchMutation.mutate({ transactionId: txId, paymentId: payId })}
+                    onDismiss={() => setAiAnalysis(null)}
+                />
+            )}
 
             {/* Tabs */}
             <Tabs defaultValue="unmatched" className="space-y-6">
