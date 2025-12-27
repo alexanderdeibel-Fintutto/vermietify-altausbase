@@ -36,6 +36,7 @@ import {
 import { Loader2 } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
 import EmptyState from '@/components/shared/EmptyState';
+import TransactionImport from '@/components/banking/TransactionImport';
 
 function BankAccountForm({ open, onOpenChange, onSubmit, initialData, isLoading }) {
     const { register, handleSubmit, reset, setValue, watch } = useForm({
@@ -148,6 +149,8 @@ export default function BankAccounts() {
     const [deleteAccount, setDeleteAccount] = useState(null);
     const [isConnecting, setIsConnecting] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
+    const [importOpen, setImportOpen] = useState(false);
+    const [importAccountId, setImportAccountId] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: accounts = [], isLoading } = useQuery({
@@ -420,6 +423,13 @@ export default function BankAccounts() {
                                                     </DropdownMenuItem>
                                                 )}
                                                 <DropdownMenuItem onClick={() => {
+                                                    setImportAccountId(account.id);
+                                                    setImportOpen(true);
+                                                }}>
+                                                    <Upload className="w-4 h-4 mr-2" />
+                                                    CSV importieren
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => {
                                                     setEditingAccount(account);
                                                     setFormOpen(true);
                                                 }}>
@@ -499,6 +509,16 @@ export default function BankAccounts() {
                 isLoading={createMutation.isPending || updateMutation.isPending}
             />
 
+            <TransactionImport
+                open={importOpen}
+                onOpenChange={setImportOpen}
+                accountId={importAccountId}
+                onSuccess={() => {
+                    queryClient.invalidateQueries({ queryKey: ['bankTransactions'] });
+                    queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
+                }}
+            />
+
             <AlertDialog open={!!deleteAccount} onOpenChange={() => setDeleteAccount(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -518,6 +538,6 @@ export default function BankAccounts() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </div>
-    );
-}
+            </div>
+            );
+            }
