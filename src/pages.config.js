@@ -10,6 +10,7 @@ import ContractDetail from './pages/ContractDetail';
 import BankReconciliation from './pages/BankReconciliation';
 import UnitDetail from './pages/UnitDetail';
 import TransactionCategories from './pages/TransactionCategories';
+import FinancialReports from './pages/FinancialReports';
 import __Layout from './Layout.jsx';
 
 
@@ -26,6 +27,7 @@ export const PAGES = {
     "BankReconciliation": BankReconciliation,
     "UnitDetail": UnitDetail,
     "TransactionCategories": TransactionCategories,
+    "FinancialReports": FinancialReports,
 }
 
 export const pagesConfig = {

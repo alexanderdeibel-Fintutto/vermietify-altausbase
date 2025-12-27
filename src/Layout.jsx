@@ -29,6 +29,7 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Bankenabgleich', href: createPageUrl('BankReconciliation'), icon: Landmark, page: 'BankReconciliation' },
         { name: 'Kategorien', href: createPageUrl('TransactionCategories'), icon: Tag, page: 'TransactionCategories' },
         { name: 'Auswertungen', href: createPageUrl('Analytics'), icon: BarChart3, page: 'Analytics' },
+        { name: 'Finanzberichte', href: createPageUrl('FinancialReports'), icon: FileText, page: 'FinancialReports' },
     ];
 
     return (
