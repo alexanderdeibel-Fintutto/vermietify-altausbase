@@ -6,8 +6,9 @@ import { de } from 'date-fns/locale';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Link2, X, Check, User, Calendar, Building2, Tag, Sparkles } from 'lucide-react';
+import { Link2, X, Check, User, Calendar, Building2, Tag, Sparkles, Plus } from 'lucide-react';
 import { findMatchSuggestions } from '@/components/banking/matchTransactions';
+import CreatePaymentFromTransaction from './CreatePaymentFromTransaction';
 import {
     Select,
     SelectContent,
@@ -34,6 +35,7 @@ export default function TransactionMatchCard({
     const [isMatching, setIsMatching] = useState(false);
     const [aiSuggestions, setAiSuggestions] = useState([]);
     const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+    const [showCreatePayment, setShowCreatePayment] = useState(false);
 
     const { data: categories = [] } = useQuery({
         queryKey: ['transactionCategories'],
@@ -73,6 +75,12 @@ export default function TransactionMatchCard({
         } finally {
             setIsMatching(false);
         }
+    };
+
+    const handlePaymentCreated = async (payment) => {
+        // Automatisch mit der neu erstellten Zahlung abgleichen
+        setSelectedPaymentId(payment.id);
+        await handleMatch();
     };
 
     const getTenant = (tenantId) => tenants.find(t => t.id === tenantId);
@@ -241,17 +249,47 @@ export default function TransactionMatchCard({
                                 </SelectContent>
                             </Select>
 
-                            <Button 
-                                onClick={handleMatch}
-                                disabled={!selectedPaymentId || isMatching}
-                                className="w-full bg-emerald-600 hover:bg-emerald-700"
-                                size="sm"
-                            >
-                                <Link2 className="w-4 h-4 mr-2" />
-                                Abgleichen
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button 
+                                    onClick={handleMatch}
+                                    disabled={!selectedPaymentId || isMatching}
+                                    className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                                    size="sm"
+                                >
+                                    <Link2 className="w-4 h-4 mr-2" />
+                                    Abgleichen
+                                </Button>
+                                <Button 
+                                    onClick={() => setShowCreatePayment(true)}
+                                    disabled={isMatching}
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex-shrink-0"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                </Button>
+                            </div>
+
+                            {availablePayments.length === 0 && aiSuggestions.length === 0 && !loadingSuggestions && (
+                                <p className="text-xs text-center text-slate-500 mt-2">
+                                    Keine passende Zahlung gefunden?{' '}
+                                    <button 
+                                        onClick={() => setShowCreatePayment(true)}
+                                        className="text-emerald-600 hover:underline font-medium"
+                                    >
+                                        Neue erstellen
+                                    </button>
+                                </p>
+                            )}
                         </div>
                     )}
+
+                    <CreatePaymentFromTransaction
+                        open={showCreatePayment}
+                        onOpenChange={setShowCreatePayment}
+                        transaction={transaction}
+                        onPaymentCreated={handlePaymentCreated}
+                    />
 
                     {isMatched && (
                         <div className="md:w-48 flex items-center justify-center border-t md:border-t-0 md:border-l pt-4 md:pt-0 md:pl-4">
