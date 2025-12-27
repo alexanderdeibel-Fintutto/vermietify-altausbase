@@ -108,6 +108,18 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
         return newMapping;
     };
 
+    const parseGermanNumber = (value) => {
+        if (!value) return 0;
+        // German format: -1.573,42
+        // Step 1: Remove thousands separator (.)
+        // Step 2: Replace decimal separator (,) with (.)
+        // Step 3: Parse as float
+        const cleaned = value.toString()
+            .replace(/\./g, '')  // Remove thousands separator
+            .replace(',', '.');   // Replace decimal separator
+        return parseFloat(cleaned) || 0;
+    };
+
     const buildTransactionsFromMapping = () => {
         const transactions = [];
 
@@ -115,7 +127,7 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
             const transaction = {
                 transaction_date: mapping.transaction_date ? row[mapping.transaction_date]?.trim() : '',
                 value_date: mapping.value_date ? row[mapping.value_date]?.trim() : '',
-                amount: mapping.amount ? parseFloat((row[mapping.amount] || '0').replace(',', '.').replace(/[^\d.-]/g, '')) : 0,
+                amount: mapping.amount ? parseGermanNumber(row[mapping.amount]) : 0,
                 description: mapping.description ? row[mapping.description]?.trim() : '',
                 sender_receiver: mapping.sender_receiver ? row[mapping.sender_receiver]?.trim() : '',
                 iban: mapping.iban ? row[mapping.iban]?.trim() : '',
