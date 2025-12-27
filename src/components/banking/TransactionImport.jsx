@@ -247,73 +247,202 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
         onOpenChange(false);
     };
 
+    const fieldLabels = {
+        transaction_date: 'Buchungstag',
+        value_date: 'Wertstellung',
+        amount: 'Betrag',
+        description: 'Buchungstext',
+        reference: 'Verwendungszweck',
+        sender_receiver: 'Auftraggeber/Empfänger',
+        iban: 'IBAN'
+    };
+
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-2xl">
+        <Dialog open={open} onOpenChange={handleClose}>
+            <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Transaktionen importieren (CSV)</DialogTitle>
+                    <div className="flex items-center gap-2 mt-2">
+                        <div className={`flex items-center gap-2 text-xs ${step >= 1 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-emerald-100' : 'bg-slate-100'}`}>1</div>
+                            Datei
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-slate-400" />
+                        <div className={`flex items-center gap-2 text-xs ${step >= 2 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-emerald-100' : 'bg-slate-100'}`}>2</div>
+                            Zuordnung
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-slate-400" />
+                        <div className={`flex items-center gap-2 text-xs ${step >= 3 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-emerald-100' : 'bg-slate-100'}`}>3</div>
+                            Vorschau
+                        </div>
+                    </div>
                 </DialogHeader>
 
                 <div className="space-y-4 mt-4">
-                    <div>
-                        <Label>CSV-Datei auswählen</Label>
-                        <div className="mt-2">
-                            <input
-                                type="file"
-                                accept=".csv"
-                                onChange={handleFileChange}
-                                className="block w-full text-sm text-slate-500
-                                    file:mr-4 file:py-2 file:px-4
-                                    file:rounded-lg file:border-0
-                                    file:text-sm file:font-semibold
-                                    file:bg-emerald-50 file:text-emerald-700
-                                    hover:file:bg-emerald-100"
-                            />
-                        </div>
-                        <p className="text-xs text-slate-500 mt-2">
-                            Erwartete Spalten: Buchungstag, Betrag, Buchungstext, Auftraggeber/Empfänger, IBAN
-                        </p>
-                    </div>
-
-                    {preview.length > 0 && (
-                        <div className="border border-slate-200 rounded-lg p-4">
-                            <div className="flex items-center gap-2 mb-3">
-                                <FileText className="w-4 h-4 text-slate-500" />
-                                <span className="text-sm font-medium">Vorschau (erste 5 Zeilen)</span>
+                    {/* Step 1: File Upload */}
+                    {step === 1 && (
+                        <div>
+                            <Label>CSV-Datei auswählen</Label>
+                            <div className="mt-2">
+                                <input
+                                    type="file"
+                                    accept=".csv"
+                                    onChange={handleFileChange}
+                                    className="block w-full text-sm text-slate-500
+                                        file:mr-4 file:py-2 file:px-4
+                                        file:rounded-lg file:border-0
+                                        file:text-sm file:font-semibold
+                                        file:bg-emerald-50 file:text-emerald-700
+                                        hover:file:bg-emerald-100"
+                                />
                             </div>
-                            <div className="space-y-2 max-h-60 overflow-y-auto">
-                                {preview.map((tx, idx) => (
-                                    <div key={idx} className="text-xs border-b border-slate-100 pb-2 last:border-0">
-                                        <div className="flex justify-between">
-                                            <span className="text-slate-600">{tx.transaction_date}</span>
-                                            <span className={`font-semibold ${tx.amount >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                                                €{tx.amount.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-                                            </span>
-                                        </div>
-                                        <div className="text-slate-500 mt-1">{tx.description}</div>
+                            <p className="text-xs text-slate-500 mt-2">
+                                Unterstützt werden CSV-Dateien mit Semikolon oder Komma als Trennzeichen
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Step 2: Column Mapping */}
+                    {step === 2 && (
+                        <div className="space-y-4">
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <p className="text-sm text-blue-800">
+                                    Ordnen Sie die CSV-Spalten den Transaktionsfeldern zu. Felder mit * sind erforderlich.
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {Object.entries(fieldLabels).map(([field, label]) => (
+                                    <div key={field}>
+                                        <Label>{label} {['transaction_date', 'amount', 'description'].includes(field) && '*'}</Label>
+                                        <Select 
+                                            value={mapping[field]} 
+                                            onValueChange={(value) => setMapping({...mapping, [field]: value})}
+                                        >
+                                            <SelectTrigger className="mt-1">
+                                                <SelectValue placeholder="Spalte wählen..." />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value={null}>Nicht zuordnen</SelectItem>
+                                                {csvHeaders.map(header => (
+                                                    <SelectItem key={header} value={header}>
+                                                        {header}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                 ))}
+                            </div>
+
+                            {csvData.length > 0 && (
+                                <div className="border border-slate-200 rounded-lg p-3">
+                                    <p className="text-xs font-medium text-slate-600 mb-2">Beispielzeile aus CSV:</p>
+                                    <div className="text-xs text-slate-500 space-y-1">
+                                        {csvHeaders.slice(0, 5).map(header => (
+                                            <div key={header}>
+                                                <span className="font-medium">{header}:</span> {csvData[0][header]}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex justify-between gap-3 pt-4">
+                                <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    onClick={() => setStep(1)}
+                                >
+                                    Zurück
+                                </Button>
+                                <Button 
+                                    onClick={handleContinueToPreview}
+                                    disabled={!mapping.transaction_date || !mapping.amount || !mapping.description}
+                                    className="bg-emerald-600 hover:bg-emerald-700"
+                                >
+                                    Weiter zur Vorschau
+                                </Button>
                             </div>
                         </div>
                     )}
 
-                    <div className="flex justify-end gap-3 pt-4">
-                        <Button 
-                            type="button" 
-                            variant="outline" 
-                            onClick={() => onOpenChange(false)}
-                        >
-                            Abbrechen
-                        </Button>
-                        <Button 
-                            onClick={handleImport}
-                            disabled={!file || importing}
-                            className="bg-emerald-600 hover:bg-emerald-700 gap-2"
-                        >
-                            <Upload className="w-4 h-4" />
-                            {importing ? 'Importiere...' : 'Importieren'}
-                        </Button>
-                    </div>
+                    {/* Step 3: Preview */}
+                    {step === 3 && preview.length > 0 && (
+                        <div className="space-y-4">
+                            <div className="border border-slate-200 rounded-lg p-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <FileText className="w-4 h-4 text-slate-500" />
+                                        <span className="text-sm font-medium">Vorschau (erste 10 Zeilen)</span>
+                                    </div>
+                                    <span className="text-xs text-slate-500">
+                                        {csvData.length} Zeilen insgesamt
+                                    </span>
+                                </div>
+                                <div className="space-y-3 max-h-96 overflow-y-auto">
+                                    {preview.map((tx, idx) => (
+                                        <div key={idx} className="text-xs border border-slate-200 rounded-lg p-3 bg-slate-50">
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <span className="font-medium text-slate-500">Datum:</span>
+                                                    <span className="ml-2 text-slate-800">{tx.transaction_date}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="font-medium text-slate-500">Betrag:</span>
+                                                    <span className={`ml-2 font-semibold ${tx.amount >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                                        €{tx.amount.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                                    </span>
+                                                </div>
+                                                {tx.sender_receiver && (
+                                                    <div className="col-span-2">
+                                                        <span className="font-medium text-slate-500">Auftraggeber/Empfänger:</span>
+                                                        <span className="ml-2 text-slate-800">{tx.sender_receiver}</span>
+                                                    </div>
+                                                )}
+                                                <div className="col-span-2">
+                                                    <span className="font-medium text-slate-500">Buchungstext:</span>
+                                                    <span className="ml-2 text-slate-800">{tx.description}</span>
+                                                </div>
+                                                {tx.reference && tx.reference !== tx.description && (
+                                                    <div className="col-span-2">
+                                                        <span className="font-medium text-slate-500">Verwendungszweck:</span>
+                                                        <span className="ml-2 text-slate-800">{tx.reference}</span>
+                                                    </div>
+                                                )}
+                                                {tx.iban && (
+                                                    <div className="col-span-2">
+                                                        <span className="font-medium text-slate-500">IBAN:</span>
+                                                        <span className="ml-2 text-slate-800 font-mono">{tx.iban}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex justify-between gap-3">
+                                <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    onClick={() => setStep(2)}
+                                >
+                                    Zurück
+                                </Button>
+                                <Button 
+                                    onClick={handleImport}
+                                    disabled={importing}
+                                    className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+                                >
+                                    <Upload className="w-4 h-4" />
+                                    {importing ? 'Importiere...' : `${csvData.length} Transaktionen importieren`}
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </DialogContent>
         </Dialog>
