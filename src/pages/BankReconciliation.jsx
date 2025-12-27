@@ -1,14 +1,29 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Landmark, CheckCircle, AlertCircle, TrendingUp, TrendingDown, Sparkles, Settings, Zap } from 'lucide-react';
+import { Landmark, CheckCircle, AlertCircle, TrendingUp, TrendingDown, Sparkles, Settings, Zap, Filter, X, Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { toast } from 'sonner';
 import TransactionCategoryCard from '@/components/banking/TransactionCategoryCard';
 import RuleManager from '@/components/banking/RuleManager';
 import RulePreviewDialog from '@/components/banking/RulePreviewDialog';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+} from "@/components/ui/command";
 
 const CATEGORY_LABELS = {
     rent_income: 'Mieteinnahmen',
@@ -37,6 +52,16 @@ export default function BankReconciliation() {
     const [rulesOpen, setRulesOpen] = useState(false);
     const [previewOpen, setPreviewOpen] = useState(false);
     const [ruleSuggestions, setRuleSuggestions] = useState([]);
+    const [filters, setFilters] = useState({
+        search: '',
+        selectedUnits: [],
+        selectedTenants: [],
+        amountMin: '',
+        amountMax: '',
+        dateFrom: '',
+        dateTo: ''
+    });
+    const [showFilters, setShowFilters] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: transactions = [], isLoading: loadingTransactions } = useQuery({
@@ -301,8 +326,58 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
         }
     };
 
-    const uncategorizedTransactions = transactions.filter(t => !t.is_categorized);
-    const categorizedTransactions = transactions.filter(t => t.is_categorized);
+    // Apply filters
+    const applyFilters = (txList) => {
+        return txList.filter(tx => {
+            // Search filter (sender, description, reference, IBAN)
+            if (filters.search) {
+                const search = filters.search.toLowerCase();
+                const matchesSearch = 
+                    tx.sender_receiver?.toLowerCase().includes(search) ||
+                    tx.description?.toLowerCase().includes(search) ||
+                    tx.reference?.toLowerCase().includes(search) ||
+                    tx.iban?.toLowerCase().includes(search);
+                if (!matchesSearch) return false;
+            }
+
+            // Amount range filter
+            if (filters.amountMin !== '' && Math.abs(tx.amount) < parseFloat(filters.amountMin)) {
+                return false;
+            }
+            if (filters.amountMax !== '' && Math.abs(tx.amount) > parseFloat(filters.amountMax)) {
+                return false;
+            }
+
+            // Date range filter
+            if (filters.dateFrom && tx.transaction_date < filters.dateFrom) {
+                return false;
+            }
+            if (filters.dateTo && tx.transaction_date > filters.dateTo) {
+                return false;
+            }
+
+            // Unit filter
+            if (filters.selectedUnits.length > 0) {
+                const payment = payments.find(p => p.id === tx.matched_payment_id);
+                if (!payment || !filters.selectedUnits.includes(payment.unit_id)) {
+                    return false;
+                }
+            }
+
+            // Tenant filter
+            if (filters.selectedTenants.length > 0) {
+                const payment = payments.find(p => p.id === tx.matched_payment_id);
+                if (!payment || !filters.selectedTenants.includes(payment.tenant_id)) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    };
+
+    const uncategorizedTransactions = applyFilters(transactions.filter(t => !t.is_categorized));
+    const categorizedTransactions = applyFilters(transactions.filter(t => t.is_categorized));
     const pendingPayments = payments.filter(p => p.status === 'pending' || p.status === 'partial');
 
     const totalUncategorized = uncategorizedTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
@@ -367,10 +442,251 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                         {isAnalyzing ? 'Analysiere...' : 'KI-Kategorisierung'}
                     </Button>
                 </div>
-            </div>
+                </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {/* Filters */}
+                <div className="bg-white rounded-2xl border border-slate-200 p-4">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2 flex-1">
+                            <Search className="w-4 h-4 text-slate-400" />
+                            <Input
+                                placeholder="Suche nach Empfänger, Buchungstext, IBAN..."
+                                value={filters.search}
+                                onChange={(e) => setFilters({...filters, search: e.target.value})}
+                                className="flex-1"
+                            />
+                            {filters.search && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setFilters({...filters, search: ''})}
+                                >
+                                    <X className="w-4 h-4" />
+                                </Button>
+                            )}
+                        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowFilters(!showFilters)}
+                            className="ml-3"
+                        >
+                            <Filter className="w-4 h-4 mr-2" />
+                            Erweiterte Filter
+                        </Button>
+                    </div>
+
+                    {showFilters && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t">
+                            {/* Wohneinheiten */}
+                            <div>
+                                <Label className="text-xs mb-2">Wohneinheiten</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                            {filters.selectedUnits.length > 0 
+                                                ? `${filters.selectedUnits.length} ausgewählt`
+                                                : 'Alle Einheiten'}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-64 p-0">
+                                        <Command>
+                                            <CommandInput placeholder="Einheit suchen..." />
+                                            <CommandEmpty>Keine Einheiten gefunden</CommandEmpty>
+                                            <CommandGroup className="max-h-64 overflow-y-auto">
+                                                {units.map(unit => {
+                                                    const building = buildings.find(b => b.id === unit.building_id);
+                                                    const isSelected = filters.selectedUnits.includes(unit.id);
+                                                    return (
+                                                        <CommandItem
+                                                            key={unit.id}
+                                                            onSelect={() => {
+                                                                setFilters({
+                                                                    ...filters,
+                                                                    selectedUnits: isSelected
+                                                                        ? filters.selectedUnits.filter(id => id !== unit.id)
+                                                                        : [...filters.selectedUnits, unit.id]
+                                                                });
+                                                            }}
+                                                        >
+                                                            <div className={`mr-2 h-4 w-4 border rounded ${isSelected ? 'bg-emerald-600' : ''}`} />
+                                                            <span className="text-sm">
+                                                                {building?.name} - {unit.unit_number}
+                                                            </span>
+                                                        </CommandItem>
+                                                    );
+                                                })}
+                                            </CommandGroup>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+
+                            {/* Mieter */}
+                            <div>
+                                <Label className="text-xs mb-2">Mieter</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                            {filters.selectedTenants.length > 0 
+                                                ? `${filters.selectedTenants.length} ausgewählt`
+                                                : 'Alle Mieter'}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-64 p-0">
+                                        <Command>
+                                            <CommandInput placeholder="Mieter suchen..." />
+                                            <CommandEmpty>Keine Mieter gefunden</CommandEmpty>
+                                            <CommandGroup className="max-h-64 overflow-y-auto">
+                                                {tenants.map(tenant => {
+                                                    const isSelected = filters.selectedTenants.includes(tenant.id);
+                                                    return (
+                                                        <CommandItem
+                                                            key={tenant.id}
+                                                            onSelect={() => {
+                                                                setFilters({
+                                                                    ...filters,
+                                                                    selectedTenants: isSelected
+                                                                        ? filters.selectedTenants.filter(id => id !== tenant.id)
+                                                                        : [...filters.selectedTenants, tenant.id]
+                                                                });
+                                                            }}
+                                                        >
+                                                            <div className={`mr-2 h-4 w-4 border rounded ${isSelected ? 'bg-emerald-600' : ''}`} />
+                                                            <span className="text-sm">
+                                                                {tenant.first_name} {tenant.last_name}
+                                                            </span>
+                                                        </CommandItem>
+                                                    );
+                                                })}
+                                            </CommandGroup>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+
+                            {/* Betragsspektrum */}
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <Label className="text-xs mb-2">Betrag von (€)</Label>
+                                    <Input
+                                        type="number"
+                                        placeholder="Min"
+                                        value={filters.amountMin}
+                                        onChange={(e) => setFilters({...filters, amountMin: e.target.value})}
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-xs mb-2">Betrag bis (€)</Label>
+                                    <Input
+                                        type="number"
+                                        placeholder="Max"
+                                        value={filters.amountMax}
+                                        onChange={(e) => setFilters({...filters, amountMax: e.target.value})}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Zeitraum */}
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <Label className="text-xs mb-2">Datum von</Label>
+                                    <Input
+                                        type="date"
+                                        value={filters.dateFrom}
+                                        onChange={(e) => setFilters({...filters, dateFrom: e.target.value})}
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-xs mb-2">Datum bis</Label>
+                                    <Input
+                                        type="date"
+                                        value={filters.dateTo}
+                                        onChange={(e) => setFilters({...filters, dateTo: e.target.value})}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Reset Button */}
+                            <div className="flex items-end">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setFilters({
+                                        search: '',
+                                        selectedUnits: [],
+                                        selectedTenants: [],
+                                        amountMin: '',
+                                        amountMax: '',
+                                        dateFrom: '',
+                                        dateTo: ''
+                                    })}
+                                    className="w-full"
+                                >
+                                    Filter zurücksetzen
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Active filters display */}
+                    {(filters.selectedUnits.length > 0 || filters.selectedTenants.length > 0 || filters.amountMin || filters.amountMax || filters.dateFrom || filters.dateTo) && (
+                        <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t">
+                            {filters.selectedUnits.map(unitId => {
+                                const unit = units.find(u => u.id === unitId);
+                                const building = buildings.find(b => b.id === unit?.building_id);
+                                return (
+                                    <Badge key={unitId} variant="secondary" className="gap-1">
+                                        {building?.name} {unit?.unit_number}
+                                        <X 
+                                            className="w-3 h-3 cursor-pointer" 
+                                            onClick={() => setFilters({
+                                                ...filters,
+                                                selectedUnits: filters.selectedUnits.filter(id => id !== unitId)
+                                            })}
+                                        />
+                                    </Badge>
+                                );
+                            })}
+                            {filters.selectedTenants.map(tenantId => {
+                                const tenant = tenants.find(t => t.id === tenantId);
+                                return (
+                                    <Badge key={tenantId} variant="secondary" className="gap-1">
+                                        {tenant?.first_name} {tenant?.last_name}
+                                        <X 
+                                            className="w-3 h-3 cursor-pointer" 
+                                            onClick={() => setFilters({
+                                                ...filters,
+                                                selectedTenants: filters.selectedTenants.filter(id => id !== tenantId)
+                                            })}
+                                        />
+                                    </Badge>
+                                );
+                            })}
+                            {(filters.amountMin || filters.amountMax) && (
+                                <Badge variant="secondary" className="gap-1">
+                                    Betrag: {filters.amountMin || '0'}€ - {filters.amountMax || '∞'}€
+                                    <X 
+                                        className="w-3 h-3 cursor-pointer" 
+                                        onClick={() => setFilters({...filters, amountMin: '', amountMax: ''})}
+                                    />
+                                </Badge>
+                            )}
+                            {(filters.dateFrom || filters.dateTo) && (
+                                <Badge variant="secondary" className="gap-1">
+                                    Zeitraum: {filters.dateFrom || '...'} - {filters.dateTo || '...'}
+                                    <X 
+                                        className="w-3 h-3 cursor-pointer" 
+                                        onClick={() => setFilters({...filters, dateFrom: '', dateTo: ''})}
+                                    />
+                                </Badge>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="bg-white rounded-2xl p-6 border border-slate-200/50 shadow-sm">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
