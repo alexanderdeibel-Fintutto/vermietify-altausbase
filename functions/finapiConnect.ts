@@ -21,8 +21,17 @@ Deno.serve(async (req) => {
                 debug: {
                     hasBaseUrl: !!FINAPI_BASE_URL,
                     hasClientId: !!CLIENT_ID,
-                    hasClientSecret: !!CLIENT_SECRET
+                    hasClientSecret: !!CLIENT_SECRET,
+                    baseUrlValue: FINAPI_BASE_URL
                 }
+            }, { status: 500 });
+        }
+
+        if (!FINAPI_BASE_URL.startsWith('http://') && !FINAPI_BASE_URL.startsWith('https://')) {
+            return Response.json({ 
+                error: `FINAPI_BASE_URL muss mit http:// oder https:// beginnen.`,
+                hint: 'Beispiel: https://sandbox.finapi.io oder https://live.finapi.io',
+                currentValue: FINAPI_BASE_URL
             }, { status: 500 });
         }
 

@@ -9,6 +9,10 @@ async function getFinAPIToken() {
         throw new Error('FinAPI Credentials nicht vollständig konfiguriert');
     }
 
+    if (!FINAPI_BASE_URL.startsWith('http://') && !FINAPI_BASE_URL.startsWith('https://')) {
+        throw new Error(`FINAPI_BASE_URL muss mit http:// oder https:// beginnen. Aktuell: "${FINAPI_BASE_URL}"`);
+    }
+
     const credentials = btoa(`${CLIENT_ID}:${CLIENT_SECRET}`);
     const tokenResponse = await fetch(`${FINAPI_BASE_URL}/oauth/token`, {
         method: 'POST',
