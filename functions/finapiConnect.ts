@@ -21,20 +21,63 @@ Deno.serve(async (req) => {
             }, { status: 500 });
         }
 
-        console.log('Creating FinAPI Web Form for user:', user.email);
+        console.log('Creating FinAPI Web Form Token for user:', user.email);
 
-        // Generate Web Form for bank connection - this creates user automatically if needed
-        const webFormUrl = `${FINAPI_BASE_URL}/webForm/bankConnectionImport?` + new URLSearchParams({
-            clientId: CLIENT_ID,
-            clientSecret: CLIENT_SECRET,
-            userId: user.email.replace('@', '_at_').replace(/\./g, '_'),
-            userPassword: crypto.randomUUID(),
-            storeSecrets: 'true',
-            skipPositionsDownload: 'false',
-            loadOwnerData: 'true'
+        // Step 1: Get mandator access token
+        const tokenResponse = await fetch(`${FINAPI_BASE_URL}/oauth/token`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                grant_type: 'client_credentials',
+                client_id: CLIENT_ID,
+                client_secret: CLIENT_SECRET
+            })
         });
 
-        console.log('Web Form URL generated');
+        if (!tokenResponse.ok) {
+            const error = await tokenResponse.text();
+            console.error('Token error:', error);
+            return Response.json({ 
+                error: 'FinAPI Authentifizierung fehlgeschlagen. Bitte überprüfen Sie CLIENT_ID und CLIENT_SECRET.'
+            }, { status: 403 });
+        }
+
+        const { access_token } = await tokenResponse.json();
+        console.log('Mandator token obtained');
+
+        // Step 2: Create Web Form Token
+        const userId = user.email.replace('@', '_at_').replace(/\./g, '_');
+        
+        const webFormResponse = await fetch(`${FINAPI_BASE_URL}/api/v1/webForms/bankConnectionImport`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${access_token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userId: userId,
+                userPassword: crypto.randomUUID(),
+                storeSecrets: true,
+                skipPositionsDownload: false,
+                loadOwnerData: true
+            })
+        });
+
+        if (!webFormResponse.ok) {
+            const error = await webFormResponse.text();
+            console.error('Web Form creation error:', error);
+            return Response.json({ 
+                error: 'Web Form konnte nicht erstellt werden',
+                details: error
+            }, { status: 400 });
+        }
+
+        const webFormData = await webFormResponse.json();
+        console.log('Web Form Token created:', webFormData.token);
+
+        const webFormUrl = `${FINAPI_BASE_URL}/webForm?webFormToken=${webFormData.token}`;
 
         return Response.json({
             success: true,
