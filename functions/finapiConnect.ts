@@ -21,25 +21,25 @@ Deno.serve(async (req) => {
             }, { status: 500 });
         }
 
-        // Get client credentials token (Sandbox format)
+        // Get client credentials token using Basic Auth
+        const credentials = btoa(`${CLIENT_ID}:${CLIENT_SECRET}`);
         const tokenResponse = await fetch(`${FINAPI_BASE_URL}/oauth/token`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Authorization': `Basic ${credentials}`,
+                'Content-Type': 'application/x-www-form-urlencoded',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({
-                grant_type: 'client_credentials',
-                client_id: CLIENT_ID,
-                client_secret: CLIENT_SECRET
-            })
+            body: 'grant_type=client_credentials'
         });
 
         if (!tokenResponse.ok) {
             const error = await tokenResponse.text();
             console.error('Token error:', error);
+            console.error('BASE_URL:', FINAPI_BASE_URL);
+            console.error('CLIENT_ID length:', CLIENT_ID?.length);
             return Response.json({ 
-                error: `FinAPI-Authentifizierung fehlgeschlagen (${tokenResponse.status}). Bitte überprüfen Sie CLIENT_ID und CLIENT_SECRET.`
+                error: `FinAPI-Authentifizierung fehlgeschlagen (${tokenResponse.status}). Überprüfen Sie, ob Ihre Sandbox-Anmeldedaten (Client-ID und Client-Secret aus dem FinAPI Entwicklerportal) korrekt sind.`
             }, { status: 500 });
         }
 
