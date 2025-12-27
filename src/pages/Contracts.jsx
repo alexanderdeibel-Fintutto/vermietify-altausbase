@@ -78,9 +78,18 @@ export default function Contracts() {
     });
 
     const deleteMutation = useMutation({
-        mutationFn: (id) => base44.entities.LeaseContract.delete(id),
+        mutationFn: async (id) => {
+            // Zuerst alle zugehörigen Zahlungen löschen
+            const payments = await base44.entities.Payment.filter({ contract_id: id });
+            for (const payment of payments) {
+                await base44.entities.Payment.delete(payment.id);
+            }
+            // Dann den Vertrag löschen
+            await base44.entities.LeaseContract.delete(id);
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['contracts'] });
+            queryClient.invalidateQueries({ queryKey: ['payments'] });
             setDeleteContract(null);
         }
     });
