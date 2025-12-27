@@ -10,6 +10,7 @@ import ContractDetail from './pages/ContractDetail';
 import BankReconciliation from './pages/BankReconciliation';
 import UnitDetail from './pages/UnitDetail';
 import FinAPICallback from './pages/FinAPICallback';
+import BankTransactions from './pages/BankTransactions';
 import __Layout from './Layout.jsx';
 
 
@@ -26,6 +27,7 @@ export const PAGES = {
     "BankReconciliation": BankReconciliation,
     "UnitDetail": UnitDetail,
     "FinAPICallback": FinAPICallback,
+    "BankTransactions": BankTransactions,
 }
 
 export const pagesConfig = {
