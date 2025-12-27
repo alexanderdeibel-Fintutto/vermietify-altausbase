@@ -21,8 +21,8 @@ import {
 } from "@/components/ui/select";
 import { Upload, AlertCircle, CheckCircle, FileText } from 'lucide-react';
 import { toast } from 'sonner';
-import { parseCSV, detectBankFormat } from './csvParser';
-import { autoMatchAllTransactions } from './matchTransactions';
+import { parseCSV, detectBankFormat } from '@/components/banking/csvParser';
+import { autoMatchAllTransactions } from '@/components/banking/matchTransactions';
 
 export default function TransactionImporter({ open, onOpenChange, accounts = [] }) {
     const [file, setFile] = useState(null);
