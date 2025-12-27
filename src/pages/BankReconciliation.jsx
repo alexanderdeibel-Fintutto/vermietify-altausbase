@@ -90,7 +90,7 @@ export default function BankReconciliation() {
         queryFn: () => base44.entities.Building.list()
     });
 
-    const { data: contracts = [] } = useQuery({
+    const { data: contracts = [], isLoading: loadingContracts } = useQuery({
         queryKey: ['contracts'],
         queryFn: () => base44.entities.LeaseContract.list()
     });
@@ -421,7 +421,7 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
         .filter(t => t.amount < 0)
         .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-    if (loadingTransactions || loadingPayments) {
+    if (loadingTransactions || loadingPayments || loadingContracts) {
         return (
             <div className="space-y-8">
                 <Skeleton className="h-8 w-48" />
