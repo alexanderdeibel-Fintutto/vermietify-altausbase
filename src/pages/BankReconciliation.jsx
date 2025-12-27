@@ -377,9 +377,17 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
     };
 
     const uncategorizedTransactions = applyFilters(transactions.filter(t => !t.is_categorized))
-        .sort((a, b) => new Date(b.transaction_date) - new Date(a.transaction_date));
+        .sort((a, b) => {
+            const dateA = a.transaction_date ? new Date(a.transaction_date).getTime() : 0;
+            const dateB = b.transaction_date ? new Date(b.transaction_date).getTime() : 0;
+            return dateB - dateA;  // Neueste zuerst
+        });
     const categorizedTransactions = applyFilters(transactions.filter(t => t.is_categorized))
-        .sort((a, b) => new Date(b.transaction_date) - new Date(a.transaction_date));
+        .sort((a, b) => {
+            const dateA = a.transaction_date ? new Date(a.transaction_date).getTime() : 0;
+            const dateB = b.transaction_date ? new Date(b.transaction_date).getTime() : 0;
+            return dateB - dateA;  // Neueste zuerst
+        });
     const pendingPayments = payments.filter(p => p.status === 'pending' || p.status === 'partial');
 
     const totalUncategorized = uncategorizedTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
