@@ -13,7 +13,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2 } from 'lucide-react';
-import { updateFuturePayments } from './generatePayments';
+import { regenerateContractPayments } from './generatePayments';
 
 export default function RentChangeForm({ open, onOpenChange, contract }) {
     const { register, handleSubmit, reset, watch } = useForm();
@@ -27,11 +27,8 @@ export default function RentChangeForm({ open, onOpenChange, contract }) {
         mutationFn: async (data) => {
             const rentChange = await base44.entities.RentChange.create(data);
             
-            // Update future payments with new rent amounts
-            const allChanges = await base44.entities.RentChange.filter({ 
-                contract_id: contract.id 
-            });
-            await updateFuturePayments(contract, allChanges);
+            // Regenerate all payments for this contract with updated rent
+            await regenerateContractPayments(contract.id);
             
             return rentChange;
         },

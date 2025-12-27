@@ -19,7 +19,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from 'lucide-react';
-import { generatePaymentsForContract } from './generatePayments';
+import { generatePaymentsForContract, regenerateContractPayments } from './generatePayments';
 
 export default function ContractForm({ 
     open, 
@@ -77,10 +77,16 @@ export default function ContractForm({
         // Submit contract first
         const result = await onSubmit(contractData);
         
-        // If new contract (not editing), generate payments
-        if (!initialData && result) {
+        // Generate/regenerate payments
+        if (result) {
             try {
-                await generatePaymentsForContract(result, [], 12);
+                if (initialData) {
+                    // If editing, regenerate all payments for this contract
+                    await regenerateContractPayments(initialData.id);
+                } else {
+                    // If new contract, generate payments
+                    await generatePaymentsForContract(result, []);
+                }
             } catch (error) {
                 console.error('Error generating payments:', error);
             }
