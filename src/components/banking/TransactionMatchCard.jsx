@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { format, parseISO } from 'date-fns';
@@ -6,7 +6,8 @@ import { de } from 'date-fns/locale';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Link2, X, Check, User, Calendar, Building2, Tag } from 'lucide-react';
+import { Link2, X, Check, User, Calendar, Building2, Tag, Sparkles } from 'lucide-react';
+import { findMatchSuggestions } from '@/components/banking/matchTransactions';
 import {
     Select,
     SelectContent,
@@ -31,6 +32,8 @@ export default function TransactionMatchCard({
         suggestedPayment?.id || ''
     );
     const [isMatching, setIsMatching] = useState(false);
+    const [aiSuggestions, setAiSuggestions] = useState([]);
+    const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
     const { data: categories = [] } = useQuery({
         queryKey: ['transactionCategories'],
@@ -38,6 +41,20 @@ export default function TransactionMatchCard({
     });
 
     const category = categories.find(c => c.id === transaction.category_id);
+
+    // Lade intelligente Vorschläge wenn keine manuelle Auswahl getroffen wurde
+    useEffect(() => {
+        if (!isMatched && isPositive && !suggestedPayment) {
+            setLoadingSuggestions(true);
+            findMatchSuggestions(transaction).then(suggestions => {
+                setAiSuggestions(suggestions);
+                if (suggestions.length > 0 && suggestions[0].isHighConfidence) {
+                    setSelectedPaymentId(suggestions[0].payment.id);
+                }
+                setLoadingSuggestions(false);
+            });
+        }
+    }, [transaction.id]);
 
     const handleMatch = async () => {
         if (!selectedPaymentId) return;
@@ -128,10 +145,11 @@ export default function TransactionMatchCard({
                             </p>
 
                             {suggestedPayment && matchScore && (
-                                <div className="mb-3 p-2 bg-blue-50 rounded-lg">
+                                <div className="mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
                                     <div className="flex items-center justify-between mb-1">
-                                        <p className="text-xs font-medium text-blue-700">
-                                            Vorschlag ({matchScore}% Übereinstimmung)
+                                        <p className="text-xs font-medium text-blue-700 flex items-center gap-1">
+                                            <Sparkles className="w-3 h-3" />
+                                            Empfohlen ({matchScore}% Übereinstimmung)
                                         </p>
                                     </div>
                                     <PaymentPreview 
@@ -140,6 +158,60 @@ export default function TransactionMatchCard({
                                         units={units}
                                         buildings={buildings}
                                     />
+                                </div>
+                            )}
+
+                            {!suggestedPayment && aiSuggestions.length > 0 && (
+                                <div className="mb-3 space-y-2">
+                                    {aiSuggestions.slice(0, 2).map((suggestion, idx) => {
+                                        const tenant = getTenant(suggestion.payment.tenant_id);
+                                        const unit = getUnit(suggestion.payment.unit_id);
+                                        const building = unit ? getBuilding(unit.building_id) : null;
+                                        
+                                        return (
+                                            <div 
+                                                key={suggestion.payment.id}
+                                                className={cn(
+                                                    "p-2 rounded-lg border cursor-pointer transition-all",
+                                                    selectedPaymentId === suggestion.payment.id 
+                                                        ? "bg-emerald-50 border-emerald-300" 
+                                                        : "bg-slate-50 border-slate-200 hover:border-slate-300"
+                                                )}
+                                                onClick={() => setSelectedPaymentId(suggestion.payment.id)}
+                                            >
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <p className="text-xs font-medium text-slate-700 flex items-center gap-1">
+                                                        {suggestion.isHighConfidence && <Sparkles className="w-3 h-3 text-amber-500" />}
+                                                        {idx === 0 ? 'Top-Vorschlag' : 'Alternative'} ({suggestion.score}%)
+                                                    </p>
+                                                </div>
+                                                <div className="text-xs space-y-1">
+                                                    {tenant && (
+                                                        <div className="flex items-center gap-1 text-slate-700">
+                                                            <User className="w-3 h-3" />
+                                                            {tenant.first_name} {tenant.last_name}
+                                                        </div>
+                                                    )}
+                                                    {building && unit && (
+                                                        <div className="flex items-center gap-1 text-slate-600">
+                                                            <Building2 className="w-3 h-3" />
+                                                            {building.name} - {unit.unit_number}
+                                                        </div>
+                                                    )}
+                                                    <div className="flex items-center gap-1 text-slate-600">
+                                                        <Calendar className="w-3 h-3" />
+                                                        {suggestion.payment.payment_month} • €{suggestion.payment.expected_amount?.toFixed(2)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                            {loadingSuggestions && (
+                                <div className="mb-3 p-3 bg-slate-50 rounded-lg text-center">
+                                    <p className="text-xs text-slate-500">Analysiere Muster...</p>
                                 </div>
                             )}
 
