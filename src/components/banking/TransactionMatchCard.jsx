@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Link2, X, Check, User, Calendar, Building2 } from 'lucide-react';
+import { Link2, X, Check, User, Calendar, Building2, Tag } from 'lucide-react';
 import {
     Select,
     SelectContent,
@@ -29,6 +31,13 @@ export default function TransactionMatchCard({
         suggestedPayment?.id || ''
     );
     const [isMatching, setIsMatching] = useState(false);
+
+    const { data: categories = [] } = useQuery({
+        queryKey: ['transactionCategories'],
+        queryFn: () => base44.entities.TransactionCategory.list()
+    });
+
+    const category = categories.find(c => c.id === transaction.category_id);
 
     const handleMatch = async () => {
         if (!selectedPaymentId) return;
@@ -92,12 +101,23 @@ export default function TransactionMatchCard({
                             </div>
                         </div>
 
-                        {isMatched && transaction.matched_payment_id && (
-                            <Badge className="bg-emerald-100 text-emerald-700 mt-2">
-                                <Check className="w-3 h-3 mr-1" />
-                                Abgeglichen
-                            </Badge>
-                        )}
+                        <div className="flex items-center gap-2 mt-2">
+                            {isMatched && transaction.matched_payment_id && (
+                                <Badge className="bg-emerald-100 text-emerald-700">
+                                    <Check className="w-3 h-3 mr-1" />
+                                    Abgeglichen
+                                </Badge>
+                            )}
+                            {category && (
+                                <Badge 
+                                    className="text-white"
+                                    style={{ backgroundColor: category.color || '#64748b' }}
+                                >
+                                    <Tag className="w-3 h-3 mr-1" />
+                                    {category.name}
+                                </Badge>
+                            )}
+                        </div>
                     </div>
 
                     {/* Matching Section */}
