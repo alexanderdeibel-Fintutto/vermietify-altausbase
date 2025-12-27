@@ -78,7 +78,16 @@ export default function Payments() {
         other: 'Sonstiges'
     };
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const filteredPayments = payments.filter(payment => {
+        // Nur Zahlungen bis heute anzeigen
+        if (payment.payment_date) {
+            const paymentDate = parseISO(payment.payment_date);
+            if (paymentDate > today) return false;
+        }
+        
         const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
         
         if (!matchesStatus) return false;
