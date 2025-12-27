@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Landmark, Plus, MoreVertical, Pencil, Trash2, Upload, TrendingUp, TrendingDown } from 'lucide-react';
+import { Landmark, Plus, MoreVertical, Pencil, Trash2, Upload, TrendingUp, TrendingDown, Globe, Lock } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +36,8 @@ import { Loader2 } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
 import EmptyState from '@/components/shared/EmptyState';
 import TransactionImporter from '@/components/banking/TransactionImporter.jsx';
+import OnlineBankingSetup from '@/components/banking/OnlineBankingSetup';
+import OnlineBankingSync from '@/components/banking/OnlineBankingSync';
 
 function BankAccountForm({ open, onOpenChange, onSubmit, initialData, isLoading }) {
     const { register, handleSubmit, reset, setValue, watch } = useForm({
@@ -147,6 +149,7 @@ export default function BankAccounts() {
     const [editingAccount, setEditingAccount] = useState(null);
     const [deleteAccount, setDeleteAccount] = useState(null);
     const [importerOpen, setImporterOpen] = useState(false);
+    const [onlineBankingSetup, setOnlineBankingSetup] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: accounts = [], isLoading } = useQuery({
@@ -271,6 +274,12 @@ export default function BankAccounts() {
                                                         Hauptkonto
                                                     </Badge>
                                                 )}
+                                                {account.online_banking_enabled && (
+                                                    <Badge className="bg-blue-100 text-blue-700">
+                                                        <Globe className="w-3 h-3 mr-1" />
+                                                        Online
+                                                    </Badge>
+                                                )}
                                             </div>
                                             {account.bank_name && (
                                                 <p className="text-sm text-slate-500 mt-1">{account.bank_name}</p>
@@ -289,6 +298,10 @@ export default function BankAccounts() {
                                                 }}>
                                                     <Pencil className="w-4 h-4 mr-2" />
                                                     Bearbeiten
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setOnlineBankingSetup(account)}>
+                                                    <Globe className="w-4 h-4 mr-2" />
+                                                    Online-Banking
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem 
                                                     onClick={() => setDeleteAccount(account)}
@@ -314,6 +327,23 @@ export default function BankAccounts() {
                                                 €{account.current_balance?.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
                                             </p>
                                         </div>
+
+                                        {account.online_banking_enabled && (
+                                            <div className="pt-4 border-t border-slate-100">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <p className="text-sm text-slate-500">Online-Banking</p>
+                                                    {account.last_sync_date && (
+                                                        <p className="text-xs text-slate-400">
+                                                            Zuletzt: {new Date(account.last_sync_date).toLocaleDateString('de-DE')}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <OnlineBankingSync 
+                                                    account={account}
+                                                    onSyncComplete={() => {}}
+                                                />
+                                            </div>
+                                        )}
 
                                         {stats.count > 0 && (
                                             <div className="pt-4 border-t border-slate-100">
@@ -367,6 +397,12 @@ export default function BankAccounts() {
                 open={importerOpen}
                 onOpenChange={setImporterOpen}
                 accounts={accounts}
+            />
+
+            <OnlineBankingSetup
+                open={!!onlineBankingSetup}
+                onOpenChange={() => setOnlineBankingSetup(null)}
+                account={onlineBankingSetup}
             />
 
             <AlertDialog open={!!deleteAccount} onOpenChange={() => setDeleteAccount(null)}>
