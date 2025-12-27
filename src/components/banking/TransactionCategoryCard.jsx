@@ -303,27 +303,25 @@ export default function TransactionCategoryCard({
                                             <SelectValue placeholder="Objekt/Wohnung wählen..." />
                                         </SelectTrigger>
                                         <SelectContent className="max-h-80">
-                                            {buildings.map(building => {
+                                            {buildings.flatMap(building => {
                                                 const buildingUnits = units.filter(u => u.building_id === building.id);
-                                                return (
-                                                    <div key={building.id}>
-                                                        <SelectItem value={building.id}>
-                                                            <div className="flex items-center gap-2">
-                                                                <Building2 className="w-4 h-4 text-slate-400" />
-                                                                <span className="font-semibold">{building.name}</span>
+                                                return [
+                                                    <SelectItem key={building.id} value={building.id}>
+                                                        <div className="flex items-center gap-2">
+                                                            <Building2 className="w-4 h-4 text-slate-400" />
+                                                            <span className="font-semibold">{building.name}</span>
+                                                        </div>
+                                                    </SelectItem>,
+                                                    ...buildingUnits.map(unit => (
+                                                        <SelectItem key={unit.id} value={unit.id}>
+                                                            <div className="flex items-center gap-2 pl-6">
+                                                                <span className="text-slate-400">└</span>
+                                                                <span>{unit.unit_number}</span>
+                                                                <span className="text-xs text-slate-400">({unit.sqm}m²)</span>
                                                             </div>
                                                         </SelectItem>
-                                                        {buildingUnits.map(unit => (
-                                                            <SelectItem key={unit.id} value={unit.id}>
-                                                                <div className="flex items-center gap-2 pl-6">
-                                                                    <span className="text-slate-400">└</span>
-                                                                    <span>{unit.unit_number}</span>
-                                                                    <span className="text-xs text-slate-400">({unit.sqm}m²)</span>
-                                                                </div>
-                                                            </SelectItem>
-                                                        ))}
-                                                    </div>
-                                                );
+                                                    ))
+                                                ];
                                             })}
                                         </SelectContent>
                                     </Select>
