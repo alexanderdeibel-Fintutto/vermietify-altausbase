@@ -87,7 +87,7 @@ export default function TransactionMatchCard({
                                     {isPositive ? '+' : ''}{transaction.amount?.toFixed(2)} €
                                 </p>
                                 <p className="text-xs text-slate-500">
-                                    {format(parseISO(transaction.transaction_date), 'dd.MM.yyyy')}
+                                    {transaction.transaction_date ? format(parseISO(transaction.transaction_date), 'dd.MM.yyyy') : '-'}
                                 </p>
                             </div>
                         </div>
