@@ -59,6 +59,21 @@ export default function ContractForm({
     }, [watchBaseRent, watchUtilities, watchHeating, setValue]);
 
     const handleFormSubmit = async (data) => {
+        // Status automatisch bestimmen
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const startDate = new Date(data.start_date);
+        const endDate = data.is_unlimited ? null : (data.end_date ? new Date(data.end_date) : null);
+
+        let autoStatus = 'active';
+        if (startDate > today) {
+            autoStatus = 'pending';
+        } else if (endDate && endDate < today) {
+            autoStatus = 'expired';
+        } else if (data.termination_date) {
+            autoStatus = 'terminated';
+        }
+
         const contractData = {
             ...data,
             base_rent: parseFloat(data.base_rent) || 0,
@@ -70,8 +85,10 @@ export default function ContractForm({
             notice_period_months: data.notice_period_months ? parseInt(data.notice_period_months) : null,
             rent_due_day: data.rent_due_day ? parseInt(data.rent_due_day) : null,
             end_date: data.is_unlimited ? null : data.end_date,
+            second_tenant_id: data.second_tenant_id || null,
             handover_date: data.handover_date || null,
             contract_date: data.contract_date || null,
+            status: autoStatus
         };
 
         // Submit contract first
@@ -122,13 +139,13 @@ export default function ContractForm({
                             </Select>
                         </div>
                         <div>
-                            <Label htmlFor="tenant_id">Mieter *</Label>
+                            <Label htmlFor="tenant_id">Hauptmieter *</Label>
                             <Select 
                                 value={watchTenantId} 
                                 onValueChange={(value) => setValue('tenant_id', value)}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Mieter wählen..." />
+                                    <SelectValue placeholder="Hauptmieter wählen..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {tenants.map((tenant) => (
@@ -139,6 +156,26 @@ export default function ContractForm({
                                 </SelectContent>
                             </Select>
                         </div>
+                    </div>
+
+                    <div>
+                        <Label htmlFor="second_tenant_id">Zweiter Mieter (optional)</Label>
+                        <Select 
+                            value={watch('second_tenant_id') || ''} 
+                            onValueChange={(value) => setValue('second_tenant_id', value || null)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Zweiter Mieter wählen..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={null}>Kein zweiter Mieter</SelectItem>
+                                {tenants.filter(t => t.id !== watchTenantId).map((tenant) => (
+                                    <SelectItem key={tenant.id} value={tenant.id}>
+                                        {tenant.first_name} {tenant.last_name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -203,17 +240,22 @@ export default function ContractForm({
                         <Switch 
                             id="is_unlimited"
                             checked={watchIsUnlimited}
-                            onCheckedChange={(checked) => setValue('is_unlimited', checked)}
+                            onCheckedChange={(checked) => {
+                                setValue('is_unlimited', checked);
+                                if (checked) {
+                                    setValue('end_date', '');
+                                }
+                            }}
                         />
                     </div>
 
                     {!watchIsUnlimited && (
                         <div>
-                            <Label htmlFor="end_date">Mietende</Label>
+                            <Label htmlFor="end_date">Mietende *</Label>
                             <Input 
                                 id="end_date"
                                 type="date"
-                                {...register('end_date')}
+                                {...register('end_date', { required: !watchIsUnlimited })}
                             />
                         </div>
                     )}

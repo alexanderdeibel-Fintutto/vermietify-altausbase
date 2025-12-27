@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { FileText, MoreVertical, Pencil, Trash2, User, Building2, Calendar, AlertCircle, Eye } from 'lucide-react';
+import { FileText, MoreVertical, Pencil, Trash2, User, Users, Building2, Calendar, AlertCircle, Eye, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
@@ -112,10 +112,28 @@ export default function Contracts() {
     const getTenant = (tenantId) => tenants.find(t => t.id === tenantId);
     const getBuilding = (buildingId) => buildings.find(b => b.id === buildingId);
 
+    const getContractStatus = (contract) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const startDate = new Date(contract.start_date);
+        const endDate = contract.end_date ? new Date(contract.end_date) : null;
+
+        if (startDate > today) {
+            return 'pending';
+        } else if (endDate && endDate < today) {
+            return 'expired';
+        } else if (contract.termination_date) {
+            return 'terminated';
+        } else {
+            return 'active';
+        }
+    };
+
     const statusConfig = {
+        pending: { label: 'Bevorstehend', color: 'bg-blue-100 text-blue-700' },
         active: { label: 'Aktiv', color: 'bg-emerald-100 text-emerald-700' },
         terminated: { label: 'Gekündigt', color: 'bg-amber-100 text-amber-700' },
-        expired: { label: 'Abgelaufen', color: 'bg-slate-100 text-slate-700' }
+        expired: { label: 'Beendet', color: 'bg-slate-100 text-slate-700' }
     };
 
     if (isLoading) {
@@ -160,8 +178,10 @@ export default function Contracts() {
                         const contractId = contract.id;
                         const unit = getUnit(contract.unit_id);
                         const tenant = getTenant(contract.tenant_id);
+                        const secondTenant = contract.second_tenant_id ? getTenant(contract.second_tenant_id) : null;
                         const building = unit ? getBuilding(unit.building_id) : null;
-                        const status = statusConfig[contract.status] || statusConfig.active;
+                        const contractStatus = getContractStatus(contract);
+                        const status = statusConfig[contractStatus] || statusConfig.active;
 
                         return (
                             <Card key={contractId} className="border-slate-200/50 hover:shadow-md transition-shadow">
@@ -214,9 +234,10 @@ export default function Contracts() {
                                     <div className="space-y-3">
                                         {tenant && (
                                             <div className="flex items-center gap-2">
-                                                <User className="w-4 h-4 text-slate-400" />
+                                                {secondTenant ? <Users className="w-4 h-4 text-slate-400" /> : <User className="w-4 h-4 text-slate-400" />}
                                                 <span className="font-medium text-slate-800">
                                                     {tenant.first_name} {tenant.last_name}
+                                                    {secondTenant && ` & ${secondTenant.first_name} ${secondTenant.last_name}`}
                                                 </span>
                                             </div>
                                         )}
