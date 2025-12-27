@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Landmark, CheckCircle, AlertCircle, TrendingUp, TrendingDown, Sparkles } from 'lucide-react';
+import { Landmark, CheckCircle, AlertCircle, TrendingUp, TrendingDown, Sparkles, Settings, Zap } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'sonner';
 import TransactionCategoryCard from '@/components/banking/TransactionCategoryCard';
+import RuleManager from '@/components/banking/RuleManager';
 
 const CATEGORY_LABELS = {
     rent_income: 'Mieteinnahmen',
@@ -32,6 +33,8 @@ const EXPENSE_CATEGORIES = [
 
 export default function BankReconciliation() {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [rulesOpen, setRulesOpen] = useState(false);
+    const [applyingRules, setApplyingRules] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: transactions = [], isLoading: loadingTransactions } = useQuery({
@@ -57,6 +60,11 @@ export default function BankReconciliation() {
     const { data: buildings = [] } = useQuery({
         queryKey: ['buildings'],
         queryFn: () => base44.entities.Building.list()
+    });
+
+    const { data: rules = [] } = useQuery({
+        queryKey: ['categorization-rules'],
+        queryFn: () => base44.entities.CategorizationRule.list('-priority')
     });
 
     const categorizeMutation = useMutation({
@@ -89,6 +97,72 @@ export default function BankReconciliation() {
         }
     });
 
+    const applyRules = async () => {
+        const uncategorizedTxs = transactions.filter(t => !t.is_categorized);
+        const activeRules = rules.filter(r => r.is_active && r.auto_apply);
+        
+        if (uncategorizedTxs.length === 0) {
+            toast.info('Alle Transaktionen sind bereits kategorisiert');
+            return;
+        }
+        
+        if (activeRules.length === 0) {
+            toast.info('Keine aktiven Regeln definiert');
+            return;
+        }
+
+        setApplyingRules(true);
+        let matched = 0;
+
+        try {
+            for (const tx of uncategorizedTxs) {
+                for (const rule of activeRules) {
+                    const conditions = rule.conditions || {};
+                    let matches = true;
+
+                    if (conditions.sender_receiver_contains && 
+                        !tx.sender_receiver?.toLowerCase().includes(conditions.sender_receiver_contains.toLowerCase())) {
+                        matches = false;
+                    }
+                    if (conditions.description_contains && 
+                        !tx.description?.toLowerCase().includes(conditions.description_contains.toLowerCase())) {
+                        matches = false;
+                    }
+                    if (conditions.amount_min !== undefined && tx.amount < conditions.amount_min) {
+                        matches = false;
+                    }
+                    if (conditions.amount_max !== undefined && tx.amount > conditions.amount_max) {
+                        matches = false;
+                    }
+                    if (conditions.is_income !== undefined && (tx.amount > 0) !== conditions.is_income) {
+                        matches = false;
+                    }
+
+                    if (matches) {
+                        await categorizeMutation.mutateAsync({
+                            transactionId: tx.id,
+                            category: rule.target_category,
+                            paymentId: null
+                        });
+                        await base44.entities.CategorizationRule.update(rule.id, {
+                            match_count: (rule.match_count || 0) + 1
+                        });
+                        matched++;
+                        break;
+                    }
+                }
+            }
+
+            queryClient.invalidateQueries({ queryKey: ['categorization-rules'] });
+            toast.success(`${matched} Transaktionen durch Regeln kategorisiert`);
+        } catch (error) {
+            console.error('Rule application error:', error);
+            toast.error('Fehler beim Anwenden der Regeln');
+        } finally {
+            setApplyingRules(false);
+        }
+    };
+
     const handleAIAnalysis = async () => {
         const uncategorizedTxs = transactions.filter(t => !t.is_categorized);
         
@@ -101,8 +175,25 @@ export default function BankReconciliation() {
         try {
             const txsToAnalyze = uncategorizedTxs.slice(0, 20);
             
+            // Get historical categorizations for learning
+            const historicalTxs = transactions
+                .filter(t => t.is_categorized && t.category)
+                .slice(0, 50);
+            
             const response = await base44.integrations.Core.InvokeLLM({
                 prompt: `Analysiere diese Banktransaktionen und ordne sie den passenden Kategorien zu.
+
+WICHTIG: Lerne aus den historischen Kategorisierungen und wende ähnliche Muster an!
+
+Historische Kategorisierungen (bereits vom Nutzer bestätigt):
+${JSON.stringify(historicalTxs.map(t => ({
+    sender: t.sender_receiver,
+    description: t.description,
+    amount: t.amount,
+    category: t.category
+})), null, 2)}
+
+Zu analysierende Transaktionen:
 
 Verfügbare Kategorien für EINNAHMEN (amount > 0):
 - rent_income: Mieteinnahmen (Mietzahlungen von Mietern)
@@ -222,14 +313,33 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                         Kategorisieren Sie Ihre Transaktionen
                     </p>
                 </div>
-                <Button 
-                    onClick={handleAIAnalysis}
-                    disabled={isAnalyzing || uncategorizedTransactions.length === 0}
-                    className="bg-emerald-600 hover:bg-emerald-700 gap-2"
-                >
-                    <Sparkles className="w-4 h-4" />
-                    {isAnalyzing ? 'Analysiere...' : 'KI Auto-Kategorisierung'}
-                </Button>
+                <div className="flex gap-2">
+                    <Button 
+                        onClick={() => setRulesOpen(true)}
+                        variant="outline"
+                        className="gap-2"
+                    >
+                        <Settings className="w-4 h-4" />
+                        Regeln verwalten
+                    </Button>
+                    <Button 
+                        onClick={applyRules}
+                        disabled={applyingRules || uncategorizedTransactions.length === 0}
+                        variant="outline"
+                        className="gap-2"
+                    >
+                        <Zap className="w-4 h-4" />
+                        {applyingRules ? 'Wende an...' : 'Regeln anwenden'}
+                    </Button>
+                    <Button 
+                        onClick={handleAIAnalysis}
+                        disabled={isAnalyzing || uncategorizedTransactions.length === 0}
+                        className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+                    >
+                        <Sparkles className="w-4 h-4" />
+                        {isAnalyzing ? 'Analysiere...' : 'KI-Kategorisierung'}
+                    </Button>
+                </div>
             </div>
 
             {/* Stats */}
@@ -364,6 +474,12 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                     )}
                 </TabsContent>
             </Tabs>
+
+            <RuleManager 
+                categoryLabels={CATEGORY_LABELS}
+                open={rulesOpen}
+                onOpenChange={setRulesOpen}
+            />
         </div>
     );
 }

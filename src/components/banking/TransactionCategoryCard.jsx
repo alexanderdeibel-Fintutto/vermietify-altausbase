@@ -4,7 +4,9 @@ import { de } from 'date-fns/locale';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tag, X, Check, User, Calendar, Building2 } from 'lucide-react';
+import { Tag, X, Check, User, Calendar, Building2, Lightbulb } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 import {
     Select,
     SelectContent,
@@ -38,9 +40,44 @@ export default function TransactionCategoryCard({
                 category: selectedCategory,
                 paymentId: selectedCategory === 'rent_income' ? selectedPaymentId : null
             });
+            
+            // Learn from this categorization - suggest creating a rule
+            if (transaction.sender_receiver && transaction.sender_receiver.trim() !== '') {
+                suggestRule();
+            }
         } finally {
             setIsProcessing(false);
         }
+    };
+
+    const suggestRule = () => {
+        toast.info(
+            `Regel erstellen für "${transaction.sender_receiver}"?`,
+            {
+                action: {
+                    label: 'Regel erstellen',
+                    onClick: async () => {
+                        try {
+                            await base44.entities.CategorizationRule.create({
+                                name: `Auto: ${transaction.sender_receiver}`,
+                                is_active: true,
+                                priority: 0,
+                                auto_apply: true,
+                                conditions: {
+                                    sender_receiver_contains: transaction.sender_receiver
+                                },
+                                target_category: selectedCategory,
+                                match_count: 1
+                            });
+                            toast.success('Regel erstellt');
+                        } catch (error) {
+                            toast.error('Fehler beim Erstellen der Regel');
+                        }
+                    }
+                },
+                duration: 5000
+            }
+        );
     };
 
     const handleUncategorize = async () => {
