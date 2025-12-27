@@ -25,7 +25,7 @@ import { toast } from 'sonner';
 
 export default function RuleManager({ categoryLabels, open, onOpenChange }) {
     const [editingRule, setEditingRule] = useState(null);
-    const [formOpen, setFormOpen] = useState(false);
+    const [showForm, setShowForm] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: rules = [] } = useQuery({
@@ -37,7 +37,7 @@ export default function RuleManager({ categoryLabels, open, onOpenChange }) {
         mutationFn: (data) => base44.entities.CategorizationRule.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['categorization-rules'] });
-            setFormOpen(false);
+            setShowForm(false);
             toast.success('Regel erstellt');
         }
     });
@@ -46,7 +46,7 @@ export default function RuleManager({ categoryLabels, open, onOpenChange }) {
         mutationFn: ({ id, data }) => base44.entities.CategorizationRule.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['categorization-rules'] });
-            setFormOpen(false);
+            setShowForm(false);
             setEditingRule(null);
             toast.success('Regel aktualisiert');
         }
@@ -68,18 +68,36 @@ export default function RuleManager({ categoryLabels, open, onOpenChange }) {
                 </DialogHeader>
 
                 <div className="space-y-4 mt-4">
-                    <Button 
-                        onClick={() => {
-                            setEditingRule(null);
-                            setFormOpen(true);
-                        }}
-                        className="w-full bg-emerald-600 hover:bg-emerald-700"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Neue Regel erstellen
-                    </Button>
+                    {!showForm && (
+                        <Button 
+                            onClick={() => {
+                                setEditingRule(null);
+                                setShowForm(true);
+                            }}
+                            className="w-full bg-emerald-600 hover:bg-emerald-700"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Neue Regel erstellen
+                        </Button>
+                    )}
 
-                    {rules.length === 0 ? (
+                    {showForm ? (
+                        <RuleFormContent
+                            rule={editingRule}
+                            onSubmit={(data) => {
+                                if (editingRule) {
+                                    updateMutation.mutate({ id: editingRule.id, data });
+                                } else {
+                                    createMutation.mutate(data);
+                                }
+                            }}
+                            onCancel={() => {
+                                setShowForm(false);
+                                setEditingRule(null);
+                            }}
+                            categoryLabels={categoryLabels}
+                        />
+                    ) : rules.length === 0 ? (
                         <div className="text-center py-8 text-slate-500">
                             Noch keine Regeln definiert
                         </div>
@@ -136,7 +154,7 @@ export default function RuleManager({ categoryLabels, open, onOpenChange }) {
                                                     size="icon"
                                                     onClick={() => {
                                                         setEditingRule(rule);
-                                                        setFormOpen(true);
+                                                        setShowForm(true);
                                                     }}
                                                 >
                                                     <Edit className="w-4 h-4" />
@@ -156,26 +174,12 @@ export default function RuleManager({ categoryLabels, open, onOpenChange }) {
                         </div>
                     )}
                 </div>
-
-                <RuleForm
-                    open={formOpen}
-                    onOpenChange={setFormOpen}
-                    rule={editingRule}
-                    onSubmit={(data) => {
-                        if (editingRule) {
-                            updateMutation.mutate({ id: editingRule.id, data });
-                        } else {
-                            createMutation.mutate(data);
-                        }
-                    }}
-                    categoryLabels={categoryLabels}
-                />
             </DialogContent>
         </Dialog>
     );
 }
 
-function RuleForm({ open, onOpenChange, rule, onSubmit, categoryLabels }) {
+function RuleFormContent({ rule, onSubmit, onCancel, categoryLabels }) {
     const [formData, setFormData] = useState(rule || {
         name: '',
         is_active: true,
@@ -208,13 +212,12 @@ function RuleForm({ open, onOpenChange, rule, onSubmit, categoryLabels }) {
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                    <DialogTitle>{rule ? 'Regel bearbeiten' : 'Neue Regel'}</DialogTitle>
-                </DialogHeader>
-
-                <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+        <Card className="border-2 border-emerald-500">
+            <CardHeader>
+                <CardTitle>{rule ? 'Regel bearbeiten' : 'Neue Regel'}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <Label>Regelname *</Label>
                         <Input
@@ -322,7 +325,7 @@ function RuleForm({ open, onOpenChange, rule, onSubmit, categoryLabels }) {
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4">
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        <Button type="button" variant="outline" onClick={onCancel}>
                             Abbrechen
                         </Button>
                         <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">
@@ -330,7 +333,7 @@ function RuleForm({ open, onOpenChange, rule, onSubmit, categoryLabels }) {
                         </Button>
                     </div>
                 </form>
-            </DialogContent>
-        </Dialog>
+            </CardContent>
+        </Card>
     );
 }
