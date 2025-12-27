@@ -36,20 +36,7 @@ export default function Payments() {
 
     const { data: payments = [], isLoading } = useQuery({
         queryKey: ['payments'],
-        queryFn: async () => {
-            const allPayments = await base44.entities.Payment.list('-payment_date');
-            const contracts = await base44.entities.LeaseContract.list();
-            const contractIds = new Set(contracts.map(c => c.id));
-            
-            // Zahlungen ohne existierenden Vertrag löschen
-            const orphanedPayments = allPayments.filter(p => !contractIds.has(p.contract_id));
-            for (const payment of orphanedPayments) {
-                await base44.entities.Payment.delete(payment.id);
-            }
-            
-            // Nur gültige Zahlungen zurückgeben
-            return allPayments.filter(p => contractIds.has(p.contract_id));
-        }
+        queryFn: () => base44.entities.Payment.list('-payment_date')
     });
 
     const { data: contracts = [] } = useQuery({
@@ -117,6 +104,10 @@ export default function Payments() {
     const handleRegeneratePayments = async () => {
         setIsRegenerating(true);
         try {
+            // Zuerst verwaiste Zahlungen bereinigen
+            await base44.functions.invoke('cleanOrphanedPayments');
+            
+            // Dann alle Zahlungen neu generieren
             const count = await regenerateAllPayments();
             queryClient.invalidateQueries({ queryKey: ['payments'] });
             toast.success(`${count} Zahlungen wurden erfolgreich aktualisiert`);
