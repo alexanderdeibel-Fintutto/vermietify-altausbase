@@ -87,10 +87,20 @@ export default function TransactionMatchCard({
                                     {isPositive ? '+' : ''}{transaction.amount?.toFixed(2)} €
                                 </p>
                                 <p className="text-xs text-slate-500">
-                                    {transaction.transaction_date && transaction.transaction_date.trim() !== '' 
-                                        ? format(parseISO(transaction.transaction_date), 'dd.MM.yyyy', { locale: de })
-                                        : '-'
-                                    }
+                                    {(() => {
+                                        try {
+                                            if (!transaction.transaction_date || transaction.transaction_date.trim() === '') {
+                                                return '-';
+                                            }
+                                            const date = parseISO(transaction.transaction_date);
+                                            if (isNaN(date.getTime())) {
+                                                return transaction.transaction_date;
+                                            }
+                                            return format(date, 'dd.MM.yyyy', { locale: de });
+                                        } catch {
+                                            return transaction.transaction_date || '-';
+                                        }
+                                    })()}
                                 </p>
                             </div>
                         </div>
