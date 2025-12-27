@@ -148,13 +148,14 @@ export default function Contracts() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {contracts.map((contract) => {
+                        const contractId = contract.id;
                         const unit = getUnit(contract.unit_id);
                         const tenant = getTenant(contract.tenant_id);
                         const building = unit ? getBuilding(unit.building_id) : null;
                         const status = statusConfig[contract.status] || statusConfig.active;
 
                         return (
-                            <Card key={contract.id} className="border-slate-200/50 hover:shadow-md transition-shadow">
+                            <Card key={contractId} className="border-slate-200/50 hover:shadow-md transition-shadow">
                                 <CardContent className="p-6">
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex-1">
@@ -178,7 +179,7 @@ export default function Contracts() {
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuItem asChild>
-                                                    <Link to={createPageUrl(`ContractDetail?contractId=${contract.id}`)}>
+                                                    <Link to={createPageUrl(`ContractDetail?contractId=${contractId}`)}>
                                                         <Eye className="w-4 h-4 mr-2" />
                                                         Details anzeigen
                                                     </Link>
