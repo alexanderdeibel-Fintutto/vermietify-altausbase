@@ -120,13 +120,16 @@ export default function OnlineBankingSync({ account, onSyncComplete }) {
         }
     }, [syncMutation.isPending]);
 
+    if (!account.online_banking_enabled) {
+        return null;
+    }
+
     return (
         <Button
             onClick={handleSync}
-            disabled={isSyncing || !account.online_banking_enabled}
+            disabled={isSyncing}
             size="sm"
-            variant="outline"
-            className="gap-2"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
         >
             {isSyncing ? (
                 <>
@@ -135,7 +138,7 @@ export default function OnlineBankingSync({ account, onSyncComplete }) {
                 </>
             ) : (
                 <>
-                    <Download className="w-4 h-4" />
+                    <RefreshCw className="w-4 h-4" />
                     Jetzt synchronisieren
                 </>
             )}
