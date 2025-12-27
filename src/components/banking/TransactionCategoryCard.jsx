@@ -394,7 +394,7 @@ export default function TransactionCategoryCard({
                                 onClick={handleCategorize}
                                 disabled={!selectedCategory || isProcessing}
                                 className={cn(
-                                    "w-full",
+                                    "w-full mt-4",
                                     isPositive 
                                         ? "bg-emerald-600 hover:bg-emerald-700"
                                         : "bg-red-600 hover:bg-red-700"
