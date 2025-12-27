@@ -306,7 +306,7 @@ export default function TransactionCategoryCard({
                                             {buildings.map(building => {
                                                 const buildingUnits = units.filter(u => u.building_id === building.id);
                                                 return (
-                                                    <React.Fragment key={building.id}>
+                                                    <div key={building.id}>
                                                         <SelectItem value={building.id}>
                                                             <div className="flex items-center gap-2">
                                                                 <Building2 className="w-4 h-4 text-slate-400" />
@@ -322,7 +322,7 @@ export default function TransactionCategoryCard({
                                                                 </div>
                                                             </SelectItem>
                                                         ))}
-                                                    </React.Fragment>
+                                                    </div>
                                                 );
                                             })}
                                         </SelectContent>
