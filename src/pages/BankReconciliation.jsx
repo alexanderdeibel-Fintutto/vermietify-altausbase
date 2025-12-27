@@ -369,7 +369,7 @@ export default function BankReconciliation() {
                                                     {payment.payment_month}
                                                 </td>
                                                 <td className="px-4 py-3 text-sm text-slate-600">
-                                                    {payment.payment_date}
+                                                    {payment.payment_date || '-'}
                                                 </td>
                                                 <td className="px-4 py-3 text-sm font-semibold text-right text-slate-800">
                                                     €{openAmount.toFixed(2)}
