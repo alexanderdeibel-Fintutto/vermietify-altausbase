@@ -5,11 +5,17 @@ const CLIENT_ID = Deno.env.get("FINAPI_CLIENT_ID");
 const CLIENT_SECRET = Deno.env.get("FINAPI_CLIENT_SECRET");
 
 async function getAccessToken() {
-    const tokenResponse = await fetch(`${FINAPI_BASE_URL}/oauth/token?grant_type=client_credentials&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}`, {
+    const tokenResponse = await fetch(`${FINAPI_BASE_URL}/oauth/token`, {
         method: 'POST',
         headers: {
+            'Content-Type': 'application/json',
             'Accept': 'application/json'
-        }
+        },
+        body: JSON.stringify({
+            grant_type: 'client_credentials',
+            client_id: CLIENT_ID,
+            client_secret: CLIENT_SECRET
+        })
     });
 
     if (!tokenResponse.ok) {
