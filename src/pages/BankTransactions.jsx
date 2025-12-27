@@ -143,13 +143,18 @@ export default function BankTransactions() {
                                                     </div>
                                                 )}
                                             </td>
-                                            <td className="px-4 py-3 text-sm text-slate-600 max-w-xs">
-                                                <div className="truncate">
+                                            <td className="px-4 py-3 text-sm text-slate-600 max-w-md">
+                                                <div className="mb-1">
                                                     {tx.description || '-'}
                                                 </div>
                                                 {tx.reference && tx.reference !== tx.description && (
-                                                    <div className="text-xs text-slate-400 truncate mt-0.5">
-                                                        {tx.reference}
+                                                    <div className="text-xs text-slate-400 mt-1">
+                                                        <span className="font-medium">Verwendungszweck:</span> {tx.reference}
+                                                    </div>
+                                                )}
+                                                {tx.value_date && tx.value_date !== tx.transaction_date && (
+                                                    <div className="text-xs text-slate-400 mt-0.5">
+                                                        <span className="font-medium">Wertstellung:</span> {tx.value_date}
                                                     </div>
                                                 )}
                                             </td>
