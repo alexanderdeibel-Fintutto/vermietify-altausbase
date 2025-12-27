@@ -139,10 +139,33 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
         const reader = new FileReader();
         reader.onload = (event) => {
             const text = event.target.result;
-            const parsed = parseCSV(text);
-            setPreview(parsed.slice(0, 5));
+            const { headers, data } = parseCSVFile(text);
+            
+            if (headers.length === 0) {
+                toast.error('Keine Spalten in der CSV gefunden');
+                return;
+            }
+
+            setCsvHeaders(headers);
+            setCsvData(data);
+            
+            // Auto-detect mapping
+            const detectedMapping = autoDetectMapping(headers);
+            setMapping(detectedMapping);
+            
+            setStep(2);
         };
         reader.readAsText(selectedFile, 'UTF-8');
+    };
+
+    const handleContinueToPreview = () => {
+        const transactions = buildTransactionsFromMapping();
+        if (transactions.length === 0) {
+            toast.error('Keine gültigen Transaktionen gefunden');
+            return;
+        }
+        setPreview(transactions.slice(0, 10));
+        setStep(3);
     };
 
     const handleImport = async () => {
