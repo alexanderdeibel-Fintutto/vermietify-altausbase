@@ -4,6 +4,7 @@ import { de } from 'date-fns/locale';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { Tag, X, Check, User, Calendar, Building2, Lightbulb } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
