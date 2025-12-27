@@ -41,7 +41,6 @@ export default function ContractForm({
     const watchUnitId = watch('unit_id');
     const watchTenantId = watch('tenant_id');
     const watchDepositInstallments = watch('deposit_installments');
-    const watchRentChangeDate = watch('rent_change_date');
 
     React.useEffect(() => {
         if (initialData) {
@@ -69,10 +68,6 @@ export default function ContractForm({
             deposit_installments: data.deposit_installments ? parseInt(data.deposit_installments) : 1,
             notice_period_months: data.notice_period_months ? parseInt(data.notice_period_months) : null,
             end_date: data.is_unlimited ? null : data.end_date,
-            new_base_rent: data.new_base_rent ? parseFloat(data.new_base_rent) : null,
-            new_utilities: data.new_utilities ? parseFloat(data.new_utilities) : null,
-            new_heating: data.new_heating ? parseFloat(data.new_heating) : null,
-            rent_change_date: data.rent_change_date || null,
             handover_date: data.handover_date || null,
         });
     };
@@ -276,51 +271,7 @@ export default function ContractForm({
                         </div>
                     </div>
 
-                    <div className="border-t pt-4">
-                        <h3 className="font-semibold text-slate-800 mb-4">Mietvertragsänderung</h3>
-                        <div className="mb-4">
-                            <Label htmlFor="rent_change_date">Datum der Änderung</Label>
-                            <Input 
-                                id="rent_change_date"
-                                type="date"
-                                {...register('rent_change_date')}
-                            />
-                        </div>
-                        {watchRentChangeDate && (
-                            <div className="grid grid-cols-3 gap-4">
-                                <div>
-                                    <Label htmlFor="new_base_rent">Neue Kaltmiete (€)</Label>
-                                    <Input 
-                                        id="new_base_rent"
-                                        type="number"
-                                        step="0.01"
-                                        {...register('new_base_rent')}
-                                        placeholder="700"
-                                    />
-                                </div>
-                                <div>
-                                    <Label htmlFor="new_utilities">Neue Nebenkosten (€)</Label>
-                                    <Input 
-                                        id="new_utilities"
-                                        type="number"
-                                        step="0.01"
-                                        {...register('new_utilities')}
-                                        placeholder="130"
-                                    />
-                                </div>
-                                <div>
-                                    <Label htmlFor="new_heating">Neue Heizkosten (€)</Label>
-                                    <Input 
-                                        id="new_heating"
-                                        type="number"
-                                        step="0.01"
-                                        {...register('new_heating')}
-                                        placeholder="90"
-                                    />
-                                </div>
-                            </div>
-                        )}
-                    </div>
+
 
                     {watchStatus === 'terminated' && (
                         <div>
