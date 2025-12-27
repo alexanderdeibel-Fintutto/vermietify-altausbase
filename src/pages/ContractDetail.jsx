@@ -24,7 +24,8 @@ import ContractForm from '@/components/contracts/ContractForm';
 import RentChangeHistory from '@/components/contracts/RentChangeHistory';
 
 export default function ContractDetail() {
-    const { contractId } = useParams();
+    const urlParams = new URLSearchParams(window.location.search);
+    const contractId = urlParams.get('contractId');
     const [formOpen, setFormOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const queryClient = useQueryClient();
@@ -34,7 +35,8 @@ export default function ContractDetail() {
         queryFn: async () => {
             const contracts = await base44.entities.LeaseContract.filter({ id: contractId });
             return contracts[0];
-        }
+        },
+        enabled: !!contractId
     });
 
     const { data: units = [] } = useQuery({
