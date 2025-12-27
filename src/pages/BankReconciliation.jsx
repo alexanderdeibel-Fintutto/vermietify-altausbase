@@ -75,17 +75,17 @@ export default function BankReconciliation() {
         queryFn: () => base44.entities.Payment.list()
     });
 
-    const { data: tenants = [] } = useQuery({
+    const { data: tenants = [], isLoading: loadingTenants } = useQuery({
         queryKey: ['tenants'],
         queryFn: () => base44.entities.Tenant.list()
     });
 
-    const { data: units = [] } = useQuery({
+    const { data: units = [], isLoading: loadingUnits } = useQuery({
         queryKey: ['units'],
         queryFn: () => base44.entities.Unit.list()
     });
 
-    const { data: buildings = [] } = useQuery({
+    const { data: buildings = [], isLoading: loadingBuildings } = useQuery({
         queryKey: ['buildings'],
         queryFn: () => base44.entities.Building.list()
     });
@@ -421,7 +421,7 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
         .filter(t => t.amount < 0)
         .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-    if (loadingTransactions || loadingPayments || loadingContracts) {
+    if (loadingTransactions || loadingPayments || loadingContracts || loadingTenants || loadingUnits || loadingBuildings) {
         return (
             <div className="space-y-8">
                 <Skeleton className="h-8 w-48" />
