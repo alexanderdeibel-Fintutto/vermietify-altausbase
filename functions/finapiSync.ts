@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-const FINAPI_BASE_URL = Deno.env.get("FINAPI_BASE_URL");
+const FINAPI_BASE_URL = Deno.env.get("FINAPI_BASE_URL")?.replace(/\/$/, '');
 const CLIENT_ID = Deno.env.get("FINAPI_CLIENT_ID");
 const CLIENT_SECRET = Deno.env.get("FINAPI_CLIENT_SECRET");
 
@@ -9,11 +9,13 @@ async function getFinAPIToken() {
         throw new Error('FinAPI Credentials nicht vollständig konfiguriert');
     }
 
+    const credentials = btoa(`${CLIENT_ID}:${CLIENT_SECRET}`);
     const tokenResponse = await fetch(`${FINAPI_BASE_URL}/oauth/token`, {
         method: 'POST',
         headers: {
+            'Authorization': `Basic ${credentials}`,
             'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': `Basic ${btoa(`${CLIENT_ID}:${CLIENT_SECRET}`)}`
+            'Accept': 'application/json'
         },
         body: new URLSearchParams({
             grant_type: 'client_credentials'
@@ -21,7 +23,12 @@ async function getFinAPIToken() {
     });
 
     if (!tokenResponse.ok) {
-        throw new Error('FinAPI Authentifizierung fehlgeschlagen');
+        const errorText = await tokenResponse.text();
+        console.error('FinAPI Token Error:', {
+            status: tokenResponse.status,
+            body: errorText
+        });
+        throw new Error(`FinAPI Authentifizierung fehlgeschlagen: ${tokenResponse.status}`);
     }
 
     const data = await tokenResponse.json();
