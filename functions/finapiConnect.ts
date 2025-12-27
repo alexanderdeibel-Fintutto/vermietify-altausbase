@@ -4,11 +4,70 @@ const FINAPI_BASE_URL = Deno.env.get("FINAPI_BASE_URL");
 const CLIENT_ID = Deno.env.get("FINAPI_CLIENT_ID");
 const CLIENT_SECRET = Deno.env.get("FINAPI_CLIENT_SECRET");
 
-async function getFinAPIToken() {
+async function getFinAPIToken(userId, password) {
     if (!FINAPI_BASE_URL || !CLIENT_ID || !CLIENT_SECRET) {
         throw new Error('FinAPI Credentials nicht konfiguriert. Bitte FINAPI_BASE_URL, FINAPI_CLIENT_ID und FINAPI_CLIENT_SECRET setzen.');
     }
 
+    const tokenResponse = await fetch(`${FINAPI_BASE_URL}/oauth/token`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': `Basic ${btoa(`${CLIENT_ID}:${CLIENT_SECRET}`)}`
+        },
+        body: new URLSearchParams({
+            grant_type: 'password',
+            username: userId,
+            password: password
+        })
+    });
+
+    if (!tokenResponse.ok) {
+        const error = await tokenResponse.text();
+        throw new Error(`FinAPI Authentifizierung fehlgeschlagen: ${error}`);
+    }
+
+    const data = await tokenResponse.json();
+    return data.access_token;
+}
+
+async function getOrCreateFinAPIUser(userId) {
+    // Generate consistent password for this user
+    const userPassword = `pwd_${userId}_${CLIENT_SECRET.substring(0, 10)}`;
+    
+    // Try to get token with existing user
+    try {
+        const token = await getFinAPIToken(userId, userPassword);
+        return { userId, password: userPassword, token };
+    } catch (error) {
+        // User doesn't exist, create with mandator token
+        const mandatorToken = await getMandatorToken();
+        
+        const createResponse = await fetch(`${FINAPI_BASE_URL}/api/v1/users`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${mandatorToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id: userId,
+                password: userPassword,
+                email: `${userId}@immoverwalter.app`,
+                isAutoUpdateEnabled: true
+            })
+        });
+
+        if (!createResponse.ok) {
+            const error = await createResponse.text();
+            throw new Error(`FinAPI User konnte nicht erstellt werden: ${error}`);
+        }
+
+        const token = await getFinAPIToken(userId, userPassword);
+        return { userId, password: userPassword, token };
+    }
+}
+
+async function getMandatorToken() {
     const tokenResponse = await fetch(`${FINAPI_BASE_URL}/oauth/token`, {
         method: 'POST',
         headers: {
@@ -22,52 +81,11 @@ async function getFinAPIToken() {
 
     if (!tokenResponse.ok) {
         const error = await tokenResponse.text();
-        throw new Error(`FinAPI Authentifizierung fehlgeschlagen: ${error}`);
+        throw new Error(`FinAPI Mandator-Authentifizierung fehlgeschlagen: ${error}`);
     }
 
     const data = await tokenResponse.json();
     return data.access_token;
-}
-
-async function getOrCreateFinAPIUser(userId, accessToken) {
-    // Check if user exists
-    const usersResponse = await fetch(`${FINAPI_BASE_URL}/api/v1/users`, {
-        headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-        }
-    });
-
-    if (usersResponse.ok) {
-        const users = await usersResponse.json();
-        const existingUser = users.users?.find(u => u.id === userId);
-        if (existingUser) {
-            return existingUser.id;
-        }
-    }
-
-    // Create new user
-    const createResponse = await fetch(`${FINAPI_BASE_URL}/api/v1/users`, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            id: userId,
-            password: crypto.randomUUID(),
-            email: `${userId}@immoverwalter.app`,
-            isAutoUpdateEnabled: true
-        })
-    });
-
-    if (!createResponse.ok) {
-        const error = await createResponse.text();
-        throw new Error(`FinAPI User konnte nicht erstellt werden: ${error}`);
-    }
-
-    const newUser = await createResponse.json();
-    return newUser.id;
 }
 
 Deno.serve(async (req) => {
@@ -86,12 +104,8 @@ Deno.serve(async (req) => {
 
         console.log('Starting FinAPI connection for user:', user.id);
 
-        // Get FinAPI access token
-        const accessToken = await getFinAPIToken();
-        console.log('FinAPI access token obtained');
-
-        // Get or create FinAPI user
-        const finapiUserId = await getOrCreateFinAPIUser(user.id, accessToken);
+        // Get or create FinAPI user and token
+        const { userId: finapiUserId, token: accessToken } = await getOrCreateFinAPIUser(user.id);
         console.log('FinAPI user ID:', finapiUserId);
 
         // Import bank connection
