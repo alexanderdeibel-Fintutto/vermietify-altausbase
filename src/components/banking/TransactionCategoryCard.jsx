@@ -278,9 +278,26 @@ export default function TransactionCategoryCard({
                             </p>
 
                             <div className="space-y-2">
-                                {/* 1. Objekt/Wohneinheit (kombiniert) */}
+                                {/* 1. Kategorie */}
                                 <div>
-                                    <Label className="text-xs text-slate-600 mb-1">1. Objekt/Wohneinheit</Label>
+                                    <Label className="text-xs text-slate-600 mb-1">1. Kategorie</Label>
+                                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Kategorie wählen..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {availableCategories.map(cat => (
+                                                <SelectItem key={cat} value={cat}>
+                                                    {categoryLabels[cat] || cat}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {/* 2. Mietobjekt (Tree-Auswahl) */}
+                                <div>
+                                    <Label className="text-xs text-slate-600 mb-1">2. Mietobjekt</Label>
                                     <Select value={selectedObjectId} onValueChange={handleObjectChange}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Objekt/Wohnung wählen..." />
@@ -312,10 +329,10 @@ export default function TransactionCategoryCard({
                                     </Select>
                                 </div>
 
-                                {/* 2. Mietvertrag */}
+                                {/* 3. Mietvertrag */}
                                 {selectedObjectId && filteredContracts.length > 0 && (
                                     <div>
-                                        <Label className="text-xs text-slate-600 mb-1">2. Mietvertrag</Label>
+                                        <Label className="text-xs text-slate-600 mb-1">3. Mietvertrag</Label>
                                         <Select value={selectedContractId} onValueChange={setSelectedContractId}>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Vertrag wählen..." />
@@ -342,23 +359,6 @@ export default function TransactionCategoryCard({
                                         </Select>
                                     </div>
                                 )}
-
-                                {/* 3. Kategorie */}
-                                <div>
-                                    <Label className="text-xs text-slate-600 mb-1">3. Kategorie</Label>
-                                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Kategorie wählen..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {availableCategories.map(cat => (
-                                                <SelectItem key={cat} value={cat}>
-                                                    {categoryLabels[cat] || cat}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
 
                                 {/* Payment Selection (nur für rent_income) */}
                                 {selectedCategory === 'rent_income' && actualUnitId && filteredPayments.length > 0 && (
