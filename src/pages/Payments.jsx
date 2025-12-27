@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { CreditCard, Filter, Search, Plus } from 'lucide-react';
+import { CreditCard, Filter, Search, Plus, RefreshCw } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from 'sonner';
+import { regenerateAllPayments } from '@/components/contracts/generatePayments';
 import {
     Select,
     SelectContent,
@@ -29,6 +31,7 @@ import EmptyState from '@/components/shared/EmptyState';
 export default function Payments() {
     const [statusFilter, setStatusFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
+    const [isRegenerating, setIsRegenerating] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: payments = [], isLoading } = useQuery({
@@ -89,6 +92,19 @@ export default function Payments() {
                reference.includes(searchTerm.toLowerCase());
     });
 
+    const handleRegeneratePayments = async () => {
+        setIsRegenerating(true);
+        try {
+            const count = await regenerateAllPayments();
+            queryClient.invalidateQueries({ queryKey: ['payments'] });
+            toast.success(`${count} Zahlungen wurden erfolgreich aktualisiert`);
+        } catch (error) {
+            toast.error('Fehler beim Aktualisieren der Zahlungen');
+        } finally {
+            setIsRegenerating(false);
+        }
+    };
+
     // Calculate stats
     const totalPaid = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + (p.amount || 0), 0);
     const totalOverdue = payments.filter(p => p.status === 'overdue' || p.status === 'pending')
@@ -109,10 +125,29 @@ export default function Payments() {
 
     return (
         <div className="space-y-8">
-            <PageHeader 
-                title="Zahlungen"
-                subtitle={`${payments.length} Zahlungen erfasst`}
-            />
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">Zahlungen</h1>
+                    <p className="text-slate-500 mt-1">{payments.length} Zahlungen erfasst</p>
+                </div>
+                <Button 
+                    onClick={handleRegeneratePayments}
+                    disabled={isRegenerating}
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                >
+                    {isRegenerating ? (
+                        <>
+                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                            Wird aktualisiert...
+                        </>
+                    ) : (
+                        <>
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                            Alle Zahlungen aktualisieren
+                        </>
+                    )}
+                </Button>
+            </div>
 
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
