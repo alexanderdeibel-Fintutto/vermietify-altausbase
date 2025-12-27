@@ -15,26 +15,56 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
         const lines = text.split('\n').filter(line => line.trim());
         if (lines.length < 2) return [];
 
-        const headers = lines[0].split(/[;,]/).map(h => h.trim().toLowerCase());
+        // Handle different CSV delimiters and quoted values
+        const detectDelimiter = (line) => {
+            const semicolonCount = (line.match(/;/g) || []).length;
+            const commaCount = (line.match(/,/g) || []).length;
+            return semicolonCount > commaCount ? ';' : ',';
+        };
+
+        const delimiter = detectDelimiter(lines[0]);
+        
+        const parseLine = (line) => {
+            const values = [];
+            let currentValue = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === delimiter && !inQuotes) {
+                    values.push(currentValue.trim());
+                    currentValue = '';
+                } else {
+                    currentValue += char;
+                }
+            }
+            values.push(currentValue.trim());
+            return values;
+        };
+
+        const headers = parseLine(lines[0]).map(h => h.trim().toLowerCase().replace(/^"|"$/g, ''));
         const transactions = [];
 
         for (let i = 1; i < lines.length; i++) {
-            const values = lines[i].split(/[;,]/).map(v => v.trim());
+            const values = parseLine(lines[i]).map(v => v.replace(/^"|"$/g, ''));
             const row = {};
             
             headers.forEach((header, index) => {
                 row[header] = values[index] || '';
             });
 
-            // Map common German CSV headers
+            // Map common German CSV headers - more variations
             const transaction = {
-                transaction_date: row['buchungstag'] || row['datum'] || row['date'] || '',
+                transaction_date: row['buchungstag'] || row['buchungsdatum'] || row['datum'] || row['date'] || '',
                 value_date: row['wertstellung'] || row['valuta'] || row['value_date'] || row['buchungstag'] || row['datum'] || '',
-                amount: parseFloat((row['betrag'] || row['amount'] || '0').replace(',', '.').replace(/[^\d.-]/g, '')),
-                description: row['buchungstext'] || row['verwendungszweck'] || row['description'] || '',
-                sender_receiver: row['auftraggeber'] || row['empfänger'] || row['name'] || row['sender_receiver'] || '',
-                iban: row['iban'] || row['kontonummer'] || '',
-                reference: row['verwendungszweck'] || row['referenz'] || row['reference'] || ''
+                amount: parseFloat((row['betrag'] || row['amount'] || row['umsatz'] || '0').replace(',', '.').replace(/[^\d.-]/g, '')),
+                description: row['buchungstext'] || row['verwendungszweck'] || row['beschreibung'] || row['description'] || row['zweck'] || '',
+                sender_receiver: row['auftraggeber'] || row['empfänger'] || row['name'] || row['sender_receiver'] || row['auftraggeber / empfänger'] || '',
+                iban: row['iban'] || row['kontonummer'] || row['account'] || '',
+                reference: row['verwendungszweck'] || row['referenz'] || row['reference'] || row['buchungstext'] || ''
             };
 
             if (transaction.transaction_date && !isNaN(transaction.amount)) {
@@ -71,30 +101,51 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
                 const text = event.target.result;
                 const transactions = parseCSV(text);
 
-                let imported = 0;
-                let skipped = 0;
-
-                for (const tx of transactions) {
-                    // Check if transaction already exists
-                    const existing = await base44.entities.BankTransaction.filter({
-                        account_id: accountId,
-                        transaction_date: tx.transaction_date,
-                        amount: tx.amount
-                    });
-
-                    if (existing.length === 0) {
-                        await base44.entities.BankTransaction.create({
-                            account_id: accountId,
-                            ...tx,
-                            is_matched: false
-                        });
-                        imported++;
-                    } else {
-                        skipped++;
-                    }
+                if (transactions.length === 0) {
+                    toast.error('Keine gültigen Transaktionen gefunden');
+                    setImporting(false);
+                    return;
                 }
 
-                toast.success(`${imported} Transaktionen importiert${skipped > 0 ? `, ${skipped} übersprungen` : ''}`);
+                // Get all existing transactions for this account at once
+                const allExisting = await base44.entities.BankTransaction.filter({
+                    account_id: accountId
+                });
+
+                // Create a Set for fast duplicate checking
+                const existingKeys = new Set(
+                    allExisting.map(tx => 
+                        `${tx.transaction_date}_${tx.amount}_${tx.description}`
+                    )
+                );
+
+                // Filter out duplicates
+                const newTransactions = transactions.filter(tx => {
+                    const key = `${tx.transaction_date}_${tx.amount}_${tx.description}`;
+                    return !existingKeys.has(key);
+                });
+
+                const skipped = transactions.length - newTransactions.length;
+
+                if (newTransactions.length === 0) {
+                    toast.info('Alle Transaktionen bereits vorhanden');
+                    onOpenChange(false);
+                    setFile(null);
+                    setPreview([]);
+                    setImporting(false);
+                    return;
+                }
+
+                // Bulk create all new transactions
+                const toCreate = newTransactions.map(tx => ({
+                    account_id: accountId,
+                    ...tx,
+                    is_matched: false
+                }));
+
+                await base44.entities.BankTransaction.bulkCreate(toCreate);
+
+                toast.success(`${newTransactions.length} Transaktionen importiert${skipped > 0 ? `, ${skipped} übersprungen (bereits vorhanden)` : ''}`);
                 onSuccess();
                 onOpenChange(false);
                 setFile(null);
@@ -103,7 +154,7 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
             reader.readAsText(file, 'UTF-8');
         } catch (error) {
             console.error('Import error:', error);
-            toast.error('Import fehlgeschlagen');
+            toast.error('Import fehlgeschlagen: ' + error.message);
         } finally {
             setImporting(false);
         }
