@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ import { Upload, AlertCircle, CheckCircle, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { parseCSV, detectBankFormat } from '@/components/banking/csvParser';
 import { autoMatchAllTransactions } from '@/components/banking/matchTransactions';
+import { categorizeTransaction } from '@/components/banking/categorizeTransaction';
 
 export default function TransactionImporter({ open, onOpenChange, accounts = [] }) {
     const [file, setFile] = useState(null);
@@ -30,6 +31,11 @@ export default function TransactionImporter({ open, onOpenChange, accounts = [] 
     const [parsedData, setParsedData] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const queryClient = useQueryClient();
+
+    const { data: categories = [] } = useQuery({
+        queryKey: ['transactionCategories'],
+        queryFn: () => base44.entities.TransactionCategory.list()
+    });
 
     const handleFileChange = async (e) => {
         const selectedFile = e.target.files?.[0];
@@ -70,11 +76,15 @@ export default function TransactionImporter({ open, onOpenChange, accounts = [] 
                 throw new Error('Bitte wählen Sie ein Konto und eine Datei aus');
             }
 
-            const transactionsToCreate = parsedData.transactions.map(t => ({
-                ...t,
-                account_id: selectedAccount,
-                is_matched: false
-            }));
+            const transactionsToCreate = parsedData.transactions.map(t => {
+                const categoryId = categorizeTransaction(t, categories);
+                return {
+                    ...t,
+                    account_id: selectedAccount,
+                    is_matched: false,
+                    category_id: categoryId
+                };
+            });
 
             // Check for duplicates
             const existingTransactions = await base44.entities.BankTransaction.filter({

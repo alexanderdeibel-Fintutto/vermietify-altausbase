@@ -11,7 +11,8 @@ import {
     Landmark,
     Menu,
     X,
-    ChevronRight
+    ChevronRight,
+    Tag
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Zahlungen', href: createPageUrl('Payments'), icon: CreditCard, page: 'Payments' },
         { name: 'Bankkonten', href: createPageUrl('BankAccounts'), icon: Landmark, page: 'BankAccounts' },
         { name: 'Bankenabgleich', href: createPageUrl('BankReconciliation'), icon: Landmark, page: 'BankReconciliation' },
+        { name: 'Kategorien', href: createPageUrl('TransactionCategories'), icon: Tag, page: 'TransactionCategories' },
         { name: 'Auswertungen', href: createPageUrl('Analytics'), icon: BarChart3, page: 'Analytics' },
     ];
 
