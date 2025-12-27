@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
             const error = await tokenResponse.text();
             console.error('Token error:', error);
             return Response.json({ 
-                error: 'Bankverbindung konnte nicht hergestellt werden.'
+                error: `FinAPI-Authentifizierung fehlgeschlagen (${tokenResponse.status}). Bitte überprüfen Sie CLIENT_ID und CLIENT_SECRET.`
             }, { status: 500 });
         }
 
