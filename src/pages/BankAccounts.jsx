@@ -195,12 +195,15 @@ export default function BankAccounts() {
 
     const handleConnectBank = async () => {
         setIsConnecting(true);
+        console.log('Starting bank connection...');
+        
         try {
             const response = await base44.functions.invoke('finapiConnect', {});
+            console.log('Response received:', response);
 
             if (response.data.error) {
                 toast.error(response.data.error);
-                console.error('Connection error:', response.data.details);
+                console.error('Connection error:', response.data);
                 return;
             }
 
@@ -212,12 +215,17 @@ export default function BankAccounts() {
                 if (response.data.webFormUrl) {
                     window.open(response.data.webFormUrl, '_blank', 'width=800,height=700');
                 }
+            } else {
+                toast.error('Unerwartete Antwort vom Server');
+                console.error('Unexpected response:', response.data);
             }
         } catch (error) {
             console.error('Bank connection error:', error);
-            toast.error(error.response?.data?.error || 'Fehler beim Verbinden der Bank');
+            const errorMsg = error.response?.data?.error || error.message || 'Fehler beim Verbinden der Bank';
+            toast.error(errorMsg);
         } finally {
             setIsConnecting(false);
+            console.log('Connection attempt finished');
         }
     };
 
@@ -258,12 +266,15 @@ export default function BankAccounts() {
         }
 
         setIsSyncing(true);
+        console.log('Starting sync for all accounts...');
+        
         try {
             const response = await base44.functions.invoke('finapiSync', {});
+            console.log('Sync response received:', response);
             
             if (response.data.error) {
                 toast.error(response.data.error);
-                console.error('Sync error:', response.data.details);
+                console.error('Sync error:', response.data);
                 return;
             }
             
@@ -280,9 +291,11 @@ export default function BankAccounts() {
             }
         } catch (error) {
             console.error('Sync error:', error);
-            toast.error(error.response?.data?.error || 'Fehler beim Synchronisieren');
+            const errorMsg = error.response?.data?.error || error.message || 'Fehler beim Synchronisieren';
+            toast.error(errorMsg);
         } finally {
             setIsSyncing(false);
+            console.log('Sync attempt finished');
         }
     };
 
