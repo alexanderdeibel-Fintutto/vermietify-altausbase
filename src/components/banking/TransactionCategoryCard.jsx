@@ -29,6 +29,8 @@ export default function TransactionCategoryCard({
 }) {
     const [selectedCategory, setSelectedCategory] = useState(transaction.category || '');
     const [selectedPaymentId, setSelectedPaymentId] = useState(transaction.matched_payment_id || '');
+    const [selectedBuildingId, setSelectedBuildingId] = useState('');
+    const [selectedUnitId, setSelectedUnitId] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
 
     const handleCategorize = async () => {
@@ -115,6 +117,28 @@ export default function TransactionCategoryCard({
     const getTenant = (tenantId) => tenants.find(t => t.id === tenantId);
     const getUnit = (unitId) => units.find(u => u.id === unitId);
     const getBuilding = (buildingId) => buildings.find(b => b.id === buildingId);
+
+    // Filter units by selected building
+    const filteredUnits = selectedBuildingId 
+        ? units.filter(u => u.building_id === selectedBuildingId)
+        : [];
+
+    // Filter payments by selected unit
+    const filteredPayments = selectedUnitId
+        ? availablePayments.filter(p => p.unit_id === selectedUnitId)
+        : [];
+
+    // Reset subsequent selections when parent changes
+    const handleBuildingChange = (buildingId) => {
+        setSelectedBuildingId(buildingId);
+        setSelectedUnitId('');
+        setSelectedPaymentId('');
+    };
+
+    const handleUnitChange = (unitId) => {
+        setSelectedUnitId(unitId);
+        setSelectedPaymentId('');
+    };
 
     const isPositive = transaction.amount > 0;
     const isCategorized = transaction.is_categorized;
@@ -247,31 +271,78 @@ export default function TransactionCategoryCard({
                             </Select>
 
                             {selectedCategory === 'rent_income' && availablePayments.length > 0 && (
-                                <Select value={selectedPaymentId} onValueChange={setSelectedPaymentId}>
-                                    <SelectTrigger className="mb-2">
-                                        <SelectValue placeholder="Zahlung zuordnen (optional)..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {availablePayments.map(payment => {
-                                            const tenant = getTenant(payment.tenant_id);
-                                            const unit = getUnit(payment.unit_id);
-                                            const building = unit ? getBuilding(unit.building_id) : null;
-                                            
-                                            return (
-                                                <SelectItem key={payment.id} value={payment.id}>
-                                                    <div className="flex flex-col">
-                                                        <span className="font-medium">
-                                                            {tenant ? `${tenant.first_name} ${tenant.last_name}` : 'Unbekannt'}
-                                                        </span>
-                                                        <span className="text-xs text-slate-500">
-                                                            {building?.name} {unit?.unit_number} • €{payment.expected_amount?.toFixed(2)} • {payment.payment_month}
-                                                        </span>
-                                                    </div>
-                                                </SelectItem>
-                                            );
-                                        })}
-                                    </SelectContent>
-                                </Select>
+                                <div className="space-y-2">
+                                    {/* Step 1: Building */}
+                                    <div>
+                                        <Label className="text-xs text-slate-600 mb-1">1. Objekt auswählen</Label>
+                                        <Select value={selectedBuildingId} onValueChange={handleBuildingChange}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Objekt wählen..." />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {buildings.map(building => (
+                                                    <SelectItem key={building.id} value={building.id}>
+                                                        {building.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    {/* Step 2: Unit */}
+                                    {selectedBuildingId && (
+                                        <div>
+                                            <Label className="text-xs text-slate-600 mb-1">2. Wohnungsnummer</Label>
+                                            <Select value={selectedUnitId} onValueChange={handleUnitChange}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Wohnung wählen..." />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {filteredUnits.map(unit => (
+                                                        <SelectItem key={unit.id} value={unit.id}>
+                                                            {unit.unit_number}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
+
+                                    {/* Step 3: Payment */}
+                                    {selectedUnitId && filteredPayments.length > 0 && (
+                                        <div>
+                                            <Label className="text-xs text-slate-600 mb-1">3. Zahlung/Monat</Label>
+                                            <Select value={selectedPaymentId} onValueChange={setSelectedPaymentId}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Zahlung wählen..." />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {filteredPayments.map(payment => {
+                                                        const tenant = getTenant(payment.tenant_id);
+                                                        return (
+                                                            <SelectItem key={payment.id} value={payment.id}>
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-medium">
+                                                                        {payment.payment_month}
+                                                                    </span>
+                                                                    <span className="text-xs text-slate-500">
+                                                                        {tenant ? `${tenant.first_name} ${tenant.last_name}` : 'Unbekannt'} • €{payment.expected_amount?.toFixed(2)}
+                                                                    </span>
+                                                                </div>
+                                                            </SelectItem>
+                                                        );
+                                                    })}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
+
+                                    {selectedUnitId && filteredPayments.length === 0 && (
+                                        <p className="text-xs text-slate-500 italic">
+                                            Keine offenen Zahlungen für diese Wohnung
+                                        </p>
+                                    )}
+                                </div>
                             )}
 
                             <Button 
