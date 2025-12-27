@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-const FINAPI_BASE_URL = Deno.env.get("FINAPI_BASE_URL");
+const FINAPI_BASE_URL = Deno.env.get("FINAPI_BASE_URL")?.replace(/\/$/, ''); // Remove trailing slash
 const CLIENT_ID = Deno.env.get("FINAPI_CLIENT_ID");
 const CLIENT_SECRET = Deno.env.get("FINAPI_CLIENT_SECRET");
 
@@ -17,79 +17,117 @@ Deno.serve(async (req) => {
 
         if (!FINAPI_BASE_URL || !CLIENT_ID || !CLIENT_SECRET) {
             return Response.json({ 
-                error: 'FinAPI ist nicht konfiguriert. Bitte Secrets überprüfen.'
+                error: 'FinAPI ist nicht konfiguriert. Bitte Secrets überprüfen.',
+                debug: {
+                    hasBaseUrl: !!FINAPI_BASE_URL,
+                    hasClientId: !!CLIENT_ID,
+                    hasClientSecret: !!CLIENT_SECRET
+                }
             }, { status: 500 });
         }
 
-        console.log('Creating FinAPI Web Form Token for user:', user.email);
+        console.log('FinAPI Config:', { 
+            baseUrl: FINAPI_BASE_URL, 
+            clientId: CLIENT_ID?.substring(0, 5) + '...',
+            user: user.email 
+        });
 
-        // Step 1: Get mandator access token using Basic Auth
+        // Step 1: Get mandator access token
         const credentials = btoa(`${CLIENT_ID}:${CLIENT_SECRET}`);
-        const tokenResponse = await fetch(`${FINAPI_BASE_URL}/oauth/token`, {
+        const tokenUrl = `${FINAPI_BASE_URL}/oauth/token`;
+        
+        console.log('Requesting token from:', tokenUrl);
+        
+        const tokenResponse = await fetch(tokenUrl, {
             method: 'POST',
             headers: {
                 'Authorization': `Basic ${credentials}`,
                 'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'application/json'
             },
             body: new URLSearchParams({
                 grant_type: 'client_credentials'
             })
         });
 
+        const tokenText = await tokenResponse.text();
+        
         if (!tokenResponse.ok) {
-            const error = await tokenResponse.text();
-            console.error('Token error:', error);
+            console.error('Token request failed:', {
+                status: tokenResponse.status,
+                statusText: tokenResponse.statusText,
+                body: tokenText,
+                url: tokenUrl
+            });
+            
             return Response.json({ 
-                error: 'FinAPI Authentifizierung fehlgeschlagen. Bitte überprüfen Sie CLIENT_ID und CLIENT_SECRET.'
-            }, { status: 403 });
+                error: 'FinAPI Authentifizierung fehlgeschlagen',
+                details: tokenText,
+                status: tokenResponse.status,
+                hint: tokenResponse.status === 403 
+                    ? 'Prüfen Sie ob CLIENT_ID und CLIENT_SECRET korrekt sind und ob Ihr FinAPI Mandator aktiviert ist'
+                    : 'Prüfen Sie die FINAPI_BASE_URL (z.B. https://sandbox.finapi.io)'
+            }, { status: tokenResponse.status });
         }
 
-        const { access_token } = await tokenResponse.json();
-        console.log('Mandator token obtained');
+        const { access_token } = JSON.parse(tokenText);
+        console.log('✓ Mandator token erhalten');
 
-        // Step 2: Create Web Form Token
-        const userId = user.email.replace('@', '_at_').replace(/\./g, '_');
+        // Step 2: Create or get FinAPI user
+        const userId = user.email.replace(/[@.]/g, '_');
+        const userPassword = crypto.randomUUID();
         
-        const webFormResponse = await fetch(`${FINAPI_BASE_URL}/api/v1/webForms/bankConnectionImport`, {
+        // Step 3: Create Web Form Token
+        const webFormUrl = `${FINAPI_BASE_URL}/api/v1/webForms/bankConnectionImport`;
+        console.log('Creating Web Form at:', webFormUrl);
+        
+        const webFormResponse = await fetch(webFormUrl, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${access_token}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify({
                 userId: userId,
-                userPassword: crypto.randomUUID(),
+                userPassword: userPassword,
                 storeSecrets: true,
                 skipPositionsDownload: false,
                 loadOwnerData: true
             })
         });
 
+        const webFormText = await webFormResponse.text();
+        
         if (!webFormResponse.ok) {
-            const error = await webFormResponse.text();
-            console.error('Web Form creation error:', error);
+            console.error('Web Form creation failed:', {
+                status: webFormResponse.status,
+                body: webFormText
+            });
+            
             return Response.json({ 
                 error: 'Web Form konnte nicht erstellt werden',
-                details: error
-            }, { status: 400 });
+                details: webFormText,
+                status: webFormResponse.status
+            }, { status: webFormResponse.status });
         }
 
-        const webFormData = await webFormResponse.json();
-        console.log('Web Form Token created:', webFormData.token);
+        const webFormData = JSON.parse(webFormText);
+        console.log('✓ Web Form Token erstellt');
 
-        const webFormUrl = `${FINAPI_BASE_URL}/webForm?webFormToken=${webFormData.token}`;
+        const finalWebFormUrl = `${FINAPI_BASE_URL}/webForm?webFormToken=${webFormData.token}`;
 
         return Response.json({
             success: true,
-            message: 'Bitte authentifizieren Sie sich bei Ihrer Bank',
-            webFormUrl
+            message: 'Bank-Authentifizierung bereit',
+            webFormUrl: finalWebFormUrl
         });
 
     } catch (error) {
         console.error('FinAPI connect error:', error);
         return Response.json({ 
-            error: error.message || 'Interner Fehler beim Verbinden der Bank',
-            details: error.stack
+            error: error.message || 'Interner Fehler',
+            stack: error.stack
         }, { status: 500 });
     }
 });
