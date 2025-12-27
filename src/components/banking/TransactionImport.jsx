@@ -169,75 +169,82 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
     };
 
     const handleImport = async () => {
-        if (!file || !accountId) return;
+        if (!accountId) return;
 
         setImporting(true);
 
         try {
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                const text = event.target.result;
-                const transactions = parseCSV(text);
+            const transactions = buildTransactionsFromMapping();
 
-                if (transactions.length === 0) {
-                    toast.error('Keine gültigen Transaktionen gefunden');
-                    setImporting(false);
-                    return;
-                }
+            if (transactions.length === 0) {
+                toast.error('Keine gültigen Transaktionen gefunden');
+                setImporting(false);
+                return;
+            }
 
-                // Get all existing transactions for this account at once (no limit)
-                const allExisting = await base44.entities.BankTransaction.filter(
-                    { account_id: accountId },
-                    null,
-                    10000 // High limit to get all transactions
-                );
+            // Get all existing transactions for this account
+            const allExisting = await base44.entities.BankTransaction.filter(
+                { account_id: accountId },
+                null,
+                10000
+            );
 
-                // Create a Set for fast duplicate checking
-                const existingKeys = new Set(
-                    allExisting.map(tx => 
-                        `${tx.transaction_date}_${tx.amount}_${tx.description}`
-                    )
-                );
+            const existingKeys = new Set(
+                allExisting.map(tx => 
+                    `${tx.transaction_date}_${tx.amount}_${tx.description}`
+                )
+            );
 
-                // Filter out duplicates
-                const newTransactions = transactions.filter(tx => {
-                    const key = `${tx.transaction_date}_${tx.amount}_${tx.description}`;
-                    return !existingKeys.has(key);
-                });
+            const newTransactions = transactions.filter(tx => {
+                const key = `${tx.transaction_date}_${tx.amount}_${tx.description}`;
+                return !existingKeys.has(key);
+            });
 
-                const skipped = transactions.length - newTransactions.length;
+            const skipped = transactions.length - newTransactions.length;
 
-                if (newTransactions.length === 0) {
-                    toast.info('Alle Transaktionen bereits vorhanden');
-                    onOpenChange(false);
-                    setFile(null);
-                    setPreview([]);
-                    setImporting(false);
-                    return;
-                }
+            if (newTransactions.length === 0) {
+                toast.info('Alle Transaktionen bereits vorhanden');
+                handleClose();
+                setImporting(false);
+                return;
+            }
 
-                // Bulk create all new transactions
-                const toCreate = newTransactions.map(tx => ({
-                    account_id: accountId,
-                    ...tx,
-                    is_matched: false
-                }));
+            const toCreate = newTransactions.map(tx => ({
+                account_id: accountId,
+                ...tx,
+                is_matched: false,
+                is_categorized: false
+            }));
 
-                await base44.entities.BankTransaction.bulkCreate(toCreate);
+            await base44.entities.BankTransaction.bulkCreate(toCreate);
 
-                toast.success(`${newTransactions.length} Transaktionen importiert${skipped > 0 ? `, ${skipped} übersprungen (bereits vorhanden)` : ''}`);
-                onSuccess();
-                onOpenChange(false);
-                setFile(null);
-                setPreview([]);
-            };
-            reader.readAsText(file, 'UTF-8');
+            toast.success(`${newTransactions.length} Transaktionen importiert${skipped > 0 ? `, ${skipped} übersprungen` : ''}`);
+            onSuccess();
+            handleClose();
         } catch (error) {
             console.error('Import error:', error);
             toast.error('Import fehlgeschlagen: ' + error.message);
         } finally {
             setImporting(false);
         }
+    };
+
+    const handleClose = () => {
+        setFile(null);
+        setStep(1);
+        setCsvHeaders([]);
+        setCsvData([]);
+        setPreview([]);
+        setMapping({
+            transaction_date: '',
+            value_date: '',
+            amount: '',
+            description: '',
+            sender_receiver: '',
+            iban: '',
+            reference: ''
+        });
+        onOpenChange(false);
     };
 
     return (
