@@ -68,8 +68,10 @@ export default function ContractForm({
             deposit: data.deposit ? parseFloat(data.deposit) : null,
             deposit_installments: data.deposit_installments ? parseInt(data.deposit_installments) : 1,
             notice_period_months: data.notice_period_months ? parseInt(data.notice_period_months) : null,
+            rent_due_day: data.rent_due_day ? parseInt(data.rent_due_day) : null,
             end_date: data.is_unlimited ? null : data.end_date,
             handover_date: data.handover_date || null,
+            contract_date: data.contract_date || null,
         };
 
         // Submit contract first
@@ -130,6 +132,28 @@ export default function ContractForm({
                                     ))}
                                 </SelectContent>
                             </Select>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <Label htmlFor="contract_date">Datum Mietvertrag</Label>
+                            <Input 
+                                id="contract_date"
+                                type="date"
+                                {...register('contract_date')}
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="rent_due_day">Fälligkeit (Tag im Monat)</Label>
+                            <Input 
+                                id="rent_due_day"
+                                type="number"
+                                min="1"
+                                max="31"
+                                {...register('rent_due_day')}
+                                placeholder="3"
+                            />
                         </div>
                     </div>
 
