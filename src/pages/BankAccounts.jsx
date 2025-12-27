@@ -36,8 +36,8 @@ import { Loader2 } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
 import EmptyState from '@/components/shared/EmptyState';
 import TransactionImporter from '@/components/banking/TransactionImporter.jsx';
-import OnlineBankingSetup from '@/components/banking/OnlineBankingSetup';
-import OnlineBankingSync from '@/components/banking/OnlineBankingSync';
+import OnlineBankingSetup from '@/components/banking/OnlineBankingSetup.jsx';
+import OnlineBankingSync from '@/components/banking/OnlineBankingSync.jsx';
 
 function BankAccountForm({ open, onOpenChange, onSubmit, initialData, isLoading }) {
     const { register, handleSubmit, reset, setValue, watch } = useForm({
