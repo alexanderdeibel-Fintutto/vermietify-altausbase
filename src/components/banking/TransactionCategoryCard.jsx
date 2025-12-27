@@ -118,35 +118,39 @@ export default function TransactionCategoryCard({
                                 <p className="font-semibold text-slate-800 text-lg mb-1">
                                     {transaction.sender_receiver || 'Unbekannt'}
                                 </p>
-                                <p className="text-sm text-slate-600 mb-2">
-                                    {transaction.description}
-                                </p>
-                                <div className="space-y-1 text-xs text-slate-500">
-                                    {transaction.reference && transaction.reference !== transaction.description && (
-                                        <div className="flex items-start gap-2">
-                                            <span className="font-medium min-w-28 text-slate-600">Verwendungszweck:</span>
-                                            <span className="flex-1">{transaction.reference}</span>
+                                <div className="space-y-2">
+                                    <div>
+                                        <span className="text-xs font-medium text-slate-500">Buchungstext:</span>
+                                        <p className="text-sm text-slate-800 mt-0.5">{transaction.description || '-'}</p>
+                                    </div>
+                                    
+                                    {transaction.reference && (
+                                        <div>
+                                            <span className="text-xs font-medium text-slate-500">Verwendungszweck:</span>
+                                            <p className="text-sm text-slate-800 mt-0.5">{transaction.reference}</p>
                                         </div>
                                     )}
+                                    
                                     {transaction.iban && (
-                                        <div className="flex items-start gap-2">
-                                            <span className="font-medium min-w-28 text-slate-600">IBAN:</span>
-                                            <span className="font-mono flex-1">{transaction.iban}</span>
+                                        <div>
+                                            <span className="text-xs font-medium text-slate-500">IBAN:</span>
+                                            <p className="text-sm text-slate-800 font-mono mt-0.5">{transaction.iban}</p>
                                         </div>
                                     )}
-                                    {transaction.value_date && transaction.value_date !== transaction.transaction_date && (
-                                        <div className="flex items-start gap-2">
-                                            <span className="font-medium min-w-28 text-slate-600">Wertstellung:</span>
-                                            <span>
+                                    
+                                    {transaction.value_date && (
+                                        <div>
+                                            <span className="text-xs font-medium text-slate-500">Wertstellung:</span>
+                                            <p className="text-sm text-slate-800 mt-0.5">
                                                 {(() => {
                                                     try {
                                                         const date = parseISO(transaction.value_date);
                                                         return format(date, 'dd.MM.yyyy', { locale: de });
                                                     } catch {
-                                                        return transaction.value_date;
+                                                        return transaction.value_date || '-';
                                                     }
                                                 })()}
-                                            </span>
+                                            </p>
                                         </div>
                                     )}
                                 </div>
