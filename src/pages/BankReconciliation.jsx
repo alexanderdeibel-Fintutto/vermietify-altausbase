@@ -90,17 +90,24 @@ export default function BankReconciliation() {
         queryFn: () => base44.entities.Building.list()
     });
 
+    const { data: contracts = [] } = useQuery({
+        queryKey: ['contracts'],
+        queryFn: () => base44.entities.LeaseContract.list()
+    });
+
     const { data: rules = [] } = useQuery({
         queryKey: ['categorization-rules'],
         queryFn: () => base44.entities.CategorizationRule.list('-priority')
     });
 
     const categorizeMutation = useMutation({
-        mutationFn: ({ transactionId, category, paymentId }) => 
+        mutationFn: ({ transactionId, category, paymentId, unitId, contractId }) => 
             base44.entities.BankTransaction.update(transactionId, {
                 is_categorized: true,
                 category,
-                matched_payment_id: paymentId || null
+                matched_payment_id: paymentId || null,
+                unit_id: unitId || null,
+                contract_id: contractId || null
             }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
@@ -116,7 +123,9 @@ export default function BankReconciliation() {
             base44.entities.BankTransaction.update(transactionId, {
                 is_categorized: false,
                 category: null,
-                matched_payment_id: null
+                matched_payment_id: null,
+                unit_id: null,
+                contract_id: null
             }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
@@ -797,16 +806,19 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                                 availableCategories={transaction.amount > 0 ? INCOME_CATEGORIES : EXPENSE_CATEGORIES}
                                 categoryLabels={CATEGORY_LABELS}
                                 availablePayments={transaction.amount > 0 ? pendingPayments : []}
-                                onCategorize={({ category, paymentId }) => 
+                                onCategorize={({ category, paymentId, unitId, contractId }) => 
                                     categorizeMutation.mutate({ 
                                         transactionId: transaction.id, 
                                         category,
-                                        paymentId 
+                                        paymentId,
+                                        unitId,
+                                        contractId
                                     })
                                 }
                                 tenants={tenants}
                                 units={units}
                                 buildings={buildings}
+                                contracts={contracts}
                             />
                         ))
                     )}
@@ -833,6 +845,7 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                                 tenants={tenants}
                                 units={units}
                                 buildings={buildings}
+                                contracts={contracts}
                             />
                         ))
                     )}
