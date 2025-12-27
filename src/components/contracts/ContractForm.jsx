@@ -30,7 +30,7 @@ export default function ContractForm({
     tenants = []
 }) {
     const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
-        defaultValues: initialData || { status: 'active', is_unlimited: true, deposit_paid: false }
+        defaultValues: initialData || { status: 'active', is_unlimited: true, deposit_paid: false, deposit_installments: 1 }
     });
 
     const watchIsUnlimited = watch('is_unlimited');
@@ -40,12 +40,14 @@ export default function ContractForm({
     const watchStatus = watch('status');
     const watchUnitId = watch('unit_id');
     const watchTenantId = watch('tenant_id');
+    const watchDepositInstallments = watch('deposit_installments');
+    const watchRentChangeDate = watch('rent_change_date');
 
     React.useEffect(() => {
         if (initialData) {
             reset(initialData);
         } else {
-            reset({ status: 'active', is_unlimited: true, deposit_paid: false });
+            reset({ status: 'active', is_unlimited: true, deposit_paid: false, deposit_installments: 1 });
         }
     }, [initialData, reset]);
 
@@ -64,8 +66,14 @@ export default function ContractForm({
             heating: parseFloat(data.heating) || 0,
             total_rent: parseFloat(data.total_rent) || 0,
             deposit: data.deposit ? parseFloat(data.deposit) : null,
+            deposit_installments: data.deposit_installments ? parseInt(data.deposit_installments) : 1,
             notice_period_months: data.notice_period_months ? parseInt(data.notice_period_months) : null,
             end_date: data.is_unlimited ? null : data.end_date,
+            new_base_rent: data.new_base_rent ? parseFloat(data.new_base_rent) : null,
+            new_utilities: data.new_utilities ? parseFloat(data.new_utilities) : null,
+            new_heating: data.new_heating ? parseFloat(data.new_heating) : null,
+            rent_change_date: data.rent_change_date || null,
+            handover_date: data.handover_date || null,
         });
     };
 
@@ -117,13 +125,21 @@ export default function ContractForm({
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                         <div>
                             <Label htmlFor="start_date">Mietbeginn *</Label>
                             <Input 
                                 id="start_date"
                                 type="date"
                                 {...register('start_date', { required: true })}
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="handover_date">Wohnungsübergabe</Label>
+                            <Input 
+                                id="handover_date"
+                                type="date"
+                                {...register('handover_date')}
                             />
                         </div>
                         <div>
@@ -212,7 +228,7 @@ export default function ContractForm({
 
                     <div className="border-t pt-4">
                         <h3 className="font-semibold text-slate-800 mb-4">Kaution & Kündigungsfrist</h3>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
                             <div>
                                 <Label htmlFor="deposit">Kaution (€)</Label>
                                 <Input 
@@ -222,6 +238,23 @@ export default function ContractForm({
                                     {...register('deposit')}
                                     placeholder="1950"
                                 />
+                            </div>
+                            <div>
+                                <Label htmlFor="deposit_installments">Fälligkeit der Kaution</Label>
+                                <Select 
+                                    value={watchDepositInstallments?.toString()} 
+                                    onValueChange={(value) => setValue('deposit_installments', parseInt(value))}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="1">1 Zahlung</SelectItem>
+                                        <SelectItem value="2">2 monatliche Zahlungen</SelectItem>
+                                        <SelectItem value="3">3 monatliche Zahlungen</SelectItem>
+                                        <SelectItem value="4">4 monatliche Zahlungen</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div>
                                 <Label htmlFor="notice_period_months">Kündigungsfrist (Monate)</Label>
@@ -241,6 +274,52 @@ export default function ContractForm({
                                 onCheckedChange={(checked) => setValue('deposit_paid', checked)}
                             />
                         </div>
+                    </div>
+
+                    <div className="border-t pt-4">
+                        <h3 className="font-semibold text-slate-800 mb-4">Mietvertragsänderung</h3>
+                        <div className="mb-4">
+                            <Label htmlFor="rent_change_date">Datum der Änderung</Label>
+                            <Input 
+                                id="rent_change_date"
+                                type="date"
+                                {...register('rent_change_date')}
+                            />
+                        </div>
+                        {watchRentChangeDate && (
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <Label htmlFor="new_base_rent">Neue Kaltmiete (€)</Label>
+                                    <Input 
+                                        id="new_base_rent"
+                                        type="number"
+                                        step="0.01"
+                                        {...register('new_base_rent')}
+                                        placeholder="700"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="new_utilities">Neue Nebenkosten (€)</Label>
+                                    <Input 
+                                        id="new_utilities"
+                                        type="number"
+                                        step="0.01"
+                                        {...register('new_utilities')}
+                                        placeholder="130"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="new_heating">Neue Heizkosten (€)</Label>
+                                    <Input 
+                                        id="new_heating"
+                                        type="number"
+                                        step="0.01"
+                                        {...register('new_heating')}
+                                        placeholder="90"
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {watchStatus === 'terminated' && (
