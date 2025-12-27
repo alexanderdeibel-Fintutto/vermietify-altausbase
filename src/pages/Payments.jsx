@@ -110,7 +110,7 @@ export default function Payments() {
             // Dann alle Zahlungen neu generieren
             const count = await regenerateAllPayments();
             queryClient.invalidateQueries({ queryKey: ['payments'] });
-            toast.success(`${count} Zahlungen wurden erfolgreich aktualisiert`);
+            toast.success(`${count} Mietforderungen wurden erfolgreich aktualisiert`);
         } catch (error) {
             toast.error('Fehler beim Aktualisieren der Zahlungen');
         } finally {
@@ -140,8 +140,8 @@ export default function Payments() {
         <div className="space-y-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">Zahlungen</h1>
-                    <p className="text-slate-500 mt-1">{payments.length} Zahlungen erfasst</p>
+                    <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">Mietforderungen</h1>
+                    <p className="text-slate-500 mt-1">{payments.length} Forderungen erfasst</p>
                 </div>
                 <Button 
                     onClick={handleRegeneratePayments}
@@ -156,7 +156,7 @@ export default function Payments() {
                     ) : (
                         <>
                             <RefreshCw className="w-4 h-4 mr-2" />
-                            Alle Zahlungen aktualisieren
+                            Alle Mietforderungen aktualisieren
                         </>
                     )}
                 </Button>
@@ -170,7 +170,7 @@ export default function Payments() {
                         €{totalPaid.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
                     </p>
                     <p className="text-sm text-slate-400 mt-1">
-                        {payments.filter(p => p.status === 'paid').length} Zahlungen
+                        {payments.filter(p => p.status === 'paid').length} Forderungen
                     </p>
                 </div>
                 <div className="bg-white rounded-2xl p-6 border border-slate-200/50 shadow-sm">
@@ -179,7 +179,7 @@ export default function Payments() {
                         €{totalOverdue.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
                     </p>
                     <p className="text-sm text-slate-400 mt-1">
-                        {payments.filter(p => p.status === 'pending' || p.status === 'overdue').length} Zahlungen
+                        {payments.filter(p => p.status === 'pending' || p.status === 'overdue').length} Forderungen
                     </p>
                 </div>
                 <div className="bg-white rounded-2xl p-6 border border-slate-200/50 shadow-sm">
@@ -187,7 +187,7 @@ export default function Payments() {
                     <p className="text-3xl font-bold text-red-600 mt-2">
                         {payments.filter(p => p.status === 'overdue').length}
                     </p>
-                    <p className="text-sm text-slate-400 mt-1">Zahlungen</p>
+                    <p className="text-sm text-slate-400 mt-1">Forderungen</p>
                 </div>
             </div>
 
@@ -223,8 +223,8 @@ export default function Payments() {
             {filteredPayments.length === 0 ? (
                 <EmptyState
                     icon={CreditCard}
-                    title="Keine Zahlungen gefunden"
-                    description="Es wurden keine Zahlungen mit den ausgewählten Filtern gefunden."
+                    title="Keine Mietforderungen gefunden"
+                    description="Es wurden keine Mietforderungen mit den ausgewählten Filtern gefunden."
                 />
             ) : (
                 <div className="bg-white rounded-2xl border border-slate-200/50 shadow-sm overflow-hidden">
