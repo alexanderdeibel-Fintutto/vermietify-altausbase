@@ -113,28 +113,52 @@ export default function TransactionCategoryCard({
                 <div className="flex flex-col lg:flex-row gap-4">
                     {/* Transaction Info */}
                     <div className="flex-1">
-                        <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-start justify-between mb-3">
                             <div className="flex-1">
-                                <p className="font-semibold text-slate-800">
+                                <p className="font-semibold text-slate-800 text-lg mb-1">
                                     {transaction.sender_receiver || 'Unbekannt'}
                                 </p>
-                                <p className="text-sm text-slate-500">
+                                <p className="text-sm text-slate-600 mb-2">
                                     {transaction.description}
                                 </p>
-                                {transaction.reference && transaction.reference !== transaction.description && (
-                                    <p className="text-xs text-slate-400 mt-1">
-                                        Ref: {transaction.reference}
-                                    </p>
-                                )}
+                                <div className="space-y-1 text-xs text-slate-500">
+                                    {transaction.reference && transaction.reference !== transaction.description && (
+                                        <div className="flex items-start gap-2">
+                                            <span className="font-medium min-w-28 text-slate-600">Verwendungszweck:</span>
+                                            <span className="flex-1">{transaction.reference}</span>
+                                        </div>
+                                    )}
+                                    {transaction.iban && (
+                                        <div className="flex items-start gap-2">
+                                            <span className="font-medium min-w-28 text-slate-600">IBAN:</span>
+                                            <span className="font-mono flex-1">{transaction.iban}</span>
+                                        </div>
+                                    )}
+                                    {transaction.value_date && transaction.value_date !== transaction.transaction_date && (
+                                        <div className="flex items-start gap-2">
+                                            <span className="font-medium min-w-28 text-slate-600">Wertstellung:</span>
+                                            <span>
+                                                {(() => {
+                                                    try {
+                                                        const date = parseISO(transaction.value_date);
+                                                        return format(date, 'dd.MM.yyyy', { locale: de });
+                                                    } catch {
+                                                        return transaction.value_date;
+                                                    }
+                                                })()}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                             <div className="text-right ml-4">
                                 <p className={cn(
-                                    "text-xl font-bold whitespace-nowrap",
+                                    "text-2xl font-bold whitespace-nowrap mb-1",
                                     isPositive ? "text-emerald-600" : "text-red-600"
                                 )}>
                                     {isPositive ? '+' : ''}{transaction.amount?.toFixed(2)} €
                                 </p>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-sm text-slate-500 font-medium">
                                     {(() => {
                                         try {
                                             if (!transaction.transaction_date || transaction.transaction_date.trim() === '') {
