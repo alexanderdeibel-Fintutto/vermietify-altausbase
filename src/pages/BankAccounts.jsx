@@ -145,6 +145,8 @@ export default function BankAccounts() {
     const [formOpen, setFormOpen] = useState(false);
     const [editingAccount, setEditingAccount] = useState(null);
     const [deleteAccount, setDeleteAccount] = useState(null);
+    const [isConnecting, setIsConnecting] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: accounts = [], isLoading } = useQuery({
@@ -216,15 +218,41 @@ export default function BankAccounts() {
 
     return (
         <div className="space-y-8">
-            <PageHeader 
-                title="Bankkonten"
-                subtitle={`${accounts.length} Konten verwalten`}
-                action={() => {
-                    setEditingAccount(null);
-                    setFormOpen(true);
-                }}
-                actionLabel="Konto hinzufügen"
-            />
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+                <div>
+                    <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">Bankkonten</h1>
+                    <p className="text-slate-500 mt-1">{accounts.length} Konten verwalten</p>
+                </div>
+                <div className="flex gap-2">
+                    <Button
+                        onClick={handleSyncAll}
+                        disabled={isSyncing || accounts.length === 0}
+                        variant="outline"
+                        className="gap-2"
+                    >
+                        <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                        Alle synchronisieren
+                    </Button>
+                    <Button
+                        onClick={handleConnectBank}
+                        disabled={isConnecting}
+                        className="bg-blue-600 hover:bg-blue-700 gap-2"
+                    >
+                        <Link2 className="w-4 h-4" />
+                        Bank verbinden
+                    </Button>
+                    <Button 
+                        onClick={() => {
+                            setEditingAccount(null);
+                            setFormOpen(true);
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Manuell hinzufügen
+                    </Button>
+                </div>
+            </div>
 
             {accounts.length === 0 ? (
                 <EmptyState
