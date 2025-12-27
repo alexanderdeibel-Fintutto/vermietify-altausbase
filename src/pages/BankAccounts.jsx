@@ -145,6 +145,7 @@ export default function BankAccounts() {
     const [formOpen, setFormOpen] = useState(false);
     const [editingAccount, setEditingAccount] = useState(null);
     const [deleteAccount, setDeleteAccount] = useState(null);
+    const [importerOpen, setImporterOpen] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: accounts = [], isLoading } = useQuery({
@@ -216,15 +217,33 @@ export default function BankAccounts() {
 
     return (
         <div className="space-y-8">
-            <PageHeader 
-                title="Bankkonten"
-                subtitle={`${accounts.length} Konten verwalten`}
-                action={() => {
-                    setEditingAccount(null);
-                    setFormOpen(true);
-                }}
-                actionLabel="Konto hinzufügen"
-            />
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">Bankkonten</h1>
+                    <p className="text-slate-500 mt-1">{accounts.length} Konten verwalten</p>
+                </div>
+                <div className="flex items-center gap-3">
+                    {accounts.length > 0 && (
+                        <Button 
+                            variant="outline"
+                            onClick={() => setImporterOpen(true)}
+                        >
+                            <Upload className="w-4 h-4 mr-2" />
+                            Transaktionen importieren
+                        </Button>
+                    )}
+                    <Button 
+                        onClick={() => {
+                            setEditingAccount(null);
+                            setFormOpen(true);
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-700"
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Konto hinzufügen
+                    </Button>
+                </div>
+            </div>
 
             {accounts.length === 0 ? (
                 <EmptyState
@@ -341,6 +360,12 @@ export default function BankAccounts() {
                 onSubmit={handleSubmit}
                 initialData={editingAccount}
                 isLoading={createMutation.isPending || updateMutation.isPending}
+            />
+
+            <TransactionImporter
+                open={importerOpen}
+                onOpenChange={setImporterOpen}
+                accounts={accounts}
             />
 
             <AlertDialog open={!!deleteAccount} onOpenChange={() => setDeleteAccount(null)}>

@@ -17,6 +17,7 @@ import {
 
 export default function BankReconciliation() {
     const [isAutoMatching, setIsAutoMatching] = useState(false);
+    const [importerOpen, setImporterOpen] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: transactions = [], isLoading: loadingTransactions } = useQuery({
