@@ -57,9 +57,12 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
             });
 
             // Map common German CSV headers - more variations
+            const transactionDate = row['buchungstag'] || row['buchungsdatum'] || row['datum'] || row['date'] || '';
+            const valueDate = row['wertstellung'] || row['valuta'] || row['value_date'] || transactionDate || '';
+
             const transaction = {
-                transaction_date: row['buchungstag'] || row['buchungsdatum'] || row['datum'] || row['date'] || '',
-                value_date: row['wertstellung'] || row['valuta'] || row['value_date'] || row['buchungstag'] || row['datum'] || '',
+                transaction_date: transactionDate.trim(),
+                value_date: valueDate.trim(),
                 amount: parseFloat((row['betrag'] || row['amount'] || row['umsatz'] || '0').replace(',', '.').replace(/[^\d.-]/g, '')),
                 description: row['buchungstext'] || row['verwendungszweck'] || row['beschreibung'] || row['description'] || row['zweck'] || '',
                 sender_receiver: row['auftraggeber'] || row['empfänger'] || row['name'] || row['sender_receiver'] || row['auftraggeber / empfänger'] || '',
@@ -67,7 +70,8 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
                 reference: row['verwendungszweck'] || row['referenz'] || row['reference'] || row['buchungstext'] || ''
             };
 
-            if (transaction.transaction_date && !isNaN(transaction.amount)) {
+            // Only add if date is valid and not empty
+            if (transaction.transaction_date && transaction.transaction_date !== '' && !isNaN(transaction.amount)) {
                 transactions.push(transaction);
             }
         }
