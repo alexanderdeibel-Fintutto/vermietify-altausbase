@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { FileText, MoreVertical, Pencil, Trash2, User, Building2, Calendar, AlertCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '../utils';
+import { FileText, MoreVertical, Pencil, Trash2, User, Building2, Calendar, AlertCircle, Eye } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
@@ -165,6 +167,12 @@ export default function Contracts() {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
+                                                <DropdownMenuItem asChild>
+                                                    <Link to={createPageUrl(`ContractDetail?contractId=${contract.id}`)}>
+                                                        <Eye className="w-4 h-4 mr-2" />
+                                                        Details anzeigen
+                                                    </Link>
+                                                </DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => {
                                                     setEditingContract(contract);
                                                     setFormOpen(true);
