@@ -35,6 +35,15 @@ export default function TransactionCategoryCard({
     const [selectedContractId, setSelectedContractId] = useState(transaction.contract_id || '');
     const [isProcessing, setIsProcessing] = useState(false);
 
+    const getTenant = (tenantId) => tenants.find(t => t.id === tenantId);
+    const getUnit = (unitId) => units.find(u => u.id === unitId);
+    const getBuilding = (buildingId) => buildings.find(b => b.id === buildingId);
+    const getContract = (contractId) => contracts.find(c => c.id === contractId);
+
+    // Determine if selected object is a unit
+    const selectedUnit = units.find(u => u.id === selectedObjectId);
+    const actualUnitId = selectedUnit ? selectedObjectId : null;
+
     const handleCategorize = async () => {
         if (!selectedCategory) return;
         
@@ -117,15 +126,6 @@ export default function TransactionCategoryCard({
             setIsProcessing(false);
         }
     };
-
-    const getTenant = (tenantId) => tenants.find(t => t.id === tenantId);
-    const getUnit = (unitId) => units.find(u => u.id === unitId);
-    const getBuilding = (buildingId) => buildings.find(b => b.id === buildingId);
-    const getContract = (contractId) => contracts.find(c => c.id === contractId);
-
-    // Determine if selected object is a unit
-    const selectedUnit = units.find(u => u.id === selectedObjectId);
-    const actualUnitId = selectedUnit ? selectedObjectId : null;
 
     // Filter payments by selected unit
     const filteredPayments = actualUnitId
