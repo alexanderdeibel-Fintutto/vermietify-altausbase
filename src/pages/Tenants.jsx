@@ -103,7 +103,7 @@ export default function Tenants() {
                                         )}
                                     </div>
                                     {tenant.jobcenter && (
-                                        <Badge className="bg-blue-100 text-blue-700">Jobcenter</Badge>
+                                        <Badge className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5">Jobcenter</Badge>
                                     )}
                                 </div>
                             </CardHeader>
