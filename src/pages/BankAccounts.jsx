@@ -195,37 +195,43 @@ export default function BankAccounts() {
 
     const handleConnectBank = async () => {
         setIsConnecting(true);
-        console.log('Starting bank connection...');
         
         try {
             const response = await base44.functions.invoke('finapiConnect', {});
-            console.log('Response received:', response);
 
             if (response.data.error) {
                 toast.error(response.data.error);
-                console.error('Connection error:', response.data);
                 return;
             }
 
-            if (response.data.success) {
-                toast.success(response.data.message || 'Bankverbindung erfolgreich hergestellt');
-                queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
-                queryClient.invalidateQueries({ queryKey: ['bankTransactions'] });
-                
-                if (response.data.webFormUrl) {
-                    window.open(response.data.webFormUrl, '_blank', 'width=800,height=700');
-                }
+            if (response.data.success && response.data.webFormUrl) {
+                // Open popup window
+                const popup = window.open(
+                    response.data.webFormUrl, 
+                    'FinAPI', 
+                    'width=800,height=700,scrollbars=yes'
+                );
+
+                // Poll for window close and refresh accounts
+                const pollTimer = setInterval(() => {
+                    if (popup && popup.closed) {
+                        clearInterval(pollTimer);
+                        queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
+                        queryClient.invalidateQueries({ queryKey: ['bankTransactions'] });
+                        toast.success('Bankkonten wurden aktualisiert');
+                    }
+                }, 500);
+
+                // Cleanup after 5 minutes
+                setTimeout(() => clearInterval(pollTimer), 300000);
             } else {
-                toast.error('Unerwartete Antwort vom Server');
-                console.error('Unexpected response:', response.data);
+                toast.error('Bankverbindung konnte nicht initialisiert werden');
             }
         } catch (error) {
             console.error('Bank connection error:', error);
-            const errorMsg = error.response?.data?.error || error.message || 'Fehler beim Verbinden der Bank';
-            toast.error(errorMsg);
+            toast.error(error.response?.data?.error || 'Fehler beim Verbinden der Bank');
         } finally {
             setIsConnecting(false);
-            console.log('Connection attempt finished');
         }
     };
 
@@ -236,24 +242,16 @@ export default function BankAccounts() {
             
             if (response.data.error) {
                 toast.error(response.data.error);
-                console.error('Sync error:', response.data.details);
                 return;
             }
             
             queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
             queryClient.invalidateQueries({ queryKey: ['bankTransactions'] });
             
-            const newTx = response.data.totalNewTransactions || 0;
-            const synced = response.data.accountsSynced || 0;
-            
-            if (newTx > 0) {
-                toast.success(`${newTx} neue Transaktionen von ${synced} Konto(en) importiert`);
-            } else {
-                toast.info('Keine neuen Transaktionen gefunden');
-            }
+            toast.success(response.data.message);
         } catch (error) {
             console.error('Sync error:', error);
-            toast.error(error.response?.data?.error || 'Fehler beim Synchronisieren');
+            toast.error(error.response?.data?.error || 'Synchronisierung fehlgeschlagen');
         } finally {
             setIsSyncing(false);
         }
@@ -266,36 +264,24 @@ export default function BankAccounts() {
         }
 
         setIsSyncing(true);
-        console.log('Starting sync for all accounts...');
         
         try {
             const response = await base44.functions.invoke('finapiSync', {});
-            console.log('Sync response received:', response);
             
             if (response.data.error) {
                 toast.error(response.data.error);
-                console.error('Sync error:', response.data);
                 return;
             }
             
             queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
             queryClient.invalidateQueries({ queryKey: ['bankTransactions'] });
             
-            const newTx = response.data.totalNewTransactions || 0;
-            const synced = response.data.accountsSynced || 0;
-            
-            if (newTx > 0) {
-                toast.success(`${newTx} neue Transaktionen von ${synced} Konto(en) importiert`);
-            } else {
-                toast.info('Keine neuen Transaktionen gefunden');
-            }
+            toast.success(response.data.message);
         } catch (error) {
             console.error('Sync error:', error);
-            const errorMsg = error.response?.data?.error || error.message || 'Fehler beim Synchronisieren';
-            toast.error(errorMsg);
+            toast.error(error.response?.data?.error || 'Synchronisierung fehlgeschlagen');
         } finally {
             setIsSyncing(false);
-            console.log('Sync attempt finished');
         }
     };
 
