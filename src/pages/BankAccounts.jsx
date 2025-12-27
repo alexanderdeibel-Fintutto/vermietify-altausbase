@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Landmark, Plus, MoreVertical, Pencil, Trash2, Upload, TrendingUp, TrendingDown } from 'lucide-react';
+import { Landmark, Plus, MoreVertical, Pencil, Trash2, Upload, TrendingUp, TrendingDown, Link2, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -192,6 +193,60 @@ export default function BankAccounts() {
         }
     };
 
+    const handleConnectBank = async () => {
+        setIsConnecting(true);
+        try {
+            const response = await base44.functions.invoke('finapiConnect', {
+                redirectUrl: window.location.origin + '/bank-accounts'
+            });
+
+            if (response.data.webFormUrl) {
+                window.open(response.data.webFormUrl, '_blank', 'width=600,height=800');
+                toast.success('Bank-Verbindungsfenster geöffnet');
+                
+                setTimeout(() => {
+                    queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
+                }, 10000);
+            }
+        } catch (error) {
+            toast.error('Fehler beim Verbinden der Bank');
+        } finally {
+            setIsConnecting(false);
+        }
+    };
+
+    const handleSyncAccount = async (accountId) => {
+        setIsSyncing(true);
+        try {
+            const response = await base44.functions.invoke('finapiSync', { accountId });
+            queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
+            queryClient.invalidateQueries({ queryKey: ['bankTransactions'] });
+            
+            const newTx = response.data.totalNewTransactions || 0;
+            toast.success(`${newTx} neue Transaktionen importiert`);
+        } catch (error) {
+            toast.error('Fehler beim Synchronisieren');
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
+    const handleSyncAll = async () => {
+        setIsSyncing(true);
+        try {
+            const response = await base44.functions.invoke('finapiSync', {});
+            queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
+            queryClient.invalidateQueries({ queryKey: ['bankTransactions'] });
+            
+            const newTx = response.data.totalNewTransactions || 0;
+            toast.success(`${newTx} neue Transaktionen importiert`);
+        } catch (error) {
+            toast.error('Fehler beim Synchronisieren');
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
     const getAccountTransactions = (accountId) => {
         return transactions.filter(t => t.account_id === accountId);
     };
@@ -255,13 +310,33 @@ export default function BankAccounts() {
             </div>
 
             {accounts.length === 0 ? (
-                <EmptyState
-                    icon={Landmark}
-                    title="Noch keine Bankkonten"
-                    description="Fügen Sie Ihr erstes Bankkonto hinzu, um Transaktionen zu verwalten."
-                    action={() => setFormOpen(true)}
-                    actionLabel="Erstes Konto hinzufügen"
-                />
+                <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
+                    <Landmark className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-slate-800 mb-2">
+                        Noch keine Bankkonten
+                    </h3>
+                    <p className="text-slate-500 mb-6">
+                        Verbinden Sie Ihre Bank automatisch oder fügen Sie ein Konto manuell hinzu.
+                    </p>
+                    <div className="flex gap-3 justify-center">
+                        <Button 
+                            onClick={handleConnectBank}
+                            disabled={isConnecting}
+                            className="bg-blue-600 hover:bg-blue-700 gap-2"
+                        >
+                            <Link2 className="w-4 h-4" />
+                            Bank verbinden
+                        </Button>
+                        <Button 
+                            onClick={() => setFormOpen(true)}
+                            variant="outline"
+                            className="gap-2"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Manuell hinzufügen
+                        </Button>
+                    </div>
+                </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {accounts.map((account) => {
@@ -279,6 +354,12 @@ export default function BankAccounts() {
                                                         Hauptkonto
                                                     </Badge>
                                                 )}
+                                                {account.finapi_connection_id && (
+                                                    <Badge className="bg-blue-100 text-blue-700 text-xs">
+                                                        <Link2 className="w-3 h-3 mr-1" />
+                                                        Verbunden
+                                                    </Badge>
+                                                )}
                                             </div>
                                             {account.bank_name && (
                                                 <p className="text-sm text-slate-500 mt-1">{account.bank_name}</p>
@@ -291,6 +372,15 @@ export default function BankAccounts() {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
+                                                {account.finapi_connection_id && (
+                                                    <DropdownMenuItem 
+                                                        onClick={() => handleSyncAccount(account.id)}
+                                                        disabled={isSyncing}
+                                                    >
+                                                        <RefreshCw className="w-4 h-4 mr-2" />
+                                                        Synchronisieren
+                                                    </DropdownMenuItem>
+                                                )}
                                                 <DropdownMenuItem onClick={() => {
                                                     setEditingAccount(account);
                                                     setFormOpen(true);
