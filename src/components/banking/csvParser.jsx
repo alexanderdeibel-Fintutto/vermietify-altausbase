@@ -1,4 +1,4 @@
-import { parse } from 'date-fns';
+import { parse } from 'date-fns/parse';
 
 /**
  * Detects the bank format from CSV content
