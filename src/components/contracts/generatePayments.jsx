@@ -87,7 +87,6 @@ export async function generatePaymentsForContract(contract, rentChanges = [], pa
             });
         }
         
-        isFirstMonth = false;
         currentDate = addMonths(currentDate, 1);
     }
 
