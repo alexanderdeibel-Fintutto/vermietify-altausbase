@@ -92,14 +92,34 @@ export default function ContractDetail() {
 
     const unit = units.find(u => u.id === contract.unit_id);
     const tenant = tenants.find(t => t.id === contract.tenant_id);
+    const secondTenant = contract.second_tenant_id ? tenants.find(t => t.id === contract.second_tenant_id) : null;
     const building = unit ? buildings.find(b => b.id === unit.building_id) : null;
 
+    const getContractStatus = (contract) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const startDate = new Date(contract.start_date);
+        const endDate = contract.end_date ? new Date(contract.end_date) : null;
+
+        if (startDate > today) {
+            return 'pending';
+        } else if (endDate && endDate < today) {
+            return 'expired';
+        } else if (contract.termination_date) {
+            return 'terminated';
+        } else {
+            return 'active';
+        }
+    };
+
     const statusConfig = {
+        pending: { label: 'Bevorstehend', color: 'bg-blue-100 text-blue-700' },
         active: { label: 'Aktiv', color: 'bg-emerald-100 text-emerald-700' },
         terminated: { label: 'Gekündigt', color: 'bg-amber-100 text-amber-700' },
-        expired: { label: 'Abgelaufen', color: 'bg-slate-100 text-slate-700' }
+        expired: { label: 'Beendet', color: 'bg-slate-100 text-slate-700' }
     };
-    const status = statusConfig[contract.status] || statusConfig.active;
+    const contractStatus = getContractStatus(contract);
+    const status = statusConfig[contractStatus] || statusConfig.active;
 
     return (
         <div className="space-y-6">
@@ -151,7 +171,7 @@ export default function ContractDetail() {
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
                                     <User className="w-4 h-4 text-slate-400" />
-                                    <span className="text-sm font-medium text-slate-500">Mieter</span>
+                                    <span className="text-sm font-medium text-slate-500">Hauptmieter</span>
                                 </div>
                                 <p className="text-lg font-semibold text-slate-800">
                                     {tenant.first_name} {tenant.last_name}
@@ -161,6 +181,23 @@ export default function ContractDetail() {
                                 )}
                                 {tenant.phone && (
                                     <p className="text-sm text-slate-600">{tenant.phone}</p>
+                                )}
+                            </div>
+                        )}
+                        {secondTenant && (
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <User className="w-4 h-4 text-slate-400" />
+                                    <span className="text-sm font-medium text-slate-500">Zweiter Mieter</span>
+                                </div>
+                                <p className="text-lg font-semibold text-slate-800">
+                                    {secondTenant.first_name} {secondTenant.last_name}
+                                </p>
+                                {secondTenant.email && (
+                                    <p className="text-sm text-slate-600">{secondTenant.email}</p>
+                                )}
+                                {secondTenant.phone && (
+                                    <p className="text-sm text-slate-600">{secondTenant.phone}</p>
                                 )}
                             </div>
                         )}
