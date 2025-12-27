@@ -85,7 +85,7 @@ export default function OnlineBankingSetup({ open, onOpenChange, account }) {
         { name: 'Commerzbank', url: 'https://www.commerzbanking.de' },
         { name: 'ING', url: 'https://banking.ing.de' },
         { name: 'Postbank', url: 'https://banking.postbank.de' },
-        { name: 'Andere', url: '' }
+        { name: 'Andere', url: 'custom' }
     ];
 
     return (
@@ -145,14 +145,13 @@ export default function OnlineBankingSetup({ open, onOpenChange, account }) {
                                 </Select>
                             </div>
 
-                            {formData.banking_url === '' && (
+                            {formData.banking_url === 'custom' && (
                                 <div>
                                     <Label htmlFor="custom_url">Banking-URL</Label>
                                     <Input 
                                         id="custom_url"
                                         type="url"
                                         placeholder="https://..."
-                                        value={formData.banking_url}
                                         onChange={(e) => setFormData({ ...formData, banking_url: e.target.value })}
                                     />
                                 </div>
