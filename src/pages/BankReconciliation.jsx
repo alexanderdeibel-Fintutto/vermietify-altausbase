@@ -13,7 +13,8 @@ import {
     matchTransactionWithPayment, 
     unmatchTransaction, 
     findMatchingPayment,
-    autoMatchAllTransactions 
+    autoMatchAllTransactions,
+    findMatchSuggestions
 } from '@/components/banking/matchTransactions';
 
 export default function BankReconciliation() {
