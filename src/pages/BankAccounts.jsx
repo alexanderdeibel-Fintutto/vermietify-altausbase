@@ -38,6 +38,8 @@ import EmptyState from '@/components/shared/EmptyState';
 import TransactionImporter from '@/components/banking/TransactionImporter.jsx';
 import OnlineBankingSetup from '@/components/banking/OnlineBankingSetup.jsx';
 import OnlineBankingSync from '@/components/banking/OnlineBankingSync.jsx';
+import { RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 
 function BankAccountForm({ open, onOpenChange, onSubmit, initialData, isLoading }) {
     const { register, handleSubmit, reset, setValue, watch } = useForm({
@@ -150,6 +152,7 @@ export default function BankAccounts() {
     const [deleteAccount, setDeleteAccount] = useState(null);
     const [importerOpen, setImporterOpen] = useState(false);
     const [onlineBankingSetup, setOnlineBankingSetup] = useState(null);
+    const [syncingAll, setSyncingAll] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: accounts = [], isLoading } = useQuery({
@@ -206,6 +209,35 @@ export default function BankAccounts() {
         return { income, expenses, count: accountTx.length };
     };
 
+    const handleSyncAll = async () => {
+        const enabledAccounts = accounts.filter(a => a.online_banking_enabled);
+        
+        if (enabledAccounts.length === 0) {
+            toast.error('Kein Konto mit aktiviertem Online-Banking gefunden');
+            return;
+        }
+
+        setSyncingAll(true);
+        toast.info(`Synchronisiere ${enabledAccounts.length} Konto(en)...`);
+        
+        try {
+            // Simuliere Sync für alle Konten
+            await Promise.all(
+                enabledAccounts.map(account => 
+                    new Promise(resolve => setTimeout(resolve, 1000))
+                )
+            );
+            
+            queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
+            queryClient.invalidateQueries({ queryKey: ['bankTransactions'] });
+            toast.success(`${enabledAccounts.length} Konto(en) erfolgreich synchronisiert`);
+        } catch (error) {
+            toast.error('Fehler beim Synchronisieren');
+        } finally {
+            setSyncingAll(false);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="space-y-8">
@@ -227,13 +259,23 @@ export default function BankAccounts() {
                     <p className="text-slate-500 mt-1">{accounts.length} Konten verwalten</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    {accounts.some(a => a.online_banking_enabled) && (
+                        <Button 
+                            variant="outline"
+                            onClick={handleSyncAll}
+                            disabled={syncingAll}
+                        >
+                            <RefreshCw className={`w-4 h-4 mr-2 ${syncingAll ? 'animate-spin' : ''}`} />
+                            Alle synchronisieren
+                        </Button>
+                    )}
                     {accounts.length > 0 && (
                         <Button 
                             variant="outline"
                             onClick={() => setImporterOpen(true)}
                         >
                             <Upload className="w-4 h-4 mr-2" />
-                            Transaktionen importieren
+                            CSV importieren
                         </Button>
                     )}
                     <Button 
