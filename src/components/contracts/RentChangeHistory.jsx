@@ -104,24 +104,6 @@ export default function RentChangeHistory({ contract }) {
                 <div className="space-y-3">
                     <h4 className="text-sm font-semibold text-slate-700 mb-3">Historie</h4>
                     
-                    {/* Original rent */}
-                    <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="text-sm font-medium text-slate-700">
-                                    {format(parseISO(contract.start_date), 'dd.MM.yyyy', { locale: de })}
-                                </span>
-                                <Badge variant="outline" className="text-xs">Ursprungsmiete</Badge>
-                            </div>
-                            <div className="text-xs text-slate-500">
-                                Kaltmiete: €{contract.base_rent?.toFixed(2)} • 
-                                NK: €{contract.utilities?.toFixed(2) || '0.00'} • 
-                                HK: €{contract.heating?.toFixed(2) || '0.00'} • 
-                                Gesamt: €{contract.total_rent?.toFixed(2)}
-                            </div>
-                        </div>
-                    </div>
-
                     {/* Changes - sorted newest to oldest */}
                     {[...rentChanges].sort((a, b) => 
                         new Date(b.effective_date) - new Date(a.effective_date)
@@ -165,6 +147,24 @@ export default function RentChangeHistory({ contract }) {
                             Noch keine Mietvertragsänderungen erfasst
                         </p>
                     )}
+
+                    {/* Original rent at the end */}
+                    <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="text-sm font-medium text-slate-700">
+                                    {format(parseISO(contract.start_date), 'dd.MM.yyyy', { locale: de })}
+                                </span>
+                                <Badge variant="outline" className="text-xs">Ursprungsmiete</Badge>
+                            </div>
+                            <div className="text-xs text-slate-500">
+                                Kaltmiete: €{contract.base_rent?.toFixed(2)} • 
+                                NK: €{contract.utilities?.toFixed(2) || '0.00'} • 
+                                HK: €{contract.heating?.toFixed(2) || '0.00'} • 
+                                Gesamt: €{contract.total_rent?.toFixed(2)}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </CardContent>
 
