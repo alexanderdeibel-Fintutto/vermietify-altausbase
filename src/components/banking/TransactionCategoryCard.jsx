@@ -30,7 +30,7 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
     isSelected = false,
     onSelect
 }) {
-
+    const [isProcessing, setIsProcessing] = useState(false);
 
     // Memoize lookup functions
     const getTenant = React.useCallback((tenantId) => tenants.find(t => t.id === tenantId), [tenants]);
