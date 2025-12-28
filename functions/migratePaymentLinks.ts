@@ -9,43 +9,45 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Get all transactions with matched_payment_id
-        const transactions = await base44.asServiceRole.entities.BankTransaction.filter({
-            is_categorized: true
-        });
+        // Get all existing links first (might be empty initially)
+        let allLinks = [];
+        try {
+            allLinks = await base44.asServiceRole.entities.PaymentTransactionLink.list();
+        } catch (e) {
+            console.log('No existing links found (this is normal for first run)');
+        }
 
-        const oldStyleTransactions = transactions.filter(tx => tx.matched_payment_id);
+        // Get all transactions
+        const transactions = await base44.asServiceRole.entities.BankTransaction.list();
+        const oldStyleTransactions = transactions.filter(tx => tx.is_categorized && tx.matched_payment_id);
 
         console.log(`Found ${oldStyleTransactions.length} transactions with old-style payment matching`);
 
         let migratedCount = 0;
-        let errorCount = 0;
+        let skippedCount = 0;
 
         for (const tx of oldStyleTransactions) {
             try {
                 // Check if link already exists
-                const existingLinks = await base44.asServiceRole.entities.PaymentTransactionLink.filter({
-                    transaction_id: tx.id,
-                    payment_id: tx.matched_payment_id
-                });
+                const linkExists = allLinks.some(link => 
+                    link.transaction_id === tx.id && link.payment_id === tx.matched_payment_id
+                );
 
-                if (existingLinks.length > 0) {
+                if (linkExists) {
                     console.log(`Link already exists for transaction ${tx.id}`);
+                    skippedCount++;
                     continue;
                 }
 
-                // Get payment to determine expected amount
-                const payments = await base44.asServiceRole.entities.Payment.filter({
-                    id: tx.matched_payment_id
-                });
+                // Get payment
+                const payments = await base44.asServiceRole.entities.Payment.list();
+                const payment = payments.find(p => p.id === tx.matched_payment_id);
 
-                if (payments.length === 0) {
+                if (!payment) {
                     console.log(`Payment ${tx.matched_payment_id} not found for transaction ${tx.id}`);
-                    errorCount++;
                     continue;
                 }
 
-                const payment = payments[0];
                 const transactionAmount = Math.abs(tx.amount);
                 const expectedAmount = payment.expected_amount || 0;
                 const linkedAmount = Math.min(transactionAmount, expectedAmount);
@@ -58,17 +60,17 @@ Deno.serve(async (req) => {
                 });
 
                 migratedCount++;
-                console.log(`Migrated transaction ${tx.id} -> payment ${tx.matched_payment_id}`);
+                console.log(`Migrated transaction ${tx.id} -> payment ${tx.matched_payment_id}, amount: ${linkedAmount}`);
             } catch (error) {
-                console.error(`Error migrating transaction ${tx.id}:`, error);
-                errorCount++;
+                console.error(`Error migrating transaction ${tx.id}:`, error.message);
             }
         }
 
-        // Now recalculate all payment statuses
-        const allPayments = await base44.asServiceRole.entities.Payment.list();
-        const allLinks = await base44.asServiceRole.entities.PaymentTransactionLink.list();
+        // Reload all links after migration
+        allLinks = await base44.asServiceRole.entities.PaymentTransactionLink.list();
 
+        // Recalculate all payment statuses
+        const allPayments = await base44.asServiceRole.entities.Payment.list();
         let updatedPayments = 0;
 
         for (const payment of allPayments) {
@@ -83,27 +85,27 @@ Deno.serve(async (req) => {
                 status = 'partial';
             }
 
-            // Only update if status or amount changed
-            if (payment.status !== status || payment.amount !== paidAmount) {
-                await base44.asServiceRole.entities.Payment.update(payment.id, {
-                    amount: paidAmount,
-                    status: status
-                });
-                updatedPayments++;
-            }
+            // Update payment
+            await base44.asServiceRole.entities.Payment.update(payment.id, {
+                amount: paidAmount,
+                status: status
+            });
+            updatedPayments++;
         }
 
         return Response.json({
             success: true,
             migrated: migratedCount,
-            errors: errorCount,
+            skipped: skippedCount,
             paymentsUpdated: updatedPayments,
-            message: `Migration complete: ${migratedCount} links created, ${updatedPayments} payments updated`
+            message: `Migration: ${migratedCount} neue Links, ${skippedCount} übersprungen, ${updatedPayments} Forderungen aktualisiert`
         });
     } catch (error) {
         console.error('Migration error:', error);
         return Response.json({
-            error: error.message || 'Migration failed'
+            success: false,
+            error: error.message,
+            stack: error.stack
         }, { status: 500 });
     }
 });
