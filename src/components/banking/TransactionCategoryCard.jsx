@@ -16,8 +16,6 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import TransactionPaymentAllocation from './TransactionPaymentAllocation';
-
 const TransactionCategoryCard = React.memo(function TransactionCategoryCard({ 
     transaction, 
     availableCategories = [],
@@ -32,11 +30,6 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
     isSelected = false,
     onSelect
 }) {
-    const [selectedCategory, setSelectedCategory] = useState(transaction.category || '');
-    const [selectedPaymentId, setSelectedPaymentId] = useState(transaction.matched_payment_id || '');
-    const [selectedObjectId, setSelectedObjectId] = useState(transaction.unit_id || '');
-    const [selectedContractId, setSelectedContractId] = useState(transaction.contract_id || '');
-    const [isProcessing, setIsProcessing] = useState(false);
     const [showAllocationDialog, setShowAllocationDialog] = useState(false);
 
     // Memoize lookup functions
@@ -45,116 +38,7 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
     const getBuilding = React.useCallback((buildingId) => buildings.find(b => b.id === buildingId), [buildings]);
     const getContract = React.useCallback((contractId) => contracts.find(c => c.id === contractId), [contracts]);
 
-    // Determine if selected object is a unit
-    const selectedUnit = units.find(u => u.id === selectedObjectId);
-    const actualUnitId = selectedUnit ? selectedObjectId : null;
 
-    const handleCategorize = async () => {
-        if (!selectedCategory) return;
-        
-        // For rent_income, show allocation dialog
-        if (selectedCategory === 'rent_income' && actualUnitId && filteredPayments.length > 0) {
-            setShowAllocationDialog(true);
-            return;
-        }
-        
-        setIsProcessing(true);
-        try {
-            await onCategorize({
-                category: selectedCategory,
-                paymentId: null,
-                unitId: actualUnitId || null,
-                contractId: selectedContractId || null
-            });
-            
-            // Check if a rule should be suggested
-            if (transaction.sender_receiver && transaction.sender_receiver.trim() !== '') {
-                await checkAndSuggestRule();
-            }
-        } finally {
-            setIsProcessing(false);
-        }
-    };
-
-    const handleAllocation = async (allocations) => {
-        setIsProcessing(true);
-        setShowAllocationDialog(false);
-        
-        try {
-            await base44.functions.invoke('reconcileTransactionWithPayments', {
-                transactionId: transaction.id,
-                paymentAllocations: allocations,
-                category: selectedCategory,
-                unitId: actualUnitId,
-                contractId: selectedContractId
-            });
-            
-            toast.success('Transaktion zugeordnet');
-            
-            // Trigger parent refresh
-            if (onCategorize) {
-                onCategorize({ skipUpdate: true });
-            }
-        } catch (error) {
-            toast.error('Fehler bei der Zuordnung');
-            console.error(error);
-        } finally {
-            setIsProcessing(false);
-        }
-    };
-
-    const checkAndSuggestRule = async () => {
-        try {
-            // Check if a rule already exists
-            const existingRules = await base44.entities.CategorizationRule.filter({
-                is_active: true
-            });
-
-            const matchingRule = existingRules.find(rule => {
-                const conditions = rule.conditions || {};
-                return conditions.sender_receiver_contains?.toLowerCase() === transaction.sender_receiver.toLowerCase();
-            });
-
-            if (matchingRule) {
-                // Rule exists - just update match count
-                await base44.entities.CategorizationRule.update(matchingRule.id, {
-                    match_count: (matchingRule.match_count || 0) + 1
-                });
-                return;
-            }
-
-            // No rule exists - suggest creating one
-            toast.info(
-                `Regel erstellen für "${transaction.sender_receiver}"?`,
-                {
-                    action: {
-                        label: 'Regel erstellen',
-                        onClick: async () => {
-                            try {
-                                await base44.entities.CategorizationRule.create({
-                                    name: `Auto: ${transaction.sender_receiver}`,
-                                    is_active: true,
-                                    priority: 0,
-                                    auto_apply: true,
-                                    conditions: {
-                                        sender_receiver_contains: transaction.sender_receiver
-                                    },
-                                    target_category: selectedCategory,
-                                    match_count: 1
-                                });
-                                toast.success('Regel erstellt - wird bei zukünftigen Transaktionen angewendet');
-                            } catch (error) {
-                                toast.error('Fehler beim Erstellen der Regel');
-                            }
-                        }
-                    },
-                    duration: 7000
-                }
-            );
-        } catch (error) {
-            console.error('Error checking rules:', error);
-        }
-    };
 
     const handleUncategorize = async () => {
         setIsProcessing(true);
@@ -177,28 +61,7 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
         }
     };
 
-    // Filter payments by selected contract (for rent_income) or unit (memoized)
-    const filteredPayments = React.useMemo(() => 
-        selectedCategory === 'rent_income' && selectedContractId
-            ? availablePayments.filter(p => p.contract_id === selectedContractId)
-            : actualUnitId ? availablePayments.filter(p => p.unit_id === actualUnitId) : [],
-        [actualUnitId, availablePayments, selectedCategory, selectedContractId]
-    );
 
-    // Filter contracts: if unit selected, filter by unit; otherwise show all active (memoized)
-    const filteredContracts = React.useMemo(() => 
-        actualUnitId
-            ? contracts.filter(c => c.unit_id === actualUnitId && c.status === 'active')
-            : contracts.filter(c => c.status === 'active'),
-        [actualUnitId, contracts]
-    );
-
-    // Reset subsequent selections when object changes
-    const handleObjectChange = (objectId) => {
-        setSelectedObjectId(objectId);
-        setSelectedContractId('');
-        setSelectedPaymentId('');
-    };
 
     const isPositive = transaction.amount > 0;
     const isCategorized = transaction.is_categorized;
@@ -353,129 +216,13 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
                         )}
                     </div>
 
-                    {/* Categorization Section */}
+                    {/* Allocation Button */}
                     {!isCategorized && (
-                        <div className="lg:w-96 border-t lg:border-t-0 lg:border-l pt-4 lg:pt-0 lg:pl-4">
-                            <p className="text-sm font-medium text-slate-700 mb-3">
-                                Transaktion zuordnen:
-                            </p>
-
-                            <div className="space-y-2">
-                                {/* 1. Kategorie */}
-                                <div>
-                                    <Label className="text-xs text-slate-600 mb-1">1. Kategorie</Label>
-                                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Kategorie wählen..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {availableCategories.map(cat => (
-                                                <SelectItem key={cat} value={cat}>
-                                                    {categoryLabels[cat] || cat}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                {/* 2. Mietobjekt (Tree-Auswahl) */}
-                                <div>
-                                    <Label className="text-xs text-slate-600 mb-1">2. Mietobjekt</Label>
-                                    <Select value={selectedObjectId} onValueChange={handleObjectChange}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Objekt/Wohnung wählen..." />
-                                        </SelectTrigger>
-                                        <SelectContent className="max-h-80">
-                                            {buildings.flatMap(building => {
-                                                const buildingUnits = units.filter(u => u.building_id === building.id);
-                                                return [
-                                                    <SelectItem key={building.id} value={building.id}>
-                                                        <div className="flex items-center gap-2">
-                                                            <Building2 className="w-4 h-4 text-slate-400" />
-                                                            <span className="font-semibold">{building.name}</span>
-                                                        </div>
-                                                    </SelectItem>,
-                                                    ...buildingUnits.map(unit => (
-                                                        <SelectItem key={unit.id} value={unit.id}>
-                                                            <div className="flex items-center gap-2 pl-6">
-                                                                <span className="text-slate-400">└</span>
-                                                                <span>{unit.unit_number}</span>
-                                                                <span className="text-xs text-slate-400">({unit.sqm}m²)</span>
-                                                            </div>
-                                                        </SelectItem>
-                                                    ))
-                                                ];
-                                            })}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                {/* 3. Mietvertrag */}
-                                {selectedObjectId && filteredContracts.length > 0 && (
-                                    <div>
-                                        <Label className="text-xs text-slate-600 mb-1">3. Mietvertrag</Label>
-                                        <Select value={selectedContractId} onValueChange={setSelectedContractId}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Vertrag wählen..." />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {filteredContracts.map(contract => {
-                                                    const tenant = getTenant(contract.tenant_id);
-                                                    const secondTenant = contract.second_tenant_id ? getTenant(contract.second_tenant_id) : null;
-                                                    return (
-                                                        <SelectItem key={contract.id} value={contract.id}>
-                                                            <div className="flex flex-col">
-                                                                <span className="font-medium">
-                                                                    {tenant ? `${tenant.first_name} ${tenant.last_name}` : 'Unbekannt'}
-                                                                    {secondTenant && ` & ${secondTenant.first_name} ${secondTenant.last_name}`}
-                                                                </span>
-                                                                <span className="text-xs text-slate-500">
-                                                                    Warmmiete: €{contract.total_rent?.toFixed(2)}
-                                                                </span>
-                                                            </div>
-                                                        </SelectItem>
-                                                    );
-                                                })}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                )}
-
-                                {/* Payment Selection (nur für rent_income) */}
-                                {selectedCategory === 'rent_income' && actualUnitId && filteredPayments.length > 0 && (
-                                    <div>
-                                        <Label className="text-xs text-slate-600 mb-1">Zahlung/Monat (optional)</Label>
-                                        <Select value={selectedPaymentId} onValueChange={setSelectedPaymentId}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Zahlung wählen..." />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {filteredPayments.map(payment => {
-                                                    const tenant = getTenant(payment.tenant_id);
-                                                    return (
-                                                        <SelectItem key={payment.id} value={payment.id}>
-                                                            <div className="flex flex-col">
-                                                                <span className="font-medium">
-                                                                    {payment.payment_month}
-                                                                </span>
-                                                                <span className="text-xs text-slate-500">
-                                                                    {tenant ? `${tenant.first_name} ${tenant.last_name}` : 'Unbekannt'} • €{payment.expected_amount?.toFixed(2)}
-                                                                </span>
-                                                            </div>
-                                                        </SelectItem>
-                                                    );
-                                                })}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                )}
-                            </div>
-
+                        <div className="lg:w-48 flex items-center justify-center border-t lg:border-t-0 lg:border-l pt-4 lg:pt-0 lg:pl-4">
                             <Button 
-                                onClick={handleCategorize}
-                                disabled={!selectedCategory || isProcessing}
+                                onClick={() => setShowAllocationDialog(true)}
                                 className={cn(
-                                    "w-full mt-4",
+                                    "w-full",
                                     isPositive 
                                         ? "bg-emerald-600 hover:bg-emerald-700"
                                         : "bg-red-600 hover:bg-red-700"
@@ -483,7 +230,7 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
                                 size="sm"
                             >
                                 <Tag className="w-4 h-4 mr-2" />
-                                Kategorisieren
+                                Zuordnen
                             </Button>
                         </div>
                     )}
@@ -503,25 +250,7 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
                         </div>
                         )}
 
-                        {/* Allocation Dialog */}
-                        {showAllocationDialog && (
-                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                            <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                                <h3 className="text-lg font-semibold text-slate-800 mb-4">
-                                    Transaktion Forderungen zuordnen
-                                </h3>
-                                <TransactionPaymentAllocation
-                                    transaction={transaction}
-                                    availablePayments={filteredPayments}
-                                    onAllocate={handleAllocation}
-                                    onCancel={() => setShowAllocationDialog(false)}
-                                    tenants={tenants}
-                                    units={units}
-                                    buildings={buildings}
-                                />
-                            </div>
-                        </div>
-                        )}
+
                         </div>
                         </CardContent>
                         </Card>

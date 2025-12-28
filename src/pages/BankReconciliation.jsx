@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from 'sonner';
 import TransactionCategoryCard from '@/components/banking/TransactionCategoryCard';
+import TransactionAllocationDialog from '@/components/banking/TransactionAllocationDialog';
 import RuleManager from '@/components/banking/RuleManager';
 import RulePreviewDialog from '@/components/banking/RulePreviewDialog';
 import {
@@ -78,6 +79,8 @@ export default function BankReconciliation() {
     const [bulkContractId, setBulkContractId] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 20;
+    const [allocationDialogOpen, setAllocationDialogOpen] = useState(false);
+    const [selectedTransaction, setSelectedTransaction] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: transactions = [], isLoading: loadingTransactions } = useQuery({
@@ -1146,15 +1149,10 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                                 availableCategories={transaction.amount > 0 ? INCOME_CATEGORIES : EXPENSE_CATEGORIES}
                                 categoryLabels={CATEGORY_LABELS}
                                 availablePayments={transaction.amount > 0 ? pendingPayments : []}
-                                onCategorize={({ category, paymentId, unitId, contractId }) => 
-                                    categorizeMutation.mutate({ 
-                                        transactionId: transaction.id, 
-                                        category,
-                                        paymentId,
-                                        unitId,
-                                        contractId
-                                    })
-                                }
+                                onCategorize={() => {
+                                    setSelectedTransaction(transaction);
+                                    setAllocationDialogOpen(true);
+                                }}
                                 tenants={tenants}
                                 units={units}
                                 buildings={buildings}
@@ -1234,6 +1232,27 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                 categoryLabels={CATEGORY_LABELS}
                 onConfirm={confirmRuleSuggestions}
             />
+
+            {allocationDialogOpen && selectedTransaction && (
+                <TransactionAllocationDialog
+                    transaction={selectedTransaction}
+                    onClose={() => {
+                        setAllocationDialogOpen(false);
+                        setSelectedTransaction(null);
+                    }}
+                    onSuccess={() => {
+                        queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
+                        queryClient.invalidateQueries({ queryKey: ['payments'] });
+                    }}
+                    availableCategories={selectedTransaction.amount > 0 ? INCOME_CATEGORIES : EXPENSE_CATEGORIES}
+                    categoryLabels={CATEGORY_LABELS}
+                    tenants={tenants}
+                    units={units}
+                    buildings={buildings}
+                    contracts={contracts}
+                    payments={pendingPayments}
+                />
+            )}
             </div>
             );
             }
