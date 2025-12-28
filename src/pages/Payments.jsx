@@ -182,41 +182,23 @@ export default function Payments() {
                     <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">Mietforderungen</h1>
                     <p className="text-slate-500 mt-1">{payments.length} Forderungen erfasst</p>
                 </div>
-                <div className="flex gap-2">
-                    <Button 
-                        onClick={async () => {
-                            try {
-                                const result = await base44.functions.invoke('migratePaymentLinks');
-                                queryClient.invalidateQueries({ queryKey: ['payments'] });
-                                queryClient.invalidateQueries({ queryKey: ['payment-transaction-links'] });
-                                toast.success(`Migration: ${result.data.migrated} Zuordnungen erstellt, ${result.data.paymentsUpdated} Forderungen aktualisiert`);
-                            } catch (error) {
-                                toast.error('Fehler bei der Migration');
-                            }
-                        }}
-                        variant="outline"
-                        className="border-blue-600 text-blue-600 hover:bg-blue-50"
-                    >
-                        Zuordnungen migrieren
-                    </Button>
-                    <Button 
-                        onClick={handleRegeneratePayments}
-                        disabled={isRegenerating}
-                        className="bg-emerald-600 hover:bg-emerald-700"
-                    >
-                        {isRegenerating ? (
-                            <>
-                                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                                Wird aktualisiert...
-                            </>
-                        ) : (
-                            <>
-                                <RefreshCw className="w-4 h-4 mr-2" />
-                                Alle Mietforderungen aktualisieren
-                            </>
-                        )}
-                    </Button>
-                </div>
+                <Button 
+                    onClick={handleRegeneratePayments}
+                    disabled={isRegenerating}
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                >
+                    {isRegenerating ? (
+                        <>
+                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                            Wird aktualisiert...
+                        </>
+                    ) : (
+                        <>
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                            Alle Mietforderungen aktualisieren
+                        </>
+                    )}
+                </Button>
             </div>
 
             {/* Stats */}
