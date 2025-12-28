@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-export default function TransactionCategoryCard({ 
+const TransactionCategoryCard = React.memo(function TransactionCategoryCard({ 
     transaction, 
     availableCategories = [],
     categoryLabels = {},
@@ -436,8 +436,10 @@ export default function TransactionCategoryCard({
                 </div>
             </CardContent>
         </Card>
-    );
-}
+        );
+        });
+
+        export default TransactionCategoryCard;
 
 function PaymentPreview({ payment, tenants, units, buildings }) {
     const tenant = tenants.find(t => t.id === payment.tenant_id);

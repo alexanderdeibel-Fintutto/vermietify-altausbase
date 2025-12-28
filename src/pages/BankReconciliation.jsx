@@ -427,55 +427,57 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
         }
     };
 
-    // Apply filters
-    const applyFilters = (txList) => {
-        return txList.filter(tx => {
-            // Search filter (sender, description, reference, IBAN)
-            if (filters.search) {
-                const search = filters.search.toLowerCase();
-                const matchesSearch = 
-                    tx.sender_receiver?.toLowerCase().includes(search) ||
-                    tx.description?.toLowerCase().includes(search) ||
-                    tx.reference?.toLowerCase().includes(search) ||
-                    tx.iban?.toLowerCase().includes(search);
-                if (!matchesSearch) return false;
-            }
+    // Apply filters - memoized for performance
+    const applyFilters = useMemo(() => {
+        return (txList) => {
+            return txList.filter(tx => {
+                // Search filter (sender, description, reference, IBAN)
+                if (filters.search) {
+                    const search = filters.search.toLowerCase();
+                    const matchesSearch = 
+                        tx.sender_receiver?.toLowerCase().includes(search) ||
+                        tx.description?.toLowerCase().includes(search) ||
+                        tx.reference?.toLowerCase().includes(search) ||
+                        tx.iban?.toLowerCase().includes(search);
+                    if (!matchesSearch) return false;
+                }
 
-            // Amount range filter
-            if (filters.amountMin !== '' && Math.abs(tx.amount) < parseFloat(filters.amountMin)) {
-                return false;
-            }
-            if (filters.amountMax !== '' && Math.abs(tx.amount) > parseFloat(filters.amountMax)) {
-                return false;
-            }
-
-            // Date range filter
-            if (filters.dateFrom && tx.transaction_date < filters.dateFrom) {
-                return false;
-            }
-            if (filters.dateTo && tx.transaction_date > filters.dateTo) {
-                return false;
-            }
-
-            // Unit filter
-            if (filters.selectedUnits.length > 0) {
-                const payment = payments.find(p => p.id === tx.matched_payment_id);
-                if (!payment || !filters.selectedUnits.includes(payment.unit_id)) {
+                // Amount range filter
+                if (filters.amountMin !== '' && Math.abs(tx.amount) < parseFloat(filters.amountMin)) {
                     return false;
                 }
-            }
-
-            // Tenant filter
-            if (filters.selectedTenants.length > 0) {
-                const payment = payments.find(p => p.id === tx.matched_payment_id);
-                if (!payment || !filters.selectedTenants.includes(payment.tenant_id)) {
+                if (filters.amountMax !== '' && Math.abs(tx.amount) > parseFloat(filters.amountMax)) {
                     return false;
                 }
-            }
 
-            return true;
-        });
-    };
+                // Date range filter
+                if (filters.dateFrom && tx.transaction_date < filters.dateFrom) {
+                    return false;
+                }
+                if (filters.dateTo && tx.transaction_date > filters.dateTo) {
+                    return false;
+                }
+
+                // Unit filter
+                if (filters.selectedUnits.length > 0) {
+                    const payment = payments.find(p => p.id === tx.matched_payment_id);
+                    if (!payment || !filters.selectedUnits.includes(payment.unit_id)) {
+                        return false;
+                    }
+                }
+
+                // Tenant filter
+                if (filters.selectedTenants.length > 0) {
+                    const payment = payments.find(p => p.id === tx.matched_payment_id);
+                    if (!payment || !filters.selectedTenants.includes(payment.tenant_id)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+        };
+    }, [filters, payments]);
 
     const parseDateSafely = (dateStr) => {
         if (!dateStr) return new Date(0);
@@ -497,13 +499,13 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
     const uncategorizedTransactions = useMemo(() => 
         applyFilters(transactions.filter(t => !t.is_categorized))
             .sort((a, b) => parseDateSafely(b.transaction_date).getTime() - parseDateSafely(a.transaction_date).getTime()),
-        [transactions, filters]
+        [transactions, applyFilters]
     );
     
     const categorizedTransactions = useMemo(() =>
         applyFilters(transactions.filter(t => t.is_categorized))
             .sort((a, b) => parseDateSafely(b.transaction_date).getTime() - parseDateSafely(a.transaction_date).getTime()),
-        [transactions, filters]
+        [transactions, applyFilters]
     );
 
     const pendingPayments = useMemo(() => 
