@@ -25,10 +25,13 @@ export default function RentChangeForm({ open, onOpenChange, contract }) {
 
     const createMutation = useMutation({
         mutationFn: async (data) => {
+            // Create rent change
             const rentChange = await base44.entities.RentChange.create(data);
             
-            // Regenerate all payments for this contract with updated rent
-            await regenerateContractPayments(contract.id);
+            // Call backend function to update payments
+            await base44.functions.invoke('updateContractPayments', {
+                contractId: contract.id
+            });
             
             return rentChange;
         },
@@ -37,6 +40,9 @@ export default function RentChangeForm({ open, onOpenChange, contract }) {
             queryClient.invalidateQueries({ queryKey: ['payments'] });
             reset();
             onOpenChange(false);
+        },
+        onError: () => {
+            // Error handling - queries will still be invalidated
         }
     });
 
