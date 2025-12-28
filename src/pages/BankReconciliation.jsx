@@ -25,6 +25,13 @@ import {
     CommandInput,
     CommandItem,
 } from "@/components/ui/command";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 const CATEGORY_LABELS = {
     rent_income: 'Mieteinnahmen',
