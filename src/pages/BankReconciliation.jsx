@@ -188,7 +188,7 @@ export default function BankReconciliation() {
                                 category,
                                 unitId: unitId || null,
                                 contractId: contractId || null,
-                                allocations: [{
+                                paymentAllocations: [{
                                     paymentId: targetPayment.id,
                                     amount: Math.abs(tx.amount)
                                 }]
