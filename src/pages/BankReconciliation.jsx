@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Landmark, CheckCircle, AlertCircle, TrendingUp, TrendingDown, Sparkles, Settings, Zap, Filter, X, Search, Tag, Check, Building2 } from 'lucide-react';
@@ -79,37 +79,44 @@ export default function BankReconciliation() {
 
     const { data: transactions = [], isLoading: loadingTransactions } = useQuery({
         queryKey: ['bank-transactions'],
-        queryFn: () => base44.entities.BankTransaction.list('-transaction_date')
+        queryFn: () => base44.entities.BankTransaction.list('-transaction_date'),
+        staleTime: 30000
     });
 
     const { data: payments = [], isLoading: loadingPayments } = useQuery({
         queryKey: ['payments'],
-        queryFn: () => base44.entities.Payment.list()
+        queryFn: () => base44.entities.Payment.list(),
+        staleTime: 30000
     });
 
     const { data: tenants = [], isLoading: loadingTenants } = useQuery({
         queryKey: ['tenants'],
-        queryFn: () => base44.entities.Tenant.list()
+        queryFn: () => base44.entities.Tenant.list(),
+        staleTime: 60000
     });
 
     const { data: units = [], isLoading: loadingUnits } = useQuery({
         queryKey: ['units'],
-        queryFn: () => base44.entities.Unit.list()
+        queryFn: () => base44.entities.Unit.list(),
+        staleTime: 60000
     });
 
     const { data: buildings = [], isLoading: loadingBuildings } = useQuery({
         queryKey: ['buildings'],
-        queryFn: () => base44.entities.Building.list()
+        queryFn: () => base44.entities.Building.list(),
+        staleTime: 60000
     });
 
     const { data: contracts = [], isLoading: loadingContracts } = useQuery({
         queryKey: ['contracts'],
-        queryFn: () => base44.entities.LeaseContract.list()
+        queryFn: () => base44.entities.LeaseContract.list(),
+        staleTime: 60000
     });
 
     const { data: rules = [] } = useQuery({
         queryKey: ['categorization-rules'],
-        queryFn: () => base44.entities.CategorizationRule.list('-priority')
+        queryFn: () => base44.entities.CategorizationRule.list('-priority'),
+        staleTime: 60000
     });
 
     const categorizeMutation = useMutation({
@@ -487,23 +494,46 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
         }
     };
 
-    const uncategorizedTransactions = applyFilters(transactions.filter(t => !t.is_categorized))
-        .sort((a, b) => parseDateSafely(b.transaction_date).getTime() - parseDateSafely(a.transaction_date).getTime());
+    const uncategorizedTransactions = useMemo(() => 
+        applyFilters(transactions.filter(t => !t.is_categorized))
+            .sort((a, b) => parseDateSafely(b.transaction_date).getTime() - parseDateSafely(a.transaction_date).getTime()),
+        [transactions, filters]
+    );
     
-    const categorizedTransactions = applyFilters(transactions.filter(t => t.is_categorized))
-        .sort((a, b) => parseDateSafely(b.transaction_date).getTime() - parseDateSafely(a.transaction_date).getTime());
-    const pendingPayments = payments.filter(p => p.status === 'pending' || p.status === 'partial');
+    const categorizedTransactions = useMemo(() =>
+        applyFilters(transactions.filter(t => t.is_categorized))
+            .sort((a, b) => parseDateSafely(b.transaction_date).getTime() - parseDateSafely(a.transaction_date).getTime()),
+        [transactions, filters]
+    );
 
-    const totalUncategorized = uncategorizedTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    const totalCategorized = categorizedTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    const pendingPayments = useMemo(() => 
+        payments.filter(p => p.status === 'pending' || p.status === 'partial'),
+        [payments]
+    );
+
+    const totalUncategorized = useMemo(() => 
+        uncategorizedTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0),
+        [uncategorizedTransactions]
+    );
+
+    const totalCategorized = useMemo(() =>
+        categorizedTransactions.reduce((sum, t) => sum + Math.abs(t.amount), 0),
+        [categorizedTransactions]
+    );
     
-    const totalIncome = categorizedTransactions
-        .filter(t => t.amount > 0)
-        .reduce((sum, t) => sum + t.amount, 0);
+    const totalIncome = useMemo(() =>
+        categorizedTransactions
+            .filter(t => t.amount > 0)
+            .reduce((sum, t) => sum + t.amount, 0),
+        [categorizedTransactions]
+    );
     
-    const totalExpenses = categorizedTransactions
-        .filter(t => t.amount < 0)
-        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    const totalExpenses = useMemo(() =>
+        categorizedTransactions
+            .filter(t => t.amount < 0)
+            .reduce((sum, t) => sum + Math.abs(t.amount), 0),
+        [categorizedTransactions]
+    );
 
     const handleBulkCategorize = () => {
         if (!bulkCategory || selectedTransactions.length === 0) return;
@@ -535,9 +565,12 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
         }
     };
 
-    const filteredBulkContracts = bulkUnitId
-        ? contracts.filter(c => c.unit_id === bulkUnitId && c.status === 'active')
-        : contracts.filter(c => c.status === 'active');
+    const filteredBulkContracts = useMemo(() => 
+        bulkUnitId
+            ? contracts.filter(c => c.unit_id === bulkUnitId && c.status === 'active')
+            : contracts.filter(c => c.status === 'active'),
+        [bulkUnitId, contracts]
+    );
 
     if (loadingTransactions || loadingPayments || loadingContracts || loadingTenants || loadingUnits || loadingBuildings) {
         return (
