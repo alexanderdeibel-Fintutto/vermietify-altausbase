@@ -136,31 +136,20 @@ export default function BankReconciliation() {
     }, [debouncedSearch, filters.selectedUnits, filters.selectedTenants, filters.amountMin, filters.amountMax, filters.dateFrom, filters.dateTo]);
 
     const categorizeMutation = useMutation({
-        mutationFn: async ({ transactionId, category, paymentId, unitId, contractId }) => {
-            // Update transaction
+        mutationFn: async ({ transactionId, category, paymentId, unitId, contractId, skipUpdate }) => {
+            if (skipUpdate) return; // Already handled by backend function
+            
+            // Simple categorization without payment linking
             await base44.entities.BankTransaction.update(transactionId, {
                 is_categorized: true,
                 category,
-                matched_payment_id: paymentId || null,
                 unit_id: unitId || null,
                 contract_id: contractId || null
             });
-
-            // If payment is linked, mark it as paid
-            if (paymentId) {
-                const payment = payments.find(p => p.id === paymentId);
-                if (payment) {
-                    await base44.entities.Payment.update(paymentId, {
-                        status: 'paid',
-                        amount: payment.expected_amount
-                    });
-                }
-            }
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
             queryClient.invalidateQueries({ queryKey: ['payments'] });
-            toast.success('Transaktion kategorisiert');
         }
     });
 
@@ -246,22 +235,13 @@ export default function BankReconciliation() {
     });
 
     const uncategorizeMutation = useMutation({
-        mutationFn: async (transactionId) => {
-            const transaction = transactions.find(t => t.id === transactionId);
+        mutationFn: async ({ transactionId, skipUpdate }) => {
+            if (skipUpdate) return; // Already handled by backend function
             
-            // If payment was linked, reset its status
-            if (transaction?.matched_payment_id) {
-                await base44.entities.Payment.update(transaction.matched_payment_id, {
-                    status: 'pending',
-                    amount: 0
-                });
-            }
-
-            // Update transaction
+            // This shouldn't be called anymore, but kept for compatibility
             await base44.entities.BankTransaction.update(transactionId, {
                 is_categorized: false,
                 category: null,
-                matched_payment_id: null,
                 unit_id: null,
                 contract_id: null
             });
@@ -269,7 +249,6 @@ export default function BankReconciliation() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
             queryClient.invalidateQueries({ queryKey: ['payments'] });
-            toast.success('Kategorisierung aufgehoben');
         }
     });
 
@@ -1230,7 +1209,7 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                                 key={transaction.id}
                                 transaction={transaction}
                                 categoryLabels={CATEGORY_LABELS}
-                                onUncategorize={() => uncategorizeMutation.mutate(transaction.id)}
+                                onUncategorize={() => uncategorizeMutation.mutate({ transactionId: transaction.id })}
                                 tenants={tenants}
                                 units={units}
                                 buildings={buildings}

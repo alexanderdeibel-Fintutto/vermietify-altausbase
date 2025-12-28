@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Tag, X, Check, User, Calendar, Building2, Lightbulb } from 'lucide-react';
+import { Tag, X, Check, User, Calendar, Building2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import {
@@ -16,6 +16,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import TransactionPaymentAllocation from './TransactionPaymentAllocation';
 
 const TransactionCategoryCard = React.memo(function TransactionCategoryCard({ 
     transaction, 
@@ -36,6 +37,7 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
     const [selectedObjectId, setSelectedObjectId] = useState(transaction.unit_id || '');
     const [selectedContractId, setSelectedContractId] = useState(transaction.contract_id || '');
     const [isProcessing, setIsProcessing] = useState(false);
+    const [showAllocationDialog, setShowAllocationDialog] = useState(false);
 
     // Memoize lookup functions
     const getTenant = React.useCallback((tenantId) => tenants.find(t => t.id === tenantId), [tenants]);
@@ -50,11 +52,17 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
     const handleCategorize = async () => {
         if (!selectedCategory) return;
         
+        // For rent_income, show allocation dialog
+        if (selectedCategory === 'rent_income' && actualUnitId && filteredPayments.length > 0) {
+            setShowAllocationDialog(true);
+            return;
+        }
+        
         setIsProcessing(true);
         try {
             await onCategorize({
                 category: selectedCategory,
-                paymentId: selectedCategory === 'rent_income' ? selectedPaymentId : null,
+                paymentId: null,
                 unitId: actualUnitId || null,
                 contractId: selectedContractId || null
             });
@@ -63,6 +71,33 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
             if (transaction.sender_receiver && transaction.sender_receiver.trim() !== '') {
                 await checkAndSuggestRule();
             }
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handleAllocation = async (allocations) => {
+        setIsProcessing(true);
+        setShowAllocationDialog(false);
+        
+        try {
+            await base44.functions.invoke('reconcileTransactionWithPayments', {
+                transactionId: transaction.id,
+                paymentAllocations: allocations,
+                category: selectedCategory,
+                unitId: actualUnitId,
+                contractId: selectedContractId
+            });
+            
+            toast.success('Transaktion zugeordnet');
+            
+            // Trigger parent refresh
+            if (onCategorize) {
+                onCategorize({ skipUpdate: true });
+            }
+        } catch (error) {
+            toast.error('Fehler bei der Zuordnung');
+            console.error(error);
         } finally {
             setIsProcessing(false);
         }
@@ -124,7 +159,19 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
     const handleUncategorize = async () => {
         setIsProcessing(true);
         try {
-            await onUncategorize();
+            await base44.functions.invoke('uncategorizeTransaction', {
+                transactionId: transaction.id
+            });
+            
+            toast.success('Kategorisierung aufgehoben');
+            
+            // Trigger parent refresh
+            if (onUncategorize) {
+                onUncategorize({ skipUpdate: true });
+            }
+        } catch (error) {
+            toast.error('Fehler beim Aufheben');
+            console.error(error);
         } finally {
             setIsProcessing(false);
         }
@@ -452,12 +499,32 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
                                 Aufheben
                             </Button>
                         </div>
-                    )}
-                </div>
-            </CardContent>
-        </Card>
-        );
-        });
+                        )}
+
+                        {/* Allocation Dialog */}
+                        {showAllocationDialog && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                                <h3 className="text-lg font-semibold text-slate-800 mb-4">
+                                    Transaktion Forderungen zuordnen
+                                </h3>
+                                <TransactionPaymentAllocation
+                                    transaction={transaction}
+                                    availablePayments={filteredPayments}
+                                    onAllocate={handleAllocation}
+                                    onCancel={() => setShowAllocationDialog(false)}
+                                    tenants={tenants}
+                                    units={units}
+                                    buildings={buildings}
+                                />
+                            </div>
+                        </div>
+                        )}
+                        </div>
+                        </CardContent>
+                        </Card>
+                        );
+                        });
 
         export default TransactionCategoryCard;
 
