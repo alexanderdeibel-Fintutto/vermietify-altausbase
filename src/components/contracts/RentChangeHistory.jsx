@@ -122,8 +122,10 @@ export default function RentChangeHistory({ contract }) {
                         </div>
                     </div>
 
-                    {/* Changes */}
-                    {rentChanges.map((change, index) => (
+                    {/* Changes - sorted newest to oldest */}
+                    {[...rentChanges].sort((a, b) => 
+                        new Date(b.effective_date) - new Date(a.effective_date)
+                    ).map((change, index) => (
                         <div 
                             key={change.id}
                             className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 hover:border-emerald-300 transition-colors"
