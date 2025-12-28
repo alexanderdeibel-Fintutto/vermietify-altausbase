@@ -168,49 +168,52 @@ export default function BankReconciliation() {
             // If category is rent_income and we have a contract, do intelligent matching
             if (category === 'rent_income' && contractId) {
                 const availablePayments = payments
-                    .filter(p => p.contract_id === contractId && (p.status === 'pending' || p.status === 'partial'))
+                    .filter(p => p.contract_id === contractId && (p.status === 'pending' || p.status === 'partial' || p.status === 'overdue'))
                     .sort((a, b) => new Date(a.payment_month) - new Date(b.payment_month));
 
                 // Match each transaction to the closest payment by date
                 for (const tx of txs) {
-                    let matchedPaymentId = null;
-                    
                     if (availablePayments.length > 0) {
                         // Find the closest payment by month
                         const txDate = new Date(tx.transaction_date);
                         const txMonth = txDate.getFullYear() + '-' + String(txDate.getMonth() + 1).padStart(2, '0');
                         
                         const matchingPayment = availablePayments.find(p => p.payment_month === txMonth);
+                        const targetPayment = matchingPayment || availablePayments[0];
                         
-                        if (matchingPayment) {
-                            matchedPaymentId = matchingPayment.id;
-                            // Mark payment as paid
-                            await base44.entities.Payment.update(matchedPaymentId, {
-                                status: 'paid',
-                                amount: matchingPayment.expected_amount
+                        if (targetPayment) {
+                            // Use backend function to properly link transaction and payment
+                            await base44.functions.invoke('reconcileTransactionWithPayments', {
+                                transactionId: tx.id,
+                                category,
+                                unitId: unitId || null,
+                                contractId: contractId || null,
+                                allocations: [{
+                                    paymentId: targetPayment.id,
+                                    amount: Math.abs(tx.amount)
+                                }]
                             });
-                            // Remove from available payments
-                            const index = availablePayments.indexOf(matchingPayment);
-                            availablePayments.splice(index, 1);
-                        } else if (availablePayments.length > 0) {
-                            // Use the earliest available payment
-                            matchedPaymentId = availablePayments[0].id;
-                            await base44.entities.Payment.update(matchedPaymentId, {
-                                status: 'paid',
-                                amount: availablePayments[0].expected_amount
-                            });
-                            availablePayments.shift();
+                            
+                            // Remove from available if fully allocated
+                            if (matchingPayment) {
+                                const index = availablePayments.indexOf(matchingPayment);
+                                availablePayments.splice(index, 1);
+                            } else {
+                                availablePayments.shift();
+                            }
+                            
+                            results.push(tx.id);
                         }
+                    } else {
+                        // No more payments available, just categorize
+                        await base44.entities.BankTransaction.update(tx.id, {
+                            is_categorized: true,
+                            category,
+                            unit_id: unitId || null,
+                            contract_id: contractId || null
+                        });
+                        results.push(tx.id);
                     }
-
-                    await base44.entities.BankTransaction.update(tx.id, {
-                        is_categorized: true,
-                        category,
-                        matched_payment_id: matchedPaymentId,
-                        unit_id: unitId || null,
-                        contract_id: contractId || null
-                    });
-                    results.push(tx.id);
                 }
             } else {
                 // Simple bulk categorization without payment matching
