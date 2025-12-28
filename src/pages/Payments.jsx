@@ -59,10 +59,46 @@ export default function Payments() {
         queryFn: () => base44.entities.Building.list()
     });
 
+    const { data: paymentLinks = [] } = useQuery({
+        queryKey: ['payment-transaction-links'],
+        queryFn: () => base44.entities.PaymentTransactionLink.list()
+    });
+
+    const { data: transactions = [] } = useQuery({
+        queryKey: ['bank-transactions'],
+        queryFn: () => base44.entities.BankTransaction.list()
+    });
+
     const getTenant = (tenantId) => tenants.find(t => t.id === tenantId);
     const getUnit = (unitId) => units.find(u => u.id === unitId);
     const getBuilding = (buildingId) => buildings.find(b => b.id === buildingId);
     const getContract = (contractId) => contracts.find(c => c.id === contractId);
+
+    // Calculate actual paid amount from links
+    const getPaymentWithLinks = (payment) => {
+        const links = paymentLinks.filter(link => link.payment_id === payment.id);
+        const paidAmount = links.reduce((sum, link) => sum + (link.linked_amount || 0), 0);
+        
+        // Calculate actual status based on paid amount
+        let actualStatus = payment.status;
+        if (paidAmount >= payment.expected_amount) {
+            actualStatus = 'paid';
+        } else if (paidAmount > 0) {
+            actualStatus = 'partial';
+        } else {
+            actualStatus = 'pending';
+        }
+
+        return {
+            ...payment,
+            amount: paidAmount,
+            status: actualStatus,
+            linkedTransactions: links.map(link => {
+                const tx = transactions.find(t => t.id === link.transaction_id);
+                return { link, transaction: tx };
+            })
+        };
+    };
 
     const statusConfig = {
         paid: { label: 'Bezahlt', color: 'bg-emerald-100 text-emerald-700' },
@@ -81,7 +117,10 @@ export default function Payments() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const filteredPayments = payments.filter(payment => {
+    // Enrich payments with link data
+    const enrichedPayments = payments.map(payment => getPaymentWithLinks(payment));
+
+    const filteredPayments = enrichedPayments.filter(payment => {
         // Nur Zahlungen bis heute anzeigen
         if (payment.payment_date) {
             const paymentDate = parseISO(payment.payment_date);
@@ -119,8 +158,8 @@ export default function Payments() {
     };
 
     // Calculate stats
-    const totalPaid = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + (p.amount || 0), 0);
-    const totalOverdue = payments.filter(p => p.status === 'overdue' || p.status === 'pending')
+    const totalPaid = enrichedPayments.filter(p => p.status === 'paid').reduce((sum, p) => sum + (p.amount || 0), 0);
+    const totalOverdue = enrichedPayments.filter(p => p.status === 'overdue' || p.status === 'pending')
         .reduce((sum, p) => sum + ((p.expected_amount || 0) - (p.amount || 0)), 0);
 
     if (isLoading) {
@@ -170,7 +209,7 @@ export default function Payments() {
                         €{totalPaid.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
                     </p>
                     <p className="text-sm text-slate-400 mt-1">
-                        {payments.filter(p => p.status === 'paid').length} Forderungen
+                        {enrichedPayments.filter(p => p.status === 'paid').length} Forderungen
                     </p>
                 </div>
                 <div className="bg-white rounded-2xl p-6 border border-slate-200/50 shadow-sm">
@@ -179,13 +218,13 @@ export default function Payments() {
                         €{totalOverdue.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
                     </p>
                     <p className="text-sm text-slate-400 mt-1">
-                        {payments.filter(p => p.status === 'pending' || p.status === 'overdue').length} Forderungen
+                        {enrichedPayments.filter(p => p.status === 'pending' || p.status === 'overdue').length} Forderungen
                     </p>
                 </div>
                 <div className="bg-white rounded-2xl p-6 border border-slate-200/50 shadow-sm">
                     <p className="text-sm font-medium text-slate-500">Überfällig</p>
                     <p className="text-3xl font-bold text-red-600 mt-2">
-                        {payments.filter(p => p.status === 'overdue').length}
+                        {enrichedPayments.filter(p => p.status === 'overdue').length}
                     </p>
                     <p className="text-sm text-slate-400 mt-1">Forderungen</p>
                 </div>
@@ -263,12 +302,21 @@ export default function Payments() {
                                                 {payment.payment_month && format(parseISO(payment.payment_month + '-01'), 'MMM yyyy', { locale: de })}
                                             </TableCell>
                                             <TableCell className="font-semibold">
-                                                €{payment.amount?.toFixed(2)}
-                                                {payment.expected_amount && payment.expected_amount !== payment.amount && (
-                                                    <span className="text-xs text-slate-400 ml-1">
-                                                        / €{payment.expected_amount.toFixed(2)}
-                                                    </span>
-                                                )}
+                                               <div className="flex flex-col">
+                                                   <span>
+                                                       €{payment.amount?.toFixed(2)}
+                                                       {payment.expected_amount && payment.expected_amount !== payment.amount && (
+                                                           <span className="text-xs text-slate-400 ml-1">
+                                                               / €{payment.expected_amount.toFixed(2)}
+                                                           </span>
+                                                       )}
+                                                   </span>
+                                                   {payment.linkedTransactions && payment.linkedTransactions.length > 0 && (
+                                                       <span className="text-xs text-emerald-600 mt-0.5">
+                                                           {payment.linkedTransactions.length} Transaktion(en) zugeordnet
+                                                       </span>
+                                                   )}
+                                               </div>
                                             </TableCell>
                                             <TableCell>
                                                 <Badge className={status.color}>
