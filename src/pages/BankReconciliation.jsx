@@ -554,7 +554,7 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
     const totalPages = Math.ceil(uncategorizedTransactions.length / itemsPerPage);
 
     const pendingPayments = useMemo(() => 
-        payments.filter(p => p.status === 'pending' || p.status === 'partial'),
+        payments.filter(p => p.status === 'pending' || p.status === 'partial' || p.status === 'overdue'),
         [payments]
     );
 

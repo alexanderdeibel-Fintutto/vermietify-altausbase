@@ -177,10 +177,12 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
         }
     };
 
-    // Filter payments by selected unit (memoized)
+    // Filter payments by selected contract (for rent_income) or unit (memoized)
     const filteredPayments = React.useMemo(() => 
-        actualUnitId ? availablePayments.filter(p => p.unit_id === actualUnitId) : [],
-        [actualUnitId, availablePayments]
+        selectedCategory === 'rent_income' && selectedContractId
+            ? availablePayments.filter(p => p.contract_id === selectedContractId)
+            : actualUnitId ? availablePayments.filter(p => p.unit_id === actualUnitId) : [],
+        [actualUnitId, availablePayments, selectedCategory, selectedContractId]
     );
 
     // Filter contracts: if unit selected, filter by unit; otherwise show all active (memoized)
