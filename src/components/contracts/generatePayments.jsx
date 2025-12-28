@@ -174,6 +174,8 @@ export async function updateFuturePayments(contract, rentChanges = []) {
         payment_type: 'rent'
     });
 
+    const paymentsToUpdate = [];
+
     for (const payment of futurePayments) {
         const paymentDate = parseISO(payment.payment_month + '-01');
         
@@ -203,12 +205,23 @@ export async function updateFuturePayments(contract, rentChanges = []) {
             }
         }
 
-        // Update payment if amount or date changed
+        // Collect updates to batch them
         if (payment.expected_amount !== totalRent || payment.payment_date !== format(dueDate, 'yyyy-MM-dd')) {
-            await base44.entities.Payment.update(payment.id, {
-                expected_amount: totalRent,
-                payment_date: format(dueDate, 'yyyy-MM-dd')
+            paymentsToUpdate.push({
+                id: payment.id,
+                data: {
+                    expected_amount: totalRent,
+                    payment_date: format(dueDate, 'yyyy-MM-dd')
+                }
             });
+        }
+    }
+
+    // Update all payments sequentially with delays
+    for (let i = 0; i < paymentsToUpdate.length; i++) {
+        await base44.entities.Payment.update(paymentsToUpdate[i].id, paymentsToUpdate[i].data);
+        if (i < paymentsToUpdate.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 50));
         }
     }
 }
