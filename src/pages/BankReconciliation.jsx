@@ -69,6 +69,7 @@ export default function BankReconciliation() {
         dateFrom: '',
         dateTo: ''
     });
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [showFilters, setShowFilters] = useState(false);
     const [selectedTransactions, setSelectedTransactions] = useState([]);
     const [showBulkActions, setShowBulkActions] = useState(false);
@@ -118,6 +119,14 @@ export default function BankReconciliation() {
         queryFn: () => base44.entities.CategorizationRule.list('-priority'),
         staleTime: 60000
     });
+
+    // Debounce search input
+    React.useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(filters.search);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [filters.search]);
 
     const categorizeMutation = useMutation({
         mutationFn: ({ transactionId, category, paymentId, unitId, contractId }) => 
@@ -430,10 +439,20 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
     // Apply filters - memoized for performance
     const applyFilters = useMemo(() => {
         return (txList) => {
+            if (debouncedSearch === '' && 
+                filters.selectedUnits.length === 0 && 
+                filters.selectedTenants.length === 0 &&
+                filters.amountMin === '' && 
+                filters.amountMax === '' &&
+                filters.dateFrom === '' && 
+                filters.dateTo === '') {
+                return txList;
+            }
+
             return txList.filter(tx => {
                 // Search filter (sender, description, reference, IBAN)
-                if (filters.search) {
-                    const search = filters.search.toLowerCase();
+                if (debouncedSearch) {
+                    const search = debouncedSearch.toLowerCase();
                     const matchesSearch = 
                         tx.sender_receiver?.toLowerCase().includes(search) ||
                         tx.description?.toLowerCase().includes(search) ||
@@ -477,7 +496,7 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                 return true;
             });
         };
-    }, [filters, payments]);
+    }, [debouncedSearch, filters.selectedUnits, filters.selectedTenants, filters.amountMin, filters.amountMax, filters.dateFrom, filters.dateTo, payments]);
 
     const parseDateSafely = (dateStr) => {
         if (!dateStr) return new Date(0);
