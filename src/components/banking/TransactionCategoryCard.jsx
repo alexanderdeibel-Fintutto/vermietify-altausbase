@@ -37,10 +37,11 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
     const [selectedContractId, setSelectedContractId] = useState(transaction.contract_id || '');
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const getTenant = (tenantId) => tenants.find(t => t.id === tenantId);
-    const getUnit = (unitId) => units.find(u => u.id === unitId);
-    const getBuilding = (buildingId) => buildings.find(b => b.id === buildingId);
-    const getContract = (contractId) => contracts.find(c => c.id === contractId);
+    // Memoize lookup functions
+    const getTenant = React.useCallback((tenantId) => tenants.find(t => t.id === tenantId), [tenants]);
+    const getUnit = React.useCallback((unitId) => units.find(u => u.id === unitId), [units]);
+    const getBuilding = React.useCallback((buildingId) => buildings.find(b => b.id === buildingId), [buildings]);
+    const getContract = React.useCallback((contractId) => contracts.find(c => c.id === contractId), [contracts]);
 
     // Determine if selected object is a unit
     const selectedUnit = units.find(u => u.id === selectedObjectId);
@@ -129,15 +130,19 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
         }
     };
 
-    // Filter payments by selected unit
-    const filteredPayments = actualUnitId
-        ? availablePayments.filter(p => p.unit_id === actualUnitId)
-        : [];
+    // Filter payments by selected unit (memoized)
+    const filteredPayments = React.useMemo(() => 
+        actualUnitId ? availablePayments.filter(p => p.unit_id === actualUnitId) : [],
+        [actualUnitId, availablePayments]
+    );
 
-    // Filter contracts: if unit selected, filter by unit; otherwise show all active
-    const filteredContracts = actualUnitId
-        ? contracts.filter(c => c.unit_id === actualUnitId && c.status === 'active')
-        : contracts.filter(c => c.status === 'active');
+    // Filter contracts: if unit selected, filter by unit; otherwise show all active (memoized)
+    const filteredContracts = React.useMemo(() => 
+        actualUnitId
+            ? contracts.filter(c => c.unit_id === actualUnitId && c.status === 'active')
+            : contracts.filter(c => c.status === 'active'),
+        [actualUnitId, contracts]
+    );
 
     // Reset subsequent selections when object changes
     const handleObjectChange = (objectId) => {
@@ -149,13 +154,28 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
     const isPositive = transaction.amount > 0;
     const isCategorized = transaction.is_categorized;
 
-    const matchedPayment = transaction.matched_payment_id 
-        ? availablePayments.find(p => p.id === transaction.matched_payment_id)
-        : null;
+    // Memoize expensive lookups
+    const matchedPayment = React.useMemo(() => 
+        transaction.matched_payment_id 
+            ? availablePayments.find(p => p.id === transaction.matched_payment_id)
+            : null,
+        [transaction.matched_payment_id, availablePayments]
+    );
 
-    const assignedUnit = transaction.unit_id ? getUnit(transaction.unit_id) : null;
-    const assignedBuilding = assignedUnit ? getBuilding(assignedUnit.building_id) : null;
-    const assignedContract = transaction.contract_id ? getContract(transaction.contract_id) : null;
+    const assignedUnit = React.useMemo(() => 
+        transaction.unit_id ? getUnit(transaction.unit_id) : null,
+        [transaction.unit_id, getUnit]
+    );
+    
+    const assignedBuilding = React.useMemo(() => 
+        assignedUnit ? getBuilding(assignedUnit.building_id) : null,
+        [assignedUnit, getBuilding]
+    );
+    
+    const assignedContract = React.useMemo(() => 
+        transaction.contract_id ? getContract(transaction.contract_id) : null,
+        [transaction.contract_id, getContract]
+    );
 
     return (
         <Card className={cn(

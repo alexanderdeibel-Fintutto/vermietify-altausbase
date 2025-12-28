@@ -76,6 +76,8 @@ export default function BankReconciliation() {
     const [bulkCategory, setBulkCategory] = useState('');
     const [bulkUnitId, setBulkUnitId] = useState('');
     const [bulkContractId, setBulkContractId] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 20;
     const queryClient = useQueryClient();
 
     const { data: transactions = [], isLoading: loadingTransactions } = useQuery({
@@ -127,6 +129,11 @@ export default function BankReconciliation() {
         }, 300);
         return () => clearTimeout(timer);
     }, [filters.search]);
+
+    // Reset to page 1 when filters change
+    React.useEffect(() => {
+        setCurrentPage(1);
+    }, [debouncedSearch, filters.selectedUnits, filters.selectedTenants, filters.amountMin, filters.amountMax, filters.dateFrom, filters.dateTo]);
 
     const categorizeMutation = useMutation({
         mutationFn: ({ transactionId, category, paymentId, unitId, contractId }) => 
@@ -526,6 +533,14 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
             .sort((a, b) => parseDateSafely(b.transaction_date).getTime() - parseDateSafely(a.transaction_date).getTime()),
         [transactions, applyFilters]
     );
+
+    // Pagination for uncategorized
+    const paginatedUncategorized = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        return uncategorizedTransactions.slice(start, start + itemsPerPage);
+    }, [uncategorizedTransactions, currentPage, itemsPerPage]);
+
+    const totalPages = Math.ceil(uncategorizedTransactions.length / itemsPerPage);
 
     const pendingPayments = useMemo(() => 
         payments.filter(p => p.status === 'pending' || p.status === 'partial'),
@@ -1110,36 +1125,61 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                                 <span className="text-sm text-slate-600 font-medium">
                                     {selectedTransactions.length === uncategorizedTransactions.length 
                                         ? 'Alle abwählen' 
-                                        : 'Alle auswählen'}
+                                        : 'Alle auf dieser Seite auswählen'}
                                 </span>
                             </div>
-                            {uncategorizedTransactions.map(transaction => (
-                                <TransactionCategoryCard
-                                    key={transaction.id}
-                                    transaction={transaction}
-                                    availableCategories={transaction.amount > 0 ? INCOME_CATEGORIES : EXPENSE_CATEGORIES}
-                                    categoryLabels={CATEGORY_LABELS}
-                                    availablePayments={transaction.amount > 0 ? pendingPayments : []}
-                                    onCategorize={({ category, paymentId, unitId, contractId }) => 
-                                        categorizeMutation.mutate({ 
-                                            transactionId: transaction.id, 
-                                            category,
-                                            paymentId,
-                                            unitId,
-                                            contractId
-                                        })
-                                    }
-                                    tenants={tenants}
-                                    units={units}
-                                    buildings={buildings}
-                                    contracts={contracts}
-                                    isSelected={selectedTransactions.includes(transaction.id)}
-                                    onSelect={handleSelectTransaction}
-                                />
-                            ))}
+                        {paginatedUncategorized.map(transaction => (
+                            <TransactionCategoryCard
+                                key={transaction.id}
+                                transaction={transaction}
+                                availableCategories={transaction.amount > 0 ? INCOME_CATEGORIES : EXPENSE_CATEGORIES}
+                                categoryLabels={CATEGORY_LABELS}
+                                availablePayments={transaction.amount > 0 ? pendingPayments : []}
+                                onCategorize={({ category, paymentId, unitId, contractId }) => 
+                                    categorizeMutation.mutate({ 
+                                        transactionId: transaction.id, 
+                                        category,
+                                        paymentId,
+                                        unitId,
+                                        contractId
+                                    })
+                                }
+                                tenants={tenants}
+                                units={units}
+                                buildings={buildings}
+                                contracts={contracts}
+                                isSelected={selectedTransactions.includes(transaction.id)}
+                                onSelect={handleSelectTransaction}
+                            />
+                        ))}
+
+                        {/* Pagination */}
+                        {totalPages > 1 && (
+                            <div className="flex items-center justify-center gap-2 mt-6">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    Zurück
+                                </Button>
+                                <span className="text-sm text-slate-600">
+                                    Seite {currentPage} von {totalPages}
+                                </span>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Weiter
+                                </Button>
+                            </div>
+                        )}
                         </>
-                    )}
-                </TabsContent>
+                        )}
+                        </TabsContent>
 
                 <TabsContent value="categorized" className="space-y-4">
                     {categorizedTransactions.length === 0 ? (
