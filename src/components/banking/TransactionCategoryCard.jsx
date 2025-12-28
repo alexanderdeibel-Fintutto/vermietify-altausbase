@@ -30,7 +30,7 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
     isSelected = false,
     onSelect
 }) {
-    const [showAllocationDialog, setShowAllocationDialog] = useState(false);
+
 
     // Memoize lookup functions
     const getTenant = React.useCallback((tenantId) => tenants.find(t => t.id === tenantId), [tenants]);
@@ -220,7 +220,7 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
                     {!isCategorized && (
                         <div className="lg:w-48 flex items-center justify-center border-t lg:border-t-0 lg:border-l pt-4 lg:pt-0 lg:pl-4">
                             <Button 
-                                onClick={() => setShowAllocationDialog(true)}
+                                onClick={onCategorize}
                                 className={cn(
                                     "w-full",
                                     isPositive 
