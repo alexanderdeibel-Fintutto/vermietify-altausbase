@@ -32,6 +32,11 @@ export async function generatePaymentsForContract(contract, rentChanges = [], pa
     const startDate = parseISO(contract.start_date);
     const endDate = contract.end_date ? parseISO(contract.end_date) : addMonths(new Date(), 24);
     
+    // Load ALL existing payments for this contract once
+    const existingPayments = await base44.entities.Payment.filter({
+        contract_id: contract.id
+    });
+    
     // Sort rent changes by date (newest first)
     const sortedChanges = [...rentChanges].sort((a, b) => 
         new Date(b.effective_date) - new Date(a.effective_date)
@@ -43,36 +48,34 @@ export async function generatePaymentsForContract(contract, rentChanges = [], pa
     
     while (isBefore(currentDate, endDate) || format(currentDate, 'yyyy-MM') === format(endDate, 'yyyy-MM')) {
         const paymentMonth = format(currentDate, 'yyyy-MM');
-        // Find applicable rent for this month
-        const applicableChange = sortedChanges.find(change => 
-            isBefore(parseISO(change.effective_date), currentDate) || 
-            format(parseISO(change.effective_date), 'yyyy-MM') === paymentMonth
+        
+        // Check in memory if payment exists
+        const paymentExists = existingPayments.some(p => 
+            p.payment_month === paymentMonth && p.payment_type === 'rent'
         );
+        
+        if (!paymentExists) {
+            // Find applicable rent for this month
+            const applicableChange = sortedChanges.find(change => 
+                isBefore(parseISO(change.effective_date), currentDate) || 
+                format(parseISO(change.effective_date), 'yyyy-MM') === paymentMonth
+            );
 
-        const baseRent = applicableChange ? applicableChange.base_rent : contract.base_rent;
-        const utilities = applicableChange ? (applicableChange.utilities || 0) : (contract.utilities || 0);
-        const heating = applicableChange ? (applicableChange.heating || 0) : (contract.heating || 0);
-        const totalRent = baseRent + utilities + heating;
+            const baseRent = applicableChange ? applicableChange.base_rent : contract.base_rent;
+            const utilities = applicableChange ? (applicableChange.utilities || 0) : (contract.utilities || 0);
+            const heating = applicableChange ? (applicableChange.heating || 0) : (contract.heating || 0);
+            const totalRent = baseRent + utilities + heating;
 
-        // Calculate due date
-        let dueDate = startOfMonth(currentDate);
-        if (contract.rent_due_day) {
-            try {
-                dueDate = setDate(dueDate, contract.rent_due_day);
-            } catch (e) {
-                // If day doesn't exist in month (e.g., 31st in February), use last day
-                dueDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+            // Calculate due date
+            let dueDate = startOfMonth(currentDate);
+            if (contract.rent_due_day) {
+                try {
+                    dueDate = setDate(dueDate, contract.rent_due_day);
+                } catch (e) {
+                    dueDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+                }
             }
-        }
 
-        // Check if payment already exists for this month
-        const existingPayments = await base44.entities.Payment.filter({
-            contract_id: contract.id,
-            payment_month: paymentMonth,
-            payment_type: 'rent'
-        });
-
-        if (existingPayments.length === 0) {
             payments.push({
                 contract_id: contract.id,
                 tenant_id: contract.tenant_id,
@@ -95,16 +98,13 @@ export async function generatePaymentsForContract(contract, rentChanges = [], pa
         const installments = contract.deposit_installments || 1;
         const installmentAmount = contract.deposit / installments;
         
-        // First installment due at contract date or start date
         const firstDueDate = contract.contract_date ? parseISO(contract.contract_date) : startDate;
 
         for (let i = 0; i < installments; i++) {
             let dueDate;
             if (i === 0) {
-                // First payment at contract date
                 dueDate = firstDueDate;
             } else {
-                // Subsequent payments on rent_due_day of following months
                 let monthDate = addMonths(firstDueDate, i);
                 if (contract.rent_due_day) {
                     try {
@@ -119,14 +119,12 @@ export async function generatePaymentsForContract(contract, rentChanges = [], pa
             
             const paymentMonth = format(dueDate, 'yyyy-MM');
 
-            // Check if deposit payment already exists
-            const existingDepositPayments = await base44.entities.Payment.filter({
-                contract_id: contract.id,
-                payment_month: paymentMonth,
-                payment_type: 'deposit'
-            });
+            // Check in memory if deposit payment exists
+            const depositExists = existingPayments.some(p => 
+                p.payment_month === paymentMonth && p.payment_type === 'deposit'
+            );
 
-            if (existingDepositPayments.length === 0) {
+            if (!depositExists) {
                 payments.push({
                     contract_id: contract.id,
                     tenant_id: contract.tenant_id,
@@ -143,9 +141,16 @@ export async function generatePaymentsForContract(contract, rentChanges = [], pa
         }
     }
 
-    // Create all payments
+    // Create all payments in batches
     if (payments.length > 0) {
-        await base44.entities.Payment.bulkCreate(payments);
+        const batchSize = 20;
+        for (let i = 0; i < payments.length; i += batchSize) {
+            const batch = payments.slice(i, i + batchSize);
+            await base44.entities.Payment.bulkCreate(batch);
+            if (i + batchSize < payments.length) {
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+        }
     }
 
     return payments.length;
@@ -217,24 +222,26 @@ export async function regenerateContractPayments(contractId) {
         const contract = await base44.entities.LeaseContract.filter({ id: contractId });
         if (!contract || contract.length === 0) return 0;
         
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         const rentChanges = await base44.entities.RentChange.filter({ 
             contract_id: contractId 
         });
 
-        // Delete all pending payments for this contract in batches
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Delete all pending payments for this contract sequentially to avoid rate limits
         const pendingPayments = await base44.entities.Payment.filter({
             contract_id: contractId,
             status: 'pending'
         });
 
-        const batchSize = 10;
-        for (let i = 0; i < pendingPayments.length; i += batchSize) {
-            const batch = pendingPayments.slice(i, i + batchSize);
-            await Promise.all(batch.map(p => base44.entities.Payment.delete(p.id)));
-            if (i + batchSize < pendingPayments.length) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }
+        for (const payment of pendingPayments) {
+            await base44.entities.Payment.delete(payment.id);
+            await new Promise(resolve => setTimeout(resolve, 50));
         }
+
+        await new Promise(resolve => setTimeout(resolve, 200));
 
         // Regenerate payments
         return await generatePaymentsForContract(contract[0], rentChanges);
