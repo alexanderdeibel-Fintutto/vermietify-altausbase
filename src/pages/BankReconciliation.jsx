@@ -686,25 +686,6 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                         <Sparkles className="w-4 h-4" />
                         {isAnalyzing ? 'Analysiere...' : 'KI-Kategorisierung'}
                     </Button>
-                    <Button 
-                        onClick={async () => {
-                            try {
-                                const result = await base44.functions.invoke('repairBulkAllocations');
-                                if (result.data.success) {
-                                    toast.success(`${result.data.repaired} Transaktionen repariert, ${result.data.skipped} übersprungen`);
-                                    queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
-                                    queryClient.invalidateQueries({ queryKey: ['payments'] });
-                                }
-                            } catch (error) {
-                                toast.error('Fehler beim Reparieren');
-                            }
-                        }}
-                        variant="outline"
-                        className="gap-2"
-                    >
-                        <CheckCircle className="w-4 h-4" />
-                        Bulk-Zuordnungen reparieren
-                    </Button>
                 </div>
                 </div>
 

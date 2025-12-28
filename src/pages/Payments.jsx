@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { CreditCard, Filter, Search, Plus, RefreshCw } from 'lucide-react';
+import { CreditCard, Filter, Search, Plus, RefreshCw, Check } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
@@ -182,23 +182,44 @@ export default function Payments() {
                     <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">Mietforderungen</h1>
                     <p className="text-slate-500 mt-1">{payments.length} Forderungen erfasst</p>
                 </div>
-                <Button 
-                    onClick={handleRegeneratePayments}
-                    disabled={isRegenerating}
-                    className="bg-emerald-600 hover:bg-emerald-700"
-                >
-                    {isRegenerating ? (
-                        <>
-                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                            Wird aktualisiert...
-                        </>
-                    ) : (
-                        <>
-                            <RefreshCw className="w-4 h-4 mr-2" />
-                            Alle Mietforderungen aktualisieren
-                        </>
-                    )}
-                </Button>
+                <div className="flex gap-2">
+                    <Button 
+                        onClick={async () => {
+                            try {
+                                const result = await base44.functions.invoke('repairBulkAllocations');
+                                if (result.data.success) {
+                                    toast.success(`${result.data.repaired} Transaktionen repariert`);
+                                    queryClient.invalidateQueries({ queryKey: ['payments'] });
+                                    queryClient.invalidateQueries({ queryKey: ['payment-transaction-links'] });
+                                }
+                            } catch (error) {
+                                toast.error('Fehler beim Überprüfen');
+                            }
+                        }}
+                        variant="outline"
+                        className="gap-2"
+                    >
+                        <Check className="w-4 h-4" />
+                        Zuordnungen prüfen
+                    </Button>
+                    <Button 
+                        onClick={handleRegeneratePayments}
+                        disabled={isRegenerating}
+                        className="bg-emerald-600 hover:bg-emerald-700"
+                    >
+                        {isRegenerating ? (
+                            <>
+                                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                Wird aktualisiert...
+                            </>
+                        ) : (
+                            <>
+                                <RefreshCw className="w-4 h-4 mr-2" />
+                                Alle Mietforderungen aktualisieren
+                            </>
+                        )}
+                    </Button>
+                </div>
             </div>
 
             {/* Stats */}
