@@ -221,14 +221,19 @@ export async function regenerateContractPayments(contractId) {
             contract_id: contractId 
         });
 
-        // Delete all pending payments for this contract
+        // Delete all pending payments for this contract in batches
         const pendingPayments = await base44.entities.Payment.filter({
             contract_id: contractId,
             status: 'pending'
         });
 
-        for (const payment of pendingPayments) {
-            await base44.entities.Payment.delete(payment.id);
+        const batchSize = 10;
+        for (let i = 0; i < pendingPayments.length; i += batchSize) {
+            const batch = pendingPayments.slice(i, i + batchSize);
+            await Promise.all(batch.map(p => base44.entities.Payment.delete(p.id)));
+            if (i + batchSize < pendingPayments.length) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
         }
 
         // Regenerate payments
@@ -250,7 +255,9 @@ export async function regenerateAllPayments() {
         
         let totalGenerated = 0;
         
-        for (const contract of contracts) {
+        for (let i = 0; i < contracts.length; i++) {
+            const contract = contracts[i];
+            
             // Determine contract status
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -276,6 +283,11 @@ export async function regenerateAllPayments() {
             if (isActive) {
                 const generated = await regenerateContractPayments(contract.id);
                 totalGenerated += generated;
+                
+                // Delay between contracts to avoid rate limits
+                if (i < contracts.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 150));
+                }
             }
         }
 
