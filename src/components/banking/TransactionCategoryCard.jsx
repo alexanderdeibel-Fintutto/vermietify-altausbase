@@ -27,7 +27,9 @@ export default function TransactionCategoryCard({
     tenants = [],
     units = [],
     buildings = [],
-    contracts = []
+    contracts = [],
+    isSelected = false,
+    onSelect
 }) {
     const [selectedCategory, setSelectedCategory] = useState(transaction.category || '');
     const [selectedPaymentId, setSelectedPaymentId] = useState(transaction.matched_payment_id || '');
@@ -157,15 +159,27 @@ export default function TransactionCategoryCard({
 
     return (
         <Card className={cn(
-            "border-l-4",
+            "border-l-4 transition-all",
             isCategorized 
                 ? isPositive 
                     ? "border-l-emerald-500 bg-emerald-50/30" 
                     : "border-l-red-500 bg-red-50/30"
-                : "border-l-slate-300"
+                : "border-l-slate-300",
+            isSelected && "ring-2 ring-blue-500 bg-blue-50/30"
         )}>
             <CardContent className="p-4">
                 <div className="flex flex-col lg:flex-row gap-4">
+                    {/* Selection Checkbox */}
+                    {!isCategorized && onSelect && (
+                        <div className="flex items-start pt-2">
+                            <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => onSelect(transaction.id)}
+                                className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                            />
+                        </div>
+                    )}
                     {/* Transaction Info */}
                     <div className="flex-1">
                         <div className="flex items-start justify-between mb-3">

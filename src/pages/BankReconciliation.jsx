@@ -63,6 +63,11 @@ export default function BankReconciliation() {
         dateTo: ''
     });
     const [showFilters, setShowFilters] = useState(false);
+    const [selectedTransactions, setSelectedTransactions] = useState([]);
+    const [showBulkActions, setShowBulkActions] = useState(false);
+    const [bulkCategory, setBulkCategory] = useState('');
+    const [bulkUnitId, setBulkUnitId] = useState('');
+    const [bulkContractId, setBulkContractId] = useState('');
     const queryClient = useQueryClient();
 
     const { data: transactions = [], isLoading: loadingTransactions } = useQuery({
@@ -115,6 +120,78 @@ export default function BankReconciliation() {
                 queryClient.invalidateQueries({ queryKey: ['payments'] });
             }
             toast.success('Transaktion kategorisiert');
+        }
+    });
+
+    const bulkCategorizeMutation = useMutation({
+        mutationFn: async ({ transactionIds, category, unitId, contractId }) => {
+            const results = [];
+            
+            // Get transactions and sort by date
+            const txs = transactions
+                .filter(t => transactionIds.includes(t.id))
+                .sort((a, b) => new Date(a.transaction_date) - new Date(b.transaction_date));
+
+            // If category is rent_income and we have a contract, do intelligent matching
+            if (category === 'rent_income' && contractId) {
+                const availablePayments = payments
+                    .filter(p => p.contract_id === contractId && (p.status === 'pending' || p.status === 'partial'))
+                    .sort((a, b) => new Date(a.payment_month) - new Date(b.payment_month));
+
+                // Match each transaction to the closest payment by date
+                for (const tx of txs) {
+                    let matchedPaymentId = null;
+                    
+                    if (availablePayments.length > 0) {
+                        // Find the closest payment by month
+                        const txDate = new Date(tx.transaction_date);
+                        const txMonth = txDate.getFullYear() + '-' + String(txDate.getMonth() + 1).padStart(2, '0');
+                        
+                        const matchingPayment = availablePayments.find(p => p.payment_month === txMonth);
+                        
+                        if (matchingPayment) {
+                            matchedPaymentId = matchingPayment.id;
+                            // Remove from available payments
+                            const index = availablePayments.indexOf(matchingPayment);
+                            availablePayments.splice(index, 1);
+                        } else if (availablePayments.length > 0) {
+                            // Use the earliest available payment
+                            matchedPaymentId = availablePayments[0].id;
+                            availablePayments.shift();
+                        }
+                    }
+
+                    await base44.entities.BankTransaction.update(tx.id, {
+                        is_categorized: true,
+                        category,
+                        matched_payment_id: matchedPaymentId,
+                        unit_id: unitId || null,
+                        contract_id: contractId || null
+                    });
+                    results.push(tx.id);
+                }
+            } else {
+                // Simple bulk categorization without payment matching
+                for (const txId of transactionIds) {
+                    await base44.entities.BankTransaction.update(txId, {
+                        is_categorized: true,
+                        category,
+                        matched_payment_id: null,
+                        unit_id: unitId || null,
+                        contract_id: contractId || null
+                    });
+                    results.push(txId);
+                }
+            }
+
+            return results;
+        },
+        onSuccess: (results) => {
+            queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
+            queryClient.invalidateQueries({ queryKey: ['payments'] });
+            setSelectedTransactions([]);
+            setShowBulkActions(false);
+            toast.success(`${results.length} Transaktionen kategorisiert`);
         }
     });
 
@@ -421,6 +498,40 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
         .filter(t => t.amount < 0)
         .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
+    const handleBulkCategorize = () => {
+        if (!bulkCategory || selectedTransactions.length === 0) return;
+        
+        const selectedUnit = units.find(u => u.id === bulkUnitId);
+        const actualUnitId = selectedUnit ? bulkUnitId : null;
+        
+        bulkCategorizeMutation.mutate({
+            transactionIds: selectedTransactions,
+            category: bulkCategory,
+            unitId: actualUnitId,
+            contractId: bulkContractId || null
+        });
+    };
+
+    const handleSelectTransaction = (txId) => {
+        setSelectedTransactions(prev => 
+            prev.includes(txId) 
+                ? prev.filter(id => id !== txId)
+                : [...prev, txId]
+        );
+    };
+
+    const handleSelectAll = () => {
+        if (selectedTransactions.length === uncategorizedTransactions.length) {
+            setSelectedTransactions([]);
+        } else {
+            setSelectedTransactions(uncategorizedTransactions.map(t => t.id));
+        }
+    };
+
+    const filteredBulkContracts = bulkUnitId
+        ? contracts.filter(c => c.unit_id === bulkUnitId && c.status === 'active')
+        : contracts.filter(c => c.status === 'active');
+
     if (loadingTransactions || loadingPayments || loadingContracts || loadingTenants || loadingUnits || loadingBuildings) {
         return (
             <div className="space-y-8">
@@ -442,10 +553,21 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                         Bankenabgleich
                     </h1>
                     <p className="text-slate-500 mt-1">
-                        Kategorisieren Sie Ihre Transaktionen
+                        {selectedTransactions.length > 0 
+                            ? `${selectedTransactions.length} Transaktionen ausgewählt`
+                            : 'Kategorisieren Sie Ihre Transaktionen'}
                     </p>
                 </div>
                 <div className="flex gap-2">
+                    {selectedTransactions.length > 0 && (
+                        <Button 
+                            onClick={() => setShowBulkActions(!showBulkActions)}
+                            className="bg-blue-600 hover:bg-blue-700"
+                        >
+                            <Tag className="w-4 h-4 mr-2" />
+                            Bulk-Zuordnung ({selectedTransactions.length})
+                        </Button>
+                    )}
                     <Button 
                         onClick={() => setRulesOpen(true)}
                         variant="outline"
@@ -473,6 +595,123 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                     </Button>
                 </div>
                 </div>
+
+                {/* Bulk Actions */}
+                {showBulkActions && selectedTransactions.length > 0 && (
+                    <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-semibold text-slate-800">
+                                Bulk-Zuordnung für {selectedTransactions.length} Transaktionen
+                            </h3>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    setShowBulkActions(false);
+                                    setBulkCategory('');
+                                    setBulkUnitId('');
+                                    setBulkContractId('');
+                                }}
+                            >
+                                <X className="w-4 h-4" />
+                            </Button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <Label className="text-sm mb-2">1. Kategorie *</Label>
+                                <Select value={bulkCategory} onValueChange={setBulkCategory}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Kategorie wählen..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {[...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES].map(cat => (
+                                            <SelectItem key={cat} value={cat}>
+                                                {CATEGORY_LABELS[cat] || cat}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div>
+                                <Label className="text-sm mb-2">2. Mietobjekt (optional)</Label>
+                                <Select value={bulkUnitId} onValueChange={(value) => {
+                                    setBulkUnitId(value);
+                                    setBulkContractId('');
+                                }}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Objekt/Wohnung wählen..." />
+                                    </SelectTrigger>
+                                    <SelectContent className="max-h-80">
+                                        {buildings.flatMap(building => {
+                                            const buildingUnits = units.filter(u => u.building_id === building.id);
+                                            return [
+                                                <SelectItem key={building.id} value={building.id}>
+                                                    <div className="flex items-center gap-2">
+                                                        <Building2 className="w-4 h-4 text-slate-400" />
+                                                        <span className="font-semibold">{building.name}</span>
+                                                    </div>
+                                                </SelectItem>,
+                                                ...buildingUnits.map(unit => (
+                                                    <SelectItem key={unit.id} value={unit.id}>
+                                                        <div className="flex items-center gap-2 pl-6">
+                                                            <span className="text-slate-400">└</span>
+                                                            <span>{unit.unit_number}</span>
+                                                        </div>
+                                                    </SelectItem>
+                                                ))
+                                            ];
+                                        })}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div>
+                                <Label className="text-sm mb-2">3. Mietvertrag (optional)</Label>
+                                <Select 
+                                    value={bulkContractId} 
+                                    onValueChange={setBulkContractId}
+                                    disabled={!bulkUnitId}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Vertrag wählen..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {filteredBulkContracts.map(contract => {
+                                            const tenant = tenants.find(t => t.id === contract.tenant_id);
+                                            return (
+                                                <SelectItem key={contract.id} value={contract.id}>
+                                                    {tenant ? `${tenant.first_name} ${tenant.last_name}` : 'Unbekannt'}
+                                                </SelectItem>
+                                            );
+                                        })}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-3 mt-4 pt-4 border-t">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setSelectedTransactions([]);
+                                    setShowBulkActions(false);
+                                }}
+                            >
+                                Abbrechen
+                            </Button>
+                            <Button
+                                onClick={handleBulkCategorize}
+                                disabled={!bulkCategory || bulkCategorizeMutation.isPending}
+                                className="bg-blue-600 hover:bg-blue-700"
+                            >
+                                <Check className="w-4 h-4 mr-2" />
+                                {bulkCategorizeMutation.isPending ? 'Wird verarbeitet...' : 'Alle kategorisieren'}
+                            </Button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Filters */}
                 <div className="bg-white rounded-2xl border border-slate-200 p-4">
@@ -799,28 +1038,45 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                             </p>
                         </div>
                     ) : (
-                        uncategorizedTransactions.map(transaction => (
-                            <TransactionCategoryCard
-                                key={transaction.id}
-                                transaction={transaction}
-                                availableCategories={transaction.amount > 0 ? INCOME_CATEGORIES : EXPENSE_CATEGORIES}
-                                categoryLabels={CATEGORY_LABELS}
-                                availablePayments={transaction.amount > 0 ? pendingPayments : []}
-                                onCategorize={({ category, paymentId, unitId, contractId }) => 
-                                    categorizeMutation.mutate({ 
-                                        transactionId: transaction.id, 
-                                        category,
-                                        paymentId,
-                                        unitId,
-                                        contractId
-                                    })
-                                }
-                                tenants={tenants}
-                                units={units}
-                                buildings={buildings}
-                                contracts={contracts}
-                            />
-                        ))
+                        <>
+                            <div className="flex items-center gap-3 px-4">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedTransactions.length === uncategorizedTransactions.length}
+                                    onChange={handleSelectAll}
+                                    className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <span className="text-sm text-slate-600 font-medium">
+                                    {selectedTransactions.length === uncategorizedTransactions.length 
+                                        ? 'Alle abwählen' 
+                                        : 'Alle auswählen'}
+                                </span>
+                            </div>
+                            {uncategorizedTransactions.map(transaction => (
+                                <TransactionCategoryCard
+                                    key={transaction.id}
+                                    transaction={transaction}
+                                    availableCategories={transaction.amount > 0 ? INCOME_CATEGORIES : EXPENSE_CATEGORIES}
+                                    categoryLabels={CATEGORY_LABELS}
+                                    availablePayments={transaction.amount > 0 ? pendingPayments : []}
+                                    onCategorize={({ category, paymentId, unitId, contractId }) => 
+                                        categorizeMutation.mutate({ 
+                                            transactionId: transaction.id, 
+                                            category,
+                                            paymentId,
+                                            unitId,
+                                            contractId
+                                        })
+                                    }
+                                    tenants={tenants}
+                                    units={units}
+                                    buildings={buildings}
+                                    contracts={contracts}
+                                    isSelected={selectedTransactions.includes(transaction.id)}
+                                    onSelect={handleSelectTransaction}
+                                />
+                            ))}
+                        </>
                     )}
                 </TabsContent>
 
