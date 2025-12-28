@@ -136,19 +136,30 @@ export default function BankReconciliation() {
     }, [debouncedSearch, filters.selectedUnits, filters.selectedTenants, filters.amountMin, filters.amountMax, filters.dateFrom, filters.dateTo]);
 
     const categorizeMutation = useMutation({
-        mutationFn: ({ transactionId, category, paymentId, unitId, contractId }) => 
-            base44.entities.BankTransaction.update(transactionId, {
+        mutationFn: async ({ transactionId, category, paymentId, unitId, contractId }) => {
+            // Update transaction
+            await base44.entities.BankTransaction.update(transactionId, {
                 is_categorized: true,
                 category,
                 matched_payment_id: paymentId || null,
                 unit_id: unitId || null,
                 contract_id: contractId || null
-            }),
+            });
+
+            // If payment is linked, mark it as paid
+            if (paymentId) {
+                const payment = payments.find(p => p.id === paymentId);
+                if (payment) {
+                    await base44.entities.Payment.update(paymentId, {
+                        status: 'paid',
+                        amount: payment.expected_amount
+                    });
+                }
+            }
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
-            if (categorizeMutation.variables.paymentId) {
-                queryClient.invalidateQueries({ queryKey: ['payments'] });
-            }
+            queryClient.invalidateQueries({ queryKey: ['payments'] });
             toast.success('Transaktion kategorisiert');
         }
     });
@@ -181,12 +192,21 @@ export default function BankReconciliation() {
                         
                         if (matchingPayment) {
                             matchedPaymentId = matchingPayment.id;
+                            // Mark payment as paid
+                            await base44.entities.Payment.update(matchedPaymentId, {
+                                status: 'paid',
+                                amount: matchingPayment.expected_amount
+                            });
                             // Remove from available payments
                             const index = availablePayments.indexOf(matchingPayment);
                             availablePayments.splice(index, 1);
                         } else if (availablePayments.length > 0) {
                             // Use the earliest available payment
                             matchedPaymentId = availablePayments[0].id;
+                            await base44.entities.Payment.update(matchedPaymentId, {
+                                status: 'paid',
+                                amount: availablePayments[0].expected_amount
+                            });
                             availablePayments.shift();
                         }
                     }
@@ -226,14 +246,26 @@ export default function BankReconciliation() {
     });
 
     const uncategorizeMutation = useMutation({
-        mutationFn: (transactionId) => 
-            base44.entities.BankTransaction.update(transactionId, {
+        mutationFn: async (transactionId) => {
+            const transaction = transactions.find(t => t.id === transactionId);
+            
+            // If payment was linked, reset its status
+            if (transaction?.matched_payment_id) {
+                await base44.entities.Payment.update(transaction.matched_payment_id, {
+                    status: 'pending',
+                    amount: 0
+                });
+            }
+
+            // Update transaction
+            await base44.entities.BankTransaction.update(transactionId, {
                 is_categorized: false,
                 category: null,
                 matched_payment_id: null,
                 unit_id: null,
                 contract_id: null
-            }),
+            });
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
             queryClient.invalidateQueries({ queryKey: ['payments'] });
