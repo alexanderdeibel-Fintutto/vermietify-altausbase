@@ -18,9 +18,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, X } from 'lucide-react';
 import { generateFinancialItemsForContract, regenerateContractFinancialItems, needsPartialRentDialog, calculatePartialRent } from './generateFinancialItems';
 import PartialRentDialog from './PartialRentDialog';
+import { base44 } from '@/api/base44Client';
 
 export default function ContractForm({ 
     open, 
@@ -34,6 +35,8 @@ export default function ContractForm({
     const [partialRentDialogOpen, setPartialRentDialogOpen] = React.useState(false);
     const [pendingContract, setPendingContract] = React.useState(null);
     const [suggestedPartialRent, setSuggestedPartialRent] = React.useState(0);
+    const [newTenantMode, setNewTenantMode] = React.useState(false);
+    const [newSecondTenantMode, setNewSecondTenantMode] = React.useState(false);
     
     const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
         defaultValues: initialData || { status: 'active', is_unlimited: true, deposit_paid: false, deposit_installments: 1 }
@@ -64,6 +67,30 @@ export default function ContractForm({
     }, [watchBaseRent, watchUtilities, watchHeating, setValue]);
 
     const handleFormSubmit = async (data) => {
+        // Create new tenants if needed
+        let primaryTenantId = data.tenant_id;
+        let secondTenantId = data.second_tenant_id;
+
+        if (newTenantMode) {
+            const newTenant = await base44.entities.Tenant.create({
+                first_name: data.new_tenant_first_name,
+                last_name: data.new_tenant_last_name,
+                email: data.new_tenant_email || null,
+                phone: data.new_tenant_phone || null
+            });
+            primaryTenantId = newTenant.id;
+        }
+
+        if (newSecondTenantMode) {
+            const newSecondTenant = await base44.entities.Tenant.create({
+                first_name: data.new_second_tenant_first_name,
+                last_name: data.new_second_tenant_last_name,
+                email: data.new_second_tenant_email || null,
+                phone: data.new_second_tenant_phone || null
+            });
+            secondTenantId = newSecondTenant.id;
+        }
+
         // Status automatisch bestimmen
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -81,6 +108,8 @@ export default function ContractForm({
 
         const contractData = {
             ...data,
+            tenant_id: primaryTenantId,
+            second_tenant_id: secondTenantId || null,
             base_rent: parseFloat(data.base_rent) || 0,
             utilities: parseFloat(data.utilities) || 0,
             heating: parseFloat(data.heating) || 0,
@@ -90,7 +119,6 @@ export default function ContractForm({
             notice_period_months: data.notice_period_months ? parseInt(data.notice_period_months) : null,
             rent_due_day: data.rent_due_day ? parseInt(data.rent_due_day) : null,
             end_date: data.is_unlimited ? null : data.end_date,
-            second_tenant_id: data.second_tenant_id || null,
             handover_date: data.handover_date || null,
             contract_date: data.contract_date || null,
             status: autoStatus
@@ -164,42 +192,136 @@ export default function ContractForm({
                         </div>
                         <div>
                             <Label htmlFor="tenant_id">Hauptmieter *</Label>
-                            <Select 
-                                value={watchTenantId} 
-                                onValueChange={(value) => setValue('tenant_id', value)}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Hauptmieter wählen..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {tenants.map((tenant) => (
-                                        <SelectItem key={tenant.id} value={tenant.id}>
-                                            {tenant.first_name} {tenant.last_name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            {!newTenantMode ? (
+                                <div className="space-y-2">
+                                    <Select 
+                                        value={watchTenantId} 
+                                        onValueChange={(value) => setValue('tenant_id', value)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Hauptmieter wählen..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {tenants.map((tenant) => (
+                                                <SelectItem key={tenant.id} value={tenant.id}>
+                                                    {tenant.first_name} {tenant.last_name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <Button 
+                                        type="button" 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={() => setNewTenantMode(true)}
+                                        className="w-full"
+                                    >
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        Neuen Mieter anlegen
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="space-y-2 p-3 border rounded-lg">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm font-medium">Neuer Mieter</span>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => setNewTenantMode(false)}
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </Button>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <Input
+                                            {...register('new_tenant_first_name', { required: newTenantMode })}
+                                            placeholder="Vorname *"
+                                        />
+                                        <Input
+                                            {...register('new_tenant_last_name', { required: newTenantMode })}
+                                            placeholder="Nachname *"
+                                        />
+                                    </div>
+                                    <Input
+                                        {...register('new_tenant_email')}
+                                        placeholder="E-Mail (optional)"
+                                        type="email"
+                                    />
+                                    <Input
+                                        {...register('new_tenant_phone')}
+                                        placeholder="Telefon (optional)"
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     <div>
                         <Label htmlFor="second_tenant_id">Zweiter Mieter (optional)</Label>
-                        <Select 
-                            value={watch('second_tenant_id') || ''} 
-                            onValueChange={(value) => setValue('second_tenant_id', value || null)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Zweiter Mieter wählen..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value={null}>Kein zweiter Mieter</SelectItem>
-                                {tenants.filter(t => t.id !== watchTenantId).map((tenant) => (
-                                    <SelectItem key={tenant.id} value={tenant.id}>
-                                        {tenant.first_name} {tenant.last_name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        {!newSecondTenantMode ? (
+                            <div className="space-y-2">
+                                <Select 
+                                    value={watch('second_tenant_id') || ''} 
+                                    onValueChange={(value) => setValue('second_tenant_id', value || null)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Zweiter Mieter wählen..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value={null}>Kein zweiter Mieter</SelectItem>
+                                        {tenants.filter(t => t.id !== watchTenantId).map((tenant) => (
+                                            <SelectItem key={tenant.id} value={tenant.id}>
+                                                {tenant.first_name} {tenant.last_name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => setNewSecondTenantMode(true)}
+                                    className="w-full"
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Neuen zweiten Mieter anlegen
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="space-y-2 p-3 border rounded-lg">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-sm font-medium">Neuer zweiter Mieter</span>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => setNewSecondTenantMode(false)}
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Input
+                                        {...register('new_second_tenant_first_name', { required: newSecondTenantMode })}
+                                        placeholder="Vorname *"
+                                    />
+                                    <Input
+                                        {...register('new_second_tenant_last_name', { required: newSecondTenantMode })}
+                                        placeholder="Nachname *"
+                                    />
+                                </div>
+                                <Input
+                                    {...register('new_second_tenant_email')}
+                                    placeholder="E-Mail (optional)"
+                                    type="email"
+                                />
+                                <Input
+                                    {...register('new_second_tenant_phone')}
+                                    placeholder="Telefon (optional)"
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

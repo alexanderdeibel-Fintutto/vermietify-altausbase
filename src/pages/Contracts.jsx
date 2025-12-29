@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -29,6 +30,7 @@ import {
 import PageHeader from '@/components/shared/PageHeader';
 import EmptyState from '@/components/shared/EmptyState';
 import ContractForm from '@/components/contracts/ContractForm';
+import TenantsList from '@/components/contracts/TenantsList';
 
 export default function Contracts() {
     const [formOpen, setFormOpen] = useState(false);
@@ -281,8 +283,14 @@ export default function Contracts() {
                             </Card>
                         );
                     })}
-                </div>
-            )}
+                        </div>
+                    )}
+                </TabsContent>
+
+                <TabsContent value="tenants">
+                    <TenantsList />
+                </TabsContent>
+            </Tabs>
 
             <ContractForm
                 open={formOpen}
