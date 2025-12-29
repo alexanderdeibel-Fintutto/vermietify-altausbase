@@ -1229,19 +1229,25 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                                 {selectedTransactions.length > 0 && (
                                     <Button
                                         onClick={async () => {
-                                            if (!confirm(`${selectedTransactions.length} Kategorisierungen wirklich aufheben?`)) return;
+                                            if (!confirm(`${selectedTransactions.length} Kategorisierungen wirklich aufheben? Alle Verknüpfungen zu Forderungen werden gelöscht.`)) return;
                                             try {
-                                                for (const txId of selectedTransactions) {
-                                                    await base44.functions.invoke('uncategorizeTransaction', {
-                                                        transactionId: txId
-                                                    });
+                                                toast.info('Kategorisierungen werden aufgehoben...');
+                                                const result = await base44.functions.invoke('bulkUncategorizeTransactions', {
+                                                    transactionIds: selectedTransactions
+                                                });
+
+                                                if (result.data.success) {
+                                                    queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
+                                                    queryClient.invalidateQueries({ queryKey: ['financial-items'] });
+                                                    queryClient.invalidateQueries({ queryKey: ['financial-item-transaction-links'] });
+                                                    setSelectedTransactions([]);
+                                                    toast.success(`${result.data.uncategorized} Kategorisierungen aufgehoben`);
+                                                } else {
+                                                    toast.error('Fehler: ' + (result.data.error || 'Unbekannter Fehler'));
                                                 }
-                                                queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
-                                                queryClient.invalidateQueries({ queryKey: ['financial-items'] });
-                                                setSelectedTransactions([]);
-                                                toast.success(`${selectedTransactions.length} Kategorisierungen aufgehoben`);
                                             } catch (error) {
-                                                toast.error('Fehler beim Aufheben');
+                                                console.error('Bulk uncategorize error:', error);
+                                                toast.error('Fehler beim Aufheben: ' + (error.message || 'Unbekannter Fehler'));
                                             }
                                         }}
                                         variant="outline"
