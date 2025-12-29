@@ -173,13 +173,14 @@ export default function BankReconciliation() {
         onSuccess: (result) => {
             queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
             queryClient.invalidateQueries({ queryKey: ['financial-items'] });
+            queryClient.invalidateQueries({ queryKey: ['financial-item-transaction-links'] });
             setSelectedTransactions([]);
             setShowBulkActions(false);
             setBulkCategory('');
             setBulkUnitId('');
             setBulkContractId('');
             setBulkAllocations([]);
-            
+
             if (result.success > 0) {
                 toast.success(`${result.success} Transaktionen kategorisiert`);
             }
@@ -492,7 +493,7 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
     };
 
     const { data: allTransactionLinks = [] } = useQuery({
-        queryKey: ['all-transaction-links'],
+        queryKey: ['financial-item-transaction-links'],
         queryFn: () => base44.entities.FinancialItemTransactionLink.list(),
         staleTime: 30000
     });
