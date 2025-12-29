@@ -1,7 +1,6 @@
 import Analytics from './pages/Analytics';
 import BankAccounts from './pages/BankAccounts';
 import BankReconciliation from './pages/BankReconciliation';
-import BankTransactions from './pages/BankTransactions';
 import BuildingDetail from './pages/BuildingDetail';
 import Buildings from './pages/Buildings';
 import ContractDetail from './pages/ContractDetail';
@@ -17,7 +16,6 @@ export const PAGES = {
     "Analytics": Analytics,
     "BankAccounts": BankAccounts,
     "BankReconciliation": BankReconciliation,
-    "BankTransactions": BankTransactions,
     "BuildingDetail": BuildingDetail,
     "Buildings": Buildings,
     "ContractDetail": ContractDetail,

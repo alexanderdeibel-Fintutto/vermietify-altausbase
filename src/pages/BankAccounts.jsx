@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Landmark, Plus, MoreVertical, Pencil, Trash2, Upload, TrendingUp, TrendingDown, Link2, RefreshCw } from 'lucide-react';
+import { Landmark, Plus, MoreVertical, Pencil, Trash2, Upload, TrendingUp, TrendingDown, Link2, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -37,6 +42,7 @@ import { Loader2 } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
 import EmptyState from '@/components/shared/EmptyState';
 import TransactionImport from '@/components/banking/TransactionImport';
+import AccountTransactionsList from '@/components/banking/AccountTransactionsList';
 
 function BankAccountForm({ open, onOpenChange, onSubmit, initialData, isLoading }) {
     const { register, handleSubmit, reset, setValue, watch } = useForm({
@@ -151,7 +157,15 @@ export default function BankAccounts() {
     const [isSyncing, setIsSyncing] = useState(false);
     const [importOpen, setImportOpen] = useState(false);
     const [importAccountId, setImportAccountId] = useState(null);
+    const [expandedAccounts, setExpandedAccounts] = useState({});
     const queryClient = useQueryClient();
+
+    const toggleAccountExpanded = (accountId) => {
+        setExpandedAccounts(prev => ({
+            ...prev,
+            [accountId]: !prev[accountId]
+        }));
+    };
 
     const { data: accounts = [], isLoading } = useQuery({
         queryKey: ['bankAccounts'],
@@ -379,123 +393,153 @@ export default function BankAccounts() {
                     </div>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6">
                     {accounts.map((account) => {
                         const stats = getTransactionStats(account.id);
+                        const accountTransactions = getAccountTransactions(account.id);
+                        const isExpanded = expandedAccounts[account.id];
                         
                         return (
-                            <Card key={account.id} className="border-slate-200/50 hover:shadow-md transition-shadow">
-                                <CardHeader className="pb-3">
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2">
-                                                <CardTitle className="text-lg">{account.name}</CardTitle>
-                                                {account.is_primary && (
-                                                    <Badge className="bg-emerald-100 text-emerald-700">
-                                                        Hauptkonto
-                                                    </Badge>
-                                                )}
-                                                {account.finapi_connection_id && (
-                                                    <Badge className="bg-blue-100 text-blue-700 text-xs">
-                                                        <Link2 className="w-3 h-3 mr-1" />
-                                                        Verbunden
-                                                    </Badge>
+                            <Collapsible 
+                                key={account.id} 
+                                open={isExpanded}
+                                onOpenChange={() => toggleAccountExpanded(account.id)}
+                            >
+                                <Card className="border-slate-200/50 hover:shadow-md transition-shadow">
+                                    <CardHeader className="pb-3">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <CardTitle className="text-lg">{account.name}</CardTitle>
+                                                    {account.is_primary && (
+                                                        <Badge className="bg-emerald-100 text-emerald-700">
+                                                            Hauptkonto
+                                                        </Badge>
+                                                    )}
+                                                    {account.finapi_connection_id && (
+                                                        <Badge className="bg-blue-100 text-blue-700 text-xs">
+                                                            <Link2 className="w-3 h-3 mr-1" />
+                                                            Verbunden
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                                {account.bank_name && (
+                                                    <p className="text-sm text-slate-500 mt-1">{account.bank_name}</p>
                                                 )}
                                             </div>
-                                            {account.bank_name && (
-                                                <p className="text-sm text-slate-500 mt-1">{account.bank_name}</p>
-                                            )}
-                                        </div>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                    <MoreVertical className="w-4 h-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                {account.finapi_connection_id && (
-                                                    <DropdownMenuItem 
-                                                        onClick={() => handleSyncAccount(account.id)}
-                                                        disabled={isSyncing}
-                                                    >
-                                                        <RefreshCw className="w-4 h-4 mr-2" />
-                                                        Synchronisieren
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                        <MoreVertical className="w-4 h-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    {account.finapi_connection_id && (
+                                                        <DropdownMenuItem 
+                                                            onClick={() => handleSyncAccount(account.id)}
+                                                            disabled={isSyncing}
+                                                        >
+                                                            <RefreshCw className="w-4 h-4 mr-2" />
+                                                            Synchronisieren
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    <DropdownMenuItem onClick={() => {
+                                                        setImportAccountId(account.id);
+                                                        setImportOpen(true);
+                                                    }}>
+                                                        <Upload className="w-4 h-4 mr-2" />
+                                                        CSV importieren
                                                     </DropdownMenuItem>
-                                                )}
-                                                <DropdownMenuItem onClick={() => {
-                                                    setImportAccountId(account.id);
-                                                    setImportOpen(true);
-                                                }}>
-                                                    <Upload className="w-4 h-4 mr-2" />
-                                                    CSV importieren
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => {
-                                                    setEditingAccount(account);
-                                                    setFormOpen(true);
-                                                }}>
-                                                    <Pencil className="w-4 h-4 mr-2" />
-                                                    Bearbeiten
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem 
-                                                    onClick={() => setDeleteAccount(account)}
-                                                    className="text-red-600"
-                                                >
-                                                    <Trash2 className="w-4 h-4 mr-2" />
-                                                    Löschen
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <p className="text-sm text-slate-500">IBAN</p>
-                                            <p className="text-sm font-mono text-slate-700 mt-1">{account.iban}</p>
+                                                    <DropdownMenuItem onClick={() => {
+                                                        setEditingAccount(account);
+                                                        setFormOpen(true);
+                                                    }}>
+                                                        <Pencil className="w-4 h-4 mr-2" />
+                                                        Bearbeiten
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem 
+                                                        onClick={() => setDeleteAccount(account)}
+                                                        className="text-red-600"
+                                                    >
+                                                        <Trash2 className="w-4 h-4 mr-2" />
+                                                        Löschen
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <p className="text-sm text-slate-500">IBAN</p>
+                                                <p className="text-sm font-mono text-slate-700 mt-1">{account.iban}</p>
+                                            </div>
 
-                                        <div className="pt-4 border-t border-slate-100">
-                                            <p className="text-sm text-slate-500 mb-2">Kontostand</p>
-                                            <p className="text-3xl font-bold text-slate-800">
-                                                €{account.current_balance?.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-                                            </p>
-                                        </div>
-
-                                        {stats.count > 0 && (
                                             <div className="pt-4 border-t border-slate-100">
-                                                <p className="text-sm text-slate-500 mb-3">Transaktionen</p>
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                                                            <TrendingUp className="w-4 h-4 text-emerald-600" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-xs text-slate-500">Eingänge</p>
-                                                            <p className="text-sm font-semibold text-slate-800">
-                                                                €{stats.income.toLocaleString('de-DE')}
-                                                            </p>
-                                                        </div>
+                                                <p className="text-sm text-slate-500 mb-2">Kontostand</p>
+                                                <p className="text-3xl font-bold text-slate-800">
+                                                    €{account.current_balance?.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                                </p>
+                                            </div>
+
+                                            {stats.count > 0 && (
+                                                <div className="pt-4 border-t border-slate-100">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <p className="text-sm text-slate-500">Transaktionen</p>
+                                                        <CollapsibleTrigger asChild>
+                                                            <Button variant="ghost" size="sm" className="gap-2">
+                                                                {isExpanded ? (
+                                                                    <>
+                                                                        Ausblenden
+                                                                        <ChevronUp className="w-4 h-4" />
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        Anzeigen ({stats.count})
+                                                                        <ChevronDown className="w-4 h-4" />
+                                                                    </>
+                                                                )}
+                                                            </Button>
+                                                        </CollapsibleTrigger>
                                                     </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                                                            <TrendingDown className="w-4 h-4 text-red-600" />
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                                                                <TrendingUp className="w-4 h-4 text-emerald-600" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs text-slate-500">Eingänge</p>
+                                                                <p className="text-sm font-semibold text-slate-800">
+                                                                    €{stats.income.toLocaleString('de-DE')}
+                                                                </p>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <p className="text-xs text-slate-500">Ausgänge</p>
-                                                            <p className="text-sm font-semibold text-slate-800">
-                                                                €{stats.expenses.toLocaleString('de-DE')}
-                                                            </p>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                                                                <TrendingDown className="w-4 h-4 text-red-600" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-xs text-slate-500">Ausgänge</p>
+                                                                <p className="text-sm font-semibold text-slate-800">
+                                                                    €{stats.expenses.toLocaleString('de-DE')}
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <p className="text-xs text-slate-400 mt-3">
-                                                    {stats.count} Transaktionen gesamt
-                                                </p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </CardContent>
-                            </Card>
+                                            )}
+                                        </div>
+
+                                        <CollapsibleContent>
+                                            {stats.count > 0 && (
+                                                <div className="mt-6 pt-6 border-t border-slate-200">
+                                                    <AccountTransactionsList transactions={accountTransactions} />
+                                                </div>
+                                            )}
+                                        </CollapsibleContent>
+                                    </CardContent>
+                                </Card>
+                            </Collapsible>
                         );
                     })}
                 </div>
