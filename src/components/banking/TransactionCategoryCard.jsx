@@ -168,12 +168,26 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
                             <div className="text-right ml-4">
                                 {isPartiallyAllocated ? (
                                     <>
-                                        <p className="text-2xl font-bold whitespace-nowrap mb-0.5 text-amber-600">
-                                            {isPositive ? '+' : ''}{remainingAmount.toFixed(2)} €
-                                        </p>
-                                        <p className="text-xs text-emerald-600 mb-1">
-                                            von {isPositive ? '+' : ''}{totalAmount.toFixed(2)} €
-                                        </p>
+                                        {/* Show remaining in yellow for uncategorized, allocated in green for categorized */}
+                                        {!isCategorized ? (
+                                            <>
+                                                <p className="text-2xl font-bold whitespace-nowrap mb-0.5 text-amber-600">
+                                                    {isPositive ? '+' : ''}{remainingAmount.toFixed(2)} €
+                                                </p>
+                                                <p className="text-xs text-emerald-600 mb-1">
+                                                    von {isPositive ? '+' : ''}{totalAmount.toFixed(2)} €
+                                                </p>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <p className="text-2xl font-bold whitespace-nowrap mb-0.5 text-emerald-600">
+                                                    {isPositive ? '+' : ''}{allocatedAmount.toFixed(2)} €
+                                                </p>
+                                                <p className="text-xs text-amber-600 mb-1">
+                                                    noch {isPositive ? '+' : ''}{remainingAmount.toFixed(2)} € offen
+                                                </p>
+                                            </>
+                                        )}
                                     </>
                                 ) : (
                                     <p className={cn(

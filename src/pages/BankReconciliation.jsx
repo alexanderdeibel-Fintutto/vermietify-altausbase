@@ -491,6 +491,17 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
         }
     };
 
+    const { data: allTransactionLinks = [] } = useQuery({
+        queryKey: ['all-transaction-links'],
+        queryFn: () => base44.entities.FinancialItemTransactionLink.list(),
+        staleTime: 30000
+    });
+
+    // Helper to check if transaction has any allocations
+    const hasAllocations = (transactionId) => {
+        return allTransactionLinks.some(link => link.transaction_id === transactionId);
+    };
+
     const uncategorizedTransactions = useMemo(() => 
         applyFilters(transactions.filter(t => !t.is_categorized))
             .sort((a, b) => parseDateSafely(b.transaction_date).getTime() - parseDateSafely(a.transaction_date).getTime()),
@@ -498,9 +509,9 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
     );
     
     const categorizedTransactions = useMemo(() =>
-        applyFilters(transactions.filter(t => t.is_categorized))
+        applyFilters(transactions.filter(t => t.is_categorized || hasAllocations(t.id)))
             .sort((a, b) => parseDateSafely(b.transaction_date).getTime() - parseDateSafely(a.transaction_date).getTime()),
-        [transactions, applyFilters]
+        [transactions, applyFilters, allTransactionLinks]
     );
 
     // Pagination for uncategorized
