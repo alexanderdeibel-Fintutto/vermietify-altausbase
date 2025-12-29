@@ -395,23 +395,14 @@ export default function TransactionAllocationDialog({
                 )}
 
                 {/* Step 4: Financial Item Allocation (for rent_income) */}
-                {selectedCategory === 'rent_income' && selectedContractId && filteredFinancialItems.length > 0 && (
+                {selectedCategory === 'rent_income' && selectedContractId && (
                     <div className="border-t pt-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <Label className="text-sm font-medium">
-                                4. Forderungen zuordnen
-                                <span className="ml-2 text-xs text-slate-500 font-normal">
-                                    (Nach Relevanz sortiert • Bis aktuelles Datum)
-                                </span>
-                            </Label>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleQuickAllocate}
-                            >
-                                Automatisch zuordnen
-                            </Button>
-                        </div>
+                        <Label className="text-sm font-medium mb-3 block">
+                            4. Forderungen zuordnen
+                            <span className="ml-2 text-xs text-slate-500 font-normal">
+                                (Nach Relevanz sortiert • Bis aktuelles Datum)
+                            </span>
+                        </Label>
 
                         {/* Balance Display */}
                         <div className="bg-slate-50 rounded-lg p-3 mb-4">
@@ -431,96 +422,99 @@ export default function TransactionAllocationDialog({
                             </div>
                         </div>
 
-                        {/* Allocations */}
-                        <div className="space-y-3 mb-4">
-                            {allocations.map((alloc, index) => {
-                                const item = filteredFinancialItems.find(i => i.id === alloc.financialItemId);
-                                const tenant = item ? getTenant(item.related_to_tenant_id) : null;
-                                const unit = item ? getUnit(item.related_to_unit_id) : null;
-                                const building = unit ? getBuilding(unit.building_id) : null;
-                                const openAmount = item ? (item.expected_amount || 0) - (item.amount || 0) : 0;
+                        {/* Available Financial Items */}
+                        {filteredFinancialItems.length > 0 ? (
+                            <div className="space-y-2 max-h-96 overflow-y-auto">
+                                {filteredFinancialItems.map((item, idx) => {
+                                    const isSelected = allocations.some(a => a.financialItemId === item.id);
+                                    const allocation = allocations.find(a => a.financialItemId === item.id);
+                                    const openAmount = (item.expected_amount || 0) - (item.amount || 0);
+                                    const isTopMatch = idx === 0;
 
-                                return (
-                                    <div key={index} className="flex gap-2 items-start">
-                                        <div className="flex-1">
-                                            <Select 
-                                                value={alloc.financialItemId} 
-                                                onValueChange={(value) => updateAllocation(index, 'financialItemId', value)}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Forderung wählen..." />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {filteredFinancialItems.map((i, idx) => {
-                                                        const t = getTenant(i.related_to_tenant_id);
-                                                        const u = getUnit(i.related_to_unit_id);
-                                                        const b = u ? getBuilding(u.building_id) : null;
-                                                        const open = (i.expected_amount || 0) - (i.amount || 0);
-                                                        const isTopMatch = idx === 0;
-                                                        
-                                                        return (
-                                                            <SelectItem key={i.id} value={i.id}>
-                                                                <div className="flex flex-col">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className="font-medium">
-                                                                            {i.payment_month ? (() => {
-                                                                                try {
-                                                                                    return format(parseISO(i.payment_month + '-01'), 'MMM yyyy', { locale: de });
-                                                                                } catch {
-                                                                                    return i.payment_month;
-                                                                                }
-                                                                            })() : i.description}
-                                                                        </span>
-                                                                        {isTopMatch && (
-                                                                            <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">
-                                                                                Passt am besten
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                    <span className="text-xs text-slate-500">
-                                                                        {i.category === 'rent' ? 'Miete' : i.category === 'deposit' ? 'Kaution' : i.category} • 
-                                                                        Offen: €{open.toFixed(2)} von €{i.expected_amount?.toFixed(2)}
-                                                                    </span>
-                                                                </div>
-                                                            </SelectItem>
-                                                        );
-                                                    })}
-                                                </SelectContent>
-                                            </Select>
-                                            {item && (
-                                                <p className="text-xs text-slate-500 mt-1">
-                                                    Offener Betrag: €{openAmount.toFixed(2)}
-                                                </p>
-                                            )}
-                                        </div>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="Betrag"
-                                            value={alloc.amount}
-                                            onChange={(e) => updateAllocation(index, 'amount', e.target.value)}
-                                            className="w-32"
-                                        />
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => removeAllocation(index)}
+                                    return (
+                                        <div 
+                                            key={item.id} 
+                                            className={`border rounded-lg p-3 cursor-pointer transition-all ${
+                                                isSelected 
+                                                    ? 'border-emerald-500 bg-emerald-50' 
+                                                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                            }`}
+                                            onClick={() => {
+                                                if (isSelected) {
+                                                    setAllocations(allocations.filter(a => a.financialItemId !== item.id));
+                                                } else {
+                                                    setAllocations([...allocations, { 
+                                                        financialItemId: item.id, 
+                                                        amount: openAmount.toFixed(2) 
+                                                    }]);
+                                                }
+                                            }}
                                         >
-                                            <Trash2 className="w-4 h-4 text-red-500" />
-                                        </Button>
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        <Button
-                            variant="outline"
-                            onClick={addAllocation}
-                            className="w-full"
-                        >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Weitere Forderung hinzufügen
-                        </Button>
+                                            <div className="flex items-start gap-3">
+                                                <div className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                                                    isSelected ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'
+                                                }`}>
+                                                    {isSelected && <Check className="w-3 h-3 text-white" />}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="font-medium text-slate-800">
+                                                            {item.payment_month ? (() => {
+                                                                try {
+                                                                    return format(parseISO(item.payment_month + '-01'), 'MMM yyyy', { locale: de });
+                                                                } catch {
+                                                                    return item.payment_month;
+                                                                }
+                                                            })() : item.description}
+                                                        </span>
+                                                        {isTopMatch && (
+                                                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                                                                Passt am besten
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-xs text-slate-500">
+                                                        {item.category === 'rent' ? 'Miete' : item.category === 'deposit' ? 'Kaution' : item.category}
+                                                    </p>
+                                                    <div className="flex items-center gap-4 mt-2 text-sm">
+                                                        <span className="text-slate-600">
+                                                            Erwartet: <span className="font-medium">€{item.expected_amount?.toFixed(2)}</span>
+                                                        </span>
+                                                        <span className="text-emerald-600">
+                                                            Offen: <span className="font-medium">€{openAmount.toFixed(2)}</span>
+                                                        </span>
+                                                    </div>
+                                                    {isSelected && (
+                                                        <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                                                            <Label className="text-xs text-slate-600 mb-1 block">Zuzuordnender Betrag:</Label>
+                                                            <Input
+                                                                type="number"
+                                                                step="0.01"
+                                                                placeholder="Betrag"
+                                                                value={allocation?.amount || ''}
+                                                                onChange={(e) => {
+                                                                    const updated = allocations.map(a => 
+                                                                        a.financialItemId === item.id 
+                                                                            ? { ...a, amount: e.target.value }
+                                                                            : a
+                                                                    );
+                                                                    setAllocations(updated);
+                                                                }}
+                                                                className="w-40"
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="text-center py-8 text-slate-500">
+                                Keine offenen Forderungen bis zum aktuellen Datum gefunden
+                            </div>
+                        )}
                     </div>
                 )}
 
