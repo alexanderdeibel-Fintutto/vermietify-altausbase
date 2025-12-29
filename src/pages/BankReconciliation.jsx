@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Landmark, CheckCircle, AlertCircle, TrendingUp, TrendingDown, Sparkles, Settings, Zap, Filter, X, Search, Tag, Check, Building2 } from 'lucide-react';
-import { parseISO, parse } from 'date-fns';
+import { Landmark, CheckCircle, AlertCircle, TrendingUp, TrendingDown, Sparkles, Settings, Zap, Filter, X, Search, Tag, Check, Building2, User, Calendar, CreditCard } from 'lucide-react';
+import { parseISO, parse, format } from 'date-fns';
+import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,6 +78,7 @@ export default function BankReconciliation() {
     const [bulkCategory, setBulkCategory] = useState('');
     const [bulkUnitId, setBulkUnitId] = useState('');
     const [bulkContractId, setBulkContractId] = useState('');
+    const [bulkAllocations, setBulkAllocations] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 20;
     const [allocationDialogOpen, setAllocationDialogOpen] = useState(false);
@@ -617,12 +619,97 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
         }
     };
 
-    const filteredBulkContracts = useMemo(() => 
-        bulkUnitId
-            ? contracts.filter(c => c.unit_id === bulkUnitId && c.status === 'active')
-            : contracts.filter(c => c.status === 'active'),
-        [bulkUnitId, contracts]
-    );
+    // Helper functions for bulk allocation
+    const getTenant = (tenantId) => tenants.find(t => t.id === tenantId);
+    const getUnit = (unitId) => units.find(u => u.id === unitId);
+    const getBuilding = (buildingId) => buildings.find(b => b.id === buildingId);
+
+    // Smart contract suggestions for bulk allocation
+    const bulkSuggestedContracts = useMemo(() => {
+        if (bulkCategory !== 'rent_income' || selectedTransactions.length === 0) return [];
+        
+        const selectedTxs = transactions.filter(t => selectedTransactions.includes(t.id));
+        const activeContracts = contracts.filter(c => c.status === 'active');
+        
+        // Score each contract based on ALL selected transactions
+        const scored = activeContracts.map(contract => {
+            let score = 0;
+            const tenant = getTenant(contract.tenant_id);
+            const secondTenant = contract.second_tenant_id ? getTenant(contract.second_tenant_id) : null;
+            
+            selectedTxs.forEach(tx => {
+                // Match sender name with tenant names
+                if (tenant && tx.sender_receiver) {
+                    const senderLower = tx.sender_receiver.toLowerCase();
+                    const firstNameMatch = tenant.first_name?.toLowerCase();
+                    const lastNameMatch = tenant.last_name?.toLowerCase();
+                    
+                    if (firstNameMatch && senderLower.includes(firstNameMatch)) score += 10;
+                    if (lastNameMatch && senderLower.includes(lastNameMatch)) score += 10;
+                    
+                    if (secondTenant) {
+                        const secondFirstMatch = secondTenant.first_name?.toLowerCase();
+                        const secondLastMatch = secondTenant.last_name?.toLowerCase();
+                        if (secondFirstMatch && senderLower.includes(secondFirstMatch)) score += 10;
+                        if (secondLastMatch && senderLower.includes(secondLastMatch)) score += 10;
+                    }
+                }
+                
+                // Match amount with rent
+                if (Math.abs(tx.amount) === contract.total_rent) score += 20;
+                else if (Math.abs(Math.abs(tx.amount) - contract.total_rent) < 10) score += 10;
+                
+                // Match reference with unit
+                const unit = getUnit(contract.unit_id);
+                if (unit && tx.reference?.includes(unit.unit_number)) score += 15;
+            });
+            
+            return { contract, score };
+        });
+        
+        return scored.sort((a, b) => b.score - a.score).map(s => s.contract);
+    }, [bulkCategory, selectedTransactions, transactions, contracts]);
+
+    const filteredBulkContracts = useMemo(() => {
+        if (bulkCategory === 'rent_income') {
+            if (bulkUnitId) {
+                return contracts.filter(c => c.unit_id === bulkUnitId && c.status === 'active');
+            }
+            return bulkSuggestedContracts;
+        }
+        return contracts.filter(c => c.status === 'active');
+    }, [bulkUnitId, contracts, bulkCategory, bulkSuggestedContracts]);
+
+    // Filter financial items for bulk allocation - only up to current date
+    const filteredBulkFinancialItems = useMemo(() => {
+        if (bulkCategory === 'rent_income' && bulkContractId) {
+            const today = format(new Date(), 'yyyy-MM');
+            const items = financialItems.filter(item => 
+                item.related_to_contract_id === bulkContractId && 
+                (item.status === 'pending' || item.status === 'partial' || item.status === 'overdue') &&
+                item.payment_month && item.payment_month <= today
+            );
+            
+            // Sort by payment_month descending (most recent first, but consider transaction dates)
+            return items.sort((a, b) => {
+                return (b.payment_month || '').localeCompare(a.payment_month || '');
+            });
+        }
+        return [];
+    }, [bulkContractId, financialItems, bulkCategory]);
+
+    // Calculate total allocated amount for bulk
+    const bulkTransactionAmount = useMemo(() => {
+        return transactions
+            .filter(t => selectedTransactions.includes(t.id))
+            .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    }, [transactions, selectedTransactions]);
+
+    const bulkTotalAllocated = useMemo(() => {
+        return bulkAllocations.reduce((sum, alloc) => sum + (parseFloat(alloc.amount) || 0), 0);
+    }, [bulkAllocations]);
+
+    const bulkRemaining = bulkTransactionAmount - bulkTotalAllocated;
 
     if (loadingTransactions || loadingFinancialItems || loadingContracts || loadingTenants || loadingUnits || loadingBuildings) {
         return (
@@ -690,9 +777,9 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
 
                 {/* Bulk Actions */}
                 {showBulkActions && selectedTransactions.length > 0 && (
-                    <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold text-slate-800">
+                    <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 max-h-[80vh] overflow-y-auto">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="font-semibold text-slate-800 text-lg">
                                 Bulk-Zuordnung für {selectedTransactions.length} Transaktionen
                             </h3>
                             <Button
@@ -703,37 +790,79 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                                     setBulkCategory('');
                                     setBulkUnitId('');
                                     setBulkContractId('');
+                                    setBulkAllocations([]);
                                 }}
                             >
                                 <X className="w-4 h-4" />
                             </Button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <Label className="text-sm mb-2">1. Kategorie *</Label>
-                                <Select value={bulkCategory} onValueChange={setBulkCategory}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Kategorie wählen..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {[...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES].map(cat => (
-                                            <SelectItem key={cat} value={cat}>
-                                                {CATEGORY_LABELS[cat] || cat}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                        {/* Selected Transactions Summary */}
+                        <div className="mb-6 space-y-2">
+                            <Label className="text-sm font-medium mb-2 block">Ausgewählte Transaktionen:</Label>
+                            <div className="max-h-48 overflow-y-auto space-y-2">
+                                {transactions.filter(t => selectedTransactions.includes(t.id)).map(tx => (
+                                    <div key={tx.id} className="bg-white rounded-lg p-3 border border-slate-200">
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <User className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                                                    <p className="font-medium text-sm text-slate-800 truncate">{tx.sender_receiver}</p>
+                                                </div>
+                                                <p className="text-xs text-slate-600 truncate">{tx.description}</p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <Calendar className="w-3 h-3 text-slate-400" />
+                                                    <span className="text-xs text-slate-500">
+                                                        {tx.transaction_date ? (() => {
+                                                            try {
+                                                                return format(parseISO(tx.transaction_date), 'dd.MM.yyyy', { locale: de });
+                                                            } catch {
+                                                                return tx.transaction_date;
+                                                            }
+                                                        })() : '-'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <p className={`text-lg font-bold ml-3 flex-shrink-0 ${tx.amount > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                                {tx.amount > 0 ? '+' : ''}{tx.amount?.toFixed(2)} €
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
+                        </div>
 
-                            <div>
-                                <Label className="text-sm mb-2">2. Mietobjekt (optional)</Label>
+                        {/* Step 1: Category */}
+                        <div className="mb-6">
+                            <Label className="text-sm font-medium mb-2 block">1. Kategorie wählen *</Label>
+                            <Select value={bulkCategory} onValueChange={(value) => {
+                                setBulkCategory(value);
+                                setBulkAllocations([]);
+                            }}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Kategorie auswählen..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {[...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES].map(cat => (
+                                        <SelectItem key={cat} value={cat}>
+                                            {CATEGORY_LABELS[cat] || cat}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Step 2: Object/Unit - Only show for rent_income */}
+                        {bulkCategory === 'rent_income' && (
+                            <div className="mb-6">
+                                <Label className="text-sm font-medium mb-2 block">2. Mietobjekt wählen (optional)</Label>
                                 <Select value={bulkUnitId} onValueChange={(value) => {
                                     setBulkUnitId(value);
                                     setBulkContractId('');
+                                    setBulkAllocations([]);
                                 }}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Objekt/Wohnung wählen..." />
+                                        <SelectValue placeholder="Objekt/Wohnung auswählen..." />
                                     </SelectTrigger>
                                     <SelectContent className="max-h-80">
                                         {buildings.flatMap(building => {
@@ -758,48 +887,210 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                                     </SelectContent>
                                 </Select>
                             </div>
+                        )}
 
-                            <div>
-                                <Label className="text-sm mb-2">3. Mietvertrag (optional)</Label>
-                                <Select 
-                                    value={bulkContractId} 
-                                    onValueChange={setBulkContractId}
-                                    disabled={!bulkUnitId}
-                                >
+                        {/* Step 3: Contract - Show when category is rent_income */}
+                        {bulkCategory === 'rent_income' && filteredBulkContracts.length > 0 && (
+                            <div className="mb-6">
+                                <Label className="text-sm font-medium mb-2 block">
+                                    3. Mietvertrag wählen *
+                                    {!bulkUnitId && bulkSuggestedContracts.length > 0 && (
+                                        <span className="ml-2 text-xs text-blue-600 font-normal">
+                                            (Nach Relevanz sortiert)
+                                        </span>
+                                    )}
+                                </Label>
+                                <Select value={bulkContractId} onValueChange={(value) => {
+                                    setBulkContractId(value);
+                                    setBulkAllocations([]);
+                                    // Automatisch das Mietobjekt setzen
+                                    const contract = contracts.find(c => c.id === value);
+                                    if (contract?.unit_id) {
+                                        setBulkUnitId(contract.unit_id);
+                                    }
+                                }}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Vertrag wählen..." />
+                                        <SelectValue placeholder="Vertrag auswählen..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {filteredBulkContracts.map(contract => {
-                                            const tenant = tenants.find(t => t.id === contract.tenant_id);
+                                        {filteredBulkContracts.map((contract, idx) => {
+                                            const tenant = getTenant(contract.tenant_id);
+                                            const secondTenant = contract.second_tenant_id ? getTenant(contract.second_tenant_id) : null;
+                                            const unit = getUnit(contract.unit_id);
+                                            const building = unit ? getBuilding(unit.building_id) : null;
+                                            const isTopSuggestion = !bulkUnitId && idx === 0 && bulkSuggestedContracts.length > 0;
+                                            
                                             return (
                                                 <SelectItem key={contract.id} value={contract.id}>
-                                                    {tenant ? `${tenant.first_name} ${tenant.last_name}` : 'Unbekannt'}
+                                                    <div className="flex flex-col">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-medium">
+                                                                {tenant ? `${tenant.first_name} ${tenant.last_name}` : 'Unbekannt'}
+                                                                {secondTenant && ` & ${secondTenant.first_name} ${secondTenant.last_name}`}
+                                                            </span>
+                                                            {isTopSuggestion && (
+                                                                <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                                                                    Empfohlen
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <span className="text-xs text-slate-500">
+                                                            {building?.name} {unit?.unit_number} • €{contract.total_rent?.toFixed(2)}/Monat
+                                                        </span>
+                                                    </div>
                                                 </SelectItem>
                                             );
                                         })}
                                     </SelectContent>
                                 </Select>
                             </div>
-                        </div>
+                        )}
 
-                        <div className="flex justify-end gap-3 mt-4 pt-4 border-t">
+                        {/* Step 4: Financial Item Selection (for rent_income) */}
+                        {bulkCategory === 'rent_income' && bulkContractId && (
+                            <div className="border-t pt-6">
+                                <Label className="text-sm font-medium mb-3 block">
+                                    4. Forderungen zuordnen
+                                    <span className="ml-2 text-xs text-slate-500 font-normal">
+                                        (Nach Relevanz sortiert • Bis aktuelles Datum)
+                                    </span>
+                                </Label>
+
+                                {/* Balance Display */}
+                                <div className="bg-white rounded-lg p-3 mb-4 border border-slate-200">
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-slate-600">Gesamt Transaktionsbetrag:</span>
+                                        <span className="font-semibold">€{bulkTransactionAmount.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm mt-1">
+                                        <span className="text-slate-600">Zugeordnet:</span>
+                                        <span className="font-semibold">€{bulkTotalAllocated.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm mt-1 pt-2 border-t">
+                                        <span className="text-slate-600">Verbleibend:</span>
+                                        <span className={`font-bold ${bulkRemaining < 0 ? 'text-red-600' : bulkRemaining > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                            €{bulkRemaining.toFixed(2)}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Available Financial Items */}
+                                {filteredBulkFinancialItems.length > 0 ? (
+                                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                                        {filteredBulkFinancialItems.map((item, idx) => {
+                                            const isSelected = bulkAllocations.some(a => a.financialItemId === item.id);
+                                            const allocation = bulkAllocations.find(a => a.financialItemId === item.id);
+                                            const openAmount = (item.expected_amount || 0) - (item.amount || 0);
+                                            const isTopMatch = idx === 0;
+
+                                            return (
+                                                <div 
+                                                    key={item.id} 
+                                                    className={`border rounded-lg p-3 cursor-pointer transition-all ${
+                                                        isSelected 
+                                                            ? 'border-emerald-500 bg-white' 
+                                                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                                                    }`}
+                                                    onClick={() => {
+                                                        if (isSelected) {
+                                                            setBulkAllocations(bulkAllocations.filter(a => a.financialItemId !== item.id));
+                                                        } else {
+                                                            setBulkAllocations([...bulkAllocations, { 
+                                                                financialItemId: item.id, 
+                                                                amount: openAmount.toFixed(2) 
+                                                            }]);
+                                                        }
+                                                    }}
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <div className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                                                            isSelected ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'
+                                                        }`}>
+                                                            {isSelected && <Check className="w-3 h-3 text-white" />}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className="font-medium text-slate-800">
+                                                                    {item.payment_month ? (() => {
+                                                                        try {
+                                                                            return format(parseISO(item.payment_month + '-01'), 'MMM yyyy', { locale: de });
+                                                                        } catch {
+                                                                            return item.payment_month;
+                                                                        }
+                                                                    })() : item.description}
+                                                                </span>
+                                                                {isTopMatch && (
+                                                                    <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                                                                        Passt am besten
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-xs text-slate-500">
+                                                                {item.category === 'rent' ? 'Miete' : item.category === 'deposit' ? 'Kaution' : item.category}
+                                                            </p>
+                                                            <div className="flex items-center gap-4 mt-2 text-sm">
+                                                                <span className="text-slate-600">
+                                                                    Erwartet: <span className="font-medium">€{item.expected_amount?.toFixed(2)}</span>
+                                                                </span>
+                                                                <span className="text-emerald-600">
+                                                                    Offen: <span className="font-medium">€{openAmount.toFixed(2)}</span>
+                                                                </span>
+                                                            </div>
+                                                            {isSelected && (
+                                                                <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                                                                    <Label className="text-xs text-slate-600 mb-1 block">Zuzuordnender Betrag:</Label>
+                                                                    <Input
+                                                                        type="number"
+                                                                        step="0.01"
+                                                                        placeholder="Betrag"
+                                                                        value={allocation?.amount || ''}
+                                                                        onChange={(e) => {
+                                                                            const updated = bulkAllocations.map(a => 
+                                                                                a.financialItemId === item.id 
+                                                                                    ? { ...a, amount: e.target.value }
+                                                                                    : a
+                                                                            );
+                                                                            setBulkAllocations(updated);
+                                                                        }}
+                                                                        className="w-40"
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8 text-slate-500 bg-white rounded-lg border border-slate-200">
+                                        Keine offenen Forderungen bis zum aktuellen Datum gefunden
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="flex justify-end gap-3 mt-6 pt-6 border-t">
                             <Button
                                 variant="outline"
                                 onClick={() => {
                                     setSelectedTransactions([]);
                                     setShowBulkActions(false);
+                                    setBulkCategory('');
+                                    setBulkUnitId('');
+                                    setBulkContractId('');
+                                    setBulkAllocations([]);
                                 }}
                             >
                                 Abbrechen
                             </Button>
                             <Button
                                 onClick={handleBulkCategorize}
-                                disabled={!bulkCategory || bulkCategorizeMutation.isPending}
+                                disabled={!bulkCategory || bulkCategorizeMutation.isPending || (bulkCategory === 'rent_income' && !bulkContractId)}
                                 className="bg-blue-600 hover:bg-blue-700"
                             >
                                 <Check className="w-4 h-4 mr-2" />
-                                {bulkCategorizeMutation.isPending ? 'Wird verarbeitet...' : 'Alle kategorisieren'}
+                                {bulkCategorizeMutation.isPending ? 'Wird verarbeitet...' : `${selectedTransactions.length} Transaktionen zuordnen`}
                             </Button>
                         </div>
                     </div>
