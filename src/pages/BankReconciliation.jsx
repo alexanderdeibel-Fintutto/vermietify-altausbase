@@ -159,85 +159,36 @@ export default function BankReconciliation() {
     });
 
     const bulkCategorizeMutation = useMutation({
-        mutationFn: async ({ transactionIds, category, unitId, contractId }) => {
-            const results = [];
+        mutationFn: async ({ transactionIds, category, unitId, contractId, allocations }) => {
+            const result = await base44.functions.invoke('bulkAllocateTransactions', {
+                transactionIds,
+                category,
+                unitId: unitId || null,
+                contractId: contractId || null,
+                allocations: allocations || []
+            });
             
-            // Get transactions and sort by date
-            const txs = transactions
-                .filter(t => transactionIds.includes(t.id))
-                .sort((a, b) => new Date(a.transaction_date) - new Date(b.transaction_date));
-
-            // If category is rent_income and we have a contract, do intelligent matching
-            if (category === 'rent_income' && contractId) {
-                const availableItems = financialItems
-                    .filter(item => item.type === 'receivable' && item.related_to_contract_id === contractId && (item.status === 'pending' || item.status === 'partial' || item.status === 'overdue'))
-                    .sort((a, b) => new Date(a.payment_month || a.due_date) - new Date(b.payment_month || b.due_date));
-
-                // Match each transaction to the closest financial item by date
-                for (const tx of txs) {
-                    if (availableItems.length > 0) {
-                        // Find the closest item by month
-                        const txDate = new Date(tx.transaction_date);
-                        const txMonth = txDate.getFullYear() + '-' + String(txDate.getMonth() + 1).padStart(2, '0');
-                        
-                        const matchingItem = availableItems.find(item => item.payment_month === txMonth);
-                        const targetItem = matchingItem || availableItems[0];
-                        
-                        if (targetItem) {
-                            // Use backend function to properly link transaction and financial item
-                            await base44.functions.invoke('reconcileTransactionWithFinancialItems', {
-                                transactionId: tx.id,
-                                category,
-                                unitId: unitId || null,
-                                contractId: contractId || null,
-                                financialItemAllocations: [{
-                                    financialItemId: targetItem.id,
-                                    amount: Math.abs(tx.amount)
-                                }]
-                            });
-                            
-                            // Remove from available if fully allocated
-                            if (matchingItem) {
-                                const index = availableItems.indexOf(matchingItem);
-                                availableItems.splice(index, 1);
-                            } else {
-                                availableItems.shift();
-                            }
-                            
-                            results.push(tx.id);
-                        }
-                    } else {
-                        // No more items available, just categorize
-                        await base44.entities.BankTransaction.update(tx.id, {
-                            is_categorized: true,
-                            category,
-                            unit_id: unitId || null,
-                            contract_id: contractId || null
-                        });
-                        results.push(tx.id);
-                    }
-                }
-            } else {
-                // Simple bulk categorization without financial item matching
-                for (const txId of transactionIds) {
-                    await base44.entities.BankTransaction.update(txId, {
-                        is_categorized: true,
-                        category,
-                        unit_id: unitId || null,
-                        contract_id: contractId || null
-                    });
-                    results.push(txId);
-                }
-            }
-
-            return results;
+            return result.data;
         },
-        onSuccess: (results) => {
+        onSuccess: (result) => {
             queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
             queryClient.invalidateQueries({ queryKey: ['financial-items'] });
             setSelectedTransactions([]);
             setShowBulkActions(false);
-            toast.success(`${results.length} Transaktionen kategorisiert`);
+            setBulkCategory('');
+            setBulkUnitId('');
+            setBulkContractId('');
+            setBulkAllocations([]);
+            
+            if (result.success > 0) {
+                toast.success(`${result.success} Transaktionen kategorisiert`);
+            }
+            if (result.errors > 0) {
+                toast.error(`${result.errors} Fehler aufgetreten`);
+            }
+        },
+        onError: (error) => {
+            toast.error('Fehler bei der Bulk-Zuordnung: ' + error.message);
         }
     });
 
@@ -595,11 +546,20 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
         const selectedUnit = units.find(u => u.id === bulkUnitId);
         const actualUnitId = selectedUnit ? bulkUnitId : null;
         
+        // Prepare allocations if available
+        const preparedAllocations = bulkAllocations
+            .filter(a => a.financialItemId && parseFloat(a.amount) > 0)
+            .map(a => ({
+                financialItemId: a.financialItemId,
+                amount: parseFloat(a.amount)
+            }));
+        
         bulkCategorizeMutation.mutate({
             transactionIds: selectedTransactions,
             category: bulkCategory,
             unitId: actualUnitId,
-            contractId: bulkContractId || null
+            contractId: bulkContractId || null,
+            allocations: preparedAllocations
         });
     };
 
