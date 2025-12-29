@@ -1550,6 +1550,7 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                                     contracts={contracts}
                                     isSelected={selectedTransactions.includes(transaction.id)}
                                     onSelect={handleSelectTransaction}
+                                    showAllocatedAmount={true}
                                 />
                             ))}
                         </>
