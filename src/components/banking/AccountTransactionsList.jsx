@@ -17,9 +17,15 @@ export default function AccountTransactionsList({ transactions = [] }) {
         return [...transactions].sort((a, b) => {
             if (!a.transaction_date) return 1;
             if (!b.transaction_date) return -1;
-            const dateA = parseISO(a.transaction_date);
-            const dateB = parseISO(b.transaction_date);
-            return dateB - dateA;
+            try {
+                const dateA = parseISO(a.transaction_date);
+                const dateB = parseISO(b.transaction_date);
+                if (isNaN(dateA.getTime())) return 1;
+                if (isNaN(dateB.getTime())) return -1;
+                return dateB - dateA;
+            } catch {
+                return 0;
+            }
         });
     }, [transactions]);
 
@@ -47,10 +53,15 @@ export default function AccountTransactionsList({ transactions = [] }) {
                     {sortedTransactions.map((transaction) => (
                         <TableRow key={transaction.id}>
                             <TableCell className="font-medium">
-                                {transaction.transaction_date 
-                                    ? format(parseISO(transaction.transaction_date), 'dd.MM.yyyy', { locale: de })
-                                    : '-'
-                                }
+                                {transaction.transaction_date ? (() => {
+                                    try {
+                                        const date = parseISO(transaction.transaction_date);
+                                        if (isNaN(date.getTime())) return transaction.transaction_date;
+                                        return format(date, 'dd.MM.yyyy', { locale: de });
+                                    } catch {
+                                        return transaction.transaction_date;
+                                    }
+                                })() : '-'}
                             </TableCell>
                             <TableCell>
                                 <div className="max-w-xs">
