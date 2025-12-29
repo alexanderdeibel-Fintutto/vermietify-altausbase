@@ -66,9 +66,6 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
     const isPositive = transaction.amount > 0;
     const isCategorized = transaction.is_categorized;
 
-    // Memoize expensive lookups - no longer used with new architecture
-    const matchedPayment = null;
-
     const assignedUnit = React.useMemo(() => 
         transaction.unit_id ? getUnit(transaction.unit_id) : null,
         [transaction.unit_id, getUnit]
@@ -198,15 +195,7 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
                                         <Calendar className="w-3 h-3 mr-1" />
                                         Vertrag: {getTenant(assignedContract.tenant_id)?.first_name} {getTenant(assignedContract.tenant_id)?.last_name}
                                     </Badge>
-                                )}
-                                {matchedPayment && (
-                                    <PaymentPreview 
-                                        payment={matchedPayment}
-                                        tenants={tenants}
-                                        units={units}
-                                        buildings={buildings}
-                                    />
-                                )}
+                                    )}
                             </div>
                         )}
                     </div>
@@ -253,17 +242,3 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
                         });
 
         export default TransactionCategoryCard;
-
-function PaymentPreview({ payment, tenants, units, buildings }) {
-    const tenant = tenants.find(t => t.id === payment.tenant_id);
-    const unit = units.find(u => u.id === payment.unit_id);
-    const building = unit ? buildings.find(b => b.id === unit.building_id) : null;
-
-    return (
-        <Badge variant="outline" className="text-xs">
-            <User className="w-3 h-3 mr-1" />
-            {tenant ? `${tenant.first_name} ${tenant.last_name}` : 'Unbekannt'}
-            {building && unit && ` • ${building.name} ${unit.unit_number}`}
-        </Badge>
-    );
-}
