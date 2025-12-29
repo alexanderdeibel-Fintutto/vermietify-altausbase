@@ -24,6 +24,7 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Mieter', href: createPageUrl('Tenants'), icon: Users, page: 'Tenants' },
         { name: 'Mietverträge', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts' },
         { name: 'Mietforderungen', href: createPageUrl('Payments'), icon: CreditCard, page: 'Payments' },
+        { name: 'Forderungen & Verbindlichkeiten', href: createPageUrl('FinancialItems'), icon: CreditCard, page: 'FinancialItems' },
         { name: 'Bankkonten', href: createPageUrl('BankAccounts'), icon: Landmark, page: 'BankAccounts' },
         { name: 'Banktransaktionen', href: createPageUrl('BankTransactions'), icon: Landmark, page: 'BankTransactions' },
         { name: 'Bankenabgleich', href: createPageUrl('BankReconciliation'), icon: Landmark, page: 'BankReconciliation' },

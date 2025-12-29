@@ -20,7 +20,7 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
     transaction, 
     availableCategories = [],
     categoryLabels = {},
-    availablePayments = [],
+    availableFinancialItems = [],
     onCategorize,
     onUncategorize,
     tenants = [],
@@ -66,13 +66,8 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
     const isPositive = transaction.amount > 0;
     const isCategorized = transaction.is_categorized;
 
-    // Memoize expensive lookups
-    const matchedPayment = React.useMemo(() => 
-        transaction.matched_payment_id 
-            ? availablePayments.find(p => p.id === transaction.matched_payment_id)
-            : null,
-        [transaction.matched_payment_id, availablePayments]
-    );
+    // Memoize expensive lookups - no longer used with new architecture
+    const matchedPayment = null;
 
     const assignedUnit = React.useMemo(() => 
         transaction.unit_id ? getUnit(transaction.unit_id) : null,

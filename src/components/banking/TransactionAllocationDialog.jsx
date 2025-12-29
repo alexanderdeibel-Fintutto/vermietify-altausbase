@@ -24,7 +24,7 @@ export default function TransactionAllocationDialog({
     units,
     buildings,
     contracts,
-    payments
+    financialItems
 }) {
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedObjectId, setSelectedObjectId] = useState('');
@@ -46,16 +46,16 @@ export default function TransactionAllocationDialog({
         return [];
     }, [actualUnitId, contracts, selectedCategory]);
 
-    // Filter payments based on contract
-    const filteredPayments = React.useMemo(() => {
+    // Filter financial items based on contract
+    const filteredFinancialItems = React.useMemo(() => {
         if (selectedCategory === 'rent_income' && selectedContractId) {
-            return payments.filter(p => 
-                p.contract_id === selectedContractId && 
-                (p.status === 'pending' || p.status === 'partial' || p.status === 'overdue')
+            return financialItems.filter(item => 
+                item.related_to_contract_id === selectedContractId && 
+                (item.status === 'pending' || item.status === 'partial' || item.status === 'overdue')
             );
         }
         return [];
-    }, [selectedContractId, payments, selectedCategory]);
+    }, [selectedContractId, financialItems, selectedCategory]);
 
     // Calculate totals
     const transactionAmount = Math.abs(transaction.amount);
@@ -63,7 +63,7 @@ export default function TransactionAllocationDialog({
     const remaining = transactionAmount - totalAllocated;
 
     const addAllocation = () => {
-        setAllocations([...allocations, { paymentId: '', amount: '' }]);
+        setAllocations([...allocations, { financialItemId: '', amount: '' }]);
     };
 
     const removeAllocation = (index) => {
@@ -77,22 +77,22 @@ export default function TransactionAllocationDialog({
     };
 
     const handleQuickAllocate = () => {
-        const openPayments = filteredPayments.slice().sort((a, b) => 
-            new Date(a.payment_month) - new Date(b.payment_month)
+        const openItems = filteredFinancialItems.slice().sort((a, b) => 
+            new Date(a.payment_month || a.due_date) - new Date(b.payment_month || b.due_date)
         );
 
         const newAllocations = [];
         let remainingAmount = transactionAmount;
 
-        for (const payment of openPayments) {
+        for (const item of openItems) {
             if (remainingAmount <= 0) break;
 
-            const openAmount = (payment.expected_amount || 0) - (payment.amount || 0);
+            const openAmount = (item.expected_amount || 0) - (item.amount || 0);
             const allocateAmount = Math.min(remainingAmount, openAmount);
 
             if (allocateAmount > 0) {
                 newAllocations.push({
-                    paymentId: payment.id,
+                    financialItemId: item.id,
                     amount: allocateAmount.toFixed(2)
                 });
                 remainingAmount -= allocateAmount;
@@ -111,23 +111,23 @@ export default function TransactionAllocationDialog({
         setIsProcessing(true);
         try {
             if (selectedCategory === 'rent_income' && allocations.length > 0) {
-                // Use backend function for payment allocation
-                const paymentAllocations = allocations
-                    .filter(a => a.paymentId && parseFloat(a.amount) > 0)
+                // Use backend function for financial item allocation
+                const financialItemAllocations = allocations
+                    .filter(a => a.financialItemId && parseFloat(a.amount) > 0)
                     .map(a => ({
-                        paymentId: a.paymentId,
+                        financialItemId: a.financialItemId,
                         amount: parseFloat(a.amount)
                     }));
 
-                if (paymentAllocations.length === 0) {
+                if (financialItemAllocations.length === 0) {
                     toast.error('Bitte ordnen Sie mindestens eine Forderung zu');
                     setIsProcessing(false);
                     return;
                 }
 
-                await base44.functions.invoke('reconcileTransactionWithPayments', {
+                await base44.functions.invoke('reconcileTransactionWithFinancialItems', {
                     transactionId: transaction.id,
-                    paymentAllocations,
+                    financialItemAllocations,
                     category: selectedCategory,
                     unitId: actualUnitId,
                     contractId: selectedContractId
@@ -276,8 +276,8 @@ export default function TransactionAllocationDialog({
                     </div>
                 )}
 
-                {/* Step 4: Payment Allocation (for rent_income) */}
-                {selectedCategory === 'rent_income' && selectedContractId && filteredPayments.length > 0 && (
+                {/* Step 4: Financial Item Allocation (for rent_income) */}
+                {selectedCategory === 'rent_income' && selectedContractId && filteredFinancialItems.length > 0 && (
                     <div className="border-t pt-6">
                         <div className="flex items-center justify-between mb-4">
                             <Label className="text-sm font-medium">4. Forderungen zuordnen</Label>
@@ -311,32 +311,32 @@ export default function TransactionAllocationDialog({
                         {/* Allocations */}
                         <div className="space-y-3 mb-4">
                             {allocations.map((alloc, index) => {
-                                const payment = filteredPayments.find(p => p.id === alloc.paymentId);
-                                const tenant = payment ? getTenant(payment.tenant_id) : null;
-                                const unit = payment ? getUnit(payment.unit_id) : null;
+                                const item = filteredFinancialItems.find(i => i.id === alloc.financialItemId);
+                                const tenant = item ? getTenant(item.related_to_tenant_id) : null;
+                                const unit = item ? getUnit(item.related_to_unit_id) : null;
                                 const building = unit ? getBuilding(unit.building_id) : null;
-                                const openAmount = payment ? (payment.expected_amount || 0) - (payment.amount || 0) : 0;
+                                const openAmount = item ? (item.expected_amount || 0) - (item.amount || 0) : 0;
 
                                 return (
                                     <div key={index} className="flex gap-2 items-start">
                                         <div className="flex-1">
                                             <Select 
-                                                value={alloc.paymentId} 
-                                                onValueChange={(value) => updateAllocation(index, 'paymentId', value)}
+                                                value={alloc.financialItemId} 
+                                                onValueChange={(value) => updateAllocation(index, 'financialItemId', value)}
                                             >
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Forderung wählen..." />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {filteredPayments.map(p => {
-                                                        const t = getTenant(p.tenant_id);
-                                                        const u = getUnit(p.unit_id);
+                                                    {filteredFinancialItems.map(i => {
+                                                        const t = getTenant(i.related_to_tenant_id);
+                                                        const u = getUnit(i.related_to_unit_id);
                                                         const b = u ? getBuilding(u.building_id) : null;
-                                                        const open = (p.expected_amount || 0) - (p.amount || 0);
+                                                        const open = (i.expected_amount || 0) - (i.amount || 0);
                                                         return (
-                                                            <SelectItem key={p.id} value={p.id}>
+                                                            <SelectItem key={i.id} value={i.id}>
                                                                 <div className="flex flex-col">
-                                                                    <span className="font-medium">{p.payment_month}</span>
+                                                                    <span className="font-medium">{i.payment_month || i.description}</span>
                                                                     <span className="text-xs text-slate-500">
                                                                         {t ? `${t.first_name} ${t.last_name}` : 'Unbekannt'} • 
                                                                         {b?.name} {u?.unit_number} • 
@@ -348,7 +348,7 @@ export default function TransactionAllocationDialog({
                                                     })}
                                                 </SelectContent>
                                             </Select>
-                                            {payment && (
+                                            {item && (
                                                 <p className="text-xs text-slate-500 mt-1">
                                                     Offener Betrag: €{openAmount.toFixed(2)}
                                                 </p>
