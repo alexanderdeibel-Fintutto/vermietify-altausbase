@@ -80,10 +80,13 @@ export default function Contracts() {
 
     const updateMutation = useMutation({
         mutationFn: ({ id, data }) => base44.entities.LeaseContract.update(id, data),
-        onSuccess: () => {
+        onSuccess: async (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['contracts'] });
+            queryClient.invalidateQueries({ queryKey: ['financial-items'] });
             setFormOpen(false);
             setEditingContract(null);
+            // Regenerate financial items after update
+            await regenerateContractFinancialItems(variables.id);
         }
     });
 
