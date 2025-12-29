@@ -1205,18 +1205,69 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                             </p>
                         </div>
                     ) : (
-                        categorizedTransactions.map(transaction => (
-                            <TransactionCategoryCard
-                                key={transaction.id}
-                                transaction={transaction}
-                                categoryLabels={CATEGORY_LABELS}
-                                onUncategorize={() => uncategorizeMutation.mutate({ transactionId: transaction.id })}
-                                tenants={tenants}
-                                units={units}
-                                buildings={buildings}
-                                contracts={contracts}
-                            />
-                        ))
+                        <>
+                            <div className="flex items-center gap-3 px-4">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedTransactions.length > 0 && selectedTransactions.every(id => 
+                                        categorizedTransactions.some(t => t.id === id)
+                                    )}
+                                    onChange={() => {
+                                        if (selectedTransactions.length > 0) {
+                                            setSelectedTransactions([]);
+                                        } else {
+                                            setSelectedTransactions(categorizedTransactions.map(t => t.id));
+                                        }
+                                    }}
+                                    className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <span className="text-sm text-slate-600 font-medium">
+                                    {selectedTransactions.length > 0 
+                                        ? `${selectedTransactions.length} ausgewählt` 
+                                        : 'Alle auswählen'}
+                                </span>
+                                {selectedTransactions.length > 0 && (
+                                    <Button
+                                        onClick={async () => {
+                                            if (!confirm(`${selectedTransactions.length} Kategorisierungen wirklich aufheben?`)) return;
+                                            try {
+                                                for (const txId of selectedTransactions) {
+                                                    await base44.functions.invoke('uncategorizeTransaction', {
+                                                        transactionId: txId
+                                                    });
+                                                }
+                                                queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
+                                                queryClient.invalidateQueries({ queryKey: ['financial-items'] });
+                                                setSelectedTransactions([]);
+                                                toast.success(`${selectedTransactions.length} Kategorisierungen aufgehoben`);
+                                            } catch (error) {
+                                                toast.error('Fehler beim Aufheben');
+                                            }
+                                        }}
+                                        variant="outline"
+                                        size="sm"
+                                        className="ml-auto text-red-600 hover:text-red-700"
+                                    >
+                                        <X className="w-4 h-4 mr-2" />
+                                        Alle Kategorisierungen aufheben
+                                    </Button>
+                                )}
+                            </div>
+                            {categorizedTransactions.map(transaction => (
+                                <TransactionCategoryCard
+                                    key={transaction.id}
+                                    transaction={transaction}
+                                    categoryLabels={CATEGORY_LABELS}
+                                    onUncategorize={() => uncategorizeMutation.mutate({ transactionId: transaction.id })}
+                                    tenants={tenants}
+                                    units={units}
+                                    buildings={buildings}
+                                    contracts={contracts}
+                                    isSelected={selectedTransactions.includes(transaction.id)}
+                                    onSelect={handleSelectTransaction}
+                                />
+                            ))}
+                        </>
                     )}
                 </TabsContent>
             </Tabs>
