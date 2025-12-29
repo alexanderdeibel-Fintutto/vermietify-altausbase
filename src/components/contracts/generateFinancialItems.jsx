@@ -95,27 +95,21 @@ export async function generateFinancialItemsForContract(contract, rentChanges = 
     }
 
     // Generate deposit financial items if deposit exists
-    if (contract.deposit && contract.deposit > 0) {
+    if (contract.deposit && contract.deposit > 0 && !contract.deposit_paid) {
         const installments = contract.deposit_installments || 1;
         const installmentAmount = contract.deposit / installments;
         
+        // Use contract_date as first due date, fallback to start_date
         const firstDueDate = contract.contract_date ? parseISO(contract.contract_date) : startDate;
 
         for (let i = 0; i < installments; i++) {
             let dueDate;
             if (i === 0) {
+                // First installment due on contract date
                 dueDate = firstDueDate;
             } else {
-                let monthDate = addMonths(firstDueDate, i);
-                if (contract.rent_due_day) {
-                    try {
-                        dueDate = setDate(monthDate, contract.rent_due_day);
-                    } catch (e) {
-                        dueDate = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
-                    }
-                } else {
-                    dueDate = monthDate;
-                }
+                // Following installments: same day in following months
+                dueDate = addMonths(firstDueDate, i);
             }
             
             const paymentMonth = format(dueDate, 'yyyy-MM');
