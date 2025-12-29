@@ -89,9 +89,9 @@ export default function BankReconciliation() {
         staleTime: 30000
     });
 
-    const { data: payments = [], isLoading: loadingPayments } = useQuery({
-        queryKey: ['payments'],
-        queryFn: () => base44.entities.Payment.list(),
+    const { data: financialItems = [], isLoading: loadingFinancialItems } = useQuery({
+        queryKey: ['financial-items'],
+        queryFn: () => base44.entities.FinancialItem.list(),
         staleTime: 30000
     });
 
@@ -139,10 +139,10 @@ export default function BankReconciliation() {
     }, [debouncedSearch, filters.selectedUnits, filters.selectedTenants, filters.amountMin, filters.amountMax, filters.dateFrom, filters.dateTo]);
 
     const categorizeMutation = useMutation({
-        mutationFn: async ({ transactionId, category, paymentId, unitId, contractId, skipUpdate }) => {
+        mutationFn: async ({ transactionId, category, financialItemId, unitId, contractId, skipUpdate }) => {
             if (skipUpdate) return; // Already handled by backend function
             
-            // Simple categorization without payment linking
+            // Simple categorization without financial item linking
             await base44.entities.BankTransaction.update(transactionId, {
                 is_categorized: true,
                 category,
@@ -152,7 +152,7 @@ export default function BankReconciliation() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
-            queryClient.invalidateQueries({ queryKey: ['payments'] });
+            queryClient.invalidateQueries({ queryKey: ['financial-items'] });
         }
     });
 
@@ -167,45 +167,45 @@ export default function BankReconciliation() {
 
             // If category is rent_income and we have a contract, do intelligent matching
             if (category === 'rent_income' && contractId) {
-                const availablePayments = payments
-                    .filter(p => p.contract_id === contractId && (p.status === 'pending' || p.status === 'partial' || p.status === 'overdue'))
-                    .sort((a, b) => new Date(a.payment_month) - new Date(b.payment_month));
+                const availableItems = financialItems
+                    .filter(item => item.type === 'receivable' && item.related_to_contract_id === contractId && (item.status === 'pending' || item.status === 'partial' || item.status === 'overdue'))
+                    .sort((a, b) => new Date(a.payment_month || a.due_date) - new Date(b.payment_month || b.due_date));
 
-                // Match each transaction to the closest payment by date
+                // Match each transaction to the closest financial item by date
                 for (const tx of txs) {
-                    if (availablePayments.length > 0) {
-                        // Find the closest payment by month
+                    if (availableItems.length > 0) {
+                        // Find the closest item by month
                         const txDate = new Date(tx.transaction_date);
                         const txMonth = txDate.getFullYear() + '-' + String(txDate.getMonth() + 1).padStart(2, '0');
                         
-                        const matchingPayment = availablePayments.find(p => p.payment_month === txMonth);
-                        const targetPayment = matchingPayment || availablePayments[0];
+                        const matchingItem = availableItems.find(item => item.payment_month === txMonth);
+                        const targetItem = matchingItem || availableItems[0];
                         
-                        if (targetPayment) {
-                            // Use backend function to properly link transaction and payment
-                            await base44.functions.invoke('reconcileTransactionWithPayments', {
+                        if (targetItem) {
+                            // Use backend function to properly link transaction and financial item
+                            await base44.functions.invoke('reconcileTransactionWithFinancialItems', {
                                 transactionId: tx.id,
                                 category,
                                 unitId: unitId || null,
                                 contractId: contractId || null,
-                                paymentAllocations: [{
-                                    paymentId: targetPayment.id,
+                                financialItemAllocations: [{
+                                    financialItemId: targetItem.id,
                                     amount: Math.abs(tx.amount)
                                 }]
                             });
                             
                             // Remove from available if fully allocated
-                            if (matchingPayment) {
-                                const index = availablePayments.indexOf(matchingPayment);
-                                availablePayments.splice(index, 1);
+                            if (matchingItem) {
+                                const index = availableItems.indexOf(matchingItem);
+                                availableItems.splice(index, 1);
                             } else {
-                                availablePayments.shift();
+                                availableItems.shift();
                             }
                             
                             results.push(tx.id);
                         }
                     } else {
-                        // No more payments available, just categorize
+                        // No more items available, just categorize
                         await base44.entities.BankTransaction.update(tx.id, {
                             is_categorized: true,
                             category,
@@ -254,7 +254,7 @@ export default function BankReconciliation() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
-            queryClient.invalidateQueries({ queryKey: ['payments'] });
+            queryClient.invalidateQueries({ queryKey: ['financial-items'] });
         }
     });
 
@@ -445,7 +445,7 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                     await categorizeMutation.mutateAsync({
                         transactionId: suggestion.transaction_id,
                         category: suggestion.category,
-                        paymentId: suggestion.payment_id
+                        financialItemId: suggestion.financial_item_id
                     });
                     applied++;
                 }
@@ -559,9 +559,9 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
 
     const totalPages = Math.ceil(uncategorizedTransactions.length / itemsPerPage);
 
-    const pendingPayments = useMemo(() => 
-        payments.filter(p => p.status === 'pending' || p.status === 'partial' || p.status === 'overdue'),
-        [payments]
+    const pendingFinancialItems = useMemo(() => 
+        financialItems.filter(item => item.type === 'receivable' && (item.status === 'pending' || item.status === 'partial' || item.status === 'overdue')),
+        [financialItems]
     );
 
     const totalUncategorized = useMemo(() => 
@@ -625,7 +625,7 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
         [bulkUnitId, contracts]
     );
 
-    if (loadingTransactions || loadingPayments || loadingContracts || loadingTenants || loadingUnits || loadingBuildings) {
+    if (loadingTransactions || loadingFinancialItems || loadingContracts || loadingTenants || loadingUnits || loadingBuildings) {
         return (
             <div className="space-y-8">
                 <Skeleton className="h-8 w-48" />
@@ -1151,7 +1151,7 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                                 transaction={transaction}
                                 availableCategories={transaction.amount > 0 ? INCOME_CATEGORIES : EXPENSE_CATEGORIES}
                                 categoryLabels={CATEGORY_LABELS}
-                                availablePayments={transaction.amount > 0 ? pendingPayments : []}
+                                availableFinancialItems={transaction.amount > 0 ? pendingFinancialItems : financialItems.filter(i => i.type === 'payable')}
                                 onCategorize={() => {
                                     setSelectedTransaction(transaction);
                                     setAllocationDialogOpen(true);
@@ -1245,7 +1245,7 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                     }}
                     onSuccess={() => {
                         queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
-                        queryClient.invalidateQueries({ queryKey: ['payments'] });
+                        queryClient.invalidateQueries({ queryKey: ['financial-items'] });
                     }}
                     availableCategories={selectedTransaction.amount > 0 ? INCOME_CATEGORIES : EXPENSE_CATEGORIES}
                     categoryLabels={CATEGORY_LABELS}
@@ -1253,7 +1253,7 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                     units={units}
                     buildings={buildings}
                     contracts={contracts}
-                    payments={pendingPayments}
+                    financialItems={selectedTransaction.amount > 0 ? pendingFinancialItems : financialItems.filter(i => i.type === 'payable')}
                 />
             )}
             </div>
