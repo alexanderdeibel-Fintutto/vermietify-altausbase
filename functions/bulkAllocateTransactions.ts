@@ -34,55 +34,32 @@ Deno.serve(async (req) => {
 
         // Process all transactions
         if (category === 'rent_income' && contractId && allocations && allocations.length > 0) {
-            // With financial item allocations - call reconcile for each transaction
+            // With financial item allocations - optimized batch processing
+            const allAffectedItemIds = new Set();
+            
             for (const tx of flatTransactions) {
                 try {
                     // Delete existing links for this transaction
                     const existingLinks = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
                         transaction_id: tx.id
                     });
-                    for (const link of existingLinks) {
-                        await base44.asServiceRole.entities.FinancialItemTransactionLink.delete(link.id);
-                    }
+                    await Promise.all(existingLinks.map(link => 
+                        base44.asServiceRole.entities.FinancialItemTransactionLink.delete(link.id)
+                    ));
 
-                    // Create new links
-                    const affectedItemIds = new Set();
+                    // Create new links in parallel
                     let totalAllocated = 0;
-                    for (const allocation of allocations) {
+                    await Promise.all(allocations.map(async (allocation) => {
                         if (allocation.financialItemId && allocation.amount > 0) {
                             await base44.asServiceRole.entities.FinancialItemTransactionLink.create({
                                 financial_item_id: allocation.financialItemId,
                                 transaction_id: tx.id,
                                 linked_amount: allocation.amount
                             });
-                            affectedItemIds.add(allocation.financialItemId);
+                            allAffectedItemIds.add(allocation.financialItemId);
                             totalAllocated += allocation.amount;
                         }
-                    }
-
-                    // Recalculate financial item statuses
-                    for (const itemId of affectedItemIds) {
-                        const links = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
-                            financial_item_id: itemId
-                        });
-                        const paidAmount = links.reduce((sum, link) => sum + link.linked_amount, 0);
-                        const items = await base44.asServiceRole.entities.FinancialItem.filter({ id: itemId });
-                        
-                        if (items.length > 0) {
-                            const item = items[0];
-                            const expectedAmount = item.expected_amount || 0;
-                            let status = 'pending';
-                            if (paidAmount >= expectedAmount - 0.01) {
-                                status = 'paid';
-                            } else if (paidAmount > 0) {
-                                status = 'partial';
-                            }
-                            await base44.asServiceRole.entities.FinancialItem.update(itemId, {
-                                amount: paidAmount,
-                                status: status
-                            });
-                        }
-                    }
+                    }));
 
                     // Update transaction
                     const transactionAmount = Math.abs(tx.amount);
@@ -102,6 +79,30 @@ Deno.serve(async (req) => {
                     results.details.push({ transactionId: tx.id, error: error.message });
                 }
             }
+
+            // Recalculate all affected financial items once at the end
+            await Promise.all(Array.from(allAffectedItemIds).map(async (itemId) => {
+                const links = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
+                    financial_item_id: itemId
+                });
+                const paidAmount = links.reduce((sum, link) => sum + link.linked_amount, 0);
+                const items = await base44.asServiceRole.entities.FinancialItem.filter({ id: itemId });
+                
+                if (items.length > 0) {
+                    const item = items[0];
+                    const expectedAmount = item.expected_amount || 0;
+                    let status = 'pending';
+                    if (paidAmount >= expectedAmount - 0.01) {
+                        status = 'paid';
+                    } else if (paidAmount > 0) {
+                        status = 'partial';
+                    }
+                    await base44.asServiceRole.entities.FinancialItem.update(itemId, {
+                        amount: paidAmount,
+                        status: status
+                    });
+                }
+            }));
         } else {
             // Simple categorization without financial items - batch update
             const updatePromises = flatTransactions.map(tx =>
