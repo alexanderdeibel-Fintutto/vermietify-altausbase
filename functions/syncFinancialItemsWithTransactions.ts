@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
         let itemsUpdated = 0;
         let errors = [];
 
-        // Step 1: Find categorized transactions without links
+        // Step 1: Find ALL categorized rent income transactions (not just those without links)
         const categorizedTransactions = transactions.filter(tx => 
             tx.is_categorized && 
             tx.category === 'rent_income' && 
@@ -33,35 +33,71 @@ Deno.serve(async (req) => {
 
         console.log(`Found ${categorizedTransactions.length} categorized rent income transactions`);
 
+        // Get all contracts for lookup
+        const contracts = await base44.asServiceRole.entities.LeaseContract.list();
+
         for (const tx of categorizedTransactions) {
             try {
                 // Check if already has links
                 const hasLinks = existingLinks.some(link => link.transaction_id === tx.id);
                 
                 if (hasLinks) {
-                    continue; // Skip if already linked
-                }
-
-                // Find appropriate financial item
-                if (!tx.contract_id && !tx.unit_id) {
-                    continue; // Skip if no contract or unit info
+                    console.log(`Transaction ${tx.id} already has links, skipping`);
+                    continue;
                 }
 
                 const txDate = new Date(tx.transaction_date);
                 const txMonth = txDate.getFullYear() + '-' + String(txDate.getMonth() + 1).padStart(2, '0');
 
-                // Filter candidate items
-                let candidateItems = financialItems.filter(item => 
-                    item.type === 'receivable' &&
-                    (item.related_to_contract_id === tx.contract_id || 
-                     item.related_to_unit_id === tx.unit_id)
-                );
+                // Find appropriate financial item - try multiple strategies
+                let candidateItems = [];
+                
+                // Strategy 1: Match by contract_id
+                if (tx.contract_id) {
+                    candidateItems = financialItems.filter(item => 
+                        item.type === 'receivable' &&
+                        item.related_to_contract_id === tx.contract_id
+                    );
+                    console.log(`Found ${candidateItems.length} items for contract ${tx.contract_id}`);
+                }
+                
+                // Strategy 2: Match by unit_id
+                if (candidateItems.length === 0 && tx.unit_id) {
+                    candidateItems = financialItems.filter(item => 
+                        item.type === 'receivable' &&
+                        item.related_to_unit_id === tx.unit_id
+                    );
+                    console.log(`Found ${candidateItems.length} items for unit ${tx.unit_id}`);
+                }
+
+                // Strategy 3: Find active contract for the unit and match by that
+                if (candidateItems.length === 0 && tx.unit_id) {
+                    const activeContract = contracts.find(c => 
+                        c.unit_id === tx.unit_id && 
+                        c.status === 'active' &&
+                        new Date(c.start_date) <= txDate
+                    );
+                    
+                    if (activeContract) {
+                        candidateItems = financialItems.filter(item => 
+                            item.type === 'receivable' &&
+                            item.related_to_contract_id === activeContract.id
+                        );
+                        console.log(`Found ${candidateItems.length} items via active contract ${activeContract.id}`);
+                    }
+                }
 
                 if (candidateItems.length === 0) {
+                    console.log(`No candidate items found for transaction ${tx.id}`);
+                    errors.push({ 
+                        transaction_id: tx.id, 
+                        error: 'No matching financial items found',
+                        details: { contract_id: tx.contract_id, unit_id: tx.unit_id, date: tx.transaction_date }
+                    });
                     continue;
                 }
 
-                // Sort by payment month
+                // Sort by payment month (oldest first)
                 candidateItems = candidateItems.sort((a, b) => 
                     new Date(a.payment_month || a.due_date || '1970-01-01') - 
                     new Date(b.payment_month || b.due_date || '1970-01-01')
@@ -79,7 +115,7 @@ Deno.serve(async (req) => {
                     });
                 }
                 
-                // If still no match, use first available
+                // If still no match, use oldest available item
                 if (!targetItem && candidateItems.length > 0) {
                     targetItem = candidateItems[0];
                 }
@@ -93,7 +129,9 @@ Deno.serve(async (req) => {
                     });
                     
                     linksCreated++;
-                    console.log(`Created link for transaction ${tx.id} to item ${targetItem.id}`);
+                    console.log(`✓ Created link: Transaction ${tx.id} (€${tx.amount}) → Item ${targetItem.id} (${targetItem.payment_month})`);
+                } else {
+                    console.log(`No suitable target item found for transaction ${tx.id}`);
                 }
             } catch (error) {
                 console.error(`Error processing transaction ${tx.id}:`, error);
@@ -154,7 +192,9 @@ Deno.serve(async (req) => {
             itemsUpdated,
             totalTransactions: categorizedTransactions.length,
             totalItems: financialItems.length,
-            errors: errors.length > 0 ? errors : undefined
+            alreadyLinked: categorizedTransactions.length - linksCreated - errors.length,
+            errors: errors.length > 0 ? errors.slice(0, 10) : undefined, // Limit to first 10 errors
+            errorCount: errors.length
         };
 
         console.log('Sync completed:', result);
