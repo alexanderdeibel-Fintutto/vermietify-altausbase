@@ -21,7 +21,6 @@ export default function Layout({ children, currentPageName }) {
     const navigation = [
         { name: 'Dashboard', href: createPageUrl('Dashboard'), icon: Home, page: 'Dashboard' },
         { name: 'Gebäude', href: createPageUrl('Buildings'), icon: Building2, page: 'Buildings' },
-        { name: 'Mieter', href: createPageUrl('Tenants'), icon: Users, page: 'Tenants' },
         { name: 'Mietverträge', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts' },
         { name: 'Mietforderungen', href: createPageUrl('Payments'), icon: CreditCard, page: 'Payments' },
         { name: 'Forderungen & Verbindlichkeiten', href: createPageUrl('FinancialItems'), icon: CreditCard, page: 'FinancialItems' },
