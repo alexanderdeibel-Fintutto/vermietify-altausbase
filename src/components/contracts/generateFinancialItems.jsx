@@ -247,14 +247,26 @@ export async function regenerateContractFinancialItems(contractId) {
 
         await new Promise(resolve => setTimeout(resolve, 100));
 
-        // Delete all pending automatic financial items for this contract
+        // Delete all unpaid automatic financial items for this contract (pending, partial, overdue)
         const pendingItems = await base44.entities.FinancialItem.filter({
             related_to_contract_id: contractId,
             status: 'pending',
             is_automatic_from_contract: true
         });
+        const partialItems = await base44.entities.FinancialItem.filter({
+            related_to_contract_id: contractId,
+            status: 'partial',
+            is_automatic_from_contract: true
+        });
+        const overdueItems = await base44.entities.FinancialItem.filter({
+            related_to_contract_id: contractId,
+            status: 'overdue',
+            is_automatic_from_contract: true
+        });
 
-        for (const item of pendingItems) {
+        const itemsToDelete = [...pendingItems, ...partialItems, ...overdueItems];
+
+        for (const item of itemsToDelete) {
             await base44.entities.FinancialItem.delete(item.id);
             await new Promise(resolve => setTimeout(resolve, 50));
         }
