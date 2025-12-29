@@ -266,9 +266,20 @@ export default function Contracts() {
                                                 )}
                                                 <div className="flex items-center gap-2 text-sm text-slate-600">
                                                     <Calendar className="w-4 h-4 text-slate-400" />
-                                                    {contract.start_date && format(parseISO(contract.start_date), 'dd.MM.yyyy')}
-                                                    {contract.end_date && !contract.is_unlimited && 
-                                                        ` - ${format(parseISO(contract.end_date), 'dd.MM.yyyy')}`}
+                                                    {contract.start_date && (() => {
+                                                        try {
+                                                            return format(parseISO(contract.start_date), 'dd.MM.yyyy');
+                                                        } catch {
+                                                            return contract.start_date;
+                                                        }
+                                                    })()}
+                                                    {contract.end_date && !contract.is_unlimited && (() => {
+                                                        try {
+                                                            return ` - ${format(parseISO(contract.end_date), 'dd.MM.yyyy')}`;
+                                                        } catch {
+                                                            return ` - ${contract.end_date}`;
+                                                        }
+                                                    })()}
                                                     {contract.is_unlimited && ' - unbefristet'}
                                                 </div>
                                             </div>
