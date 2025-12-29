@@ -109,10 +109,10 @@ Deno.serve(async (req) => {
                 }
             }));
         } else {
-            // Simple categorization without financial items - batch update
+            // Simple categorization without financial items (or partial allocation)
             const updatePromises = flatTransactions.map(tx =>
                 base44.asServiceRole.entities.BankTransaction.update(tx.id, {
-                    is_categorized: true,
+                    is_categorized: false, // Keep as uncategorized if no full allocation
                     category,
                     unit_id: unitId || null,
                     contract_id: contractId || null

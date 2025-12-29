@@ -967,9 +967,10 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                                                         if (isSelected) {
                                                             setBulkAllocations(bulkAllocations.filter(a => a.financialItemId !== item.id));
                                                         } else {
+                                                            const suggestedAmount = Math.min(openAmount, bulkRemaining);
                                                             setBulkAllocations([...bulkAllocations, { 
                                                                 financialItemId: item.id, 
-                                                                amount: openAmount.toFixed(2) 
+                                                                amount: suggestedAmount.toFixed(2) 
                                                             }]);
                                                         }
                                                     }}
@@ -1017,9 +1018,10 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                                                                         placeholder="Betrag"
                                                                         value={allocation?.amount || ''}
                                                                         onChange={(e) => {
+                                                                            const newValue = e.target.value;
                                                                             const updated = bulkAllocations.map(a => 
                                                                                 a.financialItemId === item.id 
-                                                                                    ? { ...a, amount: e.target.value }
+                                                                                    ? { ...a, amount: newValue }
                                                                                     : a
                                                                             );
                                                                             setBulkAllocations(updated);
