@@ -204,7 +204,14 @@ export default function FinancialItemAllocationDialog({ financialItem, onClose, 
                                                                     </span>
                                                                 </div>
                                                                 <span className="text-xs text-slate-500">
-                                                                    {tx.transaction_date ? format(parseISO(tx.transaction_date), 'dd.MM.yyyy', { locale: de }) : '-'}
+                                                                    {tx.transaction_date ? (() => {
+                                                                        try {
+                                                                            const date = parseISO(tx.transaction_date);
+                                                                            return isNaN(date.getTime()) ? tx.transaction_date : format(date, 'dd.MM.yyyy', { locale: de });
+                                                                        } catch {
+                                                                            return tx.transaction_date;
+                                                                        }
+                                                                    })() : '-'}
                                                                     {' • '}
                                                                     {tx.description}
                                                                 </span>
