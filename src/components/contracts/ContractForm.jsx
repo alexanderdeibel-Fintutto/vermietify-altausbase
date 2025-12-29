@@ -19,7 +19,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from 'lucide-react';
-import { generatePaymentsForContract, regenerateContractPayments, needsPartialRentDialog, calculatePartialRent } from './generatePayments';
+import { generateFinancialItemsForContract, regenerateContractFinancialItems, needsPartialRentDialog, calculatePartialRent } from './generateFinancialItems';
 import PartialRentDialog from './PartialRentDialog';
 
 export default function ContractForm({ 
@@ -99,12 +99,12 @@ export default function ContractForm({
         // Submit contract first
         const result = await onSubmit(contractData);
         
-        // Generate/regenerate payments
+        // Generate/regenerate financial items
         if (result) {
             try {
                 if (initialData) {
-                    // If editing, regenerate all payments for this contract
-                    await regenerateContractPayments(initialData.id);
+                    // If editing, regenerate all financial items for this contract
+                    await regenerateContractFinancialItems(initialData.id);
                 } else {
                     // If new contract, check if partial rent dialog is needed
                     if (needsPartialRentDialog(contractData)) {
@@ -113,12 +113,12 @@ export default function ContractForm({
                         setPendingContract(result);
                         setPartialRentDialogOpen(true);
                     } else {
-                        // Generate payments normally
-                        await generatePaymentsForContract(result, []);
+                        // Generate financial items normally
+                        await generateFinancialItemsForContract(result, []);
                     }
                 }
             } catch (error) {
-                console.error('Error generating payments:', error);
+                console.error('Error generating financial items:', error);
             }
         }
     };
@@ -126,10 +126,10 @@ export default function ContractForm({
     const handlePartialRentConfirm = async (partialAmount) => {
         if (pendingContract) {
             try {
-                await generatePaymentsForContract(pendingContract, [], partialAmount);
+                await generateFinancialItemsForContract(pendingContract, [], partialAmount);
                 setPendingContract(null);
             } catch (error) {
-                console.error('Error generating payments with partial rent:', error);
+                console.error('Error generating financial items with partial rent:', error);
             }
         }
     };
