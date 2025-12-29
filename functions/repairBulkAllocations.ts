@@ -15,11 +15,11 @@ Deno.serve(async (req) => {
             category: 'rent_income'
         });
 
-        // Get all payment links
-        const existingLinks = await base44.asServiceRole.entities.PaymentTransactionLink.list();
+        // Get all financial item links
+        const existingLinks = await base44.asServiceRole.entities.FinancialItemTransactionLink.list();
 
-        // Get all payments
-        const allPayments = await base44.asServiceRole.entities.Payment.list();
+        // Get all financial items
+        const allItems = await base44.asServiceRole.entities.FinancialItem.list();
 
         let repairedCount = 0;
         let skippedCount = 0;
@@ -39,69 +39,71 @@ Deno.serve(async (req) => {
                 continue;
             }
 
-            // Find appropriate payment based on contract or unit and date
+            // Find appropriate financial item based on contract or unit and date
             const txDate = new Date(tx.transaction_date);
             const txMonth = txDate.getFullYear() + '-' + String(txDate.getMonth() + 1).padStart(2, '0');
 
-            let candidatePayments = [];
+            let candidateItems = [];
             
             if (tx.contract_id) {
                 // Filter by contract_id
-                candidatePayments = allPayments.filter(p => 
-                    p.contract_id === tx.contract_id
+                candidateItems = allItems.filter(item => 
+                    item.type === 'receivable' &&
+                    item.related_to_contract_id === tx.contract_id
                 );
             } else if (tx.unit_id) {
                 // Filter by unit_id if no contract_id
-                candidatePayments = allPayments.filter(p => 
-                    p.unit_id === tx.unit_id
+                candidateItems = allItems.filter(item => 
+                    item.type === 'receivable' &&
+                    item.related_to_unit_id === tx.unit_id
                 );
             }
 
             // Sort by payment month
-            candidatePayments = candidatePayments.sort((a, b) => 
-                new Date(a.payment_month) - new Date(b.payment_month)
+            candidateItems = candidateItems.sort((a, b) => 
+                new Date(a.payment_month || a.due_date) - new Date(b.payment_month || b.due_date)
             );
 
             // Try to match by month first
-            let targetPayment = candidatePayments.find(p => p.payment_month === txMonth);
+            let targetItem = candidateItems.find(item => item.payment_month === txMonth);
             
-            // If no match by month, try to find the first non-fully-paid payment
-            if (!targetPayment) {
-                targetPayment = candidatePayments.find(p => {
-                    const currentPaid = p.amount || 0;
-                    const expected = p.expected_amount || 0;
+            // If no match by month, try to find the first non-fully-paid item
+            if (!targetItem) {
+                targetItem = candidateItems.find(item => {
+                    const currentPaid = item.amount || 0;
+                    const expected = item.expected_amount || 0;
                     return currentPaid < expected;
                 });
             }
             
             // If still no match, use first available
-            if (!targetPayment && candidatePayments.length > 0) {
-                targetPayment = candidatePayments[0];
+            if (!targetItem && candidateItems.length > 0) {
+                targetItem = candidateItems[0];
             }
 
-            if (targetPayment) {
+            if (targetItem) {
                 // Create the link
-                await base44.asServiceRole.entities.PaymentTransactionLink.create({
-                    payment_id: targetPayment.id,
+                await base44.asServiceRole.entities.FinancialItemTransactionLink.create({
+                    financial_item_id: targetItem.id,
                     transaction_id: tx.id,
                     linked_amount: Math.abs(tx.amount)
                 });
 
-                // Recalculate payment status
-                const paymentLinks = await base44.asServiceRole.entities.PaymentTransactionLink.filter({
-                    payment_id: targetPayment.id
+                // Recalculate item status
+                const itemLinks = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
+                    financial_item_id: targetItem.id
                 });
 
-                const totalLinked = paymentLinks.reduce((sum, link) => sum + (link.linked_amount || 0), 0);
+                const totalLinked = itemLinks.reduce((sum, link) => sum + (link.linked_amount || 0), 0);
                 
                 let newStatus = 'pending';
-                if (totalLinked >= targetPayment.expected_amount) {
+                if (totalLinked >= targetItem.expected_amount) {
                     newStatus = 'paid';
                 } else if (totalLinked > 0) {
                     newStatus = 'partial';
                 }
 
-                await base44.asServiceRole.entities.Payment.update(targetPayment.id, {
+                await base44.asServiceRole.entities.FinancialItem.update(targetItem.id, {
                     amount: totalLinked,
                     status: newStatus
                 });

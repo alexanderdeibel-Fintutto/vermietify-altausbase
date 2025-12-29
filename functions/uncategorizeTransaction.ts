@@ -16,20 +16,21 @@ Deno.serve(async (req) => {
         }
 
         // Get all links for this transaction
-        const links = await base44.asServiceRole.entities.PaymentTransactionLink.filter({
+        const links = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
             transaction_id: transactionId
         });
 
-        const affectedPaymentIds = new Set(links.map(link => link.payment_id));
-
+        const affectedItemIds = new Set();
+        
         // Delete all links
         for (const link of links) {
-            await base44.asServiceRole.entities.PaymentTransactionLink.delete(link.id);
+            affectedItemIds.add(link.financial_item_id);
+            await base44.asServiceRole.entities.FinancialItemTransactionLink.delete(link.id);
         }
 
-        // Recalculate payment statuses
-        for (const paymentId of affectedPaymentIds) {
-            await recalculatePaymentStatus(base44, paymentId);
+        // Recalculate all affected financial items
+        for (const itemId of affectedItemIds) {
+            await recalculateFinancialItemStatus(base44, itemId);
         }
 
         // Mark transaction as uncategorized
@@ -42,31 +43,32 @@ Deno.serve(async (req) => {
 
         return Response.json({ 
             success: true,
-            message: `Transaction uncategorized, ${affectedPaymentIds.size} payment(s) updated`
+            affectedItems: affectedItemIds.size
         });
+
     } catch (error) {
-        console.error('Error uncategorizing transaction:', error);
+        console.error('Uncategorize error:', error);
         return Response.json({ 
-            error: error.message || 'Failed to uncategorize transaction' 
+            error: error.message 
         }, { status: 500 });
     }
 });
 
-async function recalculatePaymentStatus(base44, paymentId) {
-    // Get all links for this payment
-    const links = await base44.asServiceRole.entities.PaymentTransactionLink.filter({
-        payment_id: paymentId
+async function recalculateFinancialItemStatus(base44, itemId) {
+    // Get all links for this financial item
+    const links = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
+        financial_item_id: itemId
     });
 
     // Calculate total paid amount
     const paidAmount = links.reduce((sum, link) => sum + link.linked_amount, 0);
 
-    // Get payment to compare with expected amount
-    const payments = await base44.asServiceRole.entities.Payment.filter({ id: paymentId });
-    if (payments.length === 0) return;
+    // Get financial item to compare with expected amount
+    const items = await base44.asServiceRole.entities.FinancialItem.filter({ id: itemId });
+    if (items.length === 0) return;
 
-    const payment = payments[0];
-    const expectedAmount = payment.expected_amount || 0;
+    const item = items[0];
+    const expectedAmount = item.expected_amount || 0;
 
     // Determine status
     let status = 'pending';
@@ -76,8 +78,8 @@ async function recalculatePaymentStatus(base44, paymentId) {
         status = 'partial';
     }
 
-    // Update payment
-    await base44.asServiceRole.entities.Payment.update(paymentId, {
+    // Update financial item
+    await base44.asServiceRole.entities.FinancialItem.update(itemId, {
         amount: paidAmount,
         status: status
     });
