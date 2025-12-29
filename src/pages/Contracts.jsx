@@ -116,18 +116,27 @@ export default function Contracts() {
     const getBuilding = (buildingId) => buildings.find(b => b.id === buildingId);
 
     const getContractStatus = (contract) => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const startDate = new Date(contract.start_date);
-        const endDate = contract.end_date ? new Date(contract.end_date) : null;
+        if (!contract.start_date) return 'active';
+        
+        try {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const startDate = parseISO(contract.start_date);
+            
+            if (isNaN(startDate.getTime())) return 'active';
+            
+            const endDate = contract.end_date ? parseISO(contract.end_date) : null;
 
-        if (startDate > today) {
-            return 'pending';
-        } else if (endDate && endDate < today) {
-            return 'expired';
-        } else if (contract.termination_date) {
-            return 'terminated';
-        } else {
+            if (startDate > today) {
+                return 'pending';
+            } else if (endDate && !isNaN(endDate.getTime()) && endDate < today) {
+                return 'expired';
+            } else if (contract.termination_date) {
+                return 'terminated';
+            } else {
+                return 'active';
+            }
+        } catch {
             return 'active';
         }
     };
