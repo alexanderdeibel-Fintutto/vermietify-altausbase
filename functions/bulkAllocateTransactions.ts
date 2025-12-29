@@ -34,9 +34,11 @@ Deno.serve(async (req) => {
 
         // Process all transactions
         if (category === 'rent_income' && contractId && allocations && allocations.length > 0) {
-            // With financial item allocations - optimized batch processing
+            // With financial item allocations - distribute allocations across all transactions
             const allAffectedItemIds = new Set();
+            const totalTransactionAmount = flatTransactions.reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
             
+            // Distribute allocations proportionally across transactions
             for (const tx of flatTransactions) {
                 try {
                     // Delete existing links for this transaction
@@ -47,23 +49,26 @@ Deno.serve(async (req) => {
                         base44.asServiceRole.entities.FinancialItemTransactionLink.delete(link.id)
                     ));
 
-                    // Create new links in parallel
+                    // Calculate this transaction's share of each allocation
+                    const txAmount = Math.abs(tx.amount);
+                    const txShare = txAmount / totalTransactionAmount;
+                    
                     let totalAllocated = 0;
                     await Promise.all(allocations.map(async (allocation) => {
                         if (allocation.financialItemId && allocation.amount > 0) {
+                            const allocatedAmount = allocation.amount * txShare;
                             await base44.asServiceRole.entities.FinancialItemTransactionLink.create({
                                 financial_item_id: allocation.financialItemId,
                                 transaction_id: tx.id,
-                                linked_amount: allocation.amount
+                                linked_amount: allocatedAmount
                             });
                             allAffectedItemIds.add(allocation.financialItemId);
-                            totalAllocated += allocation.amount;
+                            totalAllocated += allocatedAmount;
                         }
                     }));
 
                     // Update transaction
-                    const transactionAmount = Math.abs(tx.amount);
-                    const isFullyAllocated = totalAllocated >= transactionAmount - 0.01;
+                    const isFullyAllocated = totalAllocated >= txAmount - 0.01;
                     
                     await base44.asServiceRole.entities.BankTransaction.update(tx.id, {
                         is_categorized: isFullyAllocated,
