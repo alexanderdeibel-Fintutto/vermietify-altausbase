@@ -20,13 +20,19 @@ Deno.serve(async (req) => {
         let successCount = 0;
         let errorCount = 0;
         const affectedItemIds = new Set();
+        const errors = [];
 
+        // Process all transactions
         for (const transactionId of transactionIds) {
             try {
+                console.log(`Processing transaction ${transactionId}...`);
+                
                 // Get all links for this transaction
                 const links = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
                     transaction_id: transactionId
                 });
+
+                console.log(`Found ${links.length} links for transaction ${transactionId}`);
 
                 // Store affected item IDs
                 links.forEach(link => affectedItemIds.add(link.financial_item_id));
@@ -34,6 +40,7 @@ Deno.serve(async (req) => {
                 // Delete all links
                 for (const link of links) {
                     await base44.asServiceRole.entities.FinancialItemTransactionLink.delete(link.id);
+                    console.log(`Deleted link ${link.id}`);
                 }
 
                 // Update transaction to uncategorized
@@ -44,12 +51,20 @@ Deno.serve(async (req) => {
                     contract_id: null
                 });
 
+                console.log(`✓ Transaction ${transactionId} uncategorized`);
                 successCount++;
+                
+                // Small delay to avoid rate limiting
+                await new Promise(resolve => setTimeout(resolve, 50));
+                
             } catch (error) {
                 console.error(`Error uncategorizing transaction ${transactionId}:`, error);
+                errors.push({ transactionId, error: error.message });
                 errorCount++;
             }
         }
+
+        console.log(`Bulk uncategorize complete: ${successCount} success, ${errorCount} errors`);
 
         // Recalculate status for all affected financial items
         console.log(`Recalculating ${affectedItemIds.size} affected financial items`);
@@ -66,7 +81,8 @@ Deno.serve(async (req) => {
             success: true,
             uncategorized: successCount,
             errors: errorCount,
-            affectedItems: affectedItemIds.size
+            affectedItems: affectedItemIds.size,
+            errorDetails: errors.length > 0 ? errors : undefined
         });
 
     } catch (error) {

@@ -1229,25 +1229,43 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                                 {selectedTransactions.length > 0 && (
                                     <Button
                                         onClick={async () => {
-                                            if (!confirm(`${selectedTransactions.length} Kategorisierungen wirklich aufheben? Alle Verknüpfungen zu Forderungen werden gelöscht.`)) return;
+                                            const count = selectedTransactions.length;
+                                            if (!confirm(`${count} Kategorisierungen wirklich aufheben? Alle Verknüpfungen zu Forderungen werden gelöscht.`)) return;
+
+                                            const toastId = toast.loading(`Bearbeite ${count} Transaktionen...`);
+
                                             try {
-                                                toast.info('Kategorisierungen werden aufgehoben...');
                                                 const result = await base44.functions.invoke('bulkUncategorizeTransactions', {
                                                     transactionIds: selectedTransactions
                                                 });
 
+                                                console.log('Bulk uncategorize result:', result.data);
+
                                                 if (result.data.success) {
-                                                    queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
-                                                    queryClient.invalidateQueries({ queryKey: ['financial-items'] });
-                                                    queryClient.invalidateQueries({ queryKey: ['financial-item-transaction-links'] });
+                                                    // Clear selection first
                                                     setSelectedTransactions([]);
-                                                    toast.success(`${result.data.uncategorized} Kategorisierungen aufgehoben`);
+
+                                                    // Force refetch all related data
+                                                    await Promise.all([
+                                                        queryClient.invalidateQueries({ queryKey: ['bank-transactions'] }),
+                                                        queryClient.invalidateQueries({ queryKey: ['financial-items'] }),
+                                                        queryClient.invalidateQueries({ queryKey: ['financial-item-transaction-links'] })
+                                                    ]);
+
+                                                    // Wait a bit for refetch to complete
+                                                    await new Promise(resolve => setTimeout(resolve, 500));
+
+                                                    toast.success(`✓ ${result.data.uncategorized} Kategorisierungen aufgehoben`, { id: toastId });
+
+                                                    if (result.data.errors > 0) {
+                                                        toast.warning(`${result.data.errors} Fehler aufgetreten`);
+                                                    }
                                                 } else {
-                                                    toast.error('Fehler: ' + (result.data.error || 'Unbekannter Fehler'));
+                                                    toast.error('Fehler: ' + (result.data.error || 'Unbekannter Fehler'), { id: toastId });
                                                 }
                                             } catch (error) {
                                                 console.error('Bulk uncategorize error:', error);
-                                                toast.error('Fehler beim Aufheben: ' + (error.message || 'Unbekannter Fehler'));
+                                                toast.error('Fehler beim Aufheben: ' + (error.message || 'Unbekannter Fehler'), { id: toastId });
                                             }
                                         }}
                                         variant="outline"
@@ -1255,7 +1273,7 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                                         className="ml-auto text-red-600 hover:text-red-700"
                                     >
                                         <X className="w-4 h-4 mr-2" />
-                                        Alle Kategorisierungen aufheben
+                                        Alle Kategorisierungen aufheben ({selectedTransactions.length})
                                     </Button>
                                 )}
                             </div>
