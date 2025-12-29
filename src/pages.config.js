@@ -9,7 +9,6 @@ import Contracts from './pages/Contracts';
 import Dashboard from './pages/Dashboard';
 import FinAPICallback from './pages/FinAPICallback';
 import FinancialItems from './pages/FinancialItems';
-import Payments from './pages/Payments';
 import UnitDetail from './pages/UnitDetail';
 import __Layout from './Layout.jsx';
 
@@ -26,7 +25,6 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "FinAPICallback": FinAPICallback,
     "FinancialItems": FinancialItems,
-    "Payments": Payments,
     "UnitDetail": UnitDetail,
 }
 

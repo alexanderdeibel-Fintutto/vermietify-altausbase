@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,58 +22,51 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RefreshCw, Search, Calendar, Building2, User, Euro, AlertCircle, Plus } from 'lucide-react';
+import { RefreshCw, Search, User, Building2, Euro, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import PageHeader from '../components/shared/PageHeader';
-import EmptyState from '../components/shared/EmptyState';
-import { Skeleton } from "@/components/ui/skeleton";
-import { regenerateAllFinancialItems } from '../components/contracts/generateFinancialItems';
+import { regenerateAllFinancialItems } from './generateFinancialItems';
 
-export default function PaymentsPage() {
+export default function FinancialItemsList() {
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
-    const [dateFilter, setDateFilter] = useState('all');
     const [isSyncing, setIsSyncing] = useState(false);
     const [isRegenerating, setIsRegenerating] = useState(false);
 
-    // Fetch all data
     const { data: financialItems = [], isLoading: loadingItems } = useQuery({
         queryKey: ['financial-items'],
         queryFn: () => base44.entities.FinancialItem.list()
     });
 
-    const { data: contracts = [], isLoading: loadingContracts } = useQuery({
+    const { data: contracts = [] } = useQuery({
         queryKey: ['contracts'],
         queryFn: () => base44.entities.LeaseContract.list()
     });
 
-    const { data: tenants = [], isLoading: loadingTenants } = useQuery({
+    const { data: tenants = [] } = useQuery({
         queryKey: ['tenants'],
         queryFn: () => base44.entities.Tenant.list()
     });
 
-    const { data: units = [], isLoading: loadingUnits } = useQuery({
+    const { data: units = [] } = useQuery({
         queryKey: ['units'],
         queryFn: () => base44.entities.Unit.list()
     });
 
-    const { data: buildings = [], isLoading: loadingBuildings } = useQuery({
+    const { data: buildings = [] } = useQuery({
         queryKey: ['buildings'],
         queryFn: () => base44.entities.Building.list()
     });
 
-    const { data: financialItemLinks = [], isLoading: loadingLinks } = useQuery({
+    const { data: financialItemLinks = [] } = useQuery({
         queryKey: ['financial-item-transaction-links'],
         queryFn: () => base44.entities.FinancialItemTransactionLink.list()
     });
 
-    const { data: transactions = [], isLoading: loadingTransactions } = useQuery({
+    const { data: transactions = [] } = useQuery({
         queryKey: ['bank-transactions'],
         queryFn: () => base44.entities.BankTransaction.list()
     });
-
-    const isLoading = loadingItems || loadingContracts || loadingTenants || loadingUnits || loadingBuildings || loadingLinks || loadingTransactions;
 
     // Process financial items with transaction data
     const processedFinancialItems = useMemo(() => {
@@ -105,40 +98,29 @@ export default function PaymentsPage() {
         });
     }, [financialItems, financialItemLinks, transactions]);
 
-    // Filter for rent demands only
+    // Filter for rent demands only, up to and including current month
     const rentDemands = useMemo(() => {
-        return processedFinancialItems.filter(item => 
-            item.type === 'receivable' && 
-            (item.category === 'rent' || item.category === 'deposit')
-        );
+        const now = new Date();
+        const currentMonth = format(now, 'yyyy-MM');
+
+        return processedFinancialItems.filter(item => {
+            if (item.type !== 'receivable') return false;
+            if (item.category !== 'rent' && item.category !== 'deposit') return false;
+            if (!item.payment_month) return false;
+            
+            // Only show items up to and including current month
+            return item.payment_month <= currentMonth;
+        });
     }, [processedFinancialItems]);
 
     // Apply filters
     const filteredItems = useMemo(() => {
         let filtered = rentDemands;
 
-        // Status filter
         if (statusFilter !== 'all') {
             filtered = filtered.filter(item => item.status === statusFilter);
         }
 
-        // Date filter
-        if (dateFilter !== 'all') {
-            const now = new Date();
-            filtered = filtered.filter(item => {
-                if (!item.payment_month) return false;
-                const itemDate = parseISO(item.payment_month + '-01');
-                
-                if (dateFilter === 'current') {
-                    return format(itemDate, 'yyyy-MM') === format(now, 'yyyy-MM');
-                } else if (dateFilter === 'overdue') {
-                    return itemDate < now && item.status !== 'paid';
-                }
-                return true;
-            });
-        }
-
-        // Search filter
         if (searchTerm) {
             const term = searchTerm.toLowerCase();
             filtered = filtered.filter(item => {
@@ -151,13 +133,12 @@ export default function PaymentsPage() {
             });
         }
 
-        // Sort by payment_month descending
         return filtered.sort((a, b) => {
             if (!a.payment_month) return 1;
             if (!b.payment_month) return -1;
             return b.payment_month.localeCompare(a.payment_month);
         });
-    }, [rentDemands, statusFilter, dateFilter, searchTerm, tenants]);
+    }, [rentDemands, statusFilter, searchTerm, tenants]);
 
     // Calculate statistics
     const stats = useMemo(() => {
@@ -180,7 +161,6 @@ export default function PaymentsPage() {
         };
     }, [rentDemands]);
 
-    // Sync mutation
     const handleSync = async () => {
         setIsSyncing(true);
         try {
@@ -196,7 +176,6 @@ export default function PaymentsPage() {
         }
     };
 
-    // Regenerate all mutation
     const handleRegenerateAll = async () => {
         if (!confirm('Möchten Sie wirklich alle Forderungen neu generieren? Bereits bezahlte Forderungen werden nicht gelöscht.')) {
             return;
@@ -215,7 +194,6 @@ export default function PaymentsPage() {
         }
     };
 
-    // Helper functions
     const getTenant = (tenantId) => tenants.find(t => t.id === tenantId);
     const getUnit = (unitId) => units.find(u => u.id === unitId);
     const getBuilding = (buildingId) => buildings.find(b => b.id === buildingId);
@@ -236,28 +214,8 @@ export default function PaymentsPage() {
         return <Badge className={variants[status] || variants.pending}>{labels[status] || status}</Badge>;
     };
 
-    if (isLoading) {
-        return (
-            <div className="space-y-6">
-                <Skeleton className="h-12 w-64" />
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <Skeleton className="h-24" />
-                    <Skeleton className="h-24" />
-                    <Skeleton className="h-24" />
-                    <Skeleton className="h-24" />
-                </div>
-                <Skeleton className="h-96" />
-            </div>
-        );
-    }
-
     return (
         <div className="space-y-6">
-            <PageHeader
-                title="Mietforderungen"
-                subtitle={`${filteredItems.length} Forderung(en)`}
-            />
-
             {/* Statistics */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card>
@@ -328,17 +286,6 @@ export default function PaymentsPage() {
                             </SelectContent>
                         </Select>
 
-                        <Select value={dateFilter} onValueChange={setDateFilter}>
-                            <SelectTrigger className="w-full lg:w-48">
-                                <SelectValue placeholder="Zeitraum" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Alle Monate</SelectItem>
-                                <SelectItem value="current">Aktueller Monat</SelectItem>
-                                <SelectItem value="overdue">Überfällig</SelectItem>
-                            </SelectContent>
-                        </Select>
-
                         <Button
                             variant="outline"
                             onClick={handleSync}
@@ -364,11 +311,9 @@ export default function PaymentsPage() {
             <Card>
                 <CardContent className="p-0">
                     {filteredItems.length === 0 ? (
-                        <EmptyState
-                            icon={Calendar}
-                            title="Keine Mietforderungen"
-                            description="Es wurden keine Mietforderungen gefunden."
-                        />
+                        <div className="text-center py-12 text-slate-500">
+                            Keine Mietforderungen gefunden
+                        </div>
                     ) : (
                         <div className="overflow-x-auto">
                             <Table>

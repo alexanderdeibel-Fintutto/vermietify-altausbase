@@ -31,6 +31,7 @@ import PageHeader from '@/components/shared/PageHeader';
 import EmptyState from '@/components/shared/EmptyState';
 import ContractForm from '@/components/contracts/ContractForm';
 import TenantsList from '@/components/contracts/TenantsList';
+import FinancialItemsList from '@/components/contracts/FinancialItemsList';
 
 export default function Contracts() {
     const [formOpen, setFormOpen] = useState(false);
@@ -174,6 +175,9 @@ export default function Contracts() {
                     <TabsTrigger value="tenants">
                         Mieter ({tenants.length})
                     </TabsTrigger>
+                    <TabsTrigger value="financials">
+                        Mietforderungen
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="contracts" className="space-y-6">
@@ -300,6 +304,10 @@ export default function Contracts() {
 
                 <TabsContent value="tenants">
                     <TenantsList />
+                </TabsContent>
+
+                <TabsContent value="financials">
+                    <FinancialItemsList />
                 </TabsContent>
             </Tabs>
 
