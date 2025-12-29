@@ -22,7 +22,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RefreshCw, Search, User, Building2, Euro, AlertCircle, Edit } from 'lucide-react';
+import { RefreshCw, Search, User, Building2, Euro, AlertCircle, Edit, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { regenerateAllFinancialItems } from './generateFinancialItems';
 import FinancialItemAllocationDialog from './FinancialItemAllocationDialog';
@@ -35,6 +35,7 @@ export default function FinancialItemsList() {
     const [isRegenerating, setIsRegenerating] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
     const [allocationDialogOpen, setAllocationDialogOpen] = useState(false);
+    const [selectedItems, setSelectedItems] = useState([]);
 
     const { data: financialItems = [], isLoading: loadingItems } = useQuery({
         queryKey: ['financial-items'],
@@ -210,15 +211,49 @@ export default function FinancialItemsList() {
             paid: 'bg-emerald-100 text-emerald-700',
             partial: 'bg-amber-100 text-amber-700',
             pending: 'bg-slate-100 text-slate-700',
-            overdue: 'bg-red-100 text-red-700'
+            overdue: 'bg-red-100 text-red-700',
+            settled: 'bg-blue-100 text-blue-700'
         };
         const labels = {
             paid: 'Bezahlt',
             partial: 'Teilweise',
             pending: 'Ausstehend',
-            overdue: 'Überfällig'
+            overdue: 'Überfällig',
+            settled: 'Erledigt'
         };
         return <Badge className={variants[status] || variants.pending}>{labels[status] || status}</Badge>;
+    };
+
+    const markAsSettledMutation = useMutation({
+        mutationFn: async (itemIds) => {
+            for (const id of itemIds) {
+                await base44.entities.FinancialItem.update(id, { status: 'settled' });
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['financial-items'] });
+            setSelectedItems([]);
+            toast.success('Forderungen als erledigt markiert');
+        },
+        onError: () => {
+            toast.error('Fehler beim Markieren');
+        }
+    });
+
+    const handleSelectAll = () => {
+        if (selectedItems.length === filteredItems.length) {
+            setSelectedItems([]);
+        } else {
+            setSelectedItems(filteredItems.map(item => item.id));
+        }
+    };
+
+    const handleSelectItem = (itemId) => {
+        setSelectedItems(prev => 
+            prev.includes(itemId) 
+                ? prev.filter(id => id !== itemId)
+                : [...prev, itemId]
+        );
     };
 
     return (
@@ -290,6 +325,7 @@ export default function FinancialItemsList() {
                                 <SelectItem value="partial">Teilweise</SelectItem>
                                 <SelectItem value="paid">Bezahlt</SelectItem>
                                 <SelectItem value="overdue">Überfällig</SelectItem>
+                                <SelectItem value="settled">Erledigt</SelectItem>
                             </SelectContent>
                         </Select>
 
@@ -310,6 +346,17 @@ export default function FinancialItemsList() {
                             <RefreshCw className={`w-4 h-4 mr-2 ${isRegenerating ? 'animate-spin' : ''}`} />
                             Alle aktualisieren
                         </Button>
+
+                        {selectedItems.length > 0 && (
+                            <Button
+                                onClick={() => markAsSettledMutation.mutate(selectedItems)}
+                                disabled={markAsSettledMutation.isPending}
+                                className="bg-blue-600 hover:bg-blue-700"
+                            >
+                                <Check className="w-4 h-4 mr-2" />
+                                Als erledigt markieren ({selectedItems.length})
+                            </Button>
+                        )}
                     </div>
                 </CardContent>
             </Card>
@@ -326,6 +373,14 @@ export default function FinancialItemsList() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
+                                        <TableHead className="w-12">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedItems.length === filteredItems.length && filteredItems.length > 0}
+                                                onChange={handleSelectAll}
+                                                className="w-4 h-4 rounded border-slate-300"
+                                            />
+                                        </TableHead>
                                         <TableHead>Monat</TableHead>
                                         <TableHead>Mieter</TableHead>
                                         <TableHead>Objekt</TableHead>
@@ -345,6 +400,14 @@ export default function FinancialItemsList() {
 
                                         return (
                                             <TableRow key={item.id}>
+                                                <TableCell>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedItems.includes(item.id)}
+                                                        onChange={() => handleSelectItem(item.id)}
+                                                        className="w-4 h-4 rounded border-slate-300"
+                                                    />
+                                                </TableCell>
                                                 <TableCell className="font-medium">
                                                     {item.payment_month ? (() => {
                                                         try {
