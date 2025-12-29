@@ -70,9 +70,10 @@ export default function Contracts() {
             const contract = await base44.entities.LeaseContract.create(data);
             return contract;
         },
-        onSuccess: () => {
+        onSuccess: async (result) => {
             queryClient.invalidateQueries({ queryKey: ['contracts'] });
             queryClient.invalidateQueries({ queryKey: ['payments'] });
+            queryClient.invalidateQueries({ queryKey: ['financial-items'] });
             setFormOpen(false);
         }
     });
