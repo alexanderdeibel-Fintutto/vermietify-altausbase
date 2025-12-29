@@ -201,10 +201,15 @@ export default function Contracts() {
                                 const status = statusConfig[contractStatus] || statusConfig.active;
 
                                 return (
-                                    <Card key={contractId} className="border-slate-200/50 hover:shadow-md transition-shadow">
-                                        <CardContent className="p-6">
-                                            <div className="flex items-start justify-between mb-4">
-                                                <div className="flex-1">
+                                    <Link 
+                                        key={contractId}
+                                        to={createPageUrl(`ContractDetail?contractId=${contractId}`)}
+                                        className="block"
+                                    >
+                                        <Card className="border-slate-200/50 hover:shadow-md transition-shadow cursor-pointer">
+                                            <CardContent className="p-6">
+                                                <div className="flex items-start justify-between mb-4">
+                                                    <div className="flex-1">
                                                     <div className="flex items-center gap-2 mb-2">
                                                         <Badge className={status.color}>
                                                             {status.label}
@@ -219,7 +224,12 @@ export default function Contracts() {
                                                 </div>
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="icon" 
+                                                            className="h-8 w-8"
+                                                            onClick={(e) => e.preventDefault()}
+                                                        >
                                                             <MoreVertical className="w-4 h-4" />
                                                         </Button>
                                                     </DropdownMenuTrigger>
@@ -307,6 +317,7 @@ export default function Contracts() {
                                             </div>
                                         </CardContent>
                                     </Card>
+                                </Link>
                                 );
                             })}
                         </div>
