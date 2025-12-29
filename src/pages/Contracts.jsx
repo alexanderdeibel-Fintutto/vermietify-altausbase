@@ -158,7 +158,7 @@ export default function Contracts() {
         <div className="space-y-8">
             <PageHeader 
                 title="Mietverträge"
-                subtitle={`${contracts.length} Verträge verwalten`}
+                subtitle={`${contracts.length} Verträge · ${tenants.length} Mieter`}
                 action={() => {
                     setEditingContract(null);
                     setFormOpen(true);
@@ -166,17 +166,28 @@ export default function Contracts() {
                 actionLabel="Vertrag hinzufügen"
             />
 
-            {contracts.length === 0 ? (
-                <EmptyState
-                    icon={FileText}
-                    title="Noch keine Mietverträge"
-                    description="Erstellen Sie Ihren ersten Mietvertrag."
-                    action={() => setFormOpen(true)}
-                    actionLabel="Ersten Vertrag anlegen"
-                />
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {contracts.map((contract) => {
+            <Tabs defaultValue="contracts" className="space-y-6">
+                <TabsList className="bg-white border border-slate-200">
+                    <TabsTrigger value="contracts">
+                        Mietverträge ({contracts.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="tenants">
+                        Mieter ({tenants.length})
+                    </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="contracts" className="space-y-6">
+                    {contracts.length === 0 ? (
+                        <EmptyState
+                            icon={FileText}
+                            title="Noch keine Mietverträge"
+                            description="Erstellen Sie Ihren ersten Mietvertrag."
+                            action={() => setFormOpen(true)}
+                            actionLabel="Ersten Vertrag anlegen"
+                        />
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {contracts.map((contract) => {
                         const contractId = contract.id;
                         const unit = getUnit(contract.unit_id);
                         const tenant = getTenant(contract.tenant_id);
@@ -281,8 +292,8 @@ export default function Contracts() {
                                     </div>
                                 </CardContent>
                             </Card>
-                        );
-                    })}
+                            );
+                        })}
                         </div>
                     )}
                 </TabsContent>
