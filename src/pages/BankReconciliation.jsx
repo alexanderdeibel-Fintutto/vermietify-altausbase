@@ -1249,7 +1249,9 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                                                     await Promise.all([
                                                         queryClient.invalidateQueries({ queryKey: ['bank-transactions'] }),
                                                         queryClient.invalidateQueries({ queryKey: ['financial-items'] }),
-                                                        queryClient.invalidateQueries({ queryKey: ['financial-item-transaction-links'] })
+                                                        queryClient.invalidateQueries({ queryKey: ['financial-item-transaction-links'] }),
+                                                        queryClient.invalidateQueries({ queryKey: ['payments'] }),
+                                                        queryClient.invalidateQueries({ queryKey: ['payment-transaction-links'] })
                                                     ]);
 
                                                     // Wait a bit for refetch to complete

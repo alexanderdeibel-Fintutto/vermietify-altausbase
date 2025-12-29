@@ -20,6 +20,7 @@ Deno.serve(async (req) => {
         let successCount = 0;
         let errorCount = 0;
         const affectedItemIds = new Set();
+        const affectedPaymentIds = new Set();
         const errors = [];
 
         // Process all transactions
@@ -27,20 +28,36 @@ Deno.serve(async (req) => {
             try {
                 console.log(`Processing transaction ${transactionId}...`);
                 
-                // Get all links for this transaction
-                const links = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
+                // Get all FinancialItemTransactionLinks for this transaction
+                const financialLinks = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
                     transaction_id: transactionId
                 });
 
-                console.log(`Found ${links.length} links for transaction ${transactionId}`);
+                console.log(`Found ${financialLinks.length} financial item links for transaction ${transactionId}`);
 
                 // Store affected item IDs
-                links.forEach(link => affectedItemIds.add(link.financial_item_id));
+                financialLinks.forEach(link => affectedItemIds.add(link.financial_item_id));
 
-                // Delete all links
-                for (const link of links) {
+                // Delete all financial item links
+                for (const link of financialLinks) {
                     await base44.asServiceRole.entities.FinancialItemTransactionLink.delete(link.id);
-                    console.log(`Deleted link ${link.id}`);
+                    console.log(`Deleted financial item link ${link.id}`);
+                }
+
+                // Get all PaymentTransactionLinks for this transaction
+                const paymentLinks = await base44.asServiceRole.entities.PaymentTransactionLink.filter({
+                    transaction_id: transactionId
+                });
+
+                console.log(`Found ${paymentLinks.length} payment links for transaction ${transactionId}`);
+
+                // Store affected payment IDs
+                paymentLinks.forEach(link => affectedPaymentIds.add(link.payment_id));
+
+                // Delete all payment links
+                for (const link of paymentLinks) {
+                    await base44.asServiceRole.entities.PaymentTransactionLink.delete(link.id);
+                    console.log(`Deleted payment link ${link.id}`);
                 }
 
                 // Update transaction to uncategorized
@@ -73,7 +90,18 @@ Deno.serve(async (req) => {
             try {
                 await recalculateFinancialItemStatus(base44, itemId);
             } catch (error) {
-                console.error(`Error recalculating item ${itemId}:`, error);
+                console.error(`Error recalculating financial item ${itemId}:`, error);
+            }
+        }
+
+        // Recalculate status for all affected payments
+        console.log(`Recalculating ${affectedPaymentIds.size} affected payments`);
+        
+        for (const paymentId of affectedPaymentIds) {
+            try {
+                await recalculatePaymentStatus(base44, paymentId);
+            } catch (error) {
+                console.error(`Error recalculating payment ${paymentId}:`, error);
             }
         }
 
@@ -82,6 +110,7 @@ Deno.serve(async (req) => {
             uncategorized: successCount,
             errors: errorCount,
             affectedItems: affectedItemIds.size,
+            affectedPayments: affectedPaymentIds.size,
             errorDetails: errors.length > 0 ? errors : undefined
         });
 
@@ -119,6 +148,36 @@ async function recalculateFinancialItemStatus(base44, financialItemId) {
 
     // Update the financial item
     await base44.asServiceRole.entities.FinancialItem.update(financialItemId, {
+        amount: totalPaid,
+        status: newStatus
+    });
+}
+
+async function recalculatePaymentStatus(base44, paymentId) {
+    // Get all remaining links for this payment
+    const links = await base44.asServiceRole.entities.PaymentTransactionLink.filter({
+        payment_id: paymentId
+    });
+
+    // Calculate total paid
+    const totalPaid = links.reduce((sum, link) => sum + (link.linked_amount || 0), 0);
+
+    // Get the payment to check expected amount
+    const payment = await base44.asServiceRole.entities.Payment.get(paymentId);
+    const expected = payment.expected_amount || 0;
+
+    // Determine new status
+    let newStatus = 'pending';
+    if (totalPaid >= expected) {
+        newStatus = 'paid';
+    } else if (totalPaid > 0) {
+        newStatus = 'partial';
+    } else if (payment.status === 'overdue') {
+        newStatus = 'overdue';
+    }
+
+    // Update the payment
+    await base44.asServiceRole.entities.Payment.update(paymentId, {
         amount: totalPaid,
         status: newStatus
     });
