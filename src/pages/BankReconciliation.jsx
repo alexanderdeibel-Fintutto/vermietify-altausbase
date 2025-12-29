@@ -233,7 +233,7 @@ export default function BankReconciliation() {
         },
         onSuccess: (results) => {
             queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
-            queryClient.invalidateQueries({ queryKey: ['payments'] });
+            queryClient.invalidateQueries({ queryKey: ['financial-items'] });
             setSelectedTransactions([]);
             setShowBulkActions(false);
             toast.success(`${results.length} Transaktionen kategorisiert`);
@@ -331,7 +331,7 @@ export default function BankReconciliation() {
                 await categorizeMutation.mutateAsync({
                     transactionId: suggestion.transaction.id,
                     category: suggestion.category,
-                    paymentId: null
+                    financialItemId: null
                 });
                 
                 // Update rule match count
@@ -410,12 +410,12 @@ ${JSON.stringify(txsToAnalyze.map(t => ({
 Mieter (für rent_income):
 ${JSON.stringify(tenants.map(t => ({ id: t.id, name: `${t.first_name} ${t.last_name}` })), null, 2)}
 
-Offene Zahlungen (für rent_income):
-${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'partial').map(p => ({
-    id: p.id,
-    tenant_id: p.tenant_id,
-    amount: p.expected_amount,
-    month: p.payment_month
+Offene Forderungen (für rent_income):
+${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (item.status === 'pending' || item.status === 'partial')).map(item => ({
+    id: item.id,
+    tenant_id: item.related_to_tenant_id,
+    amount: item.expected_amount,
+    month: item.payment_month
 })), null, 2)}`,
                 response_json_schema: {
                     type: "object",
@@ -503,16 +503,16 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
 
                 // Unit filter
                 if (filters.selectedUnits.length > 0) {
-                    const payment = payments.find(p => p.id === tx.matched_payment_id);
-                    if (!payment || !filters.selectedUnits.includes(payment.unit_id)) {
+                    if (!tx.unit_id || !filters.selectedUnits.includes(tx.unit_id)) {
                         return false;
                     }
                 }
 
                 // Tenant filter
                 if (filters.selectedTenants.length > 0) {
-                    const payment = payments.find(p => p.id === tx.matched_payment_id);
-                    if (!payment || !filters.selectedTenants.includes(payment.tenant_id)) {
+                    // Find related financial items for this transaction
+                    const relatedItem = financialItems.find(item => item.related_to_unit_id === tx.unit_id);
+                    if (!relatedItem || !filters.selectedTenants.includes(relatedItem.related_to_tenant_id)) {
                         return false;
                     }
                 }
@@ -520,7 +520,7 @@ ${JSON.stringify(payments.filter(p => p.status === 'pending' || p.status === 'pa
                 return true;
             });
         };
-    }, [debouncedSearch, filters.selectedUnits, filters.selectedTenants, filters.amountMin, filters.amountMax, filters.dateFrom, filters.dateTo, payments]);
+    }, [debouncedSearch, filters.selectedUnits, filters.selectedTenants, filters.amountMin, filters.amountMax, filters.dateFrom, filters.dateTo, financialItems]);
 
     const parseDateSafely = (dateStr) => {
         if (!dateStr) return new Date(0);
