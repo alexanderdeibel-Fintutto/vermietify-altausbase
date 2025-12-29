@@ -170,9 +170,9 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
                                 {isPartiallyAllocated ? (
                                     <>
                                         {showAllocatedAmount ? (
-                                            /* In categorized list: show allocated amount in green */
+                                            /* In categorized list: show allocated amount in yellow to indicate partial */
                                             <>
-                                                <p className="text-2xl font-bold whitespace-nowrap mb-0.5 text-emerald-600">
+                                                <p className="text-2xl font-bold whitespace-nowrap mb-0.5 text-amber-600">
                                                     {isPositive ? '+' : ''}{allocatedAmount.toFixed(2)} €
                                                 </p>
                                                 <p className="text-xs text-amber-600 mb-1">
