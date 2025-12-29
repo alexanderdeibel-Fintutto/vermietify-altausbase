@@ -34,30 +34,66 @@ Deno.serve(async (req) => {
 
         // Process all transactions
         if (category === 'rent_income' && contractId && allocations && allocations.length > 0) {
-            // With financial item allocations
+            // With financial item allocations - call reconcile for each transaction
             for (const tx of flatTransactions) {
                 try {
-                    // Use the existing reconcile function
-                    const response = await fetch(`${Deno.env.get('BASE44_FUNCTION_URL')}/reconcileTransactionWithFinancialItems`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': req.headers.get('Authorization')
-                        },
-                        body: JSON.stringify({
-                            transactionId: tx.id,
-                            category,
-                            unitId,
-                            contractId,
-                            financialItemAllocations: allocations
-                        })
+                    // Delete existing links for this transaction
+                    const existingLinks = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
+                        transaction_id: tx.id
                     });
-
-                    const result = await response.json();
-                    
-                    if (!response.ok || result.error) {
-                        throw new Error(result.error || 'Reconciliation failed');
+                    for (const link of existingLinks) {
+                        await base44.asServiceRole.entities.FinancialItemTransactionLink.delete(link.id);
                     }
+
+                    // Create new links
+                    const affectedItemIds = new Set();
+                    let totalAllocated = 0;
+                    for (const allocation of allocations) {
+                        if (allocation.financialItemId && allocation.amount > 0) {
+                            await base44.asServiceRole.entities.FinancialItemTransactionLink.create({
+                                financial_item_id: allocation.financialItemId,
+                                transaction_id: tx.id,
+                                linked_amount: allocation.amount
+                            });
+                            affectedItemIds.add(allocation.financialItemId);
+                            totalAllocated += allocation.amount;
+                        }
+                    }
+
+                    // Recalculate financial item statuses
+                    for (const itemId of affectedItemIds) {
+                        const links = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
+                            financial_item_id: itemId
+                        });
+                        const paidAmount = links.reduce((sum, link) => sum + link.linked_amount, 0);
+                        const items = await base44.asServiceRole.entities.FinancialItem.filter({ id: itemId });
+                        
+                        if (items.length > 0) {
+                            const item = items[0];
+                            const expectedAmount = item.expected_amount || 0;
+                            let status = 'pending';
+                            if (paidAmount >= expectedAmount - 0.01) {
+                                status = 'paid';
+                            } else if (paidAmount > 0) {
+                                status = 'partial';
+                            }
+                            await base44.asServiceRole.entities.FinancialItem.update(itemId, {
+                                amount: paidAmount,
+                                status: status
+                            });
+                        }
+                    }
+
+                    // Update transaction
+                    const transactionAmount = Math.abs(tx.amount);
+                    const isFullyAllocated = totalAllocated >= transactionAmount - 0.01;
+                    
+                    await base44.asServiceRole.entities.BankTransaction.update(tx.id, {
+                        is_categorized: isFullyAllocated,
+                        category: category,
+                        unit_id: unitId || null,
+                        contract_id: contractId || null
+                    });
 
                     results.success++;
                 } catch (error) {
