@@ -22,9 +22,10 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RefreshCw, Search, User, Building2, Euro, AlertCircle } from 'lucide-react';
+import { RefreshCw, Search, User, Building2, Euro, AlertCircle, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import { regenerateAllFinancialItems } from './generateFinancialItems';
+import FinancialItemAllocationDialog from './FinancialItemAllocationDialog';
 
 export default function FinancialItemsList() {
     const queryClient = useQueryClient();
@@ -32,6 +33,8 @@ export default function FinancialItemsList() {
     const [statusFilter, setStatusFilter] = useState('all');
     const [isSyncing, setIsSyncing] = useState(false);
     const [isRegenerating, setIsRegenerating] = useState(false);
+    const [selectedItem, setSelectedItem] = useState(null);
+    const [allocationDialogOpen, setAllocationDialogOpen] = useState(false);
 
     const { data: financialItems = [], isLoading: loadingItems } = useQuery({
         queryKey: ['financial-items'],
@@ -331,6 +334,7 @@ export default function FinancialItemsList() {
                                         <TableHead className="text-right">Bezahlt</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead>Transaktionen</TableHead>
+                                        <TableHead className="text-right">Aktion</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -383,6 +387,20 @@ export default function FinancialItemsList() {
                                                         <span className="text-sm text-slate-400">-</span>
                                                     )}
                                                 </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setSelectedItem(item);
+                                                            setAllocationDialogOpen(true);
+                                                        }}
+                                                        className="text-slate-600 hover:text-slate-800"
+                                                    >
+                                                        <Edit className="w-4 h-4 mr-1" />
+                                                        Bearbeiten
+                                                    </Button>
+                                                </TableCell>
                                             </TableRow>
                                         );
                                     })}
@@ -392,6 +410,19 @@ export default function FinancialItemsList() {
                     )}
                 </CardContent>
             </Card>
+
+            {allocationDialogOpen && selectedItem && (
+                <FinancialItemAllocationDialog
+                    financialItem={selectedItem}
+                    onClose={() => {
+                        setAllocationDialogOpen(false);
+                        setSelectedItem(null);
+                    }}
+                    onSuccess={() => {
+                        queryClient.invalidateQueries({ queryKey: ['financial-items'] });
+                    }}
+                />
+            )}
         </div>
     );
 }
