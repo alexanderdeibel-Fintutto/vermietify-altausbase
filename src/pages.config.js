@@ -8,10 +8,10 @@ import ContractDetail from './pages/ContractDetail';
 import Contracts from './pages/Contracts';
 import Dashboard from './pages/Dashboard';
 import FinAPICallback from './pages/FinAPICallback';
+import FinancialItems from './pages/FinancialItems';
 import Payments from './pages/Payments';
 import Tenants from './pages/Tenants';
 import UnitDetail from './pages/UnitDetail';
-import FinancialItems from './pages/FinancialItems';
 import __Layout from './Layout.jsx';
 
 
@@ -26,10 +26,10 @@ export const PAGES = {
     "Contracts": Contracts,
     "Dashboard": Dashboard,
     "FinAPICallback": FinAPICallback,
+    "FinancialItems": FinancialItems,
     "Payments": Payments,
     "Tenants": Tenants,
     "UnitDetail": UnitDetail,
-    "FinancialItems": FinancialItems,
 }
 
 export const pagesConfig = {

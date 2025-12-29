@@ -186,21 +186,29 @@ export default function Payments() {
                     <Button 
                         onClick={async () => {
                             try {
-                                const result = await base44.functions.invoke('repairBulkAllocations');
+                                toast.info('Synchronisierung läuft...');
+                                const result = await base44.functions.invoke('syncFinancialItemsWithTransactions');
+                                
                                 if (result.data.success) {
-                                    toast.success(`${result.data.repaired} Transaktionen repariert`);
+                                    const msg = `✓ ${result.data.linksCreated} neue Verknüpfungen\n✓ ${result.data.itemsUpdated} Forderungen aktualisiert`;
+                                    toast.success(msg, { duration: 5000 });
                                     queryClient.invalidateQueries({ queryKey: ['payments'] });
                                     queryClient.invalidateQueries({ queryKey: ['payment-transaction-links'] });
+                                    queryClient.invalidateQueries({ queryKey: ['financial-items'] });
+                                    queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
+                                } else {
+                                    toast.error('Synchronisierung fehlgeschlagen: ' + (result.data.error || 'Unbekannter Fehler'));
                                 }
                             } catch (error) {
-                                toast.error('Fehler beim Überprüfen');
+                                console.error('Sync error:', error);
+                                toast.error('Fehler: ' + (error.message || 'Synchronisierung fehlgeschlagen'));
                             }
                         }}
                         variant="outline"
                         className="gap-2"
                     >
                         <Check className="w-4 h-4" />
-                        Zuordnungen prüfen
+                        Zuordnungen prüfen & aktualisieren
                     </Button>
                     <Button 
                         onClick={handleRegeneratePayments}
