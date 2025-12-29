@@ -99,8 +99,15 @@ export async function generateFinancialItemsForContract(contract, rentChanges = 
         const installments = contract.deposit_installments || 1;
         const installmentAmount = contract.deposit / installments;
         
-        // Use contract_date as first due date, fallback to start_date
-        const firstDueDate = contract.contract_date ? parseISO(contract.contract_date) : startDate;
+        // First due date: contract_date, then handover_date, then start_date
+        let firstDueDate;
+        if (contract.contract_date) {
+            firstDueDate = parseISO(contract.contract_date);
+        } else if (contract.handover_date) {
+            firstDueDate = parseISO(contract.handover_date);
+        } else {
+            firstDueDate = startDate;
+        }
 
         for (let i = 0; i < installments; i++) {
             let dueDate;
