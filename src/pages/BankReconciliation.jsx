@@ -216,12 +216,11 @@ export default function BankReconciliation() {
                     }
                 }
             } else {
-                // Simple bulk categorization without payment matching
+                // Simple bulk categorization without financial item matching
                 for (const txId of transactionIds) {
                     await base44.entities.BankTransaction.update(txId, {
                         is_categorized: true,
                         category,
-                        matched_payment_id: null,
                         unit_id: unitId || null,
                         contract_id: contractId || null
                     });
@@ -1249,9 +1248,7 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                                                     await Promise.all([
                                                         queryClient.invalidateQueries({ queryKey: ['bank-transactions'] }),
                                                         queryClient.invalidateQueries({ queryKey: ['financial-items'] }),
-                                                        queryClient.invalidateQueries({ queryKey: ['financial-item-transaction-links'] }),
-                                                        queryClient.invalidateQueries({ queryKey: ['payments'] }),
-                                                        queryClient.invalidateQueries({ queryKey: ['payment-transaction-links'] })
+                                                        queryClient.invalidateQueries({ queryKey: ['financial-item-transaction-links'] })
                                                     ]);
 
                                                     // Wait a bit for refetch to complete

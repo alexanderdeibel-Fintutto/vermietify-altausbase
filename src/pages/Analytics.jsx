@@ -34,12 +34,12 @@ export default function Analytics() {
         queryFn: () => base44.entities.LeaseContract.list()
     });
 
-    const { data: payments = [], isLoading: loadingPayments } = useQuery({
-        queryKey: ['payments'],
-        queryFn: () => base44.entities.Payment.list()
+    const { data: financialItems = [], isLoading: loadingFinancialItems } = useQuery({
+        queryKey: ['financial-items'],
+        queryFn: () => base44.entities.FinancialItem.list()
     });
 
-    const isLoading = loadingBuildings || loadingUnits || loadingContracts || loadingPayments;
+    const isLoading = loadingBuildings || loadingUnits || loadingContracts || loadingFinancialItems;
 
     // Monthly income trend
     const monthlyIncomeData = [];
@@ -47,8 +47,13 @@ export default function Analytics() {
     for (let i = months - 1; i >= 0; i--) {
         const date = subMonths(new Date(), i);
         const monthKey = format(date, 'yyyy-MM');
-        const monthPayments = payments.filter(p => p.payment_month === monthKey && p.status === 'paid');
-        const income = monthPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+        const monthItems = financialItems.filter(f => 
+            f.payment_month === monthKey && 
+            f.type === 'receivable' && 
+            f.category === 'rent' && 
+            f.status === 'paid'
+        );
+        const income = monthItems.reduce((sum, f) => sum + (f.amount || 0), 0);
         monthlyIncomeData.push({
             month: format(date, 'MMM yy', { locale: de }),
             income: income
@@ -84,16 +89,19 @@ export default function Analytics() {
         };
     });
 
-    // Payment status distribution
-    const paymentStatusData = [
-        { name: 'Bezahlt', value: payments.filter(p => p.status === 'paid').length, color: '#10b981' },
-        { name: 'Ausstehend', value: payments.filter(p => p.status === 'pending').length, color: '#3b82f6' },
-        { name: 'Überfällig', value: payments.filter(p => p.status === 'overdue').length, color: '#ef4444' },
-        { name: 'Teilzahlung', value: payments.filter(p => p.status === 'partial').length, color: '#f59e0b' }
+    // Financial item status distribution
+    const rentItems = financialItems.filter(f => f.type === 'receivable' && f.category === 'rent');
+    const itemStatusData = [
+        { name: 'Bezahlt', value: rentItems.filter(f => f.status === 'paid').length, color: '#10b981' },
+        { name: 'Ausstehend', value: rentItems.filter(f => f.status === 'pending').length, color: '#3b82f6' },
+        { name: 'Überfällig', value: rentItems.filter(f => f.status === 'overdue').length, color: '#ef4444' },
+        { name: 'Teilzahlung', value: rentItems.filter(f => f.status === 'partial').length, color: '#f59e0b' }
     ].filter(d => d.value > 0);
 
     // Key metrics
-    const totalRevenue = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + (p.amount || 0), 0);
+    const totalRevenue = financialItems
+        .filter(f => f.type === 'receivable' && f.category === 'rent' && f.status === 'paid')
+        .reduce((sum, f) => sum + (f.amount || 0), 0);
     const expectedRevenue = contracts.filter(c => c.status === 'active').reduce((sum, c) => sum + (c.total_rent || 0), 0) * months;
     const collectionRate = expectedRevenue > 0 ? (totalRevenue / expectedRevenue) * 100 : 0;
     const avgRentPerUnit = units.length > 0 ? contracts.filter(c => c.status === 'active').reduce((sum, c) => sum + (c.total_rent || 0), 0) / units.length : 0;
@@ -245,11 +253,11 @@ export default function Analytics() {
                     </CardHeader>
                     <CardContent>
                         <div className="h-72 flex items-center justify-center">
-                            {paymentStatusData.length > 0 ? (
+                            {itemStatusData.length > 0 ? (
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie
-                                            data={paymentStatusData}
+                                            data={itemStatusData}
                                             cx="50%"
                                             cy="50%"
                                             innerRadius={60}
@@ -258,7 +266,7 @@ export default function Analytics() {
                                             dataKey="value"
                                             label={(entry) => `${entry.value}`}
                                         >
-                                            {paymentStatusData.map((entry, index) => (
+                                            {itemStatusData.map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={entry.color} />
                                             ))}
                                         </Pie>
@@ -270,7 +278,7 @@ export default function Analytics() {
                             )}
                         </div>
                         <div className="flex flex-wrap justify-center gap-4 mt-4">
-                            {paymentStatusData.map((item) => (
+                            {itemStatusData.map((item) => (
                                 <div key={item.name} className="flex items-center gap-2">
                                     <div 
                                         className="w-3 h-3 rounded-full" 
