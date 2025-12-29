@@ -351,6 +351,11 @@ export default function TransactionAllocationDialog({
                         <Select value={selectedContractId} onValueChange={(value) => {
                             setSelectedContractId(value);
                             setAllocations([]);
+                            // Automatisch das Mietobjekt setzen
+                            const contract = contracts.find(c => c.id === value);
+                            if (contract?.unit_id) {
+                                setSelectedObjectId(contract.unit_id);
+                            }
                         }}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Vertrag auswählen..." />
