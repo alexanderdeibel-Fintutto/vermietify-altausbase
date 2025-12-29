@@ -1,33 +1,35 @@
-import Dashboard from './pages/Dashboard';
-import Buildings from './pages/Buildings';
-import BuildingDetail from './pages/BuildingDetail';
-import Contracts from './pages/Contracts';
-import Payments from './pages/Payments';
-import BankAccounts from './pages/BankAccounts';
 import Analytics from './pages/Analytics';
-import Tenants from './pages/Tenants';
-import ContractDetail from './pages/ContractDetail';
+import BankAccounts from './pages/BankAccounts';
 import BankReconciliation from './pages/BankReconciliation';
-import UnitDetail from './pages/UnitDetail';
-import FinAPICallback from './pages/FinAPICallback';
 import BankTransactions from './pages/BankTransactions';
+import BuildingDetail from './pages/BuildingDetail';
+import Buildings from './pages/Buildings';
+import ContractDetail from './pages/ContractDetail';
+import Contracts from './pages/Contracts';
+import Dashboard from './pages/Dashboard';
+import FinAPICallback from './pages/FinAPICallback';
+import Payments from './pages/Payments';
+import Tenants from './pages/Tenants';
+import UnitDetail from './pages/UnitDetail';
+import FinancialItems from './pages/FinancialItems';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Dashboard": Dashboard,
-    "Buildings": Buildings,
-    "BuildingDetail": BuildingDetail,
-    "Contracts": Contracts,
-    "Payments": Payments,
-    "BankAccounts": BankAccounts,
     "Analytics": Analytics,
-    "Tenants": Tenants,
-    "ContractDetail": ContractDetail,
+    "BankAccounts": BankAccounts,
     "BankReconciliation": BankReconciliation,
-    "UnitDetail": UnitDetail,
-    "FinAPICallback": FinAPICallback,
     "BankTransactions": BankTransactions,
+    "BuildingDetail": BuildingDetail,
+    "Buildings": Buildings,
+    "ContractDetail": ContractDetail,
+    "Contracts": Contracts,
+    "Dashboard": Dashboard,
+    "FinAPICallback": FinAPICallback,
+    "Payments": Payments,
+    "Tenants": Tenants,
+    "UnitDetail": UnitDetail,
+    "FinancialItems": FinancialItems,
 }
 
 export const pagesConfig = {
