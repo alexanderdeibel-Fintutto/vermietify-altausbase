@@ -156,9 +156,14 @@ export default function FinancialItemsList() {
             .filter(item => item.status !== 'paid')
             .reduce((sum, item) => sum + ((item.expected_amount || 0) - (item.actualAmount || 0)), 0);
         const overdueCount = rentDemands.filter(item => {
-            if (item.status === 'paid' || !item.payment_month) return false;
-            const itemDate = parseISO(item.payment_month + '-01');
-            return itemDate < new Date();
+            if (item.status === 'paid' || item.status === 'settled' || !item.payment_month) return false;
+            try {
+                const itemDate = parseISO(item.payment_month + '-01');
+                if (isNaN(itemDate.getTime())) return false;
+                return itemDate < new Date();
+            } catch {
+                return false;
+            }
         }).length;
 
         return {
