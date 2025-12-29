@@ -32,6 +32,7 @@ import EmptyState from '@/components/shared/EmptyState';
 import ContractForm from '@/components/contracts/ContractForm';
 import TenantsList from '@/components/contracts/TenantsList';
 import FinancialItemsList from '@/components/contracts/FinancialItemsList';
+import { regenerateContractFinancialItems } from '@/components/contracts/generateFinancialItems';
 
 export default function Contracts() {
     const [formOpen, setFormOpen] = useState(false);
