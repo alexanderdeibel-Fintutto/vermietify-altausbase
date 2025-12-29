@@ -63,9 +63,12 @@ Deno.serve(async (req) => {
             await recalculateFinancialItemStatus(base44, itemId);
         }
 
-        // Mark transaction as categorized
+        // Check if transaction is fully allocated
+        const isFullyAllocated = totalAllocated >= transactionAmount - 0.01; // small tolerance for rounding
+
+        // Mark transaction as categorized only if fully allocated
         await base44.asServiceRole.entities.BankTransaction.update(transactionId, {
-            is_categorized: true,
+            is_categorized: isFullyAllocated,
             category: category || 'rent_income',
             unit_id: unitId || null,
             contract_id: contractId || null
