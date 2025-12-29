@@ -188,112 +188,112 @@ export default function Contracts() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {contracts.map((contract) => {
-                        const contractId = contract.id;
-                        const unit = getUnit(contract.unit_id);
-                        const tenant = getTenant(contract.tenant_id);
-                        const secondTenant = contract.second_tenant_id ? getTenant(contract.second_tenant_id) : null;
-                        const building = unit ? getBuilding(unit.building_id) : null;
-                        const contractStatus = getContractStatus(contract);
-                        const status = statusConfig[contractStatus] || statusConfig.active;
+                                const contractId = contract.id;
+                                const unit = getUnit(contract.unit_id);
+                                const tenant = getTenant(contract.tenant_id);
+                                const secondTenant = contract.second_tenant_id ? getTenant(contract.second_tenant_id) : null;
+                                const building = unit ? getBuilding(unit.building_id) : null;
+                                const contractStatus = getContractStatus(contract);
+                                const status = statusConfig[contractStatus] || statusConfig.active;
 
-                        return (
-                            <Card key={contractId} className="border-slate-200/50 hover:shadow-md transition-shadow">
-                                <CardContent className="p-6">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Badge className={status.color}>
-                                                    {status.label}
-                                                </Badge>
-                                                {!contract.deposit_paid && contract.deposit && (
-                                                    <Badge className="bg-red-100 text-red-700">
-                                                        <AlertCircle className="w-3 h-3 mr-1" />
-                                                        Kaution offen
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                    <MoreVertical className="w-4 h-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem asChild>
-                                                    <Link to={createPageUrl(`ContractDetail?contractId=${contractId}`)}>
-                                                        <Eye className="w-4 h-4 mr-2" />
-                                                        Details anzeigen
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => {
-                                                    setEditingContract(contract);
-                                                    setFormOpen(true);
-                                                }}>
-                                                    <Pencil className="w-4 h-4 mr-2" />
-                                                    Bearbeiten
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem 
-                                                    onClick={() => setDeleteContract(contract)}
-                                                    className="text-red-600"
-                                                >
-                                                    <Trash2 className="w-4 h-4 mr-2" />
-                                                    Löschen
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        {tenant && (
-                                            <div className="flex items-center gap-2">
-                                                {secondTenant ? <Users className="w-4 h-4 text-slate-400" /> : <User className="w-4 h-4 text-slate-400" />}
-                                                <span className="font-medium text-slate-800">
-                                                    {tenant.first_name} {tenant.last_name}
-                                                    {secondTenant && ` & ${secondTenant.first_name} ${secondTenant.last_name}`}
-                                                </span>
-                                            </div>
-                                        )}
-                                        {building && unit && (
-                                            <div className="flex items-center gap-2 text-sm text-slate-600">
-                                                <Building2 className="w-4 h-4 text-slate-400" />
-                                                {building.name} - {unit.unit_number}
-                                            </div>
-                                        )}
-                                        <div className="flex items-center gap-2 text-sm text-slate-600">
-                                            <Calendar className="w-4 h-4 text-slate-400" />
-                                            {contract.start_date && format(parseISO(contract.start_date), 'dd.MM.yyyy')}
-                                            {contract.end_date && !contract.is_unlimited && 
-                                                ` - ${format(parseISO(contract.end_date), 'dd.MM.yyyy')}`}
-                                            {contract.is_unlimited && ' - unbefristet'}
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-4 pt-4 border-t border-slate-100">
-                                        <div className="flex justify-between items-center">
-                                            <div>
-                                                <p className="text-sm text-slate-500">Warmmiete</p>
-                                                <p className="text-2xl font-bold text-slate-800">
-                                                    €{contract.total_rent?.toFixed(2)}
-                                                </p>
-                                                <p className="text-xs text-slate-400 mt-1">
-                                                    Kalt: €{contract.base_rent?.toFixed(2)} + NK: €{(contract.utilities || 0).toFixed(2)} + HK: €{(contract.heating || 0).toFixed(2)}
-                                                </p>
-                                            </div>
-                                            {contract.deposit && (
-                                                <div className="text-right">
-                                                    <p className="text-sm text-slate-500">Kaution</p>
-                                                    <p className="text-lg font-semibold text-slate-700">
-                                                        €{contract.deposit.toFixed(2)}
-                                                    </p>
+                                return (
+                                    <Card key={contractId} className="border-slate-200/50 hover:shadow-md transition-shadow">
+                                        <CardContent className="p-6">
+                                            <div className="flex items-start justify-between mb-4">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <Badge className={status.color}>
+                                                            {status.label}
+                                                        </Badge>
+                                                        {!contract.deposit_paid && contract.deposit && (
+                                                            <Badge className="bg-red-100 text-red-700">
+                                                                <AlertCircle className="w-3 h-3 mr-1" />
+                                                                Kaution offen
+                                                            </Badge>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                            );
-                        })}
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                            <MoreVertical className="w-4 h-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem asChild>
+                                                            <Link to={createPageUrl(`ContractDetail?contractId=${contractId}`)}>
+                                                                <Eye className="w-4 h-4 mr-2" />
+                                                                Details anzeigen
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => {
+                                                            setEditingContract(contract);
+                                                            setFormOpen(true);
+                                                        }}>
+                                                            <Pencil className="w-4 h-4 mr-2" />
+                                                            Bearbeiten
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem 
+                                                            onClick={() => setDeleteContract(contract)}
+                                                            className="text-red-600"
+                                                        >
+                                                            <Trash2 className="w-4 h-4 mr-2" />
+                                                            Löschen
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                {tenant && (
+                                                    <div className="flex items-center gap-2">
+                                                        {secondTenant ? <Users className="w-4 h-4 text-slate-400" /> : <User className="w-4 h-4 text-slate-400" />}
+                                                        <span className="font-medium text-slate-800">
+                                                            {tenant.first_name} {tenant.last_name}
+                                                            {secondTenant && ` & ${secondTenant.first_name} ${secondTenant.last_name}`}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                {building && unit && (
+                                                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                                                        <Building2 className="w-4 h-4 text-slate-400" />
+                                                        {building.name} - {unit.unit_number}
+                                                    </div>
+                                                )}
+                                                <div className="flex items-center gap-2 text-sm text-slate-600">
+                                                    <Calendar className="w-4 h-4 text-slate-400" />
+                                                    {contract.start_date && format(parseISO(contract.start_date), 'dd.MM.yyyy')}
+                                                    {contract.end_date && !contract.is_unlimited && 
+                                                        ` - ${format(parseISO(contract.end_date), 'dd.MM.yyyy')}`}
+                                                    {contract.is_unlimited && ' - unbefristet'}
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-4 pt-4 border-t border-slate-100">
+                                                <div className="flex justify-between items-center">
+                                                    <div>
+                                                        <p className="text-sm text-slate-500">Warmmiete</p>
+                                                        <p className="text-2xl font-bold text-slate-800">
+                                                            €{contract.total_rent?.toFixed(2)}
+                                                        </p>
+                                                        <p className="text-xs text-slate-400 mt-1">
+                                                            Kalt: €{contract.base_rent?.toFixed(2)} + NK: €{(contract.utilities || 0).toFixed(2)} + HK: €{(contract.heating || 0).toFixed(2)}
+                                                        </p>
+                                                    </div>
+                                                    {contract.deposit && (
+                                                        <div className="text-right">
+                                                            <p className="text-sm text-slate-500">Kaution</p>
+                                                            <p className="text-lg font-semibold text-slate-700">
+                                                                €{contract.deposit.toFixed(2)}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
                         </div>
                     )}
                 </TabsContent>
