@@ -66,7 +66,8 @@ Deno.serve(async (req) => {
         // Check if transaction is fully allocated
         const isFullyAllocated = totalAllocated >= transactionAmount - 0.01; // small tolerance for rounding
 
-        // Mark transaction as categorized only if fully allocated
+        // Mark transaction as categorized if fully allocated, but always set category/unit/contract
+        // This ensures partially allocated transactions appear in categorized list via hasAllocations check
         await base44.asServiceRole.entities.BankTransaction.update(transactionId, {
             is_categorized: isFullyAllocated,
             category: category || 'rent_income',
