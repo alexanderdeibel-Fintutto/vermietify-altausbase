@@ -106,10 +106,14 @@ export default function FinancialItemsList() {
         return processedFinancialItems.filter(item => {
             if (item.type !== 'receivable') return false;
             if (item.category !== 'rent' && item.category !== 'deposit') return false;
-            if (!item.payment_month) return false;
+            if (!item.payment_month || typeof item.payment_month !== 'string') return false;
             
             // Only show items up to and including current month
-            return item.payment_month <= currentMonth;
+            try {
+                return item.payment_month <= currentMonth;
+            } catch {
+                return false;
+            }
         });
     }, [processedFinancialItems]);
 
@@ -338,7 +342,13 @@ export default function FinancialItemsList() {
                                         return (
                                             <TableRow key={item.id}>
                                                 <TableCell className="font-medium">
-                                                    {item.payment_month ? format(parseISO(item.payment_month + '-01'), 'MMM yyyy', { locale: de }) : '-'}
+                                                    {item.payment_month ? (() => {
+                                                        try {
+                                                            return format(parseISO(item.payment_month + '-01'), 'MMM yyyy', { locale: de });
+                                                        } catch {
+                                                            return item.payment_month;
+                                                        }
+                                                    })() : '-'}
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
