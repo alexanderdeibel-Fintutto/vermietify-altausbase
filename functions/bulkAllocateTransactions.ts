@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
             for (const tx of flatTransactions) {
                 try {
                     // Use the existing reconcile function
-                    await fetch(`${Deno.env.get('BASE44_FUNCTION_URL')}/reconcileTransactionWithFinancialItems`, {
+                    const response = await fetch(`${Deno.env.get('BASE44_FUNCTION_URL')}/reconcileTransactionWithFinancialItems`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -52,6 +52,12 @@ Deno.serve(async (req) => {
                             financialItemAllocations: allocations
                         })
                     });
+
+                    const result = await response.json();
+                    
+                    if (!response.ok || result.error) {
+                        throw new Error(result.error || 'Reconciliation failed');
+                    }
 
                     results.success++;
                 } catch (error) {
