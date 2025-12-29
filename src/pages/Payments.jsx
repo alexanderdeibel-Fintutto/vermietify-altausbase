@@ -1,22 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { CreditCard, Filter, Search, Plus, RefreshCw, Check } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from 'sonner';
-import { regenerateAllPayments } from '@/components/contracts/generatePayments';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import {
     Table,
     TableBody,
@@ -25,344 +14,429 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import PageHeader from '@/components/shared/PageHeader';
-import EmptyState from '@/components/shared/EmptyState';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RefreshCw, Search, Calendar, Building2, User, Euro, AlertCircle, Plus } from 'lucide-react';
+import { toast } from 'sonner';
+import PageHeader from '../components/shared/PageHeader';
+import EmptyState from '../components/shared/EmptyState';
+import { Skeleton } from "@/components/ui/skeleton";
+import { regenerateAllFinancialItems } from '../components/contracts/generateFinancialItems';
 
-export default function Payments() {
-    const [statusFilter, setStatusFilter] = useState('all');
-    const [searchTerm, setSearchTerm] = useState('');
-    const [isRegenerating, setIsRegenerating] = useState(false);
+export default function PaymentsPage() {
     const queryClient = useQueryClient();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [dateFilter, setDateFilter] = useState('all');
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [isRegenerating, setIsRegenerating] = useState(false);
 
-    const { data: payments = [], isLoading } = useQuery({
-        queryKey: ['payments'],
-        queryFn: () => base44.entities.Payment.list('-payment_date')
+    // Fetch all data
+    const { data: financialItems = [], isLoading: loadingItems } = useQuery({
+        queryKey: ['financial-items'],
+        queryFn: () => base44.entities.FinancialItem.list()
     });
 
-    const { data: contracts = [] } = useQuery({
+    const { data: contracts = [], isLoading: loadingContracts } = useQuery({
         queryKey: ['contracts'],
         queryFn: () => base44.entities.LeaseContract.list()
     });
 
-    const { data: tenants = [] } = useQuery({
+    const { data: tenants = [], isLoading: loadingTenants } = useQuery({
         queryKey: ['tenants'],
         queryFn: () => base44.entities.Tenant.list()
     });
 
-    const { data: units = [] } = useQuery({
+    const { data: units = [], isLoading: loadingUnits } = useQuery({
         queryKey: ['units'],
         queryFn: () => base44.entities.Unit.list()
     });
 
-    const { data: buildings = [] } = useQuery({
+    const { data: buildings = [], isLoading: loadingBuildings } = useQuery({
         queryKey: ['buildings'],
         queryFn: () => base44.entities.Building.list()
     });
 
-    const { data: paymentLinks = [] } = useQuery({
-        queryKey: ['payment-transaction-links'],
-        queryFn: () => base44.entities.PaymentTransactionLink.list()
+    const { data: financialItemLinks = [], isLoading: loadingLinks } = useQuery({
+        queryKey: ['financial-item-transaction-links'],
+        queryFn: () => base44.entities.FinancialItemTransactionLink.list()
     });
 
-    const { data: transactions = [] } = useQuery({
+    const { data: transactions = [], isLoading: loadingTransactions } = useQuery({
         queryKey: ['bank-transactions'],
         queryFn: () => base44.entities.BankTransaction.list()
     });
 
-    const getTenant = (tenantId) => tenants.find(t => t.id === tenantId);
-    const getUnit = (unitId) => units.find(u => u.id === unitId);
-    const getBuilding = (buildingId) => buildings.find(b => b.id === buildingId);
-    const getContract = (contractId) => contracts.find(c => c.id === contractId);
+    const isLoading = loadingItems || loadingContracts || loadingTenants || loadingUnits || loadingBuildings || loadingLinks || loadingTransactions;
 
-    // Calculate actual paid amount from links
-    const getPaymentWithLinks = (payment) => {
-        const links = paymentLinks.filter(link => link.payment_id === payment.id);
-        const paidAmount = links.reduce((sum, link) => sum + (link.linked_amount || 0), 0);
-        
-        // Calculate actual status based on paid amount
-        let actualStatus = payment.status;
-        if (paidAmount >= payment.expected_amount) {
-            actualStatus = 'paid';
-        } else if (paidAmount > 0) {
-            actualStatus = 'partial';
-        } else {
-            actualStatus = 'pending';
+    // Process financial items with transaction data
+    const processedFinancialItems = useMemo(() => {
+        if (!financialItems.length || !financialItemLinks.length || !transactions.length) {
+            return financialItems.map(item => ({
+                ...item,
+                linkedTransactions: [],
+                actualAmount: item.amount || 0
+            }));
         }
+
+        return financialItems.map(item => {
+            const links = financialItemLinks.filter(link => link.financial_item_id === item.id);
+            const linkedTransactions = links.map(link => {
+                const transaction = transactions.find(t => t.id === link.transaction_id);
+                return {
+                    ...link,
+                    transaction
+                };
+            }).filter(link => link.transaction);
+
+            const actualAmount = links.reduce((sum, link) => sum + (link.linked_amount || 0), 0);
+
+            return {
+                ...item,
+                linkedTransactions,
+                actualAmount
+            };
+        });
+    }, [financialItems, financialItemLinks, transactions]);
+
+    // Filter for rent demands only
+    const rentDemands = useMemo(() => {
+        return processedFinancialItems.filter(item => 
+            item.type === 'receivable' && 
+            (item.category === 'rent' || item.category === 'deposit')
+        );
+    }, [processedFinancialItems]);
+
+    // Apply filters
+    const filteredItems = useMemo(() => {
+        let filtered = rentDemands;
+
+        // Status filter
+        if (statusFilter !== 'all') {
+            filtered = filtered.filter(item => item.status === statusFilter);
+        }
+
+        // Date filter
+        if (dateFilter !== 'all') {
+            const now = new Date();
+            filtered = filtered.filter(item => {
+                if (!item.payment_month) return false;
+                const itemDate = parseISO(item.payment_month + '-01');
+                
+                if (dateFilter === 'current') {
+                    return format(itemDate, 'yyyy-MM') === format(now, 'yyyy-MM');
+                } else if (dateFilter === 'overdue') {
+                    return itemDate < now && item.status !== 'paid';
+                }
+                return true;
+            });
+        }
+
+        // Search filter
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            filtered = filtered.filter(item => {
+                const tenant = tenants.find(t => t.id === item.related_to_tenant_id);
+                const tenantName = tenant ? `${tenant.first_name} ${tenant.last_name}`.toLowerCase() : '';
+                const reference = (item.reference || '').toLowerCase();
+                const description = (item.description || '').toLowerCase();
+                
+                return tenantName.includes(term) || reference.includes(term) || description.includes(term);
+            });
+        }
+
+        // Sort by payment_month descending
+        return filtered.sort((a, b) => {
+            if (!a.payment_month) return 1;
+            if (!b.payment_month) return -1;
+            return b.payment_month.localeCompare(a.payment_month);
+        });
+    }, [rentDemands, statusFilter, dateFilter, searchTerm, tenants]);
+
+    // Calculate statistics
+    const stats = useMemo(() => {
+        const totalExpected = rentDemands.reduce((sum, item) => sum + (item.expected_amount || 0), 0);
+        const totalPaid = rentDemands.reduce((sum, item) => sum + (item.actualAmount || 0), 0);
+        const totalOutstanding = rentDemands
+            .filter(item => item.status !== 'paid')
+            .reduce((sum, item) => sum + ((item.expected_amount || 0) - (item.actualAmount || 0)), 0);
+        const overdueCount = rentDemands.filter(item => {
+            if (item.status === 'paid' || !item.payment_month) return false;
+            const itemDate = parseISO(item.payment_month + '-01');
+            return itemDate < new Date();
+        }).length;
 
         return {
-            ...payment,
-            amount: paidAmount,
-            status: actualStatus,
-            linkedTransactions: links.map(link => {
-                const tx = transactions.find(t => t.id === link.transaction_id);
-                return { link, transaction: tx };
-            })
+            totalExpected,
+            totalPaid,
+            totalOutstanding,
+            overdueCount
         };
-    };
+    }, [rentDemands]);
 
-    const statusConfig = {
-        paid: { label: 'Bezahlt', color: 'bg-emerald-100 text-emerald-700' },
-        partial: { label: 'Teilzahlung', color: 'bg-amber-100 text-amber-700' },
-        pending: { label: 'Ausstehend', color: 'bg-blue-100 text-blue-700' },
-        overdue: { label: 'Überfällig', color: 'bg-red-100 text-red-700' }
-    };
-
-    const paymentTypeLabels = {
-        rent: 'Miete',
-        deposit: 'Kaution',
-        utilities_settlement: 'NK-Abrechnung',
-        other: 'Sonstiges'
-    };
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Enrich payments with link data
-    const enrichedPayments = payments.map(payment => getPaymentWithLinks(payment));
-
-    const filteredPayments = enrichedPayments.filter(payment => {
-        // Nur Zahlungen bis heute anzeigen
-        if (payment.payment_date) {
-            const paymentDate = parseISO(payment.payment_date);
-            if (paymentDate > today) return false;
+    // Sync mutation
+    const handleSync = async () => {
+        setIsSyncing(true);
+        try {
+            await base44.functions.invoke('syncFinancialItemsWithTransactions', {});
+            await queryClient.invalidateQueries({ queryKey: ['financial-items'] });
+            await queryClient.invalidateQueries({ queryKey: ['financial-item-transaction-links'] });
+            toast.success('Synchronisierung erfolgreich');
+        } catch (error) {
+            toast.error('Fehler bei der Synchronisierung');
+            console.error(error);
+        } finally {
+            setIsSyncing(false);
         }
-        
-        const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
-        
-        if (!matchesStatus) return false;
-        if (!searchTerm) return true;
+    };
 
-        const tenant = getTenant(payment.tenant_id);
-        const tenantName = tenant ? `${tenant.first_name} ${tenant.last_name}`.toLowerCase() : '';
-        const reference = (payment.reference || '').toLowerCase();
-        
-        return tenantName.includes(searchTerm.toLowerCase()) || 
-               reference.includes(searchTerm.toLowerCase());
-    });
+    // Regenerate all mutation
+    const handleRegenerateAll = async () => {
+        if (!confirm('Möchten Sie wirklich alle Forderungen neu generieren? Bereits bezahlte Forderungen werden nicht gelöscht.')) {
+            return;
+        }
 
-    const handleRegeneratePayments = async () => {
         setIsRegenerating(true);
         try {
-            // Zuerst verwaiste Zahlungen bereinigen
-            await base44.functions.invoke('cleanOrphanedPayments');
-            
-            // Dann alle Zahlungen neu generieren
-            const count = await regenerateAllPayments();
-            queryClient.invalidateQueries({ queryKey: ['payments'] });
-            toast.success(`${count} Mietforderungen wurden erfolgreich aktualisiert`);
+            const count = await regenerateAllFinancialItems();
+            await queryClient.invalidateQueries({ queryKey: ['financial-items'] });
+            toast.success(`${count} Forderungen wurden generiert`);
         } catch (error) {
-            toast.error('Fehler beim Aktualisieren der Zahlungen');
+            toast.error('Fehler bei der Neugenerierung');
+            console.error(error);
         } finally {
             setIsRegenerating(false);
         }
     };
 
-    // Calculate stats
-    const totalPaid = enrichedPayments.filter(p => p.status === 'paid').reduce((sum, p) => sum + (p.amount || 0), 0);
-    const totalOverdue = enrichedPayments.filter(p => p.status === 'overdue' || p.status === 'pending')
-        .reduce((sum, p) => sum + ((p.expected_amount || 0) - (p.amount || 0)), 0);
+    // Helper functions
+    const getTenant = (tenantId) => tenants.find(t => t.id === tenantId);
+    const getUnit = (unitId) => units.find(u => u.id === unitId);
+    const getBuilding = (buildingId) => buildings.find(b => b.id === buildingId);
+
+    const getStatusBadge = (status) => {
+        const variants = {
+            paid: 'bg-emerald-100 text-emerald-700',
+            partial: 'bg-amber-100 text-amber-700',
+            pending: 'bg-slate-100 text-slate-700',
+            overdue: 'bg-red-100 text-red-700'
+        };
+        const labels = {
+            paid: 'Bezahlt',
+            partial: 'Teilweise',
+            pending: 'Ausstehend',
+            overdue: 'Überfällig'
+        };
+        return <Badge className={variants[status] || variants.pending}>{labels[status] || status}</Badge>;
+    };
 
     if (isLoading) {
         return (
-            <div className="space-y-8">
-                <Skeleton className="h-8 w-48" />
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {[...Array(3)].map((_, i) => (
-                        <Skeleton key={i} className="h-32 rounded-2xl" />
-                    ))}
+            <div className="space-y-6">
+                <Skeleton className="h-12 w-64" />
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <Skeleton className="h-24" />
+                    <Skeleton className="h-24" />
+                    <Skeleton className="h-24" />
+                    <Skeleton className="h-24" />
                 </div>
+                <Skeleton className="h-96" />
             </div>
         );
     }
 
     return (
-        <div className="space-y-8">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">Mietforderungen</h1>
-                    <p className="text-slate-500 mt-1">{payments.length} Forderungen erfasst</p>
-                </div>
-                <div className="flex gap-2">
-                    <Button 
-                        onClick={async () => {
-                            try {
-                                toast.info('Synchronisierung läuft...');
-                                const result = await base44.functions.invoke('syncFinancialItemsWithTransactions');
-                                
-                                if (result.data.success) {
-                                    const msg = `✓ ${result.data.linksCreated} neue Verknüpfungen\n✓ ${result.data.itemsUpdated} Forderungen aktualisiert`;
-                                    toast.success(msg, { duration: 5000 });
-                                    queryClient.invalidateQueries({ queryKey: ['payments'] });
-                                    queryClient.invalidateQueries({ queryKey: ['payment-transaction-links'] });
-                                    queryClient.invalidateQueries({ queryKey: ['financial-items'] });
-                                    queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
-                                } else {
-                                    toast.error('Synchronisierung fehlgeschlagen: ' + (result.data.error || 'Unbekannter Fehler'));
-                                }
-                            } catch (error) {
-                                console.error('Sync error:', error);
-                                toast.error('Fehler: ' + (error.message || 'Synchronisierung fehlgeschlagen'));
-                            }
-                        }}
-                        variant="outline"
-                        className="gap-2"
-                    >
-                        <Check className="w-4 h-4" />
-                        Zuordnungen prüfen & aktualisieren
-                    </Button>
-                    <Button 
-                        onClick={handleRegeneratePayments}
-                        disabled={isRegenerating}
-                        className="bg-emerald-600 hover:bg-emerald-700"
-                    >
-                        {isRegenerating ? (
-                            <>
-                                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                                Wird aktualisiert...
-                            </>
-                        ) : (
-                            <>
-                                <RefreshCw className="w-4 h-4 mr-2" />
-                                Alle Mietforderungen aktualisieren
-                            </>
-                        )}
-                    </Button>
-                </div>
+        <div className="space-y-6">
+            <PageHeader
+                title="Mietforderungen"
+                subtitle={`${filteredItems.length} Forderung(en)`}
+            />
+
+            {/* Statistics */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium text-slate-600">Gesamt Erwartet</CardTitle>
+                        <Euro className="w-4 h-4 text-slate-400" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">€{stats.totalExpected.toFixed(2)}</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium text-slate-600">Bezahlt</CardTitle>
+                        <Euro className="w-4 h-4 text-emerald-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-emerald-600">€{stats.totalPaid.toFixed(2)}</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium text-slate-600">Ausstehend</CardTitle>
+                        <Euro className="w-4 h-4 text-amber-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-amber-600">€{stats.totalOutstanding.toFixed(2)}</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium text-slate-600">Überfällig</CardTitle>
+                        <AlertCircle className="w-4 h-4 text-red-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-red-600">{stats.overdueCount}</div>
+                    </CardContent>
+                </Card>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white rounded-2xl p-6 border border-slate-200/50 shadow-sm">
-                    <p className="text-sm font-medium text-slate-500">Eingegangene Zahlungen</p>
-                    <p className="text-3xl font-bold text-emerald-600 mt-2">
-                        €{totalPaid.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-                    </p>
-                    <p className="text-sm text-slate-400 mt-1">
-                        {enrichedPayments.filter(p => p.status === 'paid').length} Forderungen
-                    </p>
-                </div>
-                <div className="bg-white rounded-2xl p-6 border border-slate-200/50 shadow-sm">
-                    <p className="text-sm font-medium text-slate-500">Ausstehend</p>
-                    <p className="text-3xl font-bold text-amber-600 mt-2">
-                        €{totalOverdue.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-                    </p>
-                    <p className="text-sm text-slate-400 mt-1">
-                        {enrichedPayments.filter(p => p.status === 'pending' || p.status === 'overdue').length} Forderungen
-                    </p>
-                </div>
-                <div className="bg-white rounded-2xl p-6 border border-slate-200/50 shadow-sm">
-                    <p className="text-sm font-medium text-slate-500">Überfällig</p>
-                    <p className="text-3xl font-bold text-red-600 mt-2">
-                        {enrichedPayments.filter(p => p.status === 'overdue').length}
-                    </p>
-                    <p className="text-sm text-slate-400 mt-1">Forderungen</p>
-                </div>
-            </div>
+            {/* Filters and Actions */}
+            <Card>
+                <CardContent className="pt-6">
+                    <div className="flex flex-col lg:flex-row gap-4">
+                        <div className="flex-1 relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                            <Input
+                                placeholder="Suche nach Mieter oder Referenz..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-10"
+                            />
+                        </div>
 
-            {/* Filters */}
-            <div className="bg-white rounded-2xl p-4 border border-slate-200/50 shadow-sm">
-                <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <Input
-                            placeholder="Nach Mieter oder Referenz suchen..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10"
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger className="w-full lg:w-48">
+                                <SelectValue placeholder="Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Alle Status</SelectItem>
+                                <SelectItem value="pending">Ausstehend</SelectItem>
+                                <SelectItem value="partial">Teilweise</SelectItem>
+                                <SelectItem value="paid">Bezahlt</SelectItem>
+                                <SelectItem value="overdue">Überfällig</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <Select value={dateFilter} onValueChange={setDateFilter}>
+                            <SelectTrigger className="w-full lg:w-48">
+                                <SelectValue placeholder="Zeitraum" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Alle Monate</SelectItem>
+                                <SelectItem value="current">Aktueller Monat</SelectItem>
+                                <SelectItem value="overdue">Überfällig</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <Button
+                            variant="outline"
+                            onClick={handleSync}
+                            disabled={isSyncing}
+                        >
+                            <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+                            Synchronisieren
+                        </Button>
+
+                        <Button
+                            variant="outline"
+                            onClick={handleRegenerateAll}
+                            disabled={isRegenerating}
+                        >
+                            <RefreshCw className={`w-4 h-4 mr-2 ${isRegenerating ? 'animate-spin' : ''}`} />
+                            Alle aktualisieren
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Table */}
+            <Card>
+                <CardContent className="p-0">
+                    {filteredItems.length === 0 ? (
+                        <EmptyState
+                            icon={Calendar}
+                            title="Keine Mietforderungen"
+                            description="Es wurden keine Mietforderungen gefunden."
                         />
-                    </div>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="w-full sm:w-48">
-                            <Filter className="w-4 h-4 mr-2" />
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Alle Status</SelectItem>
-                            <SelectItem value="paid">Bezahlt</SelectItem>
-                            <SelectItem value="pending">Ausstehend</SelectItem>
-                            <SelectItem value="overdue">Überfällig</SelectItem>
-                            <SelectItem value="partial">Teilzahlung</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Monat</TableHead>
+                                        <TableHead>Mieter</TableHead>
+                                        <TableHead>Objekt</TableHead>
+                                        <TableHead>Typ</TableHead>
+                                        <TableHead className="text-right">Erwartet</TableHead>
+                                        <TableHead className="text-right">Bezahlt</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead>Transaktionen</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {filteredItems.map((item) => {
+                                        const tenant = getTenant(item.related_to_tenant_id);
+                                        const unit = getUnit(item.related_to_unit_id);
+                                        const building = unit ? getBuilding(unit.building_id) : null;
 
-            {/* Payments Table */}
-            {filteredPayments.length === 0 ? (
-                <EmptyState
-                    icon={CreditCard}
-                    title="Keine Mietforderungen gefunden"
-                    description="Es wurden keine Mietforderungen mit den ausgewählten Filtern gefunden."
-                />
-            ) : (
-                <div className="bg-white rounded-2xl border border-slate-200/50 shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-slate-50">
-                                    <TableHead>Datum</TableHead>
-                                    <TableHead>Mieter</TableHead>
-                                    <TableHead>Wohnung</TableHead>
-                                    <TableHead>Monat</TableHead>
-                                    <TableHead>Betrag</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Typ</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredPayments.map((payment) => {
-                                    const tenant = getTenant(payment.tenant_id);
-                                    const unit = getUnit(payment.unit_id);
-                                    const building = unit ? getBuilding(unit.building_id) : null;
-                                    const status = statusConfig[payment.status] || statusConfig.pending;
-
-                                    return (
-                                        <TableRow key={payment.id} className="hover:bg-slate-50">
-                                            <TableCell>
-                                                {payment.payment_date && format(parseISO(payment.payment_date), 'dd.MM.yyyy')}
-                                            </TableCell>
-                                            <TableCell className="font-medium">
-                                                {tenant ? `${tenant.first_name} ${tenant.last_name}` : '-'}
-                                            </TableCell>
-                                            <TableCell className="text-sm text-slate-600">
-                                                {building && unit ? `${building.name} - ${unit.unit_number}` : '-'}
-                                            </TableCell>
-                                            <TableCell className="text-sm">
-                                                {payment.payment_month && format(parseISO(payment.payment_month + '-01'), 'MMM yyyy', { locale: de })}
-                                            </TableCell>
-                                            <TableCell className="font-semibold">
-                                               <div className="flex flex-col">
-                                                   <span>
-                                                       €{payment.amount?.toFixed(2)}
-                                                       {payment.expected_amount && payment.expected_amount !== payment.amount && (
-                                                           <span className="text-xs text-slate-400 ml-1">
-                                                               / €{payment.expected_amount.toFixed(2)}
-                                                           </span>
-                                                       )}
-                                                   </span>
-                                                   {payment.linkedTransactions && payment.linkedTransactions.length > 0 && (
-                                                       <span className="text-xs text-emerald-600 mt-0.5">
-                                                           {payment.linkedTransactions.length} Transaktion(en) zugeordnet
-                                                       </span>
-                                                   )}
-                                               </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge className={status.color}>
-                                                    {status.label}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-sm text-slate-600">
-                                                {paymentTypeLabels[payment.payment_type] || payment.payment_type}
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </div>
-            )}
+                                        return (
+                                            <TableRow key={item.id}>
+                                                <TableCell className="font-medium">
+                                                    {item.payment_month ? format(parseISO(item.payment_month + '-01'), 'MMM yyyy', { locale: de }) : '-'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-2">
+                                                        <User className="w-4 h-4 text-slate-400" />
+                                                        <span>{tenant ? `${tenant.first_name} ${tenant.last_name}` : '-'}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-2">
+                                                        <Building2 className="w-4 h-4 text-slate-400" />
+                                                        <span>{building && unit ? `${building.name} - ${unit.unit_number}` : '-'}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {item.category === 'rent' ? 'Miete' : item.category === 'deposit' ? 'Kaution' : item.category}
+                                                </TableCell>
+                                                <TableCell className="text-right font-medium">
+                                                    €{(item.expected_amount || 0).toFixed(2)}
+                                                </TableCell>
+                                                <TableCell className="text-right font-medium text-emerald-600">
+                                                    €{item.actualAmount.toFixed(2)}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {getStatusBadge(item.status)}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {item.linkedTransactions && item.linkedTransactions.length > 0 ? (
+                                                        <span className="text-sm text-slate-600">
+                                                            {item.linkedTransactions.length} Transaktion(en)
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-sm text-slate-400">-</span>
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 }
