@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/badge";
 export default function AccountTransactionsList({ transactions = [] }) {
     const sortedTransactions = useMemo(() => {
         return [...transactions].sort((a, b) => {
+            if (!a.transaction_date) return 1;
+            if (!b.transaction_date) return -1;
             const dateA = parseISO(a.transaction_date);
             const dateB = parseISO(b.transaction_date);
             return dateB - dateA;
@@ -45,7 +47,10 @@ export default function AccountTransactionsList({ transactions = [] }) {
                     {sortedTransactions.map((transaction) => (
                         <TableRow key={transaction.id}>
                             <TableCell className="font-medium">
-                                {format(parseISO(transaction.transaction_date), 'dd.MM.yyyy', { locale: de })}
+                                {transaction.transaction_date 
+                                    ? format(parseISO(transaction.transaction_date), 'dd.MM.yyyy', { locale: de })
+                                    : '-'
+                                }
                             </TableCell>
                             <TableCell>
                                 <div className="max-w-xs">
