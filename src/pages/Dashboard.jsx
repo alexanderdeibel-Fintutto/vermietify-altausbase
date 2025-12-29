@@ -28,12 +28,12 @@ export default function Dashboard() {
         queryFn: () => base44.entities.LeaseContract.list()
     });
 
-    const { data: payments = [], isLoading: loadingPayments } = useQuery({
-        queryKey: ['payments'],
-        queryFn: () => base44.entities.Payment.list()
+    const { data: financialItems = [], isLoading: loadingFinancialItems } = useQuery({
+        queryKey: ['financial-items'],
+        queryFn: () => base44.entities.FinancialItem.list()
     });
 
-    const isLoading = loadingBuildings || loadingUnits || loadingContracts || loadingPayments;
+    const isLoading = loadingBuildings || loadingUnits || loadingContracts || loadingFinancialItems;
 
     // Calculate statistics
     const activeContracts = contracts.filter(c => c.status === 'active');
@@ -42,17 +42,27 @@ export default function Dashboard() {
     const totalUnits = units.length;
     const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
 
-    // Monthly rent income
+    // Monthly rent income from financial items
     const currentMonth = format(new Date(), 'yyyy-MM');
-    const currentMonthPayments = payments.filter(p => p.payment_month === currentMonth && p.status === 'paid');
-    const monthlyIncome = currentMonthPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const currentMonthItems = financialItems.filter(f => 
+        f.payment_month === currentMonth && 
+        f.type === 'receivable' && 
+        f.category === 'rent' && 
+        f.status === 'paid'
+    );
+    const monthlyIncome = currentMonthItems.reduce((sum, f) => sum + (f.amount || 0), 0);
 
     // Expected vs received
     const expectedMonthlyRent = activeContracts.reduce((sum, c) => sum + (c.total_rent || 0), 0);
     
     // Overdue payments
-    const overduePayments = payments.filter(p => p.status === 'overdue' || p.status === 'pending');
-    const overdueAmount = overduePayments.reduce((sum, p) => sum + ((p.expected_amount || 0) - (p.amount || 0)), 0);
+    const overdueItems = financialItems.filter(f => 
+        f.type === 'receivable' && 
+        (f.status === 'overdue' || f.status === 'pending')
+    );
+    const overdueAmount = overdueItems.reduce((sum, f) => 
+        sum + ((f.expected_amount || 0) - (f.amount || 0)), 0
+    );
 
     // Monthly income chart data (last 6 months)
     const monthlyData = [];
@@ -60,8 +70,13 @@ export default function Dashboard() {
         const date = new Date();
         date.setMonth(date.getMonth() - i);
         const monthKey = format(date, 'yyyy-MM');
-        const monthPayments = payments.filter(p => p.payment_month === monthKey && p.status === 'paid');
-        const income = monthPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+        const monthItems = financialItems.filter(f => 
+            f.payment_month === monthKey && 
+            f.type === 'receivable' && 
+            f.category === 'rent' && 
+            f.status === 'paid'
+        );
+        const income = monthItems.reduce((sum, f) => sum + (f.amount || 0), 0);
         monthlyData.push({
             month: format(date, 'MMM', { locale: de }),
             income: income
@@ -125,7 +140,7 @@ export default function Dashboard() {
                 />
                 <StatCard
                     title="Offene Zahlungen"
-                    value={overduePayments.length}
+                    value={overdueItems.length}
                     subtitle={overdueAmount > 0 ? `€${overdueAmount.toLocaleString('de-DE')} ausstehend` : 'Alle Zahlungen erhalten'}
                     icon={AlertCircle}
                 />
@@ -234,7 +249,7 @@ export default function Dashboard() {
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-slate-800">Zahlungen prüfen</h3>
-                                    <p className="text-sm text-slate-500">{overduePayments.length} offen</p>
+                                    <p className="text-sm text-slate-500">{overdueItems.length} offen</p>
                                 </div>
                             </div>
                         </CardContent>

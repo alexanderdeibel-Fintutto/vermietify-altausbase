@@ -28,16 +28,15 @@ export default function RentChangeForm({ open, onOpenChange, contract }) {
             // Create rent change
             const rentChange = await base44.entities.RentChange.create(data);
             
-            // Call backend function to update payments
-            await base44.functions.invoke('updateContractPayments', {
-                contractId: contract.id
-            });
+            // Regenerate financial items for this contract
+            const { regenerateContractFinancialItems } = await import('./generateFinancialItems');
+            await regenerateContractFinancialItems(contract.id);
             
             return rentChange;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['rent-changes'] });
-            queryClient.invalidateQueries({ queryKey: ['payments'] });
+            queryClient.invalidateQueries({ queryKey: ['financial-items'] });
             reset();
             onOpenChange(false);
         },
