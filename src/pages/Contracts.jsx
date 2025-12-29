@@ -59,6 +59,11 @@ export default function Contracts() {
         queryFn: () => base44.entities.Building.list()
     });
 
+    const { data: rentChanges = [] } = useQuery({
+        queryKey: ['rent-changes'],
+        queryFn: () => base44.entities.RentChange.list()
+    });
+
     const createMutation = useMutation({
         mutationFn: async (data) => {
             const contract = await base44.entities.LeaseContract.create(data);
@@ -114,6 +119,53 @@ export default function Contracts() {
     const getUnit = (unitId) => units.find(u => u.id === unitId);
     const getTenant = (tenantId) => tenants.find(t => t.id === tenantId);
     const getBuilding = (buildingId) => buildings.find(b => b.id === buildingId);
+
+    const getCurrentRent = (contract) => {
+        if (!contract) return null;
+        
+        // Get all rent changes for this contract that are effective (effective_date <= today)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const applicableChanges = rentChanges
+            .filter(rc => rc.contract_id === contract.id)
+            .filter(rc => {
+                try {
+                    const effectiveDate = parseISO(rc.effective_date);
+                    return !isNaN(effectiveDate.getTime()) && effectiveDate <= today;
+                } catch {
+                    return false;
+                }
+            })
+            .sort((a, b) => {
+                // Sort by effective_date descending (most recent first)
+                try {
+                    const dateA = parseISO(a.effective_date);
+                    const dateB = parseISO(b.effective_date);
+                    return dateB.getTime() - dateA.getTime();
+                } catch {
+                    return 0;
+                }
+            });
+        
+        // If there's an applicable rent change, return it, otherwise return the contract's original rent
+        if (applicableChanges.length > 0) {
+            const latestChange = applicableChanges[0];
+            return {
+                base_rent: latestChange.base_rent,
+                utilities: latestChange.utilities,
+                heating: latestChange.heating,
+                total_rent: latestChange.total_rent
+            };
+        }
+        
+        return {
+            base_rent: contract.base_rent,
+            utilities: contract.utilities,
+            heating: contract.heating,
+            total_rent: contract.total_rent
+        };
+    };
 
     const getContractStatus = (contract) => {
         if (!contract.start_date) return 'active';
@@ -208,6 +260,7 @@ export default function Contracts() {
                                 const building = unit ? getBuilding(unit.building_id) : null;
                                 const contractStatus = getContractStatus(contract);
                                 const status = statusConfig[contractStatus] || statusConfig.active;
+                                const currentRent = getCurrentRent(contract);
 
                                 return (
                                     <Link 
@@ -308,10 +361,10 @@ export default function Contracts() {
                                                     <div>
                                                         <p className="text-sm text-slate-500">Warmmiete</p>
                                                         <p className="text-2xl font-bold text-slate-800">
-                                                            €{contract.total_rent?.toFixed(2)}
+                                                            €{currentRent?.total_rent?.toFixed(2)}
                                                         </p>
                                                         <p className="text-xs text-slate-400 mt-1">
-                                                            Kalt: €{contract.base_rent?.toFixed(2)} + NK: €{(contract.utilities || 0).toFixed(2)} + HK: €{(contract.heating || 0).toFixed(2)}
+                                                            Kalt: €{currentRent?.base_rent?.toFixed(2)} + NK: €{(currentRent?.utilities || 0).toFixed(2)} + HK: €{(currentRent?.heating || 0).toFixed(2)}
                                                         </p>
                                                     </div>
                                                     {contract.deposit && (
