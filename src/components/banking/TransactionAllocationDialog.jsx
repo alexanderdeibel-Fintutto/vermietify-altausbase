@@ -38,6 +38,11 @@ export default function TransactionAllocationDialog({
     const selectedUnit = units.find(u => u.id === selectedObjectId);
     const actualUnitId = selectedUnit ? selectedObjectId : null;
 
+    // Helper functions
+    const getTenant = (tenantId) => tenants.find(t => t.id === tenantId);
+    const getUnit = (unitId) => units.find(u => u.id === unitId);
+    const getBuilding = (buildingId) => buildings.find(b => b.id === buildingId);
+
     // Smart contract suggestions based on transaction data
     const suggestedContracts = React.useMemo(() => {
         if (selectedCategory !== 'rent_income') return [];
@@ -217,10 +222,6 @@ export default function TransactionAllocationDialog({
             setIsProcessing(false);
         }
     };
-
-    const getTenant = (tenantId) => tenants.find(t => t.id === tenantId);
-    const getUnit = (unitId) => units.find(u => u.id === unitId);
-    const getBuilding = (buildingId) => buildings.find(b => b.id === buildingId);
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
