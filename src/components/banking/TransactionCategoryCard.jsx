@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tag, X, Check, User, Calendar, Building2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
 import {
     Select,
     SelectContent,
@@ -31,6 +32,22 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
     onSelect
 }) {
     const [isProcessing, setIsProcessing] = useState(false);
+
+    // Fetch linked amounts for this transaction
+    const { data: transactionLinks = [] } = useQuery({
+        queryKey: ['transaction-links', transaction.id],
+        queryFn: () => base44.entities.FinancialItemTransactionLink.filter({ transaction_id: transaction.id }),
+        enabled: !!transaction.id
+    });
+
+    // Calculate allocated and remaining amounts
+    const allocatedAmount = useMemo(() => {
+        return transactionLinks.reduce((sum, link) => sum + (link.linked_amount || 0), 0);
+    }, [transactionLinks]);
+
+    const totalAmount = Math.abs(transaction.amount);
+    const remainingAmount = totalAmount - allocatedAmount;
+    const isPartiallyAllocated = allocatedAmount > 0 && remainingAmount > 0.01;
 
     // Memoize lookup functions
     const getTenant = React.useCallback((tenantId) => tenants.find(t => t.id === tenantId), [tenants]);
@@ -149,12 +166,23 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
                                 </div>
                             </div>
                             <div className="text-right ml-4">
-                                <p className={cn(
-                                    "text-2xl font-bold whitespace-nowrap mb-1",
-                                    isPositive ? "text-emerald-600" : "text-red-600"
-                                )}>
-                                    {isPositive ? '+' : ''}{transaction.amount?.toFixed(2)} €
-                                </p>
+                                {isPartiallyAllocated ? (
+                                    <>
+                                        <p className="text-2xl font-bold whitespace-nowrap mb-0.5 text-amber-600">
+                                            {isPositive ? '+' : ''}{remainingAmount.toFixed(2)} €
+                                        </p>
+                                        <p className="text-xs text-emerald-600 mb-1">
+                                            von {isPositive ? '+' : ''}{totalAmount.toFixed(2)} €
+                                        </p>
+                                    </>
+                                ) : (
+                                    <p className={cn(
+                                        "text-2xl font-bold whitespace-nowrap mb-1",
+                                        isPositive ? "text-emerald-600" : "text-red-600"
+                                    )}>
+                                        {isPositive ? '+' : ''}{transaction.amount?.toFixed(2)} €
+                                    </p>
+                                )}
                                 <p className="text-sm text-slate-500 font-medium">
                                     {(() => {
                                         try {
