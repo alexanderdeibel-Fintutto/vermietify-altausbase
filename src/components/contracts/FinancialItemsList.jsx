@@ -22,8 +22,20 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RefreshCw, Search, User, Building2, Euro, AlertCircle, Edit, Check } from 'lucide-react';
+import { RefreshCw, Search, User, Building2, Euro, AlertCircle, Edit, Check, Filter, X } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+} from "@/components/ui/command";
 import { regenerateAllFinancialItems } from './generateFinancialItems';
 import FinancialItemAllocationDialog from './FinancialItemAllocationDialog';
 
@@ -31,6 +43,13 @@ export default function FinancialItemsList() {
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [selectedTenants, setSelectedTenants] = useState([]);
+    const [selectedUnits, setSelectedUnits] = useState([]);
+    const [selectedBuildings, setSelectedBuildings] = useState([]);
+    const [monthFrom, setMonthFrom] = useState('');
+    const [monthTo, setMonthTo] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState('all');
+    const [showFilters, setShowFilters] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     const [isRegenerating, setIsRegenerating] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
@@ -125,10 +144,51 @@ export default function FinancialItemsList() {
     const filteredItems = useMemo(() => {
         let filtered = rentDemands;
 
+        // Status filter
         if (statusFilter !== 'all') {
             filtered = filtered.filter(item => item.status === statusFilter);
         }
 
+        // Category filter
+        if (categoryFilter !== 'all') {
+            filtered = filtered.filter(item => item.category === categoryFilter);
+        }
+
+        // Tenant filter
+        if (selectedTenants.length > 0) {
+            filtered = filtered.filter(item => 
+                selectedTenants.includes(item.related_to_tenant_id)
+            );
+        }
+
+        // Unit filter
+        if (selectedUnits.length > 0) {
+            filtered = filtered.filter(item => 
+                selectedUnits.includes(item.related_to_unit_id)
+            );
+        }
+
+        // Building filter
+        if (selectedBuildings.length > 0) {
+            filtered = filtered.filter(item => {
+                const unit = units.find(u => u.id === item.related_to_unit_id);
+                return unit && selectedBuildings.includes(unit.building_id);
+            });
+        }
+
+        // Month range filter
+        if (monthFrom) {
+            filtered = filtered.filter(item => 
+                item.payment_month && item.payment_month >= monthFrom
+            );
+        }
+        if (monthTo) {
+            filtered = filtered.filter(item => 
+                item.payment_month && item.payment_month <= monthTo
+            );
+        }
+
+        // Search term
         if (searchTerm) {
             const term = searchTerm.toLowerCase();
             filtered = filtered.filter(item => {
@@ -146,7 +206,7 @@ export default function FinancialItemsList() {
             if (!b.payment_month) return -1;
             return b.payment_month.localeCompare(a.payment_month);
         });
-    }, [rentDemands, statusFilter, searchTerm, tenants]);
+    }, [rentDemands, statusFilter, categoryFilter, selectedTenants, selectedUnits, selectedBuildings, monthFrom, monthTo, searchTerm, tenants, units]);
 
     // Calculate statistics
     const stats = useMemo(() => {
@@ -309,58 +369,317 @@ export default function FinancialItemsList() {
             {/* Filters and Actions */}
             <Card>
                 <CardContent className="pt-6">
-                    <div className="flex flex-col lg:flex-row gap-4">
-                        <div className="flex-1 relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-                            <Input
-                                placeholder="Suche nach Mieter oder Referenz..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-10"
-                            />
+                    <div className="flex flex-col gap-4">
+                        {/* Main Filter Row */}
+                        <div className="flex flex-col lg:flex-row gap-4">
+                            <div className="flex-1 relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                                <Input
+                                    placeholder="Suche nach Mieter oder Referenz..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="pl-10"
+                                />
+                            </div>
+
+                            <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                <SelectTrigger className="w-full lg:w-48">
+                                    <SelectValue placeholder="Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Alle Status</SelectItem>
+                                    <SelectItem value="pending">Ausstehend</SelectItem>
+                                    <SelectItem value="partial">Teilweise</SelectItem>
+                                    <SelectItem value="paid">Bezahlt</SelectItem>
+                                    <SelectItem value="overdue">Überfällig</SelectItem>
+                                    <SelectItem value="settled">Erledigt</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowFilters(!showFilters)}
+                            >
+                                <Filter className="w-4 h-4 mr-2" />
+                                Erweiterte Filter
+                                {(selectedTenants.length + selectedUnits.length + selectedBuildings.length + (monthFrom ? 1 : 0) + (monthTo ? 1 : 0) + (categoryFilter !== 'all' ? 1 : 0)) > 0 && (
+                                    <Badge className="ml-2 bg-emerald-600 text-white">
+                                        {selectedTenants.length + selectedUnits.length + selectedBuildings.length + (monthFrom ? 1 : 0) + (monthTo ? 1 : 0) + (categoryFilter !== 'all' ? 1 : 0)}
+                                    </Badge>
+                                )}
+                            </Button>
+
+                            <Button
+                                variant="outline"
+                                onClick={handleSync}
+                                disabled={isSyncing}
+                            >
+                                <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+                                Sync
+                            </Button>
+
+                            <Button
+                                variant="outline"
+                                onClick={handleRegenerateAll}
+                                disabled={isRegenerating}
+                            >
+                                <RefreshCw className={`w-4 h-4 mr-2 ${isRegenerating ? 'animate-spin' : ''}`} />
+                                Alle aktualisieren
+                            </Button>
+
+                            {selectedItems.length > 0 && (
+                                <Button
+                                    onClick={() => markAsSettledMutation.mutate(selectedItems)}
+                                    disabled={markAsSettledMutation.isPending}
+                                    className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                    <Check className="w-4 h-4 mr-2" />
+                                    Als erledigt ({selectedItems.length})
+                                </Button>
+                            )}
                         </div>
 
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
-                            <SelectTrigger className="w-full lg:w-48">
-                                <SelectValue placeholder="Status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Alle Status</SelectItem>
-                                <SelectItem value="pending">Ausstehend</SelectItem>
-                                <SelectItem value="partial">Teilweise</SelectItem>
-                                <SelectItem value="paid">Bezahlt</SelectItem>
-                                <SelectItem value="overdue">Überfällig</SelectItem>
-                                <SelectItem value="settled">Erledigt</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        {/* Extended Filters */}
+                        {showFilters && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t">
+                                {/* Category Filter */}
+                                <div>
+                                    <label className="text-xs font-medium mb-2 block">Kategorie</label>
+                                    <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Alle Kategorien" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Alle Kategorien</SelectItem>
+                                            <SelectItem value="rent">Miete</SelectItem>
+                                            <SelectItem value="deposit">Kaution</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
 
-                        <Button
-                            variant="outline"
-                            onClick={handleSync}
-                            disabled={isSyncing}
-                        >
-                            <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
-                            Synchronisieren
-                        </Button>
+                                {/* Tenant Filter */}
+                                <div>
+                                    <label className="text-xs font-medium mb-2 block">Mieter</label>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                                {selectedTenants.length > 0 
+                                                    ? `${selectedTenants.length} ausgewählt`
+                                                    : 'Alle Mieter'}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-64 p-0">
+                                            <Command>
+                                                <CommandInput placeholder="Mieter suchen..." />
+                                                <CommandEmpty>Keine Mieter gefunden</CommandEmpty>
+                                                <CommandGroup className="max-h-64 overflow-y-auto">
+                                                    {tenants.map(tenant => {
+                                                        const isSelected = selectedTenants.includes(tenant.id);
+                                                        return (
+                                                            <CommandItem
+                                                                key={tenant.id}
+                                                                onSelect={() => {
+                                                                    setSelectedTenants(isSelected
+                                                                        ? selectedTenants.filter(id => id !== tenant.id)
+                                                                        : [...selectedTenants, tenant.id]
+                                                                    );
+                                                                }}
+                                                            >
+                                                                <div className={`mr-2 h-4 w-4 border rounded ${isSelected ? 'bg-emerald-600' : ''}`} />
+                                                                <span className="text-sm">
+                                                                    {tenant.first_name} {tenant.last_name}
+                                                                </span>
+                                                            </CommandItem>
+                                                        );
+                                                    })}
+                                                </CommandGroup>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
 
-                        <Button
-                            variant="outline"
-                            onClick={handleRegenerateAll}
-                            disabled={isRegenerating}
-                        >
-                            <RefreshCw className={`w-4 h-4 mr-2 ${isRegenerating ? 'animate-spin' : ''}`} />
-                            Alle aktualisieren
-                        </Button>
+                                {/* Building Filter */}
+                                <div>
+                                    <label className="text-xs font-medium mb-2 block">Gebäude</label>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                                {selectedBuildings.length > 0 
+                                                    ? `${selectedBuildings.length} ausgewählt`
+                                                    : 'Alle Gebäude'}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-64 p-0">
+                                            <Command>
+                                                <CommandInput placeholder="Gebäude suchen..." />
+                                                <CommandEmpty>Keine Gebäude gefunden</CommandEmpty>
+                                                <CommandGroup className="max-h-64 overflow-y-auto">
+                                                    {buildings.map(building => {
+                                                        const isSelected = selectedBuildings.includes(building.id);
+                                                        return (
+                                                            <CommandItem
+                                                                key={building.id}
+                                                                onSelect={() => {
+                                                                    setSelectedBuildings(isSelected
+                                                                        ? selectedBuildings.filter(id => id !== building.id)
+                                                                        : [...selectedBuildings, building.id]
+                                                                    );
+                                                                }}
+                                                            >
+                                                                <div className={`mr-2 h-4 w-4 border rounded ${isSelected ? 'bg-emerald-600' : ''}`} />
+                                                                <span className="text-sm">
+                                                                    {building.name}
+                                                                </span>
+                                                            </CommandItem>
+                                                        );
+                                                    })}
+                                                </CommandGroup>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
 
-                        {selectedItems.length > 0 && (
-                            <Button
-                                onClick={() => markAsSettledMutation.mutate(selectedItems)}
-                                disabled={markAsSettledMutation.isPending}
-                                className="bg-blue-600 hover:bg-blue-700"
-                            >
-                                <Check className="w-4 h-4 mr-2" />
-                                Als erledigt markieren ({selectedItems.length})
-                            </Button>
+                                {/* Unit Filter */}
+                                <div>
+                                    <label className="text-xs font-medium mb-2 block">Wohneinheit</label>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                                {selectedUnits.length > 0 
+                                                    ? `${selectedUnits.length} ausgewählt`
+                                                    : 'Alle Einheiten'}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-64 p-0">
+                                            <Command>
+                                                <CommandInput placeholder="Einheit suchen..." />
+                                                <CommandEmpty>Keine Einheiten gefunden</CommandEmpty>
+                                                <CommandGroup className="max-h-64 overflow-y-auto">
+                                                    {units.map(unit => {
+                                                        const building = buildings.find(b => b.id === unit.building_id);
+                                                        const isSelected = selectedUnits.includes(unit.id);
+                                                        return (
+                                                            <CommandItem
+                                                                key={unit.id}
+                                                                onSelect={() => {
+                                                                    setSelectedUnits(isSelected
+                                                                        ? selectedUnits.filter(id => id !== unit.id)
+                                                                        : [...selectedUnits, unit.id]
+                                                                    );
+                                                                }}
+                                                            >
+                                                                <div className={`mr-2 h-4 w-4 border rounded ${isSelected ? 'bg-emerald-600' : ''}`} />
+                                                                <span className="text-sm">
+                                                                    {building?.name} - {unit.unit_number}
+                                                                </span>
+                                                            </CommandItem>
+                                                        );
+                                                    })}
+                                                </CommandGroup>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+
+                                {/* Month Range */}
+                                <div>
+                                    <label className="text-xs font-medium mb-2 block">Monat von</label>
+                                    <Input
+                                        type="month"
+                                        value={monthFrom}
+                                        onChange={(e) => setMonthFrom(e.target.value)}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-medium mb-2 block">Monat bis</label>
+                                    <Input
+                                        type="month"
+                                        value={monthTo}
+                                        onChange={(e) => setMonthTo(e.target.value)}
+                                    />
+                                </div>
+
+                                {/* Reset Button */}
+                                <div className="flex items-end md:col-span-2">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            setSelectedTenants([]);
+                                            setSelectedUnits([]);
+                                            setSelectedBuildings([]);
+                                            setMonthFrom('');
+                                            setMonthTo('');
+                                            setCategoryFilter('all');
+                                        }}
+                                        className="w-full"
+                                    >
+                                        <X className="w-4 h-4 mr-2" />
+                                        Filter zurücksetzen
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Active Filters Display */}
+                        {(selectedTenants.length > 0 || selectedUnits.length > 0 || selectedBuildings.length > 0 || monthFrom || monthTo || categoryFilter !== 'all') && (
+                            <div className="flex flex-wrap gap-2 pt-3 border-t">
+                                {categoryFilter !== 'all' && (
+                                    <Badge variant="secondary" className="gap-1">
+                                        {categoryFilter === 'rent' ? 'Miete' : 'Kaution'}
+                                        <X 
+                                            className="w-3 h-3 cursor-pointer" 
+                                            onClick={() => setCategoryFilter('all')}
+                                        />
+                                    </Badge>
+                                )}
+                                {selectedTenants.map(tenantId => {
+                                    const tenant = tenants.find(t => t.id === tenantId);
+                                    return tenant ? (
+                                        <Badge key={tenantId} variant="secondary" className="gap-1">
+                                            {tenant.first_name} {tenant.last_name}
+                                            <X 
+                                                className="w-3 h-3 cursor-pointer" 
+                                                onClick={() => setSelectedTenants(selectedTenants.filter(id => id !== tenantId))}
+                                            />
+                                        </Badge>
+                                    ) : null;
+                                })}
+                                {selectedBuildings.map(buildingId => {
+                                    const building = buildings.find(b => b.id === buildingId);
+                                    return building ? (
+                                        <Badge key={buildingId} variant="secondary" className="gap-1">
+                                            🏢 {building.name}
+                                            <X 
+                                                className="w-3 h-3 cursor-pointer" 
+                                                onClick={() => setSelectedBuildings(selectedBuildings.filter(id => id !== buildingId))}
+                                            />
+                                        </Badge>
+                                    ) : null;
+                                })}
+                                {selectedUnits.map(unitId => {
+                                    const unit = units.find(u => u.id === unitId);
+                                    const building = unit ? buildings.find(b => b.id === unit.building_id) : null;
+                                    return unit ? (
+                                        <Badge key={unitId} variant="secondary" className="gap-1">
+                                            {building?.name} - {unit.unit_number}
+                                            <X 
+                                                className="w-3 h-3 cursor-pointer" 
+                                                onClick={() => setSelectedUnits(selectedUnits.filter(id => id !== unitId))}
+                                            />
+                                        </Badge>
+                                    ) : null;
+                                })}
+                                {(monthFrom || monthTo) && (
+                                    <Badge variant="secondary" className="gap-1">
+                                        📅 {monthFrom || '...'} bis {monthTo || '...'}
+                                        <X 
+                                            className="w-3 h-3 cursor-pointer" 
+                                            onClick={() => { setMonthFrom(''); setMonthTo(''); }}
+                                        />
+                                    </Badge>
+                                )}
+                            </div>
                         )}
                     </div>
                 </CardContent>
