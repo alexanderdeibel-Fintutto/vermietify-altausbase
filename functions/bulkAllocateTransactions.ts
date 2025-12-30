@@ -130,11 +130,29 @@ Deno.serve(async (req) => {
                     const item = items[0];
                     const expectedAmount = item.expected_amount || 0;
                     let status = 'pending';
+                    
                     if (paidAmount >= expectedAmount - 0.01) {
                         status = 'paid';
                     } else if (paidAmount > 0) {
                         status = 'partial';
+                    } else {
+                        status = 'pending';
                     }
+
+                    // Check if overdue (only if not fully paid)
+                    if (status !== 'paid' && item.due_date) {
+                        try {
+                            const dueDate = new Date(item.due_date);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            if (dueDate < today) {
+                                status = 'overdue';
+                            }
+                        } catch (error) {
+                            console.error(`Error parsing due_date for item ${itemId}:`, error);
+                        }
+                    }
+                    
                     await base44.asServiceRole.entities.FinancialItem.update(itemId, {
                         amount: paidAmount,
                         status: status
