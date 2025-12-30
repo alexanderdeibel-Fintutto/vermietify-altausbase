@@ -571,7 +571,11 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
             category: bulkCategory,
             unitId: actualUnitId,
             contractId: bulkContractId || null,
-            allocations: preparedAllocations
+            allocations: preparedAllocations.map(alloc => ({
+                ...alloc,
+                unitId: actualUnitId,
+                contractId: bulkContractId || null
+            }))
         });
     };
 
