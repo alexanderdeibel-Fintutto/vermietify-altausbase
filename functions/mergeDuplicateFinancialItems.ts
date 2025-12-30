@@ -21,6 +21,8 @@ Deno.serve(async (req) => {
             category: 'rent'
         });
 
+        console.log(`Found ${allItems.length} rent items for contract ${contractId}`);
+
         // Group by payment_month
         const itemsByMonth = {};
         allItems.forEach(item => {
@@ -31,6 +33,10 @@ Deno.serve(async (req) => {
                 itemsByMonth[item.payment_month].push(item);
             }
         });
+
+        console.log('Items by month:', Object.entries(itemsByMonth).map(([month, items]) => 
+            `${month}: ${items.length} items`
+        ).join(', '));
 
         let mergedCount = 0;
         let deletedCount = 0;
