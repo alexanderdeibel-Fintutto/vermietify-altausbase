@@ -174,7 +174,8 @@ export default function BankAccounts() {
 
     const { data: transactions = [] } = useQuery({
         queryKey: ['bankTransactions'],
-        queryFn: () => base44.entities.BankTransaction.list('-transaction_date', 100)
+        queryFn: () => base44.entities.BankTransaction.list('-transaction_date', 10000),
+        staleTime: 0
     });
 
     const createMutation = useMutation({
@@ -558,10 +559,11 @@ export default function BankAccounts() {
                 onOpenChange={setImportOpen}
                 accountId={importAccountId}
                 onSuccess={async () => {
-                    await queryClient.invalidateQueries({ queryKey: ['bankTransactions'] });
-                    await queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
-                    await queryClient.refetchQueries({ queryKey: ['bankTransactions'] });
-                }}
+                    console.log('Import success callback - refetching...');
+                    await queryClient.resetQueries({ queryKey: ['bankTransactions'] });
+                    await queryClient.refetchQueries({ queryKey: ['bankTransactions'], type: 'active' });
+                    console.log('Refetch complete');
+                }
             />
 
             <AlertDialog open={!!deleteAccount} onOpenChange={() => setDeleteAccount(null)}>
