@@ -162,12 +162,24 @@ Deno.serve(async (req) => {
 
                 // Determine status
                 let newStatus = 'pending';
-                if (totalPaid >= expected) {
+                if (totalPaid >= expected - 0.01) {
                     newStatus = 'paid';
                 } else if (totalPaid > 0) {
                     newStatus = 'partial';
-                } else if (item.status === 'overdue') {
-                    newStatus = 'overdue'; // Keep overdue status if not paid
+                }
+
+                // Check if overdue (only if not fully paid)
+                if (newStatus !== 'paid' && item.due_date) {
+                    try {
+                        const dueDate = new Date(item.due_date);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        if (dueDate < today) {
+                            newStatus = 'overdue';
+                        }
+                    } catch (error) {
+                        console.error(`Error parsing due_date for item ${item.id}:`, error);
+                    }
                 }
 
                 // Update if changed
