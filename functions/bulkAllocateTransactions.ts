@@ -28,7 +28,28 @@ Deno.serve(async (req) => {
         const processedTransactionIds = new Set();
         const allAffectedFinancialItemIds = new Set();
 
-        // Step 1: Create all FinancialItemTransactionLinks based on the exact data from the frontend
+        // Collect all affected financial items first
+        for (const allocation of allocations) {
+            if (allocation.financialItemId) {
+                allAffectedFinancialItemIds.add(allocation.financialItemId);
+            }
+        }
+
+        // Step 1: Delete ALL existing links for affected financial items to start fresh
+        for (const financialItemId of allAffectedFinancialItemIds) {
+            try {
+                const existingLinks = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
+                    financial_item_id: financialItemId
+                });
+                for (const link of existingLinks) {
+                    await base44.asServiceRole.entities.FinancialItemTransactionLink.delete(link.id);
+                }
+            } catch (error) {
+                console.error(`Error deleting existing links for financial item ${financialItemId}:`, error);
+            }
+        }
+
+        // Step 2: Create all new FinancialItemTransactionLinks based on the exact data from the frontend
         for (const allocation of allocations) {
             if (!allocation.transactionId || !allocation.financialItemId || !allocation.linkedAmount || parseFloat(allocation.linkedAmount) <= 0) {
                 console.warn('Skipping invalid allocation:', allocation);
@@ -38,18 +59,8 @@ Deno.serve(async (req) => {
             }
 
             processedTransactionIds.add(allocation.transactionId);
-            allAffectedFinancialItemIds.add(allocation.financialItemId);
 
             try {
-                // Delete existing links for this specific transaction-financial item pair to prevent duplicates
-                const existingLinks = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
-                    transaction_id: allocation.transactionId,
-                    financial_item_id: allocation.financialItemId
-                });
-                for (const link of existingLinks) {
-                    await base44.asServiceRole.entities.FinancialItemTransactionLink.delete(link.id);
-                }
-
                 await base44.asServiceRole.entities.FinancialItemTransactionLink.create({
                     financial_item_id: allocation.financialItemId,
                     transaction_id: allocation.transactionId,
@@ -67,7 +78,7 @@ Deno.serve(async (req) => {
             }
         }
 
-        // Step 2: Update all affected transactions as categorized
+        // Step 3: Update all affected transactions as categorized
         for (const txId of processedTransactionIds) {
             try {
                 // Find the allocation for this transaction to get its specific unitId and contractId
@@ -86,7 +97,7 @@ Deno.serve(async (req) => {
             }
         }
 
-        // Step 3: Recalculate all affected financial items' total amount and status
+        // Step 4: Recalculate all affected financial items' total amount and status
         for (const itemId of allAffectedFinancialItemIds) {
             try {
                 const links = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
