@@ -52,37 +52,88 @@ export default function TransactionAllocationDialog({
             let score = 0;
             const tenant = getTenant(contract.tenant_id);
             const secondTenant = contract.second_tenant_id ? getTenant(contract.second_tenant_id) : null;
+            const unit = getUnit(contract.unit_id);
+            const building = unit ? getBuilding(unit.building_id) : null;
             
-            // Match sender name with tenant names
+            // Match sender name with tenant names (stronger weight)
             if (tenant && transaction.sender_receiver) {
                 const senderLower = transaction.sender_receiver.toLowerCase();
                 const firstNameMatch = tenant.first_name?.toLowerCase();
                 const lastNameMatch = tenant.last_name?.toLowerCase();
+                const fullNameMatch = `${firstNameMatch} ${lastNameMatch}`;
                 
-                if (firstNameMatch && senderLower.includes(firstNameMatch)) score += 10;
-                if (lastNameMatch && senderLower.includes(lastNameMatch)) score += 10;
+                // Full name match
+                if (senderLower.includes(fullNameMatch)) score += 40;
+                else {
+                    if (firstNameMatch && senderLower.includes(firstNameMatch)) score += 15;
+                    if (lastNameMatch && senderLower.includes(lastNameMatch)) score += 15;
+                }
                 
                 if (secondTenant) {
                     const secondFirstMatch = secondTenant.first_name?.toLowerCase();
                     const secondLastMatch = secondTenant.last_name?.toLowerCase();
-                    if (secondFirstMatch && senderLower.includes(secondFirstMatch)) score += 10;
-                    if (secondLastMatch && senderLower.includes(secondLastMatch)) score += 10;
+                    const secondFullName = `${secondFirstMatch} ${secondLastMatch}`;
+                    
+                    if (senderLower.includes(secondFullName)) score += 40;
+                    else {
+                        if (secondFirstMatch && senderLower.includes(secondFirstMatch)) score += 15;
+                        if (secondLastMatch && senderLower.includes(secondLastMatch)) score += 15;
+                    }
                 }
             }
             
-            // Match amount with rent
-            if (Math.abs(transaction.amount) === contract.total_rent) score += 20;
-            else if (Math.abs(Math.abs(transaction.amount) - contract.total_rent) < 10) score += 10;
+            // Match amount with rent (exact match gets highest score)
+            const amountDiff = Math.abs(Math.abs(transaction.amount) - contract.total_rent);
+            if (amountDiff === 0) score += 30;
+            else if (amountDiff < 5) score += 20;
+            else if (amountDiff < 50) score += 10;
+            else if (amountDiff < 100) score += 5;
             
-            // Match reference with unit
-            const unit = getUnit(contract.unit_id);
-            if (unit && transaction.reference?.includes(unit.unit_number)) score += 15;
+            // Match reference/description with unit number
+            const searchText = `${transaction.reference || ''} ${transaction.description || ''}`.toLowerCase();
+            if (unit?.unit_number && searchText.includes(unit.unit_number.toLowerCase())) score += 25;
             
-            return { contract, score };
+            // Match building name
+            if (building?.name && searchText.includes(building.name.toLowerCase())) score += 15;
+            
+            // Match address
+            if (building?.address && searchText.includes(building.address.toLowerCase())) score += 10;
+            
+            // Match IBAN with tenant email or name patterns
+            if (transaction.iban && tenant) {
+                const ibanLower = transaction.iban.toLowerCase();
+                // Check if IBAN contains parts of tenant name (some banks use name in IBAN generation)
+                const lastNameShort = tenant.last_name?.toLowerCase().substring(0, 4);
+                if (lastNameShort && ibanLower.includes(lastNameShort)) score += 10;
+            }
+            
+            // Bonus for recent transaction date matching contract activity
+            if (transaction.transaction_date && contract.start_date) {
+                try {
+                    const txDate = new Date(transaction.transaction_date);
+                    const startDate = new Date(contract.start_date);
+                    const monthsDiff = (txDate.getFullYear() - startDate.getFullYear()) * 12 + 
+                                      (txDate.getMonth() - startDate.getMonth());
+                    
+                    // Prefer contracts that have been active longer (more likely to pay)
+                    if (monthsDiff >= 2) score += 5;
+                } catch (e) {
+                    // Ignore date parsing errors
+                }
+            }
+            
+            return { contract, score, details: { 
+                tenant: tenant ? `${tenant.first_name} ${tenant.last_name}` : 'Unbekannt',
+                unit: unit?.unit_number,
+                building: building?.name,
+                rent: contract.total_rent
+            } };
         });
         
-        return scored.sort((a, b) => b.score - a.score).map(s => s.contract);
-    }, [selectedCategory, contracts, transaction]);
+        return scored
+            .filter(s => s.score > 0) // Only show contracts with some match
+            .sort((a, b) => b.score - a.score);
+    }, [selectedCategory, contracts, transaction, getTenant, getUnit, getBuilding]);
 
     // Filter contracts based on selection or use suggestions
     const filteredContracts = React.useMemo(() => {
@@ -90,7 +141,7 @@ export default function TransactionAllocationDialog({
             if (actualUnitId) {
                 return contracts.filter(c => c.unit_id === actualUnitId && c.status === 'active');
             }
-            return suggestedContracts;
+            return suggestedContracts.map(s => s.contract);
         }
         return [];
     }, [actualUnitId, contracts, selectedCategory, suggestedContracts]);
@@ -340,14 +391,17 @@ export default function TransactionAllocationDialog({
                 {/* Step 2a: Contract (for rent_income) */}
                 {selectedCategory === 'rent_income' && filteredContracts.length > 0 && (
                     <div className="mb-6">
-                        <Label className="text-sm font-medium mb-2">
-                            3. Mietvertrag wählen *
+                        <div className="flex items-center justify-between mb-2">
+                            <Label className="text-sm font-medium">
+                                3. Mietvertrag wählen *
+                            </Label>
                             {!actualUnitId && suggestedContracts.length > 0 && (
-                                <span className="ml-2 text-xs text-blue-600 font-normal">
-                                    (Nach Relevanz sortiert)
+                                <span className="text-xs text-blue-600 font-medium flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
+                                    KI-Vorschläge basierend auf Transaktionsdetails
                                 </span>
                             )}
-                        </Label>
+                        </div>
                         <Select value={selectedContractId} onValueChange={(value) => {
                             setSelectedContractId(value);
                             setAllocations([]);
@@ -361,30 +415,65 @@ export default function TransactionAllocationDialog({
                                 <SelectValue placeholder="Vertrag auswählen..." />
                             </SelectTrigger>
                             <SelectContent>
+                                {!actualUnitId && suggestedContracts.length > 0 && suggestedContracts[0].score > 20 && (
+                                    <div className="px-2 py-1.5 text-xs text-slate-500 bg-blue-50 border-b">
+                                        Beste Übereinstimmung oben • Score basierend auf Name, Betrag & Details
+                                    </div>
+                                )}
                                 {filteredContracts.map((contract, idx) => {
                                     const tenant = getTenant(contract.tenant_id);
                                     const secondTenant = contract.second_tenant_id ? getTenant(contract.second_tenant_id) : null;
                                     const unit = getUnit(contract.unit_id);
                                     const building = unit ? getBuilding(unit.building_id) : null;
-                                    const isTopSuggestion = !actualUnitId && idx === 0 && suggestedContracts.length > 0;
+                                    const suggestion = !actualUnitId ? suggestedContracts.find(s => s.contract.id === contract.id) : null;
+                                    const score = suggestion?.score || 0;
+                                    const isTopSuggestion = !actualUnitId && idx === 0 && score > 20;
+                                    const isGoodMatch = score > 40;
+                                    const isModerateMatch = score > 20 && score <= 40;
                                     
                                     return (
                                         <SelectItem key={contract.id} value={contract.id}>
-                                            <div className="flex flex-col">
+                                            <div className="flex flex-col py-1">
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-medium">
                                                         {tenant ? `${tenant.first_name} ${tenant.last_name}` : 'Unbekannt'}
                                                         {secondTenant && ` & ${secondTenant.first_name} ${secondTenant.last_name}`}
                                                     </span>
                                                     {isTopSuggestion && (
-                                                        <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
-                                                            Empfohlen
+                                                        <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-medium">
+                                                            ⭐ Beste Übereinstimmung
+                                                        </span>
+                                                    )}
+                                                    {!isTopSuggestion && isGoodMatch && (
+                                                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                                                            Gute Übereinstimmung
+                                                        </span>
+                                                    )}
+                                                    {!isTopSuggestion && isModerateMatch && (
+                                                        <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                                                            Möglich
                                                         </span>
                                                     )}
                                                 </div>
-                                                <span className="text-xs text-slate-500">
-                                                    {building?.name} {unit?.unit_number} • €{contract.total_rent?.toFixed(2)}/Monat
+                                                <span className="text-xs text-slate-500 mt-0.5">
+                                                    {building?.name} • {unit?.unit_number} • €{contract.total_rent?.toFixed(2)}/Monat
                                                 </span>
+                                                {!actualUnitId && score > 0 && (
+                                                    <div className="flex items-center gap-1 mt-1">
+                                                        <div className="h-1 bg-slate-200 rounded-full flex-1 max-w-[100px]">
+                                                            <div 
+                                                                className={`h-1 rounded-full ${
+                                                                    isGoodMatch ? 'bg-emerald-500' : 
+                                                                    isModerateMatch ? 'bg-blue-500' : 'bg-slate-400'
+                                                                }`}
+                                                                style={{ width: `${Math.min(100, (score / 100) * 100)}%` }}
+                                                            />
+                                                        </div>
+                                                        <span className="text-xs text-slate-400">
+                                                            {Math.min(100, Math.round((score / 100) * 100))}%
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </SelectItem>
                                     );
