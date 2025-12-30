@@ -231,7 +231,7 @@ export default function TransactionAllocationDialog({
             if (selectedCategory === 'rent_income' && allocations.length > 0) {
                 // Use backend function for financial item allocation
                 const financialItemAllocations = allocations
-                    .filter(a => a.financialItemId && parseFloat(a.amount) > 0)
+                    .filter(a => a.financialItemId && a.amount && !isNaN(parseFloat(a.amount)) && parseFloat(a.amount) > 0)
                     .map(a => ({
                         financialItemId: a.financialItemId,
                         amount: parseFloat(a.amount)
