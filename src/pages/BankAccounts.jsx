@@ -563,7 +563,7 @@ export default function BankAccounts() {
                     await queryClient.resetQueries({ queryKey: ['bankTransactions'] });
                     await queryClient.refetchQueries({ queryKey: ['bankTransactions'], type: 'active' });
                     console.log('Refetch complete');
-                }
+                }}
             />
 
             <AlertDialog open={!!deleteAccount} onOpenChange={() => setDeleteAccount(null)}>
