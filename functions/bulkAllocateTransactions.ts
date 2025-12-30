@@ -27,11 +27,15 @@ Deno.serve(async (req) => {
 
         const processedTransactionIds = new Set();
         const allAffectedFinancialItemIds = new Set();
+        const newLinksToCreate = [];
 
-        // Collect all affected financial items first
+        // Collect all affected financial items and valid allocations
         for (const allocation of allocations) {
             if (allocation.financialItemId) {
                 allAffectedFinancialItemIds.add(allocation.financialItemId);
+            }
+            if (allocation.transactionId) {
+                processedTransactionIds.add(allocation.transactionId);
             }
         }
 
@@ -49,7 +53,7 @@ Deno.serve(async (req) => {
             }
         }
 
-        // Step 2: Create all new FinancialItemTransactionLinks based on the exact data from the frontend
+        // Step 2: Collect all new FinancialItemTransactionLinks for bulk creation
         for (const allocation of allocations) {
             if (!allocation.transactionId || !allocation.financialItemId || !allocation.linkedAmount || parseFloat(allocation.linkedAmount) <= 0) {
                 console.warn('Skipping invalid allocation:', allocation);
@@ -58,23 +62,22 @@ Deno.serve(async (req) => {
                 continue;
             }
 
-            processedTransactionIds.add(allocation.transactionId);
+            newLinksToCreate.push({
+                financial_item_id: allocation.financialItemId,
+                transaction_id: allocation.transactionId,
+                linked_amount: parseFloat(allocation.linkedAmount)
+            });
+        }
 
+        // Execute bulk creation of links
+        if (newLinksToCreate.length > 0) {
             try {
-                await base44.asServiceRole.entities.FinancialItemTransactionLink.create({
-                    financial_item_id: allocation.financialItemId,
-                    transaction_id: allocation.transactionId,
-                    linked_amount: parseFloat(allocation.linkedAmount)
-                });
-                results.success++;
+                await base44.asServiceRole.entities.FinancialItemTransactionLink.bulkCreate(newLinksToCreate);
+                results.success += newLinksToCreate.length;
             } catch (error) {
-                console.error(`Error creating link for transaction ${allocation.transactionId} and financial item ${allocation.financialItemId}:`, error);
-                results.errors++;
-                results.details.push({ 
-                    transactionId: allocation.transactionId, 
-                    financialItemId: allocation.financialItemId,
-                    error: error.message 
-                });
+                console.error('Bulk link creation error:', error);
+                results.errors += newLinksToCreate.length;
+                results.details.push({ error: 'Bulk link creation failed', details: error.message });
             }
         }
 
@@ -98,11 +101,28 @@ Deno.serve(async (req) => {
         }
 
         // Step 4: Recalculate all affected financial items' total amount and status
+        // Optimize: Fetch all relevant links once
+        let allRelevantLinks = [];
+        try {
+            allRelevantLinks = await base44.asServiceRole.entities.FinancialItemTransactionLink.list();
+        } catch (error) {
+            console.error('Error fetching all links:', error);
+        }
+
+        // Group links by financial_item_id in memory
+        const linksByFinancialItem = {};
+        for (const link of allRelevantLinks) {
+            if (allAffectedFinancialItemIds.has(link.financial_item_id)) {
+                if (!linksByFinancialItem[link.financial_item_id]) {
+                    linksByFinancialItem[link.financial_item_id] = [];
+                }
+                linksByFinancialItem[link.financial_item_id].push(link);
+            }
+        }
+
         for (const itemId of allAffectedFinancialItemIds) {
             try {
-                const links = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
-                    financial_item_id: itemId
-                });
+                const links = linksByFinancialItem[itemId] || [];
                 const paidAmount = parseFloat(links.reduce((sum, link) => sum + link.linked_amount, 0).toFixed(2));
 
                 const items = await base44.asServiceRole.entities.FinancialItem.filter({ id: itemId });
