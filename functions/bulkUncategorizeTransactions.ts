@@ -84,10 +84,24 @@ async function recalculateFinancialItemStatus(base44, financialItemId) {
     const expectedAmount = item.expected_amount || 0;
 
     let status = 'pending';
-    if (paidAmount >= expectedAmount) {
+    if (paidAmount >= expectedAmount - 0.01) {
         status = 'paid';
     } else if (paidAmount > 0) {
         status = 'partial';
+    }
+
+    // Check if overdue (only if not fully paid)
+    if (status !== 'paid' && item.due_date) {
+        try {
+            const dueDate = new Date(item.due_date);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (dueDate < today) {
+                status = 'overdue';
+            }
+        } catch (error) {
+            console.error(`Error parsing due_date for item ${financialItemId}:`, error);
+        }
     }
 
     await base44.asServiceRole.entities.FinancialItem.update(financialItemId, {
