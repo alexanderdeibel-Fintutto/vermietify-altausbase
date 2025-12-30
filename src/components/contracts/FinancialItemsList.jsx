@@ -270,6 +270,54 @@ export default function FinancialItemsList() {
         }
     };
 
+    const handleMergeDuplicates = async (contractId) => {
+        setIsRegenerating(true);
+        try {
+            const response = await base44.functions.invoke('mergeDuplicateFinancialItems', { contractId });
+            await queryClient.invalidateQueries({ queryKey: ['financial-items'] });
+            await queryClient.invalidateQueries({ queryKey: ['financial-item-transaction-links'] });
+            toast.success(response.data.message);
+        } catch (error) {
+            toast.error('Fehler beim Zusammenführen');
+            console.error(error);
+        } finally {
+            setIsRegenerating(false);
+        }
+    };
+
+    // Detect duplicates
+    const duplicatesByContract = useMemo(() => {
+        const duplicates = {};
+        const itemsByContract = {};
+        
+        filteredItems.forEach(item => {
+            if (!item.related_to_contract_id) return;
+            
+            if (!itemsByContract[item.related_to_contract_id]) {
+                itemsByContract[item.related_to_contract_id] = {};
+            }
+            
+            if (!itemsByContract[item.related_to_contract_id][item.payment_month]) {
+                itemsByContract[item.related_to_contract_id][item.payment_month] = [];
+            }
+            
+            itemsByContract[item.related_to_contract_id][item.payment_month].push(item);
+        });
+        
+        Object.entries(itemsByContract).forEach(([contractId, months]) => {
+            Object.entries(months).forEach(([month, items]) => {
+                if (items.length > 1) {
+                    if (!duplicates[contractId]) {
+                        duplicates[contractId] = [];
+                    }
+                    duplicates[contractId].push({ month, items });
+                }
+            });
+        });
+        
+        return duplicates;
+    }, [filteredItems]);
+
     const getTenant = (tenantId) => tenants.find(t => t.id === tenantId);
     const getUnit = (unitId) => units.find(u => u.id === unitId);
     const getBuilding = (buildingId) => buildings.find(b => b.id === buildingId);
@@ -334,6 +382,41 @@ export default function FinancialItemsList() {
     return (
         <div className="space-y-6">
             {/* Statistics */}
+            {/* Duplicate Warning */}
+            {Object.keys(duplicatesByContract).length > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                    <div className="flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
+                        <div className="flex-1">
+                            <h3 className="font-semibold text-amber-900 mb-1">
+                                Doppelte Forderungen erkannt
+                            </h3>
+                            <p className="text-sm text-amber-700 mb-3">
+                                Es wurden {Object.values(duplicatesByContract).reduce((sum, dups) => sum + dups.length, 0)} doppelte Forderungen gefunden. 
+                                Dies kann nach Vertragsänderungen auftreten.
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                                {Object.entries(duplicatesByContract).map(([contractId, dups]) => {
+                                    const contract = contracts.find(c => c.id === contractId);
+                                    const tenant = contract ? getTenant(contract.tenant_id) : null;
+                                    return (
+                                        <Button
+                                            key={contractId}
+                                            size="sm"
+                                            onClick={() => handleMergeDuplicates(contractId)}
+                                            disabled={isRegenerating}
+                                            className="bg-amber-600 hover:bg-amber-700"
+                                        >
+                                            {tenant ? `${tenant.first_name} ${tenant.last_name}` : 'Vertrag'} bereinigen ({dups.length})
+                                        </Button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
