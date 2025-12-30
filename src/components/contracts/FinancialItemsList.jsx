@@ -295,13 +295,13 @@ export default function FinancialItemsList() {
         }
     };
 
-    // Detect duplicates
+    // Detect duplicates - use rentDemands instead of filteredItems to catch all duplicates
     const duplicatesByContract = useMemo(() => {
         const duplicates = {};
         const itemsByContract = {};
         
-        filteredItems.forEach(item => {
-            if (!item.related_to_contract_id) return;
+        rentDemands.forEach(item => {
+            if (!item.related_to_contract_id || !item.payment_month) return;
             
             if (!itemsByContract[item.related_to_contract_id]) {
                 itemsByContract[item.related_to_contract_id] = {};
@@ -316,7 +316,7 @@ export default function FinancialItemsList() {
         
         Object.entries(itemsByContract).forEach(([contractId, months]) => {
             Object.entries(months).forEach(([month, items]) => {
-                if (items.length > 1) {
+                if (items.length > 1 && items[0].category === 'rent') {
                     if (!duplicates[contractId]) {
                         duplicates[contractId] = [];
                     }
@@ -326,7 +326,7 @@ export default function FinancialItemsList() {
         });
         
         return duplicates;
-    }, [filteredItems]);
+    }, [rentDemands]);
 
     const getTenant = (tenantId) => tenants.find(t => t.id === tenantId);
     const getUnit = (unitId) => units.find(u => u.id === unitId);
