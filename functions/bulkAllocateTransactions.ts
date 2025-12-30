@@ -70,11 +70,14 @@ Deno.serve(async (req) => {
         // Step 2: Update all affected transactions as categorized
         for (const txId of processedTransactionIds) {
             try {
+                // Find the allocation for this transaction to get its specific unitId and contractId
+                const firstAllocation = allocations.find(alloc => alloc.transactionId === txId);
+                
                 await base44.asServiceRole.entities.BankTransaction.update(txId, {
                     is_categorized: true,
                     category: category,
-                    unit_id: unitId || null,
-                    contract_id: contractId || null
+                    unit_id: firstAllocation?.unitId || unitId || null,
+                    contract_id: firstAllocation?.contractId || contractId || null
                 });
             } catch (error) {
                 console.error(`Error updating transaction ${txId}:`, error);
