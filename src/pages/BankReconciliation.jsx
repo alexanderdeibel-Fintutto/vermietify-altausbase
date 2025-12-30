@@ -185,11 +185,15 @@ export default function BankReconciliation() {
                 toast.success(`${result.success} Transaktionen kategorisiert`);
             }
             if (result.errors > 0) {
-                toast.error(`${result.errors} Fehler aufgetreten`);
+                const errorDetails = result.details?.map(d => `${d.error || 'Unbekannt'} (TX: ${d.transactionId || 'N/A'})`).join('; ') || 'Keine Details verfügbar';
+                toast.error(`Fehler bei ${result.errors} Transaktionen: ${errorDetails}`, { duration: 10000 });
             }
+            
+            console.log('Bulk-Zuordnung Ergebnis:', result);
         },
         onError: (error) => {
-            toast.error('Fehler bei der Bulk-Zuordnung: ' + error.message);
+            toast.error('SCHWERWIEGENDER FEHLER bei der Bulk-Zuordnung: ' + (error.message || 'Unbekannter Fehler'), { duration: Infinity });
+            console.error('Bulk-Zuordnung Fehler:', error);
         }
     });
 
