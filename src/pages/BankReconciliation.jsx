@@ -562,24 +562,29 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
         const selectedUnit = units.find(u => u.id === bulkUnitId);
         const actualUnitId = selectedUnit ? bulkUnitId : null;
         
-        // Prepare allocations: for EACH selected transaction, create allocation objects
+        // Prepare allocations: ONE link per financial item, using available transactions
         const preparedAllocations = [];
+        const transactionsToAllocate = [...selectedTransactions];
         
         if (bulkAllocations.length > 0) {
-            // For each transaction, create allocations to financial items
-            selectedTransactions.forEach(txId => {
-                bulkAllocations
-                    .filter(a => a.financialItemId && parseFloat(a.amount) > 0)
-                    .forEach(alloc => {
+            // For each financial item, create ONE link to ONE transaction
+            bulkAllocations
+                .filter(a => a.financialItemId && parseFloat(a.amount) > 0)
+                .forEach(alloc => {
+                    const txIdForLink = transactionsToAllocate.shift();
+                    
+                    if (txIdForLink) {
                         preparedAllocations.push({
-                            transactionId: txId,
+                            transactionId: txIdForLink,
                             financialItemId: alloc.financialItemId,
                             linkedAmount: parseFloat(alloc.amount),
                             unitId: actualUnitId,
                             contractId: bulkContractId || null
                         });
-                    });
-            });
+                    } else {
+                        console.warn(`Keine Transaktions-ID verfügbar für Finanzposition ${alloc.financialItemId}`);
+                    }
+                });
         }
         
         bulkCategorizeMutation.mutate({
