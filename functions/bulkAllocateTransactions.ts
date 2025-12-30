@@ -81,6 +81,7 @@ Deno.serve(async (req) => {
                 });
             } catch (error) {
                 console.error(`Error updating transaction ${txId}:`, error);
+                results.errors++;
                 results.details.push({ transactionId: txId, error: `Transaction update error: ${error.message}` });
             }
         }
@@ -92,7 +93,7 @@ Deno.serve(async (req) => {
                     financial_item_id: itemId
                 });
                 const paidAmount = parseFloat(links.reduce((sum, link) => sum + link.linked_amount, 0).toFixed(2));
-                
+
                 const items = await base44.asServiceRole.entities.FinancialItem.filter({ id: itemId });
                 if (items.length > 0) {
                     const item = items[0];
@@ -110,6 +111,7 @@ Deno.serve(async (req) => {
                 }
             } catch (error) {
                 console.error(`Error updating financial item ${itemId}:`, error);
+                results.errors++;
                 results.details.push({ financialItemId: itemId, error: `Financial item update error: ${error.message}` });
             }
         }
