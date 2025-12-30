@@ -208,14 +208,14 @@ export default function FinancialItemsList() {
         });
     }, [rentDemands, statusFilter, categoryFilter, selectedTenants, selectedUnits, selectedBuildings, monthFrom, monthTo, searchTerm, tenants, units]);
 
-    // Calculate statistics
+    // Calculate statistics based on filtered items
     const stats = useMemo(() => {
-        const totalExpected = rentDemands.reduce((sum, item) => sum + (item.expected_amount || 0), 0);
-        const totalPaid = rentDemands.reduce((sum, item) => sum + (item.actualAmount || 0), 0);
-        const totalOutstanding = rentDemands
+        const totalExpected = filteredItems.reduce((sum, item) => sum + (item.expected_amount || 0), 0);
+        const totalPaid = filteredItems.reduce((sum, item) => sum + (item.actualAmount || 0), 0);
+        const totalOutstanding = filteredItems
             .filter(item => item.status !== 'paid')
             .reduce((sum, item) => sum + ((item.expected_amount || 0) - (item.actualAmount || 0)), 0);
-        const overdueCount = rentDemands.filter(item => {
+        const overdueCount = filteredItems.filter(item => {
             if (item.status === 'paid' || item.status === 'settled' || !item.payment_month) return false;
             try {
                 const itemDate = parseISO(item.payment_month + '-01');
@@ -232,7 +232,7 @@ export default function FinancialItemsList() {
             totalOutstanding,
             overdueCount
         };
-    }, [rentDemands]);
+    }, [filteredItems]);
 
     const handleSync = async () => {
         setIsSyncing(true);
