@@ -496,7 +496,7 @@ export default function TransactionAllocationDialog({
                         </Label>
 
                         {/* Balance Display */}
-                        <div className="bg-slate-50 rounded-lg p-3 mb-4">
+                        <div className={`rounded-lg p-3 mb-4 ${remaining < 0 ? 'bg-red-50 border border-red-200' : 'bg-slate-50'}`}>
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-slate-600">Transaktionsbetrag:</span>
                                 <span className="font-semibold">€{transactionAmount.toFixed(2)}</span>
@@ -511,6 +511,13 @@ export default function TransactionAllocationDialog({
                                     €{remaining.toFixed(2)}
                                 </span>
                             </div>
+                            {remaining < 0 && (
+                                <div className="mt-2 pt-2 border-t border-red-200">
+                                    <p className="text-xs text-red-700 font-medium">
+                                        ⚠️ Die Zuordnung übersteigt den Transaktionsbetrag um €{Math.abs(remaining).toFixed(2)}
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Available Financial Items */}
@@ -616,7 +623,7 @@ export default function TransactionAllocationDialog({
                     </Button>
                     <Button
                         onClick={handleSubmit}
-                        disabled={!selectedCategory || isProcessing || (selectedCategory === 'rent_income' && !selectedContractId)}
+                        disabled={!selectedCategory || isProcessing || (selectedCategory === 'rent_income' && !selectedContractId) || remaining < -0.01}
                         className={isIncome ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"}
                     >
                         <Check className="w-4 h-4 mr-2" />
