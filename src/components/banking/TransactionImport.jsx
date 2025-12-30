@@ -199,12 +199,17 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
     };
 
     const handleImport = async () => {
-        if (!accountId) return;
+        if (!accountId) {
+            toast.error('Kein Konto ausgewählt');
+            return;
+        }
 
         setImporting(true);
 
         try {
             const transactions = buildTransactionsFromMapping();
+
+            console.log('Built transactions:', transactions);
 
             if (transactions.length === 0) {
                 toast.error('Keine gültigen Transaktionen gefunden');
@@ -219,6 +224,8 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
                 10000
             );
 
+            console.log('Existing transactions for account:', allExisting.length);
+
             const existingKeys = new Set(
                 allExisting.map(tx => 
                     `${tx.transaction_date}_${tx.amount}_${tx.description}`
@@ -232,10 +239,12 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
 
             const skipped = transactions.length - newTransactions.length;
 
+            console.log('New transactions to import:', newTransactions.length, 'Skipped:', skipped);
+
             if (newTransactions.length === 0) {
                 toast.info('Alle Transaktionen bereits vorhanden');
-                handleClose();
                 setImporting(false);
+                handleClose();
                 return;
             }
 
@@ -246,7 +255,11 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
                 is_categorized: false
             }));
 
-            await base44.entities.BankTransaction.bulkCreate(toCreate);
+            console.log('Creating transactions:', toCreate);
+
+            const result = await base44.entities.BankTransaction.bulkCreate(toCreate);
+            
+            console.log('BulkCreate result:', result);
 
             // Save mapping for future imports
             try {
@@ -256,11 +269,16 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
             }
 
             toast.success(`${newTransactions.length} Transaktionen importiert${skipped > 0 ? `, ${skipped} übersprungen` : ''}`);
-            onSuccess();
+            
+            // Call onSuccess to refresh data
+            if (onSuccess) {
+                await onSuccess();
+            }
+            
             handleClose();
         } catch (error) {
             console.error('Import error:', error);
-            toast.error('Import fehlgeschlagen: ' + error.message);
+            toast.error('Import fehlgeschlagen: ' + (error.message || 'Unbekannter Fehler'));
         } finally {
             setImporting(false);
         }
