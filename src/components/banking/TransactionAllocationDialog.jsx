@@ -267,8 +267,10 @@ export default function TransactionAllocationDialog({
             onSuccess();
             onClose();
         } catch (error) {
-            toast.error('Fehler bei der Zuordnung');
-            console.error(error);
+            const errorMessage = error.response?.data?.error || error.message || 'Unbekannter Fehler';
+            toast.error('Fehler bei der Zuordnung: ' + errorMessage);
+            console.error('Allocation error:', error);
+            console.error('Error response:', error.response?.data);
         } finally {
             setIsProcessing(false);
         }
