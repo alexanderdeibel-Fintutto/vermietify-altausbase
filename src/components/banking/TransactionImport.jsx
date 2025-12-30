@@ -78,6 +78,24 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
     };
 
     const autoDetectMapping = (headers) => {
+        // Try to load saved mapping first
+        try {
+            const savedMapping = localStorage.getItem('csv_import_mapping');
+            if (savedMapping) {
+                const parsed = JSON.parse(savedMapping);
+                // Check if all saved columns exist in current headers
+                const allColumnsExist = Object.values(parsed).every(col => 
+                    !col || headers.includes(col)
+                );
+                if (allColumnsExist) {
+                    return parsed;
+                }
+            }
+        } catch (error) {
+            console.warn('Could not load saved mapping:', error);
+        }
+
+        // Fallback to auto-detection
         const newMapping = { ...mapping };
         
         headers.forEach(header => {
@@ -229,6 +247,13 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
             }));
 
             await base44.entities.BankTransaction.bulkCreate(toCreate);
+
+            // Save mapping for future imports
+            try {
+                localStorage.setItem('csv_import_mapping', JSON.stringify(mapping));
+            } catch (error) {
+                console.warn('Could not save mapping:', error);
+            }
 
             toast.success(`${newTransactions.length} Transaktionen importiert${skipped > 0 ? `, ${skipped} übersprungen` : ''}`);
             onSuccess();
