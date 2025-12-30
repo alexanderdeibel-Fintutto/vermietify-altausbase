@@ -210,12 +210,15 @@ export default function FinancialItemsList() {
 
     // Calculate statistics based on filtered items
     const stats = useMemo(() => {
-        const totalExpected = filteredItems.reduce((sum, item) => sum + (item.expected_amount || 0), 0);
-        const totalPaid = filteredItems.reduce((sum, item) => sum + (item.actualAmount || 0), 0);
-        const totalOutstanding = filteredItems
+        // Filter out settled items from calculations
+        const activeItems = filteredItems.filter(item => item.status !== 'settled');
+        
+        const totalExpected = activeItems.reduce((sum, item) => sum + (item.expected_amount || 0), 0);
+        const totalPaid = activeItems.reduce((sum, item) => sum + (item.actualAmount || 0), 0);
+        const totalOutstanding = activeItems
             .filter(item => item.status !== 'paid')
             .reduce((sum, item) => sum + ((item.expected_amount || 0) - (item.actualAmount || 0)), 0);
-        const overdueCount = filteredItems.filter(item => {
+        const overdueCount = activeItems.filter(item => {
             if (item.status === 'paid' || item.status === 'settled' || !item.payment_month) return false;
             try {
                 const itemDate = parseISO(item.payment_month + '-01');
