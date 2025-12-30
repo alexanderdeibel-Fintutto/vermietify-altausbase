@@ -70,19 +70,8 @@ Deno.serve(async (req) => {
         // Step 2: Update all affected transactions as categorized
         for (const txId of processedTransactionIds) {
             try {
-                const txLinks = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
-                    transaction_id: txId
-                });
-                const totalAllocated = txLinks.reduce((sum, link) => sum + link.linked_amount, 0);
-
-                const transaction = (await base44.asServiceRole.entities.BankTransaction.filter({ id: txId }))[0];
-                if (!transaction) {
-                    throw new Error(`Transaction ${txId} not found.`);
-                }
-                const isFullyAllocated = totalAllocated >= Math.abs(transaction.amount) - 0.01;
-
                 await base44.asServiceRole.entities.BankTransaction.update(txId, {
-                    is_categorized: isFullyAllocated,
+                    is_categorized: true,
                     category: category,
                     unit_id: unitId || null,
                     contract_id: contractId || null
