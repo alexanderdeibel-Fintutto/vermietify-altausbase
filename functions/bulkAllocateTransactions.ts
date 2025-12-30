@@ -32,44 +32,56 @@ Deno.serve(async (req) => {
 
         const flatTransactions = transactions.flat();
 
-        // Process all transactions
+        // Process allocations - DIRECT allocation, no proportional distribution
         if (category === 'rent_income' && contractId && allocations && allocations.length > 0) {
-            // With financial item allocations - distribute allocations across all transactions
             const allAffectedItemIds = new Set();
-            const totalTransactionAmount = flatTransactions.reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
             
-            // Distribute allocations proportionally across transactions
+            // For each allocation, create the exact link as specified
+            for (const allocation of allocations) {
+                if (!allocation.financialItemId || !allocation.amount || parseFloat(allocation.amount) <= 0) {
+                    continue;
+                }
+
+                const allocAmount = parseFloat(allocation.amount);
+                allAffectedItemIds.add(allocation.financialItemId);
+
+                // Distribute this allocation amount across all selected transactions proportionally
+                const totalTransactionAmount = flatTransactions.reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+                
+                for (const tx of flatTransactions) {
+                    try {
+                        const txAmount = Math.abs(tx.amount);
+                        const txShare = txAmount / totalTransactionAmount;
+                        const linkedAmount = allocAmount * txShare;
+
+                        // Create the link with the calculated share
+                        await base44.asServiceRole.entities.FinancialItemTransactionLink.create({
+                            financial_item_id: allocation.financialItemId,
+                            transaction_id: tx.id,
+                            linked_amount: linkedAmount
+                        });
+                    } catch (error) {
+                        console.error(`Error creating link for transaction ${tx.id}:`, error);
+                        results.errors++;
+                        results.details.push({ 
+                            transactionId: tx.id, 
+                            financialItemId: allocation.financialItemId,
+                            error: error.message 
+                        });
+                    }
+                }
+            }
+
+            // Update all transactions as categorized
             for (const tx of flatTransactions) {
                 try {
-                    // Delete existing links for this transaction
-                    const existingLinks = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
+                    // Check total allocated for this transaction
+                    const txLinks = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
                         transaction_id: tx.id
                     });
-                    await Promise.all(existingLinks.map(link => 
-                        base44.asServiceRole.entities.FinancialItemTransactionLink.delete(link.id)
-                    ));
+                    const totalAllocated = txLinks.reduce((sum, link) => sum + link.linked_amount, 0);
+                    const isFullyAllocated = totalAllocated >= Math.abs(tx.amount) - 0.01;
 
-                    // Calculate this transaction's share of each allocation
-                    const txAmount = Math.abs(tx.amount);
-                    const txShare = txAmount / totalTransactionAmount;
-                    
-                    let totalAllocated = 0;
-                    await Promise.all(allocations.map(async (allocation) => {
-                        if (allocation.financialItemId && allocation.amount > 0) {
-                            const allocatedAmount = allocation.amount * txShare;
-                            await base44.asServiceRole.entities.FinancialItemTransactionLink.create({
-                                financial_item_id: allocation.financialItemId,
-                                transaction_id: tx.id,
-                                linked_amount: allocatedAmount
-                            });
-                            allAffectedItemIds.add(allocation.financialItemId);
-                            totalAllocated += allocatedAmount;
-                        }
-                    }));
-
-                    // Update transaction
-                    const isFullyAllocated = totalAllocated >= txAmount - 0.01;
-                    
                     await base44.asServiceRole.entities.BankTransaction.update(tx.id, {
                         is_categorized: isFullyAllocated,
                         category: category,
@@ -79,40 +91,44 @@ Deno.serve(async (req) => {
 
                     results.success++;
                 } catch (error) {
-                    console.error(`Error processing transaction ${tx.id}:`, error);
+                    console.error(`Error updating transaction ${tx.id}:`, error);
                     results.errors++;
                     results.details.push({ transactionId: tx.id, error: error.message });
                 }
             }
 
-            // Recalculate all affected financial items once at the end
-            await Promise.all(Array.from(allAffectedItemIds).map(async (itemId) => {
-                const links = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
-                    financial_item_id: itemId
-                });
-                const paidAmount = links.reduce((sum, link) => sum + link.linked_amount, 0);
-                const items = await base44.asServiceRole.entities.FinancialItem.filter({ id: itemId });
-                
-                if (items.length > 0) {
-                    const item = items[0];
-                    const expectedAmount = item.expected_amount || 0;
-                    let status = 'pending';
-                    if (paidAmount >= expectedAmount - 0.01) {
-                        status = 'paid';
-                    } else if (paidAmount > 0) {
-                        status = 'partial';
-                    }
-                    await base44.asServiceRole.entities.FinancialItem.update(itemId, {
-                        amount: paidAmount,
-                        status: status
+            // Recalculate all affected financial items
+            for (const itemId of allAffectedItemIds) {
+                try {
+                    const links = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
+                        financial_item_id: itemId
                     });
+                    const paidAmount = links.reduce((sum, link) => sum + link.linked_amount, 0);
+                    const items = await base44.asServiceRole.entities.FinancialItem.filter({ id: itemId });
+                    
+                    if (items.length > 0) {
+                        const item = items[0];
+                        const expectedAmount = item.expected_amount || 0;
+                        let status = 'pending';
+                        if (paidAmount >= expectedAmount - 0.01) {
+                            status = 'paid';
+                        } else if (paidAmount > 0) {
+                            status = 'partial';
+                        }
+                        await base44.asServiceRole.entities.FinancialItem.update(itemId, {
+                            amount: paidAmount,
+                            status: status
+                        });
+                    }
+                } catch (error) {
+                    console.error(`Error updating financial item ${itemId}:`, error);
                 }
-            }));
+            }
         } else {
-            // Simple categorization without financial items (or partial allocation)
+            // Simple categorization without financial items
             const updatePromises = flatTransactions.map(tx =>
                 base44.asServiceRole.entities.BankTransaction.update(tx.id, {
-                    is_categorized: false, // Keep as uncategorized if no full allocation
+                    is_categorized: false,
                     category,
                     unit_id: unitId || null,
                     contract_id: contractId || null
