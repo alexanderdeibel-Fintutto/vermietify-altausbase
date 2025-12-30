@@ -124,31 +124,8 @@ export default function ContractForm({
             status: autoStatus
         };
 
-        // Submit contract first
-        const result = await onSubmit(contractData);
-        
-        // Generate/regenerate financial items
-        if (result) {
-            try {
-                if (initialData) {
-                    // If editing, regenerate all financial items for this contract
-                    await regenerateContractFinancialItems(initialData.id);
-                } else {
-                    // If new contract, check if partial rent dialog is needed
-                    if (needsPartialRentDialog(contractData)) {
-                        const partialAmount = calculatePartialRent(contractData, new Date(contractData.start_date));
-                        setSuggestedPartialRent(partialAmount);
-                        setPendingContract(result);
-                        setPartialRentDialogOpen(true);
-                    } else {
-                        // Generate financial items normally
-                        await generateFinancialItemsForContract(result, []);
-                    }
-                }
-            } catch (error) {
-                console.error('Error generating financial items:', error);
-            }
-        }
+        // Submit contract - financial items generation is now handled in parent component's mutation onSuccess
+        await onSubmit(contractData);
     };
 
     const handlePartialRentConfirm = async (partialAmount) => {

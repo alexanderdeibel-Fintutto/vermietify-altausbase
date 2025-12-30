@@ -71,6 +71,9 @@ export default function Contracts() {
             return contract;
         },
         onSuccess: async (result) => {
+            // FIRST: Generate financial items for new contract
+            await regenerateContractFinancialItems(result.id);
+            // THEN: Invalidate queries to refresh UI
             queryClient.invalidateQueries({ queryKey: ['contracts'] });
             queryClient.invalidateQueries({ queryKey: ['payments'] });
             queryClient.invalidateQueries({ queryKey: ['financial-items'] });
@@ -81,12 +84,13 @@ export default function Contracts() {
     const updateMutation = useMutation({
         mutationFn: ({ id, data }) => base44.entities.LeaseContract.update(id, data),
         onSuccess: async (_, variables) => {
+            // FIRST: Regenerate financial items based on new contract data
+            await regenerateContractFinancialItems(variables.id);
+            // THEN: Invalidate queries to refresh UI with new data
             queryClient.invalidateQueries({ queryKey: ['contracts'] });
             queryClient.invalidateQueries({ queryKey: ['financial-items'] });
             setFormOpen(false);
             setEditingContract(null);
-            // Regenerate financial items after update
-            await regenerateContractFinancialItems(variables.id);
         }
     });
 
