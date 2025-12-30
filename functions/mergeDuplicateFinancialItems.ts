@@ -44,6 +44,8 @@ Deno.serve(async (req) => {
         // Process each month with duplicates
         for (const [month, items] of Object.entries(itemsByMonth)) {
             if (items.length <= 1) continue;
+            
+            console.log(`Processing ${items.length} duplicates for month ${month}`);
 
             // Sort: paid/partial items first, then by expected_amount descending
             items.sort((a, b) => {
