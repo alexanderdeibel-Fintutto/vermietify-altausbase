@@ -71,13 +71,13 @@ export default function Contracts() {
             return contract;
         },
         onSuccess: async (result) => {
-            // FIRST: Generate financial items for new contract
-            await regenerateContractFinancialItems(result.id);
-            // THEN: Invalidate queries to refresh UI
             queryClient.invalidateQueries({ queryKey: ['contracts'] });
             queryClient.invalidateQueries({ queryKey: ['payments'] });
             queryClient.invalidateQueries({ queryKey: ['financial-items'] });
             setFormOpen(false);
+            if (result && !result.needsPartialRentConfirmation) {
+                await regenerateContractFinancialItems(result.id);
+            }
         }
     });
 

@@ -124,8 +124,14 @@ export default function ContractForm({
             status: autoStatus
         };
 
-        // Submit contract - financial items generation is now handled in parent component's mutation onSuccess
-        await onSubmit(contractData);
+        const submittedContract = await onSubmit(contractData);
+
+        if (submittedContract && !initialData && needsPartialRentDialog(contractData)) {
+            const partialAmount = calculatePartialRent(contractData, new Date(contractData.start_date));
+            setSuggestedPartialRent(partialAmount);
+            setPendingContract({ ...submittedContract, partialRentAmount: partialAmount, needsPartialRentConfirmation: true });
+            setPartialRentDialogOpen(true);
+        }
     };
 
     const handlePartialRentConfirm = async (partialAmount) => {

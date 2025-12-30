@@ -24,10 +24,12 @@ export function needsPartialRentDialog(contract) {
 /**
  * Generates monthly rent financial items (receivables) for a lease contract
  */
-export async function generateFinancialItemsForContract(contract, rentChanges = [], partialRentAmount = null) {
+export async function generateFinancialItemsForContract(contract, rentChanges = [], initialPartialRentAmount = null) {
     const items = [];
     const startDate = parseISO(contract.start_date);
-    const endDate = contract.end_date ? parseISO(contract.end_date) : addMonths(new Date(), 24);
+    const endDate = contract.is_unlimited 
+        ? addMonths(new Date(), 24) 
+        : (contract.end_date ? parseISO(contract.end_date) : addMonths(new Date(), 24));
     
     // Load ALL existing financial items for this contract once
     const existingItems = await base44.entities.FinancialItem.filter({
@@ -46,33 +48,39 @@ export async function generateFinancialItemsForContract(contract, rentChanges = 
     while (isBefore(currentDate, endDate) || format(currentDate, 'yyyy-MM') === format(endDate, 'yyyy-MM')) {
         const paymentMonth = format(currentDate, 'yyyy-MM');
         
-        // Check in memory if item exists
-        const itemExists = existingItems.some(item => 
-            item.payment_month === paymentMonth && item.category === 'rent'
-        );
-        
-        if (!itemExists) {
-            // Find applicable rent for this month
+        // Find applicable rent for this month
             const applicableChange = sortedChanges.find(change => 
                 isBefore(parseISO(change.effective_date), currentDate) || 
                 format(parseISO(change.effective_date), 'yyyy-MM') === paymentMonth
             );
 
-            const baseRent = applicableChange ? applicableChange.base_rent : contract.base_rent;
-            const utilities = applicableChange ? (applicableChange.utilities || 0) : (contract.utilities || 0);
-            const heating = applicableChange ? (applicableChange.heating || 0) : (contract.heating || 0);
-            const totalRent = baseRent + utilities + heating;
+        const baseRent = applicableChange ? applicableChange.base_rent : contract.base_rent;
+        const utilities = applicableChange ? (applicableChange.utilities || 0) : (contract.utilities || 0);
+        const heating = applicableChange ? (applicableChange.heating || 0) : (contract.heating || 0);
+        const totalRent = baseRent + utilities + heating;
 
-            // Calculate due date
-            let dueDate = startOfMonth(currentDate);
-            if (contract.rent_due_day) {
-                try {
-                    dueDate = setDate(dueDate, contract.rent_due_day);
-                } catch (e) {
-                    dueDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-                }
+        let expectedAmountForMonth = totalRent;
+        if (initialPartialRentAmount !== null && format(startDate, 'yyyy-MM') === paymentMonth) {
+            expectedAmountForMonth = initialPartialRentAmount;
+        }
+
+        // Calculate due date
+        let dueDate = startOfMonth(currentDate);
+        if (contract.rent_due_day) {
+            try {
+                dueDate = setDate(dueDate, contract.rent_due_day);
+            } catch (e) {
+                dueDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
             }
-
+        }
+        
+        const itemExists = existingItems.some(item => 
+            item.payment_month === paymentMonth && 
+            item.category === 'rent' &&
+            item.expected_amount === expectedAmountForMonth
+        );
+        
+        if (!itemExists) {
             items.push({
                 type: 'receivable',
                 related_to_contract_id: contract.id,
@@ -80,7 +88,7 @@ export async function generateFinancialItemsForContract(contract, rentChanges = 
                 related_to_unit_id: contract.unit_id,
                 payment_month: paymentMonth,
                 due_date: format(dueDate, 'yyyy-MM-dd'),
-                expected_amount: totalRent,
+                expected_amount: expectedAmountForMonth,
                 amount: 0,
                 category: 'rent',
                 status: 'pending',
@@ -99,31 +107,36 @@ export async function generateFinancialItemsForContract(contract, rentChanges = 
         const installments = contract.deposit_installments || 1;
         const installmentAmount = contract.deposit / installments;
         
-        // First due date: contract_date, then handover_date, then start_date
-        let firstDueDate;
+        let firstDepositDueDate;
         if (contract.contract_date) {
-            firstDueDate = parseISO(contract.contract_date);
+            firstDepositDueDate = parseISO(contract.contract_date);
         } else if (contract.handover_date) {
-            firstDueDate = parseISO(contract.handover_date);
+            firstDepositDueDate = parseISO(contract.handover_date);
         } else {
-            firstDueDate = startDate;
+            firstDepositDueDate = startDate;
+        }
+        if (isBefore(firstDepositDueDate, startDate)) {
+            firstDepositDueDate = startDate;
         }
 
         for (let i = 0; i < installments; i++) {
-            let dueDate;
+            let depositDueDate;
             if (i === 0) {
-                // First installment due on contract date
-                dueDate = firstDueDate;
+                depositDueDate = firstDepositDueDate;
             } else {
-                // Following installments: same day in following months
-                dueDate = addMonths(firstDueDate, i);
+                depositDueDate = addMonths(firstDepositDueDate, i);
+            }
+
+            if (isBefore(depositDueDate, startDate)) {
+                depositDueDate = startDate;
             }
             
-            const paymentMonth = format(dueDate, 'yyyy-MM');
+            const paymentMonth = format(depositDueDate, 'yyyy-MM');
 
-            // Check in memory if deposit item exists
             const depositExists = existingItems.some(item => 
-                item.payment_month === paymentMonth && item.category === 'deposit'
+                item.payment_month === paymentMonth && 
+                item.category === 'deposit' &&
+                item.expected_amount === installmentAmount
             );
 
             if (!depositExists) {
@@ -133,7 +146,7 @@ export async function generateFinancialItemsForContract(contract, rentChanges = 
                     related_to_tenant_id: contract.tenant_id,
                     related_to_unit_id: contract.unit_id,
                     payment_month: paymentMonth,
-                    due_date: format(dueDate, 'yyyy-MM-dd'),
+                    due_date: format(depositDueDate, 'yyyy-MM-dd'),
                     expected_amount: installmentAmount,
                     amount: 0,
                     category: 'deposit',
@@ -234,7 +247,7 @@ export async function updateFutureFinancialItems(contract, rentChanges = []) {
 /**
  * Regenerates all financial items for a specific contract
  */
-export async function regenerateContractFinancialItems(contractId) {
+export async function regenerateContractFinancialItems(contractId, initialPartialRentAmount = null) {
     try {
         const contract = await base44.entities.LeaseContract.filter({ id: contractId });
         if (!contract || contract.length === 0) return 0;
@@ -274,7 +287,7 @@ export async function regenerateContractFinancialItems(contractId) {
         await new Promise(resolve => setTimeout(resolve, 200));
 
         // Regenerate financial items
-        return await generateFinancialItemsForContract(contract[0], rentChanges);
+        return await generateFinancialItemsForContract(contract[0], rentChanges, initialPartialRentAmount);
     } catch (error) {
         console.error('Error regenerating contract financial items:', error);
         throw error;
@@ -297,22 +310,19 @@ export async function regenerateAllFinancialItems() {
             // Determine contract status
             const today = new Date();
             today.setHours(0, 0, 0, 0);
-            const startDate = new Date(contract.start_date);
-            const endDate = contract.end_date ? new Date(contract.end_date) : null;
+            const startDate = parseISO(contract.start_date);
+            const endDate = contract.end_date ? parseISO(contract.end_date) : null;
 
             let isActive = false;
-            if (startDate <= today) {
-                if (endDate) {
-                    isActive = endDate >= today;
-                } else {
-                    isActive = true;
-                }
-                if (contract.termination_date) {
-                    const terminationDate = new Date(contract.termination_date);
-                    if (terminationDate < today) {
-                        isActive = false;
-                    }
-                }
+            const isFutureContract = isAfter(startDate, today);
+            const hasStarted = isBefore(startDate, today) || format(startDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
+            const hasEnded = endDate && (isBefore(endDate, today) || format(endDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd'));
+            const isTerminated = contract.termination_date && (isBefore(parseISO(contract.termination_date), today) || format(parseISO(contract.termination_date), 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd'));
+
+            if (isFutureContract) {
+                isActive = true;
+            } else if (hasStarted && !hasEnded && !isTerminated) {
+                isActive = true;
             }
 
             // Only generate items for active contracts
