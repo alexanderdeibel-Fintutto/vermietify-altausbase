@@ -23,6 +23,7 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Gebäude', href: createPageUrl('Buildings'), icon: Building2, page: 'Buildings' },
         { name: 'Mietverträge', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts' },
         { name: 'Forderungen & Verbindlichkeiten', href: createPageUrl('FinancialItems'), icon: CreditCard, page: 'FinancialItems' },
+        { name: 'Rechnungen & Belege', href: createPageUrl('Invoices'), icon: FileText, page: 'Invoices' },
         { name: 'Bankkonten', href: createPageUrl('BankAccounts'), icon: Landmark, page: 'BankAccounts' },
         { name: 'Bankenabgleich', href: createPageUrl('BankReconciliation'), icon: Landmark, page: 'BankReconciliation' },
         { name: 'Auswertungen', href: createPageUrl('Analytics'), icon: BarChart3, page: 'Analytics' },
