@@ -170,10 +170,17 @@ export default function BankReconciliation() {
             
             return result.data;
         },
-        onSuccess: (result) => {
-            queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
-            queryClient.invalidateQueries({ queryKey: ['financial-items'] });
-            queryClient.invalidateQueries({ queryKey: ['financial-item-transaction-links'] });
+        onSuccess: async (result) => {
+            // Force refetch all related data
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['bank-transactions'] }),
+                queryClient.invalidateQueries({ queryKey: ['financial-items'] }),
+                queryClient.invalidateQueries({ queryKey: ['financial-item-transaction-links'] })
+            ]);
+
+            // Wait for refetch to complete
+            await new Promise(resolve => setTimeout(resolve, 500));
+
             setSelectedTransactions([]);
             setShowBulkActions(false);
             setBulkCategory('');
@@ -188,7 +195,7 @@ export default function BankReconciliation() {
                 const errorDetails = result.details?.map(d => `${d.error || 'Unbekannt'} (TX: ${d.transactionId || 'N/A'})`).join('; ') || 'Keine Details verfügbar';
                 toast.error(`Fehler bei ${result.errors} Transaktionen: ${errorDetails}`, { duration: 10000 });
             }
-            
+
             console.log('Bulk-Zuordnung Ergebnis:', result);
         },
         onError: (error) => {
