@@ -557,9 +557,10 @@ export default function BankAccounts() {
                 open={importOpen}
                 onOpenChange={setImportOpen}
                 accountId={importAccountId}
-                onSuccess={() => {
-                    queryClient.invalidateQueries({ queryKey: ['bankTransactions'] });
-                    queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
+                onSuccess={async () => {
+                    await queryClient.invalidateQueries({ queryKey: ['bankTransactions'] });
+                    await queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
+                    await queryClient.refetchQueries({ queryKey: ['bankTransactions'] });
                 }}
             />
 

@@ -268,12 +268,15 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
                 console.warn('Could not save mapping:', error);
             }
 
-            toast.success(`${newTransactions.length} Transaktionen importiert${skipped > 0 ? `, ${skipped} übersprungen` : ''}`);
-            
-            // Call onSuccess to refresh data
+            // Call onSuccess to refresh data BEFORE showing success message
             if (onSuccess) {
                 await onSuccess();
             }
+            
+            // Give the queries time to refetch
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            toast.success(`${newTransactions.length} Transaktionen importiert${skipped > 0 ? `, ${skipped} übersprungen` : ''}`);
             
             handleClose();
         } catch (error) {
