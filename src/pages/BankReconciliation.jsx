@@ -928,6 +928,40 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                                     </span>
                                 </Label>
 
+                                {/* Select All Checkbox */}
+                                {filteredBulkFinancialItems.length > 0 && (
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <input
+                                            type="checkbox"
+                                            checked={filteredBulkFinancialItems.length > 0 && filteredBulkFinancialItems.every(item => 
+                                                bulkAllocations.some(a => a.financialItemId === item.id)
+                                            )}
+                                            onChange={() => {
+                                                if (filteredBulkFinancialItems.every(item => bulkAllocations.some(a => a.financialItemId === item.id))) {
+                                                    // Deselect all
+                                                    setBulkAllocations([]);
+                                                } else {
+                                                    // Select all with their open amounts
+                                                    const newAllocations = filteredBulkFinancialItems.map(item => {
+                                                        const openAmount = (item.expected_amount || 0) - (item.amount || 0);
+                                                        return {
+                                                            financialItemId: item.id,
+                                                            amount: openAmount.toFixed(2)
+                                                        };
+                                                    });
+                                                    setBulkAllocations(newAllocations);
+                                                }
+                                            }}
+                                            className="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                                        />
+                                        <span className="text-sm text-slate-600 font-medium">
+                                            {filteredBulkFinancialItems.every(item => bulkAllocations.some(a => a.financialItemId === item.id))
+                                                ? 'Alle abwählen' 
+                                                : 'Alle auswählen'}
+                                        </span>
+                                    </div>
+                                )}
+
                                 {/* Balance Display */}
                                 <div className="bg-white rounded-lg p-3 mb-4 border border-slate-200">
                                     <div className="flex justify-between items-center text-sm">
