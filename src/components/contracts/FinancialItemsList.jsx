@@ -291,17 +291,24 @@ export default function FinancialItemsList() {
 
     const markAsSettledMutation = useMutation({
         mutationFn: async (itemIds) => {
-            for (const id of itemIds) {
-                await base44.entities.FinancialItem.update(id, { status: 'settled' });
-            }
+            const result = await base44.functions.invoke('bulkUpdateFinancialItems', {
+                itemIds,
+                updateData: { status: 'settled' }
+            });
+            return result.data;
         },
-        onSuccess: () => {
+        onSuccess: (result) => {
             queryClient.invalidateQueries({ queryKey: ['financial-items'] });
             setSelectedItems([]);
-            toast.success('Forderungen als erledigt markiert');
+            if (result.success > 0) {
+                toast.success(`${result.success} Forderungen als erledigt markiert`);
+            }
+            if (result.errors > 0) {
+                toast.error(`Fehler bei ${result.errors} Forderungen`);
+            }
         },
-        onError: () => {
-            toast.error('Fehler beim Markieren');
+        onError: (error) => {
+            toast.error('Fehler beim Markieren: ' + (error.message || 'Unbekannter Fehler'));
         }
     });
 
