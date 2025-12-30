@@ -66,6 +66,8 @@ export default function BankReconciliation() {
         search: '',
         selectedUnits: [],
         selectedTenants: [],
+        selectedCategories: [],
+        categorizationStatus: 'all', // all, categorized, uncategorized
         amountMin: '',
         amountMax: '',
         dateFrom: '',
@@ -73,6 +75,9 @@ export default function BankReconciliation() {
     });
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [showFilters, setShowFilters] = useState(false);
+    const [savedFilters, setSavedFilters] = useState([]);
+    const [filterName, setFilterName] = useState('');
+    const [showSaveFilter, setShowSaveFilter] = useState(false);
     const [selectedTransactions, setSelectedTransactions] = useState([]);
     const [showBulkActions, setShowBulkActions] = useState(false);
     const [bulkCategory, setBulkCategory] = useState('');
@@ -135,10 +140,22 @@ export default function BankReconciliation() {
         return () => clearTimeout(timer);
     }, [filters.search]);
 
+    // Load saved filters from localStorage
+    React.useEffect(() => {
+        try {
+            const saved = localStorage.getItem('transaction_filters');
+            if (saved) {
+                setSavedFilters(JSON.parse(saved));
+            }
+        } catch (error) {
+            console.warn('Could not load saved filters:', error);
+        }
+    }, []);
+
     // Reset to page 1 when filters change
     React.useEffect(() => {
         setCurrentPage(1);
-    }, [debouncedSearch, filters.selectedUnits, filters.selectedTenants, filters.amountMin, filters.amountMax, filters.dateFrom, filters.dateTo]);
+    }, [debouncedSearch, filters.selectedUnits, filters.selectedTenants, filters.selectedCategories, filters.categorizationStatus, filters.amountMin, filters.amountMax, filters.dateFrom, filters.dateTo]);
 
     const categorizeMutation = useMutation({
         mutationFn: async ({ transactionId, category, financialItemId, unitId, contractId, skipUpdate }) => {
@@ -430,6 +447,8 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
             if (debouncedSearch === '' && 
                 filters.selectedUnits.length === 0 && 
                 filters.selectedTenants.length === 0 &&
+                filters.selectedCategories.length === 0 &&
+                filters.categorizationStatus === 'all' &&
                 filters.amountMin === '' && 
                 filters.amountMax === '' &&
                 filters.dateFrom === '' && 
@@ -447,6 +466,21 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                         tx.reference?.toLowerCase().includes(search) ||
                         tx.iban?.toLowerCase().includes(search);
                     if (!matchesSearch) return false;
+                }
+
+                // Categorization status filter
+                if (filters.categorizationStatus === 'categorized' && !tx.is_categorized) {
+                    return false;
+                }
+                if (filters.categorizationStatus === 'uncategorized' && tx.is_categorized) {
+                    return false;
+                }
+
+                // Category filter
+                if (filters.selectedCategories.length > 0) {
+                    if (!tx.category || !filters.selectedCategories.includes(tx.category)) {
+                        return false;
+                    }
                 }
 
                 // Amount range filter
@@ -484,7 +518,7 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                 return true;
             });
         };
-    }, [debouncedSearch, filters.selectedUnits, filters.selectedTenants, filters.amountMin, filters.amountMax, filters.dateFrom, filters.dateTo, financialItems]);
+    }, [debouncedSearch, filters.selectedUnits, filters.selectedTenants, filters.selectedCategories, filters.categorizationStatus, filters.amountMin, filters.amountMax, filters.dateFrom, filters.dateTo, financialItems]);
 
     const parseDateSafely = (dateStr) => {
         if (!dateStr) return new Date(0);
@@ -1165,7 +1199,93 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                     </div>
 
                     {showFilters && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t">
+                        <div className="space-y-4 pt-4 border-t">
+                            {/* Saved Filters */}
+                            {savedFilters.length > 0 && (
+                                <div>
+                                    <Label className="text-xs mb-2">Gespeicherte Filter</Label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {savedFilters.map((saved, idx) => (
+                                            <div key={idx} className="flex items-center gap-1 bg-slate-100 rounded-lg px-3 py-1.5">
+                                                <button
+                                                    onClick={() => setFilters(saved.filters)}
+                                                    className="text-sm text-slate-700 hover:text-slate-900"
+                                                >
+                                                    {saved.name}
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        const updated = savedFilters.filter((_, i) => i !== idx);
+                                                        setSavedFilters(updated);
+                                                        localStorage.setItem('transaction_filters', JSON.stringify(updated));
+                                                    }}
+                                                    className="text-slate-400 hover:text-red-600 ml-1"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {/* Categorization Status */}
+                            <div>
+                                <Label className="text-xs mb-2">Kategorisierungsstatus</Label>
+                                <Select value={filters.categorizationStatus} onValueChange={(value) => setFilters({...filters, categorizationStatus: value})}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Alle</SelectItem>
+                                        <SelectItem value="categorized">Kategorisiert</SelectItem>
+                                        <SelectItem value="uncategorized">Nicht kategorisiert</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {/* Categories */}
+                            <div>
+                                <Label className="text-xs mb-2">Kategorien</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-start text-left font-normal">
+                                            {filters.selectedCategories.length > 0 
+                                                ? `${filters.selectedCategories.length} ausgewählt`
+                                                : 'Alle Kategorien'}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-64 p-0">
+                                        <Command>
+                                            <CommandInput placeholder="Kategorie suchen..." />
+                                            <CommandEmpty>Keine Kategorien gefunden</CommandEmpty>
+                                            <CommandGroup className="max-h-64 overflow-y-auto">
+                                                {Object.entries(CATEGORY_LABELS).map(([key, label]) => {
+                                                    const isSelected = filters.selectedCategories.includes(key);
+                                                    return (
+                                                        <CommandItem
+                                                            key={key}
+                                                            onSelect={() => {
+                                                                setFilters({
+                                                                    ...filters,
+                                                                    selectedCategories: isSelected
+                                                                        ? filters.selectedCategories.filter(c => c !== key)
+                                                                        : [...filters.selectedCategories, key]
+                                                                });
+                                                            }}
+                                                        >
+                                                            <div className={`mr-2 h-4 w-4 border rounded ${isSelected ? 'bg-emerald-600' : ''}`} />
+                                                            <span className="text-sm">{label}</span>
+                                                        </CommandItem>
+                                                    );
+                                                })}
+                                            </CommandGroup>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+
                             {/* Wohneinheiten */}
                             <div>
                                 <Label className="text-xs mb-2">Wohneinheiten</Label>
@@ -1295,8 +1415,8 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                                 </div>
                             </div>
 
-                            {/* Reset Button */}
-                            <div className="flex items-end">
+                            {/* Reset and Save Buttons */}
+                            <div className="flex items-end gap-2">
                                 <Button
                                     variant="outline"
                                     size="sm"
@@ -1304,21 +1424,72 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                                         search: '',
                                         selectedUnits: [],
                                         selectedTenants: [],
+                                        selectedCategories: [],
+                                        categorizationStatus: 'all',
                                         amountMin: '',
                                         amountMax: '',
                                         dateFrom: '',
                                         dateTo: ''
                                     })}
-                                    className="w-full"
+                                    className="flex-1"
                                 >
                                     Filter zurücksetzen
                                 </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setShowSaveFilter(true)}
+                                    className="flex-1"
+                                >
+                                    Filter speichern
+                                </Button>
                             </div>
-                        </div>
-                    )}
+                            </div>
+
+                            {/* Save Filter Dialog */}
+                            {showSaveFilter && (
+                            <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                                <Label className="text-sm mb-2">Filtername</Label>
+                                <div className="flex gap-2">
+                                    <Input
+                                        placeholder="z.B. Mieteinnahmen 2024"
+                                        value={filterName}
+                                        onChange={(e) => setFilterName(e.target.value)}
+                                    />
+                                    <Button
+                                        onClick={() => {
+                                            if (!filterName.trim()) {
+                                                toast.error('Bitte einen Namen eingeben');
+                                                return;
+                                            }
+                                            const newFilter = { name: filterName, filters };
+                                            const updated = [...savedFilters, newFilter];
+                                            setSavedFilters(updated);
+                                            localStorage.setItem('transaction_filters', JSON.stringify(updated));
+                                            setFilterName('');
+                                            setShowSaveFilter(false);
+                                            toast.success('Filter gespeichert');
+                                        }}
+                                    >
+                                        Speichern
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            setFilterName('');
+                                            setShowSaveFilter(false);
+                                        }}
+                                    >
+                                        Abbrechen
+                                    </Button>
+                                </div>
+                            </div>
+                            )}
+                            </div>
+                            )}
 
                     {/* Active filters display */}
-                    {(filters.selectedUnits.length > 0 || filters.selectedTenants.length > 0 || filters.amountMin || filters.amountMax || filters.dateFrom || filters.dateTo) && (
+                    {(filters.selectedUnits.length > 0 || filters.selectedTenants.length > 0 || filters.selectedCategories.length > 0 || filters.categorizationStatus !== 'all' || filters.amountMin || filters.amountMax || filters.dateFrom || filters.dateTo) && (
                         <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t">
                             {filters.selectedUnits.map(unitId => {
                                 const unit = units.find(u => u.id === unitId);
