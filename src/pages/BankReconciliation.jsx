@@ -562,24 +562,32 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
         const selectedUnit = units.find(u => u.id === bulkUnitId);
         const actualUnitId = selectedUnit ? bulkUnitId : null;
         
-        // Prepare allocations if available
-        const preparedAllocations = bulkAllocations
-            .filter(a => a.financialItemId && parseFloat(a.amount) > 0)
-            .map(a => ({
-                financialItemId: a.financialItemId,
-                amount: parseFloat(a.amount)
-            }));
+        // Prepare allocations: for EACH selected transaction, create allocation objects
+        const preparedAllocations = [];
+        
+        if (bulkAllocations.length > 0) {
+            // For each transaction, create allocations to financial items
+            selectedTransactions.forEach(txId => {
+                bulkAllocations
+                    .filter(a => a.financialItemId && parseFloat(a.amount) > 0)
+                    .forEach(alloc => {
+                        preparedAllocations.push({
+                            transactionId: txId,
+                            financialItemId: alloc.financialItemId,
+                            linkedAmount: parseFloat(alloc.amount),
+                            unitId: actualUnitId,
+                            contractId: bulkContractId || null
+                        });
+                    });
+            });
+        }
         
         bulkCategorizeMutation.mutate({
             transactionIds: selectedTransactions,
             category: bulkCategory,
             unitId: actualUnitId,
             contractId: bulkContractId || null,
-            allocations: preparedAllocations.map(alloc => ({
-                ...alloc,
-                unitId: actualUnitId,
-                contractId: bulkContractId || null
-            }))
+            allocations: preparedAllocations
         });
     };
 
