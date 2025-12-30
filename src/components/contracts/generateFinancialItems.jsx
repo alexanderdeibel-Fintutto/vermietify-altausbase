@@ -260,24 +260,89 @@ export async function regenerateContractFinancialItems(contractId, initialPartia
 
         await new Promise(resolve => setTimeout(resolve, 100));
 
-        // Delete all unpaid automatic financial items for this contract (pending, partial, overdue)
-        const pendingItems = await base44.entities.FinancialItem.filter({
+        // Get ALL existing financial items for this contract (including paid ones)
+        const allExistingItems = await base44.entities.FinancialItem.filter({
             related_to_contract_id: contractId,
-            status: 'pending',
-            is_automatic_from_contract: true
-        });
-        const partialItems = await base44.entities.FinancialItem.filter({
-            related_to_contract_id: contractId,
-            status: 'partial',
-            is_automatic_from_contract: true
-        });
-        const overdueItems = await base44.entities.FinancialItem.filter({
-            related_to_contract_id: contractId,
-            status: 'overdue',
             is_automatic_from_contract: true
         });
 
-        const itemsToDelete = [...pendingItems, ...partialItems, ...overdueItems];
+        // Build a map of payment_month -> item
+        const itemsByMonth = {};
+        allExistingItems.forEach(item => {
+            if (item.payment_month && item.category === 'rent') {
+                itemsByMonth[item.payment_month] = item;
+            }
+        });
+
+        // Calculate what the expected amounts should be for each month
+        const startDate = parseISO(contract[0].start_date);
+        const endDate = contract[0].is_unlimited 
+            ? addMonths(new Date(), 24) 
+            : (contract[0].end_date ? parseISO(contract[0].end_date) : addMonths(new Date(), 24));
+        
+        const sortedChanges = [...rentChanges].sort((a, b) => 
+            new Date(b.effective_date) - new Date(a.effective_date)
+        );
+
+        let currentDate = startOfMonth(startDate);
+        const itemsToUpdate = [];
+        const monthsProcessed = new Set();
+        
+        while (isBefore(currentDate, endDate) || format(currentDate, 'yyyy-MM') === format(endDate, 'yyyy-MM')) {
+            const paymentMonth = format(currentDate, 'yyyy-MM');
+            monthsProcessed.add(paymentMonth);
+            
+            // Find applicable rent for this month
+            const applicableChange = sortedChanges.find(change => 
+                isBefore(parseISO(change.effective_date), currentDate) || 
+                format(parseISO(change.effective_date), 'yyyy-MM') === paymentMonth
+            );
+
+            const baseRent = applicableChange ? applicableChange.base_rent : contract[0].base_rent;
+            const utilities = applicableChange ? (applicableChange.utilities || 0) : (contract[0].utilities || 0);
+            const heating = applicableChange ? (applicableChange.heating || 0) : (contract[0].heating || 0);
+            const totalRent = baseRent + utilities + heating;
+
+            let expectedAmountForMonth = totalRent;
+            if (initialPartialRentAmount !== null && format(startDate, 'yyyy-MM') === paymentMonth) {
+                expectedAmountForMonth = initialPartialRentAmount;
+            }
+
+            // Check if item exists for this month
+            const existingItem = itemsByMonth[paymentMonth];
+            
+            if (existingItem && existingItem.expected_amount !== expectedAmountForMonth) {
+                // Update expected_amount, keep transaction links intact
+                const paidAmount = existingItem.amount || 0;
+                const newStatus = paidAmount >= expectedAmountForMonth ? 'paid' 
+                    : paidAmount > 0 ? 'partial' 
+                    : 'pending';
+                
+                itemsToUpdate.push({
+                    id: existingItem.id,
+                    data: {
+                        expected_amount: expectedAmountForMonth,
+                        status: newStatus
+                    }
+                });
+            }
+            
+            currentDate = addMonths(currentDate, 1);
+        }
+
+        // Update items with changed amounts
+        for (const update of itemsToUpdate) {
+            await base44.entities.FinancialItem.update(update.id, update.data);
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+
+        // Delete orphaned items (months that are no longer in range) but only unpaid ones
+        const itemsToDelete = allExistingItems.filter(item => 
+            item.category === 'rent' &&
+            item.payment_month &&
+            !monthsProcessed.has(item.payment_month) &&
+            ['pending', 'partial', 'overdue'].includes(item.status)
+        );
 
         for (const item of itemsToDelete) {
             await base44.entities.FinancialItem.delete(item.id);
@@ -286,7 +351,7 @@ export async function regenerateContractFinancialItems(contractId, initialPartia
 
         await new Promise(resolve => setTimeout(resolve, 200));
 
-        // Regenerate financial items
+        // Generate new items for months that don't exist yet
         return await generateFinancialItemsForContract(contract[0], rentChanges, initialPartialRentAmount);
     } catch (error) {
         console.error('Error regenerating contract financial items:', error);
