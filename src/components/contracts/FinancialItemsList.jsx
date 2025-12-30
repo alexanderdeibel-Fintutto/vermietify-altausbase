@@ -274,8 +274,18 @@ export default function FinancialItemsList() {
         setIsRegenerating(true);
         try {
             const response = await base44.functions.invoke('mergeDuplicateFinancialItems', { contractId });
-            await queryClient.invalidateQueries({ queryKey: ['financial-items'] });
-            await queryClient.invalidateQueries({ queryKey: ['financial-item-transaction-links'] });
+            
+            // Force refetch of all data
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['financial-items'] }),
+                queryClient.invalidateQueries({ queryKey: ['financial-item-transaction-links'] }),
+                queryClient.refetchQueries({ queryKey: ['financial-items'] }),
+                queryClient.refetchQueries({ queryKey: ['financial-item-transaction-links'] })
+            ]);
+            
+            // Wait for refetch to complete
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
             toast.success(response.data.message);
         } catch (error) {
             toast.error('Fehler beim Zusammenführen');
