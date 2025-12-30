@@ -1522,6 +1522,27 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                                     </Badge>
                                 );
                             })}
+                            {filters.categorizationStatus !== 'all' && (
+                                <Badge variant="secondary" className="gap-1">
+                                    {filters.categorizationStatus === 'categorized' ? 'Kategorisiert' : 'Nicht kategorisiert'}
+                                    <X 
+                                        className="w-3 h-3 cursor-pointer" 
+                                        onClick={() => setFilters({...filters, categorizationStatus: 'all'})}
+                                    />
+                                </Badge>
+                            )}
+                            {filters.selectedCategories.map(cat => (
+                                <Badge key={cat} variant="secondary" className="gap-1">
+                                    {CATEGORY_LABELS[cat]}
+                                    <X 
+                                        className="w-3 h-3 cursor-pointer" 
+                                        onClick={() => setFilters({
+                                            ...filters,
+                                            selectedCategories: filters.selectedCategories.filter(c => c !== cat)
+                                        })}
+                                    />
+                                </Badge>
+                            ))}
                             {(filters.amountMin || filters.amountMax) && (
                                 <Badge variant="secondary" className="gap-1">
                                     Betrag: {filters.amountMin || '0'}€ - {filters.amountMax || '∞'}€
