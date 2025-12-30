@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tag, X, Check, User, Calendar, Building2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import { useQuery } from '@tanstack/react-query';
+
 import {
     Select,
     SelectContent,
@@ -30,16 +30,16 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
     contracts = [],
     isSelected = false,
     onSelect,
-    showAllocatedAmount = false
+    showAllocatedAmount = false,
+    allTransactionLinks = []
 }) {
     const [isProcessing, setIsProcessing] = useState(false);
 
-    // Fetch linked amounts for this transaction
-    const { data: transactionLinks = [] } = useQuery({
-        queryKey: ['transaction-links', transaction.id],
-        queryFn: () => base44.entities.FinancialItemTransactionLink.filter({ transaction_id: transaction.id }),
-        enabled: !!transaction.id
-    });
+    // Filter links for this transaction from the provided data
+    const transactionLinks = useMemo(() => 
+        allTransactionLinks.filter(link => link.transaction_id === transaction.id),
+        [allTransactionLinks, transaction.id]
+    );
 
     // Calculate allocated and remaining amounts
     const allocatedAmount = useMemo(() => {

@@ -1481,6 +1481,7 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                                 contracts={contracts}
                                 isSelected={selectedTransactions.includes(transaction.id)}
                                 onSelect={handleSelectTransaction}
+                                allTransactionLinks={allTransactionLinks}
                             />
                         ))}
 
@@ -1609,6 +1610,7 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                                     isSelected={selectedTransactions.includes(transaction.id)}
                                     onSelect={handleSelectTransaction}
                                     showAllocatedAmount={true}
+                                    allTransactionLinks={allTransactionLinks}
                                 />
                             ))}
                         </>
