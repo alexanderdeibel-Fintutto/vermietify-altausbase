@@ -31,7 +31,7 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
     const [preview, setPreview] = useState([]);
     const [duplicateSuggestions, setDuplicateSuggestions] = useState([]);
     const [checkingDuplicates, setCheckingDuplicates] = useState(false);
-    const [excludedTransactions, setExcludedTransactions] = useState(new Set());
+    const [transactionDecisions, setTransactionDecisions] = useState(new Map()); // idx -> 'skip' | 'import' | 'pending'
 
     const detectDelimiter = (line) => {
         const semicolonCount = (line.match(/;/g) || []).length;
@@ -327,10 +327,10 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
             );
 
             const newTransactions = transactions.filter((tx, idx) => {
-                // Check if excluded by user
-                if (excludedTransactions.has(idx)) {
-                    return false;
-                }
+                    // Check if user decided to skip this transaction
+                    if (transactionDecisions.get(idx) === 'skip') {
+                        return false;
+                    }
                 
                 const key = JSON.stringify({
                     date: tx.transaction_date,
@@ -399,7 +399,7 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
         setCsvData([]);
         setPreview([]);
         setDuplicateSuggestions([]);
-        setExcludedTransactions(new Set());
+        setTransactionDecisions(new Map());
         setMapping({
             transaction_date: '',
             value_date: '',
@@ -560,56 +560,84 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
                                     </div>
                                     <div className="space-y-3 max-h-64 overflow-y-auto">
                                         {duplicateSuggestions.map((suggestion, idx) => {
-                                            const txIndex = csvData.findIndex(row => {
-                                                const builtTx = buildTransactionsFromMapping().find(t => 
-                                                    t.transaction_date === suggestion.newTransaction.transaction_date &&
-                                                    t.amount === suggestion.newTransaction.amount &&
-                                                    t.description === suggestion.newTransaction.description
-                                                );
-                                                return builtTx;
-                                            });
-                                            const isExcluded = excludedTransactions.has(txIndex);
-                                            const topMatch = suggestion.potentialDuplicates[0];
+                                                const txIndex = csvData.findIndex(row => {
+                                                    const builtTx = buildTransactionsFromMapping().find(t => 
+                                                        t.transaction_date === suggestion.newTransaction.transaction_date &&
+                                                        t.amount === suggestion.newTransaction.amount &&
+                                                        t.description === suggestion.newTransaction.description
+                                                    );
+                                                    return builtTx;
+                                                });
+                                                const decision = transactionDecisions.get(txIndex) || 'pending';
+                                                const topMatch = suggestion.potentialDuplicates[0];
 
-                                            return (
-                                                <div key={idx} className={`border rounded-lg p-3 ${isExcluded ? 'bg-slate-100 opacity-60' : 'bg-white'}`}>
-                                                    <div className="flex items-start justify-between gap-3">
-                                                        <div className="flex-1 space-y-2">
-                                                            <div className="text-sm">
-                                                                <span className="font-medium text-slate-700">Neue Transaktion:</span>
-                                                                <div className="mt-1 text-xs text-slate-600">
-                                                                    {suggestion.newTransaction.transaction_date} | €{suggestion.newTransaction.amount.toFixed(2)} | {suggestion.newTransaction.description?.substring(0, 50)}...
+                                                return (
+                                                    <div key={idx} className={`border rounded-lg p-3 ${
+                                                        decision === 'skip' ? 'bg-red-50 border-red-200' : 
+                                                        decision === 'import' ? 'bg-green-50 border-green-200' : 
+                                                        'bg-white'
+                                                    }`}>
+                                                        <div className="flex items-start justify-between gap-3">
+                                                            <div className="flex-1 space-y-2">
+                                                                <div className="text-sm">
+                                                                    <span className="font-medium text-slate-700">Neue Transaktion:</span>
+                                                                    <div className="mt-1 text-xs text-slate-600">
+                                                                        {suggestion.newTransaction.transaction_date} | €{suggestion.newTransaction.amount.toFixed(2)} | {suggestion.newTransaction.description?.substring(0, 50)}...
+                                                                    </div>
                                                                 </div>
+                                                                <div className="text-sm">
+                                                                    <span className="font-medium text-orange-700">Ähnliche existierende:</span>
+                                                                    <div className="mt-1 text-xs text-slate-600">
+                                                                        {topMatch.existingTransaction.transaction_date} | €{topMatch.existingTransaction.amount.toFixed(2)} | {topMatch.existingTransaction.description?.substring(0, 50)}...
+                                                                    </div>
+                                                                    <div className="mt-1 text-xs text-orange-600">
+                                                                        Übereinstimmung: {(topMatch.matchScore * 100).toFixed(0)}%
+                                                                    </div>
+                                                                </div>
+                                                                {decision !== 'pending' && (
+                                                                    <div className={`text-xs font-medium ${
+                                                                        decision === 'skip' ? 'text-red-600' : 'text-green-600'
+                                                                    }`}>
+                                                                        ✓ {decision === 'skip' ? 'Wird übersprungen' : 'Wird importiert (kein Duplikat)'}
+                                                                    </div>
+                                                                )}
                                                             </div>
-                                                            <div className="text-sm">
-                                                                <span className="font-medium text-orange-700">Ähnliche existierende:</span>
-                                                                <div className="mt-1 text-xs text-slate-600">
-                                                                    {topMatch.existingTransaction.transaction_date} | €{topMatch.existingTransaction.amount.toFixed(2)} | {topMatch.existingTransaction.description?.substring(0, 50)}...
-                                                                </div>
-                                                                <div className="mt-1 text-xs text-orange-600">
-                                                                    Übereinstimmung: {(topMatch.matchScore * 100).toFixed(0)}%
-                                                                </div>
+                                                            <div className="flex flex-col gap-2">
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant={decision === 'skip' ? "default" : "destructive"}
+                                                                    onClick={() => {
+                                                                        const newDecisions = new Map(transactionDecisions);
+                                                                        if (decision === 'skip') {
+                                                                            newDecisions.delete(txIndex);
+                                                                        } else {
+                                                                            newDecisions.set(txIndex, 'skip');
+                                                                        }
+                                                                        setTransactionDecisions(newDecisions);
+                                                                    }}
+                                                                >
+                                                                    {decision === 'skip' ? '✓ Überspringen' : 'Überspringen'}
+                                                                </Button>
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant={decision === 'import' ? "default" : "outline"}
+                                                                    onClick={() => {
+                                                                        const newDecisions = new Map(transactionDecisions);
+                                                                        if (decision === 'import') {
+                                                                            newDecisions.delete(txIndex);
+                                                                        } else {
+                                                                            newDecisions.set(txIndex, 'import');
+                                                                        }
+                                                                        setTransactionDecisions(newDecisions);
+                                                                    }}
+                                                                >
+                                                                    {decision === 'import' ? '✓ Kein Duplikat' : 'Kein Duplikat'}
+                                                                </Button>
                                                             </div>
                                                         </div>
-                                                        <Button
-                                                            size="sm"
-                                                            variant={isExcluded ? "outline" : "destructive"}
-                                                            onClick={() => {
-                                                                const newExcluded = new Set(excludedTransactions);
-                                                                if (isExcluded) {
-                                                                    newExcluded.delete(txIndex);
-                                                                } else {
-                                                                    newExcluded.add(txIndex);
-                                                                }
-                                                                setExcludedTransactions(newExcluded);
-                                                            }}
-                                                        >
-                                                            {isExcluded ? 'Doch importieren' : 'Überspringen'}
-                                                        </Button>
                                                     </div>
-                                                </div>
-                                            );
-                                        })}
+                                                );
+                                            })}
                                     </div>
                                 </div>
                             )}
@@ -621,14 +649,15 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
                                         <span className="text-sm font-medium">Vorschau (erste 10 Zeilen)</span>
                                     </div>
                                     <span className="text-xs text-slate-500">
-                                        {csvData.length - excludedTransactions.size} von {csvData.length} werden importiert
+                                        {csvData.length - Array.from(transactionDecisions.values()).filter(d => d === 'skip').length} von {csvData.length} werden importiert
                                     </span>
                                 </div>
                                 <div className="space-y-3 max-h-96 overflow-y-auto">
                                     {preview.map((tx, idx) => {
-                                        const isExcluded = excludedTransactions.has(idx);
+                                        const decision = transactionDecisions.get(idx) || 'pending';
+                                        const isSkipped = decision === 'skip';
                                         return (
-                                            <div key={idx} className={`text-xs border rounded-lg p-3 ${isExcluded ? 'bg-slate-100 opacity-40' : 'bg-slate-50 border-slate-200'}`}>
+                                            <div key={idx} className={`text-xs border rounded-lg p-3 ${isSkipped ? 'bg-slate-100 opacity-40' : 'bg-slate-50 border-slate-200'}`}>
                                                 <div className="grid grid-cols-2 gap-2">
                                                     <div>
                                                         <span className="font-medium text-slate-500">Datum:</span>
@@ -663,9 +692,9 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
                                                         </div>
                                                     )}
                                                 </div>
-                                                {isExcluded && (
+                                                {isSkipped && (
                                                     <div className="mt-2 pt-2 border-t border-slate-300">
-                                                        <span className="text-xs text-slate-600 italic">Wird übersprungen (mögliches Duplikat)</span>
+                                                        <span className="text-xs text-red-600 italic">Wird übersprungen (Duplikat)</span>
                                                     </div>
                                                 )}
                                             </div>
