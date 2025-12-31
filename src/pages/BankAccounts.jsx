@@ -163,7 +163,7 @@ export default function BankAccounts() {
     const toggleAccountExpanded = (accountId) => {
         setExpandedAccounts(prev => ({
             ...prev,
-            [accountId]: !prev[accountId]
+            [accountId]: prev[accountId] === true ? false : true
         }));
     };
 
@@ -418,7 +418,7 @@ export default function BankAccounts() {
                     {accounts.map((account) => {
                         const stats = accountStatsMap.get(account.id) || { income: 0, expenses: 0, count: 0 };
                         const accountTransactions = accountTransactionsMap.get(account.id) || [];
-                        const isExpanded = expandedAccounts[account.id];
+                        const isExpanded = expandedAccounts[account.id] === true;
                         
                         return (
                             <Collapsible 
