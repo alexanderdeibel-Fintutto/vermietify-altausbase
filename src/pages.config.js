@@ -5,12 +5,12 @@ import BuildingDetail from './pages/BuildingDetail';
 import Buildings from './pages/Buildings';
 import ContractDetail from './pages/ContractDetail';
 import Contracts from './pages/Contracts';
+import CostTypes from './pages/CostTypes';
 import Dashboard from './pages/Dashboard';
 import FinAPICallback from './pages/FinAPICallback';
 import FinancialItems from './pages/FinancialItems';
 import Invoices from './pages/Invoices';
 import UnitDetail from './pages/UnitDetail';
-import CostTypes from './pages/CostTypes';
 import __Layout from './Layout.jsx';
 
 
@@ -22,12 +22,12 @@ export const PAGES = {
     "Buildings": Buildings,
     "ContractDetail": ContractDetail,
     "Contracts": Contracts,
+    "CostTypes": CostTypes,
     "Dashboard": Dashboard,
     "FinAPICallback": FinAPICallback,
     "FinancialItems": FinancialItems,
     "Invoices": Invoices,
     "UnitDetail": UnitDetail,
-    "CostTypes": CostTypes,
 }
 
 export const pagesConfig = {

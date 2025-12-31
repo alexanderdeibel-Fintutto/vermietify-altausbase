@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     Table,
     TableBody,
@@ -38,36 +39,37 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, MoreVertical, Pencil, Trash2, FileText, Building2, TrendingUp, TrendingDown, Filter, X, Download } from 'lucide-react';
+import { Plus, Search, MoreVertical, Pencil, Trash2, FileText, Building2, TrendingUp, TrendingDown, Filter, Download, Tag, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import InvoiceForm from '@/components/invoices/InvoiceForm';
-
-const categoryLabels = {
-    maintenance: 'Instandhaltung',
-    utilities: 'Nebenkosten',
-    insurance: 'Versicherungen',
-    tax: 'Steuern',
-    property_management: 'Hausverwaltung',
-    marketing: 'Marketing',
-    legal: 'Rechtsberatung',
-    financing: 'Finanzierung',
-    other_expense: 'Sonstige Ausgabe',
-    other_income: 'Sonstige Einnahme'
-};
+import CostTypeForm from '@/components/cost-types/CostTypeForm';
 
 export default function Invoices() {
     const queryClient = useQueryClient();
-    const [formOpen, setFormOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState('invoices');
+    
+    // Invoice state
+    const [invoiceFormOpen, setInvoiceFormOpen] = useState(false);
     const [editingInvoice, setEditingInvoice] = useState(null);
     const [deleteInvoice, setDeleteInvoice] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [invoiceSearchTerm, setInvoiceSearchTerm] = useState('');
     const [typeFilter, setTypeFilter] = useState('all');
     const [statusFilter, setStatusFilter] = useState('all');
-    const [categoryFilter, setCategoryFilter] = useState('all');
     const [buildingFilter, setBuildingFilter] = useState('all');
     const [showFilters, setShowFilters] = useState(false);
 
-    const { data: invoices = [], isLoading } = useQuery({
+    // Cost Type state
+    const [costTypeFormOpen, setCostTypeFormOpen] = useState(false);
+    const [editingCostType, setEditingCostType] = useState(null);
+    const [deleteCostType, setDeleteCostType] = useState(null);
+    const [costTypeSearchTerm, setCostTypeSearchTerm] = useState('');
+    const [costTypeFilter, setCostTypeFilter] = useState('all');
+    const [mainCategoryFilter, setMainCategoryFilter] = useState('all');
+
+    // Recipient state
+    const [recipientSearchTerm, setRecipientSearchTerm] = useState('');
+
+    const { data: invoices = [], isLoading: loadingInvoices } = useQuery({
         queryKey: ['invoices'],
         queryFn: () => base44.entities.Invoice.list('-invoice_date')
     });
@@ -87,11 +89,22 @@ export default function Invoices() {
         queryFn: () => base44.entities.LeaseContract.list()
     });
 
-    const createMutation = useMutation({
+    const { data: costTypes = [], isLoading: loadingCostTypes } = useQuery({
+        queryKey: ['cost-types'],
+        queryFn: () => base44.entities.CostType.list()
+    });
+
+    const { data: euerCategories = [] } = useQuery({
+        queryKey: ['euer-categories'],
+        queryFn: () => base44.entities.EuerCategory.list()
+    });
+
+    // Invoice mutations
+    const createInvoiceMutation = useMutation({
         mutationFn: (data) => base44.entities.Invoice.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['invoices'] });
-            setFormOpen(false);
+            setInvoiceFormOpen(false);
             toast.success('Rechnung erstellt');
         },
         onError: (error) => {
@@ -100,11 +113,11 @@ export default function Invoices() {
         }
     });
 
-    const updateMutation = useMutation({
+    const updateInvoiceMutation = useMutation({
         mutationFn: ({ id, data }) => base44.entities.Invoice.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['invoices'] });
-            setFormOpen(false);
+            setInvoiceFormOpen(false);
             setEditingInvoice(null);
             toast.success('Rechnung aktualisiert');
         },
@@ -114,7 +127,7 @@ export default function Invoices() {
         }
     });
 
-    const deleteMutation = useMutation({
+    const deleteInvoiceMutation = useMutation({
         mutationFn: (id) => base44.entities.Invoice.delete(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['invoices'] });
@@ -127,34 +140,100 @@ export default function Invoices() {
         }
     });
 
-    const handleSubmit = (data) => {
+    // Cost Type mutations
+    const createCostTypeMutation = useMutation({
+        mutationFn: (data) => base44.entities.CostType.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['cost-types'] });
+            setCostTypeFormOpen(false);
+            toast.success('Kostenart erstellt');
+        },
+        onError: (error) => {
+            toast.error('Fehler beim Erstellen');
+            console.error(error);
+        }
+    });
+
+    const updateCostTypeMutation = useMutation({
+        mutationFn: ({ id, data }) => base44.entities.CostType.update(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['cost-types'] });
+            setCostTypeFormOpen(false);
+            setEditingCostType(null);
+            toast.success('Kostenart aktualisiert');
+        },
+        onError: (error) => {
+            toast.error('Fehler beim Aktualisieren');
+            console.error(error);
+        }
+    });
+
+    const deleteCostTypeMutation = useMutation({
+        mutationFn: (id) => base44.entities.CostType.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['cost-types'] });
+            setDeleteCostType(null);
+            toast.success('Kostenart gelöscht');
+        },
+        onError: (error) => {
+            toast.error('Fehler beim Löschen');
+            console.error(error);
+        }
+    });
+
+    const handleInvoiceSubmit = (data) => {
         if (editingInvoice) {
-            updateMutation.mutate({ id: editingInvoice.id, data });
+            updateInvoiceMutation.mutate({ id: editingInvoice.id, data });
         } else {
-            createMutation.mutate(data);
+            createInvoiceMutation.mutate(data);
         }
     };
+
+    const handleCostTypeSubmit = (data) => {
+        if (editingCostType) {
+            updateCostTypeMutation.mutate({ id: editingCostType.id, data });
+        } else {
+            createCostTypeMutation.mutate(data);
+        }
+    };
+
+    // Get unique recipients
+    const recipients = useMemo(() => {
+        const recipientMap = new Map();
+        
+        invoices.forEach(inv => {
+            if (inv.recipient) {
+                const existing = recipientMap.get(inv.recipient);
+                if (existing) {
+                    existing.count++;
+                    existing.totalAmount += inv.amount || 0;
+                    existing.lastInvoiceDate = inv.invoice_date > existing.lastInvoiceDate ? inv.invoice_date : existing.lastInvoiceDate;
+                } else {
+                    recipientMap.set(inv.recipient, {
+                        name: inv.recipient,
+                        count: 1,
+                        totalAmount: inv.amount || 0,
+                        lastInvoiceDate: inv.invoice_date
+                    });
+                }
+            }
+        });
+
+        return Array.from(recipientMap.values()).sort((a, b) => b.count - a.count);
+    }, [invoices]);
 
     // Filter invoices
     const filteredInvoices = useMemo(() => {
         let filtered = invoices;
 
-        // Type filter
         if (typeFilter !== 'all') {
             filtered = filtered.filter(inv => inv.type === typeFilter);
         }
 
-        // Status filter
         if (statusFilter !== 'all') {
             filtered = filtered.filter(inv => inv.status === statusFilter);
         }
 
-        // Category filter
-        if (categoryFilter !== 'all') {
-            filtered = filtered.filter(inv => inv.category === categoryFilter);
-        }
-
-        // Building filter
         if (buildingFilter !== 'all') {
             filtered = filtered.filter(inv => {
                 if (inv.building_id === buildingFilter) return true;
@@ -166,21 +245,60 @@ export default function Invoices() {
             });
         }
 
-        // Search
-        if (searchTerm) {
-            const term = searchTerm.toLowerCase();
+        if (invoiceSearchTerm) {
+            const term = invoiceSearchTerm.toLowerCase();
             filtered = filtered.filter(inv => 
                 inv.description?.toLowerCase().includes(term) ||
                 inv.reference?.toLowerCase().includes(term) ||
+                inv.recipient?.toLowerCase().includes(term) ||
                 inv.accounting_notes?.toLowerCase().includes(term)
             );
         }
 
         return filtered;
-    }, [invoices, typeFilter, statusFilter, categoryFilter, buildingFilter, searchTerm, units]);
+    }, [invoices, typeFilter, statusFilter, buildingFilter, invoiceSearchTerm, units]);
 
-    // Calculate statistics
-    const stats = useMemo(() => {
+    // Filter cost types
+    const filteredCostTypes = useMemo(() => {
+        let filtered = costTypes;
+
+        if (costTypeFilter !== 'all') {
+            filtered = filtered.filter(ct => ct.type === costTypeFilter);
+        }
+
+        if (mainCategoryFilter !== 'all') {
+            filtered = filtered.filter(ct => ct.main_category === mainCategoryFilter);
+        }
+
+        if (costTypeSearchTerm) {
+            const term = costTypeSearchTerm.toLowerCase();
+            filtered = filtered.filter(ct => 
+                ct.main_category?.toLowerCase().includes(term) ||
+                ct.sub_category?.toLowerCase().includes(term)
+            );
+        }
+
+        return filtered.sort((a, b) => {
+            if (a.type !== b.type) {
+                return a.type === 'income' ? -1 : 1;
+            }
+            if (a.main_category !== b.main_category) {
+                return a.main_category.localeCompare(b.main_category);
+            }
+            return a.sub_category.localeCompare(b.sub_category);
+        });
+    }, [costTypes, costTypeFilter, mainCategoryFilter, costTypeSearchTerm]);
+
+    // Filter recipients
+    const filteredRecipients = useMemo(() => {
+        if (!recipientSearchTerm) return recipients;
+        
+        const term = recipientSearchTerm.toLowerCase();
+        return recipients.filter(r => r.name.toLowerCase().includes(term));
+    }, [recipients, recipientSearchTerm]);
+
+    // Statistics
+    const invoiceStats = useMemo(() => {
         const expenses = filteredInvoices
             .filter(inv => inv.type === 'expense')
             .reduce((sum, inv) => sum + (inv.amount || 0), 0);
@@ -199,6 +317,20 @@ export default function Invoices() {
 
         return { expenses, income, pending, operatingCost };
     }, [filteredInvoices]);
+
+    const costTypeStats = useMemo(() => {
+        const expenses = costTypes.filter(ct => ct.type === 'expense').length;
+        const income = costTypes.filter(ct => ct.type === 'income').length;
+        const distributable = costTypes.filter(ct => ct.distributable).length;
+        const taxDeductible = costTypes.filter(ct => ct.tax_deductible).length;
+
+        return { expenses, income, distributable, taxDeductible };
+    }, [costTypes]);
+
+    const mainCategories = useMemo(() => {
+        const categories = new Set(costTypes.map(ct => ct.main_category));
+        return Array.from(categories).sort();
+    }, [costTypes]);
 
     const getBuilding = (invoice) => {
         if (invoice.building_id) {
@@ -220,6 +352,14 @@ export default function Invoices() {
         return null;
     };
 
+    const getCostType = (costTypeId) => {
+        return costTypes.find(ct => ct.id === costTypeId);
+    };
+
+    const getEuerCategory = (id) => {
+        return euerCategories.find(ec => ec.id === id);
+    };
+
     const getStatusBadge = (status) => {
         const variants = {
             paid: 'bg-emerald-100 text-emerald-700',
@@ -234,7 +374,7 @@ export default function Invoices() {
         return <Badge className={variants[status]}>{labels[status]}</Badge>;
     };
 
-    if (isLoading) {
+    if (loadingInvoices || loadingCostTypes) {
         return <div className="p-8">Lädt...</div>;
     }
 
@@ -247,297 +387,588 @@ export default function Invoices() {
                         Rechnungen & Belege
                     </h1>
                     <p className="text-slate-500 mt-1">
-                        {filteredInvoices.length} {filteredInvoices.length === 1 ? 'Beleg' : 'Belege'}
+                        {activeTab === 'invoices' && `${filteredInvoices.length} ${filteredInvoices.length === 1 ? 'Beleg' : 'Belege'}`}
+                        {activeTab === 'cost-types' && `${filteredCostTypes.length} ${filteredCostTypes.length === 1 ? 'Kostenart' : 'Kostenarten'}`}
+                        {activeTab === 'recipients' && `${filteredRecipients.length} ${filteredRecipients.length === 1 ? 'Empfänger' : 'Empfänger'}`}
                     </p>
                 </div>
                 <Button 
                     onClick={() => {
-                        setEditingInvoice(null);
-                        setFormOpen(true);
+                        if (activeTab === 'invoices') {
+                            setEditingInvoice(null);
+                            setInvoiceFormOpen(true);
+                        } else if (activeTab === 'cost-types') {
+                            setEditingCostType(null);
+                            setCostTypeFormOpen(true);
+                        }
                     }}
                     className="bg-emerald-600 hover:bg-emerald-700 gap-2"
                 >
                     <Plus className="w-4 h-4" />
-                    Neue Rechnung
+                    {activeTab === 'invoices' && 'Neue Rechnung'}
+                    {activeTab === 'cost-types' && 'Neue Kostenart'}
+                    {activeTab === 'recipients' && 'Neuer Empfänger'}
                 </Button>
             </div>
 
-            {/* Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-slate-600">Ausgaben</p>
-                                <p className="text-2xl font-bold text-red-600">
-                                    €{stats.expenses.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-                                </p>
-                            </div>
-                            <TrendingDown className="w-8 h-8 text-red-500" />
-                        </div>
-                    </CardContent>
-                </Card>
+            {/* Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="bg-white border border-slate-200">
+                    <TabsTrigger value="invoices" className="gap-2">
+                        <FileText className="w-4 h-4" />
+                        Rechnungen
+                    </TabsTrigger>
+                    <TabsTrigger value="cost-types" className="gap-2">
+                        <Tag className="w-4 h-4" />
+                        Kostenarten
+                    </TabsTrigger>
+                    <TabsTrigger value="recipients" className="gap-2">
+                        <Users className="w-4 h-4" />
+                        Empfänger
+                    </TabsTrigger>
+                </TabsList>
 
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-slate-600">Sonstige Einnahmen</p>
-                                <p className="text-2xl font-bold text-emerald-600">
-                                    €{stats.income.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-                                </p>
-                            </div>
-                            <TrendingUp className="w-8 h-8 text-emerald-500" />
-                        </div>
-                    </CardContent>
-                </Card>
+                {/* INVOICES TAB */}
+                <TabsContent value="invoices" className="space-y-6 mt-6">
+                    {/* Statistics */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <Card>
+                            <CardContent className="pt-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-slate-600">Ausgaben</p>
+                                        <p className="text-2xl font-bold text-red-600">
+                                            €{invoiceStats.expenses.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                        </p>
+                                    </div>
+                                    <TrendingDown className="w-8 h-8 text-red-500" />
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-slate-600">Ausstehend</p>
-                                <p className="text-2xl font-bold text-amber-600">
-                                    €{stats.pending.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-                                </p>
-                            </div>
-                            <FileText className="w-8 h-8 text-amber-500" />
-                        </div>
-                    </CardContent>
-                </Card>
+                        <Card>
+                            <CardContent className="pt-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-slate-600">Sonstige Einnahmen</p>
+                                        <p className="text-2xl font-bold text-emerald-600">
+                                            €{invoiceStats.income.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                        </p>
+                                    </div>
+                                    <TrendingUp className="w-8 h-8 text-emerald-500" />
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-slate-600">Betriebskosten</p>
-                                <p className="text-2xl font-bold text-blue-600">
-                                    €{stats.operatingCost.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-                                </p>
-                            </div>
-                            <Building2 className="w-8 h-8 text-blue-500" />
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+                        <Card>
+                            <CardContent className="pt-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-slate-600">Ausstehend</p>
+                                        <p className="text-2xl font-bold text-amber-600">
+                                            €{invoiceStats.pending.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                        </p>
+                                    </div>
+                                    <FileText className="w-8 h-8 text-amber-500" />
+                                </div>
+                            </CardContent>
+                        </Card>
 
-            {/* Filters */}
-            <Card>
-                <CardContent className="pt-6">
-                    <div className="space-y-4">
-                        <div className="flex flex-col lg:flex-row gap-4">
-                            <div className="flex-1 relative">
+                        <Card>
+                            <CardContent className="pt-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-slate-600">Betriebskosten</p>
+                                        <p className="text-2xl font-bold text-blue-600">
+                                            €{invoiceStats.operatingCost.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                        </p>
+                                    </div>
+                                    <Building2 className="w-8 h-8 text-blue-500" />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Filters */}
+                    <Card>
+                        <CardContent className="pt-6">
+                            <div className="space-y-4">
+                                <div className="flex flex-col lg:flex-row gap-4">
+                                    <div className="flex-1 relative">
+                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                                        <Input
+                                            placeholder="Suche nach Beschreibung, Referenz, Empfänger..."
+                                            value={invoiceSearchTerm}
+                                            onChange={(e) => setInvoiceSearchTerm(e.target.value)}
+                                            className="pl-10"
+                                        />
+                                    </div>
+
+                                    <Select value={typeFilter} onValueChange={setTypeFilter}>
+                                        <SelectTrigger className="w-full lg:w-48">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Alle Typen</SelectItem>
+                                            <SelectItem value="expense">Ausgaben</SelectItem>
+                                            <SelectItem value="other_income">Sonstige Einnahmen</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+
+                                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                        <SelectTrigger className="w-full lg:w-48">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Alle Status</SelectItem>
+                                            <SelectItem value="pending">Ausstehend</SelectItem>
+                                            <SelectItem value="paid">Bezahlt</SelectItem>
+                                            <SelectItem value="overdue">Überfällig</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setShowFilters(!showFilters)}
+                                    >
+                                        <Filter className="w-4 h-4 mr-2" />
+                                        Mehr Filter
+                                    </Button>
+                                </div>
+
+                                {showFilters && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                                        <div>
+                                            <label className="text-xs font-medium mb-2 block">Gebäude</label>
+                                            <Select value={buildingFilter} onValueChange={setBuildingFilter}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Alle Gebäude" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="all">Alle Gebäude</SelectItem>
+                                                    {buildings.map(building => (
+                                                        <SelectItem key={building.id} value={building.id}>
+                                                            {building.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Invoices Table */}
+                    <Card>
+                        <CardContent className="p-0">
+                            {filteredInvoices.length === 0 ? (
+                                <div className="text-center py-12 text-slate-500">
+                                    Keine Rechnungen gefunden
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Datum</TableHead>
+                                                <TableHead>Typ</TableHead>
+                                                <TableHead>Empfänger</TableHead>
+                                                <TableHead>Beschreibung</TableHead>
+                                                <TableHead>Objekt</TableHead>
+                                                <TableHead>Kostenart</TableHead>
+                                                <TableHead className="text-right">Betrag</TableHead>
+                                                <TableHead>Status</TableHead>
+                                                <TableHead>NK</TableHead>
+                                                <TableHead className="text-right">Aktionen</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {filteredInvoices.map((invoice) => {
+                                                const building = getBuilding(invoice);
+                                                const unit = getUnit(invoice);
+                                                const costType = getCostType(invoice.cost_type_id);
+
+                                                return (
+                                                    <TableRow key={invoice.id}>
+                                                        <TableCell className="font-medium">
+                                                            {invoice.invoice_date ? format(parseISO(invoice.invoice_date), 'dd.MM.yyyy', { locale: de }) : '-'}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {invoice.type === 'expense' ? (
+                                                                <Badge variant="outline" className="border-red-300 text-red-700">
+                                                                    Ausgabe
+                                                                </Badge>
+                                                            ) : (
+                                                                <Badge variant="outline" className="border-emerald-300 text-emerald-700">
+                                                                    Einnahme
+                                                                </Badge>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="text-sm">
+                                                            {invoice.recipient || '-'}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div>
+                                                                <p className="font-medium">{invoice.description}</p>
+                                                                {invoice.reference && (
+                                                                    <p className="text-xs text-slate-500">{invoice.reference}</p>
+                                                                )}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="text-sm">
+                                                                <p className="font-medium">{building?.name || '-'}</p>
+                                                                {unit && (
+                                                                    <p className="text-xs text-slate-500">{unit.unit_number}</p>
+                                                                )}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-sm">
+                                                            {costType ? (
+                                                                <div>
+                                                                    <p className="font-medium">{costType.main_category}</p>
+                                                                    <p className="text-xs text-slate-500">{costType.sub_category}</p>
+                                                                </div>
+                                                            ) : '-'}
+                                                        </TableCell>
+                                                        <TableCell className="text-right font-semibold">
+                                                            <span className={invoice.type === 'expense' ? 'text-red-600' : 'text-emerald-600'}>
+                                                                {invoice.type === 'expense' ? '-' : '+'}€{invoice.amount?.toFixed(2)}
+                                                            </span>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {getStatusBadge(invoice.status)}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {invoice.operating_cost_relevant && (
+                                                                <Badge className="bg-blue-100 text-blue-700 text-xs">
+                                                                    ✓
+                                                                </Badge>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button variant="ghost" size="icon">
+                                                                        <MoreVertical className="w-4 h-4" />
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end">
+                                                                    <DropdownMenuItem onClick={() => {
+                                                                        setEditingInvoice(invoice);
+                                                                        setInvoiceFormOpen(true);
+                                                                    }}>
+                                                                        <Pencil className="w-4 h-4 mr-2" />
+                                                                        Bearbeiten
+                                                                    </DropdownMenuItem>
+                                                                    {invoice.document_url && (
+                                                                        <DropdownMenuItem onClick={() => window.open(invoice.document_url, '_blank')}>
+                                                                            <Download className="w-4 h-4 mr-2" />
+                                                                            Dokument öffnen
+                                                                        </DropdownMenuItem>
+                                                                    )}
+                                                                    <DropdownMenuItem 
+                                                                        onClick={() => setDeleteInvoice(invoice)}
+                                                                        className="text-red-600"
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4 mr-2" />
+                                                                        Löschen
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* COST TYPES TAB */}
+                <TabsContent value="cost-types" className="space-y-6 mt-6">
+                    {/* Statistics */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <Card>
+                            <CardContent className="pt-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-slate-600">Ausgaben</p>
+                                        <p className="text-2xl font-bold text-red-600">{costTypeStats.expenses}</p>
+                                    </div>
+                                    <TrendingDown className="w-8 h-8 text-red-500" />
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardContent className="pt-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-slate-600">Einnahmen</p>
+                                        <p className="text-2xl font-bold text-emerald-600">{costTypeStats.income}</p>
+                                    </div>
+                                    <TrendingUp className="w-8 h-8 text-emerald-500" />
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardContent className="pt-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-slate-600">Umlagefähig</p>
+                                        <p className="text-2xl font-bold text-blue-600">{costTypeStats.distributable}</p>
+                                    </div>
+                                    <Tag className="w-8 h-8 text-blue-500" />
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardContent className="pt-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-slate-600">Steuerlich absetzbar</p>
+                                        <p className="text-2xl font-bold text-purple-600">{costTypeStats.taxDeductible}</p>
+                                    </div>
+                                    <Tag className="w-8 h-8 text-purple-500" />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Filters */}
+                    <Card>
+                        <CardContent className="pt-6">
+                            <div className="flex flex-col lg:flex-row gap-4">
+                                <div className="flex-1 relative">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                                    <Input
+                                        placeholder="Suche nach Kategorie..."
+                                        value={costTypeSearchTerm}
+                                        onChange={(e) => setCostTypeSearchTerm(e.target.value)}
+                                        className="pl-10"
+                                    />
+                                </div>
+
+                                <Select value={costTypeFilter} onValueChange={setCostTypeFilter}>
+                                    <SelectTrigger className="w-full lg:w-48">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Alle Typen</SelectItem>
+                                        <SelectItem value="expense">Ausgaben</SelectItem>
+                                        <SelectItem value="income">Einnahmen</SelectItem>
+                                    </SelectContent>
+                                </Select>
+
+                                <Select value={mainCategoryFilter} onValueChange={setMainCategoryFilter}>
+                                    <SelectTrigger className="w-full lg:w-64">
+                                        <SelectValue placeholder="Hauptkategorie" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Alle Hauptkategorien</SelectItem>
+                                        {mainCategories.map(cat => (
+                                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Cost Types Table */}
+                    <Card>
+                        <CardContent className="p-0">
+                            {filteredCostTypes.length === 0 ? (
+                                <div className="text-center py-12 text-slate-500">
+                                    Keine Kostenarten gefunden
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Typ</TableHead>
+                                                <TableHead>Hauptkategorie</TableHead>
+                                                <TableHead>Kategorie</TableHead>
+                                                <TableHead>MwSt.</TableHead>
+                                                <TableHead>Umlagefähig</TableHead>
+                                                <TableHead>Umlageschlüssel</TableHead>
+                                                <TableHead>EÜR</TableHead>
+                                                <TableHead className="text-right">Aktionen</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {filteredCostTypes.map((costType) => {
+                                                const euerCat = getEuerCategory(costType.euer_category_id);
+
+                                                return (
+                                                    <TableRow key={costType.id}>
+                                                        <TableCell>
+                                                            {costType.type === 'expense' ? (
+                                                                <Badge variant="outline" className="border-red-300 text-red-700">
+                                                                    Ausgabe
+                                                                </Badge>
+                                                            ) : (
+                                                                <Badge variant="outline" className="border-emerald-300 text-emerald-700">
+                                                                    Einnahme
+                                                                </Badge>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell className="font-medium">
+                                                            {costType.main_category}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {costType.sub_category}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {costType.vat_rate > 0 ? `${(costType.vat_rate * 100).toFixed(0)}%` : 'nein'}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {costType.distributable ? (
+                                                                <Badge className="bg-blue-100 text-blue-700">ja</Badge>
+                                                            ) : (
+                                                                <span className="text-slate-400">nein</span>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {costType.distributable && costType.distribution_key !== 'none' 
+                                                                ? costType.distribution_key 
+                                                                : '-'}
+                                                        </TableCell>
+                                                        <TableCell className="text-sm">
+                                                            {euerCat ? (
+                                                                <div>
+                                                                    <p className="font-medium">{euerCat.parent_category}</p>
+                                                                    <p className="text-xs text-slate-500">{euerCat.name}</p>
+                                                                </div>
+                                                            ) : '-'}
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button variant="ghost" size="icon">
+                                                                        <MoreVertical className="w-4 h-4" />
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end">
+                                                                    <DropdownMenuItem onClick={() => {
+                                                                        setEditingCostType(costType);
+                                                                        setCostTypeFormOpen(true);
+                                                                    }}>
+                                                                        <Pencil className="w-4 h-4 mr-2" />
+                                                                        Bearbeiten
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem 
+                                                                        onClick={() => setDeleteCostType(costType)}
+                                                                        className="text-red-600"
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4 mr-2" />
+                                                                        Löschen
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* RECIPIENTS TAB */}
+                <TabsContent value="recipients" className="space-y-6 mt-6">
+                    {/* Search */}
+                    <Card>
+                        <CardContent className="pt-6">
+                            <div className="relative">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                                 <Input
-                                    placeholder="Suche nach Beschreibung, Referenz..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder="Suche nach Empfänger..."
+                                    value={recipientSearchTerm}
+                                    onChange={(e) => setRecipientSearchTerm(e.target.value)}
                                     className="pl-10"
                                 />
                             </div>
+                        </CardContent>
+                    </Card>
 
-                            <Select value={typeFilter} onValueChange={setTypeFilter}>
-                                <SelectTrigger className="w-full lg:w-48">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Alle Typen</SelectItem>
-                                    <SelectItem value="expense">Ausgaben</SelectItem>
-                                    <SelectItem value="other_income">Sonstige Einnahmen</SelectItem>
-                                </SelectContent>
-                            </Select>
-
-                            <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                <SelectTrigger className="w-full lg:w-48">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Alle Status</SelectItem>
-                                    <SelectItem value="pending">Ausstehend</SelectItem>
-                                    <SelectItem value="paid">Bezahlt</SelectItem>
-                                    <SelectItem value="overdue">Überfällig</SelectItem>
-                                </SelectContent>
-                            </Select>
-
-                            <Button
-                                variant="outline"
-                                onClick={() => setShowFilters(!showFilters)}
-                            >
-                                <Filter className="w-4 h-4 mr-2" />
-                                Mehr Filter
-                            </Button>
-                        </div>
-
-                        {showFilters && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
-                                <div>
-                                    <label className="text-xs font-medium mb-2 block">Kategorie</label>
-                                    <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Alle Kategorien" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">Alle Kategorien</SelectItem>
-                                            {Object.entries(categoryLabels).map(([key, label]) => (
-                                                <SelectItem key={key} value={key}>{label}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                    {/* Recipients Table */}
+                    <Card>
+                        <CardContent className="p-0">
+                            {filteredRecipients.length === 0 ? (
+                                <div className="text-center py-12 text-slate-500">
+                                    Keine Empfänger gefunden
                                 </div>
-
-                                <div>
-                                    <label className="text-xs font-medium mb-2 block">Gebäude</label>
-                                    <Select value={buildingFilter} onValueChange={setBuildingFilter}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Alle Gebäude" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">Alle Gebäude</SelectItem>
-                                            {buildings.map(building => (
-                                                <SelectItem key={building.id} value={building.id}>
-                                                    {building.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Table */}
-            <Card>
-                <CardContent className="p-0">
-                    {filteredInvoices.length === 0 ? (
-                        <div className="text-center py-12 text-slate-500">
-                            Keine Rechnungen gefunden
-                        </div>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Datum</TableHead>
-                                        <TableHead>Typ</TableHead>
-                                        <TableHead>Beschreibung</TableHead>
-                                        <TableHead>Objekt</TableHead>
-                                        <TableHead>Kategorie</TableHead>
-                                        <TableHead className="text-right">Betrag</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>NK</TableHead>
-                                        <TableHead className="text-right">Aktionen</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {filteredInvoices.map((invoice) => {
-                                        const building = getBuilding(invoice);
-                                        const unit = getUnit(invoice);
-
-                                        return (
-                                            <TableRow key={invoice.id}>
-                                                <TableCell className="font-medium">
-                                                    {invoice.invoice_date ? format(parseISO(invoice.invoice_date), 'dd.MM.yyyy', { locale: de }) : '-'}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {invoice.type === 'expense' ? (
-                                                        <Badge variant="outline" className="border-red-300 text-red-700">
-                                                            Ausgabe
-                                                        </Badge>
-                                                    ) : (
-                                                        <Badge variant="outline" className="border-emerald-300 text-emerald-700">
-                                                            Einnahme
-                                                        </Badge>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div>
-                                                        <p className="font-medium">{invoice.description}</p>
-                                                        {invoice.reference && (
-                                                            <p className="text-xs text-slate-500">{invoice.reference}</p>
-                                                        )}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="text-sm">
-                                                        <p className="font-medium">{building?.name || '-'}</p>
-                                                        {unit && (
-                                                            <p className="text-xs text-slate-500">{unit.unit_number}</p>
-                                                        )}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-sm">
-                                                    {categoryLabels[invoice.category] || invoice.category}
-                                                </TableCell>
-                                                <TableCell className="text-right font-semibold">
-                                                    <span className={invoice.type === 'expense' ? 'text-red-600' : 'text-emerald-600'}>
-                                                        {invoice.type === 'expense' ? '-' : '+'}€{invoice.amount?.toFixed(2)}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell>
-                                                    {getStatusBadge(invoice.status)}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {invoice.operating_cost_relevant && (
-                                                        <Badge className="bg-blue-100 text-blue-700 text-xs">
-                                                            ✓
-                                                        </Badge>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="icon">
-                                                                <MoreVertical className="w-4 h-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem onClick={() => {
-                                                                setEditingInvoice(invoice);
-                                                                setFormOpen(true);
-                                                            }}>
-                                                                <Pencil className="w-4 h-4 mr-2" />
-                                                                Bearbeiten
-                                                            </DropdownMenuItem>
-                                                            {invoice.document_url && (
-                                                                <DropdownMenuItem onClick={() => window.open(invoice.document_url, '_blank')}>
-                                                                    <Download className="w-4 h-4 mr-2" />
-                                                                    Dokument öffnen
-                                                                </DropdownMenuItem>
-                                                            )}
-                                                            <DropdownMenuItem 
-                                                                onClick={() => setDeleteInvoice(invoice)}
-                                                                className="text-red-600"
-                                                            >
-                                                                <Trash2 className="w-4 h-4 mr-2" />
-                                                                Löschen
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Empfänger</TableHead>
+                                                <TableHead className="text-right">Anzahl Rechnungen</TableHead>
+                                                <TableHead className="text-right">Gesamtbetrag</TableHead>
+                                                <TableHead>Letzte Rechnung</TableHead>
                                             </TableRow>
-                                        );
-                                    })}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {filteredRecipients.map((recipient, idx) => (
+                                                <TableRow key={idx}>
+                                                    <TableCell className="font-medium">
+                                                        {recipient.name}
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        {recipient.count}
+                                                    </TableCell>
+                                                    <TableCell className="text-right font-semibold">
+                                                        €{recipient.totalAmount.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {recipient.lastInvoiceDate ? format(parseISO(recipient.lastInvoiceDate), 'dd.MM.yyyy', { locale: de }) : '-'}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
 
-            {/* Form Dialog */}
+            {/* Invoice Form Dialog */}
             <InvoiceForm
-                open={formOpen}
-                onOpenChange={setFormOpen}
+                open={invoiceFormOpen}
+                onOpenChange={setInvoiceFormOpen}
                 invoice={editingInvoice}
                 buildings={buildings}
                 units={units}
                 contracts={contracts}
-                onSuccess={handleSubmit}
+                onSuccess={handleInvoiceSubmit}
             />
 
-            {/* Delete Dialog */}
+            {/* Cost Type Form Dialog */}
+            <CostTypeForm
+                open={costTypeFormOpen}
+                onOpenChange={setCostTypeFormOpen}
+                costType={editingCostType}
+                euerCategories={euerCategories}
+                onSuccess={handleCostTypeSubmit}
+            />
+
+            {/* Delete Invoice Dialog */}
             <AlertDialog open={!!deleteInvoice} onOpenChange={() => setDeleteInvoice(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -549,7 +980,28 @@ export default function Invoices() {
                     <AlertDialogFooter>
                         <AlertDialogCancel>Abbrechen</AlertDialogCancel>
                         <AlertDialogAction
-                            onClick={() => deleteMutation.mutate(deleteInvoice.id)}
+                            onClick={() => deleteInvoiceMutation.mutate(deleteInvoice.id)}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            Löschen
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Delete Cost Type Dialog */}
+            <AlertDialog open={!!deleteCostType} onOpenChange={() => setDeleteCostType(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Kostenart löschen?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Möchten Sie diese Kostenart wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => deleteCostTypeMutation.mutate(deleteCostType.id)}
                             className="bg-red-600 hover:bg-red-700"
                         >
                             Löschen
