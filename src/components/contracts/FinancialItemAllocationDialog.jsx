@@ -17,16 +17,21 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-export default function FinancialItemAllocationDialog({ financialItem, onClose, onSuccess }) {
+export default function FinancialItemAllocationDialog({ financialItem, invoice, open, onOpenChange, buildings, units, contracts, tenants }) {
     const queryClient = useQueryClient();
     const [allocations, setAllocations] = useState([]);
     const [isProcessing, setIsProcessing] = useState(false);
 
-    // Fetch linked transactions for this financial item
+    const item = financialItem || invoice;
+    const isInvoice = !!invoice;
+
+    // Fetch linked transactions for this item
     const { data: existingLinks = [] } = useQuery({
-        queryKey: ['financial-item-links', financialItem.id],
-        queryFn: () => base44.entities.FinancialItemTransactionLink.filter({ financial_item_id: financialItem.id }),
-        enabled: !!financialItem.id
+        queryKey: ['item-links', item?.id, isInvoice],
+        queryFn: () => isInvoice 
+            ? base44.entities.FinancialItemTransactionLink.filter({ invoice_id: item.id })
+            : base44.entities.FinancialItemTransactionLink.filter({ financial_item_id: item.id }),
+        enabled: !!item?.id && open
     });
 
     // Fetch all uncategorized transactions that match the amount/type
@@ -35,13 +40,22 @@ export default function FinancialItemAllocationDialog({ financialItem, onClose, 
         queryFn: () => base44.entities.BankTransaction.list('-transaction_date')
     });
 
-    // Filter relevant transactions (positive for receivables, negative for payables)
+    // Filter relevant transactions (positive for income/receivables, negative for expenses/payables)
     const availableTransactions = React.useMemo(() => {
-        const isIncome = financialItem.type === 'receivable';
-        return allTransactions.filter(tx => 
-            isIncome ? tx.amount > 0 : tx.amount < 0
-        );
-    }, [allTransactions, financialItem.type]);
+        if (isInvoice) {
+            // For invoices: income -> positive, expense -> negative
+            const isIncome = invoice.type === 'other_income';
+            return allTransactions.filter(tx => 
+                isIncome ? tx.amount > 0 : tx.amount < 0
+            );
+        } else {
+            // For financial items: receivable -> positive, payable -> negative
+            const isIncome = financialItem.type === 'receivable';
+            return allTransactions.filter(tx => 
+                isIncome ? tx.amount > 0 : tx.amount < 0
+            );
+        }
+    }, [allTransactions, isInvoice, invoice, financialItem]);
 
     // Initialize allocations from existing links
     useEffect(() => {
@@ -55,7 +69,10 @@ export default function FinancialItemAllocationDialog({ financialItem, onClose, 
     }, [existingLinks]);
 
     const totalAllocated = allocations.reduce((sum, alloc) => sum + (parseFloat(alloc.amount) || 0), 0);
-    const remaining = (financialItem.expected_amount || 0) - totalAllocated;
+    const expectedAmount = isInvoice 
+        ? (invoice.expected_amount || invoice.amount || 0)
+        : (financialItem.expected_amount || 0);
+    const remaining = expectedAmount - totalAllocated;
 
     const addAllocation = () => {
         setAllocations([...allocations, { linkId: null, transactionId: '', amount: '' }]);
@@ -82,16 +99,22 @@ export default function FinancialItemAllocationDialog({ financialItem, onClose, 
             // Create new links
             const validAllocations = allocations.filter(a => a.transactionId && parseFloat(a.amount) > 0);
             for (const alloc of validAllocations) {
-                await base44.entities.FinancialItemTransactionLink.create({
-                    financial_item_id: financialItem.id,
+                const linkData = {
                     transaction_id: alloc.transactionId,
                     linked_amount: parseFloat(alloc.amount)
-                });
+                };
+                
+                if (isInvoice) {
+                    linkData.invoice_id = item.id;
+                } else {
+                    linkData.financial_item_id = item.id;
+                }
+                
+                await base44.entities.FinancialItemTransactionLink.create(linkData);
             }
 
-            // Update financial item status and amount
+            // Update item status and amount
             const newAmount = validAllocations.reduce((sum, a) => sum + parseFloat(a.amount), 0);
-            const expectedAmount = financialItem.expected_amount || 0;
             
             let newStatus = 'pending';
             if (newAmount >= expectedAmount - 0.01) {
@@ -100,10 +123,31 @@ export default function FinancialItemAllocationDialog({ financialItem, onClose, 
                 newStatus = 'partial';
             }
 
-            await base44.entities.FinancialItem.update(financialItem.id, {
-                amount: newAmount,
-                status: newStatus
-            });
+            if (isInvoice) {
+                // Check if overdue
+                if (newStatus !== 'paid' && invoice.due_date) {
+                    try {
+                        const dueDate = new Date(invoice.due_date);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        if (dueDate < today) {
+                            newStatus = 'overdue';
+                        }
+                    } catch (error) {
+                        console.error('Error parsing due_date:', error);
+                    }
+                }
+                
+                await base44.entities.Invoice.update(item.id, {
+                    paid_amount: newAmount,
+                    status: newStatus
+                });
+            } else {
+                await base44.entities.FinancialItem.update(item.id, {
+                    amount: newAmount,
+                    status: newStatus
+                });
+            }
 
             // Update all affected transactions
             const allAffectedTransactionIds = [
@@ -121,12 +165,12 @@ export default function FinancialItemAllocationDialog({ financialItem, onClose, 
             }
 
             queryClient.invalidateQueries({ queryKey: ['financial-items'] });
+            queryClient.invalidateQueries({ queryKey: ['invoices'] });
             queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
             queryClient.invalidateQueries({ queryKey: ['financial-item-transaction-links'] });
             
             toast.success('Zuordnung aktualisiert');
-            onSuccess?.();
-            onClose();
+            onOpenChange(false);
         } catch (error) {
             console.error('Error updating allocations:', error);
             toast.error('Fehler beim Aktualisieren');
@@ -137,6 +181,8 @@ export default function FinancialItemAllocationDialog({ financialItem, onClose, 
 
     const getTransaction = (txId) => availableTransactions.find(t => t.id === txId);
 
+    if (!open || !item) return null;
+
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
@@ -146,10 +192,10 @@ export default function FinancialItemAllocationDialog({ financialItem, onClose, 
                             Transaktionen zuordnen
                         </h3>
                         <p className="text-sm text-slate-500 mt-1">
-                            {financialItem.description}
+                            {item.description}
                         </p>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={onClose}>
+                    <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
                         <X className="w-5 h-5" />
                     </Button>
                 </div>
@@ -159,7 +205,7 @@ export default function FinancialItemAllocationDialog({ financialItem, onClose, 
                     <div className="flex justify-between items-center mb-3">
                         <span className="text-sm text-slate-600">Erwarteter Betrag:</span>
                         <span className="text-2xl font-bold text-slate-800">
-                            €{financialItem.expected_amount?.toFixed(2)}
+                            €{expectedAmount.toFixed(2)}
                         </span>
                     </div>
                     <div className="flex justify-between items-center text-sm pt-3 border-t">
@@ -272,7 +318,7 @@ export default function FinancialItemAllocationDialog({ financialItem, onClose, 
 
                 {/* Actions */}
                 <div className="flex justify-end gap-3 pt-6 border-t">
-                    <Button variant="outline" onClick={onClose}>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>
                         Abbrechen
                     </Button>
                     <Button
