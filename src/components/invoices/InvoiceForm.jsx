@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useQuery } from '@tanstack/react-query';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
 import {
     Select,
     SelectContent,
@@ -18,37 +13,54 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Building2, Upload, X } from 'lucide-react';
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format, parseISO } from 'date-fns';
+import { de } from 'date-fns/locale';
+import { CalendarIcon, Upload, Loader2, Sparkles, Info } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-const categoryLabels = {
-    maintenance: 'Instandhaltung/Reparatur',
-    utilities: 'Nebenkosten (Strom, Wasser, etc.)',
-    insurance: 'Versicherungen',
-    tax: 'Steuern',
-    property_management: 'Hausverwaltung',
-    marketing: 'Marketing/Werbung',
-    legal: 'Rechtsberatung',
-    financing: 'Finanzierung/Zinsen',
-    other_expense: 'Sonstige Ausgabe',
-    other_income: 'Sonstige Einnahme'
-};
-
 export default function InvoiceForm({ open, onOpenChange, invoice, buildings, units, contracts, onSuccess }) {
-    const { register, handleSubmit, reset, watch, setValue } = useForm({
+    const [uploading, setUploading] = useState(false);
+    const [analyzingAI, setAnalyzingAI] = useState(false);
+    const [aiSuggestions, setAiSuggestions] = useState(null);
+    const [invoiceDate, setInvoiceDate] = useState(invoice?.invoice_date ? parseISO(invoice.invoice_date) : null);
+    const [dueDate, setDueDate] = useState(invoice?.due_date ? parseISO(invoice.due_date) : null);
+    const { register, handleSubmit, watch, setValue, reset } = useForm({
         defaultValues: invoice || {
             type: 'expense',
+            invoice_date: '',
+            due_date: '',
+            amount: '',
             currency: 'EUR',
+            reference: '',
+            description: '',
+            unit_id: '',
+            building_id: '',
+            related_to_contract_id: '',
+            cost_type_id: '',
+            accounting_notes: '',
+            operating_cost_relevant: false,
+            document_url: '',
             status: 'pending',
-            operating_cost_relevant: false
+            notes: ''
         }
     });
 
-    const [uploadingFile, setUploadingFile] = useState(false);
-    const [documentFile, setDocumentFile] = useState(null);
+    // Fetch cost types and EÜR categories
+    const { data: costTypes = [] } = useQuery({
+        queryKey: ['cost-types'],
+        queryFn: () => base44.entities.CostType.list()
+    });
 
-    const selectedType = watch('type');
+    const { data: euerCategories = [] } = useQuery({
+        queryKey: ['euer-categories'],
+        queryFn: () => base44.entities.EuerCategory.list()
+    });
+
     const selectedBuildingId = watch('building_id');
     const selectedUnitId = watch('unit_id');
     const selectedCostTypeId = watch('cost_type_id');
@@ -56,181 +68,451 @@ export default function InvoiceForm({ open, onOpenChange, invoice, buildings, un
     const watchedDescription = watch('description');
     const watchedReference = watch('reference');
 
-    useEffect(() => {
-        if (invoice) {
-            reset(invoice);
-        } else {
-            reset({
-                type: 'expense',
-                currency: 'EUR',
-                status: 'pending',
-                operating_cost_relevant: false
-            });
-        }
-    }, [invoice, reset]);
-
     // Filter units based on selected building
     const filteredUnits = selectedBuildingId 
         ? units.filter(u => u.building_id === selectedBuildingId)
         : units;
 
     // Filter contracts based on selected unit
-    const filteredContracts = selectedUnitId
+    const filteredContracts = selectedUnitId 
         ? contracts.filter(c => c.unit_id === selectedUnitId && c.status === 'active')
-        : [];
+        : contracts.filter(c => c.status === 'active');
 
-    const handleFileChange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+    // Get selected cost type details
+    const selectedCostType = costTypes.find(ct => ct.id === selectedCostTypeId);
+    const selectedEuerCategory = selectedCostType 
+        ? euerCategories.find(ec => ec.id === selectedCostType.euer_category_id)
+        : null;
 
-        setUploadingFile(true);
-        try {
-            const { file_url } = await base44.integrations.Core.UploadFile({ file });
-            setValue('document_url', file_url);
-            setDocumentFile(file);
-            toast.success('Dokument hochgeladen');
-        } catch (error) {
-            toast.error('Fehler beim Hochladen');
-            console.error(error);
-        } finally {
-            setUploadingFile(false);
+    // Filter cost types based on invoice type
+    const filteredCostTypes = costTypes.filter(ct => ct.type === watchedType);
+
+    // Auto-set operating_cost_relevant when cost type changes
+    useEffect(() => {
+        if (selectedCostType) {
+            setValue('operating_cost_relevant', selectedCostType.distributable || false);
         }
-    };
+    }, [selectedCostType, setValue]);
 
-    const onSubmit = (data) => {
-        // Validate that either unit_id or building_id is set
-        if (!data.unit_id && !data.building_id) {
-            toast.error('Bitte wählen Sie ein Objekt (Gebäude oder Wohneinheit)');
+    // AI-based cost type suggestions
+    const getAISuggestions = async () => {
+        const description = watchedDescription?.trim();
+        const reference = watchedReference?.trim();
+        
+        if (!description && !reference) {
+            toast.error('Bitte geben Sie zuerst eine Beschreibung oder Referenz ein');
             return;
         }
 
-        onSuccess({
+        setAnalyzingAI(true);
+        try {
+            const response = await base44.integrations.Core.InvokeLLM({
+                prompt: `Analysiere diese Rechnungsinformation und schlage die passendste Kostenart vor.
+
+Rechnungsdetails:
+- Beschreibung: ${description || 'keine'}
+- Referenz/Verwendungszweck: ${reference || 'keine'}
+- Typ: ${watchedType === 'expense' ? 'Ausgabe' : 'Einnahme'}
+
+Verfügbare Kostenarten:
+${filteredCostTypes.map(ct => `- ID: ${ct.id}, Hauptkategorie: ${ct.main_category}, Kategorie: ${ct.sub_category}`).join('\n')}
+
+Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück. Berücksichtige dabei den Kontext und typische Kategorisierungen im Immobilienverwaltungs-Bereich.`,
+                response_json_schema: {
+                    type: "object",
+                    properties: {
+                        suggested_cost_type_id: { type: "string" },
+                        confidence: { type: "number" },
+                        reasoning: { type: "string" }
+                    }
+                }
+            });
+
+            if (response.suggested_cost_type_id) {
+                const suggestedCostType = costTypes.find(ct => ct.id === response.suggested_cost_type_id);
+                if (suggestedCostType) {
+                    setAiSuggestions({
+                        costType: suggestedCostType,
+                        confidence: response.confidence || 0,
+                        reasoning: response.reasoning || ''
+                    });
+                    toast.success('KI-Vorschlag gefunden');
+                } else {
+                    toast.error('Vorgeschlagene Kostenart nicht gefunden');
+                }
+            }
+        } catch (error) {
+            console.error('AI suggestion error:', error);
+            toast.error('Fehler beim Abrufen von KI-Vorschlägen');
+        } finally {
+            setAnalyzingAI(false);
+        }
+    };
+
+    const applySuggestion = () => {
+        if (aiSuggestions?.costType) {
+            setValue('cost_type_id', aiSuggestions.costType.id);
+            setAiSuggestions(null);
+            toast.success('Vorschlag angewendet');
+        }
+    };
+
+    useEffect(() => {
+        if (open) {
+            reset(invoice || {
+                type: 'expense',
+                invoice_date: '',
+                due_date: '',
+                amount: '',
+                currency: 'EUR',
+                reference: '',
+                description: '',
+                unit_id: '',
+                building_id: '',
+                related_to_contract_id: '',
+                cost_type_id: '',
+                accounting_notes: '',
+                operating_cost_relevant: false,
+                document_url: '',
+                status: 'pending',
+                notes: ''
+            });
+            setInvoiceDate(invoice?.invoice_date ? parseISO(invoice.invoice_date) : null);
+            setDueDate(invoice?.due_date ? parseISO(invoice.due_date) : null);
+            setAiSuggestions(null);
+        }
+    }, [open, invoice, reset]);
+
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploading(true);
+        try {
+            const { file_url } = await base44.integrations.Core.UploadFile({ file });
+            setValue('document_url', file_url);
+            toast.success('Dokument hochgeladen');
+        } catch (error) {
+            console.error('Upload error:', error);
+            toast.error('Fehler beim Hochladen');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const onSubmit = async (data) => {
+        // Basic validation
+        if (!data.invoice_date || !data.amount || !data.description || !data.cost_type_id) {
+            toast.error('Bitte füllen Sie alle Pflichtfelder aus (inkl. Kostenart)');
+            return;
+        }
+
+        const submissionData = {
             ...data,
+            invoice_date: invoiceDate ? format(invoiceDate, 'yyyy-MM-dd') : null,
+            due_date: dueDate ? format(dueDate, 'yyyy-MM-dd') : null,
             amount: parseFloat(data.amount),
-            building_id: data.building_id || null,
-            unit_id: data.unit_id || null,
-            related_to_contract_id: data.related_to_contract_id || null
-        });
+            operating_cost_relevant: data.operating_cost_relevant || false,
+        };
+
+        // Remove category field if it exists (we use cost_type_id now)
+        delete submissionData.category;
+
+        await onSuccess(submissionData);
     };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>
-                        {invoice ? 'Rechnung/Beleg bearbeiten' : 'Neue Rechnung/Beleg erstellen'}
+                        {invoice ? 'Rechnung bearbeiten' : 'Neue Rechnung/Beleg erstellen'}
                     </DialogTitle>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-4">
-                    {/* Type Selection */}
-                    <div>
-                        <Label>Typ *</Label>
-                        <Select 
-                            value={watch('type')} 
-                            onValueChange={(value) => setValue('type', value)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="expense">Ausgabe</SelectItem>
-                                <SelectItem value="other_income">Sonstige Einnahme</SelectItem>
-                            </SelectContent>
-                        </Select>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                    {/* Section 1: Grundlegende Informationen */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-semibold text-slate-700 border-b pb-2">
+                            Grundlegende Informationen
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Type */}
+                            <div>
+                                <Label>Typ *</Label>
+                                <Select 
+                                    value={watch('type')} 
+                                    onValueChange={(value) => setValue('type', value)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="expense">Ausgabe</SelectItem>
+                                        <SelectItem value="other_income">Sonstige Einnahme</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {/* Invoice Date */}
+                            <div>
+                                <Label>Rechnungsdatum *</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-start">
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {invoiceDate ? format(invoiceDate, 'dd.MM.yyyy', { locale: de }) : 'Datum wählen'}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0">
+                                        <Calendar
+                                            mode="single"
+                                            selected={invoiceDate}
+                                            onSelect={setInvoiceDate}
+                                            locale={de}
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+
+                            {/* Due Date */}
+                            <div>
+                                <Label>Fälligkeitsdatum</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-start">
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {dueDate ? format(dueDate, 'dd.MM.yyyy', { locale: de }) : 'Datum wählen'}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0">
+                                        <Calendar
+                                            mode="single"
+                                            selected={dueDate}
+                                            onSelect={setDueDate}
+                                            locale={de}
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+
+                            {/* Amount */}
+                            <div>
+                                <Label>Betrag (€) *</Label>
+                                <Input 
+                                    type="number" 
+                                    step="0.01" 
+                                    {...register('amount')} 
+                                    placeholder="0.00" 
+                                />
+                            </div>
+
+                            {/* Currency */}
+                            <div>
+                                <Label>Währung</Label>
+                                <Select 
+                                    value={watch('currency')} 
+                                    onValueChange={(value) => setValue('currency', value)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="EUR">EUR (€)</SelectItem>
+                                        <SelectItem value="USD">USD ($)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {/* Reference */}
+                            <div>
+                                <Label>Rechnungsnummer/Referenz</Label>
+                                <Input {...register('reference')} placeholder="RE-12345" />
+                            </div>
+                        </div>
+
+                        {/* Description */}
+                        <div>
+                            <Label>Beschreibung/Leistung *</Label>
+                            <Textarea 
+                                {...register('description')} 
+                                placeholder="z.B. Stromrechnung Dezember 2024, Hausmeisterdienste..."
+                                className="h-20"
+                            />
+                        </div>
                     </div>
 
-                    {/* Dates */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <Label>Rechnungsdatum *</Label>
-                            <Input 
-                                type="date" 
-                                {...register('invoice_date', { required: true })}
-                            />
-                        </div>
-                        <div>
-                            <Label>Fälligkeitsdatum</Label>
-                            <Input 
-                                type="date" 
-                                {...register('due_date')}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Amount and Currency */}
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="col-span-2">
-                            <Label>Betrag *</Label>
-                            <Input 
-                                type="number" 
-                                step="0.01"
-                                placeholder="0.00"
-                                {...register('amount', { required: true })}
-                            />
-                        </div>
-                        <div>
-                            <Label>Währung</Label>
-                            <Input 
-                                {...register('currency')}
-                                placeholder="EUR"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Reference and Category */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <Label>Rechnungsnummer/Referenz</Label>
-                            <Input 
-                                {...register('reference')}
-                                placeholder="RE-2024-001"
-                            />
-                        </div>
-                        <div>
-                            <Label>Kategorie *</Label>
-                            <Select 
-                                value={watch('category')} 
-                                onValueChange={(value) => setValue('category', value)}
+                    {/* Section 2: Kostenart & Kategorisierung */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between border-b pb-2">
+                            <h3 className="text-sm font-semibold text-slate-700">
+                                Kostenart & Kategorisierung
+                            </h3>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={getAISuggestions}
+                                disabled={analyzingAI || (!watchedDescription && !watchedReference)}
+                                className="gap-2"
                             >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Kategorie wählen..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {Object.entries(categoryLabels)
-                                        .filter(([key]) => {
-                                            if (selectedType === 'expense') {
-                                                return key !== 'other_income';
-                                            } else {
-                                                return key === 'other_income';
-                                            }
-                                        })
-                                        .map(([key, label]) => (
-                                            <SelectItem key={key} value={key}>
-                                                {label}
-                                            </SelectItem>
-                                        ))
-                                    }
-                                </SelectContent>
-                            </Select>
+                                {analyzingAI ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Analysiere...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="w-4 h-4" />
+                                        KI-Vorschlag
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+
+                        {/* AI Suggestions Card */}
+                        {aiSuggestions && (
+                            <Card className="p-4 bg-blue-50 border-blue-200">
+                                <div className="flex items-start gap-3">
+                                    <Sparkles className="w-5 h-5 text-blue-600 mt-0.5" />
+                                    <div className="flex-1">
+                                        <p className="font-medium text-sm text-slate-800 mb-1">
+                                            KI-Vorschlag
+                                        </p>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant="outline" className="bg-white">
+                                                    {aiSuggestions.costType.main_category}
+                                                </Badge>
+                                                <span className="text-sm">→</span>
+                                                <Badge className="bg-blue-600">
+                                                    {aiSuggestions.costType.sub_category}
+                                                </Badge>
+                                                <Badge variant="outline" className="ml-auto">
+                                                    {Math.round(aiSuggestions.confidence)}% sicher
+                                                </Badge>
+                                            </div>
+                                            {aiSuggestions.reasoning && (
+                                                <p className="text-xs text-slate-600 mt-2">
+                                                    <Info className="w-3 h-3 inline mr-1" />
+                                                    {aiSuggestions.reasoning}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            onClick={applySuggestion}
+                                            className="bg-blue-600 hover:bg-blue-700"
+                                        >
+                                            Übernehmen
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => setAiSuggestions(null)}
+                                        >
+                                            Ignorieren
+                                        </Button>
+                                    </div>
+                                </div>
+                            </Card>
+                        )}
+
+                        <div className="grid grid-cols-1 gap-4">
+                            {/* Cost Type Selection */}
+                            <div>
+                                <Label>Kostenart *</Label>
+                                <Select 
+                                    value={watch('cost_type_id')} 
+                                    onValueChange={(value) => setValue('cost_type_id', value)}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Kostenart auswählen..." />
+                                    </SelectTrigger>
+                                    <SelectContent className="max-h-80">
+                                        {/* Group by main_category */}
+                                        {Object.entries(
+                                            filteredCostTypes.reduce((acc, ct) => {
+                                                if (!acc[ct.main_category]) acc[ct.main_category] = [];
+                                                acc[ct.main_category].push(ct);
+                                                return acc;
+                                            }, {})
+                                        ).map(([mainCategory, types]) => (
+                                            <React.Fragment key={mainCategory}>
+                                                <div className="px-2 py-1.5 text-xs font-semibold text-slate-500 bg-slate-50">
+                                                    {mainCategory}
+                                                </div>
+                                                {types.map(ct => (
+                                                    <SelectItem key={ct.id} value={ct.id}>
+                                                        <div className="flex items-center gap-2">
+                                                            <span>{ct.sub_category}</span>
+                                                            {ct.distributable && (
+                                                                <Badge variant="outline" className="text-xs">
+                                                                    umlagefähig
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                    </SelectItem>
+                                                ))}
+                                            </React.Fragment>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {/* EÜR Category Display (read-only) */}
+                            {selectedCostType && selectedEuerCategory && (
+                                <div>
+                                    <Label>EÜR-Kategorie (automatisch)</Label>
+                                    <div className="mt-2 p-3 bg-slate-50 border border-slate-200 rounded-md">
+                                        <div className="space-y-1">
+                                            <p className="text-sm font-medium text-slate-700">
+                                                {selectedEuerCategory.parent_category}
+                                            </p>
+                                            <p className="text-xs text-slate-500">
+                                                {selectedEuerCategory.name}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Cost Type Details */}
+                            {selectedCostType && (
+                                <div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedCostType.vat_rate > 0 && (
+                                            <Badge variant="outline">
+                                                MwSt: {(selectedCostType.vat_rate * 100).toFixed(0)}%
+                                            </Badge>
+                                        )}
+                                        {selectedCostType.distributable && (
+                                            <Badge className="bg-blue-100 text-blue-700">
+                                                Umlagefähig ({selectedCostType.distribution_key})
+                                            </Badge>
+                                        )}
+                                        {selectedCostType.tax_deductible && (
+                                            <Badge className="bg-green-100 text-green-700">
+                                                Steuerlich absetzbar
+                                            </Badge>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
-                    {/* Description */}
-                    <div>
-                        <Label>Beschreibung/Verwendungszweck *</Label>
-                        <Textarea 
-                            {...register('description', { required: true })}
-                            placeholder="Beschreibung der Rechnung..."
-                            rows={3}
-                        />
-                    </div>
-
-                    {/* Object Selection */}
-                    <div className="border-t pt-4">
-                        <Label className="text-base font-semibold mb-3 block">Objektzuordnung *</Label>
-                        
-                        <div className="grid grid-cols-2 gap-4">
+                    {/* Section 3: Objekt-Zuordnung */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-semibold text-slate-700 border-b pb-2">
+                            Objekt-Zuordnung (optional)
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Building */}
                             <div>
                                 <Label>Gebäude</Label>
                                 <Select 
@@ -242,23 +524,21 @@ export default function InvoiceForm({ open, onOpenChange, invoice, buildings, un
                                     }}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Gebäude wählen..." />
+                                        <SelectValue placeholder="Gebäude auswählen..." />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {buildings.map(building => (
                                             <SelectItem key={building.id} value={building.id}>
-                                                <div className="flex items-center gap-2">
-                                                    <Building2 className="w-4 h-4" />
-                                                    {building.name}
-                                                </div>
+                                                {building.name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
 
+                            {/* Unit */}
                             <div>
-                                <Label>Wohneinheit (optional)</Label>
+                                <Label>Wohneinheit</Label>
                                 <Select 
                                     value={watch('unit_id')} 
                                     onValueChange={(value) => {
@@ -268,10 +548,9 @@ export default function InvoiceForm({ open, onOpenChange, invoice, buildings, un
                                     disabled={!selectedBuildingId}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Einheit wählen..." />
+                                        <SelectValue placeholder="Wohneinheit auswählen..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value={null}>Keine Einheit</SelectItem>
                                         {filteredUnits.map(unit => (
                                             <SelectItem key={unit.id} value={unit.id}>
                                                 {unit.unit_number}
@@ -280,61 +559,39 @@ export default function InvoiceForm({ open, onOpenChange, invoice, buildings, un
                                     </SelectContent>
                                 </Select>
                             </div>
-                        </div>
 
-                        {/* Contract Selection */}
-                        {selectedUnitId && filteredContracts.length > 0 && (
-                            <div className="mt-4">
-                                <Label>Mietvertrag (optional)</Label>
+                            {/* Contract */}
+                            <div className="md:col-span-2">
+                                <Label>Mietvertrag</Label>
                                 <Select 
                                     value={watch('related_to_contract_id')} 
                                     onValueChange={(value) => setValue('related_to_contract_id', value)}
+                                    disabled={!selectedUnitId}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Vertrag wählen..." />
+                                        <SelectValue placeholder="Mietvertrag auswählen..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value={null}>Kein Vertrag</SelectItem>
                                         {filteredContracts.map(contract => (
                                             <SelectItem key={contract.id} value={contract.id}>
-                                                Vertrag: {contract.tenant_id}
+                                                Vertrag vom {contract.start_date ? format(parseISO(contract.start_date), 'dd.MM.yyyy', { locale: de }) : ''}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
-                        )}
+                        </div>
                     </div>
 
-                    {/* Accounting Details */}
-                    <div className="border-t pt-4">
-                        <Label className="text-base font-semibold mb-3 block">Buchhaltung</Label>
-                        
-                        <div className="space-y-4">
+                    {/* Section 4: Buchhaltung & Status */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-semibold text-slate-700 border-b pb-2">
+                            Buchhaltung & Status
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Status */}
                             <div>
-                                <Label>Buchhaltungsnotizen</Label>
-                                <Textarea 
-                                    {...register('accounting_notes')}
-                                    placeholder="Spezielle Notizen für die Buchhaltung..."
-                                    rows={2}
-                                />
-                            </div>
-
-                            <div className="flex items-center justify-between py-2">
-                                <div>
-                                    <Label>Betriebskostenrelevant</Label>
-                                    <p className="text-xs text-slate-500 mt-1">
-                                        Wird diese Ausgabe/Einnahme bei der Betriebskostenabrechnung berücksichtigt?
-                                    </p>
-                                </div>
-                                <Switch 
-                                    checked={watch('operating_cost_relevant')}
-                                    onCheckedChange={(checked) => setValue('operating_cost_relevant', checked)}
-                                />
-                            </div>
-
-                            <div>
-                                <Label>Status</Label>
+                                <Label>Zahlungsstatus</Label>
                                 <Select 
                                     value={watch('status')} 
                                     onValueChange={(value) => setValue('status', value)}
@@ -349,71 +606,81 @@ export default function InvoiceForm({ open, onOpenChange, invoice, buildings, un
                                     </SelectContent>
                                 </Select>
                             </div>
-                        </div>
-                    </div>
 
-                    {/* Document Upload */}
-                    <div className="border-t pt-4">
-                        <Label>Dokument</Label>
-                        <div className="mt-2">
-                            {watch('document_url') ? (
-                                <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-                                    <span className="text-sm text-emerald-700 flex-1">
-                                        Dokument hochgeladen
-                                    </span>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => {
-                                            setValue('document_url', '');
-                                            setDocumentFile(null);
-                                        }}
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                            ) : (
-                                <div>
+                            {/* Operating Cost Relevant - auto from cost type */}
+                            <div className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    id="operating_cost_relevant"
+                                    {...register('operating_cost_relevant')}
+                                    disabled={!!selectedCostType?.distributable}
+                                    className="w-4 h-4 rounded border-slate-300 disabled:opacity-50"
+                                />
+                                <Label 
+                                    htmlFor="operating_cost_relevant" 
+                                    className={`cursor-pointer ${selectedCostType?.distributable ? 'text-slate-500' : ''}`}
+                                >
+                                    Relevant für Betriebskostenabrechnung
+                                    {selectedCostType?.distributable && (
+                                        <span className="ml-2 text-xs">(automatisch von Kostenart)</span>
+                                    )}
+                                </Label>
+                            </div>
+
+                            {/* Document Upload */}
+                            <div className="md:col-span-2">
+                                <Label>Dokument hochladen</Label>
+                                <div className="flex gap-2 items-center mt-2">
                                     <input
                                         type="file"
+                                        onChange={handleFileUpload}
+                                        disabled={uploading}
+                                        className="flex-1"
                                         accept=".pdf,.jpg,.jpeg,.png"
-                                        onChange={handleFileChange}
-                                        className="hidden"
-                                        id="document-upload"
-                                        disabled={uploadingFile}
                                     />
-                                    <label htmlFor="document-upload">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            disabled={uploadingFile}
-                                            asChild
-                                        >
-                                            <span>
-                                                <Upload className="w-4 h-4 mr-2" />
-                                                {uploadingFile ? 'Wird hochgeladen...' : 'Dokument hochladen'}
-                                            </span>
-                                        </Button>
-                                    </label>
+                                    {uploading && <Loader2 className="w-4 h-4 animate-spin" />}
                                 </div>
-                            )}
+                                {watch('document_url') && (
+                                    <a 
+                                        href={watch('document_url')} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="text-xs text-blue-600 hover:underline mt-1 block"
+                                    >
+                                        Dokument ansehen
+                                    </a>
+                                )}
+                            </div>
+
+                            {/* Accounting Notes */}
+                            <div className="md:col-span-2">
+                                <Label>Buchhaltungsnotizen</Label>
+                                <Textarea 
+                                    {...register('accounting_notes')} 
+                                    placeholder="Interne Notizen für die Buchhaltung..."
+                                    className="h-20"
+                                />
+                            </div>
+
+                            {/* Notes */}
+                            <div className="md:col-span-2">
+                                <Label>Allgemeine Notizen</Label>
+                                <Textarea 
+                                    {...register('notes')} 
+                                    placeholder="Weitere Notizen..."
+                                    className="h-20"
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    {/* General Notes */}
-                    <div>
-                        <Label>Allgemeine Notizen</Label>
-                        <Textarea 
-                            {...register('notes')}
-                            placeholder="Weitere Notizen..."
-                            rows={2}
-                        />
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex justify-end gap-3 pt-4">
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                    {/* Form Actions */}
+                    <div className="flex justify-end gap-3 pt-4 border-t">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => onOpenChange(false)}
+                        >
                             Abbrechen
                         </Button>
                         <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">
