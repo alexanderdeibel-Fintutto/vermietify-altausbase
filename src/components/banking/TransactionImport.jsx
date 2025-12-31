@@ -138,16 +138,45 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
         return parseFloat(cleaned) || 0;
     };
 
+    const extractSenderFromDescription = (description) => {
+        if (!description) return '';
+        
+        // Extract first meaningful part (usually sender name)
+        const parts = description.split(/\s+/);
+        const meaningfulParts = [];
+        
+        for (let i = 0; i < Math.min(parts.length, 5); i++) {
+            const part = parts[i];
+            // Stop at common separators or technical terms
+            if (part.includes('End-to-End') || part.includes('Mandatsref') || 
+                part.includes('Gläubiger') || part.includes('Kundenreferenz') ||
+                part.includes('SEPA') || part.match(/^\d+\.\d+\.\d+$/)) {
+                break;
+            }
+            meaningfulParts.push(part);
+        }
+        
+        return meaningfulParts.join(' ').trim();
+    };
+
     const buildTransactionsFromMapping = () => {
         const transactions = [];
 
         csvData.forEach(row => {
+            const descriptionText = mapping.description ? row[mapping.description]?.trim() : '';
+            let senderReceiver = mapping.sender_receiver ? row[mapping.sender_receiver]?.trim() : '';
+            
+            // If no sender_receiver column mapped, try to extract from description
+            if (!senderReceiver && descriptionText) {
+                senderReceiver = extractSenderFromDescription(descriptionText);
+            }
+            
             const transaction = {
                 transaction_date: mapping.transaction_date ? row[mapping.transaction_date]?.trim() : '',
                 value_date: mapping.value_date ? row[mapping.value_date]?.trim() : '',
                 amount: mapping.amount ? parseGermanNumber(row[mapping.amount]) : 0,
-                description: mapping.description ? row[mapping.description]?.trim() : '',
-                sender_receiver: mapping.sender_receiver ? row[mapping.sender_receiver]?.trim() : '',
+                description: descriptionText,
+                sender_receiver: senderReceiver,
                 iban: mapping.iban ? row[mapping.iban]?.trim() : '',
                 reference: mapping.reference ? row[mapping.reference]?.trim() : ''
             };
@@ -226,14 +255,18 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
 
             console.log('Existing transactions for account:', allExisting.length);
 
+            // More robust duplicate detection using multiple fields
             const existingKeys = new Set(
-                allExisting.map(tx => 
-                    `${tx.transaction_date}_${tx.amount}_${tx.description}`
-                )
+                allExisting.map(tx => {
+                    // Create a composite key with date, amount, and first 50 chars of description
+                    const shortDesc = tx.description?.substring(0, 50) || '';
+                    return `${tx.transaction_date}_${tx.amount}_${shortDesc}`;
+                })
             );
 
             const newTransactions = transactions.filter(tx => {
-                const key = `${tx.transaction_date}_${tx.amount}_${tx.description}`;
+                const shortDesc = tx.description?.substring(0, 50) || '';
+                const key = `${tx.transaction_date}_${tx.amount}_${shortDesc}`;
                 return !existingKeys.has(key);
             });
 
@@ -368,6 +401,9 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                                 <p className="text-sm text-blue-800">
                                     Ordnen Sie die CSV-Spalten den Transaktionsfeldern zu. Felder mit * sind erforderlich.
+                                </p>
+                                <p className="text-xs text-blue-700 mt-2">
+                                    💡 Tipp: Wenn kein Empfänger-Feld vorhanden ist, wird versucht, den Empfänger aus dem Buchungstext zu extrahieren.
                                 </p>
                             </div>
 
