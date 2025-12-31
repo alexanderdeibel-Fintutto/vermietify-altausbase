@@ -249,7 +249,7 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
 
     const onSubmit = async (data) => {
         // Basic validation
-        if (!data.invoice_date || !data.amount || !data.description || !data.cost_type_id) {
+        if (!invoiceDate || !data.amount || !data.description || !data.cost_type_id) {
             toast.error('Bitte füllen Sie alle Pflichtfelder aus (inkl. Kostenart)');
             return;
         }
