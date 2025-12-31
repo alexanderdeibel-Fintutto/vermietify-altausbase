@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
         // Create Cost Types based on the provided table
         const costTypesData = [
             // Einnahmen - Mieteinnahmen steuerfrei
-            { type: 'income', main_category: 'Mieteinnahmen steuerfrei', sub_category: 'Betriebskosten', vat_rate: 0, distributable: true, distribution_key: 'qm', euer_category_id: findEuerCategoryId('Mieteinnahmen'), tax_deductible: false },
+            { type: 'income', main_category: 'Mieteinnahmen steuerfrei', sub_category: 'Betriebskosten', vat_rate: 0, distributable: true, distribution_key: 'qm', euer_category_id: findEuerCategoryId('Betriebskosten-Nachzahlungen'), tax_deductible: false },
             { type: 'income', main_category: 'Mieteinnahmen steuerfrei', sub_category: 'Kautionen', vat_rate: 0, distributable: false, distribution_key: 'none', euer_category_id: findEuerCategoryId('Mieteinnahmen'), tax_deductible: false },
             { type: 'income', main_category: 'Mieteinnahmen steuerfrei', sub_category: 'Miete', vat_rate: 0, distributable: false, distribution_key: 'none', euer_category_id: findEuerCategoryId('Mieteinnahmen'), tax_deductible: false },
             
