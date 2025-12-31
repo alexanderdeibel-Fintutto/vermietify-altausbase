@@ -232,9 +232,14 @@ export default function Invoices() {
     });
 
     const handleInvoiceSubmit = (data) => {
+        console.log('handleInvoiceSubmit called with data:', data);
+        console.log('editingInvoice:', editingInvoice);
+        
         if (editingInvoice) {
+            console.log('Calling updateInvoiceMutation');
             updateInvoiceMutation.mutate({ id: editingInvoice.id, data });
         } else {
+            console.log('Calling createInvoiceMutation');
             createInvoiceMutation.mutate(data);
         }
     };

@@ -248,8 +248,13 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
     };
 
     const onSubmit = async (data) => {
+        console.log('onSubmit called with data:', data);
+        console.log('invoiceDate:', invoiceDate);
+        console.log('dueDate:', dueDate);
+        
         // Basic validation
         if (!invoiceDate || !data.amount || !data.description || !data.cost_type_id) {
+            console.log('Validation failed:', { invoiceDate, amount: data.amount, description: data.description, cost_type_id: data.cost_type_id });
             toast.error('Bitte füllen Sie alle Pflichtfelder aus (inkl. Kostenart)');
             return;
         }
@@ -265,7 +270,16 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
         // Remove category field if it exists (we use cost_type_id now)
         delete submissionData.category;
 
-        await onSuccess(submissionData);
+        console.log('Calling onSuccess with submissionData:', submissionData);
+        console.log('onSuccess function:', onSuccess);
+        
+        try {
+            await onSuccess(submissionData);
+            console.log('onSuccess completed successfully');
+        } catch (error) {
+            console.error('Error in onSuccess:', error);
+            toast.error('Fehler beim Erstellen: ' + error.message);
+        }
     };
 
     return (
