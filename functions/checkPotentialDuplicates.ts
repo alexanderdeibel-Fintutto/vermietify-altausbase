@@ -90,20 +90,29 @@ function dateSimilarity(date1, date2, maxDays = 7) {
 
 // Calculate overall match score
 function calculateMatchScore(newTx, existingTx) {
-    const weights = {
-        date: 0.25,
-        amount: 0.35,
-        description: 0.2,
-        sender: 0.15,
-        reference: 0.05
-    };
-    
     const scores = {
-        date: dateSimilarity(newTx.transaction_date, existingTx.transaction_date),
+        date: dateSimilarity(newTx.transaction_date, existingTx.transaction_date, 3), // max 3 days
         amount: amountSimilarity(newTx.amount, existingTx.amount),
         description: stringSimilarity(newTx.description, existingTx.description),
         sender: stringSimilarity(newTx.sender_receiver, existingTx.sender_receiver),
         reference: stringSimilarity(newTx.reference, existingTx.reference)
+    };
+    
+    // Strict rule: if dates are more than 3 days apart, it's not a duplicate
+    if (scores.date === 0) {
+        return {
+            totalScore: 0,
+            details: scores
+        };
+    }
+    
+    // Date is most important criterion
+    const weights = {
+        date: 0.40,
+        amount: 0.30,
+        sender: 0.20,
+        description: 0.10,
+        reference: 0.00
     };
     
     let totalScore = 0;
