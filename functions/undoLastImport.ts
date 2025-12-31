@@ -10,20 +10,40 @@ Deno.serve(async (req) => {
         }
 
         const body = await req.json();
-        const { accountId, count } = body;
+        const { accountId } = body;
 
         if (!accountId) {
             return Response.json({ error: 'accountId erforderlich' }, { status: 400 });
         }
 
-        // Get all transactions for this account, sorted by creation date (newest first)
-        const transactions = await base44.asServiceRole.entities.BankTransaction.filter(
-            { account_id: accountId },
-            '-created_date',
-            count || 1000
-        );
+        // Get ALL transactions for this account
+        let allTransactions = [];
+        let hasMore = true;
+        let skip = 0;
+        const limit = 1000;
 
-        if (transactions.length === 0) {
+        while (hasMore) {
+            const batch = await base44.asServiceRole.entities.BankTransaction.filter(
+                { account_id: accountId },
+                '-created_date',
+                limit,
+                skip
+            );
+
+            if (batch.length === 0) {
+                hasMore = false;
+            } else {
+                allTransactions = allTransactions.concat(batch);
+                skip += batch.length;
+
+                // If we got less than the limit, we're done
+                if (batch.length < limit) {
+                    hasMore = false;
+                }
+            }
+        }
+
+        if (allTransactions.length === 0) {
             return Response.json({ 
                 success: true,
                 deleted: 0,
@@ -31,30 +51,28 @@ Deno.serve(async (req) => {
             });
         }
 
-        // Take only the specified count
-        const toDelete = transactions.slice(0, count || 1000);
-
-        // Delete in batches to avoid rate limits
+        // Delete in small batches to avoid rate limits
         const batchSize = 10;
         let deleted = 0;
-        
-        for (let i = 0; i < toDelete.length; i += batchSize) {
-            const batch = toDelete.slice(i, i + batchSize);
+
+        for (let i = 0; i < allTransactions.length; i += batchSize) {
+            const batch = allTransactions.slice(i, i + batchSize);
             await Promise.all(
                 batch.map(tx => base44.asServiceRole.entities.BankTransaction.delete(tx.id))
             );
             deleted += batch.length;
-            
+
             // Small delay between batches to avoid rate limiting
-            if (i + batchSize < toDelete.length) {
-                await new Promise(resolve => setTimeout(resolve, 100));
+            if (i + batchSize < allTransactions.length) {
+                await new Promise(resolve => setTimeout(resolve, 150));
             }
         }
 
         return Response.json({
             success: true,
             deleted: deleted,
-            message: `${deleted} Transaktionen gelöscht`
+            total: allTransactions.length,
+            message: `${deleted} von ${allTransactions.length} Transaktionen gelöscht`
         });
 
     } catch (error) {

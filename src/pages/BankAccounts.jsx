@@ -305,20 +305,16 @@ export default function BankAccounts() {
     };
 
     const handleUndoImport = async (accountId) => {
-        const accountTxs = accountTransactionsMap.get(accountId) || [];
-        const count = accountTxs.length;
-        
-        if (count === 0) {
-            toast.error('Keine Transaktionen zum Löschen vorhanden');
+        if (!confirm(`Möchten Sie wirklich ALLE Transaktionen dieses Kontos löschen?\n\nDies kann nicht rückgängig gemacht werden und kann einige Minuten dauern.`)) {
             return;
         }
 
-        if (!confirm(`Möchten Sie wirklich alle ${count} Transaktionen dieses Kontos löschen?`)) {
-            return;
-        }
+        const loadingToast = toast.loading('Lösche Transaktionen...');
 
         try {
-            const response = await base44.functions.invoke('undoLastImport', { accountId, count });
+            const response = await base44.functions.invoke('undoLastImport', { accountId });
+            
+            toast.dismiss(loadingToast);
             
             if (response.data.error) {
                 toast.error(response.data.error);
@@ -328,8 +324,9 @@ export default function BankAccounts() {
             queryClient.invalidateQueries({ queryKey: ['bankTransactions'] });
             toast.success(response.data.message);
         } catch (error) {
+            toast.dismiss(loadingToast);
             console.error('Undo error:', error);
-            toast.error('Fehler beim Rückgängig machen');
+            toast.error('Fehler beim Rückgängig machen: ' + (error.message || 'Unbekannter Fehler'));
         }
     };
 
@@ -531,10 +528,10 @@ export default function BankAccounts() {
                                                     {stats.count > 0 && (
                                                         <DropdownMenuItem 
                                                             onClick={() => handleUndoImport(account.id)}
-                                                            className="text-orange-600"
+                                                            className="text-red-600"
                                                         >
-                                                            <Undo2 className="w-4 h-4 mr-2" />
-                                                            Alle Transaktionen löschen ({stats.count})
+                                                            <Trash2 className="w-4 h-4 mr-2" />
+                                                            Alle Transaktionen löschen
                                                         </DropdownMenuItem>
                                                     )}
                                                     <DropdownMenuItem onClick={() => {
