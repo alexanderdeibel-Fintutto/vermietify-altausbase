@@ -304,9 +304,7 @@ export default function BankAccounts() {
     };
 
     const getAccountTransactions = (accountId) => {
-        return transactions
-            .filter(t => t.account_id === accountId)
-            .sort((a, b) => new Date(b.transaction_date) - new Date(a.transaction_date));
+        return transactions.filter(t => t.account_id === accountId);
     };
 
     const getTransactionStats = (accountId) => {
