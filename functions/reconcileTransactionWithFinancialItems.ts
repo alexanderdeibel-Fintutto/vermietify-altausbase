@@ -9,16 +9,22 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { transactionId, financialItemAllocations, category, unitId, contractId } = await req.json();
+        const { transactionId, financialItemAllocations, invoiceAllocations, category, unitId, contractId } = await req.json();
 
-        if (!transactionId || !financialItemAllocations || !Array.isArray(financialItemAllocations)) {
-            return Response.json({ error: 'transactionId and financialItemAllocations are required' }, { status: 400 });
+        if (!transactionId || (!financialItemAllocations && !invoiceAllocations)) {
+            return Response.json({ error: 'transactionId and allocations are required' }, { status: 400 });
         }
 
+        const allAllocations = [
+            ...(financialItemAllocations || []).map(a => ({ ...a, type: 'financial_item' })),
+            ...(invoiceAllocations || []).map(a => ({ ...a, type: 'invoice' }))
+        ];
+
         // Validate that allocation amounts are positive
-        for (const allocation of financialItemAllocations) {
-            if (!allocation.financialItemId || !allocation.amount || allocation.amount <= 0) {
-                return Response.json({ error: 'Invalid allocation: financialItemId and positive amount required' }, { status: 400 });
+        for (const allocation of allAllocations) {
+            const id = allocation.type === 'financial_item' ? allocation.financialItemId : allocation.invoiceId;
+            if (!id || !allocation.amount || allocation.amount <= 0) {
+                return Response.json({ error: 'Invalid allocation: id and positive amount required' }, { status: 400 });
             }
         }
 
@@ -30,7 +36,7 @@ Deno.serve(async (req) => {
         const transaction = transactions[0];
 
         // Calculate total allocation
-        const totalAllocated = financialItemAllocations.reduce((sum, a) => sum + a.amount, 0);
+        const totalAllocated = allAllocations.reduce((sum, a) => sum + a.amount, 0);
         const transactionAmount = Math.abs(transaction.amount);
 
         if (totalAllocated > transactionAmount) {
@@ -48,19 +54,34 @@ Deno.serve(async (req) => {
         }
 
         // Create new links
-        const affectedItemIds = new Set();
-        for (const allocation of financialItemAllocations) {
-            await base44.asServiceRole.entities.FinancialItemTransactionLink.create({
-                financial_item_id: allocation.financialItemId,
+        const affectedFinancialItemIds = new Set();
+        const affectedInvoiceIds = new Set();
+        
+        for (const allocation of allAllocations) {
+            const linkData = {
                 transaction_id: transactionId,
                 linked_amount: allocation.amount
-            });
-            affectedItemIds.add(allocation.financialItemId);
+            };
+            
+            if (allocation.type === 'financial_item') {
+                linkData.financial_item_id = allocation.financialItemId;
+                affectedFinancialItemIds.add(allocation.financialItemId);
+            } else {
+                linkData.invoice_id = allocation.invoiceId;
+                affectedInvoiceIds.add(allocation.invoiceId);
+            }
+            
+            await base44.asServiceRole.entities.FinancialItemTransactionLink.create(linkData);
         }
 
         // Recalculate financial item statuses
-        for (const itemId of affectedItemIds) {
+        for (const itemId of affectedFinancialItemIds) {
             await recalculateFinancialItemStatus(base44, itemId);
+        }
+        
+        // Recalculate invoice statuses
+        for (const invoiceId of affectedInvoiceIds) {
+            await recalculateInvoiceStatus(base44, invoiceId);
         }
 
         // Check if transaction is fully allocated
@@ -77,7 +98,7 @@ Deno.serve(async (req) => {
 
         return Response.json({ 
             success: true,
-            message: `Transaction allocated to ${affectedItemIds.size} financial item(s)`
+            message: `Transaction allocated to ${affectedFinancialItemIds.size} financial item(s) and ${affectedInvoiceIds.size} invoice(s)`
         });
     } catch (error) {
         console.error('Error reconciling transaction:', error);
@@ -114,6 +135,51 @@ async function recalculateFinancialItemStatus(base44, itemId) {
     // Update financial item
     await base44.asServiceRole.entities.FinancialItem.update(itemId, {
         amount: paidAmount,
+        status: status
+    });
+}
+
+async function recalculateInvoiceStatus(base44, invoiceId) {
+    // Get all links for this invoice
+    const links = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
+        invoice_id: invoiceId
+    });
+
+    // Calculate total paid amount
+    const paidAmount = links.reduce((sum, link) => sum + link.linked_amount, 0);
+
+    // Get invoice to compare with expected amount
+    const invoices = await base44.asServiceRole.entities.Invoice.filter({ id: invoiceId });
+    if (invoices.length === 0) return;
+
+    const invoice = invoices[0];
+    const expectedAmount = invoice.expected_amount || invoice.amount || 0;
+
+    // Determine status
+    let status = 'pending';
+    if (paidAmount >= expectedAmount - 0.01) {
+        status = 'paid';
+    } else if (paidAmount > 0) {
+        status = 'partial';
+    }
+
+    // Check if overdue (only if not fully paid)
+    if (status !== 'paid' && invoice.due_date) {
+        try {
+            const dueDate = new Date(invoice.due_date);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (dueDate < today) {
+                status = 'overdue';
+            }
+        } catch (error) {
+            console.error(`Error parsing due_date for invoice ${invoiceId}:`, error);
+        }
+    }
+
+    // Update invoice
+    await base44.asServiceRole.entities.Invoice.update(invoiceId, {
+        paid_amount: paidAmount,
         status: status
     });
 }
