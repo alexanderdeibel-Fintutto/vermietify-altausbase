@@ -273,20 +273,19 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
             invoice_date: invoiceDate ? format(invoiceDate, 'yyyy-MM-dd') : null,
             due_date: dueDate ? format(dueDate, 'yyyy-MM-dd') : null,
             amount: amount,
-            expected_amount: amount,
-            paid_amount: 0,
             operating_cost_relevant: data.operating_cost_relevant || false,
         };
+
+        // Set expected_amount and paid_amount only for new invoices
+        if (!invoice) {
+            submissionData.expected_amount = amount;
+            submissionData.paid_amount = 0;
+        }
 
         // Remove category field if it exists (we use cost_type_id now)
         delete submissionData.category;
         
-        try {
-            await onSuccess(submissionData);
-        } catch (error) {
-            console.error('Error in onSuccess:', error);
-            toast.error('Fehler beim Erstellen: ' + error.message);
-        }
+        onSuccess(submissionData);
     };
 
     return (
@@ -714,6 +713,7 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="pending">Ausstehend</SelectItem>
+                                        <SelectItem value="partial">Teilzahlung</SelectItem>
                                         <SelectItem value="paid">Bezahlt</SelectItem>
                                         <SelectItem value="overdue">Überfällig</SelectItem>
                                     </SelectContent>
