@@ -326,12 +326,13 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
                 })
             );
 
-            const newTransactions = transactions.filter((tx, idx) => {
+            const newTransactions = transactions.filter((tx) => {
                     // Check if user decided to skip this transaction
-                    if (transactionDecisions.get(idx) === 'skip') {
+                    const txKey = `${tx.transaction_date}-${tx.amount}-${tx.description}`;
+                    if (transactionDecisions.get(txKey) === 'skip') {
                         return false;
                     }
-                
+
                 const key = JSON.stringify({
                     date: tx.transaction_date,
                     value: tx.value_date,
@@ -560,16 +561,9 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
                                     </div>
                                     <div className="space-y-3 max-h-64 overflow-y-auto">
                                         {duplicateSuggestions.map((suggestion, idx) => {
-                                                const txIndex = csvData.findIndex(row => {
-                                                    const builtTx = buildTransactionsFromMapping().find(t => 
-                                                        t.transaction_date === suggestion.newTransaction.transaction_date &&
-                                                        t.amount === suggestion.newTransaction.amount &&
-                                                        t.description === suggestion.newTransaction.description
-                                                    );
-                                                    return builtTx;
-                                                });
-                                                const decision = transactionDecisions.get(txIndex) || 'pending';
-                                                const topMatch = suggestion.potentialDuplicates[0];
+                                            const txKey = `${suggestion.newTransaction.transaction_date}-${suggestion.newTransaction.amount}-${suggestion.newTransaction.description}`;
+                                            const decision = transactionDecisions.get(txKey) || 'pending';
+                                            const topMatch = suggestion.potentialDuplicates[0];
 
                                                 return (
                                                     <div key={idx} className={`border rounded-lg p-3 ${
@@ -609,9 +603,9 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
                                                                     onClick={() => {
                                                                         const newDecisions = new Map(transactionDecisions);
                                                                         if (decision === 'skip') {
-                                                                            newDecisions.delete(txIndex);
+                                                                            newDecisions.delete(txKey);
                                                                         } else {
-                                                                            newDecisions.set(txIndex, 'skip');
+                                                                            newDecisions.set(txKey, 'skip');
                                                                         }
                                                                         setTransactionDecisions(newDecisions);
                                                                     }}
@@ -624,9 +618,9 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
                                                                     onClick={() => {
                                                                         const newDecisions = new Map(transactionDecisions);
                                                                         if (decision === 'import') {
-                                                                            newDecisions.delete(txIndex);
+                                                                            newDecisions.delete(txKey);
                                                                         } else {
-                                                                            newDecisions.set(txIndex, 'import');
+                                                                            newDecisions.set(txKey, 'import');
                                                                         }
                                                                         setTransactionDecisions(newDecisions);
                                                                     }}
@@ -654,7 +648,8 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
                                 </div>
                                 <div className="space-y-3 max-h-96 overflow-y-auto">
                                     {preview.map((tx, idx) => {
-                                        const decision = transactionDecisions.get(idx) || 'pending';
+                                        const txKey = `${tx.transaction_date}-${tx.amount}-${tx.description}`;
+                                        const decision = transactionDecisions.get(txKey) || 'pending';
                                         const isSkipped = decision === 'skip';
                                         return (
                                             <div key={idx} className={`text-xs border rounded-lg p-3 ${isSkipped ? 'bg-slate-100 opacity-40' : 'bg-slate-50 border-slate-200'}`}>
