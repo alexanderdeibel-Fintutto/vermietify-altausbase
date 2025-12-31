@@ -34,15 +34,27 @@ Deno.serve(async (req) => {
         // Take only the specified count
         const toDelete = transactions.slice(0, count || 1000);
 
-        // Delete them
-        for (const tx of toDelete) {
-            await base44.asServiceRole.entities.BankTransaction.delete(tx.id);
+        // Delete in batches to avoid rate limits
+        const batchSize = 10;
+        let deleted = 0;
+        
+        for (let i = 0; i < toDelete.length; i += batchSize) {
+            const batch = toDelete.slice(i, i + batchSize);
+            await Promise.all(
+                batch.map(tx => base44.asServiceRole.entities.BankTransaction.delete(tx.id))
+            );
+            deleted += batch.length;
+            
+            // Small delay between batches to avoid rate limiting
+            if (i + batchSize < toDelete.length) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
         }
 
         return Response.json({
             success: true,
-            deleted: toDelete.length,
-            message: `${toDelete.length} Transaktionen gelöscht`
+            deleted: deleted,
+            message: `${deleted} Transaktionen gelöscht`
         });
 
     } catch (error) {
