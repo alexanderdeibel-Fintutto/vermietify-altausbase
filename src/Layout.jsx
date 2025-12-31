@@ -24,6 +24,7 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Mietverträge', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts' },
         { name: 'Forderungen & Verbindlichkeiten', href: createPageUrl('FinancialItems'), icon: CreditCard, page: 'FinancialItems' },
         { name: 'Rechnungen & Belege', href: createPageUrl('Invoices'), icon: FileText, page: 'Invoices' },
+        { name: 'Kostenarten', href: createPageUrl('CostTypes'), icon: FileText, page: 'CostTypes' },
         { name: 'Bankkonten', href: createPageUrl('BankAccounts'), icon: Landmark, page: 'BankAccounts' },
         { name: 'Bankenabgleich', href: createPageUrl('BankReconciliation'), icon: Landmark, page: 'BankReconciliation' },
         { name: 'Auswertungen', href: createPageUrl('Analytics'), icon: BarChart3, page: 'Analytics' },
