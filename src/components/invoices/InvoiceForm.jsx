@@ -51,6 +51,10 @@ export default function InvoiceForm({ open, onOpenChange, invoice, buildings, un
     const selectedType = watch('type');
     const selectedBuildingId = watch('building_id');
     const selectedUnitId = watch('unit_id');
+    const selectedCostTypeId = watch('cost_type_id');
+    const watchedType = watch('type');
+    const watchedDescription = watch('description');
+    const watchedReference = watch('reference');
 
     useEffect(() => {
         if (invoice) {
