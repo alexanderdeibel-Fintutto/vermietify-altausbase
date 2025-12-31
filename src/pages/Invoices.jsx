@@ -43,6 +43,7 @@ import { Plus, Search, MoreVertical, Pencil, Trash2, FileText, Building2, Trendi
 import { toast } from 'sonner';
 import InvoiceForm from '@/components/invoices/InvoiceForm';
 import CostTypeForm from '@/components/cost-types/CostTypeForm';
+import RecipientForm from '@/components/recipients/RecipientForm';
 
 export default function Invoices() {
     const queryClient = useQueryClient();
@@ -67,6 +68,9 @@ export default function Invoices() {
     const [mainCategoryFilter, setMainCategoryFilter] = useState('all');
 
     // Recipient state
+    const [recipientFormOpen, setRecipientFormOpen] = useState(false);
+    const [editingRecipient, setEditingRecipient] = useState(null);
+    const [deleteRecipient, setDeleteRecipient] = useState(null);
     const [recipientSearchTerm, setRecipientSearchTerm] = useState('');
 
     const { data: invoices = [], isLoading: loadingInvoices } = useQuery({
@@ -97,6 +101,11 @@ export default function Invoices() {
     const { data: euerCategories = [] } = useQuery({
         queryKey: ['euer-categories'],
         queryFn: () => base44.entities.EuerCategory.list()
+    });
+
+    const { data: savedRecipients = [] } = useQuery({
+        queryKey: ['recipients'],
+        queryFn: () => base44.entities.Recipient.list()
     });
 
     // Invoice mutations
@@ -181,6 +190,47 @@ export default function Invoices() {
         }
     });
 
+    // Recipient mutations
+    const createRecipientMutation = useMutation({
+        mutationFn: (data) => base44.entities.Recipient.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['recipients'] });
+            setRecipientFormOpen(false);
+            toast.success('Empfänger erstellt');
+        },
+        onError: (error) => {
+            toast.error('Fehler beim Erstellen');
+            console.error(error);
+        }
+    });
+
+    const updateRecipientMutation = useMutation({
+        mutationFn: ({ id, data }) => base44.entities.Recipient.update(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['recipients'] });
+            setRecipientFormOpen(false);
+            setEditingRecipient(null);
+            toast.success('Empfänger aktualisiert');
+        },
+        onError: (error) => {
+            toast.error('Fehler beim Aktualisieren');
+            console.error(error);
+        }
+    });
+
+    const deleteRecipientMutation = useMutation({
+        mutationFn: (id) => base44.entities.Recipient.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['recipients'] });
+            setDeleteRecipient(null);
+            toast.success('Empfänger gelöscht');
+        },
+        onError: (error) => {
+            toast.error('Fehler beim Löschen');
+            console.error(error);
+        }
+    });
+
     const handleInvoiceSubmit = (data) => {
         if (editingInvoice) {
             updateInvoiceMutation.mutate({ id: editingInvoice.id, data });
@@ -197,10 +247,19 @@ export default function Invoices() {
         }
     };
 
-    // Get unique recipients
+    const handleRecipientSubmit = (data) => {
+        if (editingRecipient) {
+            updateRecipientMutation.mutate({ id: editingRecipient.id, data });
+        } else {
+            createRecipientMutation.mutate(data);
+        }
+    };
+
+    // Get unique recipients (combine from invoices and saved recipients)
     const recipients = useMemo(() => {
         const recipientMap = new Map();
         
+        // Add from invoices
         invoices.forEach(inv => {
             if (inv.recipient) {
                 const existing = recipientMap.get(inv.recipient);
@@ -213,14 +272,33 @@ export default function Invoices() {
                         name: inv.recipient,
                         count: 1,
                         totalAmount: inv.amount || 0,
-                        lastInvoiceDate: inv.invoice_date
+                        lastInvoiceDate: inv.invoice_date,
+                        savedId: null
                     });
                 }
             }
         });
 
+        // Add saved recipients (even if no invoices)
+        savedRecipients.forEach(saved => {
+            const existing = recipientMap.get(saved.name);
+            if (existing) {
+                existing.savedId = saved.id;
+                existing.notes = saved.notes;
+            } else {
+                recipientMap.set(saved.name, {
+                    name: saved.name,
+                    count: 0,
+                    totalAmount: 0,
+                    lastInvoiceDate: null,
+                    savedId: saved.id,
+                    notes: saved.notes
+                });
+            }
+        });
+
         return Array.from(recipientMap.values()).sort((a, b) => b.count - a.count);
-    }, [invoices]);
+    }, [invoices, savedRecipients]);
 
     // Filter invoices
     const filteredInvoices = useMemo(() => {
@@ -400,6 +478,9 @@ export default function Invoices() {
                         } else if (activeTab === 'cost-types') {
                             setEditingCostType(null);
                             setCostTypeFormOpen(true);
+                        } else if (activeTab === 'recipients') {
+                            setEditingRecipient(null);
+                            setRecipientFormOpen(true);
                         }
                     }}
                     className="bg-emerald-600 hover:bg-emerald-700 gap-2"
@@ -920,13 +1001,19 @@ export default function Invoices() {
                                                 <TableHead className="text-right">Anzahl Rechnungen</TableHead>
                                                 <TableHead className="text-right">Gesamtbetrag</TableHead>
                                                 <TableHead>Letzte Rechnung</TableHead>
+                                                <TableHead className="text-right">Aktionen</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
                                             {filteredRecipients.map((recipient, idx) => (
                                                 <TableRow key={idx}>
-                                                    <TableCell className="font-medium">
-                                                        {recipient.name}
+                                                    <TableCell>
+                                                        <div>
+                                                            <p className="font-medium">{recipient.name}</p>
+                                                            {recipient.notes && (
+                                                                <p className="text-xs text-slate-500 mt-1">{recipient.notes}</p>
+                                                            )}
+                                                        </div>
                                                     </TableCell>
                                                     <TableCell className="text-right">
                                                         {recipient.count}
@@ -936,6 +1023,40 @@ export default function Invoices() {
                                                     </TableCell>
                                                     <TableCell>
                                                         {recipient.lastInvoiceDate ? format(parseISO(recipient.lastInvoiceDate), 'dd.MM.yyyy', { locale: de }) : '-'}
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        {recipient.savedId && (
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button variant="ghost" size="icon">
+                                                                        <MoreVertical className="w-4 h-4" />
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end">
+                                                                    <DropdownMenuItem onClick={() => {
+                                                                        setEditingRecipient({
+                                                                            id: recipient.savedId,
+                                                                            name: recipient.name,
+                                                                            notes: recipient.notes
+                                                                        });
+                                                                        setRecipientFormOpen(true);
+                                                                    }}>
+                                                                        <Pencil className="w-4 h-4 mr-2" />
+                                                                        Bearbeiten
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem 
+                                                                        onClick={() => setDeleteRecipient({
+                                                                            id: recipient.savedId,
+                                                                            name: recipient.name
+                                                                        })}
+                                                                        className="text-red-600"
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4 mr-2" />
+                                                                        Löschen
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        )}
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
@@ -966,6 +1087,15 @@ export default function Invoices() {
                 costType={editingCostType}
                 euerCategories={euerCategories}
                 onSuccess={handleCostTypeSubmit}
+            />
+
+            {/* Recipient Form Dialog */}
+            <RecipientForm
+                open={recipientFormOpen}
+                onOpenChange={setRecipientFormOpen}
+                recipient={editingRecipient}
+                onSuccess={handleRecipientSubmit}
+                isLoading={createRecipientMutation.isPending || updateRecipientMutation.isPending}
             />
 
             {/* Delete Invoice Dialog */}
@@ -1002,6 +1132,27 @@ export default function Invoices() {
                         <AlertDialogCancel>Abbrechen</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={() => deleteCostTypeMutation.mutate(deleteCostType.id)}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            Löschen
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Delete Recipient Dialog */}
+            <AlertDialog open={!!deleteRecipient} onOpenChange={() => setDeleteRecipient(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Empfänger löschen?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Möchten Sie den Empfänger "{deleteRecipient?.name}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => deleteRecipientMutation.mutate(deleteRecipient.id)}
                             className="bg-red-600 hover:bg-red-700"
                         >
                             Löschen

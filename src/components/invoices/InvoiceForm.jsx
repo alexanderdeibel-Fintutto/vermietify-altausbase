@@ -68,14 +68,23 @@ export default function InvoiceForm({ open, onOpenChange, invoice, buildings, un
         queryFn: () => base44.entities.Invoice.list()
     });
 
-    // Get unique recipients from existing invoices
+    // Fetch saved recipients
+    const { data: savedRecipients = [] } = useQuery({
+        queryKey: ['recipients'],
+        queryFn: () => base44.entities.Recipient.list()
+    });
+
+    // Get unique recipients from both invoices and saved recipients
     const uniqueRecipients = React.useMemo(() => {
         const recipients = new Set();
         existingInvoices.forEach(inv => {
             if (inv.recipient) recipients.add(inv.recipient);
         });
+        savedRecipients.forEach(saved => {
+            if (saved.name) recipients.add(saved.name);
+        });
         return Array.from(recipients).sort();
-    }, [existingInvoices]);
+    }, [existingInvoices, savedRecipients]);
 
     const selectedBuildingId = watch('building_id');
     const selectedUnitId = watch('unit_id');
