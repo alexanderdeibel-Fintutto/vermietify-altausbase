@@ -313,11 +313,20 @@ export default function BankAccounts() {
         });
         
         // Sort transactions by date (newest first)
-        map.forEach((txs, accountId) => {
+        map.forEach((txs) => {
             txs.sort((a, b) => {
                 if (!a.transaction_date) return 1;
                 if (!b.transaction_date) return -1;
-                return new Date(b.transaction_date) - new Date(a.transaction_date);
+                
+                // Parse dates properly (handles yyyy-MM-dd format)
+                const dateA = new Date(a.transaction_date);
+                const dateB = new Date(b.transaction_date);
+                
+                // Check for invalid dates
+                if (isNaN(dateA.getTime())) return 1;
+                if (isNaN(dateB.getTime())) return -1;
+                
+                return dateB.getTime() - dateA.getTime();
             });
         });
         
