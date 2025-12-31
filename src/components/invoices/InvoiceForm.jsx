@@ -267,11 +267,14 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
             return;
         }
 
+        const amount = parseFloat(data.amount);
         const submissionData = {
             ...data,
             invoice_date: invoiceDate ? format(invoiceDate, 'yyyy-MM-dd') : null,
             due_date: dueDate ? format(dueDate, 'yyyy-MM-dd') : null,
-            amount: parseFloat(data.amount),
+            amount: amount,
+            expected_amount: amount,
+            paid_amount: 0,
             operating_cost_relevant: data.operating_cost_relevant || false,
         };
 
