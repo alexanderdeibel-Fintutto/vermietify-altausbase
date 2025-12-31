@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,18 +17,21 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { CalendarIcon, Upload, Loader2, Sparkles, Info } from 'lucide-react';
+import { CalendarIcon, Upload, Loader2, Sparkles, Info, Plus } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import RecipientForm from '@/components/recipients/RecipientForm';
 
 export default function InvoiceForm({ open, onOpenChange, invoice, buildings, units, contracts, onSuccess }) {
+    const queryClient = useQueryClient();
     const [uploading, setUploading] = useState(false);
     const [analyzingAI, setAnalyzingAI] = useState(false);
     const [aiSuggestions, setAiSuggestions] = useState(null);
     const [invoiceDate, setInvoiceDate] = useState(invoice?.invoice_date ? parseISO(invoice.invoice_date) : null);
     const [dueDate, setDueDate] = useState(invoice?.due_date ? parseISO(invoice.due_date) : null);
+    const [recipientFormOpen, setRecipientFormOpen] = useState(false);
     const { register, handleSubmit, watch, setValue, reset } = useForm({
         defaultValues: invoice || {
             type: 'expense',
@@ -85,6 +88,21 @@ export default function InvoiceForm({ open, onOpenChange, invoice, buildings, un
         });
         return Array.from(recipients).sort();
     }, [existingInvoices, savedRecipients]);
+
+    // Create recipient mutation
+    const createRecipientMutation = useMutation({
+        mutationFn: (data) => base44.entities.Recipient.create(data),
+        onSuccess: (newRecipient) => {
+            queryClient.invalidateQueries({ queryKey: ['recipients'] });
+            setValue('recipient', newRecipient.name);
+            setRecipientFormOpen(false);
+            toast.success('Empfänger erstellt und ausgewählt');
+        },
+        onError: (error) => {
+            toast.error('Fehler beim Erstellen des Empfängers');
+            console.error(error);
+        }
+    });
 
     const selectedBuildingId = watch('building_id');
     const selectedUnitId = watch('unit_id');
@@ -225,6 +243,10 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
         }
     };
 
+    const handleRecipientSubmit = (data) => {
+        createRecipientMutation.mutate(data);
+    };
+
     const onSubmit = async (data) => {
         // Basic validation
         if (!data.invoice_date || !data.amount || !data.description || !data.cost_type_id) {
@@ -349,20 +371,33 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                                 </Select>
                             </div>
 
-                            {/* Recipient with autocomplete */}
-                            <div>
+                            {/* Recipient with autocomplete and add button */}
+                            <div className="md:col-span-2">
                                 <Label>Empfänger/Aussteller *</Label>
-                                <input
-                                    list="recipients-list"
-                                    {...register('recipient')}
-                                    placeholder="z.B. Stadtwerke, Versicherung AG..."
-                                    className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                />
-                                <datalist id="recipients-list">
-                                    {uniqueRecipients.map((recipient, idx) => (
-                                        <option key={idx} value={recipient} />
-                                    ))}
-                                </datalist>
+                                <div className="flex gap-2">
+                                    <div className="flex-1">
+                                        <input
+                                            list="recipients-list"
+                                            {...register('recipient')}
+                                            placeholder="z.B. Stadtwerke, Versicherung AG..."
+                                            className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        />
+                                        <datalist id="recipients-list">
+                                            {uniqueRecipients.map((recipient, idx) => (
+                                                <option key={idx} value={recipient} />
+                                            ))}
+                                        </datalist>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setRecipientFormOpen(true)}
+                                        className="gap-2"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                        Neu
+                                    </Button>
+                                </div>
                             </div>
 
                             {/* Reference */}
@@ -730,6 +765,15 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                     </div>
                 </form>
             </DialogContent>
+
+            {/* Recipient Form Dialog */}
+            <RecipientForm
+                open={recipientFormOpen}
+                onOpenChange={setRecipientFormOpen}
+                recipient={null}
+                onSuccess={handleRecipientSubmit}
+                isLoading={createRecipientMutation.isPending}
+            />
         </Dialog>
     );
 }
