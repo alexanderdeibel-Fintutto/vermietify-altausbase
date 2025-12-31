@@ -486,13 +486,16 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
                                     <div key={field}>
                                         <Label>{label} {['transaction_date', 'amount', 'description'].includes(field) && '*'}</Label>
                                         <Select 
-                                            value={mapping[field]} 
-                                            onValueChange={(value) => setMapping({...mapping, [field]: value})}
+                                            value={mapping[field] || ''} 
+                                            onValueChange={(value) => setMapping({...mapping, [field]: value === 'auto' ? '' : value})}
                                         >
                                             <SelectTrigger className="mt-1">
                                                 <SelectValue placeholder="Spalte wählen..." />
                                             </SelectTrigger>
                                             <SelectContent>
+                                                {['sender_receiver', 'reference'].includes(field) && (
+                                                    <SelectItem value="auto">🔍 Automatisch erkennen</SelectItem>
+                                                )}
                                                 <SelectItem value={null}>Nicht zuordnen</SelectItem>
                                                 {csvHeaders.map(header => (
                                                     <SelectItem key={header} value={header}>
