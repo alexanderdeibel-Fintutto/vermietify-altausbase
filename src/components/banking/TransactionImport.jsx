@@ -255,18 +255,28 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
 
             console.log('Existing transactions for account:', allExisting.length);
 
-            // More robust duplicate detection using multiple fields
+            // Very robust duplicate detection: date + value_date + amount + sender
             const existingKeys = new Set(
                 allExisting.map(tx => {
-                    // Create a composite key with date, amount, and first 50 chars of description
-                    const shortDesc = tx.description?.substring(0, 50) || '';
-                    return `${tx.transaction_date}_${tx.amount}_${shortDesc}`;
+                    // Use multiple unique identifiers
+                    return JSON.stringify({
+                        date: tx.transaction_date,
+                        value: tx.value_date,
+                        amt: tx.amount?.toFixed(2), // Normalize to 2 decimals
+                        sender: tx.sender_receiver?.substring(0, 30) || '',
+                        iban: tx.iban?.substring(0, 15) || ''
+                    });
                 })
             );
 
             const newTransactions = transactions.filter(tx => {
-                const shortDesc = tx.description?.substring(0, 50) || '';
-                const key = `${tx.transaction_date}_${tx.amount}_${shortDesc}`;
+                const key = JSON.stringify({
+                    date: tx.transaction_date,
+                    value: tx.value_date,
+                    amt: tx.amount?.toFixed(2),
+                    sender: tx.sender_receiver?.substring(0, 30) || '',
+                    iban: tx.iban?.substring(0, 15) || ''
+                });
                 return !existingKeys.has(key);
             });
 
