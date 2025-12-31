@@ -159,6 +159,7 @@ export default function BankAccounts() {
     const [importOpen, setImportOpen] = useState(false);
     const [importAccountId, setImportAccountId] = useState(null);
     const [expandedAccounts, setExpandedAccounts] = useState({});
+    const [selectedAccountFilter, setSelectedAccountFilter] = useState('all');
     const queryClient = useQueryClient();
 
     const toggleAccountExpanded = (accountId) => {
@@ -175,7 +176,7 @@ export default function BankAccounts() {
 
     const { data: transactions = [] } = useQuery({
         queryKey: ['bankTransactions'],
-        queryFn: () => base44.entities.BankTransaction.list('-transaction_date', 200),
+        queryFn: () => base44.entities.BankTransaction.list('-transaction_date', 1000),
         staleTime: 0
     });
 
@@ -331,8 +332,14 @@ export default function BankAccounts() {
     };
 
     const accountTransactionsMap = useMemo(() => {
+        // Filter transactions by selected account
+        let filteredTransactions = transactions;
+        if (selectedAccountFilter !== 'all') {
+            filteredTransactions = transactions.filter(t => t.account_id === selectedAccountFilter);
+        }
+        
         const map = new Map();
-        transactions.forEach(t => {
+        filteredTransactions.forEach(t => {
             if (!map.has(t.account_id)) {
                 map.set(t.account_id, []);
             }
@@ -376,7 +383,7 @@ export default function BankAccounts() {
         });
         
         return map;
-    }, [transactions]);
+    }, [transactions, selectedAccountFilter]);
 
     const accountStatsMap = useMemo(() => {
         const map = new Map();
@@ -404,11 +411,24 @@ export default function BankAccounts() {
     return (
         <div className="space-y-8">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-                <div>
+                <div className="flex-1">
                     <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">Bankkonten</h1>
                     <p className="text-slate-500 mt-1">{accounts.length} Konten verwalten</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                    <Select value={selectedAccountFilter} onValueChange={setSelectedAccountFilter}>
+                        <SelectTrigger className="w-48">
+                            <SelectValue placeholder="Konto wählen..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Alle Konten</SelectItem>
+                            {accounts.map(acc => (
+                                <SelectItem key={acc.id} value={acc.id}>
+                                    {acc.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     <Button
                         onClick={handleSyncAll}
                         disabled={isSyncing || accounts.length === 0}
