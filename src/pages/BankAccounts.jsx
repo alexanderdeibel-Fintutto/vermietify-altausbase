@@ -304,8 +304,16 @@ export default function BankAccounts() {
         }
     };
 
-    const handleUndoImport = async (accountId, count) => {
-        if (!confirm(`Möchten Sie wirklich die letzten ${count} Transaktionen löschen?`)) {
+    const handleUndoImport = async (accountId) => {
+        const accountTxs = accountTransactionsMap.get(accountId) || [];
+        const count = accountTxs.length;
+        
+        if (count === 0) {
+            toast.error('Keine Transaktionen zum Löschen vorhanden');
+            return;
+        }
+
+        if (!confirm(`Möchten Sie wirklich alle ${count} Transaktionen dieses Kontos löschen?`)) {
             return;
         }
 
@@ -522,11 +530,11 @@ export default function BankAccounts() {
                                                     </DropdownMenuItem>
                                                     {stats.count > 0 && (
                                                         <DropdownMenuItem 
-                                                            onClick={() => handleUndoImport(account.id, 1000)}
+                                                            onClick={() => handleUndoImport(account.id)}
                                                             className="text-orange-600"
                                                         >
                                                             <Undo2 className="w-4 h-4 mr-2" />
-                                                            Letzten Import rückgängig machen
+                                                            Alle Transaktionen löschen ({stats.count})
                                                         </DropdownMenuItem>
                                                     )}
                                                     <DropdownMenuItem onClick={() => {
