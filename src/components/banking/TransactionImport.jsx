@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Upload, FileText, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
+import { Upload, FileText, CheckCircle2, AlertCircle, ArrowRight, AlertTriangle, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import {
@@ -29,6 +29,9 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
         reference: ''
     });
     const [preview, setPreview] = useState([]);
+    const [duplicateSuggestions, setDuplicateSuggestions] = useState([]);
+    const [checkingDuplicates, setCheckingDuplicates] = useState(false);
+    const [excludedTransactions, setExcludedTransactions] = useState(new Set());
 
     const detectDelimiter = (line) => {
         const semicolonCount = (line.match(/;/g) || []).length;
@@ -112,7 +115,8 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
             if (h.includes('buchungstext') && !newMapping.description) {
                 newMapping.description = header;
             }
-            if ((h.includes('verwendungszweck') || h.includes('zweck') || h.includes('referenz')) && !newMapping.reference) {
+            if ((h.includes('verwendungszweck') || h.includes('zweck') || h.includes('referenz') || 
+                 h.includes('verwendung') || h.includes('purpose') || h.includes('memo')) && !newMapping.reference) {
                 newMapping.reference = header;
             }
             if ((h.includes('auftraggeber') || h.includes('empfänger') || h.includes('name')) && !newMapping.sender_receiver) {
@@ -159,16 +163,50 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
         return meaningfulParts.join(' ').trim();
     };
 
+    const extractReferenceFromDescription = (description) => {
+        if (!description) return '';
+        
+        // Try to extract reference/purpose from description
+        // Look for patterns like: "Verwendungszweck:", "Zweck:", or after "SEPA"
+        const patterns = [
+            /Verwendungszweck[:\s]+([^,]+)/i,
+            /Zweck[:\s]+([^,]+)/i,
+            /SEPA[^,]*,\s*([^,]+)/i,
+            /Kundenreferenz[:\s]+([^,]+)/i
+        ];
+        
+        for (const pattern of patterns) {
+            const match = description.match(pattern);
+            if (match && match[1]) {
+                return match[1].trim();
+            }
+        }
+        
+        // If no pattern matches, extract text after common separators
+        const parts = description.split(/End-to-End|Mandatsref|Gläubiger/);
+        if (parts.length > 1 && parts[1]) {
+            return parts[1].split(',')[0].trim();
+        }
+        
+        return '';
+    };
+
     const buildTransactionsFromMapping = () => {
         const transactions = [];
 
         csvData.forEach(row => {
             const descriptionText = mapping.description ? row[mapping.description]?.trim() : '';
             let senderReceiver = mapping.sender_receiver ? row[mapping.sender_receiver]?.trim() : '';
+            let reference = mapping.reference ? row[mapping.reference]?.trim() : '';
             
             // If no sender_receiver column mapped, try to extract from description
             if (!senderReceiver && descriptionText) {
                 senderReceiver = extractSenderFromDescription(descriptionText);
+            }
+            
+            // If no reference column mapped, try to extract from description
+            if (!reference && descriptionText) {
+                reference = extractReferenceFromDescription(descriptionText);
             }
             
             const transaction = {
@@ -178,7 +216,7 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
                 description: descriptionText,
                 sender_receiver: senderReceiver,
                 iban: mapping.iban ? row[mapping.iban]?.trim() : '',
-                reference: mapping.reference ? row[mapping.reference]?.trim() : ''
+                reference: reference
             };
 
             if (transaction.transaction_date && !isNaN(transaction.amount)) {
@@ -217,14 +255,33 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
         reader.readAsText(selectedFile, 'UTF-8');
     };
 
-    const handleContinueToPreview = () => {
+    const handleContinueToPreview = async () => {
         const transactions = buildTransactionsFromMapping();
         if (transactions.length === 0) {
             toast.error('Keine gültigen Transaktionen gefunden');
             return;
         }
+        
         setPreview(transactions.slice(0, 10));
         setStep(3);
+        
+        // Check for potential duplicates in background
+        setCheckingDuplicates(true);
+        try {
+            const response = await base44.functions.invoke('checkPotentialDuplicates', {
+                accountId,
+                transactions
+            });
+            
+            if (response.data.success) {
+                setDuplicateSuggestions(response.data.duplicateSuggestions || []);
+            }
+        } catch (error) {
+            console.error('Duplicate check error:', error);
+            // Don't show error to user, just skip duplicate check
+        } finally {
+            setCheckingDuplicates(false);
+        }
     };
 
     const handleImport = async () => {
@@ -269,7 +326,12 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
                 })
             );
 
-            const newTransactions = transactions.filter(tx => {
+            const newTransactions = transactions.filter((tx, idx) => {
+                // Check if excluded by user
+                if (excludedTransactions.has(idx)) {
+                    return false;
+                }
+                
                 const key = JSON.stringify({
                     date: tx.transaction_date,
                     value: tx.value_date,
@@ -336,6 +398,8 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
         setCsvHeaders([]);
         setCsvData([]);
         setPreview([]);
+        setDuplicateSuggestions([]);
+        setExcludedTransactions(new Set());
         setMapping({
             transaction_date: '',
             value_date: '',
@@ -476,6 +540,77 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
                     {/* Step 3: Preview */}
                     {step === 3 && preview.length > 0 && (
                         <div className="space-y-4">
+                            {checkingDuplicates && (
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-2">
+                                    <div className="animate-spin">⏳</div>
+                                    <span className="text-sm text-blue-800">Prüfe auf mögliche Duplikate...</span>
+                                </div>
+                            )}
+
+                            {duplicateSuggestions.length > 0 && (
+                                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <AlertTriangle className="w-5 h-5 text-orange-600" />
+                                        <span className="font-medium text-orange-800">
+                                            {duplicateSuggestions.length} mögliche Duplikate gefunden
+                                        </span>
+                                    </div>
+                                    <div className="space-y-3 max-h-64 overflow-y-auto">
+                                        {duplicateSuggestions.map((suggestion, idx) => {
+                                            const txIndex = csvData.findIndex(row => {
+                                                const builtTx = buildTransactionsFromMapping().find(t => 
+                                                    t.transaction_date === suggestion.newTransaction.transaction_date &&
+                                                    t.amount === suggestion.newTransaction.amount &&
+                                                    t.description === suggestion.newTransaction.description
+                                                );
+                                                return builtTx;
+                                            });
+                                            const isExcluded = excludedTransactions.has(txIndex);
+                                            const topMatch = suggestion.potentialDuplicates[0];
+
+                                            return (
+                                                <div key={idx} className={`border rounded-lg p-3 ${isExcluded ? 'bg-slate-100 opacity-60' : 'bg-white'}`}>
+                                                    <div className="flex items-start justify-between gap-3">
+                                                        <div className="flex-1 space-y-2">
+                                                            <div className="text-sm">
+                                                                <span className="font-medium text-slate-700">Neue Transaktion:</span>
+                                                                <div className="mt-1 text-xs text-slate-600">
+                                                                    {suggestion.newTransaction.transaction_date} | €{suggestion.newTransaction.amount.toFixed(2)} | {suggestion.newTransaction.description?.substring(0, 50)}...
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-sm">
+                                                                <span className="font-medium text-orange-700">Ähnliche existierende:</span>
+                                                                <div className="mt-1 text-xs text-slate-600">
+                                                                    {topMatch.existingTransaction.transaction_date} | €{topMatch.existingTransaction.amount.toFixed(2)} | {topMatch.existingTransaction.description?.substring(0, 50)}...
+                                                                </div>
+                                                                <div className="mt-1 text-xs text-orange-600">
+                                                                    Übereinstimmung: {(topMatch.matchScore * 100).toFixed(0)}%
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <Button
+                                                            size="sm"
+                                                            variant={isExcluded ? "outline" : "destructive"}
+                                                            onClick={() => {
+                                                                const newExcluded = new Set(excludedTransactions);
+                                                                if (isExcluded) {
+                                                                    newExcluded.delete(txIndex);
+                                                                } else {
+                                                                    newExcluded.add(txIndex);
+                                                                }
+                                                                setExcludedTransactions(newExcluded);
+                                                            }}
+                                                        >
+                                                            {isExcluded ? 'Doch importieren' : 'Überspringen'}
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="border border-slate-200 rounded-lg p-4">
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-2">
@@ -483,48 +618,56 @@ export default function TransactionImport({ open, onOpenChange, accountId, onSuc
                                         <span className="text-sm font-medium">Vorschau (erste 10 Zeilen)</span>
                                     </div>
                                     <span className="text-xs text-slate-500">
-                                        {csvData.length} Zeilen insgesamt
+                                        {csvData.length - excludedTransactions.size} von {csvData.length} werden importiert
                                     </span>
                                 </div>
                                 <div className="space-y-3 max-h-96 overflow-y-auto">
-                                    {preview.map((tx, idx) => (
-                                        <div key={idx} className="text-xs border border-slate-200 rounded-lg p-3 bg-slate-50">
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <div>
-                                                    <span className="font-medium text-slate-500">Datum:</span>
-                                                    <span className="ml-2 text-slate-800">{tx.transaction_date}</span>
-                                                </div>
-                                                <div>
-                                                    <span className="font-medium text-slate-500">Betrag:</span>
-                                                    <span className={`ml-2 font-semibold ${tx.amount >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                                                        €{tx.amount.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-                                                    </span>
-                                                </div>
-                                                {tx.sender_receiver && (
-                                                    <div className="col-span-2">
-                                                        <span className="font-medium text-slate-500">Auftraggeber/Empfänger:</span>
-                                                        <span className="ml-2 text-slate-800">{tx.sender_receiver}</span>
+                                    {preview.map((tx, idx) => {
+                                        const isExcluded = excludedTransactions.has(idx);
+                                        return (
+                                            <div key={idx} className={`text-xs border rounded-lg p-3 ${isExcluded ? 'bg-slate-100 opacity-40' : 'bg-slate-50 border-slate-200'}`}>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div>
+                                                        <span className="font-medium text-slate-500">Datum:</span>
+                                                        <span className="ml-2 text-slate-800">{tx.transaction_date}</span>
                                                     </div>
-                                                )}
-                                                <div className="col-span-2">
-                                                    <span className="font-medium text-slate-500">Buchungstext:</span>
-                                                    <span className="ml-2 text-slate-800">{tx.description}</span>
-                                                </div>
-                                                {tx.reference && tx.reference !== tx.description && (
-                                                    <div className="col-span-2">
-                                                        <span className="font-medium text-slate-500">Verwendungszweck:</span>
-                                                        <span className="ml-2 text-slate-800">{tx.reference}</span>
+                                                    <div>
+                                                        <span className="font-medium text-slate-500">Betrag:</span>
+                                                        <span className={`ml-2 font-semibold ${tx.amount >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                                            €{tx.amount.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                                        </span>
                                                     </div>
-                                                )}
-                                                {tx.iban && (
+                                                    {tx.sender_receiver && (
+                                                        <div className="col-span-2">
+                                                            <span className="font-medium text-slate-500">Auftraggeber/Empfänger:</span>
+                                                            <span className="ml-2 text-slate-800">{tx.sender_receiver}</span>
+                                                        </div>
+                                                    )}
                                                     <div className="col-span-2">
-                                                        <span className="font-medium text-slate-500">IBAN:</span>
-                                                        <span className="ml-2 text-slate-800 font-mono">{tx.iban}</span>
+                                                        <span className="font-medium text-slate-500">Buchungstext:</span>
+                                                        <span className="ml-2 text-slate-800">{tx.description}</span>
+                                                    </div>
+                                                    {tx.reference && tx.reference !== tx.description && (
+                                                        <div className="col-span-2">
+                                                            <span className="font-medium text-slate-500">Verwendungszweck:</span>
+                                                            <span className="ml-2 text-slate-800">{tx.reference}</span>
+                                                        </div>
+                                                    )}
+                                                    {tx.iban && (
+                                                        <div className="col-span-2">
+                                                            <span className="font-medium text-slate-500">IBAN:</span>
+                                                            <span className="ml-2 text-slate-800 font-mono">{tx.iban}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {isExcluded && (
+                                                    <div className="mt-2 pt-2 border-t border-slate-300">
+                                                        <span className="text-xs text-slate-600 italic">Wird übersprungen (mögliches Duplikat)</span>
                                                     </div>
                                                 )}
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
 
