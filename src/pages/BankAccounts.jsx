@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Landmark, Plus, MoreVertical, Pencil, Trash2, Upload, TrendingUp, TrendingDown, Link2, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
@@ -303,16 +303,26 @@ export default function BankAccounts() {
         }
     };
 
-    const getAccountTransactions = (accountId) => {
-        return transactions.filter(t => t.account_id === accountId);
-    };
+    const accountTransactionsMap = useMemo(() => {
+        const map = new Map();
+        transactions.forEach(t => {
+            if (!map.has(t.account_id)) {
+                map.set(t.account_id, []);
+            }
+            map.get(t.account_id).push(t);
+        });
+        return map;
+    }, [transactions]);
 
-    const getTransactionStats = (accountId) => {
-        const accountTx = getAccountTransactions(accountId);
-        const income = accountTx.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
-        const expenses = accountTx.filter(t => t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0);
-        return { income, expenses, count: accountTx.length };
-    };
+    const accountStatsMap = useMemo(() => {
+        const map = new Map();
+        accountTransactionsMap.forEach((txs, accountId) => {
+            const income = txs.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
+            const expenses = txs.filter(t => t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0);
+            map.set(accountId, { income, expenses, count: txs.length });
+        });
+        return map;
+    }, [accountTransactionsMap]);
 
     if (isLoading) {
         return (
@@ -396,8 +406,8 @@ export default function BankAccounts() {
             ) : (
                 <div className="grid grid-cols-1 gap-6">
                     {accounts.map((account) => {
-                        const stats = getTransactionStats(account.id);
-                        const accountTransactions = getAccountTransactions(account.id);
+                        const stats = accountStatsMap.get(account.id) || { income: 0, expenses: 0, count: 0 };
+                        const accountTransactions = accountTransactionsMap.get(account.id) || [];
                         const isExpanded = expandedAccounts[account.id];
                         
                         return (
