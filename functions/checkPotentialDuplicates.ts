@@ -30,21 +30,9 @@ function stringSimilarity(str1, str2) {
     return matches / Math.max(tokens1.length, tokens2.length);
 }
 
-// Check if two amounts are similar (within threshold)
+// Check if two amounts are exactly the same
 function amountSimilarity(amount1, amount2) {
-    const diff = Math.abs(amount1 - amount2);
-    const avg = (Math.abs(amount1) + Math.abs(amount2)) / 2;
-    
-    if (diff === 0) return 1;
-    if (avg === 0) return 0;
-    
-    // Allow 10% deviation or 5 EUR fixed, whichever is larger
-    const threshold = Math.max(avg * 0.1, 5);
-    
-    if (diff <= threshold) {
-        return 1 - (diff / threshold);
-    }
-    
+    if (amount1 === amount2) return 1;
     return 0;
 }
 
@@ -91,27 +79,27 @@ function dateSimilarity(date1, date2, maxDays = 7) {
 // Calculate overall match score
 function calculateMatchScore(newTx, existingTx) {
     const scores = {
-        date: dateSimilarity(newTx.transaction_date, existingTx.transaction_date, 3), // max 3 days
+        date: dateSimilarity(newTx.transaction_date, existingTx.transaction_date, 0), // must be exact date
         amount: amountSimilarity(newTx.amount, existingTx.amount),
         description: stringSimilarity(newTx.description, existingTx.description),
         sender: stringSimilarity(newTx.sender_receiver, existingTx.sender_receiver),
         reference: stringSimilarity(newTx.reference, existingTx.reference)
     };
     
-    // Strict rule: if dates are more than 3 days apart, it's not a duplicate
-    if (scores.date === 0) {
+    // Strict rule: if dates or amounts are not an exact match, it's not a duplicate
+    if (scores.date < 1 || scores.amount < 1) {
         return {
             totalScore: 0,
             details: scores
         };
     }
     
-    // Date is most important criterion
+    // If date and amount match exactly, consider other factors for final score
     const weights = {
-        date: 0.40,
-        amount: 0.30,
-        sender: 0.20,
-        description: 0.10,
+        date: 0.5,
+        amount: 0.4,
+        sender: 0.05,
+        description: 0.05,
         reference: 0.00
     };
     
