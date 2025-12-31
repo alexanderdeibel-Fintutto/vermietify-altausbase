@@ -305,11 +305,11 @@ export default function BankAccounts() {
     };
 
     const handleUndoImport = async (accountId) => {
-        if (!confirm(`Möchten Sie wirklich ALLE Transaktionen dieses Kontos löschen?\n\nDies kann nicht rückgängig gemacht werden und kann einige Minuten dauern.`)) {
+        if (!confirm(`Möchten Sie den letzten CSV-Import für dieses Konto rückgängig machen?\n\nAlle Transaktionen aus dem letzten Import werden gelöscht.`)) {
             return;
         }
 
-        const loadingToast = toast.loading('Lösche Transaktionen...');
+        const loadingToast = toast.loading('Lösche Import-Transaktionen...');
 
         try {
             const response = await base44.functions.invoke('undoLastImport', { accountId });
@@ -528,10 +528,10 @@ export default function BankAccounts() {
                                                     {stats.count > 0 && (
                                                         <DropdownMenuItem 
                                                             onClick={() => handleUndoImport(account.id)}
-                                                            className="text-red-600"
+                                                            className="text-orange-600"
                                                         >
-                                                            <Trash2 className="w-4 h-4 mr-2" />
-                                                            Alle Transaktionen löschen
+                                                            <Undo2 className="w-4 h-4 mr-2" />
+                                                            Letzten Import rückgängig machen
                                                         </DropdownMenuItem>
                                                     )}
                                                     <DropdownMenuItem onClick={() => {

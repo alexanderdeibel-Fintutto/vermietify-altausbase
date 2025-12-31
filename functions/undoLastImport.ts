@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'accountId erforderlich' }, { status: 400 });
         }
 
-        // Get ALL transactions for this account
+        // Get ALL transactions for this account, sorted by creation date (newest first)
         let allTransactions = [];
         let hasMore = true;
         let skip = 0;
@@ -36,7 +36,6 @@ Deno.serve(async (req) => {
                 allTransactions = allTransactions.concat(batch);
                 skip += batch.length;
 
-                // If we got less than the limit, we're done
                 if (batch.length < limit) {
                     hasMore = false;
                 }
@@ -51,19 +50,35 @@ Deno.serve(async (req) => {
             });
         }
 
+        // Find the last import batch: all transactions created within 5 minutes of the newest transaction
+        const newestDate = new Date(allTransactions[0].created_date);
+        const importTimeWindow = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+        const lastImportBatch = allTransactions.filter(tx => {
+            const txDate = new Date(tx.created_date);
+            return (newestDate - txDate) <= importTimeWindow;
+        });
+
+        if (lastImportBatch.length === 0) {
+            return Response.json({ 
+                success: true,
+                deleted: 0,
+                message: 'Keine Transaktionen im letzten Import gefunden'
+            });
+        }
+
         // Delete in small batches to avoid rate limits
         const batchSize = 10;
         let deleted = 0;
 
-        for (let i = 0; i < allTransactions.length; i += batchSize) {
-            const batch = allTransactions.slice(i, i + batchSize);
+        for (let i = 0; i < lastImportBatch.length; i += batchSize) {
+            const batch = lastImportBatch.slice(i, i + batchSize);
             await Promise.all(
                 batch.map(tx => base44.asServiceRole.entities.BankTransaction.delete(tx.id))
             );
             deleted += batch.length;
 
-            // Small delay between batches to avoid rate limiting
-            if (i + batchSize < allTransactions.length) {
+            if (i + batchSize < lastImportBatch.length) {
                 await new Promise(resolve => setTimeout(resolve, 150));
             }
         }
@@ -71,8 +86,8 @@ Deno.serve(async (req) => {
         return Response.json({
             success: true,
             deleted: deleted,
-            total: allTransactions.length,
-            message: `${deleted} von ${allTransactions.length} Transaktionen gelöscht`
+            total: lastImportBatch.length,
+            message: `Letzter Import rückgängig gemacht: ${deleted} Transaktionen gelöscht`
         });
 
     } catch (error) {
