@@ -9,7 +9,8 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { accountId, count } = await req.json();
+        const body = await req.json();
+        const { accountId, count } = body;
 
         if (!accountId) {
             return Response.json({ error: 'accountId erforderlich' }, { status: 400 });
