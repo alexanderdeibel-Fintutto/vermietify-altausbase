@@ -76,7 +76,7 @@ export default function AccountTransactionsList({ transactions = [] }) {
             filtered = filtered.filter(t => Math.abs(t.amount) <= parseFloat(filters.amountMax));
         }
 
-        // Sort by date
+        // Sort by date (newest first)
         return filtered.sort((a, b) => {
             if (!a.transaction_date) return 1;
             if (!b.transaction_date) return -1;
@@ -85,7 +85,7 @@ export default function AccountTransactionsList({ transactions = [] }) {
                 const dateB = parseISO(b.transaction_date);
                 if (isNaN(dateA.getTime())) return 1;
                 if (isNaN(dateB.getTime())) return -1;
-                return dateB - dateA;
+                return dateB.getTime() - dateA.getTime();
             } catch {
                 return 0;
             }
