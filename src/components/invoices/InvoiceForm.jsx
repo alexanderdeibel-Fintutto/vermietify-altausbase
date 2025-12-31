@@ -32,7 +32,7 @@ export default function InvoiceForm({ open, onOpenChange, invoice, buildings, un
     const [invoiceDate, setInvoiceDate] = useState(invoice?.invoice_date ? parseISO(invoice.invoice_date) : null);
     const [dueDate, setDueDate] = useState(invoice?.due_date ? parseISO(invoice.due_date) : null);
     const [recipientFormOpen, setRecipientFormOpen] = useState(false);
-    const { register, handleSubmit, watch, setValue, reset } = useForm({
+    const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm({
         defaultValues: invoice || {
             type: 'expense',
             invoice_date: '',
@@ -248,14 +248,22 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
     };
 
     const onSubmit = async (data) => {
-        console.log('onSubmit called with data:', data);
-        console.log('invoiceDate:', invoiceDate);
-        console.log('dueDate:', dueDate);
+        // Manual validation for custom fields
+        let hasErrors = false;
         
-        // Basic validation
-        if (!invoiceDate || !data.amount || !data.description || !data.cost_type_id) {
-            console.log('Validation failed:', { invoiceDate, amount: data.amount, description: data.description, cost_type_id: data.cost_type_id });
-            toast.error('Bitte füllen Sie alle Pflichtfelder aus (inkl. Kostenart)');
+        if (!invoiceDate) {
+            setValue('invoice_date', '', { shouldValidate: true });
+            errors.invoice_date = { message: 'Rechnungsdatum ist erforderlich' };
+            hasErrors = true;
+        }
+        
+        if (!data.cost_type_id) {
+            errors.cost_type_id = { message: 'Kostenart ist erforderlich' };
+            hasErrors = true;
+        }
+
+        if (hasErrors) {
+            toast.error('Bitte füllen Sie alle Pflichtfelder aus');
             return;
         }
 
@@ -269,13 +277,9 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
 
         // Remove category field if it exists (we use cost_type_id now)
         delete submissionData.category;
-
-        console.log('Calling onSuccess with submissionData:', submissionData);
-        console.log('onSuccess function:', onSuccess);
         
         try {
             await onSuccess(submissionData);
-            console.log('onSuccess completed successfully');
         } catch (error) {
             console.error('Error in onSuccess:', error);
             toast.error('Fehler beim Erstellen: ' + error.message);
@@ -320,7 +324,7 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                                 <Label>Rechnungsdatum *</Label>
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button variant="outline" className="w-full justify-start">
+                                        <Button variant="outline" className={`w-full justify-start ${!invoiceDate && errors.invoice_date ? 'border-red-500' : ''}`}>
                                             <CalendarIcon className="mr-2 h-4 w-4" />
                                             {invoiceDate ? format(invoiceDate, 'dd.MM.yyyy', { locale: de }) : 'Datum wählen'}
                                         </Button>
@@ -334,6 +338,9 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                                         />
                                     </PopoverContent>
                                 </Popover>
+                                {!invoiceDate && errors.invoice_date && (
+                                    <p className="text-xs text-red-600 mt-1">{errors.invoice_date.message}</p>
+                                )}
                             </div>
 
                             {/* Due Date */}
@@ -363,9 +370,16 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                                 <Input 
                                     type="number" 
                                     step="0.01" 
-                                    {...register('amount', { required: true })} 
-                                    placeholder="0.00" 
+                                    {...register('amount', { 
+                                        required: 'Betrag ist erforderlich',
+                                        min: { value: 0.01, message: 'Betrag muss größer als 0 sein' }
+                                    })} 
+                                    placeholder="0.00"
+                                    className={errors.amount ? 'border-red-500' : ''}
                                 />
+                                {errors.amount && (
+                                    <p className="text-xs text-red-600 mt-1">{errors.amount.message}</p>
+                                )}
                             </div>
 
                             {/* Currency */}
@@ -425,10 +439,13 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                         <div>
                             <Label>Beschreibung/Leistung *</Label>
                             <Textarea 
-                                {...register('description')} 
+                                {...register('description', { required: 'Beschreibung ist erforderlich' })} 
                                 placeholder="z.B. Stromrechnung Dezember 2024, Hausmeisterdienste..."
-                                className="h-20"
+                                className={`h-20 ${errors.description ? 'border-red-500' : ''}`}
                             />
+                            {errors.description && (
+                                <p className="text-xs text-red-600 mt-1">{errors.description.message}</p>
+                            )}
                         </div>
                     </div>
 
@@ -520,7 +537,7 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                                     value={watch('cost_type_id')} 
                                     onValueChange={(value) => setValue('cost_type_id', value)}
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger className={!watch('cost_type_id') && errors.cost_type_id ? 'border-red-500' : ''}>
                                         <SelectValue placeholder="Kostenart auswählen..." />
                                     </SelectTrigger>
                                     <SelectContent className="max-h-80">
@@ -551,10 +568,13 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                                             </React.Fragment>
                                         ))}
                                     </SelectContent>
-                                </Select>
-                            </div>
+                                    </Select>
+                                    {!watch('cost_type_id') && errors.cost_type_id && (
+                                    <p className="text-xs text-red-600 mt-1">{errors.cost_type_id.message}</p>
+                                    )}
+                                    </div>
 
-                            {/* EÜR Category Display (read-only) */}
+                                    {/* EÜR Category Display (read-only) */}
                             {selectedCostType && selectedEuerCategory && (
                                 <div>
                                     <Label>EÜR-Kategorie (automatisch)</Label>
