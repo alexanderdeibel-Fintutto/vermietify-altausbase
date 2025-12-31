@@ -9,9 +9,9 @@ import CostTypes from './pages/CostTypes';
 import Dashboard from './pages/Dashboard';
 import FinAPICallback from './pages/FinAPICallback';
 import FinancialItems from './pages/FinancialItems';
+import Finanzen from './pages/Finanzen';
 import Invoices from './pages/Invoices';
 import UnitDetail from './pages/UnitDetail';
-import Finanzen from './pages/Finanzen';
 import __Layout from './Layout.jsx';
 
 
@@ -27,9 +27,9 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "FinAPICallback": FinAPICallback,
     "FinancialItems": FinancialItems,
+    "Finanzen": Finanzen,
     "Invoices": Invoices,
     "UnitDetail": UnitDetail,
-    "Finanzen": Finanzen,
 }
 
 export const pagesConfig = {

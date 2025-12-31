@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Landmark, Plus, MoreVertical, Pencil, Trash2, Upload, TrendingUp, TrendingDown, Link2, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { Landmark, Plus, MoreVertical, Pencil, Trash2, Upload, TrendingUp, TrendingDown, Link2, RefreshCw, ChevronDown, ChevronUp, Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { parseISO } from 'date-fns';
 import { Button } from "@/components/ui/button";
@@ -304,6 +304,27 @@ export default function BankAccounts() {
         }
     };
 
+    const handleUndoImport = async (accountId, count) => {
+        if (!confirm(`Möchten Sie wirklich die letzten ${count} Transaktionen löschen?`)) {
+            return;
+        }
+
+        try {
+            const response = await base44.functions.invoke('undoLastImport', { accountId, count });
+            
+            if (response.data.error) {
+                toast.error(response.data.error);
+                return;
+            }
+            
+            queryClient.invalidateQueries({ queryKey: ['bankTransactions'] });
+            toast.success(response.data.message);
+        } catch (error) {
+            console.error('Undo error:', error);
+            toast.error('Fehler beim Rückgängig machen');
+        }
+    };
+
     const accountTransactionsMap = useMemo(() => {
         const map = new Map();
         transactions.forEach(t => {
@@ -499,6 +520,15 @@ export default function BankAccounts() {
                                                         <Upload className="w-4 h-4 mr-2" />
                                                         CSV importieren
                                                     </DropdownMenuItem>
+                                                    {stats.count > 0 && (
+                                                        <DropdownMenuItem 
+                                                            onClick={() => handleUndoImport(account.id, 1000)}
+                                                            className="text-orange-600"
+                                                        >
+                                                            <Undo2 className="w-4 h-4 mr-2" />
+                                                            Letzten Import rückgängig machen
+                                                        </DropdownMenuItem>
+                                                    )}
                                                     <DropdownMenuItem onClick={() => {
                                                         setEditingAccount(account);
                                                         setFormOpen(true);
