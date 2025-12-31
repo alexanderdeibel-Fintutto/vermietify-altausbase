@@ -363,7 +363,7 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                                 <Input 
                                     type="number" 
                                     step="0.01" 
-                                    {...register('amount')} 
+                                    {...register('amount', { required: true })} 
                                     placeholder="0.00" 
                                 />
                             </div>
