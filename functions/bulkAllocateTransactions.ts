@@ -27,19 +27,23 @@ Deno.serve(async (req) => {
 
         const processedTransactionIds = new Set();
         const allAffectedFinancialItemIds = new Set();
+        const allAffectedInvoiceIds = new Set();
         const newLinksToCreate = [];
 
-        // Collect all affected financial items and valid allocations
+        // Collect all affected financial items, invoices and valid allocations
         for (const allocation of allocations) {
             if (allocation.financialItemId) {
                 allAffectedFinancialItemIds.add(allocation.financialItemId);
+            }
+            if (allocation.invoiceId) {
+                allAffectedInvoiceIds.add(allocation.invoiceId);
             }
             if (allocation.transactionId) {
                 processedTransactionIds.add(allocation.transactionId);
             }
         }
 
-        // Step 1: Delete ALL existing links for affected financial items to start fresh
+        // Step 1: Delete ALL existing links for affected financial items and invoices to start fresh
         for (const financialItemId of allAffectedFinancialItemIds) {
             try {
                 const existingLinks = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
@@ -52,21 +56,41 @@ Deno.serve(async (req) => {
                 console.error(`Error deleting existing links for financial item ${financialItemId}:`, error);
             }
         }
+        
+        for (const invoiceId of allAffectedInvoiceIds) {
+            try {
+                const existingLinks = await base44.asServiceRole.entities.FinancialItemTransactionLink.filter({
+                    invoice_id: invoiceId
+                });
+                for (const link of existingLinks) {
+                    await base44.asServiceRole.entities.FinancialItemTransactionLink.delete(link.id);
+                }
+            } catch (error) {
+                console.error(`Error deleting existing links for invoice ${invoiceId}:`, error);
+            }
+        }
 
         // Step 2: Collect all new FinancialItemTransactionLinks for bulk creation
         for (const allocation of allocations) {
-            if (!allocation.transactionId || !allocation.financialItemId || !allocation.linkedAmount || parseFloat(allocation.linkedAmount) <= 0) {
+            if (!allocation.transactionId || (!allocation.financialItemId && !allocation.invoiceId) || !allocation.linkedAmount || parseFloat(allocation.linkedAmount) <= 0) {
                 console.warn('Skipping invalid allocation:', allocation);
                 results.errors++;
                 results.details.push({ error: 'Invalid allocation data', allocation });
                 continue;
             }
 
-            newLinksToCreate.push({
-                financial_item_id: allocation.financialItemId,
+            const linkData = {
                 transaction_id: allocation.transactionId,
                 linked_amount: parseFloat(allocation.linkedAmount)
-            });
+            };
+            
+            if (allocation.financialItemId) {
+                linkData.financial_item_id = allocation.financialItemId;
+            } else if (allocation.invoiceId) {
+                linkData.invoice_id = allocation.invoiceId;
+            }
+            
+            newLinksToCreate.push(linkData);
         }
 
         // Execute bulk creation of links
@@ -100,7 +124,7 @@ Deno.serve(async (req) => {
             }
         }
 
-        // Step 4: Recalculate all affected financial items' total amount and status
+        // Step 4: Recalculate all affected financial items' and invoices' total amount and status
         // Optimize: Fetch all relevant links once
         let allRelevantLinks = [];
         try {
@@ -109,14 +133,21 @@ Deno.serve(async (req) => {
             console.error('Error fetching all links:', error);
         }
 
-        // Group links by financial_item_id in memory
+        // Group links by financial_item_id and invoice_id in memory
         const linksByFinancialItem = {};
+        const linksByInvoice = {};
         for (const link of allRelevantLinks) {
-            if (allAffectedFinancialItemIds.has(link.financial_item_id)) {
+            if (link.financial_item_id && allAffectedFinancialItemIds.has(link.financial_item_id)) {
                 if (!linksByFinancialItem[link.financial_item_id]) {
                     linksByFinancialItem[link.financial_item_id] = [];
                 }
                 linksByFinancialItem[link.financial_item_id].push(link);
+            }
+            if (link.invoice_id && allAffectedInvoiceIds.has(link.invoice_id)) {
+                if (!linksByInvoice[link.invoice_id]) {
+                    linksByInvoice[link.invoice_id] = [];
+                }
+                linksByInvoice[link.invoice_id].push(link);
             }
         }
 
@@ -162,6 +193,52 @@ Deno.serve(async (req) => {
                 console.error(`Error updating financial item ${itemId}:`, error);
                 results.errors++;
                 results.details.push({ financialItemId: itemId, error: `Financial item update error: ${error.message}` });
+            }
+        }
+        
+        // Step 5: Recalculate all affected invoices' paid amount and status
+        for (const invoiceId of allAffectedInvoiceIds) {
+            try {
+                const links = linksByInvoice[invoiceId] || [];
+                const paidAmount = parseFloat(links.reduce((sum, link) => sum + link.linked_amount, 0).toFixed(2));
+
+                const invoices = await base44.asServiceRole.entities.Invoice.filter({ id: invoiceId });
+                if (invoices.length > 0) {
+                    const invoice = invoices[0];
+                    const expectedAmount = invoice.expected_amount || invoice.amount || 0;
+                    let status = 'pending';
+                    
+                    if (paidAmount >= expectedAmount - 0.01) {
+                        status = 'paid';
+                    } else if (paidAmount > 0) {
+                        status = 'partial';
+                    } else {
+                        status = 'pending';
+                    }
+
+                    // Check if overdue (only if not fully paid)
+                    if (status !== 'paid' && invoice.due_date) {
+                        try {
+                            const dueDate = new Date(invoice.due_date);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            if (dueDate < today) {
+                                status = 'overdue';
+                            }
+                        } catch (error) {
+                            console.error(`Error parsing due_date for invoice ${invoiceId}:`, error);
+                        }
+                    }
+                    
+                    await base44.asServiceRole.entities.Invoice.update(invoiceId, {
+                        paid_amount: paidAmount,
+                        status: status
+                    });
+                }
+            } catch (error) {
+                console.error(`Error updating invoice ${invoiceId}:`, error);
+                results.errors++;
+                results.details.push({ invoiceId: invoiceId, error: `Invoice update error: ${error.message}` });
             }
         }
 
