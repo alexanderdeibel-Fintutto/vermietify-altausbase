@@ -36,6 +36,7 @@ export default function InvoiceForm({ open, onOpenChange, invoice, buildings, un
             due_date: '',
             amount: '',
             currency: 'EUR',
+            recipient: '',
             reference: '',
             description: '',
             unit_id: '',
@@ -60,6 +61,21 @@ export default function InvoiceForm({ open, onOpenChange, invoice, buildings, un
         queryKey: ['euer-categories'],
         queryFn: () => base44.entities.EuerCategory.list()
     });
+
+    // Fetch existing invoices to get unique recipients
+    const { data: existingInvoices = [] } = useQuery({
+        queryKey: ['invoices-recipients'],
+        queryFn: () => base44.entities.Invoice.list()
+    });
+
+    // Get unique recipients from existing invoices
+    const uniqueRecipients = React.useMemo(() => {
+        const recipients = new Set();
+        existingInvoices.forEach(inv => {
+            if (inv.recipient) recipients.add(inv.recipient);
+        });
+        return Array.from(recipients).sort();
+    }, [existingInvoices]);
 
     const selectedBuildingId = watch('building_id');
     const selectedUnitId = watch('unit_id');
@@ -322,6 +338,22 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                                         <SelectItem value="USD">USD ($)</SelectItem>
                                     </SelectContent>
                                 </Select>
+                            </div>
+
+                            {/* Recipient with autocomplete */}
+                            <div>
+                                <Label>Empfänger/Aussteller *</Label>
+                                <input
+                                    list="recipients-list"
+                                    {...register('recipient')}
+                                    placeholder="z.B. Stadtwerke, Versicherung AG..."
+                                    className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                />
+                                <datalist id="recipients-list">
+                                    {uniqueRecipients.map((recipient, idx) => (
+                                        <option key={idx} value={recipient} />
+                                    ))}
+                                </datalist>
                             </div>
 
                             {/* Reference */}
