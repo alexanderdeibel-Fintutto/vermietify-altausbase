@@ -102,6 +102,12 @@ export default function BankReconciliation() {
         staleTime: 30000
     });
 
+    const { data: invoices = [], isLoading: loadingInvoices } = useQuery({
+        queryKey: ['invoices'],
+        queryFn: () => base44.entities.Invoice.list(),
+        staleTime: 30000
+    });
+
     const { data: tenants = [], isLoading: loadingTenants } = useQuery({
         queryKey: ['tenants'],
         queryFn: () => base44.entities.Tenant.list(),
@@ -745,7 +751,7 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
 
     const bulkRemaining = bulkTransactionAmount - bulkTotalAllocated;
 
-    if (loadingTransactions || loadingFinancialItems || loadingContracts || loadingTenants || loadingUnits || loadingBuildings) {
+    if (loadingTransactions || loadingFinancialItems || loadingInvoices || loadingContracts || loadingTenants || loadingUnits || loadingBuildings) {
         return (
             <div className="space-y-8">
                 <Skeleton className="h-8 w-48" />
@@ -1842,6 +1848,7 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                     onSuccess={() => {
                         queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
                         queryClient.invalidateQueries({ queryKey: ['financial-items'] });
+                        queryClient.invalidateQueries({ queryKey: ['invoices'] });
                     }}
                     availableCategories={selectedTransaction.amount > 0 ? INCOME_CATEGORIES : EXPENSE_CATEGORIES}
                     categoryLabels={CATEGORY_LABELS}
@@ -1850,6 +1857,7 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                     buildings={buildings}
                     contracts={contracts}
                     financialItems={selectedTransaction.amount > 0 ? pendingFinancialItems : financialItems.filter(i => i.type === 'payable')}
+                    invoices={invoices}
                 />
             )}
             </div>

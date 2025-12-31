@@ -26,12 +26,14 @@ export default function TransactionAllocationDialog({
     units,
     buildings,
     contracts,
-    financialItems
+    financialItems,
+    invoices
 }) {
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedObjectId, setSelectedObjectId] = useState('');
     const [selectedContractId, setSelectedContractId] = useState('');
     const [allocations, setAllocations] = useState([]);
+    const [invoiceAllocations, setInvoiceAllocations] = useState([]);
     const [isProcessing, setIsProcessing] = useState(false);
 
     const isIncome = transaction.amount > 0;
@@ -175,10 +177,31 @@ export default function TransactionAllocationDialog({
         return [];
     }, [selectedContractId, financialItems, selectedCategory, transaction.transaction_date]);
 
+    // Filter invoices based on transaction type
+    const filteredInvoices = React.useMemo(() => {
+        if (!invoices) return [];
+        
+        const isIncome = transaction.amount > 0;
+        return invoices.filter(inv => {
+            // Match type: income transactions -> other_income invoices, expense -> expense invoices
+            const typeMatch = isIncome ? inv.type === 'other_income' : inv.type === 'expense';
+            if (!typeMatch) return false;
+            
+            // Only show pending/partial/overdue invoices
+            return inv.status === 'pending' || inv.status === 'partial' || inv.status === 'overdue';
+        }).sort((a, b) => {
+            // Sort by invoice date, most recent first
+            const dateA = a.invoice_date ? new Date(a.invoice_date) : new Date(0);
+            const dateB = b.invoice_date ? new Date(b.invoice_date) : new Date(0);
+            return dateB - dateA;
+        });
+    }, [invoices, transaction.amount]);
+
     // Calculate totals
     const transactionAmount = Math.abs(transaction.amount);
     const totalAllocated = allocations.reduce((sum, alloc) => sum + (parseFloat(alloc.amount) || 0), 0);
-    const remaining = transactionAmount - totalAllocated;
+    const totalInvoiceAllocated = invoiceAllocations.reduce((sum, alloc) => sum + (parseFloat(alloc.amount) || 0), 0);
+    const remaining = transactionAmount - totalAllocated - totalInvoiceAllocated;
 
     const addAllocation = () => {
         setAllocations([...allocations, { financialItemId: '', amount: '' }]);
@@ -228,8 +251,11 @@ export default function TransactionAllocationDialog({
 
         setIsProcessing(true);
         try {
-            if (selectedCategory === 'rent_income' && allocations.length > 0) {
-                // Use backend function for financial item allocation
+            const hasFinancialAllocations = allocations.length > 0;
+            const hasInvoiceAllocations = invoiceAllocations.length > 0;
+            
+            if ((selectedCategory === 'rent_income' && hasFinancialAllocations) || hasInvoiceAllocations) {
+                // Use backend function for allocation
                 const financialItemAllocations = allocations
                     .filter(a => a.financialItemId && a.amount && !isNaN(parseFloat(a.amount)) && parseFloat(a.amount) > 0)
                     .map(a => ({
@@ -237,15 +263,23 @@ export default function TransactionAllocationDialog({
                         amount: parseFloat(a.amount)
                     }));
 
-                if (financialItemAllocations.length === 0) {
-                    toast.error('Bitte ordnen Sie mindestens eine Forderung zu');
+                const invoiceAllocs = invoiceAllocations
+                    .filter(a => a.invoiceId && a.amount && !isNaN(parseFloat(a.amount)) && parseFloat(a.amount) > 0)
+                    .map(a => ({
+                        invoiceId: a.invoiceId,
+                        amount: parseFloat(a.amount)
+                    }));
+
+                if (financialItemAllocations.length === 0 && invoiceAllocs.length === 0) {
+                    toast.error('Bitte ordnen Sie mindestens eine Forderung oder Rechnung zu');
                     setIsProcessing(false);
                     return;
                 }
 
                 await base44.functions.invoke('reconcileTransactionWithFinancialItems', {
                     transactionId: transaction.id,
-                    financialItemAllocations,
+                    financialItemAllocations: financialItemAllocations.length > 0 ? financialItemAllocations : undefined,
+                    invoiceAllocations: invoiceAllocs.length > 0 ? invoiceAllocs : undefined,
                     category: selectedCategory,
                     unitId: actualUnitId,
                     contractId: selectedContractId
@@ -501,10 +535,18 @@ export default function TransactionAllocationDialog({
                                 <span className="text-slate-600">Transaktionsbetrag:</span>
                                 <span className="font-semibold">€{transactionAmount.toFixed(2)}</span>
                             </div>
-                            <div className="flex justify-between items-center text-sm mt-1">
-                                <span className="text-slate-600">Zugeordnet:</span>
-                                <span className="font-semibold">€{totalAllocated.toFixed(2)}</span>
-                            </div>
+                            {totalAllocated > 0 && (
+                                <div className="flex justify-between items-center text-sm mt-1">
+                                    <span className="text-slate-600">Forderungen:</span>
+                                    <span className="font-semibold">€{totalAllocated.toFixed(2)}</span>
+                                </div>
+                            )}
+                            {totalInvoiceAllocated > 0 && (
+                                <div className="flex justify-between items-center text-sm mt-1">
+                                    <span className="text-slate-600">Rechnungen:</span>
+                                    <span className="font-semibold">€{totalInvoiceAllocated.toFixed(2)}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between items-center text-sm mt-1 pt-2 border-t">
                                 <span className="text-slate-600">Verbleibend:</span>
                                 <span className={`font-bold ${remaining < 0 ? 'text-red-600' : remaining > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
@@ -616,6 +658,105 @@ export default function TransactionAllocationDialog({
                     </div>
                 )}
 
+                {/* Step 5: Invoice Allocation */}
+                {filteredInvoices.length > 0 && (
+                    <div className="border-t pt-6 mt-6">
+                        <Label className="text-sm font-medium mb-3 block">
+                            {selectedCategory === 'rent_income' ? '5. ' : ''}Rechnungen zuordnen
+                            <span className="ml-2 text-xs text-slate-500 font-normal">
+                                ({isIncome ? 'Sonstige Einnahmen' : 'Ausgaben'} • Nach Datum sortiert)
+                            </span>
+                        </Label>
+
+                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                            {filteredInvoices.map((invoice) => {
+                                const isSelected = invoiceAllocations.some(a => a.invoiceId === invoice.id);
+                                const allocation = invoiceAllocations.find(a => a.invoiceId === invoice.id);
+                                const openAmount = (invoice.expected_amount || invoice.amount || 0) - (invoice.paid_amount || 0);
+
+                                return (
+                                    <div 
+                                        key={invoice.id} 
+                                        className={`border rounded-lg p-3 cursor-pointer transition-all ${
+                                            isSelected 
+                                                ? 'border-purple-500 bg-purple-50' 
+                                                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                        }`}
+                                        onClick={() => {
+                                            if (isSelected) {
+                                                setInvoiceAllocations(invoiceAllocations.filter(a => a.invoiceId !== invoice.id));
+                                            } else {
+                                                setInvoiceAllocations([...invoiceAllocations, { 
+                                                    invoiceId: invoice.id, 
+                                                    amount: openAmount.toFixed(2) 
+                                                }]);
+                                            }
+                                        }}
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                                                isSelected ? 'bg-purple-500 border-purple-500' : 'border-slate-300'
+                                            }`}>
+                                                {isSelected && <Check className="w-3 h-3 text-white" />}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="font-medium text-slate-800">
+                                                        {invoice.description}
+                                                    </span>
+                                                </div>
+                                                {invoice.reference && (
+                                                    <p className="text-xs text-slate-500 mb-1">
+                                                        Ref: {invoice.reference}
+                                                    </p>
+                                                )}
+                                                {invoice.recipient && (
+                                                    <p className="text-xs text-slate-500 mb-1">
+                                                        Empfänger: {invoice.recipient}
+                                                    </p>
+                                                )}
+                                                <div className="flex items-center gap-4 mt-2 text-sm">
+                                                    <span className="text-slate-600">
+                                                        Datum: <span className="font-medium">
+                                                            {invoice.invoice_date ? format(parseISO(invoice.invoice_date), 'dd.MM.yyyy', { locale: de }) : '-'}
+                                                        </span>
+                                                    </span>
+                                                    <span className="text-slate-600">
+                                                        Erwartet: <span className="font-medium">€{(invoice.expected_amount || invoice.amount || 0).toFixed(2)}</span>
+                                                    </span>
+                                                    <span className="text-amber-600">
+                                                        Offen: <span className="font-medium">€{openAmount.toFixed(2)}</span>
+                                                    </span>
+                                                </div>
+                                                {isSelected && (
+                                                    <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                                                        <Label className="text-xs text-slate-600 mb-1 block">Zuzuordnender Betrag:</Label>
+                                                        <Input
+                                                            type="number"
+                                                            step="0.01"
+                                                            placeholder="Betrag"
+                                                            value={allocation?.amount || ''}
+                                                            onChange={(e) => {
+                                                                const updated = invoiceAllocations.map(a => 
+                                                                    a.invoiceId === invoice.id 
+                                                                        ? { ...a, amount: e.target.value }
+                                                                        : a
+                                                                );
+                                                                setInvoiceAllocations(updated);
+                                                            }}
+                                                            className="w-40"
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
                 {/* Actions */}
                 <div className="flex justify-end gap-3 mt-6 pt-6 border-t">
                     <Button variant="outline" onClick={onClose}>
@@ -623,7 +764,7 @@ export default function TransactionAllocationDialog({
                     </Button>
                     <Button
                         onClick={handleSubmit}
-                        disabled={!selectedCategory || isProcessing || (selectedCategory === 'rent_income' && !selectedContractId) || remaining < -0.01}
+                        disabled={!selectedCategory || isProcessing || (selectedCategory === 'rent_income' && !selectedContractId && allocations.length === 0) || remaining < -0.01}
                         className={isIncome ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"}
                     >
                         <Check className="w-4 h-4 mr-2" />
