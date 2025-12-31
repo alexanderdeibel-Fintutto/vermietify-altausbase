@@ -320,9 +320,23 @@ export default function BankAccounts() {
                 if (!b.transaction_date) return -1;
                 
                 try {
-                    // Parse ISO dates properly
-                    const dateA = parseISO(a.transaction_date);
-                    const dateB = parseISO(b.transaction_date);
+                    // Try ISO format first (yyyy-MM-dd)
+                    let dateA = parseISO(a.transaction_date);
+                    let dateB = parseISO(b.transaction_date);
+                    
+                    // If invalid, try German format (dd.MM.yyyy)
+                    if (isNaN(dateA.getTime())) {
+                        const parts = a.transaction_date.split('.');
+                        if (parts.length === 3) {
+                            dateA = new Date(parts[2], parts[1] - 1, parts[0]);
+                        }
+                    }
+                    if (isNaN(dateB.getTime())) {
+                        const parts = b.transaction_date.split('.');
+                        if (parts.length === 3) {
+                            dateB = new Date(parts[2], parts[1] - 1, parts[0]);
+                        }
+                    }
                     
                     // Check for invalid dates
                     if (isNaN(dateA.getTime())) return 1;
