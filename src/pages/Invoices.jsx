@@ -1005,61 +1005,80 @@ export default function Invoices() {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {filteredRecipients.map((recipient, idx) => (
-                                                <TableRow key={idx}>
-                                                    <TableCell>
-                                                        <div>
-                                                            <p className="font-medium">{recipient.name}</p>
-                                                            {recipient.notes && (
-                                                                <p className="text-xs text-slate-500 mt-1">{recipient.notes}</p>
-                                                            )}
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        {recipient.count}
-                                                    </TableCell>
-                                                    <TableCell className="text-right font-semibold">
-                                                        €{recipient.totalAmount.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {recipient.lastInvoiceDate ? format(parseISO(recipient.lastInvoiceDate), 'dd.MM.yyyy', { locale: de }) : '-'}
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        {recipient.savedId && (
-                                                            <DropdownMenu>
-                                                                <DropdownMenuTrigger asChild>
-                                                                    <Button variant="ghost" size="icon">
-                                                                        <MoreVertical className="w-4 h-4" />
-                                                                    </Button>
-                                                                </DropdownMenuTrigger>
-                                                                <DropdownMenuContent align="end">
-                                                                    <DropdownMenuItem onClick={() => {
-                                                                        setEditingRecipient({
-                                                                            id: recipient.savedId,
-                                                                            name: recipient.name,
-                                                                            notes: recipient.notes
-                                                                        });
+                                            {filteredRecipients.map((recipient, idx) => {
+                                                const savedData = savedRecipients.find(s => s.id === recipient.savedId);
+                                                
+                                                return (
+                                                    <TableRow key={idx}>
+                                                        <TableCell>
+                                                            <div>
+                                                                <p className="font-medium">{recipient.name}</p>
+                                                                {savedData?.category && (
+                                                                    <Badge variant="outline" className="text-xs mt-1">
+                                                                        {savedData.category}
+                                                                    </Badge>
+                                                                )}
+                                                                {savedData?.email && (
+                                                                    <p className="text-xs text-slate-500 mt-1">{savedData.email}</p>
+                                                                )}
+                                                                {savedData?.phone && (
+                                                                    <p className="text-xs text-slate-500">{savedData.phone}</p>
+                                                                )}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            {recipient.count}
+                                                        </TableCell>
+                                                        <TableCell className="text-right font-semibold">
+                                                            €{recipient.totalAmount.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {recipient.lastInvoiceDate ? format(parseISO(recipient.lastInvoiceDate), 'dd.MM.yyyy', { locale: de }) : '-'}
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            {recipient.savedId ? (
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger asChild>
+                                                                        <Button variant="ghost" size="icon">
+                                                                            <MoreVertical className="w-4 h-4" />
+                                                                        </Button>
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent align="end">
+                                                                        <DropdownMenuItem onClick={() => {
+                                                                            setEditingRecipient(savedData);
+                                                                            setRecipientFormOpen(true);
+                                                                        }}>
+                                                                            <Pencil className="w-4 h-4 mr-2" />
+                                                                            Bearbeiten
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuItem 
+                                                                            onClick={() => setDeleteRecipient({
+                                                                                id: recipient.savedId,
+                                                                                name: recipient.name
+                                                                            })}
+                                                                            className="text-red-600"
+                                                                        >
+                                                                            <Trash2 className="w-4 h-4 mr-2" />
+                                                                            Löschen
+                                                                        </DropdownMenuItem>
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                            ) : (
+                                                                <Button 
+                                                                    variant="outline" 
+                                                                    size="sm"
+                                                                    onClick={() => {
+                                                                        setEditingRecipient({ name: recipient.name });
                                                                         setRecipientFormOpen(true);
-                                                                    }}>
-                                                                        <Pencil className="w-4 h-4 mr-2" />
-                                                                        Bearbeiten
-                                                                    </DropdownMenuItem>
-                                                                    <DropdownMenuItem 
-                                                                        onClick={() => setDeleteRecipient({
-                                                                            id: recipient.savedId,
-                                                                            name: recipient.name
-                                                                        })}
-                                                                        className="text-red-600"
-                                                                    >
-                                                                        <Trash2 className="w-4 h-4 mr-2" />
-                                                                        Löschen
-                                                                    </DropdownMenuItem>
-                                                                </DropdownMenuContent>
-                                                            </DropdownMenu>
-                                                        )}
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
+                                                                    }}
+                                                                >
+                                                                    Details hinzufügen
+                                                                </Button>
+                                                            )}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
                                         </TableBody>
                                     </Table>
                                 </div>
