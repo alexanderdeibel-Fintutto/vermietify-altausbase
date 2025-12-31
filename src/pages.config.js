@@ -11,6 +11,7 @@ import FinAPICallback from './pages/FinAPICallback';
 import FinancialItems from './pages/FinancialItems';
 import Invoices from './pages/Invoices';
 import UnitDetail from './pages/UnitDetail';
+import Finanzen from './pages/Finanzen';
 import __Layout from './Layout.jsx';
 
 
@@ -28,6 +29,7 @@ export const PAGES = {
     "FinancialItems": FinancialItems,
     "Invoices": Invoices,
     "UnitDetail": UnitDetail,
+    "Finanzen": Finanzen,
 }
 
 export const pagesConfig = {
