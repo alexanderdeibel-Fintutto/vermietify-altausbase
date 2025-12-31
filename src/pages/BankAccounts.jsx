@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Landmark, Plus, MoreVertical, Pencil, Trash2, Upload, TrendingUp, TrendingDown, Link2, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
+import { parseISO } from 'date-fns';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -318,15 +319,19 @@ export default function BankAccounts() {
                 if (!a.transaction_date) return 1;
                 if (!b.transaction_date) return -1;
                 
-                // Parse dates properly (handles yyyy-MM-dd format)
-                const dateA = new Date(a.transaction_date);
-                const dateB = new Date(b.transaction_date);
-                
-                // Check for invalid dates
-                if (isNaN(dateA.getTime())) return 1;
-                if (isNaN(dateB.getTime())) return -1;
-                
-                return dateB.getTime() - dateA.getTime();
+                try {
+                    // Parse ISO dates properly
+                    const dateA = parseISO(a.transaction_date);
+                    const dateB = parseISO(b.transaction_date);
+                    
+                    // Check for invalid dates
+                    if (isNaN(dateA.getTime())) return 1;
+                    if (isNaN(dateB.getTime())) return -1;
+                    
+                    return dateB.getTime() - dateA.getTime();
+                } catch {
+                    return 0;
+                }
             });
         });
         
