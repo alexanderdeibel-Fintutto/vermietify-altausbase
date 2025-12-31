@@ -311,6 +311,16 @@ export default function BankAccounts() {
             }
             map.get(t.account_id).push(t);
         });
+        
+        // Sort transactions by date (newest first)
+        map.forEach((txs, accountId) => {
+            txs.sort((a, b) => {
+                if (!a.transaction_date) return 1;
+                if (!b.transaction_date) return -1;
+                return new Date(b.transaction_date) - new Date(a.transaction_date);
+            });
+        });
+        
         return map;
     }, [transactions]);
 
