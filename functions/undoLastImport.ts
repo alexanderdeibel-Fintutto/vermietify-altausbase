@@ -67,19 +67,19 @@ Deno.serve(async (req) => {
             });
         }
 
-        // Delete in small batches to avoid rate limits
-        const batchSize = 10;
+        // Delete one by one with delay to avoid rate limits
         let deleted = 0;
 
-        for (let i = 0; i < lastImportBatch.length; i += batchSize) {
-            const batch = lastImportBatch.slice(i, i + batchSize);
-            await Promise.all(
-                batch.map(tx => base44.asServiceRole.entities.BankTransaction.delete(tx.id))
-            );
-            deleted += batch.length;
+        for (const tx of lastImportBatch) {
+            try {
+                await base44.asServiceRole.entities.BankTransaction.delete(tx.id);
+                deleted++;
 
-            if (i + batchSize < lastImportBatch.length) {
-                await new Promise(resolve => setTimeout(resolve, 150));
+                // Wait 200ms between each deletion
+                await new Promise(resolve => setTimeout(resolve, 200));
+            } catch (error) {
+                console.error('Error deleting transaction:', tx.id, error);
+                // Continue with next transaction
             }
         }
 
