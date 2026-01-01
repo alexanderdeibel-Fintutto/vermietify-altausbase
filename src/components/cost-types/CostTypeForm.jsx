@@ -18,7 +18,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-export default function CostTypeForm({ open, onOpenChange, costType, euerCategories, onSuccess }) {
+export default function CostTypeForm({ open, onOpenChange, costType, euerCategories, existingMainCategories = [], onSuccess }) {
     const { register, handleSubmit, reset, watch, setValue } = useForm({
         defaultValues: costType || {
             type: 'expense',
@@ -31,6 +31,7 @@ export default function CostTypeForm({ open, onOpenChange, costType, euerCategor
 
     const selectedType = watch('type');
     const isDistributable = watch('distributable');
+    const [isNewMainCategory, setIsNewMainCategory] = React.useState(false);
 
     useEffect(() => {
         if (costType) {
@@ -92,10 +93,58 @@ export default function CostTypeForm({ open, onOpenChange, costType, euerCategor
                     {/* Main Category */}
                     <div>
                         <Label>Hauptkategorie *</Label>
-                        <Input 
-                            {...register('main_category', { required: true })}
-                            placeholder="z.B. Betriebskosten"
-                        />
+                        {isNewMainCategory ? (
+                            <div className="space-y-2">
+                                <Input 
+                                    {...register('main_category', { required: true })}
+                                    placeholder="Neue Hauptkategorie eingeben..."
+                                />
+                                <Button 
+                                    type="button"
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => {
+                                        setIsNewMainCategory(false);
+                                        setValue('main_category', '');
+                                    }}
+                                >
+                                    Aus bestehenden wählen
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                <Select 
+                                    value={watch('main_category')} 
+                                    onValueChange={(value) => {
+                                        if (value === '__new__') {
+                                            setIsNewMainCategory(true);
+                                            setValue('main_category', '');
+                                        } else {
+                                            setValue('main_category', value);
+                                        }
+                                    }}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Hauptkategorie wählen..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="__new__" className="text-emerald-600 font-medium">
+                                            + Neue Hauptkategorie
+                                        </SelectItem>
+                                        {existingMainCategories.length > 0 && (
+                                            <>
+                                                <div className="border-t my-1" />
+                                                {existingMainCategories.map(cat => (
+                                                    <SelectItem key={cat} value={cat}>
+                                                        {cat}
+                                                    </SelectItem>
+                                                ))}
+                                            </>
+                                        )}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
                     </div>
 
                     {/* Sub Category */}

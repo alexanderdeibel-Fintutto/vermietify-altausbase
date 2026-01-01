@@ -386,6 +386,7 @@ export default function CostTypes() {
                 onOpenChange={setFormOpen}
                 costType={editingCostType}
                 euerCategories={euerCategories}
+                existingMainCategories={mainCategories}
                 onSuccess={handleSubmit}
             />
 
