@@ -5,7 +5,8 @@ import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, History, Trash2 } from 'lucide-react';
+import { Plus, History, Trash2, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 import {
     Card,
     CardContent,
@@ -28,6 +29,7 @@ import RentChangeForm from './RentChangeForm';
 export default function RentChangeHistory({ contract }) {
     const [formOpen, setFormOpen] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
+    const [isRecalculating, setIsRecalculating] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: rentChanges = [] } = useQuery({
@@ -46,6 +48,22 @@ export default function RentChangeHistory({ contract }) {
             setDeleteId(null);
         }
     });
+
+    const handleRecalculatePayments = async () => {
+        setIsRecalculating(true);
+        try {
+            const response = await base44.functions.invoke('recalculateContractPayments', { contractId: contract.id });
+            if (response.data.success) {
+                toast.success(response.data.message);
+                queryClient.invalidateQueries({ queryKey: ['payments'] });
+                queryClient.invalidateQueries({ queryKey: ['financial-items'] });
+            }
+        } catch (error) {
+            toast.error('Fehler bei der Neuberechnung');
+        } finally {
+            setIsRecalculating(false);
+        }
+    };
 
     // Get current rent (most recent change or original)
     const currentRent = rentChanges.length > 0 ? rentChanges[0] : {
@@ -67,14 +85,25 @@ export default function RentChangeHistory({ contract }) {
                             <CardDescription>Historie aller Mietvertragsänderungen</CardDescription>
                         </div>
                     </div>
-                    <Button 
-                        onClick={() => setFormOpen(true)}
-                        size="sm"
-                        className="bg-emerald-600 hover:bg-emerald-700"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Änderung hinzufügen
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button 
+                            onClick={handleRecalculatePayments}
+                            disabled={isRecalculating}
+                            size="sm"
+                            variant="outline"
+                        >
+                            <RefreshCw className={`w-4 h-4 mr-2 ${isRecalculating ? 'animate-spin' : ''}`} />
+                            Zahlungen neu berechnen
+                        </Button>
+                        <Button 
+                            onClick={() => setFormOpen(true)}
+                            size="sm"
+                            className="bg-emerald-600 hover:bg-emerald-700"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Änderung hinzufügen
+                        </Button>
+                    </div>
                 </div>
             </CardHeader>
             <CardContent>
