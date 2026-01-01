@@ -15,6 +15,7 @@ import TransactionCategoryCard from '@/components/banking/TransactionCategoryCar
 import TransactionAllocationDialog from '@/components/banking/TransactionAllocationDialog';
 import RuleManager from '@/components/banking/RuleManager';
 import RulePreviewDialog from '@/components/banking/RulePreviewDialog';
+import CreateInvoiceFromTransactionDialog from '@/components/banking/CreateInvoiceFromTransactionDialog';
 import {
     Popover,
     PopoverContent,
@@ -88,6 +89,8 @@ export default function BankReconciliation() {
     const itemsPerPage = 20;
     const [allocationDialogOpen, setAllocationDialogOpen] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState(null);
+    const [createInvoiceDialogOpen, setCreateInvoiceDialogOpen] = useState(false);
+    const [selectedTransactionForInvoice, setSelectedTransactionForInvoice] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: transactions = [], isLoading: loadingTransactions } = useQuery({
@@ -135,6 +138,12 @@ export default function BankReconciliation() {
     const { data: rules = [] } = useQuery({
         queryKey: ['categorization-rules'],
         queryFn: () => base44.entities.CategorizationRule.list('-priority'),
+        staleTime: 60000
+    });
+
+    const { data: costTypes = [], isLoading: loadingCostTypes } = useQuery({
+        queryKey: ['cost-types'],
+        queryFn: () => base44.entities.CostType.list(),
         staleTime: 60000
     });
 
@@ -751,7 +760,7 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
 
     const bulkRemaining = bulkTransactionAmount - bulkTotalAllocated;
 
-    if (loadingTransactions || loadingFinancialItems || loadingInvoices || loadingContracts || loadingTenants || loadingUnits || loadingBuildings) {
+    if (loadingTransactions || loadingFinancialItems || loadingInvoices || loadingContracts || loadingTenants || loadingUnits || loadingBuildings || loadingCostTypes) {
         return (
             <div className="space-y-8">
                 <Skeleton className="h-8 w-48" />
@@ -1858,6 +1867,22 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                     contracts={contracts}
                     financialItems={selectedTransaction.amount > 0 ? pendingFinancialItems : financialItems.filter(i => i.type === 'payable')}
                     invoices={invoices}
+                />
+            )}
+
+            {createInvoiceDialogOpen && selectedTransactionForInvoice && (
+                <CreateInvoiceFromTransactionDialog
+                    open={createInvoiceDialogOpen}
+                    onOpenChange={setCreateInvoiceDialogOpen}
+                    transaction={selectedTransactionForInvoice}
+                    costTypes={costTypes}
+                    onSuccess={() => {
+                        queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
+                        queryClient.invalidateQueries({ queryKey: ['financial-items'] });
+                        queryClient.invalidateQueries({ queryKey: ['invoices'] });
+                        queryClient.invalidateQueries({ queryKey: ['financial-item-transaction-links'] });
+                        setSelectedTransactionForInvoice(null);
+                    }}
                 />
             )}
             </div>
