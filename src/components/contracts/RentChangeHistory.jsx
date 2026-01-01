@@ -37,8 +37,12 @@ export default function RentChangeHistory({ contract }) {
 
     const deleteMutation = useMutation({
         mutationFn: (id) => base44.entities.RentChange.delete(id),
-        onSuccess: () => {
+        onSuccess: async () => {
             queryClient.invalidateQueries({ queryKey: ['rent-changes'] });
+            // Recalculate payments after rent change deletion
+            await base44.functions.invoke('recalculateContractPayments', { contractId: contract.id });
+            queryClient.invalidateQueries({ queryKey: ['payments'] });
+            queryClient.invalidateQueries({ queryKey: ['financial-items'] });
             setDeleteId(null);
         }
     });
