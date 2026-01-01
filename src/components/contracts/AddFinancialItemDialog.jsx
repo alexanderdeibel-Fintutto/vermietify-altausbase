@@ -20,7 +20,7 @@ export default function AddFinancialItemDialog({ open, onOpenChange, contracts, 
         related_to_contract_id: '',
         related_to_unit_id: '',
         related_to_building_id: '',
-        category: '',
+        cost_type_id: '',
         notes: '',
         status: 'pending'
     });
@@ -52,7 +52,7 @@ export default function AddFinancialItemDialog({ open, onOpenChange, contracts, 
             related_to_contract_id: '',
             related_to_unit_id: '',
             related_to_building_id: '',
-            category: '',
+            cost_type_id: '',
             notes: '',
             status: 'pending'
         });
@@ -61,15 +61,17 @@ export default function AddFinancialItemDialog({ open, onOpenChange, contracts, 
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        if (!formData.expected_amount || !formData.due_date || !formData.description) {
+        if (!formData.expected_amount || !formData.due_date || !formData.description || !formData.cost_type_id) {
             toast.error('Bitte alle Pflichtfelder ausfüllen');
             return;
         }
 
-        if (!formData.related_to_contract_id && !formData.related_to_unit_id && !formData.related_to_building_id) {
-            toast.error('Bitte mindestens einen Vertrag, eine Wohneinheit oder ein Gebäude auswählen');
+        if (!formData.related_to_unit_id && !formData.related_to_building_id) {
+            toast.error('Bitte mindestens ein Gebäude oder eine Wohneinheit auswählen');
             return;
         }
+
+        const costType = costTypes.find(ct => ct.id === formData.cost_type_id);
 
         createMutation.mutate({
             type: formData.type,
@@ -79,7 +81,8 @@ export default function AddFinancialItemDialog({ open, onOpenChange, contracts, 
             description: formData.description,
             related_to_contract_id: formData.related_to_contract_id || null,
             related_to_unit_id: formData.related_to_unit_id || null,
-            category: formData.category || 'other',
+            cost_type_id: formData.cost_type_id,
+            category: costType?.sub_category || 'other',
             status: formData.status,
             notes: formData.notes,
             is_automatic_from_contract: false
@@ -91,6 +94,26 @@ export default function AddFinancialItemDialog({ open, onOpenChange, contracts, 
         if (!formData.related_to_building_id) return units;
         return units.filter(u => u.building_id === formData.related_to_building_id);
     }, [formData.related_to_building_id, units]);
+
+    // Filter cost types based on selected type
+    const filteredCostTypes = useMemo(() => {
+        if (formData.type === 'receivable') {
+            return costTypes.filter(ct => ct.type === 'income');
+        } else {
+            return costTypes.filter(ct => ct.type === 'expense');
+        }
+    }, [formData.type, costTypes]);
+
+    // Group cost types by main category
+    const groupedCostTypes = useMemo(() => {
+        return filteredCostTypes.reduce((acc, ct) => {
+            if (!acc[ct.main_category]) {
+                acc[ct.main_category] = [];
+            }
+            acc[ct.main_category].push(ct);
+            return acc;
+        }, {});
+    }, [filteredCostTypes]);
 
     // Auto-select unit and building when contract is selected
     const handleContractChange = (contractId) => {
@@ -174,14 +197,31 @@ export default function AddFinancialItemDialog({ open, onOpenChange, contracts, 
                         />
                     </div>
 
-                    {/* Category */}
+                    {/* Cost Type */}
                     <div>
-                        <Label>Kategorie</Label>
-                        <Input
-                            value={formData.category}
-                            onChange={(e) => setFormData({...formData, category: e.target.value})}
-                            placeholder="z.B. utilities_settlement, deposit, other"
-                        />
+                        <Label>Kostenart *</Label>
+                        <Select 
+                            value={formData.cost_type_id} 
+                            onValueChange={(value) => setFormData({...formData, cost_type_id: value})}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Kostenart auswählen..." />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-80">
+                                {Object.entries(groupedCostTypes).map(([mainCategory, types]) => (
+                                    <React.Fragment key={mainCategory}>
+                                        <div className="px-2 py-1.5 text-xs font-semibold text-slate-500 bg-slate-50">
+                                            {mainCategory}
+                                        </div>
+                                        {types.map(ct => (
+                                            <SelectItem key={ct.id} value={ct.id}>
+                                                <span className="ml-2">{ct.sub_category}</span>
+                                            </SelectItem>
+                                        ))}
+                                    </React.Fragment>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     {/* Contract */}
