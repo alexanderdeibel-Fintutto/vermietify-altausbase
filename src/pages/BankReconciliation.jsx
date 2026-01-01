@@ -1689,6 +1689,10 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                                     setSelectedTransaction(transaction);
                                     setAllocationDialogOpen(true);
                                 }}
+                                onCreateInvoice={() => {
+                                    setSelectedTransactionForInvoice(transaction);
+                                    setCreateInvoiceDialogOpen(true);
+                                }}
                                 tenants={tenants}
                                 units={units}
                                 buildings={buildings}
