@@ -32,16 +32,17 @@ Deno.serve(async (req) => {
         // Determine the earliest date from which payments should be regenerated
         const regenerateFromDate = startOfMonth(parseISO(contract.start_date));
 
-        // 1. Delete all existing pending/overdue payments for this contract from regenerateFromDate onwards
-        const paymentsToDelete = await base44.asServiceRole.entities.Payment.filter({
-            contract_id: contractId,
+        // 1. Delete all existing pending/overdue/partial financial items for this contract from regenerateFromDate onwards
+        const itemsToDelete = await base44.asServiceRole.entities.FinancialItem.filter({
+            related_to_contract_id: contractId,
             payment_month: { $gte: format(regenerateFromDate, 'yyyy-MM') },
-            status: { $in: ['pending', 'overdue'] }
+            status: { $in: ['pending', 'overdue', 'partial'] },
+            is_automatic_from_contract: true
         });
         
         let deletedCount = 0;
-        for (const payment of paymentsToDelete) {
-            await base44.asServiceRole.entities.Payment.delete(payment.id);
+        for (const item of itemsToDelete) {
+            await base44.asServiceRole.entities.FinancialItem.delete(item.id);
             deletedCount++;
         }
 
@@ -77,17 +78,21 @@ Deno.serve(async (req) => {
                 }
             }
 
-            // Create payment for the current month
-            await base44.asServiceRole.entities.Payment.create({
-                contract_id: contract.id,
-                tenant_id: contract.tenant_id,
-                unit_id: contract.unit_id,
-                payment_date: currentDate.toISOString().split('T')[0],
+            // Create financial item for the current month
+            await base44.asServiceRole.entities.FinancialItem.create({
+                type: 'receivable',
                 expected_amount: activeRent.total_rent,
-                payment_month: paymentMonth,
-                payment_type: 'rent',
+                amount: 0,
                 status: 'pending',
+                due_date: currentDate.toISOString().split('T')[0],
+                description: `Miete ${paymentMonth}`,
                 reference: `Miete ${paymentMonth}`,
+                related_to_contract_id: contract.id,
+                related_to_unit_id: contract.unit_id,
+                related_to_tenant_id: contract.tenant_id,
+                payment_month: paymentMonth,
+                category: 'rent',
+                is_automatic_from_contract: true
             });
             generatedCount++;
 
