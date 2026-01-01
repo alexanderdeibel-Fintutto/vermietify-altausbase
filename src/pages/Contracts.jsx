@@ -232,8 +232,6 @@ export default function Contracts() {
             <PageHeader 
                 title="Mietverträge"
                 subtitle={`${contracts.length} Verträge · ${tenants.length} Mieter`}
-                action={() => setAddFinancialItemOpen(true)}
-                actionLabel="Mietforderung hinzufügen"
             />
 
             <Tabs defaultValue="contracts" className="space-y-6">
@@ -250,6 +248,17 @@ export default function Contracts() {
                 </TabsList>
 
                 <TabsContent value="contracts" className="space-y-6">
+                    <div className="flex justify-end mb-4">
+                        <Button 
+                            onClick={() => {
+                                setEditingContract(null);
+                                setFormOpen(true);
+                            }}
+                            className="bg-emerald-600 hover:bg-emerald-700"
+                        >
+                            Vertrag hinzufügen
+                        </Button>
+                    </div>
                     {contracts.length === 0 ? (
                         <EmptyState
                             icon={FileText}
@@ -399,6 +408,14 @@ export default function Contracts() {
                 </TabsContent>
 
                 <TabsContent value="financials">
+                    <div className="flex justify-end mb-4">
+                        <Button 
+                            onClick={() => setAddFinancialItemOpen(true)}
+                            className="bg-emerald-600 hover:bg-emerald-700"
+                        >
+                            Mietforderung hinzufügen
+                        </Button>
+                    </div>
                     <FinancialItemsList />
                 </TabsContent>
             </Tabs>
