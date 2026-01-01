@@ -33,11 +33,13 @@ import ContractForm from '@/components/contracts/ContractForm';
 import TenantsList from '@/components/contracts/TenantsList';
 import FinancialItemsList from '@/components/contracts/FinancialItemsList';
 import { regenerateContractFinancialItems } from '@/components/contracts/generateFinancialItems';
+import AddFinancialItemDialog from '@/components/contracts/AddFinancialItemDialog';
 
 export default function Contracts() {
     const [formOpen, setFormOpen] = useState(false);
     const [editingContract, setEditingContract] = useState(null);
     const [deleteContract, setDeleteContract] = useState(null);
+    const [addFinancialItemOpen, setAddFinancialItemOpen] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: contracts = [], isLoading } = useQuery({
@@ -230,11 +232,8 @@ export default function Contracts() {
             <PageHeader 
                 title="Mietverträge"
                 subtitle={`${contracts.length} Verträge · ${tenants.length} Mieter`}
-                action={() => {
-                    setEditingContract(null);
-                    setFormOpen(true);
-                }}
-                actionLabel="Vertrag hinzufügen"
+                action={() => setAddFinancialItemOpen(true)}
+                actionLabel="Mietforderung hinzufügen"
             />
 
             <Tabs defaultValue="contracts" className="space-y-6">
@@ -433,6 +432,15 @@ export default function Contracts() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            <AddFinancialItemDialog
+                open={addFinancialItemOpen}
+                onOpenChange={setAddFinancialItemOpen}
+                contracts={contracts}
+                units={units}
+                buildings={buildings}
+                tenants={tenants}
+            />
         </div>
     );
 }
