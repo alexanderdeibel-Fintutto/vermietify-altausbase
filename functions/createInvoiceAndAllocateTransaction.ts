@@ -46,6 +46,8 @@ Deno.serve(async (req) => {
             reference: invoiceData.reference || '',
             description: invoiceData.description,
             cost_type_id: invoiceData.cost_type_id,
+            building_id: invoiceData.building_id || null,
+            unit_id: invoiceData.unit_id || null,
             status: 'paid',
             notes: invoiceData.notes || ''
         });
@@ -61,6 +63,7 @@ Deno.serve(async (req) => {
             reference: invoiceData.reference || '',
             category: costType.sub_category,
             cost_type_id: invoiceData.cost_type_id,
+            related_to_unit_id: invoiceData.unit_id || null,
             is_automatic_from_contract: false
         });
 

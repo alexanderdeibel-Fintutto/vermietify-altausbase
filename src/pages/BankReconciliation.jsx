@@ -1880,6 +1880,8 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                     onOpenChange={setCreateInvoiceDialogOpen}
                     transaction={selectedTransactionForInvoice}
                     costTypes={costTypes}
+                    buildings={buildings}
+                    units={units}
                     onSuccess={() => {
                         queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
                         queryClient.invalidateQueries({ queryKey: ['financial-items'] });

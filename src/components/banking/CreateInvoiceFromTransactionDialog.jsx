@@ -14,6 +14,8 @@ export default function CreateInvoiceFromTransactionDialog({
     onOpenChange, 
     transaction, 
     costTypes,
+    buildings = [],
+    units = [],
     onSuccess 
 }) {
     const [isProcessing, setIsProcessing] = useState(false);
@@ -24,6 +26,8 @@ export default function CreateInvoiceFromTransactionDialog({
         invoice_date: transaction?.transaction_date || '',
         description: transaction?.description || '',
         reference: transaction?.reference || transaction?.description || '',
+        building_id: '',
+        unit_id: '',
         notes: ''
     });
 
@@ -168,6 +172,53 @@ export default function CreateInvoiceFromTransactionDialog({
                             value={formData.reference}
                             onChange={(e) => setFormData({...formData, reference: e.target.value})}
                         />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        {/* Building */}
+                        <div>
+                            <Label>Gebäude (optional)</Label>
+                            <Select 
+                                value={formData.building_id} 
+                                onValueChange={(value) => setFormData({...formData, building_id: value, unit_id: ''})}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Gebäude auswählen..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={null}>Kein Gebäude</SelectItem>
+                                    {buildings.map(building => (
+                                        <SelectItem key={building.id} value={building.id}>
+                                            {building.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Unit */}
+                        <div>
+                            <Label>Wohneinheit (optional)</Label>
+                            <Select 
+                                value={formData.unit_id} 
+                                onValueChange={(value) => setFormData({...formData, unit_id: value})}
+                                disabled={!formData.building_id}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Einheit auswählen..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={null}>Keine Einheit</SelectItem>
+                                    {units
+                                        .filter(u => u.building_id === formData.building_id)
+                                        .map(unit => (
+                                            <SelectItem key={unit.id} value={unit.id}>
+                                                {unit.unit_number}
+                                            </SelectItem>
+                                        ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
 
                     {/* Notes */}
