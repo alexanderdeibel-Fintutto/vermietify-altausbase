@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Tag, X, Check, User, Calendar, Building2 } from 'lucide-react';
+import { Tag, X, Check, User, Calendar, Building2, FileText } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
@@ -24,6 +24,7 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
     availableFinancialItems = [],
     onCategorize,
     onUncategorize,
+    onCreateInvoice,
     tenants = [],
     units = [],
     buildings = [],
@@ -244,9 +245,9 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
                         )}
                     </div>
 
-                    {/* Allocation Button */}
+                    {/* Allocation Buttons */}
                     {!isCategorized && (
-                        <div className="lg:w-48 flex items-center justify-center border-t lg:border-t-0 lg:border-l pt-4 lg:pt-0 lg:pl-4">
+                        <div className="lg:w-48 flex flex-col gap-2 items-center justify-center border-t lg:border-t-0 lg:border-l pt-4 lg:pt-0 lg:pl-4">
                             <Button 
                                 onClick={onCategorize}
                                 className={cn(
@@ -260,6 +261,17 @@ const TransactionCategoryCard = React.memo(function TransactionCategoryCard({
                                 <Tag className="w-4 h-4 mr-2" />
                                 Zuordnen
                             </Button>
+                            {onCreateInvoice && (
+                                <Button 
+                                    onClick={onCreateInvoice}
+                                    variant="outline"
+                                    className="w-full"
+                                    size="sm"
+                                >
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    Rechnung erstellen
+                                </Button>
+                            )}
                         </div>
                     )}
 
