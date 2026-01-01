@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -146,6 +146,9 @@ export default function AddFinancialItemDialog({ open, onOpenChange, contracts, 
                         <FileText className="w-5 h-5 text-emerald-600" />
                         Mietforderung hinzufügen
                     </DialogTitle>
+                    <DialogDescription>
+                        Erstellen Sie eine manuelle Forderung oder Verbindlichkeit für ein Objekt oder einen Mietvertrag.
+                    </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
