@@ -111,6 +111,11 @@ export default function Finanzen() {
 
             // Calculate actual paid amount from links
             const links = itemLinks.filter(link => link.financial_item_id === item.id);
+            
+            // Skip if this financial item is linked to an invoice (will be shown as invoice instead)
+            const hasInvoiceLink = links.some(link => link.invoice_id);
+            if (hasInvoiceLink) return;
+            
             const paidAmount = links.reduce((sum, link) => sum + (link.linked_amount || 0), 0);
             
             // Calculate actual status
