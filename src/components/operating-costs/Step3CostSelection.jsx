@@ -48,9 +48,8 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
         }
 
         console.log('Step3: Starting cost calculation...');
-        console.log('Step3: allRelevantCostTypes', allRelevantCostTypes);
-        console.log('Step3: All invoices', invoices);
-        console.log('Step3: All financialItems', financialItems);
+        console.log('Step3: allRelevantCostTypes IDs:', allRelevantCostTypes.map(ct => ct.id));
+        console.log('Step3: All invoice cost_type_ids:', [...new Set(invoices.map(inv => inv.cost_type_id))]);
         console.log('Step3: Period', data.period_start, 'to', data.period_end);
         console.log('Step3: Building ID', data.building_id);
 
@@ -58,8 +57,6 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
         
         allRelevantCostTypes.forEach(costType => {
             console.log(`\nStep3: Processing cost type: ${costType.sub_category} (${costType.id})`);
-            console.log(`Step3: Total invoices available: ${invoices.length}`);
-            console.log(`Step3: Total financial items available: ${financialItems.length}`);
             const dbEntries = [];
 
             // Get invoices for this cost type
