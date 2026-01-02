@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from "@/components/ui/button";
@@ -37,89 +37,84 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
         queryFn: () => base44.entities.Unit.list()
     });
 
-    const operatingCostTypes = costTypes.filter(ct => ct.distributable);
+    const allRelevantCostTypes = useMemo(() => {
+        const operatingCostTypes = costTypes.filter(ct => ct.distributable);
 
-    // Also get invoices marked as operating cost relevant with non-distributable cost types
-    const operatingCostInvoices = invoices.filter(inv => 
-        inv.operating_cost_relevant && 
-        inv.invoice_date >= data.period_start && 
-        inv.invoice_date <= data.period_end
-    );
+        // Also get invoices marked as operating cost relevant with non-distributable cost types
+        const operatingCostInvoices = invoices.filter(inv => 
+            inv.operating_cost_relevant && 
+            inv.invoice_date >= data.period_start && 
+            inv.invoice_date <= data.period_end
+        );
 
-    // Get unique cost types from operating cost invoices
-    const additionalCostTypes = costTypes.filter(ct => 
-        !ct.distributable && 
-        operatingCostInvoices.some(inv => inv.cost_type_id === ct.id)
-    );
+        // Get unique cost types from operating cost invoices
+        const additionalCostTypes = costTypes.filter(ct => 
+            !ct.distributable && 
+            operatingCostInvoices.some(inv => inv.cost_type_id === ct.id)
+        );
 
-    const allRelevantCostTypes = [...operatingCostTypes, ...additionalCostTypes];
+        return [...operatingCostTypes, ...additionalCostTypes];
+    }, [costTypes, invoices, data.period_start, data.period_end]);
 
     useEffect(() => {
-        setCosts(prevCosts => {
-            const updatedCosts = {};
-            
-            allRelevantCostTypes.forEach(costType => {
-                // Get relevant invoices
-                const relevantInvoices = invoices.filter(inv => {
-                    if (inv.cost_type_id !== costType.id) return false;
-                    if (!inv.invoice_date) return false;
-                    if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) return false;
-                    
-                    // Skip if unit doesn't match selected units
-                    if (inv.unit_id) {
-                        const unit = units.find(u => u.id === inv.unit_id);
-                        if (unit && !data.selected_units.includes(unit.id)) return false;
-                    }
-                    
-                    // Skip if building doesn't match (only if building is set on invoice)
-                    if (inv.building_id && data.building_id && inv.building_id !== data.building_id) return false;
-                    
-                    return true;
-                });
-
-                // Get relevant financial items (payables with cost_type_id)
-                const relevantFinancialItems = financialItems.filter(item => {
-                    if (item.type !== 'payable') return false;
-                    if (item.cost_type_id !== costType.id) return false;
-                    if (!item.due_date) return false;
-                    if (item.due_date < data.period_start || item.due_date > data.period_end) return false;
-                    
-                    // Skip if unit doesn't match selected units
-                    if (item.related_to_unit_id) {
-                        const unit = units.find(u => u.id === item.related_to_unit_id);
-                        if (unit && !data.selected_units.includes(unit.id)) return false;
-                    }
-                    
-                    return true;
-                }).map(item => ({
-                    id: item.id,
-                    description: item.description || 'Kosten',
-                    invoice_date: item.due_date,
-                    recipient: item.reference || '-',
-                    amount: item.expected_amount || 0,
-                    isFinancialItem: true
-                }));
-
-                // Combine database entries
-                const dbEntries = [...relevantInvoices, ...relevantFinancialItems];
+        const newCosts = {};
+        
+        allRelevantCostTypes.forEach(costType => {
+            // Get relevant invoices
+            const relevantInvoices = invoices.filter(inv => {
+                if (inv.cost_type_id !== costType.id) return false;
+                if (!inv.invoice_date) return false;
+                if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) return false;
                 
-                // Preserve manual entries from previous state
-                const existingManualEntries = prevCosts[costType.id]?.invoices.filter(inv => inv.isManual) || [];
+                // Skip if unit doesn't match selected units
+                if (inv.unit_id) {
+                    const unit = units.find(u => u.id === inv.unit_id);
+                    if (unit && !data.selected_units.includes(unit.id)) return false;
+                }
                 
-                const allEntries = [...dbEntries, ...existingManualEntries];
-
-                updatedCosts[costType.id] = {
-                    costType,
-                    selected: prevCosts[costType.id]?.selected || false,
-                    distribution_key: prevCosts[costType.id]?.distribution_key || costType.distribution_key || 'qm',
-                    invoices: allEntries,
-                    selectedInvoices: prevCosts[costType.id]?.selectedInvoices || [],
-                    total: prevCosts[costType.id]?.total || 0
-                };
+                // Skip if building doesn't match (only if building is set on invoice)
+                if (inv.building_id && data.building_id && inv.building_id !== data.building_id) return false;
+                
+                return true;
             });
 
-            return updatedCosts;
+            // Get relevant financial items (payables with cost_type_id)
+            const relevantFinancialItems = financialItems.filter(item => {
+                if (item.type !== 'payable') return false;
+                if (item.cost_type_id !== costType.id) return false;
+                if (!item.due_date) return false;
+                if (item.due_date < data.period_start || item.due_date > data.period_end) return false;
+                
+                // Skip if unit doesn't match selected units
+                if (item.related_to_unit_id) {
+                    const unit = units.find(u => u.id === item.related_to_unit_id);
+                    if (unit && !data.selected_units.includes(unit.id)) return false;
+                }
+                
+                return true;
+            }).map(item => ({
+                id: item.id,
+                description: item.description || 'Kosten',
+                invoice_date: item.due_date,
+                recipient: item.reference || '-',
+                amount: item.expected_amount || 0,
+                isFinancialItem: true
+            }));
+
+            // Combine database entries
+            const dbEntries = [...relevantInvoices, ...relevantFinancialItems];
+
+            newCosts[costType.id] = {
+                costType,
+                selected: false,
+                distribution_key: costType.distribution_key || 'qm',
+                invoices: dbEntries,
+                selectedInvoices: [],
+                total: 0
+            };
         });
+
+        setCosts(newCosts);
     }, [allRelevantCostTypes, invoices, financialItems, data.period_start, data.period_end, data.selected_units, data.building_id, units]);
 
     const toggleCategory = (costTypeId) => {
