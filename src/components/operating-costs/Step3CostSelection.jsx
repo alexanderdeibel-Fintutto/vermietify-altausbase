@@ -100,41 +100,39 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
                 
                 console.log(`Step3: ✓ Adding invoice ${inv.id}: ${inv.description}`);
                 dbEntries.push(inv);
-            });
-
-            // Get relevant financial items (only for distributable cost types)
-            if (costType.distributable) {
-                console.log(`Step3: Cost type is distributable, checking financial items...`);
-                financialItems.forEach(item => {
-                    if (item.type !== 'payable') return;
-                    if (item.cost_type_id !== costType.id) return;
-                    
-                    console.log(`Step3: Checking financial item ${item.id}: due_date=${item.due_date}`);
-                    
-                    if (!item.due_date) return;
-                    if (item.due_date < data.period_start || item.due_date > data.period_end) return;
-                    
-                    // Check location match
-                    let locationMatch = true;
-                    if (item.related_to_unit_id && data.selected_units.length > 0) {
-                        locationMatch = data.selected_units.includes(item.related_to_unit_id);
-                    }
-                    
-                    console.log(`Step3: Financial item ${item.id} location match: ${locationMatch}`);
-                    
-                    if (!locationMatch) return;
-                    
-                    console.log(`Step3: ✓ Adding financial item ${item.id}: ${item.description}`);
-                    dbEntries.push({
-                        id: item.id,
-                        description: item.description || 'Kosten',
-                        invoice_date: item.due_date,
-                        recipient: item.reference || '-',
-                        amount: item.expected_amount || 0,
-                        isFinancialItem: true
-                    });
                 });
-            }
+
+                // Get relevant financial items
+                console.log(`Step3: Checking financial items...`);
+                financialItems.forEach(item => {
+                if (item.type !== 'payable') return;
+                if (item.cost_type_id !== costType.id) return;
+
+                console.log(`Step3: Checking financial item ${item.id}: due_date=${item.due_date}`);
+
+                if (!item.due_date) return;
+                if (item.due_date < data.period_start || item.due_date > data.period_end) return;
+
+                // Check location match
+                let locationMatch = true;
+                if (item.related_to_unit_id && data.selected_units.length > 0) {
+                    locationMatch = data.selected_units.includes(item.related_to_unit_id);
+                }
+
+                console.log(`Step3: Financial item ${item.id} location match: ${locationMatch}`);
+
+                if (!locationMatch) return;
+
+                console.log(`Step3: ✓ Adding financial item ${item.id}: ${item.description}`);
+                dbEntries.push({
+                    id: item.id,
+                    description: item.description || 'Kosten',
+                    invoice_date: item.due_date,
+                    recipient: item.reference || '-',
+                    amount: item.expected_amount || 0,
+                    isFinancialItem: true
+                });
+                });
 
             console.log(`Step3: Total entries for ${costType.sub_category}: ${dbEntries.length}`);
 
