@@ -27,11 +27,14 @@ Deno.serve(async (req) => {
                     continue;
                 }
 
+                // Ensure valid date
+                const transactionDate = transaction.transaction_date || new Date().toISOString().split('T')[0];
+
                 // Create Invoice
                 const newInvoice = await base44.entities.Invoice.create({
                     type: transaction.amount < 0 ? 'expense' : 'other_income',
-                    invoice_date: transaction.transaction_date,
-                    due_date: transaction.transaction_date,
+                    invoice_date: transactionDate,
+                    due_date: transactionDate,
                     amount: Math.abs(transaction.amount),
                     expected_amount: Math.abs(transaction.amount),
                     paid_amount: Math.abs(transaction.amount),
@@ -54,7 +57,7 @@ Deno.serve(async (req) => {
                     amount: Math.abs(transaction.amount),
                     expected_amount: Math.abs(transaction.amount),
                     currency: 'EUR',
-                    due_date: transaction.transaction_date,
+                    due_date: transactionDate,
                     description: invoiceData.description,
                     reference: transaction.reference || transaction.description,
                     related_to_unit_id: invoiceData.unit_id || null,
