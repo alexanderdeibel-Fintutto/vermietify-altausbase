@@ -16,6 +16,7 @@ import TransactionAllocationDialog from '@/components/banking/TransactionAllocat
 import RuleManager from '@/components/banking/RuleManager';
 import RulePreviewDialog from '@/components/banking/RulePreviewDialog';
 import CreateInvoiceFromTransactionDialog from '@/components/banking/CreateInvoiceFromTransactionDialog';
+import CreateMultipleInvoicesDialog from '@/components/banking/CreateMultipleInvoicesDialog';
 import {
     Popover,
     PopoverContent,
@@ -91,6 +92,7 @@ export default function BankReconciliation() {
     const [selectedTransaction, setSelectedTransaction] = useState(null);
     const [createInvoiceDialogOpen, setCreateInvoiceDialogOpen] = useState(false);
     const [selectedTransactionForInvoice, setSelectedTransactionForInvoice] = useState(null);
+    const [createMultipleInvoicesDialogOpen, setCreateMultipleInvoicesDialogOpen] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: transactions = [], isLoading: loadingTransactions } = useQuery({
@@ -788,13 +790,22 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                 </div>
                 <div className="flex gap-2">
                     {selectedTransactions.length > 0 && (
-                        <Button 
-                            onClick={() => setShowBulkActions(!showBulkActions)}
-                            className="bg-blue-600 hover:bg-blue-700"
-                        >
-                            <Tag className="w-4 h-4 mr-2" />
-                            Bulk-Zuordnung ({selectedTransactions.length})
-                        </Button>
+                        <>
+                            <Button 
+                                onClick={() => setShowBulkActions(!showBulkActions)}
+                                className="bg-blue-600 hover:bg-blue-700"
+                            >
+                                <Tag className="w-4 h-4 mr-2" />
+                                Bulk-Zuordnung ({selectedTransactions.length})
+                            </Button>
+                            <Button 
+                                onClick={() => setCreateMultipleInvoicesDialogOpen(true)}
+                                className="bg-emerald-600 hover:bg-emerald-700"
+                            >
+                                <FileText className="w-4 h-4 mr-2" />
+                                Mehrere Rechnungen erstellen
+                            </Button>
+                        </>
                     )}
                     <Button 
                         onClick={() => setRulesOpen(true)}
@@ -1888,6 +1899,25 @@ ${JSON.stringify(financialItems.filter(item => item.type === 'receivable' && (it
                         queryClient.invalidateQueries({ queryKey: ['invoices'] });
                         queryClient.invalidateQueries({ queryKey: ['financial-item-transaction-links'] });
                         setSelectedTransactionForInvoice(null);
+                    }}
+                />
+            )}
+
+            {createMultipleInvoicesDialogOpen && selectedTransactions.length > 0 && (
+                <CreateMultipleInvoicesDialog
+                    open={createMultipleInvoicesDialogOpen}
+                    onOpenChange={setCreateMultipleInvoicesDialogOpen}
+                    transactions={transactions.filter(t => selectedTransactions.includes(t.id))}
+                    costTypes={costTypes}
+                    buildings={buildings}
+                    units={units}
+                    onSuccess={() => {
+                        queryClient.invalidateQueries({ queryKey: ['bank-transactions'] });
+                        queryClient.invalidateQueries({ queryKey: ['financial-items'] });
+                        queryClient.invalidateQueries({ queryKey: ['invoices'] });
+                        queryClient.invalidateQueries({ queryKey: ['financial-item-transaction-links'] });
+                        setCreateMultipleInvoicesDialogOpen(false);
+                        setSelectedTransactions([]);
                     }}
                 />
             )}
