@@ -43,12 +43,17 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
             // Get relevant invoices
             const relevantInvoices = invoices.filter(inv => {
                 if (inv.cost_type_id !== costType.id) return false;
+                if (!inv.invoice_date) return false;
                 if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) return false;
                 
-                const unit = units.find(u => u.id === inv.unit_id);
-                if (unit && !data.selected_units.includes(unit.id)) return false;
+                // Skip if unit doesn't match selected units
+                if (inv.unit_id) {
+                    const unit = units.find(u => u.id === inv.unit_id);
+                    if (unit && !data.selected_units.includes(unit.id)) return false;
+                }
                 
-                if (inv.building_id && inv.building_id !== data.building_id) return false;
+                // Skip if building doesn't match (only if building is set on invoice)
+                if (inv.building_id && data.building_id && inv.building_id !== data.building_id) return false;
                 
                 return true;
             });
@@ -60,8 +65,11 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
                 if (!item.due_date) return false;
                 if (item.due_date < data.period_start || item.due_date > data.period_end) return false;
                 
-                const unit = units.find(u => u.id === item.related_to_unit_id);
-                if (unit && !data.selected_units.includes(unit.id)) return false;
+                // Skip if unit doesn't match selected units
+                if (item.related_to_unit_id) {
+                    const unit = units.find(u => u.id === item.related_to_unit_id);
+                    if (unit && !data.selected_units.includes(unit.id)) return false;
+                }
                 
                 return true;
             }).map(item => ({
