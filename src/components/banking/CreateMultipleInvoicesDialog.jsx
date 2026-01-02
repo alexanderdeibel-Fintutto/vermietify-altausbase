@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import { FileText, Loader2 } from 'lucide-react';
+import { FileText, Loader2, Plus } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
 export default function CreateMultipleInvoicesDialog({
     open,
@@ -19,6 +20,7 @@ export default function CreateMultipleInvoicesDialog({
     onSuccess
 }) {
     const [isProcessing, setIsProcessing] = useState(false);
+    const [showNewRecipient, setShowNewRecipient] = useState(false);
     const [formData, setFormData] = useState({
         cost_type_id: '',
         recipient: '',
@@ -26,6 +28,12 @@ export default function CreateMultipleInvoicesDialog({
         building_id: '',
         unit_id: '',
         notes: ''
+    });
+
+    const { data: recipients = [] } = useQuery({
+        queryKey: ['recipients'],
+        queryFn: () => base44.entities.Recipient.list(),
+        staleTime: 60000
     });
 
     const selectedCostType = costTypes.find(ct => ct.id === formData.cost_type_id);
@@ -128,11 +136,60 @@ export default function CreateMultipleInvoicesDialog({
                     {/* Recipient */}
                     <div>
                         <Label>Empfänger/Aussteller *</Label>
-                        <Input
-                            value={formData.recipient}
-                            onChange={(e) => setFormData({ ...formData, recipient: e.target.value })}
-                            required
-                        />
+                        {showNewRecipient ? (
+                            <div className="space-y-2">
+                                <Input
+                                    value={formData.recipient}
+                                    onChange={(e) => setFormData({ ...formData, recipient: e.target.value })}
+                                    placeholder="Name des Empfängers eingeben..."
+                                    required
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        setShowNewRecipient(false);
+                                        setFormData({ ...formData, recipient: '' });
+                                    }}
+                                >
+                                    Aus Liste wählen
+                                </Button>
+                            </div>
+                        ) : (
+                            <Select
+                                value={formData.recipient}
+                                onValueChange={(value) => {
+                                    if (value === '__new__') {
+                                        setShowNewRecipient(true);
+                                        setFormData({ ...formData, recipient: '' });
+                                    } else {
+                                        setFormData({ ...formData, recipient: value });
+                                    }
+                                }}
+                                required
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Empfänger auswählen..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="__new__" className="text-emerald-600 font-medium">
+                                        <Plus className="w-4 h-4 inline mr-2" />
+                                        Neuer Empfänger
+                                    </SelectItem>
+                                    {recipients.length > 0 && (
+                                        <>
+                                            <div className="border-t my-1" />
+                                            {recipients.map(recipient => (
+                                                <SelectItem key={recipient.id} value={recipient.name}>
+                                                    {recipient.name}
+                                                </SelectItem>
+                                            ))}
+                                        </>
+                                    )}
+                                </SelectContent>
+                            </Select>
+                        )}
                     </div>
 
                     {/* Description */}
