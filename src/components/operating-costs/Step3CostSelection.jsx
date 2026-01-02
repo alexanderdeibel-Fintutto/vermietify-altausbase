@@ -39,8 +39,8 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
     });
 
     const allRelevantCostTypes = useMemo(() => {
-        console.log('Step3: All cost types:', costTypes);
-        return costTypes;
+        // Only show distributable cost types (Betriebskosten)
+        return costTypes.filter(ct => ct.distributable === true);
     }, [costTypes]);
 
     useEffect(() => {
