@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { toast } from 'sonner';
 import Step1BuildingSelection from './Step1BuildingSelection';
 import Step2ContractSelection from './Step2ContractSelection';
 import Step3CostSelection from './Step3CostSelection';
 import Step4DirectCosts from './Step4DirectCosts';
 import Step5Summary from './Step5Summary';
 
-export default function OperatingCostStatementDialog({ open, onOpenChange, onSuccess }) {
+export default function OperatingCostStatementDialog({ open, onOpenChange, onSuccess, existingStatement }) {
     const [currentStep, setCurrentStep] = useState(1);
     const [statementData, setStatementData] = useState({
         building_id: '',
@@ -19,8 +22,49 @@ export default function OperatingCostStatementDialog({ open, onOpenChange, onSuc
         vacancies: [],
         costs: {},
         directCosts: {},
+        manualCosts: [],
         results: []
     });
+    const [statementId, setStatementId] = useState(null);
+    const queryClient = useQueryClient();
+
+    useEffect(() => {
+        if (existingStatement && open) {
+            setStatementId(existingStatement.id);
+            setCurrentStep(existingStatement.current_step || 1);
+            if (existingStatement.draft_details) {
+                setStatementData(existingStatement.draft_details);
+            } else {
+                setStatementData({
+                    building_id: existingStatement.building_id || '',
+                    period_start: existingStatement.period_start || '',
+                    period_end: existingStatement.period_end || '',
+                    selected_units: existingStatement.selected_units || [],
+                    contracts: [],
+                    vacancies: [],
+                    costs: {},
+                    directCosts: {},
+                    manualCosts: [],
+                    results: []
+                });
+            }
+        } else if (!existingStatement && !open) {
+            setStatementId(null);
+            setCurrentStep(1);
+            setStatementData({
+                building_id: '',
+                period_start: '',
+                period_end: '',
+                selected_units: [],
+                contracts: [],
+                vacancies: [],
+                costs: {},
+                directCosts: {},
+                manualCosts: [],
+                results: []
+            });
+        }
+    }, [existingStatement, open]);
 
     const steps = [
         { number: 1, title: 'Gebäude & Zeitraum' },
@@ -46,18 +90,55 @@ export default function OperatingCostStatementDialog({ open, onOpenChange, onSuc
         setStatementData({ ...statementData, ...data });
     };
 
+    const saveDraftMutation = useMutation({
+        mutationFn: async () => {
+            const draftData = {
+                building_id: statementData.building_id,
+                period_start: statementData.period_start,
+                period_end: statementData.period_end,
+                selected_units: statementData.selected_units,
+                status: 'draft',
+                current_step: currentStep,
+                draft_details: statementData
+            };
+
+            if (statementId) {
+                return base44.entities.OperatingCostStatement.update(statementId, draftData);
+            } else {
+                const created = await base44.entities.OperatingCostStatement.create(draftData);
+                setStatementId(created.id);
+                return created;
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['operating-cost-statements'] });
+            toast.success('Entwurf gespeichert');
+        },
+        onError: (error) => {
+            toast.error('Fehler beim Speichern: ' + error.message);
+        }
+    });
+
+    const handleSaveDraft = () => {
+        if (!statementData.building_id || !statementData.period_start || !statementData.period_end) {
+            toast.error('Bitte wählen Sie zuerst ein Gebäude und einen Zeitraum aus');
+            return;
+        }
+        saveDraftMutation.mutate();
+    };
+
     const renderStep = () => {
         switch (currentStep) {
             case 1:
-                return <Step1BuildingSelection data={statementData} onNext={handleNext} onDataChange={handleStepData} />;
+                return <Step1BuildingSelection data={statementData} onNext={handleNext} onDataChange={handleStepData} onSaveDraft={handleSaveDraft} isSaving={saveDraftMutation.isPending} />;
             case 2:
-                return <Step2ContractSelection data={statementData} onNext={handleNext} onBack={handleBack} onDataChange={handleStepData} />;
+                return <Step2ContractSelection data={statementData} onNext={handleNext} onBack={handleBack} onDataChange={handleStepData} onSaveDraft={handleSaveDraft} isSaving={saveDraftMutation.isPending} />;
             case 3:
-                return <Step3CostSelection data={statementData} onNext={handleNext} onBack={handleBack} onDataChange={handleStepData} />;
+                return <Step3CostSelection data={statementData} onNext={handleNext} onBack={handleBack} onDataChange={handleStepData} onSaveDraft={handleSaveDraft} isSaving={saveDraftMutation.isPending} />;
             case 4:
-                return <Step4DirectCosts data={statementData} onNext={handleNext} onBack={handleBack} onDataChange={handleStepData} />;
+                return <Step4DirectCosts data={statementData} onNext={handleNext} onBack={handleBack} onDataChange={handleStepData} onSaveDraft={handleSaveDraft} isSaving={saveDraftMutation.isPending} />;
             case 5:
-                return <Step5Summary data={statementData} onBack={handleBack} onSuccess={onSuccess} onClose={() => onOpenChange(false)} />;
+                return <Step5Summary data={statementData} onBack={handleBack} onSuccess={onSuccess} onClose={() => onOpenChange(false)} statementId={statementId} />;
             default:
                 return null;
         }

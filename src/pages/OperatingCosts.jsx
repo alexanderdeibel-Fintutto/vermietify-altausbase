@@ -14,6 +14,7 @@ import { de } from 'date-fns/locale';
 export default function OperatingCosts() {
     const [formOpen, setFormOpen] = useState(false);
     const [selectedStatement, setSelectedStatement] = useState(null);
+    const [editingStatement, setEditingStatement] = useState(null);
 
     const { data: statements = [], isLoading } = useQuery({
         queryKey: ['operating-cost-statements'],
@@ -56,23 +57,38 @@ export default function OperatingCosts() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {statements.map((statement) => {
                         const building = getBuilding(statement.building_id);
+                        const isDraft = statement.status === 'draft';
                         
                         return (
                             <Card 
                                 key={statement.id} 
-                                className="border-slate-200/50 hover:shadow-md transition-shadow cursor-pointer"
-                                onClick={() => setSelectedStatement(statement)}
+                                className={`border-slate-200/50 hover:shadow-md transition-shadow cursor-pointer ${isDraft ? 'border-amber-300 bg-amber-50/30' : ''}`}
+                                onClick={() => {
+                                    if (isDraft) {
+                                        setEditingStatement(statement);
+                                        setFormOpen(true);
+                                    } else {
+                                        setSelectedStatement(statement);
+                                    }
+                                }}
                             >
                                 <CardContent className="p-6">
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                                                <FileText className="w-5 h-5 text-emerald-600" />
+                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isDraft ? 'bg-amber-100' : 'bg-emerald-100'}`}>
+                                                <FileText className={`w-5 h-5 ${isDraft ? 'text-amber-600' : 'text-emerald-600'}`} />
                                             </div>
                                             <div>
-                                                <h3 className="font-semibold text-slate-800">
-                                                    Abrechnung {new Date(statement.period_start).getFullYear()}
-                                                </h3>
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="font-semibold text-slate-800">
+                                                        Abrechnung {new Date(statement.period_start).getFullYear()}
+                                                    </h3>
+                                                    {isDraft && (
+                                                        <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded">
+                                                            Entwurf
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <p className="text-sm text-slate-500">
                                                     {building?.name || 'Unbekanntes Gebäude'}
                                                 </p>
@@ -89,10 +105,12 @@ export default function OperatingCosts() {
                                             <Calendar className="w-4 h-4 text-slate-400" />
                                             <span>{statement.period_start} - {statement.period_end}</span>
                                         </div>
-                                        <div className="flex items-center gap-2 text-slate-600">
-                                            <Euro className="w-4 h-4 text-slate-400" />
-                                            <span>Gesamtkosten: €{statement.total_costs?.toFixed(2)}</span>
-                                        </div>
+                                        {!isDraft && (
+                                            <div className="flex items-center gap-2 text-slate-600">
+                                                <Euro className="w-4 h-4 text-slate-400" />
+                                                <span>Gesamtkosten: €{statement.total_costs?.toFixed(2)}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -103,10 +121,17 @@ export default function OperatingCosts() {
 
             <OperatingCostStatementDialog
                 open={formOpen}
-                onOpenChange={setFormOpen}
+                onOpenChange={(open) => {
+                    setFormOpen(open);
+                    if (!open) {
+                        setEditingStatement(null);
+                    }
+                }}
                 onSuccess={() => {
                     setFormOpen(false);
+                    setEditingStatement(null);
                 }}
+                existingStatement={editingStatement}
             />
 
             <StatementDetailDialog
