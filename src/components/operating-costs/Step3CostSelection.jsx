@@ -48,11 +48,12 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
             return;
         }
 
-        console.log('Step3: Starting cost calculation...');
-        console.log('Step3: allRelevantCostTypes IDs:', allRelevantCostTypes.map(ct => ct.id));
-        console.log('Step3: All invoice cost_type_ids:', [...new Set(invoices.map(inv => inv.cost_type_id))]);
+        console.log('======================================');
+        console.log('Step3: COST TYPE IDs:', allRelevantCostTypes.map(ct => ct.id));
+        console.log('Step3: INVOICE COST TYPE IDs:', [...new Set(invoices.map(inv => inv.cost_type_id))]);
         console.log('Step3: Period', data.period_start, 'to', data.period_end);
         console.log('Step3: Building ID', data.building_id);
+        console.log('======================================');
 
         const newCosts = {};
         
