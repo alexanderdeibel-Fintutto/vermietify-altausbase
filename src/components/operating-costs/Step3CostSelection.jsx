@@ -122,9 +122,15 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
                 if (item.due_date < data.period_start || item.due_date > data.period_end) return;
 
                 // Check location match
-                let locationMatch = true;
-                if (item.related_to_unit_id && data.selected_units.length > 0) {
+                let locationMatch = false;
+                
+                // If item has a unit_id, check if it's in selected units
+                if (item.related_to_unit_id) {
                     locationMatch = data.selected_units.includes(item.related_to_unit_id);
+                }
+                // If item has no unit_id, include it
+                else {
+                    locationMatch = true;
                 }
 
                 console.log(`Step3: Financial item ${item.id} location match: ${locationMatch}`);
