@@ -55,65 +55,72 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
     const allRelevantCostTypes = [...operatingCostTypes, ...additionalCostTypes];
 
     useEffect(() => {
-        const initialCosts = {};
-        
-        allRelevantCostTypes.forEach(costType => {
-            // Get relevant invoices
-            const relevantInvoices = invoices.filter(inv => {
-                if (inv.cost_type_id !== costType.id) return false;
-                if (!inv.invoice_date) return false;
-                if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) return false;
+        setCosts(prevCosts => {
+            const updatedCosts = {};
+            
+            allRelevantCostTypes.forEach(costType => {
+                // Get relevant invoices
+                const relevantInvoices = invoices.filter(inv => {
+                    if (inv.cost_type_id !== costType.id) return false;
+                    if (!inv.invoice_date) return false;
+                    if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) return false;
+                    
+                    // Skip if unit doesn't match selected units
+                    if (inv.unit_id) {
+                        const unit = units.find(u => u.id === inv.unit_id);
+                        if (unit && !data.selected_units.includes(unit.id)) return false;
+                    }
+                    
+                    // Skip if building doesn't match (only if building is set on invoice)
+                    if (inv.building_id && data.building_id && inv.building_id !== data.building_id) return false;
+                    
+                    return true;
+                });
+
+                // Get relevant financial items (payables with cost_type_id)
+                const relevantFinancialItems = financialItems.filter(item => {
+                    if (item.type !== 'payable') return false;
+                    if (item.cost_type_id !== costType.id) return false;
+                    if (!item.due_date) return false;
+                    if (item.due_date < data.period_start || item.due_date > data.period_end) return false;
+                    
+                    // Skip if unit doesn't match selected units
+                    if (item.related_to_unit_id) {
+                        const unit = units.find(u => u.id === item.related_to_unit_id);
+                        if (unit && !data.selected_units.includes(unit.id)) return false;
+                    }
+                    
+                    return true;
+                }).map(item => ({
+                    id: item.id,
+                    description: item.description || 'Kosten',
+                    invoice_date: item.due_date,
+                    recipient: item.reference || '-',
+                    amount: item.expected_amount || 0,
+                    isFinancialItem: true
+                }));
+
+                // Combine database entries
+                const dbEntries = [...relevantInvoices, ...relevantFinancialItems];
                 
-                // Skip if unit doesn't match selected units
-                if (inv.unit_id) {
-                    const unit = units.find(u => u.id === inv.unit_id);
-                    if (unit && !data.selected_units.includes(unit.id)) return false;
-                }
+                // Preserve manual entries from previous state
+                const existingManualEntries = prevCosts[costType.id]?.invoices.filter(inv => inv.isManual) || [];
                 
-                // Skip if building doesn't match (only if building is set on invoice)
-                if (inv.building_id && data.building_id && inv.building_id !== data.building_id) return false;
-                
-                return true;
+                const allEntries = [...dbEntries, ...existingManualEntries];
+
+                updatedCosts[costType.id] = {
+                    costType,
+                    selected: prevCosts[costType.id]?.selected || false,
+                    distribution_key: prevCosts[costType.id]?.distribution_key || costType.distribution_key || 'qm',
+                    invoices: allEntries,
+                    selectedInvoices: prevCosts[costType.id]?.selectedInvoices || [],
+                    total: prevCosts[costType.id]?.total || 0
+                };
             });
 
-            // Get relevant financial items (payables with cost_type_id)
-            const relevantFinancialItems = financialItems.filter(item => {
-                if (item.type !== 'payable') return false;
-                if (item.cost_type_id !== costType.id) return false;
-                if (!item.due_date) return false;
-                if (item.due_date < data.period_start || item.due_date > data.period_end) return false;
-                
-                // Skip if unit doesn't match selected units
-                if (item.related_to_unit_id) {
-                    const unit = units.find(u => u.id === item.related_to_unit_id);
-                    if (unit && !data.selected_units.includes(unit.id)) return false;
-                }
-                
-                return true;
-            }).map(item => ({
-                id: item.id,
-                description: item.description || 'Kosten',
-                invoice_date: item.due_date,
-                recipient: item.reference || '-',
-                amount: item.expected_amount || 0,
-                isFinancialItem: true
-            }));
-
-            // Combine both
-            const allEntries = [...relevantInvoices, ...relevantFinancialItems];
-
-            initialCosts[costType.id] = {
-                costType,
-                selected: false,
-                distribution_key: costType.distribution_key || 'qm',
-                invoices: allEntries,
-                selectedInvoices: [],
-                total: 0
-            };
+            return updatedCosts;
         });
-
-        setCosts(initialCosts);
-    }, [costTypes, invoices, financialItems, data.period_start, data.period_end, data.selected_units, data.building_id, units]);
+    }, [allRelevantCostTypes, invoices, financialItems, data.period_start, data.period_end, data.selected_units, data.building_id, units]);
 
     const toggleCategory = (costTypeId) => {
         setExpandedCategories(prev => {
