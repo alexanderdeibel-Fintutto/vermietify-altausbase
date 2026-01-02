@@ -6,17 +6,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Plus, FileText, Calendar, Euro } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
 import EmptyState from '@/components/shared/EmptyState';
+import OperatingCostStatementDialog from '@/components/operating-costs/OperatingCostStatementDialog';
 
 export default function OperatingCosts() {
     const [formOpen, setFormOpen] = useState(false);
 
-    // Placeholder - wird später mit echter Entity ersetzt
     const { data: statements = [], isLoading } = useQuery({
         queryKey: ['operating-cost-statements'],
-        queryFn: async () => {
-            // Platzhalter für zukünftige Entity
-            return [];
-        }
+        queryFn: () => base44.entities.OperatingCostStatement.list()
     });
 
     return (
@@ -81,7 +78,13 @@ export default function OperatingCosts() {
                 </div>
             )}
 
-            {/* Formular Dialog - wird später hinzugefügt */}
+            <OperatingCostStatementDialog
+                open={formOpen}
+                onOpenChange={setFormOpen}
+                onSuccess={() => {
+                    setFormOpen(false);
+                }}
+            />
         </div>
     );
 }
