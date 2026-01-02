@@ -120,6 +120,9 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
         });
 
         console.log('Step3: Computed costs', newCosts);
+        console.log('Step3: allRelevantCostTypes', allRelevantCostTypes);
+        console.log('Step3: invoices', invoices);
+        console.log('Step3: financialItems', financialItems);
         setCosts(newCosts);
     }, [allRelevantCostTypes, invoices, financialItems, data.period_start, data.period_end, data.selected_units, data.building_id, units]);
 
