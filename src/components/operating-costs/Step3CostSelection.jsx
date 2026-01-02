@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import { parseISO, parse, isWithinInterval } from 'date-fns';
 
 export default function Step3CostSelection({ data, onNext, onBack, onDataChange }) {
     const [costs, setCosts] = useState({});
@@ -68,27 +69,38 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
                 console.log(`  Found ${matchingInvoices.length} invoices with matching cost_type_id`);
                 
                 matchingInvoices.forEach(inv => {
-                    console.log(`  Checking: ${inv.description}, date=${inv.invoice_date}, building=${inv.building_id}, unit=${inv.unit_id}`);
-                    
                     if (!inv.invoice_date) {
-                        console.log(`    ❌ No date`);
                         return;
                     }
-                    if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) {
-                        console.log(`    ❌ Outside period (${inv.invoice_date} not in ${data.period_start} - ${data.period_end})`);
+                    
+                    // Parse invoice date - try both formats
+                    let invoiceDate;
+                    try {
+                        if (inv.invoice_date.includes('.')) {
+                            // DD.MM.YYYY format
+                            invoiceDate = parse(inv.invoice_date, 'dd.MM.yyyy', new Date());
+                        } else {
+                            // YYYY-MM-DD format
+                            invoiceDate = parseISO(inv.invoice_date);
+                        }
+                    } catch (e) {
+                        console.log(`  ❌ Invalid date format: ${inv.invoice_date}`);
+                        return;
+                    }
+                    
+                    // Check if within period
+                    const periodStart = parseISO(data.period_start);
+                    const periodEnd = parseISO(data.period_end);
+                    
+                    if (!isWithinInterval(invoiceDate, { start: periodStart, end: periodEnd })) {
                         return;
                     }
                     
                     const matchesBuilding = inv.building_id === data.building_id;
                     const unitBelongsToBuilding = inv.unit_id && units.find(u => u.id === inv.unit_id)?.building_id === data.building_id;
                     
-                    console.log(`    Building match: ${matchesBuilding}, Unit building match: ${unitBelongsToBuilding}`);
-                    
                     if (matchesBuilding || unitBelongsToBuilding) {
-                        console.log(`    ✅ INCLUDED`);
                         dbEntries.push(inv);
-                    } else {
-                        console.log(`    ❌ Wrong building`);
                     }
                 });
             }
