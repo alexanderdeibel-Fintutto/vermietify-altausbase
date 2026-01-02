@@ -67,7 +67,6 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
         console.log('Step3: All invoices', invoices);
         console.log('Step3: All financialItems', financialItems);
         console.log('Step3: Period', data.period_start, 'to', data.period_end);
-        console.log('Step3: Selected units', data.selected_units);
         console.log('Step3: Building ID', data.building_id);
 
         const newCosts = {};
@@ -76,33 +75,62 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
             console.log(`\nStep3: Processing cost type: ${costType.sub_category} (${costType.id})`);
             const dbEntries = [];
 
-            // Get relevant invoices - ALL invoices with this cost type in the period and building
+            // Get relevant invoices - filter by: cost type + period + building
             invoices.forEach(inv => {
                 if (inv.cost_type_id !== costType.id) return;
                 if (!inv.invoice_date) return;
                 if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) return;
-                if (inv.building_id && inv.building_id !== data.building_id) return;
                 
-                console.log(`Step3: Including invoice ${inv.id}: ${inv.description} (${inv.amount})`);
-                dbEntries.push(inv);
+                // Building match: direct building_id OR unit belongs to building OR no location (general)
+                let includeInvoice = false;
+                
+                if (inv.building_id === data.building_id) {
+                    includeInvoice = true;
+                } else if (inv.unit_id) {
+                    const unit = units.find(u => u.id === inv.unit_id);
+                    if (unit && unit.building_id === data.building_id) {
+                        includeInvoice = true;
+                    }
+                } else if (!inv.building_id && !inv.unit_id) {
+                    includeInvoice = true;
+                }
+                
+                if (includeInvoice) {
+                    console.log(`Step3: Including invoice ${inv.id}: ${inv.description} (${inv.amount})`);
+                    dbEntries.push(inv);
+                }
             });
 
-            // Get relevant financial items
+            // Get relevant financial items - filter by: cost type + period + building
             financialItems.forEach(item => {
                 if (item.type !== 'payable') return;
                 if (item.cost_type_id !== costType.id) return;
                 if (!item.due_date) return;
                 if (item.due_date < data.period_start || item.due_date > data.period_end) return;
 
-                console.log(`Step3: Including financial item ${item.id}: ${item.description} (${item.expected_amount})`);
-                dbEntries.push({
-                    id: item.id,
-                    description: item.description || 'Kosten',
-                    invoice_date: item.due_date,
-                    recipient: item.reference || '-',
-                    amount: item.expected_amount || 0,
-                    isFinancialItem: true
-                });
+                // Building match: unit belongs to building OR no location (general)
+                let includeItem = false;
+                
+                if (item.related_to_unit_id) {
+                    const unit = units.find(u => u.id === item.related_to_unit_id);
+                    if (unit && unit.building_id === data.building_id) {
+                        includeItem = true;
+                    }
+                } else if (!item.related_to_unit_id) {
+                    includeItem = true;
+                }
+                
+                if (includeItem) {
+                    console.log(`Step3: Including financial item ${item.id}: ${item.description} (${item.expected_amount})`);
+                    dbEntries.push({
+                        id: item.id,
+                        description: item.description || 'Kosten',
+                        invoice_date: item.due_date,
+                        recipient: item.reference || '-',
+                        amount: item.expected_amount || 0,
+                        isFinancialItem: true
+                    });
+                }
             });
 
             console.log(`Step3: Total entries for ${costType.sub_category}: ${dbEntries.length}`);
@@ -119,7 +147,7 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
 
         console.log('Step3: Final computed costs', newCosts);
         setCosts(newCosts);
-    }, [allRelevantCostTypes, invoices, financialItems, data.period_start, data.period_end, data.selected_units, data.building_id]);
+    }, [allRelevantCostTypes, invoices, financialItems, data.period_start, data.period_end, data.building_id, units]);
 
     const toggleCategory = (costTypeId) => {
         setExpandedCategories(prev => {
