@@ -13,6 +13,8 @@ import { toast } from 'sonner';
 export default function Step3CostSelection({ data, onNext, onBack, onDataChange }) {
     const [costs, setCosts] = useState({});
     const [expandedCategories, setExpandedCategories] = useState(new Set());
+    const [addingManualCost, setAddingManualCost] = useState(null);
+    const [manualCostForm, setManualCostForm] = useState({ description: '', amount: '', date: data.period_start || '' });
 
     const { data: costTypes = [] } = useQuery({
         queryKey: ['cost-types'],
@@ -178,6 +180,46 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
         }));
     };
 
+    const handleAddManualCost = (costTypeId) => {
+        if (!manualCostForm.description || !manualCostForm.amount) {
+            toast.error('Bitte Beschreibung und Betrag eingeben');
+            return;
+        }
+
+        const manualEntry = {
+            id: `manual-${Date.now()}`,
+            description: manualCostForm.description,
+            invoice_date: manualCostForm.date,
+            recipient: 'Manuelle Buchung',
+            amount: parseFloat(manualCostForm.amount),
+            isManual: true
+        };
+
+        setCosts(prev => {
+            const costData = prev[costTypeId];
+            const newInvoices = [...costData.invoices, manualEntry];
+            const newSelectedInvoices = [...costData.selectedInvoices, manualEntry.id];
+            const newTotal = newInvoices
+                .filter(inv => newSelectedInvoices.includes(inv.id))
+                .reduce((sum, inv) => sum + inv.amount, 0);
+
+            return {
+                ...prev,
+                [costTypeId]: {
+                    ...costData,
+                    invoices: newInvoices,
+                    selectedInvoices: newSelectedInvoices,
+                    total: newTotal,
+                    selected: true
+                }
+            };
+        });
+
+        setAddingManualCost(null);
+        setManualCostForm({ description: '', amount: '', date: data.period_start || '' });
+        toast.success('Buchung hinzugefügt');
+    };
+
     const handleNext = () => {
         const selectedCosts = Object.values(costs).filter(c => c.selected);
         
@@ -265,28 +307,82 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
 
                                         {isExpanded && (
                                             <div className="mt-4 space-y-2 pl-9">
-                                                {costData.invoices.length === 0 ? (
-                                                    <p className="text-sm text-slate-500">Keine Buchungen im Zeitraum</p>
-                                                ) : (
-                                                    costData.invoices.map(invoice => (
-                                                        <div key={invoice.id} className="flex items-center justify-between p-2 bg-slate-50 rounded">
-                                                            <div className="flex items-center gap-2">
-                                                                <Checkbox
-                                                                    checked={costData.selectedInvoices.includes(invoice.id)}
-                                                                    onCheckedChange={() => toggleInvoice(costType.id, invoice.id)}
-                                                                />
-                                                                <div>
-                                                                    <p className="text-sm font-medium text-slate-800">{invoice.description}</p>
-                                                                    <p className="text-xs text-slate-500">
-                                                                        {invoice.invoice_date} • {invoice.recipient}
-                                                                    </p>
-                                                                </div>
+                                                {costData.invoices.map(invoice => (
+                                                    <div key={invoice.id} className="flex items-center justify-between p-2 bg-slate-50 rounded">
+                                                        <div className="flex items-center gap-2">
+                                                            <Checkbox
+                                                                checked={costData.selectedInvoices.includes(invoice.id)}
+                                                                onCheckedChange={() => toggleInvoice(costType.id, invoice.id)}
+                                                            />
+                                                            <div>
+                                                                <p className="text-sm font-medium text-slate-800">
+                                                                    {invoice.description}
+                                                                    {invoice.isManual && (
+                                                                        <Badge variant="outline" className="ml-2 text-xs">Manuell</Badge>
+                                                                    )}
+                                                                </p>
+                                                                <p className="text-xs text-slate-500">
+                                                                    {invoice.invoice_date} • {invoice.recipient}
+                                                                </p>
                                                             </div>
-                                                            <span className="text-sm font-medium text-slate-800">
-                                                                €{invoice.amount.toFixed(2)}
-                                                            </span>
                                                         </div>
-                                                    ))
+                                                        <span className="text-sm font-medium text-slate-800">
+                                                            €{invoice.amount.toFixed(2)}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                                
+                                                {addingManualCost === costType.id ? (
+                                                    <div className="p-3 bg-blue-50 rounded border border-blue-200 space-y-2">
+                                                        <Input
+                                                            placeholder="Beschreibung"
+                                                            value={manualCostForm.description}
+                                                            onChange={(e) => setManualCostForm({ ...manualCostForm, description: e.target.value })}
+                                                        />
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <Input
+                                                                type="number"
+                                                                step="0.01"
+                                                                placeholder="Betrag"
+                                                                value={manualCostForm.amount}
+                                                                onChange={(e) => setManualCostForm({ ...manualCostForm, amount: e.target.value })}
+                                                            />
+                                                            <Input
+                                                                type="date"
+                                                                value={manualCostForm.date}
+                                                                onChange={(e) => setManualCostForm({ ...manualCostForm, date: e.target.value })}
+                                                            />
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            <Button 
+                                                                size="sm" 
+                                                                onClick={() => handleAddManualCost(costType.id)}
+                                                                className="bg-emerald-600 hover:bg-emerald-700"
+                                                            >
+                                                                Hinzufügen
+                                                            </Button>
+                                                            <Button 
+                                                                size="sm" 
+                                                                variant="outline"
+                                                                onClick={() => {
+                                                                    setAddingManualCost(null);
+                                                                    setManualCostForm({ description: '', amount: '', date: data.period_start || '' });
+                                                                }}
+                                                            >
+                                                                Abbrechen
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => setAddingManualCost(costType.id)}
+                                                        className="w-full"
+                                                    >
+                                                        <Plus className="w-4 h-4 mr-2" />
+                                                        Buchung hinzufügen
+                                                    </Button>
                                                 )}
                                             </div>
                                         )}
