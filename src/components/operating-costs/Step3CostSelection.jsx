@@ -76,77 +76,43 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
             console.log(`\nStep3: Processing cost type: ${costType.sub_category} (${costType.id})`);
             const dbEntries = [];
 
-            // Get relevant invoices (only those marked as operating cost relevant)
+            // Get relevant invoices
             invoices.forEach(inv => {
                 if (inv.cost_type_id !== costType.id) return;
-                
-                console.log(`Step3: Checking invoice ${inv.id}: operating_cost_relevant=${inv.operating_cost_relevant}, date=${inv.invoice_date}`);
-                
                 if (!inv.operating_cost_relevant) return;
                 if (!inv.invoice_date) return;
                 if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) return;
                 
-                // Check location match
-                let locationMatch = false;
+                // Location match: unit must be in selected units OR building must match OR no location set (building-wide)
+                const unitMatch = !inv.unit_id || data.selected_units.includes(inv.unit_id);
+                const buildingMatch = !inv.building_id || inv.building_id === data.building_id;
                 
-                // If invoice has a unit_id, check if it's in selected units
-                if (inv.unit_id) {
-                    locationMatch = data.selected_units.includes(inv.unit_id);
+                if (unitMatch && buildingMatch) {
+                    dbEntries.push(inv);
                 }
-                // If invoice has a building_id, check if it matches
-                else if (inv.building_id) {
-                    locationMatch = inv.building_id === data.building_id;
-                }
-                // If invoice has neither, include it
-                else {
-                    locationMatch = true;
-                }
-                
-                console.log(`Step3: Invoice ${inv.id} location match: ${locationMatch}`);
-                
-                if (!locationMatch) return;
-                
-                console.log(`Step3: ✓ Adding invoice ${inv.id}: ${inv.description}`);
-                dbEntries.push(inv);
-                });
+            });
 
-                // Get relevant financial items
-                console.log(`Step3: Checking financial items...`);
-                financialItems.forEach(item => {
+            // Get relevant financial items
+            financialItems.forEach(item => {
                 if (item.type !== 'payable') return;
                 if (item.cost_type_id !== costType.id) return;
-
-                console.log(`Step3: Checking financial item ${item.id}: due_date=${item.due_date}`);
-
                 if (!item.due_date) return;
                 if (item.due_date < data.period_start || item.due_date > data.period_end) return;
 
-                // Check location match
-                let locationMatch = false;
+                // Location match: unit must be in selected units OR no unit set (building-wide)
+                const unitMatch = !item.related_to_unit_id || data.selected_units.includes(item.related_to_unit_id);
                 
-                // If item has a unit_id, check if it's in selected units
-                if (item.related_to_unit_id) {
-                    locationMatch = data.selected_units.includes(item.related_to_unit_id);
+                if (unitMatch) {
+                    dbEntries.push({
+                        id: item.id,
+                        description: item.description || 'Kosten',
+                        invoice_date: item.due_date,
+                        recipient: item.reference || '-',
+                        amount: item.expected_amount || 0,
+                        isFinancialItem: true
+                    });
                 }
-                // If item has no unit_id, include it
-                else {
-                    locationMatch = true;
-                }
-
-                console.log(`Step3: Financial item ${item.id} location match: ${locationMatch}`);
-
-                if (!locationMatch) return;
-
-                console.log(`Step3: ✓ Adding financial item ${item.id}: ${item.description}`);
-                dbEntries.push({
-                    id: item.id,
-                    description: item.description || 'Kosten',
-                    invoice_date: item.due_date,
-                    recipient: item.reference || '-',
-                    amount: item.expected_amount || 0,
-                    isFinancialItem: true
-                });
-                });
+            });
 
             console.log(`Step3: Total entries for ${costType.sub_category}: ${dbEntries.length}`);
 
