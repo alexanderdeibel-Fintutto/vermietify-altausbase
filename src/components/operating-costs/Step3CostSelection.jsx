@@ -24,6 +24,11 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
         queryFn: () => base44.entities.Invoice.list()
     });
 
+    const { data: financialItems = [] } = useQuery({
+        queryKey: ['financial-items'],
+        queryFn: () => base44.entities.FinancialItem.list()
+    });
+
     const { data: units = [] } = useQuery({
         queryKey: ['units'],
         queryFn: () => base44.entities.Unit.list()
@@ -35,6 +40,7 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
         const initialCosts = {};
         
         operatingCostTypes.forEach(costType => {
+            // Get relevant invoices
             const relevantInvoices = invoices.filter(inv => {
                 if (inv.cost_type_id !== costType.id) return false;
                 if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) return false;
@@ -47,18 +53,41 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
                 return true;
             });
 
+            // Get relevant financial items (payables with cost_type_id)
+            const relevantFinancialItems = financialItems.filter(item => {
+                if (item.type !== 'payable') return false;
+                if (item.cost_type_id !== costType.id) return false;
+                if (!item.due_date) return false;
+                if (item.due_date < data.period_start || item.due_date > data.period_end) return false;
+                
+                const unit = units.find(u => u.id === item.related_to_unit_id);
+                if (unit && !data.selected_units.includes(unit.id)) return false;
+                
+                return true;
+            }).map(item => ({
+                id: item.id,
+                description: item.description || 'Kosten',
+                invoice_date: item.due_date,
+                recipient: item.reference || '-',
+                amount: item.expected_amount || 0,
+                isFinancialItem: true
+            }));
+
+            // Combine both
+            const allEntries = [...relevantInvoices, ...relevantFinancialItems];
+
             initialCosts[costType.id] = {
                 costType,
                 selected: false,
                 distribution_key: costType.distribution_key || 'qm',
-                invoices: relevantInvoices,
+                invoices: allEntries,
                 selectedInvoices: [],
                 total: 0
             };
         });
 
         setCosts(initialCosts);
-    }, [operatingCostTypes, invoices, data]);
+    }, [operatingCostTypes, invoices, financialItems, data, units]);
 
     const toggleCategory = (costTypeId) => {
         setExpandedCategories(prev => {
