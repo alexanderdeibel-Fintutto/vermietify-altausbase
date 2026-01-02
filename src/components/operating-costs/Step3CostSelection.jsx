@@ -57,14 +57,31 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
     }, [costTypes, invoices, data.period_start, data.period_end]);
 
     useEffect(() => {
+        if (!allRelevantCostTypes.length) {
+            console.log('Step3: No relevant cost types found');
+            return;
+        }
+
+        console.log('Step3: Starting cost calculation...');
+        console.log('Step3: allRelevantCostTypes', allRelevantCostTypes);
+        console.log('Step3: All invoices', invoices);
+        console.log('Step3: All financialItems', financialItems);
+        console.log('Step3: Period', data.period_start, 'to', data.period_end);
+        console.log('Step3: Selected units', data.selected_units);
+        console.log('Step3: Building ID', data.building_id);
+
         const newCosts = {};
         
         allRelevantCostTypes.forEach(costType => {
+            console.log(`\nStep3: Processing cost type: ${costType.sub_category} (${costType.id})`);
             const dbEntries = [];
 
             // Get relevant invoices (only those marked as operating cost relevant)
             invoices.forEach(inv => {
                 if (inv.cost_type_id !== costType.id) return;
+                
+                console.log(`Step3: Checking invoice ${inv.id}: operating_cost_relevant=${inv.operating_cost_relevant}, date=${inv.invoice_date}`);
+                
                 if (!inv.operating_cost_relevant) return;
                 if (!inv.invoice_date) return;
                 if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) return;
@@ -77,16 +94,23 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
                     locationMatch = inv.building_id === data.building_id;
                 }
                 
+                console.log(`Step3: Invoice ${inv.id} location match: ${locationMatch}`);
+                
                 if (!locationMatch) return;
                 
+                console.log(`Step3: ✓ Adding invoice ${inv.id}: ${inv.description}`);
                 dbEntries.push(inv);
             });
 
             // Get relevant financial items (only for distributable cost types)
             if (costType.distributable) {
+                console.log(`Step3: Cost type is distributable, checking financial items...`);
                 financialItems.forEach(item => {
                     if (item.type !== 'payable') return;
                     if (item.cost_type_id !== costType.id) return;
+                    
+                    console.log(`Step3: Checking financial item ${item.id}: due_date=${item.due_date}`);
+                    
                     if (!item.due_date) return;
                     if (item.due_date < data.period_start || item.due_date > data.period_end) return;
                     
@@ -96,8 +120,11 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
                         locationMatch = data.selected_units.includes(item.related_to_unit_id);
                     }
                     
+                    console.log(`Step3: Financial item ${item.id} location match: ${locationMatch}`);
+                    
                     if (!locationMatch) return;
                     
+                    console.log(`Step3: ✓ Adding financial item ${item.id}: ${item.description}`);
                     dbEntries.push({
                         id: item.id,
                         description: item.description || 'Kosten',
@@ -109,6 +136,8 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
                 });
             }
 
+            console.log(`Step3: Total entries for ${costType.sub_category}: ${dbEntries.length}`);
+
             newCosts[costType.id] = {
                 costType,
                 selected: false,
@@ -119,12 +148,9 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
             };
         });
 
-        console.log('Step3: Computed costs', newCosts);
-        console.log('Step3: allRelevantCostTypes', allRelevantCostTypes);
-        console.log('Step3: invoices', invoices);
-        console.log('Step3: financialItems', financialItems);
+        console.log('Step3: Final computed costs', newCosts);
         setCosts(newCosts);
-    }, [allRelevantCostTypes, invoices, financialItems, data.period_start, data.period_end, data.selected_units, data.building_id, units]);
+    }, [allRelevantCostTypes, invoices, financialItems, data.period_start, data.period_end, data.selected_units, data.building_id]);
 
     const toggleCategory = (costTypeId) => {
         setExpandedCategories(prev => {
