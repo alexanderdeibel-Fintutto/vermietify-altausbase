@@ -38,27 +38,23 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
     });
 
     const allRelevantCostTypes = useMemo(() => {
-        const relevantCostTypeIds = new Set();
+        const operatingCostTypes = costTypes.filter(ct => ct.distributable);
 
-        // Find cost types from invoices
-        invoices.forEach(inv => {
-            if (!inv.cost_type_id) return;
-            if (!inv.invoice_date) return;
-            if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) return;
-            relevantCostTypeIds.add(inv.cost_type_id);
-        });
+        // Get invoices marked as operating cost relevant
+        const operatingCostInvoices = invoices.filter(inv => 
+            inv.operating_cost_relevant && 
+            inv.invoice_date >= data.period_start && 
+            inv.invoice_date <= data.period_end
+        );
 
-        // Find cost types from financial items
-        financialItems.forEach(item => {
-            if (!item.cost_type_id) return;
-            if (item.type !== 'payable') return;
-            if (!item.due_date) return;
-            if (item.due_date < data.period_start || item.due_date > data.period_end) return;
-            relevantCostTypeIds.add(item.cost_type_id);
-        });
+        // Get unique cost types from operating cost invoices
+        const additionalCostTypes = costTypes.filter(ct => 
+            !ct.distributable && 
+            operatingCostInvoices.some(inv => inv.cost_type_id === ct.id)
+        );
 
-        return costTypes.filter(ct => relevantCostTypeIds.has(ct.id));
-    }, [costTypes, invoices, financialItems, data.period_start, data.period_end]);
+        return [...operatingCostTypes, ...additionalCostTypes];
+    }, [costTypes, invoices, data.period_start, data.period_end]);
 
     useEffect(() => {
         const newCosts = {};
@@ -66,9 +62,10 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
         allRelevantCostTypes.forEach(costType => {
             const dbEntries = [];
 
-            // Get relevant invoices
+            // Get relevant invoices (only those marked as operating cost relevant)
             invoices.forEach(inv => {
                 if (inv.cost_type_id !== costType.id) return;
+                if (!inv.operating_cost_relevant) return;
                 if (!inv.invoice_date) return;
                 if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) return;
                 
@@ -85,30 +82,32 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
                 dbEntries.push(inv);
             });
 
-            // Get relevant financial items
-            financialItems.forEach(item => {
-                if (item.type !== 'payable') return;
-                if (item.cost_type_id !== costType.id) return;
-                if (!item.due_date) return;
-                if (item.due_date < data.period_start || item.due_date > data.period_end) return;
-                
-                // Check location match
-                let locationMatch = true;
-                if (item.related_to_unit_id && data.selected_units.length > 0) {
-                    locationMatch = data.selected_units.includes(item.related_to_unit_id);
-                }
-                
-                if (!locationMatch) return;
-                
-                dbEntries.push({
-                    id: item.id,
-                    description: item.description || 'Kosten',
-                    invoice_date: item.due_date,
-                    recipient: item.reference || '-',
-                    amount: item.expected_amount || 0,
-                    isFinancialItem: true
+            // Get relevant financial items (only for distributable cost types)
+            if (costType.distributable) {
+                financialItems.forEach(item => {
+                    if (item.type !== 'payable') return;
+                    if (item.cost_type_id !== costType.id) return;
+                    if (!item.due_date) return;
+                    if (item.due_date < data.period_start || item.due_date > data.period_end) return;
+                    
+                    // Check location match
+                    let locationMatch = true;
+                    if (item.related_to_unit_id && data.selected_units.length > 0) {
+                        locationMatch = data.selected_units.includes(item.related_to_unit_id);
+                    }
+                    
+                    if (!locationMatch) return;
+                    
+                    dbEntries.push({
+                        id: item.id,
+                        description: item.description || 'Kosten',
+                        invoice_date: item.due_date,
+                        recipient: item.reference || '-',
+                        amount: item.expected_amount || 0,
+                        isFinancialItem: true
+                    });
                 });
-            });
+            }
 
             newCosts[costType.id] = {
                 costType,
