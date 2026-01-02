@@ -679,7 +679,13 @@ export default function Invoices() {
                                                 return (
                                                     <TableRow key={invoice.id}>
                                                         <TableCell className="font-medium">
-                                                            {invoice.invoice_date ? format(parseISO(invoice.invoice_date), 'dd.MM.yyyy', { locale: de }) : '-'}
+                                                            {invoice.invoice_date ? (() => {
+                                                                try {
+                                                                    return format(parseISO(invoice.invoice_date), 'dd.MM.yyyy', { locale: de });
+                                                                } catch {
+                                                                    return invoice.invoice_date;
+                                                                }
+                                                            })() : '-'}
                                                         </TableCell>
                                                         <TableCell>
                                                             {invoice.type === 'expense' ? (
@@ -1038,7 +1044,13 @@ export default function Invoices() {
                                                             €{recipient.totalAmount.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
                                                         </TableCell>
                                                         <TableCell>
-                                                            {recipient.lastInvoiceDate ? format(parseISO(recipient.lastInvoiceDate), 'dd.MM.yyyy', { locale: de }) : '-'}
+                                                            {recipient.lastInvoiceDate ? (() => {
+                                                                try {
+                                                                    return format(parseISO(recipient.lastInvoiceDate), 'dd.MM.yyyy', { locale: de });
+                                                                } catch {
+                                                                    return recipient.lastInvoiceDate;
+                                                                }
+                                                            })() : '-'}
                                                         </TableCell>
                                                         <TableCell className="text-right">
                                                             {recipient.savedId ? (
