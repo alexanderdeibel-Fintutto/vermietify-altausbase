@@ -381,7 +381,7 @@ export default function Step4DirectCosts({ data, onNext, onBack, onDataChange, o
                         onClick={onSaveDraft}
                         disabled={isSaving}
                     >
-                        {isSaving ? 'Speichert...' : 'Entwurf speichern'}
+                        {isSaving ? 'Speichert...' : 'Beenden & Speichern'}
                     </Button>
                     <Button 
                         onClick={handleNext}

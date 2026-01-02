@@ -424,7 +424,7 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange,
                         onClick={onSaveDraft}
                         disabled={isSaving}
                     >
-                        {isSaving ? 'Speichert...' : 'Entwurf speichern'}
+                        {isSaving ? 'Speichert...' : 'Beenden & Speichern'}
                     </Button>
                     <Button 
                         onClick={handleNext}

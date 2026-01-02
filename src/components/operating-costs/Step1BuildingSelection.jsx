@@ -169,7 +169,7 @@ export default function Step1BuildingSelection({ data, onNext, onDataChange, onS
                     onClick={onSaveDraft}
                     disabled={!selectedBuilding || !periodStart || !periodEnd || isSaving}
                 >
-                    {isSaving ? 'Speichert...' : 'Entwurf speichern'}
+                    {isSaving ? 'Speichert...' : 'Beenden & Speichern'}
                 </Button>
                 <Button 
                     onClick={handleNext}

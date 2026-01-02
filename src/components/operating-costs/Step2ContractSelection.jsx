@@ -317,7 +317,7 @@ export default function Step2ContractSelection({ data, onNext, onBack, onDataCha
                         onClick={onSaveDraft}
                         disabled={isSaving}
                     >
-                        {isSaving ? 'Speichert...' : 'Entwurf speichern'}
+                        {isSaving ? 'Speichert...' : 'Beenden & Speichern'}
                     </Button>
                     <Button 
                         onClick={handleNext}

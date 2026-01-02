@@ -113,6 +113,7 @@ export default function OperatingCostStatementDialog({ open, onOpenChange, onSuc
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['operating-cost-statements'] });
             toast.success('Entwurf gespeichert');
+            onOpenChange(false);
         },
         onError: (error) => {
             toast.error('Fehler beim Speichern: ' + error.message);
