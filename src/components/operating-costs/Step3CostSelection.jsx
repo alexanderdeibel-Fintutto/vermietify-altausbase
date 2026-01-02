@@ -76,10 +76,9 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
             console.log(`\nStep3: Processing cost type: ${costType.sub_category} (${costType.id})`);
             const dbEntries = [];
 
-            // Get relevant invoices
+            // Get relevant invoices - ALL invoices with this cost type in the period and building
             invoices.forEach(inv => {
                 if (inv.cost_type_id !== costType.id) return;
-                if (!inv.operating_cost_relevant) return;
                 if (!inv.invoice_date) return;
                 if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) return;
                 if (inv.building_id && inv.building_id !== data.building_id) return;
