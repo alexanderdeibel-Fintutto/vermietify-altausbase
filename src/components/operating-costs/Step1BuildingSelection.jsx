@@ -163,7 +163,14 @@ export default function Step1BuildingSelection({ data, onNext, onDataChange, onS
                 </div>
             )}
 
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-between pt-4">
+                <Button 
+                    variant="outline"
+                    onClick={onSaveDraft}
+                    disabled={!selectedBuilding || !periodStart || !periodEnd || isSaving}
+                >
+                    {isSaving ? 'Speichert...' : 'Entwurf speichern'}
+                </Button>
                 <Button 
                     onClick={handleNext}
                     className="bg-emerald-600 hover:bg-emerald-700"
