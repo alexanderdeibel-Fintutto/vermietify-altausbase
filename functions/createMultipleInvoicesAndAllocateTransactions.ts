@@ -19,11 +19,15 @@ Deno.serve(async (req) => {
         }
 
         const results = [];
+        let successCount = 0;
+        let errorCount = 0;
+        
         for (const transactionId of transactionIds) {
             try {
-                const transaction = await base44.entities.BankTransaction.get(transactionId);
+                const transaction = await base44.asServiceRole.entities.BankTransaction.get(transactionId);
                 if (!transaction) {
                     results.push({ transactionId, success: false, error: 'Transaktion nicht gefunden' });
+                    errorCount++;
                     continue;
                 }
 
@@ -31,7 +35,7 @@ Deno.serve(async (req) => {
                 const transactionDate = transaction.transaction_date || new Date().toISOString().split('T')[0];
 
                 // Create Invoice
-                const newInvoice = await base44.entities.Invoice.create({
+                const newInvoice = await base44.asServiceRole.entities.Invoice.create({
                     type: transaction.amount < 0 ? 'expense' : 'other_income',
                     invoice_date: transactionDate,
                     due_date: transactionDate,
@@ -52,7 +56,7 @@ Deno.serve(async (req) => {
                 });
 
                 // Create Financial Item
-                const newFinancialItem = await base44.entities.FinancialItem.create({
+                const newFinancialItem = await base44.asServiceRole.entities.FinancialItem.create({
                     type: transaction.amount < 0 ? 'payable' : 'receivable',
                     amount: Math.abs(transaction.amount),
                     expected_amount: Math.abs(transaction.amount),
@@ -69,7 +73,7 @@ Deno.serve(async (req) => {
                 });
 
                 // Link Financial Item, Invoice, and Transaction
-                await base44.entities.FinancialItemTransactionLink.create({
+                await base44.asServiceRole.entities.FinancialItemTransactionLink.create({
                     financial_item_id: newFinancialItem.id,
                     invoice_id: newInvoice.id,
                     transaction_id: transaction.id,
@@ -77,20 +81,28 @@ Deno.serve(async (req) => {
                 });
 
                 // Mark Bank Transaction as categorized
-                await base44.entities.BankTransaction.update(transaction.id, {
+                await base44.asServiceRole.entities.BankTransaction.update(transaction.id, {
                     is_categorized: true,
                     category: invoiceData.category_name,
                     unit_id: invoiceData.unit_id || null
                 });
 
                 results.push({ transactionId, success: true, invoiceId: newInvoice.id });
+                successCount++;
 
             } catch (error) {
+                console.error(`Error processing transaction ${transactionId}:`, error);
                 results.push({ transactionId, success: false, error: error.message });
+                errorCount++;
             }
         }
 
-        return Response.json({ success: true, results });
+        return Response.json({ 
+            success: errorCount === 0, 
+            successCount,
+            errorCount,
+            results 
+        });
 
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });

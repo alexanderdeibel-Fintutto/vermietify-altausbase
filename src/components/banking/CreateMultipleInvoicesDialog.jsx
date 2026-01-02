@@ -65,14 +65,20 @@ export default function CreateMultipleInvoicesDialog({
                 }
             });
 
-            if (response.data.success) {
-                const successCount = response.data.results.filter(r => r.success).length;
-                toast.success(`${successCount} Rechnungen erstellt und zugeordnet`);
-                onSuccess();
-                onOpenChange(false);
-            } else {
-                toast.error('Fehler beim Erstellen der Rechnungen');
+            const successCount = response.data.successCount || response.data.results.filter(r => r.success).length;
+            const errorCount = response.data.errorCount || response.data.results.filter(r => !r.success).length;
+            
+            if (successCount > 0) {
+                toast.success(`${successCount} Rechnungen erfolgreich erstellt`);
             }
+            if (errorCount > 0) {
+                const errors = response.data.results.filter(r => !r.success);
+                console.error('Failed transactions:', errors);
+                toast.error(`${errorCount} Fehler beim Erstellen. Siehe Konsole für Details.`, { duration: 10000 });
+            }
+            
+            onSuccess();
+            onOpenChange(false);
         } catch (error) {
             toast.error('Fehler: ' + error.message);
         } finally {

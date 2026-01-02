@@ -105,8 +105,12 @@ export default function Finanzen() {
         financialItems.forEach(item => {
             // Skip future automatic items
             if (item.is_automatic_from_contract && item.due_date) {
-                const dueDate = parseISO(item.due_date);
-                if (dueDate > today) return;
+                try {
+                    const dueDate = parseISO(item.due_date);
+                    if (dueDate > today) return;
+                } catch {
+                    // Invalid date, skip validation
+                }
             }
 
             // Calculate actual paid amount from links
@@ -183,9 +187,15 @@ export default function Finanzen() {
         });
 
         return items.sort((a, b) => {
-            const dateA = a.date ? new Date(a.date) : new Date(0);
-            const dateB = b.date ? new Date(b.date) : new Date(0);
-            return dateB - dateA;
+            try {
+                const dateA = a.date ? new Date(a.date) : new Date(0);
+                const dateB = b.date ? new Date(b.date) : new Date(0);
+                if (isNaN(dateA.getTime())) return 1;
+                if (isNaN(dateB.getTime())) return -1;
+                return dateB - dateA;
+            } catch {
+                return 0;
+            }
         });
     }, [financialItems, invoices, itemLinks, units, buildings, tenants, costTypes]);
 
@@ -506,10 +516,22 @@ export default function Finanzen() {
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell className="font-medium">
-                                                    {item.date ? format(parseISO(item.date), 'dd.MM.yyyy', { locale: de }) : '-'}
+                                                    {item.date ? (() => {
+                                                        try {
+                                                            return format(parseISO(item.date), 'dd.MM.yyyy', { locale: de });
+                                                        } catch {
+                                                            return item.date;
+                                                        }
+                                                    })() : '-'}
                                                     {item.paymentMonth && (
                                                         <div className="text-xs text-slate-500">
-                                                            {format(parseISO(item.paymentMonth + '-01'), 'MMM yyyy', { locale: de })}
+                                                            {(() => {
+                                                                try {
+                                                                    return format(parseISO(item.paymentMonth + '-01'), 'MMM yyyy', { locale: de });
+                                                                } catch {
+                                                                    return item.paymentMonth;
+                                                                }
+                                                            })()}
                                                         </div>
                                                     )}
                                                 </TableCell>
