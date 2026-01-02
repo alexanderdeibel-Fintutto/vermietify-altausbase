@@ -37,7 +37,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-lg">
+            <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>
                         {initialData ? 'Gebäude bearbeiten' : 'Neues Gebäude anlegen'}
@@ -133,6 +133,99 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 {...register('image_url')}
                                 placeholder="https://..."
                             />
+                        </div>
+
+                        <div className="pt-4 border-t border-slate-200">
+                            <h3 className="font-semibold text-slate-800 mb-3">Eigentümer</h3>
+                            <div className="space-y-3">
+                                <div>
+                                    <Label htmlFor="owner_name">Name</Label>
+                                    <Input 
+                                        id="owner_name"
+                                        {...register('owner_name')}
+                                        placeholder="Max Mustermann"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="owner_street">Straße</Label>
+                                    <Input 
+                                        id="owner_street"
+                                        {...register('owner_street')}
+                                        placeholder="Musterstraße 1"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label htmlFor="owner_postal_code">PLZ</Label>
+                                        <Input 
+                                            id="owner_postal_code"
+                                            {...register('owner_postal_code')}
+                                            placeholder="12345"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="owner_city">Ort</Label>
+                                        <Input 
+                                            id="owner_city"
+                                            {...register('owner_city')}
+                                            placeholder="Berlin"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-slate-200">
+                            <h3 className="font-semibold text-slate-800 mb-3">Ansprechpartner</h3>
+                            <div className="space-y-3">
+                                <div>
+                                    <Label htmlFor="contact_person">Name</Label>
+                                    <Input 
+                                        id="contact_person"
+                                        {...register('contact_person')}
+                                        placeholder="Maria Müller"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="contact_phone">Telefonnummer</Label>
+                                    <Input 
+                                        id="contact_phone"
+                                        {...register('contact_phone')}
+                                        placeholder="+49 123 456789"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="contact_email">E-Mail</Label>
+                                    <Input 
+                                        id="contact_email"
+                                        type="email"
+                                        {...register('contact_email')}
+                                        placeholder="kontakt@beispiel.de"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-slate-200">
+                            <h3 className="font-semibold text-slate-800 mb-3">Bankverbindung</h3>
+                            <div className="space-y-3">
+                                <div>
+                                    <Label htmlFor="iban">IBAN</Label>
+                                    <Input 
+                                        id="iban"
+                                        {...register('iban')}
+                                        placeholder="DE89 3704 0044 0532 0130 00"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="bic">BIC</Label>
+                                    <Input 
+                                        id="bic"
+                                        {...register('bic')}
+                                        placeholder="COBADEFFXXX"
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         <div>
