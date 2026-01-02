@@ -12,6 +12,7 @@ import FinancialItems from './pages/FinancialItems';
 import Finanzen from './pages/Finanzen';
 import Invoices from './pages/Invoices';
 import UnitDetail from './pages/UnitDetail';
+import OperatingCosts from './pages/OperatingCosts';
 import __Layout from './Layout.jsx';
 
 
@@ -30,6 +31,7 @@ export const PAGES = {
     "Finanzen": Finanzen,
     "Invoices": Invoices,
     "UnitDetail": UnitDetail,
+    "OperatingCosts": OperatingCosts,
 }
 
 export const pagesConfig = {
