@@ -124,6 +124,14 @@ export default function Step2ContractSelection({ data, onNext, onBack, onDataCha
     };
 
     const handleNext = () => {
+        // Check for overlapping contracts
+        const unitsWithOverlap = selectedUnits.filter(unit => hasOverlap(unit.id));
+        if (unitsWithOverlap.length > 0) {
+            const unitNames = unitsWithOverlap.map(u => u.unit_number).join(', ');
+            toast.error(`Doppelbelegung durch mehrere Mietverträge erkannt für: ${unitNames}. Bitte korrigieren Sie die Verträge.`);
+            return;
+        }
+
         // Check coverage
         const allCovered = selectedUnits.every(unit => {
             const unitContracts = contracts.filter(c => c.unit_id === unit.id);
@@ -158,6 +166,24 @@ export default function Step2ContractSelection({ data, onNext, onBack, onDataCha
 
     const getTenant = (tenantId) => tenants.find(t => t.id === tenantId);
     const getUnit = (unitId) => units.find(u => u.id === unitId);
+
+    const hasOverlap = (unitId) => {
+        const unitContracts = contracts.filter(c => c.unit_id === unitId);
+        
+        for (let i = 0; i < unitContracts.length; i++) {
+            for (let j = i + 1; j < unitContracts.length; j++) {
+                const contract1Start = parseISO(unitContracts[i].effective_start);
+                const contract1End = parseISO(unitContracts[i].effective_end);
+                const contract2Start = parseISO(unitContracts[j].effective_start);
+                const contract2End = parseISO(unitContracts[j].effective_end);
+                
+                if (contract1Start <= contract2End && contract2Start <= contract1End) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
 
     const isCovered = (unitId) => {
         const unitContracts = contracts.filter(c => c.unit_id === unitId);
@@ -194,16 +220,22 @@ export default function Step2ContractSelection({ data, onNext, onBack, onDataCha
                 const unitContracts = contracts.filter(c => c.unit_id === unit.id);
                 const unitVacancies = vacancies.filter(v => v.unit_id === unit.id);
                 const covered = isCovered(unit.id);
+                const overlap = hasOverlap(unit.id);
 
                 return (
-                    <Card key={unit.id} className="p-4 border-2" style={{ borderColor: covered ? '#10b981' : '#ef4444' }}>
+                    <Card key={unit.id} className="p-4 border-2" style={{ borderColor: overlap ? '#ef4444' : covered ? '#10b981' : '#ef4444' }}>
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
                                 <Home className="w-5 h-5 text-slate-400" />
                                 <h4 className="font-semibold text-slate-800">{unit.unit_number}</h4>
                                 <span className="text-sm text-slate-500">({unit.sqm} m²)</span>
                             </div>
-                            {covered ? (
+                            {overlap ? (
+                                <Badge className="bg-red-100 text-red-700">
+                                    <AlertCircle className="w-3 h-3 mr-1" />
+                                    Doppelbelegung erkannt!
+                                </Badge>
+                            ) : covered ? (
                                 <Badge className="bg-emerald-100 text-emerald-700">
                                     <CheckCircle className="w-3 h-3 mr-1" />
                                     Vollständig abgedeckt
