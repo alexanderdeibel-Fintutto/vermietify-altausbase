@@ -73,6 +73,8 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
         
         allRelevantCostTypes.forEach(costType => {
             console.log(`\nStep3: Processing cost type: ${costType.sub_category} (${costType.id})`);
+            console.log(`Step3: Total invoices available: ${invoices.length}`);
+            console.log(`Step3: Total financial items available: ${financialItems.length}`);
             const dbEntries = [];
 
             // SIMPLIFIED: Get ALL invoices with this cost type in the period
