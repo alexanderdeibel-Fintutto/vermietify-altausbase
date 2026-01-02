@@ -36,10 +36,25 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
 
     const operatingCostTypes = costTypes.filter(ct => ct.distributable);
 
+    // Also get invoices marked as operating cost relevant with non-distributable cost types
+    const operatingCostInvoices = invoices.filter(inv => 
+        inv.operating_cost_relevant && 
+        inv.invoice_date >= data.period_start && 
+        inv.invoice_date <= data.period_end
+    );
+
+    // Get unique cost types from operating cost invoices
+    const additionalCostTypes = costTypes.filter(ct => 
+        !ct.distributable && 
+        operatingCostInvoices.some(inv => inv.cost_type_id === ct.id)
+    );
+
+    const allRelevantCostTypes = [...operatingCostTypes, ...additionalCostTypes];
+
     useEffect(() => {
         const initialCosts = {};
         
-        operatingCostTypes.forEach(costType => {
+        allRelevantCostTypes.forEach(costType => {
             // Get relevant invoices
             const relevantInvoices = invoices.filter(inv => {
                 if (inv.cost_type_id !== costType.id) return false;
@@ -95,7 +110,7 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
         });
 
         setCosts(initialCosts);
-    }, [operatingCostTypes, invoices, financialItems, data, units]);
+    }, [allRelevantCostTypes, invoices, financialItems, data, units]);
 
     const toggleCategory = (costTypeId) => {
         setExpandedCategories(prev => {
@@ -165,7 +180,7 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
         onNext();
     };
 
-    const groupedCostTypes = operatingCostTypes.reduce((acc, ct) => {
+    const groupedCostTypes = allRelevantCostTypes.reduce((acc, ct) => {
         if (!acc[ct.main_category]) {
             acc[ct.main_category] = [];
         }
