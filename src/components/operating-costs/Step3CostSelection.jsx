@@ -62,18 +62,36 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
             const dbEntries = [];
 
             // Get invoices for this cost type
-            const relevantInvoices = invoices.filter(inv => {
-                if (inv.cost_type_id !== costType.id) return false;
-                if (!inv.invoice_date) return false;
-                if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) return false;
-                
-                const matchesBuilding = inv.building_id === data.building_id;
-                const unitBelongsToBuilding = inv.unit_id && units.find(u => u.id === inv.unit_id)?.building_id === data.building_id;
-                
-                return matchesBuilding || unitBelongsToBuilding;
-            });
+            const matchingInvoices = invoices.filter(inv => inv.cost_type_id === costType.id);
             
-            dbEntries.push(...relevantInvoices);
+            if (matchingInvoices.length > 0) {
+                console.log(`  Found ${matchingInvoices.length} invoices with matching cost_type_id`);
+                
+                matchingInvoices.forEach(inv => {
+                    console.log(`  Checking: ${inv.description}, date=${inv.invoice_date}, building=${inv.building_id}, unit=${inv.unit_id}`);
+                    
+                    if (!inv.invoice_date) {
+                        console.log(`    ❌ No date`);
+                        return;
+                    }
+                    if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) {
+                        console.log(`    ❌ Outside period (${inv.invoice_date} not in ${data.period_start} - ${data.period_end})`);
+                        return;
+                    }
+                    
+                    const matchesBuilding = inv.building_id === data.building_id;
+                    const unitBelongsToBuilding = inv.unit_id && units.find(u => u.id === inv.unit_id)?.building_id === data.building_id;
+                    
+                    console.log(`    Building match: ${matchesBuilding}, Unit building match: ${unitBelongsToBuilding}`);
+                    
+                    if (matchesBuilding || unitBelongsToBuilding) {
+                        console.log(`    ✅ INCLUDED`);
+                        dbEntries.push(inv);
+                    } else {
+                        console.log(`    ❌ Wrong building`);
+                    }
+                });
+            }
 
             console.log(`Step3: *** Total entries for ${costType.sub_category}: ${dbEntries.length} ***`);
 
