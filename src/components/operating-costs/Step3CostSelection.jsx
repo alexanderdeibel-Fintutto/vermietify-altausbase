@@ -125,14 +125,24 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
     };
 
     const toggleCategorySelection = (costTypeId) => {
-        setCosts(prev => ({
-            ...prev,
-            [costTypeId]: {
-                ...prev[costTypeId],
-                selected: !prev[costTypeId].selected,
-                selectedInvoices: !prev[costTypeId].selected ? prev[costTypeId].invoices.map(inv => inv.id) : []
-            }
-        }));
+        setCosts(prev => {
+            const costData = prev[costTypeId];
+            const willBeSelected = !costData.selected;
+            const newSelectedInvoices = willBeSelected ? costData.invoices.map(inv => inv.id) : [];
+            const newTotal = willBeSelected 
+                ? costData.invoices.reduce((sum, inv) => sum + inv.amount, 0) 
+                : 0;
+
+            return {
+                ...prev,
+                [costTypeId]: {
+                    ...costData,
+                    selected: willBeSelected,
+                    selectedInvoices: newSelectedInvoices,
+                    total: newTotal
+                }
+            };
+        });
     };
 
     const toggleInvoice = (costTypeId, invoiceId) => {
