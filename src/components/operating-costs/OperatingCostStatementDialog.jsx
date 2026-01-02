@@ -75,7 +75,7 @@ export default function OperatingCostStatementDialog({ open, onOpenChange, onSuc
                 {/* Progress Steps */}
                 <div className="flex items-center justify-between px-4 py-4 border-b border-slate-200">
                     {steps.map((step, index) => (
-                        <React.Fragment key={step.number}>
+                        <div key={step.number} className="flex items-center flex-1">
                             <div className="flex items-center gap-3">
                                 <div className={`
                                     w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
@@ -92,7 +92,7 @@ export default function OperatingCostStatementDialog({ open, onOpenChange, onSuc
                             {index < steps.length - 1 && (
                                 <div className={`flex-1 h-0.5 mx-4 ${currentStep > step.number ? 'bg-emerald-600' : 'bg-slate-200'}`} />
                             )}
-                        </React.Fragment>
+                        </div>
                     ))}
                 </div>
 
