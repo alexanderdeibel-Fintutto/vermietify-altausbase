@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -80,6 +80,9 @@ export default function CreateMultipleInvoicesDialog({
                         <FileText className="w-5 h-5 text-emerald-600" />
                         <DialogTitle>Mehrere Rechnungen erstellen & zuordnen</DialogTitle>
                     </div>
+                    <DialogDescription>
+                        Erstellen Sie für jede ausgewählte Transaktion eine Rechnung mit gemeinsamen Stammdaten.
+                    </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -108,18 +111,16 @@ export default function CreateMultipleInvoicesDialog({
                                 <SelectValue placeholder="Kostenart auswählen..." />
                             </SelectTrigger>
                             <SelectContent className="max-h-80">
-                                {Object.entries(groupedCostTypes).map(([mainCategory, types]) => (
-                                    <React.Fragment key={mainCategory}>
-                                        <div className="px-2 py-1.5 text-xs font-semibold text-slate-500 bg-slate-50">
-                                            {mainCategory}
-                                        </div>
-                                        {types.map(ct => (
-                                            <SelectItem key={ct.id} value={ct.id}>
-                                                <span className="ml-2">{ct.sub_category}</span>
-                                            </SelectItem>
-                                        ))}
-                                    </React.Fragment>
-                                ))}
+                                {Object.entries(groupedCostTypes).map(([mainCategory, types]) => [
+                                    <div key={mainCategory} className="px-2 py-1.5 text-xs font-semibold text-slate-500 bg-slate-50">
+                                        {mainCategory}
+                                    </div>,
+                                    ...types.map(ct => (
+                                        <SelectItem key={ct.id} value={ct.id}>
+                                            <span className="ml-2">{ct.sub_category}</span>
+                                        </SelectItem>
+                                    ))
+                                ])}
                             </SelectContent>
                         </Select>
                     </div>
