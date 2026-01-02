@@ -75,65 +75,60 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
             console.log(`\nStep3: Processing cost type: ${costType.sub_category} (${costType.id})`);
             const dbEntries = [];
 
-            // Get relevant invoices - filter by: cost type + period + building
+            // SIMPLIFIED: Get ALL invoices with this cost type in the period
             invoices.forEach(inv => {
-                if (inv.cost_type_id !== costType.id) return;
-                if (!inv.invoice_date) return;
-                if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) return;
+                console.log(`Step3: Checking invoice ${inv.id}: cost_type=${inv.cost_type_id}, date=${inv.invoice_date}`);
                 
-                // Building match: direct building_id OR unit belongs to building OR no location (general)
-                let includeInvoice = false;
-                
-                if (inv.building_id === data.building_id) {
-                    includeInvoice = true;
-                } else if (inv.unit_id) {
-                    const unit = units.find(u => u.id === inv.unit_id);
-                    if (unit && unit.building_id === data.building_id) {
-                        includeInvoice = true;
-                    }
-                } else if (!inv.building_id && !inv.unit_id) {
-                    includeInvoice = true;
+                if (inv.cost_type_id !== costType.id) {
+                    console.log(`  -> Skipped: wrong cost type`);
+                    return;
+                }
+                if (!inv.invoice_date) {
+                    console.log(`  -> Skipped: no date`);
+                    return;
+                }
+                if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) {
+                    console.log(`  -> Skipped: outside period`);
+                    return;
                 }
                 
-                if (includeInvoice) {
-                    console.log(`Step3: Including invoice ${inv.id}: ${inv.description} (${inv.amount})`);
-                    dbEntries.push(inv);
-                }
+                console.log(`Step3: ✓ INCLUDING invoice ${inv.id}: ${inv.description} (${inv.amount})`);
+                dbEntries.push(inv);
             });
 
-            // Get relevant financial items - filter by: cost type + period + building
+            // SIMPLIFIED: Get ALL financial items with this cost type in the period
             financialItems.forEach(item => {
-                if (item.type !== 'payable') return;
-                if (item.cost_type_id !== costType.id) return;
-                if (!item.due_date) return;
-                if (item.due_date < data.period_start || item.due_date > data.period_end) return;
-
-                // Building match: unit belongs to building OR no location (general)
-                let includeItem = false;
+                console.log(`Step3: Checking financial item ${item.id}: type=${item.type}, cost_type=${item.cost_type_id}, date=${item.due_date}`);
                 
-                if (item.related_to_unit_id) {
-                    const unit = units.find(u => u.id === item.related_to_unit_id);
-                    if (unit && unit.building_id === data.building_id) {
-                        includeItem = true;
-                    }
-                } else if (!item.related_to_unit_id) {
-                    includeItem = true;
+                if (item.type !== 'payable') {
+                    console.log(`  -> Skipped: not payable`);
+                    return;
+                }
+                if (item.cost_type_id !== costType.id) {
+                    console.log(`  -> Skipped: wrong cost type`);
+                    return;
+                }
+                if (!item.due_date) {
+                    console.log(`  -> Skipped: no date`);
+                    return;
+                }
+                if (item.due_date < data.period_start || item.due_date > data.period_end) {
+                    console.log(`  -> Skipped: outside period`);
+                    return;
                 }
                 
-                if (includeItem) {
-                    console.log(`Step3: Including financial item ${item.id}: ${item.description} (${item.expected_amount})`);
-                    dbEntries.push({
-                        id: item.id,
-                        description: item.description || 'Kosten',
-                        invoice_date: item.due_date,
-                        recipient: item.reference || '-',
-                        amount: item.expected_amount || 0,
-                        isFinancialItem: true
-                    });
-                }
+                console.log(`Step3: ✓ INCLUDING financial item ${item.id}: ${item.description} (${item.expected_amount})`);
+                dbEntries.push({
+                    id: item.id,
+                    description: item.description || 'Kosten',
+                    invoice_date: item.due_date,
+                    recipient: item.reference || '-',
+                    amount: item.expected_amount || 0,
+                    isFinancialItem: true
+                });
             });
 
-            console.log(`Step3: Total entries for ${costType.sub_category}: ${dbEntries.length}`);
+            console.log(`Step3: *** Total entries for ${costType.sub_category}: ${dbEntries.length} ***`);
 
             newCosts[costType.id] = {
                 costType,
