@@ -87,11 +87,19 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
                 if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) return;
                 
                 // Check location match
-                let locationMatch = true;
-                if (inv.unit_id && data.selected_units.length > 0) {
+                let locationMatch = false;
+                
+                // If invoice has a unit_id, check if it's in selected units
+                if (inv.unit_id) {
                     locationMatch = data.selected_units.includes(inv.unit_id);
-                } else if (inv.building_id && data.building_id) {
+                }
+                // If invoice has a building_id, check if it matches
+                else if (inv.building_id) {
                     locationMatch = inv.building_id === data.building_id;
+                }
+                // If invoice has neither, include it
+                else {
+                    locationMatch = true;
                 }
                 
                 console.log(`Step3: Invoice ${inv.id} location match: ${locationMatch}`);
