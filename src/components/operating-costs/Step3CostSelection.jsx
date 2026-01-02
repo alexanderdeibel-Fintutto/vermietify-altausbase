@@ -82,18 +82,10 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
                 if (!inv.operating_cost_relevant) return;
                 if (!inv.invoice_date) return;
                 if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) return;
+                if (inv.building_id && inv.building_id !== data.building_id) return;
                 
-                // Location logic: Include if building matches OR if specific unit is selected OR if no location (building-wide)
-                const hasNoLocation = !inv.unit_id && !inv.building_id;
-                const buildingMatches = inv.building_id === data.building_id;
-                const unitIsSelected = inv.unit_id && data.selected_units.includes(inv.unit_id);
-                
-                if (hasNoLocation || buildingMatches || unitIsSelected) {
-                    console.log(`Step3: Including invoice ${inv.id}: ${inv.description} (${inv.amount})`);
-                    dbEntries.push(inv);
-                } else {
-                    console.log(`Step3: Skipping invoice ${inv.id} - location mismatch`);
-                }
+                console.log(`Step3: Including invoice ${inv.id}: ${inv.description} (${inv.amount})`);
+                dbEntries.push(inv);
             });
 
             // Get relevant financial items
@@ -103,23 +95,15 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
                 if (!item.due_date) return;
                 if (item.due_date < data.period_start || item.due_date > data.period_end) return;
 
-                // Location logic: Include if unit is selected OR if no unit (building-wide)
-                const hasNoUnit = !item.related_to_unit_id;
-                const unitIsSelected = item.related_to_unit_id && data.selected_units.includes(item.related_to_unit_id);
-                
-                if (hasNoUnit || unitIsSelected) {
-                    console.log(`Step3: Including financial item ${item.id}: ${item.description} (${item.expected_amount})`);
-                    dbEntries.push({
-                        id: item.id,
-                        description: item.description || 'Kosten',
-                        invoice_date: item.due_date,
-                        recipient: item.reference || '-',
-                        amount: item.expected_amount || 0,
-                        isFinancialItem: true
-                    });
-                } else {
-                    console.log(`Step3: Skipping financial item ${item.id} - unit not selected`);
-                }
+                console.log(`Step3: Including financial item ${item.id}: ${item.description} (${item.expected_amount})`);
+                dbEntries.push({
+                    id: item.id,
+                    description: item.description || 'Kosten',
+                    invoice_date: item.due_date,
+                    recipient: item.reference || '-',
+                    amount: item.expected_amount || 0,
+                    isFinancialItem: true
+                });
             });
 
             console.log(`Step3: Total entries for ${costType.sub_category}: ${dbEntries.length}`);
