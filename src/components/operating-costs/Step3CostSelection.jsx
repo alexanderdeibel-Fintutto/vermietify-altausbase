@@ -61,34 +61,18 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
             const dbEntries = [];
 
             // Get invoices for this cost type
-            invoices.forEach(inv => {
-                console.log(`Step3: Checking invoice ${inv.id}: cost_type=${inv.cost_type_id}, date=${inv.invoice_date}, building=${inv.building_id}, unit=${inv.unit_id}`);
+            const relevantInvoices = invoices.filter(inv => {
+                if (inv.cost_type_id !== costType.id) return false;
+                if (!inv.invoice_date) return false;
+                if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) return false;
                 
-                if (inv.cost_type_id !== costType.id) {
-                    console.log(`  -> Skipped: wrong cost type`);
-                    return;
-                }
-                if (!inv.invoice_date) {
-                    console.log(`  -> Skipped: no date`);
-                    return;
-                }
-                if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) {
-                    console.log(`  -> Skipped: outside period`);
-                    return;
-                }
-                
-                // Check building/unit match
                 const matchesBuilding = inv.building_id === data.building_id;
                 const unitBelongsToBuilding = inv.unit_id && units.find(u => u.id === inv.unit_id)?.building_id === data.building_id;
                 
-                if (!matchesBuilding && !unitBelongsToBuilding) {
-                    console.log(`  -> Skipped: wrong building (invoice building: ${inv.building_id}, invoice unit building: ${unitBelongsToBuilding ? 'match' : 'no match'})`);
-                    return;
-                }
-                
-                console.log(`Step3: ✓ INCLUDING invoice ${inv.id}: ${inv.description} (${inv.amount})`);
-                dbEntries.push(inv);
+                return matchesBuilding || unitBelongsToBuilding;
             });
+            
+            dbEntries.push(...relevantInvoices);
 
             console.log(`Step3: *** Total entries for ${costType.sub_category}: ${dbEntries.length} ***`);
 
