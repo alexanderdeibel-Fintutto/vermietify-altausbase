@@ -102,13 +102,17 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
             // Combine both
             const allEntries = [...relevantInvoices, ...relevantFinancialItems];
 
+            // Preserve existing manual entries
+            const existingManualEntries = costs[costType.id]?.invoices.filter(inv => inv.isManual) || [];
+            const combinedEntries = [...allEntries, ...existingManualEntries];
+
             initialCosts[costType.id] = {
                 costType,
-                selected: false,
-                distribution_key: costType.distribution_key || 'qm',
-                invoices: allEntries,
-                selectedInvoices: [],
-                total: 0
+                selected: costs[costType.id]?.selected || false,
+                distribution_key: costs[costType.id]?.distribution_key || costType.distribution_key || 'qm',
+                invoices: combinedEntries,
+                selectedInvoices: costs[costType.id]?.selectedInvoices || [],
+                total: costs[costType.id]?.total || 0
             };
         });
 
