@@ -98,37 +98,8 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
                 dbEntries.push(inv);
             });
 
-            // SIMPLIFIED: Get ALL financial items with this cost type in the period
-            financialItems.forEach(item => {
-                console.log(`Step3: Checking financial item ${item.id}: type=${item.type}, cost_type=${item.cost_type_id}, date=${item.due_date}`);
-                
-                if (item.type !== 'payable') {
-                    console.log(`  -> Skipped: not payable`);
-                    return;
-                }
-                if (item.cost_type_id !== costType.id) {
-                    console.log(`  -> Skipped: wrong cost type`);
-                    return;
-                }
-                if (!item.due_date) {
-                    console.log(`  -> Skipped: no date`);
-                    return;
-                }
-                if (item.due_date < data.period_start || item.due_date > data.period_end) {
-                    console.log(`  -> Skipped: outside period`);
-                    return;
-                }
-                
-                console.log(`Step3: ✓ INCLUDING financial item ${item.id}: ${item.description} (${item.expected_amount})`);
-                dbEntries.push({
-                    id: item.id,
-                    description: item.description || 'Kosten',
-                    invoice_date: item.due_date,
-                    recipient: item.reference || '-',
-                    amount: item.expected_amount || 0,
-                    isFinancialItem: true
-                });
-            });
+            // NOTE: Financial items are mostly used for rent receivables, not for operating costs
+            // So we focus on invoices only for operating cost statements
 
             console.log(`Step3: *** Total entries for ${costType.sub_category}: ${dbEntries.length} ***`);
 
