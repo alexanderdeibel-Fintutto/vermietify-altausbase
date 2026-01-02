@@ -52,21 +52,29 @@ export default function Step5Summary({ data, onBack, onSuccess, onClose }) {
             let totalCost = 0;
             const costDetails = [];
 
-            Object.values(data.costs).forEach(costData => {
+            // Process costs from Step 3 (with distribution keys)
+            Object.values(data.costs || {}).forEach(costData => {
                 if (!costData.selected) return;
 
                 let itemCost = 0;
+                const itemKey = item.is_vacancy ? `vacancy-${item.unit_id}` : item.id;
 
                 if (costData.distribution_key === 'direkt') {
-                    itemCost = data.directCosts[costData.costType.id]?.[item.id || item.unit_id] || 0;
+                    // Direct costs from Step 3 that were allocated in Step 4
+                    itemCost = data.directCosts?.[costData.costType.id]?.[itemKey] || 0;
                 } else if (costData.distribution_key === 'qm') {
                     const totalSqm = units
                         .filter(u => data.selected_units.includes(u.id))
                         .reduce((sum, u) => sum + (u.sqm || 0), 0);
                     itemCost = (costData.total * (unit.sqm / totalSqm)) * dayFactor;
                 } else if (costData.distribution_key === 'Personen') {
-                    const totalPersons = allItems.reduce((sum, i) => sum + (i.number_of_persons || 0), 0);
-                    itemCost = (costData.total * ((item.number_of_persons || 0) / totalPersons)) * dayFactor;
+                    // Personen costs are 0 for vacancies
+                    if (!item.is_vacancy) {
+                        const totalPersons = data.contracts.reduce((sum, i) => sum + (i.number_of_persons || 0), 0);
+                        if (totalPersons > 0) {
+                            itemCost = (costData.total * ((item.number_of_persons || 0) / totalPersons)) * dayFactor;
+                        }
+                    }
                 } else if (costData.distribution_key === 'Einheit') {
                     const totalUnits = allItems.length;
                     itemCost = (costData.total / totalUnits) * dayFactor;
@@ -77,6 +85,21 @@ export default function Step5Summary({ data, onBack, onSuccess, onClose }) {
                         category: costData.costType.sub_category,
                         amount: itemCost,
                         distribution_key: costData.distribution_key
+                    });
+                    totalCost += itemCost;
+                }
+            });
+
+            // Process manual costs from Step 4
+            (data.manualCosts || []).forEach(manualCost => {
+                const itemKey = item.is_vacancy ? `vacancy-${item.unit_id}` : item.id;
+                const itemCost = data.directCosts?.[manualCost.id]?.[itemKey] || 0;
+
+                if (itemCost > 0) {
+                    costDetails.push({
+                        category: manualCost.name,
+                        amount: itemCost,
+                        distribution_key: 'direkt'
                     });
                     totalCost += itemCost;
                 }
@@ -97,7 +120,7 @@ export default function Step5Summary({ data, onBack, onSuccess, onClose }) {
                 }, 0);
             }
 
-            const difference = advancePayments - totalCost;
+            const difference = totalCost - advancePayments;
 
             calculatedResults.push({
                 ...item,
@@ -222,8 +245,8 @@ export default function Step5Summary({ data, onBack, onSuccess, onClose }) {
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="text-sm text-slate-600">Differenz</p>
-                                                    <Badge className={result.difference >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}>
-                                                        {result.difference >= 0 ? 'Guthaben' : 'Nachzahlung'}: €{Math.abs(result.difference).toFixed(2)}
+                                                    <Badge className={result.difference <= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}>
+                                                        {result.difference <= 0 ? 'Guthaben' : 'Nachzahlung'}: €{Math.abs(result.difference).toFixed(2)}
                                                     </Badge>
                                                 </div>
                                             </>
