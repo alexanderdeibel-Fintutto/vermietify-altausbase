@@ -8,7 +8,7 @@ import { User, Home, ChevronDown, ChevronUp } from 'lucide-react';
 import { differenceInDays, parseISO } from 'date-fns';
 import { toast } from 'sonner';
 
-export default function Step5Summary({ data, onBack, onSuccess, onClose }) {
+export default function Step5Summary({ data, onBack, onSuccess, onClose, statementId }) {
     const [results, setResults] = useState([]);
     const [expandedItems, setExpandedItems] = useState(new Set());
     const queryClient = useQueryClient();
@@ -137,14 +137,25 @@ export default function Step5Summary({ data, onBack, onSuccess, onClose }) {
 
     const createMutation = useMutation({
         mutationFn: async () => {
-            const statement = await base44.entities.OperatingCostStatement.create({
-                building_id: data.building_id,
-                period_start: data.period_start,
-                period_end: data.period_end,
-                selected_units: data.selected_units,
-                total_costs: results.reduce((sum, r) => sum + r.totalCost, 0),
-                status: 'completed'
-            });
+            let statement;
+            if (statementId) {
+                statement = await base44.entities.OperatingCostStatement.update(statementId, {
+                    total_costs: results.reduce((sum, r) => sum + r.totalCost, 0),
+                    status: 'completed',
+                    draft_details: null,
+                    current_step: null
+                });
+                statement.id = statementId;
+            } else {
+                statement = await base44.entities.OperatingCostStatement.create({
+                    building_id: data.building_id,
+                    period_start: data.period_start,
+                    period_end: data.period_end,
+                    selected_units: data.selected_units,
+                    total_costs: results.reduce((sum, r) => sum + r.totalCost, 0),
+                    status: 'completed'
+                });
+            }
 
             const items = results.map(result => ({
                 statement_id: statement.id,

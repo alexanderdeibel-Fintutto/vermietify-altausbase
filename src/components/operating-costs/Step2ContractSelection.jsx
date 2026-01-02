@@ -11,7 +11,7 @@ import { parseISO, isWithinInterval, eachDayOfInterval, differenceInDays, format
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
 
-export default function Step2ContractSelection({ data, onNext, onBack, onDataChange }) {
+export default function Step2ContractSelection({ data, onNext, onBack, onDataChange, onSaveDraft, isSaving }) {
     const [contracts, setContracts] = useState([]);
     const [vacancies, setVacancies] = useState([]);
 
@@ -311,12 +311,21 @@ export default function Step2ContractSelection({ data, onNext, onBack, onDataCha
                 <Button variant="outline" onClick={onBack}>
                     Zurück
                 </Button>
-                <Button 
-                    onClick={handleNext}
-                    className="bg-emerald-600 hover:bg-emerald-700"
-                >
-                    Weiter
-                </Button>
+                <div className="flex gap-2">
+                    <Button 
+                        variant="outline"
+                        onClick={onSaveDraft}
+                        disabled={isSaving}
+                    >
+                        {isSaving ? 'Speichert...' : 'Entwurf speichern'}
+                    </Button>
+                    <Button 
+                        onClick={handleNext}
+                        className="bg-emerald-600 hover:bg-emerald-700"
+                    >
+                        Weiter
+                    </Button>
+                </div>
             </div>
         </div>
     );

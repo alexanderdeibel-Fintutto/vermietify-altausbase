@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Building2, Home, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function Step1BuildingSelection({ data, onNext, onDataChange }) {
+export default function Step1BuildingSelection({ data, onNext, onDataChange, onSaveDraft, isSaving }) {
     const [selectedBuilding, setSelectedBuilding] = useState(data.building_id || '');
     const [periodStart, setPeriodStart] = useState(data.period_start || '');
     const [periodEnd, setPeriodEnd] = useState(data.period_end || '');

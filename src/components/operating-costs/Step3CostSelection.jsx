@@ -12,7 +12,7 @@ import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { parseISO, parse, isWithinInterval } from 'date-fns';
 
-export default function Step3CostSelection({ data, onNext, onBack, onDataChange }) {
+export default function Step3CostSelection({ data, onNext, onBack, onDataChange, onSaveDraft, isSaving }) {
     const [costs, setCosts] = useState({});
     const [expandedCategories, setExpandedCategories] = useState(new Set());
     const [addingManualCost, setAddingManualCost] = useState(null);
@@ -418,12 +418,21 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
                 <Button variant="outline" onClick={onBack}>
                     Zurück
                 </Button>
-                <Button 
-                    onClick={handleNext}
-                    className="bg-emerald-600 hover:bg-emerald-700"
-                >
-                    Weiter
-                </Button>
+                <div className="flex gap-2">
+                    <Button 
+                        variant="outline"
+                        onClick={onSaveDraft}
+                        disabled={isSaving}
+                    >
+                        {isSaving ? 'Speichert...' : 'Entwurf speichern'}
+                    </Button>
+                    <Button 
+                        onClick={handleNext}
+                        className="bg-emerald-600 hover:bg-emerald-700"
+                    >
+                        Weiter
+                    </Button>
+                </div>
             </div>
         </div>
     );

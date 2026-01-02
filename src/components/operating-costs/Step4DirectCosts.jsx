@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 
-export default function Step4DirectCosts({ data, onNext, onBack, onDataChange }) {
+export default function Step4DirectCosts({ data, onNext, onBack, onDataChange, onSaveDraft, isSaving }) {
     const [manualCosts, setManualCosts] = useState([]);
     const [allocations, setAllocations] = useState({});
     const [expandedCosts, setExpandedCosts] = useState(new Set());
@@ -375,13 +375,22 @@ export default function Step4DirectCosts({ data, onNext, onBack, onDataChange })
                 <Button variant="outline" onClick={onBack}>
                     Zurück
                 </Button>
-                <Button 
-                    onClick={handleNext}
-                    disabled={allCosts.length === 0}
-                    className="bg-emerald-600 hover:bg-emerald-700"
-                >
-                    Berechnen & Weiter
-                </Button>
+                <div className="flex gap-2">
+                    <Button 
+                        variant="outline"
+                        onClick={onSaveDraft}
+                        disabled={isSaving}
+                    >
+                        {isSaving ? 'Speichert...' : 'Entwurf speichern'}
+                    </Button>
+                    <Button 
+                        onClick={handleNext}
+                        disabled={allCosts.length === 0}
+                        className="bg-emerald-600 hover:bg-emerald-700"
+                    >
+                        Berechnen & Weiter
+                    </Button>
+                </div>
             </div>
         </div>
     );
