@@ -38,7 +38,7 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
     });
 
     const allRelevantCostTypes = useMemo(() => {
-        return costTypes.filter(ct => ct.distributable);
+        return costTypes.filter(ct => ct.type === 'expense');
     }, [costTypes]);
 
     useEffect(() => {
