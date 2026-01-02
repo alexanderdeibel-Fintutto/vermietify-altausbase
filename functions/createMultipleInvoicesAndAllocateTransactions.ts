@@ -22,6 +22,21 @@ Deno.serve(async (req) => {
         let successCount = 0;
         let errorCount = 0;
         
+        // Check if recipient exists, if not create it
+        if (invoiceData.recipient) {
+            const existingRecipients = await base44.asServiceRole.entities.Recipient.filter({
+                name: invoiceData.recipient
+            });
+            
+            if (existingRecipients.length === 0) {
+                // Create new recipient
+                await base44.asServiceRole.entities.Recipient.create({
+                    name: invoiceData.recipient,
+                    type: 'company'
+                });
+            }
+        }
+        
         for (const transactionId of transactionIds) {
             try {
                 const transaction = await base44.asServiceRole.entities.BankTransaction.get(transactionId);
