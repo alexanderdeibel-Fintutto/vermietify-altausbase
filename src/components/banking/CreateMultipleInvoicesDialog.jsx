@@ -74,7 +74,7 @@ export default function CreateMultipleInvoicesDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-xl">
+            <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <div className="flex items-center gap-2">
                         <FileText className="w-5 h-5 text-emerald-600" />
@@ -87,12 +87,12 @@ export default function CreateMultipleInvoicesDialog({
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Selected Transactions Summary */}
-                    <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                    <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
                         <p className="text-sm font-medium text-slate-700 mb-2">Ausgewählte Transaktionen: {transactions.length}</p>
-                        <div className="text-sm space-y-1 max-h-40 overflow-y-auto">
+                        <div className="text-xs space-y-1 max-h-32 overflow-y-auto">
                             {transactions.map(tx => (
-                                <div key={tx.id} className="flex justify-between items-center">
-                                    <span className="truncate mr-2">{tx.description}</span>
+                                <div key={tx.id} className="flex justify-between items-center gap-2">
+                                    <span className="truncate">{tx.description}</span>
                                     <span className="font-semibold whitespace-nowrap">€{Math.abs(tx.amount).toFixed(2)}</span>
                                 </div>
                             ))}
