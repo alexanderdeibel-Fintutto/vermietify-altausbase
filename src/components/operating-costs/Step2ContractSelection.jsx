@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from "@/components/ui/button";
@@ -30,15 +30,19 @@ export default function Step2ContractSelection({ data, onNext, onBack, onDataCha
         queryFn: () => base44.entities.Tenant.list()
     });
 
-    const selectedUnits = units.filter(u => data.selected_units.includes(u.id));
-    const periodStart = parseISO(data.period_start);
-    const periodEnd = parseISO(data.period_end);
+    const selectedUnits = useMemo(() => 
+        units.filter(u => data.selected_units.includes(u.id)),
+        [units, data.selected_units]
+    );
+    
+    const periodStart = useMemo(() => parseISO(data.period_start), [data.period_start]);
+    const periodEnd = useMemo(() => parseISO(data.period_end), [data.period_end]);
 
     useEffect(() => {
         if (selectedUnits.length > 0 && data.period_start && data.period_end) {
             calculateContractsAndVacancies();
         }
-    }, [data.selected_units, data.period_start, data.period_end, allContracts]);
+    }, [selectedUnits.length, data.period_start, data.period_end, allContracts]);
 
     const calculateContractsAndVacancies = () => {
         const relevantContracts = allContracts.filter(contract => {

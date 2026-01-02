@@ -57,72 +57,63 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange 
     }, [costTypes, invoices, data.period_start, data.period_end]);
 
     useEffect(() => {
-        setCosts(prevCosts => {
-            const newCosts = {};
-            
-            allRelevantCostTypes.forEach(costType => {
-                // Get relevant invoices
-                const relevantInvoices = invoices.filter(inv => {
-                    if (inv.cost_type_id !== costType.id) return false;
-                    if (!inv.invoice_date) return false;
-                    if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) return false;
-                    
-                    // Skip if unit doesn't match selected units
-                    if (inv.unit_id) {
-                        const unit = units.find(u => u.id === inv.unit_id);
-                        if (unit && !data.selected_units.includes(unit.id)) return false;
-                    }
-                    
-                    // Skip if building doesn't match (only if building is set on invoice)
-                    if (inv.building_id && data.building_id && inv.building_id !== data.building_id) return false;
-                    
-                    return true;
-                });
-
-                // Get relevant financial items (payables with cost_type_id)
-                const relevantFinancialItems = financialItems.filter(item => {
-                    if (item.type !== 'payable') return false;
-                    if (item.cost_type_id !== costType.id) return false;
-                    if (!item.due_date) return false;
-                    if (item.due_date < data.period_start || item.due_date > data.period_end) return false;
-                    
-                    // Skip if unit doesn't match selected units
-                    if (item.related_to_unit_id) {
-                        const unit = units.find(u => u.id === item.related_to_unit_id);
-                        if (unit && !data.selected_units.includes(unit.id)) return false;
-                    }
-                    
-                    return true;
-                }).map(item => ({
-                    id: item.id,
-                    description: item.description || 'Kosten',
-                    invoice_date: item.due_date,
-                    recipient: item.reference || '-',
-                    amount: item.expected_amount || 0,
-                    isFinancialItem: true
-                }));
-
-                // Combine database entries
-                const dbEntries = [...relevantInvoices, ...relevantFinancialItems];
+        const newCosts = {};
+        
+        allRelevantCostTypes.forEach(costType => {
+            // Get relevant invoices
+            const relevantInvoices = invoices.filter(inv => {
+                if (inv.cost_type_id !== costType.id) return false;
+                if (!inv.invoice_date) return false;
+                if (inv.invoice_date < data.period_start || inv.invoice_date > data.period_end) return false;
                 
-                // Preserve manual entries from previous state
-                const prevData = prevCosts[costType.id];
-                const manualEntries = prevData?.invoices?.filter(inv => inv.isManual) || [];
+                // Skip if unit doesn't match selected units
+                if (inv.unit_id) {
+                    const unit = units.find(u => u.id === inv.unit_id);
+                    if (unit && !data.selected_units.includes(unit.id)) return false;
+                }
                 
-                const allEntries = [...dbEntries, ...manualEntries];
-
-                newCosts[costType.id] = {
-                    costType,
-                    selected: prevData?.selected || false,
-                    distribution_key: prevData?.distribution_key || costType.distribution_key || 'qm',
-                    invoices: allEntries,
-                    selectedInvoices: prevData?.selectedInvoices || [],
-                    total: prevData?.total || 0
-                };
+                // Skip if building doesn't match (only if building is set on invoice)
+                if (inv.building_id && data.building_id && inv.building_id !== data.building_id) return false;
+                
+                return true;
             });
 
-            return newCosts;
+            // Get relevant financial items (payables with cost_type_id)
+            const relevantFinancialItems = financialItems.filter(item => {
+                if (item.type !== 'payable') return false;
+                if (item.cost_type_id !== costType.id) return false;
+                if (!item.due_date) return false;
+                if (item.due_date < data.period_start || item.due_date > data.period_end) return false;
+                
+                // Skip if unit doesn't match selected units
+                if (item.related_to_unit_id) {
+                    const unit = units.find(u => u.id === item.related_to_unit_id);
+                    if (unit && !data.selected_units.includes(unit.id)) return false;
+                }
+                
+                return true;
+            }).map(item => ({
+                id: item.id,
+                description: item.description || 'Kosten',
+                invoice_date: item.due_date,
+                recipient: item.reference || '-',
+                amount: item.expected_amount || 0,
+                isFinancialItem: true
+            }));
+
+            const dbEntries = [...relevantInvoices, ...relevantFinancialItems];
+
+            newCosts[costType.id] = {
+                costType,
+                selected: false,
+                distribution_key: costType.distribution_key || 'qm',
+                invoices: dbEntries,
+                selectedInvoices: [],
+                total: 0
+            };
         });
+
+        setCosts(newCosts);
     }, [allRelevantCostTypes, invoices, financialItems, data.period_start, data.period_end, data.selected_units, data.building_id, units]);
 
     const toggleCategory = (costTypeId) => {
