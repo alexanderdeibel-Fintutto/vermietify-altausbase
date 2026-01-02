@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Landmark, CheckCircle, AlertCircle, TrendingUp, TrendingDown, Sparkles, Settings, Zap, Filter, X, Search, Tag, Check, Building2, User, Calendar, CreditCard } from 'lucide-react';
+import { Landmark, CheckCircle, AlertCircle, TrendingUp, TrendingDown, Sparkles, Settings, Zap, Filter, X, Search, Tag, Check, Building2, User, Calendar, CreditCard, FileText } from 'lucide-react';
 import { parseISO, parse, format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
