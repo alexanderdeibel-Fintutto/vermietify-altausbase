@@ -772,6 +772,6 @@ export default function BankAccounts() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-            </div>
-            );
-            }
+        </div>
+    );
+}
