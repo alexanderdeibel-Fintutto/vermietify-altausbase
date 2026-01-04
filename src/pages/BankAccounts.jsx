@@ -195,11 +195,24 @@ export default function BankAccounts() {
         queryFn: () => base44.entities.BankAccount.list()
     });
 
-    const { data: transactions = [] } = useQuery({
-        queryKey: ['bankTransactions'],
-        queryFn: () => base44.entities.BankTransaction.list('-transaction_date', 1000),
+    // Load transactions for each account separately
+    const accountTransactionsQueries = useQuery({
+        queryKey: ['allAccountTransactions', accounts.map(a => a.id).join(',')],
+        queryFn: async () => {
+            if (accounts.length === 0) return [];
+            
+            const allPromises = accounts.map(account => 
+                base44.entities.BankTransaction.filter({ account_id: account.id })
+            );
+            
+            const results = await Promise.all(allPromises);
+            return results.flat();
+        },
+        enabled: accounts.length > 0,
         staleTime: 0
     });
+
+    const transactions = accountTransactionsQueries.data || [];
 
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.BankAccount.create(data),
