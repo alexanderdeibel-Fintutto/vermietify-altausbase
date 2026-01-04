@@ -12,23 +12,27 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2 } from 'lucide-react';
+import GebaeudeManager from './GebaeudeManager';
 
 export default function BuildingForm({ open, onOpenChange, onSubmit, initialData, isLoading, section }) {
     const { register, handleSubmit, reset, formState: { errors } } = useForm({
         defaultValues: initialData || {}
     });
+    
+    const [gebaeude, setGebaeude] = React.useState([]);
 
     const getDialogTitle = () => {
-        if (!initialData) return 'Neues Gebäude anlegen';
-        if (!section) return 'Gebäude bearbeiten';
+        if (!initialData) return 'Neues Objekt anlegen';
+        if (!section) return 'Objekt bearbeiten';
         const sectionTitles = {
             name: 'Objekt umbenennen',
             lage: 'Lage bearbeiten',
+            gebaeude: 'Gebäude bearbeiten',
             baudaten: 'Baudaten bearbeiten',
             ausstattung: 'Ausstattung bearbeiten',
             energieausweis: 'Energieausweis-Daten bearbeiten'
         };
-        return sectionTitles[section] || 'Gebäude bearbeiten';
+        return sectionTitles[section] || 'Objekt bearbeiten';
     };
 
     const shouldShowSection = (sectionName) => {
@@ -40,14 +44,17 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
     React.useEffect(() => {
         if (initialData) {
             reset(initialData);
+            setGebaeude(initialData.gebaeude_data || [{ bezeichnung: 'Gebäude 1', lage_auf_grundstueck: '', eigene_hausnummer: '', gebaeude_standard: 'mittel' }]);
         } else {
             reset({});
+            setGebaeude([{ bezeichnung: 'Gebäude 1', lage_auf_grundstueck: '', eigene_hausnummer: '', gebaeude_standard: 'mittel' }]);
         }
-    }, [initialData, reset]);
+    }, [initialData, reset, open]);
 
     const handleFormSubmit = (data) => {
         onSubmit({
             ...data,
+            gebaeude_data: gebaeude,
             purchase_price: data.purchase_price ? parseFloat(data.purchase_price) : null,
             year_built: data.year_built ? parseInt(data.year_built) : null,
             total_units: data.total_units ? parseInt(data.total_units) : null,
@@ -139,6 +146,15 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                     />
                                 </div>
                             </div>
+                        </div>
+                        </>
+                        )}
+
+                        {shouldShowSection('gebaeude') && (
+                        <>
+                        <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
+                            {!section && <h3 className="font-semibold text-slate-800 mb-3">Gebäude</h3>}
+                            <GebaeudeManager gebaeude={gebaeude} onChange={setGebaeude} />
                         </div>
                         </>
                         )}
