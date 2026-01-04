@@ -411,7 +411,8 @@ export default function BankAccounts() {
         accountTransactionsMap.forEach((txs, accountId) => {
             const income = txs.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
             const expenses = txs.filter(t => t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0);
-            map.set(accountId, { income, expenses, count: txs.length });
+            const balance = txs.reduce((sum, t) => sum + (t.amount || 0), 0);
+            map.set(accountId, { income, expenses, count: txs.length, balance });
         });
         return map;
     }, [accountTransactionsMap]);
@@ -632,11 +633,11 @@ export default function BankAccounts() {
                                             )}
 
                                             <div className="pt-4 border-t border-slate-100">
-                                                <p className="text-sm text-slate-500 mb-2">Kontostand</p>
-                                                <p className="text-3xl font-bold text-slate-800">
-                                                    €{account.current_balance?.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-                                                </p>
-                                            </div>
+                                                            <p className="text-sm text-slate-500 mb-2">Kontostand</p>
+                                                            <p className="text-3xl font-bold text-slate-800">
+                                                                €{(stats.balance || 0).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                                            </p>
+                                                        </div>
 
                                             {stats.count > 0 && (
                                                <div className="pt-4 border-t border-slate-100">
