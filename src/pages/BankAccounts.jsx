@@ -52,6 +52,7 @@ import EmptyState from '@/components/shared/EmptyState';
 import TransactionImport from '@/components/banking/TransactionImport';
 import AccountTransactionsList from '@/components/banking/AccountTransactionsList';
 import CashBookDialog from '@/components/banking/CashBookDialog';
+import BankAccountDialog from '@/components/banking/BankAccountDialog';
 
 function BankAccountForm({ open, onOpenChange, onSubmit, initialData, isLoading }) {
     const { register, handleSubmit, reset, setValue, watch } = useForm({
@@ -190,6 +191,8 @@ export default function BankAccounts() {
     const [selectedAccountFilter, setSelectedAccountFilter] = useState('all');
     const [cashBookOpen, setCashBookOpen] = useState(false);
     const [selectedCashAccount, setSelectedCashAccount] = useState(null);
+    const [bankAccountDialogOpen, setBankAccountDialogOpen] = useState(false);
+    const [selectedBankAccount, setSelectedBankAccount] = useState(null);
     const queryClient = useQueryClient();
 
     const toggleAccountExpanded = (accountId) => {
@@ -526,20 +529,19 @@ export default function BankAccounts() {
                         const isCash = account.account_type === 'cash';
                         
                         return (
-                            <Collapsible 
-                                key={account.id} 
-                                open={isExpanded}
-                                onOpenChange={() => toggleAccountExpanded(account.id)}
+                            <Card 
+                                key={account.id}
+                                className="border-slate-200/50 hover:shadow-md transition-shadow cursor-pointer"
+                                onClick={() => {
+                                    if (isCash) {
+                                        setSelectedCashAccount(account);
+                                        setCashBookOpen(true);
+                                    } else {
+                                        setSelectedBankAccount(account);
+                                        setBankAccountDialogOpen(true);
+                                    }
+                                }}
                             >
-                                <Card 
-                                    className={`border-slate-200/50 hover:shadow-md transition-shadow ${isCash ? 'cursor-pointer' : ''}`}
-                                    onClick={() => {
-                                        if (isCash) {
-                                            setSelectedCashAccount(account);
-                                            setCashBookOpen(true);
-                                        }
-                                    }}
-                                >
                                     <CardHeader className="pb-3">
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1">
@@ -719,10 +721,26 @@ export default function BankAccounts() {
                                         )}
 
                                         <CashBookDialog
-                                        open={cashBookOpen}
-                                        onOpenChange={setCashBookOpen}
-                                        account={selectedCashAccount}
-                                        transactions={selectedCashAccount ? accountTransactionsMap.get(selectedCashAccount.id) || [] : []}
+                                            open={cashBookOpen}
+                                            onOpenChange={setCashBookOpen}
+                                            account={selectedCashAccount}
+                                            transactions={selectedCashAccount ? accountTransactionsMap.get(selectedCashAccount.id) || [] : []}
+                                        />
+
+                                        <BankAccountDialog
+                                            open={bankAccountDialogOpen}
+                                            onOpenChange={setBankAccountDialogOpen}
+                                            account={selectedBankAccount}
+                                            transactions={selectedBankAccount ? accountTransactionsMap.get(selectedBankAccount.id) || [] : []}
+                                            onSync={() => selectedBankAccount && handleSyncAccount(selectedBankAccount.id)}
+                                            onImport={() => {
+                                                if (selectedBankAccount) {
+                                                    setImportAccountId(selectedBankAccount.id);
+                                                    setImportOpen(true);
+                                                    setBankAccountDialogOpen(false);
+                                                }
+                                            }}
+                                            isSyncing={isSyncing}
                                         />
 
                                         <BankAccountForm
