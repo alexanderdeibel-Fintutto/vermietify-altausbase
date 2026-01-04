@@ -353,14 +353,10 @@ export default function BankAccounts() {
     };
 
     const accountTransactionsMap = useMemo(() => {
-        // Filter transactions by selected account
-        let filteredTransactions = transactions;
-        if (selectedAccountFilter !== 'all') {
-            filteredTransactions = transactions.filter(t => t.account_id === selectedAccountFilter);
-        }
-        
         const map = new Map();
-        filteredTransactions.forEach(t => {
+        
+        // Always include ALL transactions for ALL accounts (no filtering)
+        transactions.forEach(t => {
             if (!map.has(t.account_id)) {
                 map.set(t.account_id, []);
             }
@@ -404,7 +400,7 @@ export default function BankAccounts() {
         });
         
         return map;
-    }, [transactions, selectedAccountFilter]);
+    }, [transactions]);
 
     const accountStatsMap = useMemo(() => {
         const map = new Map();
@@ -511,8 +507,10 @@ export default function BankAccounts() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 gap-6">
-                    {accounts.map((account) => {
-                        const stats = accountStatsMap.get(account.id) || { income: 0, expenses: 0, count: 0 };
+                    {accounts
+                        .filter(account => selectedAccountFilter === 'all' || account.id === selectedAccountFilter)
+                        .map((account) => {
+                        const stats = accountStatsMap.get(account.id) || { income: 0, expenses: 0, count: 0, balance: 0 };
                         const isCash = account.account_type === 'cash';
                         
                         return (
