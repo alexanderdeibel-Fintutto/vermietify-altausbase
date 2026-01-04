@@ -28,6 +28,7 @@ export default function FlaechenEinheitenManager({ einheiten, onChange, gebaeude
             etage: 0, 
             lage: 'mitte',
             bezeichnung: '',
+            qm: 0,
             anzahl_wohnzimmer: 0,
             bad: false,
             kueche: false,
@@ -119,6 +120,17 @@ export default function FlaechenEinheitenManager({ einheiten, onChange, gebaeude
                                         value={einheit.bezeichnung || ''} 
                                         onChange={(e) => handleUpdate(index, 'bezeichnung', e.target.value)}
                                         placeholder="z.B. Wohnung 1"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label className="text-xs">Fläche (qm)</Label>
+                                    <Input 
+                                        type="number"
+                                        step="0.01"
+                                        value={einheit.qm || ''} 
+                                        onChange={(e) => handleUpdate(index, 'qm', parseFloat(e.target.value) || 0)}
+                                        placeholder="0"
                                     />
                                 </div>
                                 <div>

@@ -256,6 +256,7 @@ export default function BuildingDetail() {
                                         <p>Gebäude: {gebaeudeBezeichnung}</p>
                                         <p>Etage: {einheit.etage}</p>
                                         <p>Lage: {einheit.lage}</p>
+                                        {einheit.qm > 0 && <p>Fläche: {einheit.qm} qm</p>}
                                         {einheit.anzahl_wohnzimmer > 0 && <p>Wohnzimmer: {einheit.anzahl_wohnzimmer}</p>}
                                         <p>Bad: {einheit.bad ? 'Ja' : 'Nein'}</p>
                                         <p>Küche: {einheit.kueche ? 'Ja' : 'Nein'}</p>
