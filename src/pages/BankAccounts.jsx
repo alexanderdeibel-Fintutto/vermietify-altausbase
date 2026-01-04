@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Landmark, Plus, MoreVertical, Pencil, Trash2, Upload, TrendingUp, TrendingDown, Link2, RefreshCw, ChevronDown, ChevronUp, Undo2 } from 'lucide-react';
+import { Landmark, Plus, MoreVertical, Pencil, Trash2, Upload, TrendingUp, TrendingDown, Link2, RefreshCw, Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { parseISO } from 'date-fns';
 import { Button } from "@/components/ui/button";
@@ -15,11 +15,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import {
-    Collapsible,
-    CollapsibleContent,
-    CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -187,20 +183,12 @@ export default function BankAccounts() {
     const [isSyncing, setIsSyncing] = useState(false);
     const [importOpen, setImportOpen] = useState(false);
     const [importAccountId, setImportAccountId] = useState(null);
-    const [expandedAccounts, setExpandedAccounts] = useState({});
     const [selectedAccountFilter, setSelectedAccountFilter] = useState('all');
     const [cashBookOpen, setCashBookOpen] = useState(false);
     const [selectedCashAccount, setSelectedCashAccount] = useState(null);
     const [bankAccountDialogOpen, setBankAccountDialogOpen] = useState(false);
     const [selectedBankAccount, setSelectedBankAccount] = useState(null);
     const queryClient = useQueryClient();
-
-    const toggleAccountExpanded = (accountId) => {
-        setExpandedAccounts(prev => ({
-            ...prev,
-            [accountId]: prev[accountId] === true ? false : true
-        }));
-    };
 
     const { data: accounts = [], isLoading } = useQuery({
         queryKey: ['bankAccounts'],
@@ -524,8 +512,6 @@ export default function BankAccounts() {
                 <div className="grid grid-cols-1 gap-6">
                     {accounts.map((account) => {
                         const stats = accountStatsMap.get(account.id) || { income: 0, expenses: 0, count: 0 };
-                        const accountTransactions = accountTransactionsMap.get(account.id) || [];
-                        const isExpanded = expandedAccounts[account.id] === true;
                         const isCash = account.account_type === 'cash';
                         
                         return (
@@ -652,66 +638,35 @@ export default function BankAccounts() {
                                                 </p>
                                             </div>
 
-                                            {stats.count > 0 && !isCash && (
-                                                <div className="pt-4 border-t border-slate-100">
-                                                    <div className="flex items-center justify-between mb-3">
-                                                        <p className="text-sm text-slate-500">Transaktionen</p>
-                                                        <CollapsibleTrigger asChild>
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="sm" 
-                                                                className="gap-2"
-                                                                onClick={(e) => e.stopPropagation()}
-                                                            >
-                                                                {isExpanded ? (
-                                                                    <>
-                                                                        Ausblenden
-                                                                        <ChevronUp className="w-4 h-4" />
-                                                                    </>
-                                                                ) : (
-                                                                    <>
-                                                                        Anzeigen ({stats.count})
-                                                                        <ChevronDown className="w-4 h-4" />
-                                                                    </>
-                                                                )}
-                                                            </Button>
-                                                        </CollapsibleTrigger>
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-3">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                                                                <TrendingUp className="w-4 h-4 text-emerald-600" />
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-xs text-slate-500">Eingänge</p>
-                                                                <p className="text-sm font-semibold text-slate-800">
-                                                                    €{stats.income.toLocaleString('de-DE')}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                                                                <TrendingDown className="w-4 h-4 text-red-600" />
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-xs text-slate-500">Ausgänge</p>
-                                                                <p className="text-sm font-semibold text-slate-800">
-                                                                    €{stats.expenses.toLocaleString('de-DE')}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <CollapsibleContent>
                                             {stats.count > 0 && (
-                                                <div className="mt-6 pt-6 border-t border-slate-200">
-                                                    <AccountTransactionsList transactions={accountTransactions} />
-                                                </div>
+                                               <div className="pt-4 border-t border-slate-100">
+                                                   <div className="grid grid-cols-2 gap-3">
+                                                       <div className="flex items-center gap-2">
+                                                           <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                                                               <TrendingUp className="w-4 h-4 text-emerald-600" />
+                                                           </div>
+                                                           <div>
+                                                               <p className="text-xs text-slate-500">Eingänge</p>
+                                                               <p className="text-sm font-semibold text-slate-800">
+                                                                   €{stats.income.toLocaleString('de-DE')}
+                                                               </p>
+                                                           </div>
+                                                       </div>
+                                                       <div className="flex items-center gap-2">
+                                                           <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                                                               <TrendingDown className="w-4 h-4 text-red-600" />
+                                                           </div>
+                                                           <div>
+                                                               <p className="text-xs text-slate-500">Ausgänge</p>
+                                                               <p className="text-sm font-semibold text-slate-800">
+                                                                   €{stats.expenses.toLocaleString('de-DE')}
+                                                               </p>
+                                                           </div>
+                                                       </div>
+                                                   </div>
+                                               </div>
                                             )}
-                                        </CollapsibleContent>
+                                            </div>
                                         </CardContent>
                                         </Card>
                                         );
