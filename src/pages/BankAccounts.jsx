@@ -54,14 +54,14 @@ import AccountTransactionsList from '@/components/banking/AccountTransactionsLis
 
 function BankAccountForm({ open, onOpenChange, onSubmit, initialData, isLoading }) {
     const { register, handleSubmit, reset, setValue, watch } = useForm({
-        defaultValues: initialData || { is_primary: false }
+        defaultValues: initialData || { is_primary: false, account_type: 'bank' }
     });
 
     React.useEffect(() => {
         if (initialData) {
             reset(initialData);
         } else {
-            reset({ is_primary: false });
+            reset({ is_primary: false, account_type: 'bank' });
         }
     }, [initialData, reset]);
 
@@ -91,32 +91,52 @@ function BankAccountForm({ open, onOpenChange, onSubmit, initialData, isLoading 
                     </div>
 
                     <div>
-                        <Label htmlFor="bank_name">Bank</Label>
-                        <Input 
-                            id="bank_name"
-                            {...register('bank_name')}
-                            placeholder="z.B. Sparkasse"
-                        />
+                        <Label htmlFor="account_type">Kontotyp</Label>
+                        <Select 
+                            value={watch('account_type')} 
+                            onValueChange={(value) => setValue('account_type', value)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Typ wählen" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="bank">Bankkonto</SelectItem>
+                                <SelectItem value="cash">Kasse</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <Label htmlFor="iban">IBAN *</Label>
-                            <Input 
-                                id="iban"
-                                {...register('iban', { required: true })}
-                                placeholder="DE89370400440532013000"
-                            />
-                        </div>
-                        <div>
-                            <Label htmlFor="bic">BIC</Label>
-                            <Input 
-                                id="bic"
-                                {...register('bic')}
-                                placeholder="COBADEFFXXX"
-                            />
-                        </div>
-                    </div>
+                    {watch('account_type') === 'bank' && (
+                        <>
+                            <div>
+                                <Label htmlFor="bank_name">Bank</Label>
+                                <Input 
+                                    id="bank_name"
+                                    {...register('bank_name')}
+                                    placeholder="z.B. Sparkasse"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label htmlFor="iban">IBAN</Label>
+                                    <Input 
+                                        id="iban"
+                                        {...register('iban')}
+                                        placeholder="DE89370400440532013000"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="bic">BIC</Label>
+                                    <Input 
+                                        id="bic"
+                                        {...register('bic')}
+                                        placeholder="COBADEFFXXX"
+                                    />
+                                </div>
+                            </div>
+                        </>
+                    )}
 
                     <div>
                         <Label htmlFor="current_balance">Aktueller Kontostand (€)</Label>
@@ -513,16 +533,21 @@ export default function BankAccounts() {
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2">
                                                     <CardTitle className="text-lg">{account.name}</CardTitle>
+                                                    {account.account_type === 'cash' && (
+                                                       <Badge className="bg-amber-100 text-amber-700">
+                                                           Kasse
+                                                       </Badge>
+                                                    )}
                                                     {account.is_primary && (
-                                                        <Badge className="bg-emerald-100 text-emerald-700">
-                                                            Hauptkonto
-                                                        </Badge>
+                                                       <Badge className="bg-emerald-100 text-emerald-700">
+                                                           Hauptkonto
+                                                       </Badge>
                                                     )}
                                                     {account.finapi_connection_id && (
-                                                        <Badge className="bg-blue-100 text-blue-700 text-xs">
-                                                            <Link2 className="w-3 h-3 mr-1" />
-                                                            Verbunden
-                                                        </Badge>
+                                                       <Badge className="bg-blue-100 text-blue-700 text-xs">
+                                                           <Link2 className="w-3 h-3 mr-1" />
+                                                           Verbunden
+                                                       </Badge>
                                                     )}
                                                 </div>
                                                 {account.bank_name && (
@@ -581,10 +606,12 @@ export default function BankAccounts() {
                                     </CardHeader>
                                     <CardContent>
                                         <div className="space-y-4">
-                                            <div>
-                                                <p className="text-sm text-slate-500">IBAN</p>
-                                                <p className="text-sm font-mono text-slate-700 mt-1">{account.iban}</p>
-                                            </div>
+                                            {account.account_type === 'bank' && account.iban && (
+                                                <div>
+                                                    <p className="text-sm text-slate-500">IBAN</p>
+                                                    <p className="text-sm font-mono text-slate-700 mt-1">{account.iban}</p>
+                                                </div>
+                                            )}
 
                                             <div className="pt-4 border-t border-slate-100">
                                                 <p className="text-sm text-slate-500 mb-2">Kontostand</p>
