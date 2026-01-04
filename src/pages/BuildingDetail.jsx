@@ -532,9 +532,15 @@ export default function BuildingDetail() {
 
             {/* Gebäude */}
             <DetailSection 
-                title="Gebäude"
+                title={building.gebaeude_typ === 'aufgaenge' ? 'Aufgänge/Hausnummern' : 'Gebäude'}
                 icon={BuildingIcon}
-                summary={building.gebaeude_data && building.gebaeude_data.length > 0 ? `${building.gebaeude_data.length} Gebäude auf dem Grundstück` : 'Noch keine Gebäude angelegt'}
+                summary={building.gebaeude_data && building.gebaeude_data.length > 0 
+                    ? building.gebaeude_typ === 'aufgaenge'
+                        ? `${building.gebaeude_data.length} Aufgänge/Hausnummern im Gebäude`
+                        : `${building.gebaeude_data.length} Gebäude auf dem Grundstück`
+                    : building.gebaeude_typ === 'aufgaenge' 
+                        ? 'Noch keine Aufgänge angelegt'
+                        : 'Noch keine Gebäude angelegt'}
                 onEdit={() => handleEditSection('gebaeude')}
             >
                 {building.gebaeude_data && building.gebaeude_data.length > 0 ? (

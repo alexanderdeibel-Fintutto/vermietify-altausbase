@@ -35,6 +35,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
     const [gebaeude, setGebaeude] = React.useState([]);
     const [flaechenEinheiten, setFlaechenEinheiten] = React.useState([]);
     const [grundbuch, setGrundbuch] = React.useState({});
+    const [gebaeudeTyp, setGebaeudeTyp] = React.useState('gebaeude');
     const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
     const [checkingDependencies, setCheckingDependencies] = React.useState(false);
     const [dependencies, setDependencies] = React.useState(null);
@@ -69,6 +70,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
         if (initialData) {
             reset(initialData);
             setGebaeude(initialData.gebaeude_data || [{ bezeichnung: 'Gebäude 1', lage_auf_grundstueck: '', eigene_hausnummer: '', gebaeude_standard: 'mittel' }]);
+            setGebaeudeTyp(initialData.gebaeude_typ || 'gebaeude');
             if (editingUnitIndex !== null && initialData.flaechen_einheiten) {
                 setFlaechenEinheiten([initialData.flaechen_einheiten[editingUnitIndex]]);
             } else if (section === 'flaechen' && editingUnitIndex === null) {
@@ -97,6 +99,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
         }
         onSubmit({
             ...data,
+            gebaeude_typ: gebaeudeTyp,
             gebaeude_data: gebaeude,
             flaechen_einheiten: finalFlaechenEinheiten,
             grundbuch: grundbuch,
@@ -238,7 +241,12 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                         <>
                         <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
                             {!section && <h3 className="font-semibold text-slate-800 mb-3">Gebäude</h3>}
-                            <GebaeudeManager gebaeude={gebaeude} onChange={setGebaeude} />
+                            <GebaeudeManager 
+                                gebaeude={gebaeude} 
+                                onChange={setGebaeude}
+                                initialGebaeudeTyp={gebaeudeTyp}
+                                onGebaeudeTypChange={setGebaeudeTyp}
+                            />
                         </div>
                         </>
                         )}

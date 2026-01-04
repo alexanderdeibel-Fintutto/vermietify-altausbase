@@ -6,9 +6,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Trash2, Building, DoorOpen } from 'lucide-react';
 
-export default function GebaeudeManager({ gebaeude, onChange }) {
+export default function GebaeudeManager({ gebaeude, onChange, initialGebaeudeTyp, onGebaeudeTypChange }) {
     const [anzahl, setAnzahl] = useState(gebaeude?.length || 1);
-    const [gebaeudeTyp, setGebaeudeTyp] = useState('gebaeude');
+    const [gebaeudeTyp, setGebaeudeTyp] = useState(initialGebaeudeTyp || 'gebaeude');
+
+    const handleGebaeudeTypChange = (newTyp) => {
+        setGebaeudeTyp(newTyp);
+        if (onGebaeudeTypChange) {
+            onGebaeudeTypChange(newTyp);
+        }
+    };
 
     const handleAnzahlChange = (newAnzahl) => {
         const num = parseInt(newAnzahl) || 1;
@@ -46,7 +53,7 @@ export default function GebaeudeManager({ gebaeude, onChange }) {
         <div className="space-y-4">
             <div>
                 <Label htmlFor="gebaeude_typ">Unterteilung nach</Label>
-                <Select value={gebaeudeTyp} onValueChange={setGebaeudeTyp}>
+                <Select value={gebaeudeTyp} onValueChange={handleGebaeudeTypChange}>
                     <SelectTrigger className="max-w-xs">
                         <SelectValue />
                     </SelectTrigger>
