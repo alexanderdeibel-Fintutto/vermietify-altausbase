@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     Dialog,
     DialogContent,
@@ -32,6 +33,13 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
             year_built: data.year_built ? parseInt(data.year_built) : null,
             total_units: data.total_units ? parseInt(data.total_units) : null,
             total_sqm: data.total_sqm ? parseFloat(data.total_sqm) : null,
+            garages_parking_spaces: data.garages_parking_spaces ? parseInt(data.garages_parking_spaces) : null,
+            heating_year_built: data.heating_year_built ? parseInt(data.heating_year_built) : null,
+            window_year_built: data.window_year_built ? parseInt(data.window_year_built) : null,
+            energy_demand_kwh_jahr: data.energy_demand_kwh_jahr ? parseFloat(data.energy_demand_kwh_jahr) : null,
+            co2_emissions: data.co2_emissions ? parseFloat(data.co2_emissions) : null,
+            primary_energy_demand: data.primary_energy_demand ? parseFloat(data.primary_energy_demand) : null,
+            final_energy_demand: data.final_energy_demand ? parseFloat(data.final_energy_demand) : null,
         });
     };
 
@@ -50,89 +58,358 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                             <Input 
                                 id="name"
                                 {...register('name', { required: true })}
-                                placeholder="z.B. Hauptstraße 10"
+                                placeholder="z.B. Mein Wohnhaus"
                                 className={errors.name ? 'border-red-500' : ''}
                             />
                         </div>
 
-                        <div>
-                            <Label htmlFor="address">Adresse *</Label>
-                            <Input 
-                                id="address"
-                                {...register('address', { required: true })}
-                                placeholder="Straße und Hausnummer"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label htmlFor="postal_code">PLZ *</Label>
-                                <Input 
-                                    id="postal_code"
-                                    {...register('postal_code', { required: true })}
-                                    placeholder="12345"
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="city">Stadt *</Label>
-                                <Input 
-                                    id="city"
-                                    {...register('city', { required: true })}
-                                    placeholder="Berlin"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label htmlFor="year_built">Baujahr</Label>
-                                <Input 
-                                    id="year_built"
-                                    type="number"
-                                    {...register('year_built')}
-                                    placeholder="1990"
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="total_sqm">Gesamtfläche (m²)</Label>
-                                <Input 
-                                    id="total_sqm"
-                                    type="number"
-                                    step="0.01"
-                                    {...register('total_sqm')}
-                                    placeholder="500"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label htmlFor="purchase_date">Kaufdatum</Label>
-                                <Input 
-                                    id="purchase_date"
-                                    type="date"
-                                    {...register('purchase_date')}
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="purchase_price">Kaufpreis (€)</Label>
-                                <Input 
-                                    id="purchase_price"
-                                    type="number"
-                                    step="0.01"
-                                    {...register('purchase_price')}
-                                    placeholder="250000"
-                                />
+                        <div className="pt-4 border-t border-slate-200">
+                            <h3 className="font-semibold text-slate-800 mb-3">Lage</h3>
+                            <div className="space-y-3">
+                                <div>
+                                    <Label htmlFor="address">Straße *</Label>
+                                    <Input 
+                                        id="address"
+                                        {...register('address', { required: true })}
+                                        placeholder="Musterstraße"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="house_number">Hausnummer</Label>
+                                    <Input 
+                                        id="house_number"
+                                        {...register('house_number')}
+                                        placeholder="10"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label htmlFor="postal_code">PLZ *</Label>
+                                        <Input 
+                                            id="postal_code"
+                                            {...register('postal_code', { required: true })}
+                                            placeholder="12345"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="city">Ort *</Label>
+                                        <Input 
+                                            id="city"
+                                            {...register('city', { required: true })}
+                                            placeholder="Berlin"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <Label htmlFor="gps_coordinates">GPS-Koordinaten</Label>
+                                    <Input 
+                                        id="gps_coordinates"
+                                        {...register('gps_coordinates')}
+                                        placeholder="52.5200, 13.4050"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="garages_parking_spaces">Anzahl Garagen/Stellplätze</Label>
+                                    <Input 
+                                        id="garages_parking_spaces"
+                                        type="number"
+                                        {...register('garages_parking_spaces')}
+                                        placeholder="5"
+                                    />
+                                </div>
                             </div>
                         </div>
 
-                        <div>
-                            <Label htmlFor="image_url">Bild-URL</Label>
-                            <Input 
-                                id="image_url"
-                                {...register('image_url')}
-                                placeholder="https://..."
-                            />
+                        <div className="pt-4 border-t border-slate-200">
+                            <h3 className="font-semibold text-slate-800 mb-3">Allgemeine Angaben</h3>
+                            <div className="space-y-3">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label htmlFor="year_built">Baujahr</Label>
+                                        <Input 
+                                            id="year_built"
+                                            type="number"
+                                            {...register('year_built')}
+                                            placeholder="1990"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="total_units">Anzahl Wohneinheiten</Label>
+                                        <Input 
+                                            id="total_units"
+                                            type="number"
+                                            {...register('total_units')}
+                                            placeholder="10"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <Label htmlFor="total_sqm">Gesamtfläche (m²)</Label>
+                                    <Input 
+                                        id="total_sqm"
+                                        type="number"
+                                        step="0.01"
+                                        {...register('total_sqm')}
+                                        placeholder="500"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label htmlFor="purchase_date">Kaufdatum</Label>
+                                        <Input 
+                                            id="purchase_date"
+                                            type="date"
+                                            {...register('purchase_date')}
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="purchase_price">Kaufpreis (€)</Label>
+                                        <Input 
+                                            id="purchase_price"
+                                            type="number"
+                                            step="0.01"
+                                            {...register('purchase_price')}
+                                            placeholder="250000"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <Label htmlFor="image_url">Bild-URL</Label>
+                                    <Input 
+                                        id="image_url"
+                                        {...register('image_url')}
+                                        placeholder="https://..."
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-slate-200">
+                            <h3 className="font-semibold text-slate-800 mb-3">Baudaten</h3>
+                            <div className="space-y-3">
+                                <div>
+                                    <Label htmlFor="ready_for_occupancy_date">Bezugsfertig Datum</Label>
+                                    <Input 
+                                        id="ready_for_occupancy_date"
+                                        type="date"
+                                        {...register('ready_for_occupancy_date')}
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="building_permit_number">Baugenehmigungsnummer</Label>
+                                    <Input 
+                                        id="building_permit_number"
+                                        {...register('building_permit_number')}
+                                        placeholder="BG-XXXX-YYYY"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="building_permit_date">Baugenehmigungsdatum</Label>
+                                    <Input 
+                                        id="building_permit_date"
+                                        type="date"
+                                        {...register('building_permit_date')}
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="building_authority">Zuständiges Bauamt</Label>
+                                    <Input 
+                                        id="building_authority"
+                                        {...register('building_authority')}
+                                        placeholder="Bauamt Berlin-Mitte"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="architect_name">Architekt</Label>
+                                    <Input 
+                                        id="architect_name"
+                                        {...register('architect_name')}
+                                        placeholder="Architekturbüro Meier"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="construction_company_name">Baufirma</Label>
+                                    <Input 
+                                        id="construction_company_name"
+                                        {...register('construction_company_name')}
+                                        placeholder="Bau AG Mustermann"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="construction_method">Bauweise</Label>
+                                    <Input 
+                                        id="construction_method"
+                                        {...register('construction_method')}
+                                        placeholder="Massivbauweise"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="roof_shape">Dachform</Label>
+                                    <Input 
+                                        id="roof_shape"
+                                        {...register('roof_shape')}
+                                        placeholder="Satteldach"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="roof_covering">Dacheindeckung</Label>
+                                    <Input 
+                                        id="roof_covering"
+                                        {...register('roof_covering')}
+                                        placeholder="Ziegel"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-slate-200">
+                            <h3 className="font-semibold text-slate-800 mb-3">Ausstattung</h3>
+                            <div className="space-y-3">
+                                <div>
+                                    <Label htmlFor="heating_type">Heizungsart</Label>
+                                    <Input 
+                                        id="heating_type"
+                                        {...register('heating_type')}
+                                        placeholder="Zentralheizung"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="heating_year_built">Heizung Baujahr</Label>
+                                    <Input 
+                                        id="heating_year_built"
+                                        type="number"
+                                        {...register('heating_year_built')}
+                                        placeholder="2005"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="energy_source">Energieträger</Label>
+                                    <Input 
+                                        id="energy_source"
+                                        {...register('energy_source')}
+                                        placeholder="Gas"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="hot_water_production">Warmwassererzeugung</Label>
+                                    <Input 
+                                        id="hot_water_production"
+                                        {...register('hot_water_production')}
+                                        placeholder="Durchlauferhitzer"
+                                    />
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox 
+                                        id="insulation_roof"
+                                        {...register('insulation_roof')}
+                                    />
+                                    <label
+                                        htmlFor="insulation_roof"
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                        Dachisolierung vorhanden
+                                    </label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox 
+                                        id="insulation_facade"
+                                        {...register('insulation_facade')}
+                                    />
+                                    <label
+                                        htmlFor="insulation_facade"
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                        Fassadenisolierung vorhanden
+                                    </label>
+                                </div>
+                                <div>
+                                    <Label htmlFor="window_type">Fensterart</Label>
+                                    <Input 
+                                        id="window_type"
+                                        {...register('window_type')}
+                                        placeholder="Doppelverglasung"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="window_year_built">Fenster Baujahr</Label>
+                                    <Input 
+                                        id="window_year_built"
+                                        type="number"
+                                        {...register('window_year_built')}
+                                        placeholder="2010"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-slate-200">
+                            <h3 className="font-semibold text-slate-800 mb-3">Energieausweis-Daten</h3>
+                            <div className="space-y-3">
+                                <div>
+                                    <Label htmlFor="energy_certificate_type">Energieausweis Typ</Label>
+                                    <Input 
+                                        id="energy_certificate_type"
+                                        {...register('energy_certificate_type')}
+                                        placeholder="Verbrauchsausweis"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="energy_certificate_valid_until">Gültig bis</Label>
+                                    <Input 
+                                        id="energy_certificate_valid_until"
+                                        type="date"
+                                        {...register('energy_certificate_valid_until')}
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="energy_demand_kwh_jahr">Energiebedarf kWh/Jahr</Label>
+                                    <Input 
+                                        id="energy_demand_kwh_jahr"
+                                        type="number"
+                                        step="0.01"
+                                        {...register('energy_demand_kwh_jahr')}
+                                        placeholder="120.50"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="energy_efficiency_class">Energieeffizienzklasse</Label>
+                                    <Input 
+                                        id="energy_efficiency_class"
+                                        {...register('energy_efficiency_class')}
+                                        placeholder="A+"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="co2_emissions">CO2 Emissionen</Label>
+                                    <Input 
+                                        id="co2_emissions"
+                                        type="number"
+                                        step="0.01"
+                                        {...register('co2_emissions')}
+                                        placeholder="25.3"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="primary_energy_demand">Primärenergiebedarf</Label>
+                                    <Input 
+                                        id="primary_energy_demand"
+                                        type="number"
+                                        step="0.01"
+                                        {...register('primary_energy_demand')}
+                                        placeholder="80.00"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="final_energy_demand">Endenergiebedarf</Label>
+                                    <Input 
+                                        id="final_energy_demand"
+                                        type="number"
+                                        step="0.01"
+                                        {...register('final_energy_demand')}
+                                        placeholder="60.00"
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         <div className="pt-4 border-t border-slate-200">
