@@ -243,15 +243,26 @@ export default function BuildingDetail() {
                 {building.flaechen_einheiten && building.flaechen_einheiten.length > 0 ? (
                     building.flaechen_einheiten.map((einheit, index) => {
                         const gebaeudeBezeichnung = building.gebaeude_data?.[einheit.gebaeude_index]?.bezeichnung || 'Unbekannt';
+                        const artLabel = einheit.art === 'wohneinheit' ? 'Wohneinheit' : einheit.art === 'gewerbeeinheit' ? 'Gewerbeeinheit' : 'Anlegen';
+                        const internetLabel = einheit.internet === 'wlan' ? 'W-LAN' : einheit.internet === 'glasfaser' ? 'Glasfaser' : 'Telefon';
                         return (
                             <div key={index} className="col-span-full">
                                 <div className="bg-slate-50 rounded-lg p-4 space-y-2">
                                     <h4 className="font-semibold text-slate-800">
-                                        {einheit.art === 'wohneinheit' ? 'Wohneinheit' : einheit.art === 'gewerbeeinheit' ? 'Gewerbeeinheit' : 'Anlegen'}
+                                        {einheit.bezeichnung || artLabel}
                                     </h4>
-                                    <p className="text-sm text-slate-600">Gebäude: {gebaeudeBezeichnung}</p>
-                                    <p className="text-sm text-slate-600">Etage: {einheit.etage}</p>
-                                    <p className="text-sm text-slate-600">Lage: {einheit.lage}</p>
+                                    <div className="grid grid-cols-2 gap-2 text-sm text-slate-600">
+                                        <p>Art: {artLabel}</p>
+                                        <p>Gebäude: {gebaeudeBezeichnung}</p>
+                                        <p>Etage: {einheit.etage}</p>
+                                        <p>Lage: {einheit.lage}</p>
+                                        {einheit.anzahl_wohnzimmer > 0 && <p>Wohnzimmer: {einheit.anzahl_wohnzimmer}</p>}
+                                        <p>Bad: {einheit.bad ? 'Ja' : 'Nein'}</p>
+                                        <p>Küche: {einheit.kueche ? 'Ja' : 'Nein'}</p>
+                                        <p>Keller: {einheit.keller ? 'Ja' : 'Nein'}</p>
+                                        <p>Sat/TV: {einheit.sat_tv ? 'Ja' : 'Nein'}</p>
+                                        {einheit.internet && <p>Internet: {internetLabel}</p>}
+                                    </div>
                                 </div>
                             </div>
                         );
