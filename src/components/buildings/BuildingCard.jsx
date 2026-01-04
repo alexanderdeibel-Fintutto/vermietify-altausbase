@@ -12,7 +12,7 @@ export default function BuildingCard({ building, units = [] }) {
     const totalSqm = buildingUnits.reduce((sum, u) => sum + (u.sqm || 0), 0);
 
     return (
-        <Link to={createPageUrl(`BuildingDetail?id=${building.id}`)}>
+        <Link to={createPageUrl(`BuildingDetail?buildingId=${building.id}`)}>
             <Card className="border-slate-200/50 hover:shadow-lg transition-all duration-300 cursor-pointer group overflow-hidden">
                 <div className="h-40 bg-gradient-to-br from-slate-100 to-slate-200 relative">
                     {building.image_url ? (
@@ -40,7 +40,7 @@ export default function BuildingCard({ building, units = [] }) {
                             </h3>
                             <div className="flex items-center gap-1.5 text-sm text-slate-500 mt-1">
                                 <MapPin className="w-3.5 h-3.5" />
-                                {building.address}, {building.postal_code} {building.city}
+                                {building.address} {building.house_number}, {building.postal_code} {building.city}
                             </div>
                         </div>
                         <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
