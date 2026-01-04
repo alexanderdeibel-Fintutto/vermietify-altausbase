@@ -13,10 +13,27 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2 } from 'lucide-react';
 
-export default function BuildingForm({ open, onOpenChange, onSubmit, initialData, isLoading }) {
+export default function BuildingForm({ open, onOpenChange, onSubmit, initialData, isLoading, section }) {
     const { register, handleSubmit, reset, formState: { errors } } = useForm({
         defaultValues: initialData || {}
     });
+
+    const getDialogTitle = () => {
+        if (!initialData) return 'Neues Gebäude anlegen';
+        if (!section) return 'Gebäude bearbeiten';
+        const sectionTitles = {
+            lage: 'Lage bearbeiten',
+            baudaten: 'Baudaten bearbeiten',
+            ausstattung: 'Ausstattung bearbeiten',
+            energieausweis: 'Energieausweis-Daten bearbeiten'
+        };
+        return sectionTitles[section] || 'Gebäude bearbeiten';
+    };
+
+    const shouldShowSection = (sectionName) => {
+        if (!section) return true; // Show all if no specific section
+        return section === sectionName;
+    };
 
     React.useEffect(() => {
         if (initialData) {
@@ -47,22 +64,23 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>
-                        {initialData ? 'Gebäude bearbeiten' : 'Neues Gebäude anlegen'}
-                    </DialogTitle>
+                    <DialogTitle>{getDialogTitle()}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 mt-4">
                     <div className="grid grid-cols-1 gap-4">
-                        <div>
-                            <Label htmlFor="name">Name *</Label>
-                            <Input 
-                                id="name"
-                                {...register('name', { required: true })}
-                                placeholder="z.B. Mein Wohnhaus"
-                                className={errors.name ? 'border-red-500' : ''}
-                            />
-                        </div>
+                        {!section && (
+                            <div>
+                                <Label htmlFor="name">Name *</Label>
+                                <Input 
+                                    id="name"
+                                    {...register('name', { required: true })}
+                                    placeholder="z.B. Mein Wohnhaus"
+                                    className={errors.name ? 'border-red-500' : ''}
+                                />
+                            </div>
+                        )}
 
+                        {shouldShowSection('lage') && (
                         <div className="pt-4 border-t border-slate-200">
                             <h3 className="font-semibold text-slate-800 mb-3">Lage</h3>
                             <div className="space-y-3">
@@ -504,7 +522,9 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 </div>
                             </div>
                         </div>
+                        )}
 
+                        {!section && (
                         <div>
                             <Label htmlFor="notes">Notizen</Label>
                             <Textarea 
@@ -514,6 +534,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 rows={3}
                             />
                         </div>
+                        )}
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4">

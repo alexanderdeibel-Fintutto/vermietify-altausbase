@@ -85,6 +85,7 @@ export default function BuildingDetail() {
     const urlParams = new URLSearchParams(window.location.search);
     const buildingId = urlParams.get('buildingId');
     const [formOpen, setFormOpen] = useState(false);
+    const [editingSection, setEditingSection] = useState(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const queryClient = useQueryClient();
 
@@ -139,6 +140,11 @@ export default function BuildingDetail() {
         updateMutation.mutate({ id: building.id, data });
     };
 
+    const handleEditSection = (section) => {
+        setEditingSection(section);
+        setFormOpen(true);
+    };
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -158,7 +164,10 @@ export default function BuildingDetail() {
                 </div>
                 <div className="flex gap-2">
                     <Button 
-                        onClick={() => setFormOpen(true)}
+                        onClick={() => {
+                            setEditingSection(null);
+                            setFormOpen(true);
+                        }}
                         className="bg-emerald-600 hover:bg-emerald-700"
                     >
                         <Edit className="w-4 h-4 mr-2" />
@@ -179,7 +188,7 @@ export default function BuildingDetail() {
                 title="Lage"
                 icon={MapPin}
                 summary={building.address && building.city ? `${building.address}${building.house_number ? ' ' + building.house_number : ''}, ${building.postal_code} ${building.city}${building.gps_coordinates ? ' • GPS: ' + building.gps_coordinates : ''}${building.garages_parking_spaces ? ' • ' + building.garages_parking_spaces + ' Stellplätze' : ''}` : null}
-                onEdit={() => setFormOpen(true)}
+                onEdit={() => handleEditSection('lage')}
             >
                 <DetailItem label="Straße" value={building.address} />
                 <DetailItem label="Hausnummer" value={building.house_number} />
@@ -194,7 +203,7 @@ export default function BuildingDetail() {
                 title="Baudaten"
                 icon={BuildingIcon}
                 summary={building.year_built || building.construction_method || building.roof_shape ? `${building.year_built ? 'Baujahr ' + building.year_built : ''}${building.construction_method ? (building.year_built ? ' • ' : '') + building.construction_method : ''}${building.roof_shape ? ' • ' + building.roof_shape : ''}` : null}
-                onEdit={() => setFormOpen(true)}
+                onEdit={() => handleEditSection('baudaten')}
             >
                 <DetailItem label="Baujahr" value={building.year_built} />
                 <DetailItem 
@@ -219,7 +228,7 @@ export default function BuildingDetail() {
                 title="Ausstattung"
                 icon={Wrench}
                 summary={building.heating_type || building.energy_source || building.window_type ? `${building.heating_type ? building.heating_type : ''}${building.energy_source ? (building.heating_type ? ' (' + building.energy_source + ')' : building.energy_source) : ''}${building.window_type ? ' • Fenster: ' + building.window_type : ''}${building.insulation_roof || building.insulation_facade ? ' • Isolierung vorhanden' : ''}` : null}
-                onEdit={() => setFormOpen(true)}
+                onEdit={() => handleEditSection('ausstattung')}
             >
                 <DetailItem label="Heizungsart" value={building.heating_type} />
                 <DetailItem label="Heizung Baujahr" value={building.heating_year_built} />
@@ -236,7 +245,7 @@ export default function BuildingDetail() {
                 title="Energieausweis-Daten"
                 icon={Zap}
                 summary={building.energy_efficiency_class || building.energy_demand_kwh_jahr ? `${building.energy_efficiency_class ? 'Klasse ' + building.energy_efficiency_class : ''}${building.energy_demand_kwh_jahr ? (building.energy_efficiency_class ? ' • ' : '') + building.energy_demand_kwh_jahr + ' kWh/Jahr' : ''}${building.energy_certificate_valid_until ? ' • Gültig bis ' + format(parseISO(building.energy_certificate_valid_until), 'MM/yyyy', { locale: de }) : ''}` : null}
-                onEdit={() => setFormOpen(true)}
+                onEdit={() => handleEditSection('energieausweis')}
             >
                 <DetailItem label="Energieausweis Typ" value={building.energy_certificate_type} />
                 <DetailItem 
@@ -253,10 +262,14 @@ export default function BuildingDetail() {
             {/* Form & Delete Dialog */}
             <BuildingForm
                 open={formOpen}
-                onOpenChange={setFormOpen}
+                onOpenChange={(open) => {
+                    setFormOpen(open);
+                    if (!open) setEditingSection(null);
+                }}
                 onSubmit={handleFormSubmit}
                 initialData={building}
                 isLoading={updateMutation.isPending}
+                section={editingSection}
             />
 
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
