@@ -10,7 +10,7 @@ import { Plus, Trash2 } from 'lucide-react';
 export default function FlaechenEinheitenManager({ einheiten, onChange, gebaeude }) {
     const handleAdd = () => {
         onChange([...einheiten, { 
-            art: 'wohneinheit', 
+            art: 'Wohneinheit', 
             gebaeude_index: gebaeude.length > 0 ? 0 : null, 
             etage: 0, 
             lage: 'mitte',
@@ -43,19 +43,19 @@ export default function FlaechenEinheitenManager({ einheiten, onChange, gebaeude
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <Label className="text-xs">Art</Label>
-                                    <Select 
-                                        value={einheit.art} 
-                                        onValueChange={(value) => handleUpdate(index, 'art', value)}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="wohneinheit">Wohneinheit</SelectItem>
-                                            <SelectItem value="gewerbeeinheit">Gewerbeeinheit</SelectItem>
-                                            <SelectItem value="anlegen">Anlegen</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                    <Input 
+                                        value={einheit.art || ''} 
+                                        onChange={(e) => handleUpdate(index, 'art', e.target.value)}
+                                        placeholder="z.B. Wohneinheit, Gewerbeeinheit, Lager..."
+                                        list={`art-suggestions-${index}`}
+                                    />
+                                    <datalist id={`art-suggestions-${index}`}>
+                                        <option value="Wohneinheit" />
+                                        <option value="Gewerbeeinheit" />
+                                        <option value="Lager" />
+                                        <option value="Büro" />
+                                        <option value="Garage" />
+                                    </datalist>
                                 </div>
                                 <div>
                                     <Label className="text-xs">Bezeichnung</Label>

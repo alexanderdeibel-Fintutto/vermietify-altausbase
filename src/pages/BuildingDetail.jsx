@@ -243,7 +243,7 @@ export default function BuildingDetail() {
                 {building.flaechen_einheiten && building.flaechen_einheiten.length > 0 ? (
                     building.flaechen_einheiten.map((einheit, index) => {
                         const gebaeudeBezeichnung = building.gebaeude_data?.[einheit.gebaeude_index]?.bezeichnung || 'Unbekannt';
-                        const artLabel = einheit.art === 'wohneinheit' ? 'Wohneinheit' : einheit.art === 'gewerbeeinheit' ? 'Gewerbeeinheit' : 'Anlegen';
+                        const artLabel = einheit.art || 'Unbekannt';
                         const internetLabel = einheit.internet === 'wlan' ? 'W-LAN' : einheit.internet === 'glasfaser' ? 'Glasfaser' : 'Telefon';
                         return (
                             <div key={index} className="col-span-full">
