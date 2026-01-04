@@ -68,34 +68,37 @@ export default function CashBookDialog({ open, onOpenChange, account }) {
         }
     }, [editingTransaction, reset]);
 
+    const recalculateBalance = async () => {
+        // Fetch all transactions for this account
+        const allTransactions = await base44.entities.BankTransaction.filter({ account_id: account.id });
+        
+        // Calculate total balance
+        const totalBalance = allTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+        
+        // Update account balance
+        await base44.entities.BankAccount.update(account.id, {
+            current_balance: totalBalance
+        });
+    };
+
     const createTransactionMutation = useMutation({
         mutationFn: async (data) => {
             if (editingTransaction) {
                 // Update transaction
-                const oldAmount = editingTransaction.amount;
                 await base44.entities.BankTransaction.update(editingTransaction.id, data);
-                
-                // Update account balance (remove old amount, add new amount)
-                const balanceDiff = data.amount - oldAmount;
-                const newBalance = (account.current_balance || 0) + balanceDiff;
-                await base44.entities.BankAccount.update(account.id, {
-                    current_balance: newBalance
-                });
             } else {
                 // Create transaction
                 await base44.entities.BankTransaction.create(data);
-                
-                // Update account balance
-                const newBalance = (account.current_balance || 0) + data.amount;
-                await base44.entities.BankAccount.update(account.id, {
-                    current_balance: newBalance
-                });
             }
+            
+            // Recalculate balance from all transactions
+            await recalculateBalance();
         },
         onSuccess: async () => {
             await queryClient.refetchQueries({ queryKey: ['cashBookTransactions', account.id] });
             await queryClient.refetchQueries({ queryKey: ['bankTransactions'] });
             await queryClient.refetchQueries({ queryKey: ['bankAccounts'] });
+            await queryClient.refetchQueries({ queryKey: ['bankAccount', account.id] });
             setShowForm(false);
             setEditingTransaction(null);
             reset();
@@ -107,16 +110,14 @@ export default function CashBookDialog({ open, onOpenChange, account }) {
         mutationFn: async (transaction) => {
             await base44.entities.BankTransaction.delete(transaction.id);
             
-            // Update account balance (subtract deleted transaction amount)
-            const newBalance = (account.current_balance || 0) - transaction.amount;
-            await base44.entities.BankAccount.update(account.id, {
-                current_balance: newBalance
-            });
+            // Recalculate balance from remaining transactions
+            await recalculateBalance();
         },
         onSuccess: async () => {
             await queryClient.refetchQueries({ queryKey: ['cashBookTransactions', account.id] });
             await queryClient.refetchQueries({ queryKey: ['bankTransactions'] });
             await queryClient.refetchQueries({ queryKey: ['bankAccounts'] });
+            await queryClient.refetchQueries({ queryKey: ['bankAccount', account.id] });
             toast.success('Kassenbuchung gelöscht');
         }
     });
