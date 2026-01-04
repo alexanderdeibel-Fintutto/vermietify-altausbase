@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2 } from 'lucide-react';
 import GebaeudeManager from './GebaeudeManager';
+import FlaechenEinheitenManager from './FlaechenEinheitenManager';
 
 export default function BuildingForm({ open, onOpenChange, onSubmit, initialData, isLoading, section }) {
     const { register, handleSubmit, reset, formState: { errors } } = useForm({
@@ -20,6 +21,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
     });
     
     const [gebaeude, setGebaeude] = React.useState([]);
+    const [flaechenEinheiten, setFlaechenEinheiten] = React.useState([]);
 
     const getDialogTitle = () => {
         if (!initialData) return 'Neues Objekt anlegen';
@@ -28,6 +30,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
             name: 'Objekt umbenennen',
             lage: 'Lage bearbeiten',
             gebaeude: 'Gebäude bearbeiten',
+            flaechen: 'Flächen/Einheiten bearbeiten',
             baudaten: 'Baudaten bearbeiten',
             ausstattung: 'Ausstattung bearbeiten',
             energieausweis: 'Energieausweis-Daten bearbeiten'
@@ -45,9 +48,11 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
         if (initialData) {
             reset(initialData);
             setGebaeude(initialData.gebaeude_data || [{ bezeichnung: 'Gebäude 1', lage_auf_grundstueck: '', eigene_hausnummer: '', gebaeude_standard: 'mittel' }]);
+            setFlaechenEinheiten(initialData.flaechen_einheiten || []);
         } else {
             reset({});
             setGebaeude([{ bezeichnung: 'Gebäude 1', lage_auf_grundstueck: '', eigene_hausnummer: '', gebaeude_standard: 'mittel' }]);
+            setFlaechenEinheiten([]);
         }
     }, [initialData, reset, open]);
 
@@ -55,6 +60,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
         onSubmit({
             ...data,
             gebaeude_data: gebaeude,
+            flaechen_einheiten: flaechenEinheiten,
             purchase_price: data.purchase_price ? parseFloat(data.purchase_price) : null,
             year_built: data.year_built ? parseInt(data.year_built) : null,
             total_units: data.total_units ? parseInt(data.total_units) : null,
@@ -155,6 +161,19 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                         <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
                             {!section && <h3 className="font-semibold text-slate-800 mb-3">Gebäude</h3>}
                             <GebaeudeManager gebaeude={gebaeude} onChange={setGebaeude} />
+                        </div>
+                        </>
+                        )}
+
+                        {shouldShowSection('flaechen') && (
+                        <>
+                        <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
+                            {!section && <h3 className="font-semibold text-slate-800 mb-3">Flächen/Einheiten</h3>}
+                            <FlaechenEinheitenManager 
+                                einheiten={flaechenEinheiten} 
+                                onChange={setFlaechenEinheiten}
+                                gebaeude={gebaeude}
+                            />
                         </div>
                         </>
                         )}

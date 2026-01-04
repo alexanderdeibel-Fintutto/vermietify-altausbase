@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
@@ -229,6 +229,36 @@ export default function BuildingDetail() {
                 ) : (
                     <div className="col-span-full text-center py-4 text-slate-500">
                         Noch keine Gebäude angelegt
+                    </div>
+                )}
+            </DetailSection>
+
+            {/* Flächen/Einheiten */}
+            <DetailSection 
+                title="Flächen/Einheiten"
+                icon={Home}
+                summary={building.flaechen_einheiten && building.flaechen_einheiten.length > 0 ? `${building.flaechen_einheiten.length} Flächen/Einheiten` : 'Noch keine Flächen angelegt'}
+                onEdit={() => handleEditSection('flaechen')}
+            >
+                {building.flaechen_einheiten && building.flaechen_einheiten.length > 0 ? (
+                    building.flaechen_einheiten.map((einheit, index) => {
+                        const gebaeudeBezeichnung = building.gebaeude_data?.[einheit.gebaeude_index]?.bezeichnung || 'Unbekannt';
+                        return (
+                            <div key={index} className="col-span-full">
+                                <div className="bg-slate-50 rounded-lg p-4 space-y-2">
+                                    <h4 className="font-semibold text-slate-800">
+                                        {einheit.art === 'wohneinheit' ? 'Wohneinheit' : einheit.art === 'gewerbeeinheit' ? 'Gewerbeeinheit' : 'Anlegen'}
+                                    </h4>
+                                    <p className="text-sm text-slate-600">Gebäude: {gebaeudeBezeichnung}</p>
+                                    <p className="text-sm text-slate-600">Etage: {einheit.etage}</p>
+                                    <p className="text-sm text-slate-600">Lage: {einheit.lage}</p>
+                                </div>
+                            </div>
+                        );
+                    })
+                ) : (
+                    <div className="col-span-full text-center py-4 text-slate-500">
+                        Noch keine Flächen/Einheiten angelegt
                     </div>
                 )}
             </DetailSection>
