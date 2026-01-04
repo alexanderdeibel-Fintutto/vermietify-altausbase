@@ -534,8 +534,6 @@ export default function BankAccounts() {
                         const stats = accountStatsMap.get(account.id) || { income: 0, expenses: 0, count: 0, balance: 0 };
                         const isCash = account.account_type === 'cash';
 
-                        console.log('🎯 Rendering account:', account.name, account.id, 'stats:', stats);
-
                         return (
                             <Card 
                                 key={account.id}
