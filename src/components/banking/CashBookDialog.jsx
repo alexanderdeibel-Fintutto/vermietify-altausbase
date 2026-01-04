@@ -33,7 +33,18 @@ export default function CashBookDialog({ open, onOpenChange, account, transactio
     const queryClient = useQueryClient();
 
     const createTransactionMutation = useMutation({
-        mutationFn: (data) => base44.entities.BankTransaction.create(data),
+        mutationFn: async (data) => {
+            // Create transaction
+            const transaction = await base44.entities.BankTransaction.create(data);
+            
+            // Update account balance
+            const newBalance = (account.current_balance || 0) + data.amount;
+            await base44.entities.BankAccount.update(account.id, {
+                current_balance: newBalance
+            });
+            
+            return transaction;
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['bankTransactions'] });
             queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
