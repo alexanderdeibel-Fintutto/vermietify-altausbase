@@ -485,6 +485,15 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                         </>
                         )}
 
+                        {shouldShowSection('grundbuch') && (
+                        <>
+                        <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
+                            {!section && <h3 className="font-semibold text-slate-800 mb-3">Grundbuch</h3>}
+                            <GrundbuchForm grundbuch={grundbuch} onChange={setGrundbuch} />
+                        </div>
+                        </>
+                        )}
+
                         {shouldShowSection('energieausweis') && (
                         <>
                         <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
