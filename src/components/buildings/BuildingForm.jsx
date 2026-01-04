@@ -88,8 +88,12 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
     const handleFormSubmit = (data) => {
         let finalFlaechenEinheiten = flaechenEinheiten;
         if (editingUnitIndex !== null && initialData?.flaechen_einheiten) {
+            // Editing an existing unit
             finalFlaechenEinheiten = [...initialData.flaechen_einheiten];
             finalFlaechenEinheiten[editingUnitIndex] = flaechenEinheiten[0];
+        } else if (section === 'flaechen' && initialData?.flaechen_einheiten) {
+            // Adding new units to existing building
+            finalFlaechenEinheiten = [...initialData.flaechen_einheiten, ...flaechenEinheiten];
         }
         onSubmit({
             ...data,
