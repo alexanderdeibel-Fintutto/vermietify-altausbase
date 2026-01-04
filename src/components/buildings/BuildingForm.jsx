@@ -138,9 +138,11 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 </div>
                             </div>
                         </div>
+                        </>
                         )}
 
                         {!section && (
+                        <>
                         <div className="pt-4 border-t border-slate-200">
                             <h3 className="font-semibold text-slate-800 mb-3">Allgemeine Angaben</h3>
                             <div className="space-y-3">
