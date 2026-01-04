@@ -45,9 +45,9 @@ export default function CashBookDialog({ open, onOpenChange, account, transactio
             
             return transaction;
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['bankTransactions'] });
-            queryClient.invalidateQueries({ queryKey: ['bankAccounts'] });
+        onSuccess: async () => {
+            await queryClient.refetchQueries({ queryKey: ['bankTransactions'] });
+            await queryClient.refetchQueries({ queryKey: ['bankAccounts'] });
             setShowForm(false);
             reset();
             toast.success('Kassenbuchung hinzugefügt');
