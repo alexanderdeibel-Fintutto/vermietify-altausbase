@@ -38,7 +38,8 @@ export default function FlaechenEinheitenManager({ einheiten, onChange, gebaeude
             kueche: false,
             keller: false,
             sat_tv: false,
-            internet: 'wlan'
+            internet: 'wlan',
+            status: 'vermietbar'
         };
         onChange([...einheiten, newEinheit]);
     };
@@ -126,6 +127,23 @@ export default function FlaechenEinheitenManager({ einheiten, onChange, gebaeude
                                         onChange={(e) => handleUpdate(index, 'bezeichnung', e.target.value)}
                                         placeholder="z.B. Wohnung 1"
                                     />
+                                </div>
+
+                                <div>
+                                    <Label className="text-xs">Status</Label>
+                                    <Select 
+                                        value={einheit.status || 'vermietbar'} 
+                                        onValueChange={(value) => handleUpdate(index, 'status', value)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="vermietbar">Vermietbar</SelectItem>
+                                            <SelectItem value="selbstnutzung">Selbstnutzung</SelectItem>
+                                            <SelectItem value="unvermietbar">Unvermietbar</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
 
                                 <div>
