@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText, Receipt, Plug, Gauge } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText, Receipt, Plug, Gauge, Upload } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import BuildingForm from '@/components/buildings/BuildingForm';
 import PropertyTaxForm from '@/components/property-tax/PropertyTaxForm';
 import SupplierForm from '@/components/suppliers/SupplierForm';
 import MeterForm from '@/components/meters/MeterForm';
+import MeterImportDialog from '@/components/meters/MeterImportDialog';
 
 const DetailSection = ({ title, icon: Icon, children, onEdit, summary }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -97,6 +98,7 @@ export default function BuildingDetail() {
     const [editingSupplier, setEditingSupplier] = useState(null);
     const [meterFormOpen, setMeterFormOpen] = useState(false);
     const [editingMeter, setEditingMeter] = useState(null);
+    const [meterImportOpen, setMeterImportOpen] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: building, isLoading } = useQuery({
@@ -313,6 +315,11 @@ export default function BuildingDetail() {
     const handleEditMeter = (meter) => {
         setEditingMeter(meter);
         setMeterFormOpen(true);
+    };
+
+    const handleMeterImport = async (meters) => {
+        await base44.entities.Meter.bulkCreate(meters);
+        queryClient.invalidateQueries({ queryKey: ['meters'] });
     };
 
     return (
@@ -900,29 +907,48 @@ export default function BuildingDetail() {
                                     })}
                                 </tbody>
                             </table>
-                            <div className="mt-4">
+                            <div className="mt-4 flex gap-2">
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={handleAddMeter}
-                                    className="w-full"
+                                    className="flex-1"
                                 >
                                     <Plus className="w-4 h-4 mr-2" />
-                                    Weiteren Zähler hinzufügen
+                                    Zähler hinzufügen
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setMeterImportOpen(true)}
+                                    className="flex-1"
+                                >
+                                    <Upload className="w-4 h-4 mr-2" />
+                                    CSV importieren
                                 </Button>
                             </div>
                         </div>
                     ) : (
                         <div className="text-center py-8">
                             <p className="text-slate-500 mb-4">Noch keine Zähler erfasst</p>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleAddMeter}
-                            >
-                                <Plus className="w-4 h-4 mr-2" />
-                                Ersten Zähler anlegen
-                            </Button>
+                            <div className="flex justify-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleAddMeter}
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Ersten Zähler anlegen
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setMeterImportOpen(true)}
+                                >
+                                    <Upload className="w-4 h-4 mr-2" />
+                                    CSV importieren
+                                </Button>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -998,6 +1024,13 @@ export default function BuildingDetail() {
                         onSubmit={handleMeterSubmit}
                         initialData={editingMeter}
                         isLoading={createMeterMutation.isPending || updateMeterMutation.isPending}
+                        building={building}
+                    />
+
+                    <MeterImportDialog
+                        open={meterImportOpen}
+                        onOpenChange={setMeterImportOpen}
+                        onImport={handleMeterImport}
                         building={building}
                     />
                     </div>
