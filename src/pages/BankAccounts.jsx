@@ -710,68 +710,74 @@ export default function BankAccounts() {
                                         })}
                                         </div>
                                         )}
+                                        </TabsContent>
+
+                                        <TabsContent value="reconciliation">
+                                        <BankReconciliation />
+                                        </TabsContent>
+                                        </Tabs>
 
                                         <CashBookDialog
-                                            open={cashBookOpen}
-                                            onOpenChange={setCashBookOpen}
-                                            account={selectedCashAccount}
+                                        open={cashBookOpen}
+                                        onOpenChange={setCashBookOpen}
+                                        account={selectedCashAccount}
                                         />
 
                                         <BankAccountDialog
-                                            open={bankAccountDialogOpen}
-                                            onOpenChange={setBankAccountDialogOpen}
-                                            account={selectedBankAccount}
-                                            transactions={selectedBankAccount ? accountTransactionsMap.get(selectedBankAccount.id) || [] : []}
-                                            onSync={() => selectedBankAccount && handleSyncAccount(selectedBankAccount.id)}
-                                            onImport={() => {
-                                                if (selectedBankAccount) {
-                                                    setImportAccountId(selectedBankAccount.id);
-                                                    setImportOpen(true);
-                                                    setBankAccountDialogOpen(false);
-                                                }
-                                            }}
-                                            isSyncing={isSyncing}
+                                        open={bankAccountDialogOpen}
+                                        onOpenChange={setBankAccountDialogOpen}
+                                        account={selectedBankAccount}
+                                        transactions={selectedBankAccount ? accountTransactionsMap.get(selectedBankAccount.id) || [] : []}
+                                        onSync={() => selectedBankAccount && handleSyncAccount(selectedBankAccount.id)}
+                                        onImport={() => {
+                                        if (selectedBankAccount) {
+                                        setImportAccountId(selectedBankAccount.id);
+                                        setImportOpen(true);
+                                        setBankAccountDialogOpen(false);
+                                        }
+                                        }}
+                                        isSyncing={isSyncing}
                                         />
 
                                         <BankAccountForm
-                open={formOpen}
-                onOpenChange={setFormOpen}
-                onSubmit={handleSubmit}
-                initialData={editingAccount}
-                isLoading={createMutation.isPending || updateMutation.isPending}
-            />
+                                        open={formOpen}
+                                        onOpenChange={setFormOpen}
+                                        onSubmit={handleSubmit}
+                                        initialData={editingAccount}
+                                        isLoading={createMutation.isPending || updateMutation.isPending}
+                                        />
 
-            <TransactionImport
-                open={importOpen}
-                onOpenChange={setImportOpen}
-                accountId={importAccountId}
-                onSuccess={async () => {
-                    console.log('Import success callback - refetching...');
-                    await queryClient.resetQueries({ queryKey: ['bankTransactions'] });
-                    await queryClient.refetchQueries({ queryKey: ['bankTransactions'], type: 'active' });
-                    console.log('Refetch complete');
-                }}
-            />
+                                        <TransactionImport
+                                        open={importOpen}
+                                        onOpenChange={setImportOpen}
+                                        accountId={importAccountId}
+                                        onSuccess={async () => {
+                                        console.log('Import success callback - refetching...');
+                                        await queryClient.resetQueries({ queryKey: ['bankTransactions'] });
+                                        await queryClient.refetchQueries({ queryKey: ['bankTransactions'], type: 'active' });
+                                        console.log('Refetch complete');
+                                        }}
+                                        />
 
-            <AlertDialog open={!!deleteAccount} onOpenChange={() => setDeleteAccount(null)}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Bankkonto löschen?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Möchten Sie das Konto "{deleteAccount?.name}" wirklich löschen?
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={() => deleteMutation.mutate(deleteAccount.id)}
-                            className="bg-red-600 hover:bg-red-700"
-                        >
-                            Löschen
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+                                        <AlertDialog open={!!deleteAccount} onOpenChange={() => setDeleteAccount(null)}>
+                                        <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                        <AlertDialogTitle>Bankkonto löschen?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                        Möchten Sie das Konto "{deleteAccount?.name}" wirklich löschen?
+                                        </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                        <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                                        <AlertDialogAction
+                                        onClick={() => deleteMutation.mutate(deleteAccount.id)}
+                                        className="bg-red-600 hover:bg-red-700"
+                                        >
+                                        Löschen
+                                        </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                        </AlertDialog>
         </div>
     );
 }
