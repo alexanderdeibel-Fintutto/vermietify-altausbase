@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
@@ -265,41 +265,88 @@ export default function BuildingDetail() {
                     return `${total} Flächen (${artSummary}) • ${vermietbareQm.toFixed(2)} qm vermietbar`;
                 })()}
                 onEdit={() => handleEditSection('flaechen')}
-            >
-                {building.flaechen_einheiten && building.flaechen_einheiten.length > 0 ? (
-                    building.flaechen_einheiten.map((einheit, index) => {
-                        const gebaeudeBezeichnung = building.gebaeude_data?.[einheit.gebaeude_index]?.bezeichnung || 'Unbekannt';
-                        const artLabel = einheit.art || 'Unbekannt';
-                        const internetLabel = einheit.internet === 'wlan' ? 'W-LAN' : einheit.internet === 'glasfaser' ? 'Glasfaser' : 'Telefon';
-                        return (
-                            <div key={index} className="col-span-full">
-                                <div className="bg-slate-50 rounded-lg p-4 space-y-2">
-                                    <h4 className="font-semibold text-slate-800">
-                                        {einheit.bezeichnung || artLabel}
-                                    </h4>
-                                    <div className="grid grid-cols-2 gap-2 text-sm text-slate-600">
-                                        <p>Art: {artLabel}</p>
-                                        <p>Gebäude: {gebaeudeBezeichnung}</p>
-                                        <p>Etage: {einheit.etage}</p>
-                                        <p>Lage: {einheit.lage}</p>
-                                        {einheit.qm > 0 && <p>Fläche: {einheit.qm} qm</p>}
-                                        {einheit.anzahl_wohnzimmer > 0 && <p>Wohnzimmer: {einheit.anzahl_wohnzimmer}</p>}
-                                        <p>Bad: {einheit.bad ? 'Ja' : 'Nein'}</p>
-                                        <p>Küche: {einheit.kueche ? 'Ja' : 'Nein'}</p>
-                                        <p>Keller: {einheit.keller ? 'Ja' : 'Nein'}</p>
-                                        <p>Sat/TV: {einheit.sat_tv ? 'Ja' : 'Nein'}</p>
-                                        {einheit.internet && <p>Internet: {internetLabel}</p>}
-                                    </div>
-                                </div>
+                >
+                <div className="col-span-full">
+                    {building.flaechen_einheiten && building.flaechen_einheiten.length > 0 ? (
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="border-b border-slate-200">
+                                        <th className="text-left py-2 px-3 text-xs font-medium text-slate-600">Art</th>
+                                        <th className="text-left py-2 px-3 text-xs font-medium text-slate-600">Bezeichnung</th>
+                                        <th className="text-left py-2 px-3 text-xs font-medium text-slate-600">Gebäude</th>
+                                        <th className="text-left py-2 px-3 text-xs font-medium text-slate-600">Etage</th>
+                                        <th className="text-left py-2 px-3 text-xs font-medium text-slate-600">Lage</th>
+                                        <th className="text-left py-2 px-3 text-xs font-medium text-slate-600">qm</th>
+                                        <th className="text-left py-2 px-3 text-xs font-medium text-slate-600">Zimmer</th>
+                                        <th className="text-left py-2 px-3 text-xs font-medium text-slate-600">Ausstattung</th>
+                                        <th className="text-right py-2 px-3 text-xs font-medium text-slate-600">Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {building.flaechen_einheiten.map((einheit, index) => {
+                                        const gebaeudeBezeichnung = building.gebaeude_data?.[einheit.gebaeude_index]?.bezeichnung || '-';
+                                        const artLabel = einheit.art || 'Unbekannt';
+                                        const ausstattung = [
+                                            einheit.bad && 'Bad',
+                                            einheit.kueche && 'Küche',
+                                            einheit.keller && 'Keller',
+                                            einheit.sat_tv && 'Sat/TV',
+                                            einheit.internet && (einheit.internet === 'wlan' ? 'W-LAN' : einheit.internet === 'glasfaser' ? 'Glasfaser' : 'Tel')
+                                        ].filter(Boolean).join(', ') || '-';
+
+                                        return (
+                                            <tr key={index} className="border-b border-slate-100 hover:bg-slate-50">
+                                                <td className="py-3 px-3 text-sm text-slate-800">{artLabel}</td>
+                                                <td className="py-3 px-3 text-sm text-slate-800 font-medium">{einheit.bezeichnung || '-'}</td>
+                                                <td className="py-3 px-3 text-sm text-slate-600">{gebaeudeBezeichnung}</td>
+                                                <td className="py-3 px-3 text-sm text-slate-600">{einheit.etage}</td>
+                                                <td className="py-3 px-3 text-sm text-slate-600">{einheit.lage || '-'}</td>
+                                                <td className="py-3 px-3 text-sm text-slate-600">{einheit.qm || '-'}</td>
+                                                <td className="py-3 px-3 text-sm text-slate-600">{einheit.anzahl_wohnzimmer || '-'}</td>
+                                                <td className="py-3 px-3 text-sm text-slate-600 max-w-[200px] truncate" title={ausstattung}>{ausstattung}</td>
+                                                <td className="py-3 px-3 text-right">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleEditSection('flaechen')}
+                                                        className="h-7 px-2 text-slate-600 hover:text-slate-800"
+                                                    >
+                                                        <Edit className="w-3.5 h-3.5" />
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                            <div className="mt-4">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleEditSection('flaechen')}
+                                    className="w-full"
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Neue Fläche hinzufügen
+                                </Button>
                             </div>
-                        );
-                    })
-                ) : (
-                    <div className="col-span-full text-center py-4 text-slate-500">
-                        Noch keine Flächen/Einheiten angelegt
-                    </div>
-                )}
-            </DetailSection>
+                        </div>
+                    ) : (
+                        <div className="text-center py-8">
+                            <p className="text-slate-500 mb-4">Noch keine Flächen/Einheiten angelegt</p>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEditSection('flaechen')}
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Erste Fläche hinzufügen
+                            </Button>
+                        </div>
+                    )}
+                </div>
+                </DetailSection>
 
             {/* Baudaten */}
             <DetailSection 
