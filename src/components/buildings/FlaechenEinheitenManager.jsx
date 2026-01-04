@@ -8,9 +8,22 @@ import { Card } from "@/components/ui/card";
 import { Plus, Trash2 } from 'lucide-react';
 
 export default function FlaechenEinheitenManager({ einheiten, onChange, gebaeude }) {
+    const [artTypes, setArtTypes] = React.useState(['Wohn', 'Gewerbe', 'Neben']);
+    const [newArtType, setNewArtType] = React.useState('');
+    const [showAddArt, setShowAddArt] = React.useState(null);
+
+    const handleAddArtType = (index) => {
+        if (newArtType.trim() && !artTypes.includes(newArtType.trim())) {
+            setArtTypes([...artTypes, newArtType.trim()]);
+            handleUpdate(index, 'art', newArtType.trim());
+            setNewArtType('');
+            setShowAddArt(null);
+        }
+    };
+
     const handleAdd = () => {
         onChange([...einheiten, { 
-            art: 'Wohneinheit', 
+            art: 'Wohn', 
             gebaeude_index: gebaeude.length > 0 ? 0 : null, 
             etage: 0, 
             lage: 'mitte',
@@ -43,19 +56,62 @@ export default function FlaechenEinheitenManager({ einheiten, onChange, gebaeude
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <Label className="text-xs">Art</Label>
-                                    <Input 
-                                        value={einheit.art || ''} 
-                                        onChange={(e) => handleUpdate(index, 'art', e.target.value)}
-                                        placeholder="z.B. Wohneinheit, Gewerbeeinheit, Lager..."
-                                        list={`art-suggestions-${index}`}
-                                    />
-                                    <datalist id={`art-suggestions-${index}`}>
-                                        <option value="Wohneinheit" />
-                                        <option value="Gewerbeeinheit" />
-                                        <option value="Lager" />
-                                        <option value="Büro" />
-                                        <option value="Garage" />
-                                    </datalist>
+                                    {showAddArt === index ? (
+                                        <div className="flex gap-1">
+                                            <Input 
+                                                value={newArtType} 
+                                                onChange={(e) => setNewArtType(e.target.value)}
+                                                placeholder="Neue Art..."
+                                                className="h-8"
+                                                onKeyPress={(e) => e.key === 'Enter' && handleAddArtType(index)}
+                                            />
+                                            <Button 
+                                                type="button"
+                                                size="sm"
+                                                onClick={() => handleAddArtType(index)}
+                                                className="h-8 px-2"
+                                            >
+                                                <Plus className="w-3 h-3" />
+                                            </Button>
+                                            <Button 
+                                                type="button"
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => {
+                                                    setShowAddArt(null);
+                                                    setNewArtType('');
+                                                }}
+                                                className="h-8 px-2"
+                                            >
+                                                ✕
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <Select 
+                                            value={einheit.art} 
+                                            onValueChange={(value) => {
+                                                if (value === '__add_new__') {
+                                                    setShowAddArt(index);
+                                                } else {
+                                                    handleUpdate(index, 'art', value);
+                                                }
+                                            }}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {artTypes.map((type) => (
+                                                    <SelectItem key={type} value={type}>
+                                                        {type}
+                                                    </SelectItem>
+                                                ))}
+                                                <SelectItem value="__add_new__" className="text-emerald-600 font-medium">
+                                                    + Neue Art hinzufügen
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    )}
                                 </div>
                                 <div>
                                     <Label className="text-xs">Bezeichnung</Label>
