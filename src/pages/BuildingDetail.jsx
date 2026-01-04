@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText, Receipt, Plug, Gauge, Upload, FileSignature } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText, Receipt, Plug, Gauge, Upload, FileSignature, Landmark, ShieldCheck } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,8 @@ import SupplierForm from '@/components/suppliers/SupplierForm';
 import MeterForm from '@/components/meters/MeterForm';
 import MeterImportDialog from '@/components/meters/MeterImportDialog';
 import PurchaseContractForm from '@/components/purchase-contract/PurchaseContractForm';
+import FinancingForm from '@/components/financing/FinancingForm';
+import InsuranceForm from '@/components/insurance/InsuranceForm';
 
 const DetailSection = ({ title, icon: Icon, children, onEdit, summary }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -102,6 +104,10 @@ export default function BuildingDetail() {
     const [editingMeter, setEditingMeter] = useState(null);
     const [meterImportOpen, setMeterImportOpen] = useState(false);
     const [purchaseContractFormOpen, setPurchaseContractFormOpen] = useState(false);
+    const [financingFormOpen, setFinancingFormOpen] = useState(false);
+    const [editingFinancing, setEditingFinancing] = useState(null);
+    const [insuranceFormOpen, setInsuranceFormOpen] = useState(false);
+    const [editingInsurance, setEditingInsurance] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: building, isLoading } = useQuery({
@@ -141,6 +147,22 @@ export default function BuildingDetail() {
         queryKey: ['purchaseContracts', buildingId],
         queryFn: async () => {
             return await base44.entities.PurchaseContract.filter({ building_id: buildingId });
+        },
+        enabled: !!buildingId
+    });
+
+    const { data: financings = [] } = useQuery({
+        queryKey: ['financings', buildingId],
+        queryFn: async () => {
+            return await base44.entities.Financing.filter({ building_id: buildingId });
+        },
+        enabled: !!buildingId
+    });
+
+    const { data: insurances = [] } = useQuery({
+        queryKey: ['insurances', buildingId],
+        queryFn: async () => {
+            return await base44.entities.Insurance.filter({ building_id: buildingId });
         },
         enabled: !!buildingId
     });
@@ -252,6 +274,56 @@ export default function BuildingDetail() {
         }
     });
 
+    const createFinancingMutation = useMutation({
+        mutationFn: (data) => base44.entities.Financing.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['financings'] });
+            setFinancingFormOpen(false);
+            setEditingFinancing(null);
+        }
+    });
+
+    const updateFinancingMutation = useMutation({
+        mutationFn: ({ id, data }) => base44.entities.Financing.update(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['financings'] });
+            setFinancingFormOpen(false);
+            setEditingFinancing(null);
+        }
+    });
+
+    const deleteFinancingMutation = useMutation({
+        mutationFn: (id) => base44.entities.Financing.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['financings'] });
+        }
+    });
+
+    const createInsuranceMutation = useMutation({
+        mutationFn: (data) => base44.entities.Insurance.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['insurances'] });
+            setInsuranceFormOpen(false);
+            setEditingInsurance(null);
+        }
+    });
+
+    const updateInsuranceMutation = useMutation({
+        mutationFn: ({ id, data }) => base44.entities.Insurance.update(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['insurances'] });
+            setInsuranceFormOpen(false);
+            setEditingInsurance(null);
+        }
+    });
+
+    const deleteInsuranceMutation = useMutation({
+        mutationFn: (id) => base44.entities.Insurance.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['insurances'] });
+        }
+    });
+
     if (isLoading) {
         return (
             <div className="space-y-8">
@@ -356,6 +428,42 @@ export default function BuildingDetail() {
         } else {
             createPurchaseContractMutation.mutate(data);
         }
+    };
+
+    const handleFinancingSubmit = (data) => {
+        if (editingFinancing) {
+            updateFinancingMutation.mutate({ id: editingFinancing.id, data });
+        } else {
+            createFinancingMutation.mutate(data);
+        }
+    };
+
+    const handleAddFinancing = () => {
+        setEditingFinancing(null);
+        setFinancingFormOpen(true);
+    };
+
+    const handleEditFinancing = (financing) => {
+        setEditingFinancing(financing);
+        setFinancingFormOpen(true);
+    };
+
+    const handleInsuranceSubmit = (data) => {
+        if (editingInsurance) {
+            updateInsuranceMutation.mutate({ id: editingInsurance.id, data });
+        } else {
+            createInsuranceMutation.mutate(data);
+        }
+    };
+
+    const handleAddInsurance = () => {
+        setEditingInsurance(null);
+        setInsuranceFormOpen(true);
+    };
+
+    const handleEditInsurance = (insurance) => {
+        setEditingInsurance(insurance);
+        setInsuranceFormOpen(true);
     };
 
     return (
@@ -997,6 +1105,199 @@ export default function BuildingDetail() {
                 </div>
             </DetailSection>
 
+            {/* Finanzierung */}
+            <DetailSection 
+                title="Finanzierung"
+                icon={Landmark}
+                summary={financings.length > 0 ? `${financings.length} Kredit(e)${financings[0]?.kreditbetrag ? ' • ' + financings.reduce((sum, f) => sum + (f.kreditbetrag || 0), 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : ''}` : 'Noch keine Finanzierungen hinterlegt'}
+            >
+                <div className="col-span-full">
+                    {financings.length > 0 ? (
+                        <div className="space-y-3">
+                            {financings.map((financing) => (
+                                <Card key={financing.id} className="p-4">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <h4 className="font-semibold text-slate-800 mb-2">
+                                                {financing.kreditgeber}
+                                            </h4>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                                {financing.kreditbetrag && (
+                                                    <div>
+                                                        <p className="text-slate-500">Kreditbetrag</p>
+                                                        <p className="font-medium text-slate-800">{financing.kreditbetrag.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</p>
+                                                    </div>
+                                                )}
+                                                {financing.restschuld && (
+                                                    <div>
+                                                        <p className="text-slate-500">Restschuld</p>
+                                                        <p className="font-medium text-slate-800">{financing.restschuld.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</p>
+                                                    </div>
+                                                )}
+                                                {financing.zinssatz && (
+                                                    <div>
+                                                        <p className="text-slate-500">Zinssatz</p>
+                                                        <p className="font-medium text-slate-800">{financing.zinssatz}%</p>
+                                                    </div>
+                                                )}
+                                                {financing.monatsrate && (
+                                                    <div>
+                                                        <p className="text-slate-500">Monatsrate</p>
+                                                        <p className="font-medium text-slate-800">{financing.monatsrate.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleEditFinancing(financing)}
+                                                className="h-8 px-2 text-slate-600 hover:text-slate-800"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => {
+                                                    if (confirm('Möchten Sie diese Finanzierung wirklich löschen?')) {
+                                                        deleteFinancingMutation.mutate(financing.id);
+                                                    }
+                                                }}
+                                                className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </Card>
+                            ))}
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleAddFinancing}
+                                className="w-full"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Weitere Finanzierung hinzufügen
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="text-center py-8">
+                            <p className="text-slate-500 mb-4">Noch keine Finanzierungen hinterlegt</p>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleAddFinancing}
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Erste Finanzierung anlegen
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            </DetailSection>
+
+            {/* Versicherung */}
+            <DetailSection 
+                title="Versicherung"
+                icon={ShieldCheck}
+                summary={insurances.length > 0 ? `${insurances.length} Versicherung(en) abgeschlossen` : 'Noch keine Versicherungen hinterlegt'}
+            >
+                <div className="col-span-full">
+                    {insurances.length > 0 ? (
+                        <div className="space-y-3">
+                            {insurances.map((insurance) => (
+                                <Card key={insurance.id} className="p-4">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <h4 className="font-semibold text-slate-800">
+                                                    {insurance.versicherungsgesellschaft}
+                                                </h4>
+                                                <span className="text-xs px-2 py-1 rounded bg-emerald-100 text-emerald-700">
+                                                    {insurance.versicherungstyp}
+                                                </span>
+                                            </div>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                                {insurance.policennummer && (
+                                                    <div>
+                                                        <p className="text-slate-500">Policennummer</p>
+                                                        <p className="font-medium text-slate-800">{insurance.policennummer}</p>
+                                                    </div>
+                                                )}
+                                                {insurance.praemie_jaehrlich && (
+                                                    <div>
+                                                        <p className="text-slate-500">Jährl. Prämie</p>
+                                                        <p className="font-medium text-slate-800">{insurance.praemie_jaehrlich.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</p>
+                                                    </div>
+                                                )}
+                                                {insurance.deckungssumme && (
+                                                    <div>
+                                                        <p className="text-slate-500">Deckungssumme</p>
+                                                        <p className="font-medium text-slate-800">{insurance.deckungssumme.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</p>
+                                                    </div>
+                                                )}
+                                                {insurance.zahlungsweise && (
+                                                    <div>
+                                                        <p className="text-slate-500">Zahlungsweise</p>
+                                                        <p className="font-medium text-slate-800">{insurance.zahlungsweise}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleEditInsurance(insurance)}
+                                                className="h-8 px-2 text-slate-600 hover:text-slate-800"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => {
+                                                    if (confirm('Möchten Sie diese Versicherung wirklich löschen?')) {
+                                                        deleteInsuranceMutation.mutate(insurance.id);
+                                                    }
+                                                }}
+                                                className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </Card>
+                            ))}
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleAddInsurance}
+                                className="w-full"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Weitere Versicherung hinzufügen
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="text-center py-8">
+                            <p className="text-slate-500 mb-4">Noch keine Versicherungen hinterlegt</p>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleAddInsurance}
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Erste Versicherung anlegen
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            </DetailSection>
+
             {/* Kaufvertrag */}
             <DetailSection 
                 title="Kaufvertrag"
@@ -1116,6 +1417,30 @@ export default function BuildingDetail() {
                         onSubmit={handlePurchaseContractSubmit}
                         initialData={purchaseContracts[0]}
                         isLoading={createPurchaseContractMutation.isPending || updatePurchaseContractMutation.isPending}
+                        buildingId={buildingId}
+                    />
+
+                    <FinancingForm
+                        open={financingFormOpen}
+                        onOpenChange={(open) => {
+                            setFinancingFormOpen(open);
+                            if (!open) setEditingFinancing(null);
+                        }}
+                        onSubmit={handleFinancingSubmit}
+                        initialData={editingFinancing}
+                        isLoading={createFinancingMutation.isPending || updateFinancingMutation.isPending}
+                        buildingId={buildingId}
+                    />
+
+                    <InsuranceForm
+                        open={insuranceFormOpen}
+                        onOpenChange={(open) => {
+                            setInsuranceFormOpen(open);
+                            if (!open) setEditingInsurance(null);
+                        }}
+                        onSubmit={handleInsuranceSubmit}
+                        initialData={editingInsurance}
+                        isLoading={createInsuranceMutation.isPending || updateInsuranceMutation.isPending}
                         buildingId={buildingId}
                     />
                     </div>
