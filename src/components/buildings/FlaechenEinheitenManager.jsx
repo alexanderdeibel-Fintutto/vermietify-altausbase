@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import { Plus, Trash2 } from 'lucide-react';
 
-export default function FlaechenEinheitenManager({ einheiten, onChange, gebaeude }) {
+export default function FlaechenEinheitenManager({ einheiten, onChange, gebaeude, editingUnitIndex }) {
     const [artTypes, setArtTypes] = React.useState(['Wohneinheit', 'Gewerbe', 'Ferienwohnung', 'kurzfristige Vermietung', 'Nebenfläche', 'nicht vermietbar']);
     const [newArtType, setNewArtType] = React.useState('');
     const [showAddArt, setShowAddArt] = React.useState(null);
@@ -238,33 +238,39 @@ export default function FlaechenEinheitenManager({ einheiten, onChange, gebaeude
                                 </div>
                             </div>
                         </div>
-                        <Button 
-                            type="button"
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => handleRemove(index)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </Button>
+                        {editingUnitIndex === null && (
+                            <Button 
+                                type="button"
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => handleRemove(index)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </Button>
+                        )}
                     </div>
                 </Card>
             ))}
             
-            <Button 
-                type="button"
-                variant="outline" 
-                onClick={handleAdd}
-                className="w-full"
-                disabled={gebaeude.length === 0}
-            >
-                <Plus className="w-4 h-4 mr-2" />
-                Fläche/Einheit hinzufügen
-            </Button>
-            {gebaeude.length === 0 && (
-                <p className="text-xs text-slate-500 text-center">
-                    Bitte legen Sie zuerst Gebäude an
-                </p>
+            {editingUnitIndex === null && (
+                <>
+                    <Button 
+                        type="button"
+                        variant="outline" 
+                        onClick={handleAdd}
+                        className="w-full"
+                        disabled={gebaeude.length === 0}
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Fläche/Einheit hinzufügen
+                    </Button>
+                    {gebaeude.length === 0 && (
+                        <p className="text-xs text-slate-500 text-center">
+                            Bitte legen Sie zuerst Gebäude an
+                        </p>
+                    )}
+                </>
             )}
         </div>
     );

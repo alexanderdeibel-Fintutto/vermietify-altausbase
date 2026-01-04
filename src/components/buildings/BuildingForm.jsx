@@ -15,7 +15,7 @@ import { Loader2 } from 'lucide-react';
 import GebaeudeManager from './GebaeudeManager';
 import FlaechenEinheitenManager from './FlaechenEinheitenManager';
 
-export default function BuildingForm({ open, onOpenChange, onSubmit, initialData, isLoading, section }) {
+export default function BuildingForm({ open, onOpenChange, onSubmit, initialData, isLoading, section, editingUnitIndex }) {
     const { register, handleSubmit, reset, formState: { errors } } = useForm({
         defaultValues: initialData || {}
     });
@@ -26,6 +26,9 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
     const getDialogTitle = () => {
         if (!initialData) return 'Neues Objekt anlegen';
         if (!section) return 'Objekt bearbeiten';
+        if (section === 'flaechen' && editingUnitIndex !== null) {
+            return 'Fläche/Einheit bearbeiten';
+        }
         const sectionTitles = {
             name: 'Objekt umbenennen',
             lage: 'Lage bearbeiten',
@@ -48,19 +51,28 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
         if (initialData) {
             reset(initialData);
             setGebaeude(initialData.gebaeude_data || [{ bezeichnung: 'Gebäude 1', lage_auf_grundstueck: '', eigene_hausnummer: '', gebaeude_standard: 'mittel' }]);
-            setFlaechenEinheiten(initialData.flaechen_einheiten || []);
+            if (editingUnitIndex !== null && initialData.flaechen_einheiten) {
+                setFlaechenEinheiten([initialData.flaechen_einheiten[editingUnitIndex]]);
+            } else {
+                setFlaechenEinheiten(initialData.flaechen_einheiten || []);
+            }
         } else {
             reset({});
             setGebaeude([{ bezeichnung: 'Gebäude 1', lage_auf_grundstueck: '', eigene_hausnummer: '', gebaeude_standard: 'mittel' }]);
             setFlaechenEinheiten([]);
         }
-    }, [initialData, reset, open]);
+    }, [initialData, reset, open, editingUnitIndex]);
 
     const handleFormSubmit = (data) => {
+        let finalFlaechenEinheiten = flaechenEinheiten;
+        if (editingUnitIndex !== null && initialData?.flaechen_einheiten) {
+            finalFlaechenEinheiten = [...initialData.flaechen_einheiten];
+            finalFlaechenEinheiten[editingUnitIndex] = flaechenEinheiten[0];
+        }
         onSubmit({
             ...data,
             gebaeude_data: gebaeude,
-            flaechen_einheiten: flaechenEinheiten,
+            flaechen_einheiten: finalFlaechenEinheiten,
             purchase_price: data.purchase_price ? parseFloat(data.purchase_price) : null,
             year_built: data.year_built ? parseInt(data.year_built) : null,
             total_units: data.total_units ? parseInt(data.total_units) : null,
@@ -173,6 +185,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 einheiten={flaechenEinheiten} 
                                 onChange={setFlaechenEinheiten}
                                 gebaeude={gebaeude}
+                                editingUnitIndex={editingUnitIndex}
                             />
                         </div>
                         </>

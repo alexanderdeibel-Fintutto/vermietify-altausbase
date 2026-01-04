@@ -86,6 +86,7 @@ export default function BuildingDetail() {
     const buildingId = urlParams.get('buildingId');
     const [formOpen, setFormOpen] = useState(false);
     const [editingSection, setEditingSection] = useState(null);
+    const [editingUnitIndex, setEditingUnitIndex] = useState(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const queryClient = useQueryClient();
 
@@ -142,6 +143,13 @@ export default function BuildingDetail() {
 
     const handleEditSection = (section) => {
         setEditingSection(section);
+        setEditingUnitIndex(null);
+        setFormOpen(true);
+    };
+
+    const handleEditUnit = (index) => {
+        setEditingUnitIndex(index);
+        setEditingSection('flaechen');
         setFormOpen(true);
     };
 
@@ -309,7 +317,7 @@ export default function BuildingDetail() {
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => handleEditSection('flaechen')}
+                                                        onClick={() => handleEditUnit(index)}
                                                         className="h-7 px-2 text-slate-600 hover:text-slate-800"
                                                     >
                                                         <Edit className="w-3.5 h-3.5" />
@@ -414,12 +422,16 @@ export default function BuildingDetail() {
                 open={formOpen}
                 onOpenChange={(open) => {
                     setFormOpen(open);
-                    if (!open) setEditingSection(null);
+                    if (!open) {
+                        setEditingSection(null);
+                        setEditingUnitIndex(null);
+                    }
                 }}
                 onSubmit={handleFormSubmit}
                 initialData={building}
                 isLoading={updateMutation.isPending}
                 section={editingSection}
+                editingUnitIndex={editingUnitIndex}
             />
 
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
