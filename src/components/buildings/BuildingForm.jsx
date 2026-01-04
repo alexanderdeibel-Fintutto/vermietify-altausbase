@@ -81,8 +81,8 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                         )}
 
                         {shouldShowSection('lage') && (
-                        <div className="pt-4 border-t border-slate-200">
-                            <h3 className="font-semibold text-slate-800 mb-3">Lage</h3>
+                        <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
+                            {!section && <h3 className="font-semibold text-slate-800 mb-3">Lage</h3>}
                             <div className="space-y-3">
                                 <div>
                                     <Label htmlFor="address">Straße *</Label>
