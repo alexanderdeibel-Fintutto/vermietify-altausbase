@@ -637,34 +637,32 @@ export default function BankAccounts() {
                                                             </p>
                                                         </div>
 
-                                            {stats.count > 0 && (
-                                               <div className="pt-4 border-t border-slate-100">
-                                                   <div className="grid grid-cols-2 gap-3">
-                                                       <div className="flex items-center gap-2">
-                                                           <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                                                               <TrendingUp className="w-4 h-4 text-emerald-600" />
-                                                           </div>
-                                                           <div>
-                                                               <p className="text-xs text-slate-500">Eingänge</p>
-                                                               <p className="text-sm font-semibold text-slate-800">
-                                                                   €{stats.income.toLocaleString('de-DE')}
-                                                               </p>
-                                                           </div>
-                                                       </div>
-                                                       <div className="flex items-center gap-2">
-                                                           <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                                                               <TrendingDown className="w-4 h-4 text-red-600" />
-                                                           </div>
-                                                           <div>
-                                                               <p className="text-xs text-slate-500">Ausgänge</p>
-                                                               <p className="text-sm font-semibold text-slate-800">
-                                                                   €{stats.expenses.toLocaleString('de-DE')}
-                                                               </p>
-                                                           </div>
-                                                       </div>
-                                                   </div>
-                                               </div>
-                                            )}
+                                            <div className="pt-4 border-t border-slate-100">
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                                                            <TrendingUp className="w-4 h-4 text-emerald-600" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs text-slate-500">Eingänge</p>
+                                                            <p className="text-sm font-semibold text-slate-800">
+                                                                €{stats.income.toLocaleString('de-DE')}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                                                            <TrendingDown className="w-4 h-4 text-red-600" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs text-slate-500">Ausgänge</p>
+                                                            <p className="text-sm font-semibold text-slate-800">
+                                                                €{stats.expenses.toLocaleString('de-DE')}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                             </div>
                                         </CardContent>
                                         </Card>
