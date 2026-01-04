@@ -404,14 +404,22 @@ export default function BankAccounts() {
 
     const accountStatsMap = useMemo(() => {
         const map = new Map();
+        
+        // Ensure all accounts have an entry, even with no transactions
+        accounts.forEach(account => {
+            map.set(account.id, { income: 0, expenses: 0, count: 0, balance: 0 });
+        });
+        
+        // Update with actual transaction data
         accountTransactionsMap.forEach((txs, accountId) => {
             const income = txs.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
             const expenses = txs.filter(t => t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0);
             const balance = txs.reduce((sum, t) => sum + (t.amount || 0), 0);
             map.set(accountId, { income, expenses, count: txs.length, balance });
         });
+        
         return map;
-    }, [accountTransactionsMap]);
+    }, [accountTransactionsMap, accounts]);
 
     if (isLoading) {
         return (
