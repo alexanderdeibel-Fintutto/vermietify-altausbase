@@ -137,7 +137,9 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 </div>
                             </div>
                         </div>
+                        )}
 
+                        {!section && (
                         <div className="pt-4 border-t border-slate-200">
                             <h3 className="font-semibold text-slate-800 mb-3">Allgemeine Angaben</h3>
                             <div className="space-y-3">
@@ -201,9 +203,11 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 </div>
                             </div>
                         </div>
+                        )}
 
-                        <div className="pt-4 border-t border-slate-200">
-                            <h3 className="font-semibold text-slate-800 mb-3">Baudaten</h3>
+                        {shouldShowSection('baudaten') && (
+                        <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
+                            {!section && <h3 className="font-semibold text-slate-800 mb-3">Baudaten</h3>}
                             <div className="space-y-3">
                                 <div>
                                     <Label htmlFor="ready_for_occupancy_date">Bezugsfertig Datum</Label>
@@ -279,9 +283,11 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 </div>
                             </div>
                         </div>
+                        )}
 
-                        <div className="pt-4 border-t border-slate-200">
-                            <h3 className="font-semibold text-slate-800 mb-3">Ausstattung</h3>
+                        {shouldShowSection('ausstattung') && (
+                        <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
+                            {!section && <h3 className="font-semibold text-slate-800 mb-3">Ausstattung</h3>}
                             <div className="space-y-3">
                                 <div>
                                     <Label htmlFor="heating_type">Heizungsart</Label>
@@ -359,9 +365,11 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 </div>
                             </div>
                         </div>
+                        )}
 
-                        <div className="pt-4 border-t border-slate-200">
-                            <h3 className="font-semibold text-slate-800 mb-3">Energieausweis-Daten</h3>
+                        {shouldShowSection('energieausweis') && (
+                        <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
+                            {!section && <h3 className="font-semibold text-slate-800 mb-3">Energieausweis-Daten</h3>}
                             <div className="space-y-3">
                                 <div>
                                     <Label htmlFor="energy_certificate_type">Energieausweis Typ</Label>
@@ -429,7 +437,9 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 </div>
                             </div>
                         </div>
+                        )}
 
+                        {!section && (
                         <div className="pt-4 border-t border-slate-200">
                             <h3 className="font-semibold text-slate-800 mb-3">Eigentümer</h3>
                             <div className="space-y-3">
@@ -469,7 +479,9 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 </div>
                             </div>
                         </div>
+                        )}
 
+                        {!section && (
                         <div className="pt-4 border-t border-slate-200">
                             <h3 className="font-semibold text-slate-800 mb-3">Ansprechpartner</h3>
                             <div className="space-y-3">
@@ -500,7 +512,9 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 </div>
                             </div>
                         </div>
+                        )}
 
+                        {!section && (
                         <div className="pt-4 border-t border-slate-200">
                             <h3 className="font-semibold text-slate-800 mb-3">Bankverbindung</h3>
                             <div className="space-y-3">
