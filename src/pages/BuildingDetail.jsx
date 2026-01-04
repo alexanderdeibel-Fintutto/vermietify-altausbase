@@ -421,7 +421,7 @@ export default function BuildingDetail() {
             <DetailSection 
                 title="Grundbuch"
                 icon={FileText}
-                summary={building.grundbuch?.deckblatt?.blatt_nummer || building.grundbuch?.deckblatt?.amtsgericht ? `${building.grundbuch?.deckblatt?.amtsgericht ? building.grundbuch.deckblatt.amtsgericht : ''}${building.grundbuch?.deckblatt?.blatt_nummer ? (building.grundbuch?.deckblatt?.amtsgericht ? ' • Blatt ' : 'Blatt ') + building.grundbuch.deckblatt.blatt_nummer : ''}${building.grundbuch?.bestandsverzeichnis?.length > 0 ? ' • ' + building.grundbuch.bestandsverzeichnis.length + ' Einträge' : ''}` : 'Noch keine Grundbuchdaten hinterlegt'}
+                summary={building.grundbuch?.deckblatt ? `${building.grundbuch.deckblatt.gemeinde || ''}${building.grundbuch.deckblatt.gemeinde && (building.grundbuch.deckblatt.flur || building.grundbuch.deckblatt.flurstueck) ? ' • ' : ''}${building.grundbuch.deckblatt.flur ? 'Flur ' + building.grundbuch.deckblatt.flur : ''}${building.grundbuch.deckblatt.flur && building.grundbuch.deckblatt.flurstueck ? ', ' : ''}${building.grundbuch.deckblatt.flurstueck ? 'Flurstück ' + building.grundbuch.deckblatt.flurstueck : ''}${building.grundbuch.deckblatt.blatt_nummer ? ' • Blatt ' + building.grundbuch.deckblatt.blatt_nummer : ''}${building.grundbuch.bestandsverzeichnis?.length > 0 ? ' • ' + building.grundbuch.bestandsverzeichnis.length + ' Einträge' : ''}` : 'Noch keine Grundbuchdaten hinterlegt'}
                 onEdit={() => handleEditSection('grundbuch')}
             >
                 {building.grundbuch?.deckblatt ? (
@@ -437,6 +437,9 @@ export default function BuildingDetail() {
                             label="Datum" 
                             value={building.grundbuch.deckblatt.datum ? format(parseISO(building.grundbuch.deckblatt.datum), 'dd.MM.yyyy', { locale: de }) : null} 
                         />
+                        <DetailItem label="Gemeinde" value={building.grundbuch.deckblatt.gemeinde} />
+                        <DetailItem label="Flur" value={building.grundbuch.deckblatt.flur} />
+                        <DetailItem label="Flurstück" value={building.grundbuch.deckblatt.flurstueck} />
                     </>
                 ) : (
                     <div className="col-span-full text-center py-4 text-slate-500">

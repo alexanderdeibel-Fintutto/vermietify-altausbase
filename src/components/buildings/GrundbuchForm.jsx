@@ -154,6 +154,30 @@ export default function GrundbuchForm({ grundbuch, onChange }) {
                                     placeholder="z.B. 456"
                                 />
                             </div>
+                            <div>
+                                <Label className="text-xs">Gemeinde</Label>
+                                <Input
+                                    value={grundbuch?.deckblatt?.gemeinde || ''}
+                                    onChange={(e) => updateDeckblatt('gemeinde', e.target.value)}
+                                    placeholder="z.B. Berlin"
+                                />
+                            </div>
+                            <div>
+                                <Label className="text-xs">Flur</Label>
+                                <Input
+                                    value={grundbuch?.deckblatt?.flur || ''}
+                                    onChange={(e) => updateDeckblatt('flur', e.target.value)}
+                                    placeholder="z.B. 001"
+                                />
+                            </div>
+                            <div>
+                                <Label className="text-xs">Flurstück</Label>
+                                <Input
+                                    value={grundbuch?.deckblatt?.flurstueck || ''}
+                                    onChange={(e) => updateDeckblatt('flurstueck', e.target.value)}
+                                    placeholder="z.B. 123/45"
+                                />
+                            </div>
                         </div>
                     </AccordionContent>
                 </AccordionItem>
