@@ -51,6 +51,7 @@ import PageHeader from '@/components/shared/PageHeader';
 import EmptyState from '@/components/shared/EmptyState';
 import TransactionImport from '@/components/banking/TransactionImport';
 import AccountTransactionsList from '@/components/banking/AccountTransactionsList';
+import CashBookDialog from '@/components/banking/CashBookDialog';
 
 function BankAccountForm({ open, onOpenChange, onSubmit, initialData, isLoading }) {
     const { register, handleSubmit, reset, setValue, watch } = useForm({
@@ -187,6 +188,8 @@ export default function BankAccounts() {
     const [importAccountId, setImportAccountId] = useState(null);
     const [expandedAccounts, setExpandedAccounts] = useState({});
     const [selectedAccountFilter, setSelectedAccountFilter] = useState('all');
+    const [cashBookOpen, setCashBookOpen] = useState(false);
+    const [selectedCashAccount, setSelectedCashAccount] = useState(null);
     const queryClient = useQueryClient();
 
     const toggleAccountExpanded = (accountId) => {
@@ -520,6 +523,7 @@ export default function BankAccounts() {
                         const stats = accountStatsMap.get(account.id) || { income: 0, expenses: 0, count: 0 };
                         const accountTransactions = accountTransactionsMap.get(account.id) || [];
                         const isExpanded = expandedAccounts[account.id] === true;
+                        const isCash = account.account_type === 'cash';
                         
                         return (
                             <Collapsible 
@@ -527,7 +531,15 @@ export default function BankAccounts() {
                                 open={isExpanded}
                                 onOpenChange={() => toggleAccountExpanded(account.id)}
                             >
-                                <Card className="border-slate-200/50 hover:shadow-md transition-shadow">
+                                <Card 
+                                    className={`border-slate-200/50 hover:shadow-md transition-shadow ${isCash ? 'cursor-pointer' : ''}`}
+                                    onClick={() => {
+                                        if (isCash) {
+                                            setSelectedCashAccount(account);
+                                            setCashBookOpen(true);
+                                        }
+                                    }}
+                                >
                                     <CardHeader className="pb-3">
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1">
@@ -556,37 +568,52 @@ export default function BankAccounts() {
                                             </div>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon" 
+                                                        className="h-8 w-8"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
                                                         <MoreVertical className="w-4 h-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     {account.finapi_connection_id && (
                                                         <DropdownMenuItem 
-                                                            onClick={() => handleSyncAccount(account.id)}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleSyncAccount(account.id);
+                                                            }}
                                                             disabled={isSyncing}
                                                         >
                                                             <RefreshCw className="w-4 h-4 mr-2" />
                                                             Synchronisieren
                                                         </DropdownMenuItem>
                                                     )}
-                                                    <DropdownMenuItem onClick={() => {
-                                                        setImportAccountId(account.id);
-                                                        setImportOpen(true);
-                                                    }}>
-                                                        <Upload className="w-4 h-4 mr-2" />
-                                                        CSV importieren
-                                                    </DropdownMenuItem>
-                                                    {stats.count > 0 && (
+                                                    {!isCash && (
+                                                        <DropdownMenuItem onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setImportAccountId(account.id);
+                                                            setImportOpen(true);
+                                                        }}>
+                                                            <Upload className="w-4 h-4 mr-2" />
+                                                            CSV importieren
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    {stats.count > 0 && !isCash && (
                                                         <DropdownMenuItem 
-                                                            onClick={() => handleUndoImport(account.id)}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleUndoImport(account.id);
+                                                            }}
                                                             className="text-orange-600"
                                                         >
                                                             <Undo2 className="w-4 h-4 mr-2" />
                                                             Letzten Import rückgängig machen
                                                         </DropdownMenuItem>
                                                     )}
-                                                    <DropdownMenuItem onClick={() => {
+                                                    <DropdownMenuItem onClick={(e) => {
+                                                        e.stopPropagation();
                                                         setEditingAccount(account);
                                                         setFormOpen(true);
                                                     }}>
@@ -594,7 +621,10 @@ export default function BankAccounts() {
                                                         Bearbeiten
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem 
-                                                        onClick={() => setDeleteAccount(account)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setDeleteAccount(account);
+                                                        }}
                                                         className="text-red-600"
                                                     >
                                                         <Trash2 className="w-4 h-4 mr-2" />
@@ -620,12 +650,17 @@ export default function BankAccounts() {
                                                 </p>
                                             </div>
 
-                                            {stats.count > 0 && (
+                                            {stats.count > 0 && !isCash && (
                                                 <div className="pt-4 border-t border-slate-100">
                                                     <div className="flex items-center justify-between mb-3">
                                                         <p className="text-sm text-slate-500">Transaktionen</p>
                                                         <CollapsibleTrigger asChild>
-                                                            <Button variant="ghost" size="sm" className="gap-2">
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="sm" 
+                                                                className="gap-2"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            >
                                                                 {isExpanded ? (
                                                                     <>
                                                                         Ausblenden
@@ -675,15 +710,22 @@ export default function BankAccounts() {
                                                 </div>
                                             )}
                                         </CollapsibleContent>
-                                    </CardContent>
-                                </Card>
-                            </Collapsible>
-                        );
-                    })}
-                </div>
-            )}
+                                        </CardContent>
+                                        </Card>
+                                        </Collapsible>
+                                        );
+                                        })}
+                                        </div>
+                                        )}
 
-            <BankAccountForm
+                                        <CashBookDialog
+                                        open={cashBookOpen}
+                                        onOpenChange={setCashBookOpen}
+                                        account={selectedCashAccount}
+                                        transactions={selectedCashAccount ? accountTransactionsMap.get(selectedCashAccount.id) || [] : []}
+                                        />
+
+                                        <BankAccountForm
                 open={formOpen}
                 onOpenChange={setFormOpen}
                 onSubmit={handleSubmit}
