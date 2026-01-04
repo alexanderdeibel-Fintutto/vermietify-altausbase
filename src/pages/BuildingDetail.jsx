@@ -162,22 +162,26 @@ export default function BuildingDetail() {
                         </p>
                     </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-1">
                     <Button 
                         onClick={() => {
                             setEditingSection('name');
                             setFormOpen(true);
                         }}
-                        variant="outline"
+                        variant="ghost"
+                        size="sm"
+                        className="text-slate-600 hover:text-slate-800"
                     >
-                        <Edit className="w-4 h-4 mr-2" />
+                        <Edit className="w-3.5 h-3.5 mr-1.5" />
                         Umbenennen
                     </Button>
                     <Button 
-                        variant="destructive"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => setDeleteDialogOpen(true)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
-                        <Trash2 className="w-4 h-4 mr-2" />
+                        <Trash2 className="w-3.5 h-3.5 mr-1.5" />
                         Löschen
                     </Button>
                 </div>
