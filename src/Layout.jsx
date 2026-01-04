@@ -20,7 +20,7 @@ export default function Layout({ children, currentPageName }) {
 
     const navigation = [
         { name: 'Dashboard', href: createPageUrl('Dashboard'), icon: Home, page: 'Dashboard' },
-        { name: 'Gebäude', href: createPageUrl('Buildings'), icon: Building2, page: 'Buildings' },
+        { name: 'Objekte', href: createPageUrl('Buildings'), icon: Building2, page: 'Buildings' },
         { name: 'Mietverträge', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts' },
         { name: 'Finanzen', href: createPageUrl('Finanzen'), icon: CreditCard, page: 'Finanzen' },
         { name: 'Rechnungen & Belege', href: createPageUrl('Invoices'), icon: FileText, page: 'Invoices' },

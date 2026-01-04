@@ -72,19 +72,19 @@ export default function Buildings() {
     return (
         <div className="space-y-8">
             <PageHeader 
-                title="Gebäude"
+                title="Objekte"
                 subtitle={`${buildings.length} Immobilien verwalten`}
                 action={handleAddNew}
-                actionLabel="Gebäude hinzufügen"
+                actionLabel="Objekt hinzufügen"
             />
 
             {buildings.length === 0 ? (
                 <EmptyState
                     icon={Building2}
-                    title="Noch keine Gebäude"
+                    title="Noch keine Objekte"
                     description="Fügen Sie Ihr erstes Mehrfamilienhaus hinzu, um mit der Verwaltung zu beginnen."
                     action={handleAddNew}
-                    actionLabel="Erstes Gebäude anlegen"
+                    actionLabel="Erstes Objekt anlegen"
                 />
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
