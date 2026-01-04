@@ -20,6 +20,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import BuildingForm from '@/components/buildings/BuildingForm';
+import BuildingStats from '@/components/buildings/BuildingStats';
 import PropertyTaxForm from '@/components/property-tax/PropertyTaxForm';
 import SupplierForm from '@/components/suppliers/SupplierForm';
 import MeterForm from '@/components/meters/MeterForm';
@@ -398,6 +399,13 @@ export default function BuildingDetail() {
                     </Button>
                 </div>
             </div>
+
+            {/* Statistik-Karten */}
+            <BuildingStats 
+                building={building} 
+                meters={meters}
+                suppliers={suppliers}
+            />
 
             {/* Lage */}
             <DetailSection 
