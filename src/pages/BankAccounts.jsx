@@ -714,7 +714,6 @@ export default function BankAccounts() {
                                         </CollapsibleContent>
                                         </CardContent>
                                         </Card>
-                                        </Collapsible>
                                         );
                                         })}
                                         </div>
