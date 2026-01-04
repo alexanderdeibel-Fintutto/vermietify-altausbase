@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText, Receipt, Plug, Gauge, Upload } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText, Receipt, Plug, Gauge, Upload, FileSignature } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import PropertyTaxForm from '@/components/property-tax/PropertyTaxForm';
 import SupplierForm from '@/components/suppliers/SupplierForm';
 import MeterForm from '@/components/meters/MeterForm';
 import MeterImportDialog from '@/components/meters/MeterImportDialog';
+import PurchaseContractForm from '@/components/purchase-contract/PurchaseContractForm';
 
 const DetailSection = ({ title, icon: Icon, children, onEdit, summary }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -99,6 +100,7 @@ export default function BuildingDetail() {
     const [meterFormOpen, setMeterFormOpen] = useState(false);
     const [editingMeter, setEditingMeter] = useState(null);
     const [meterImportOpen, setMeterImportOpen] = useState(false);
+    const [purchaseContractFormOpen, setPurchaseContractFormOpen] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: building, isLoading } = useQuery({
@@ -130,6 +132,14 @@ export default function BuildingDetail() {
         queryKey: ['meters', buildingId],
         queryFn: async () => {
             return await base44.entities.Meter.filter({ building_id: buildingId });
+        },
+        enabled: !!buildingId
+    });
+
+    const { data: purchaseContracts = [] } = useQuery({
+        queryKey: ['purchaseContracts', buildingId],
+        queryFn: async () => {
+            return await base44.entities.PurchaseContract.filter({ building_id: buildingId });
         },
         enabled: !!buildingId
     });
@@ -222,6 +232,22 @@ export default function BuildingDetail() {
         mutationFn: (id) => base44.entities.Meter.delete(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['meters'] });
+        }
+    });
+
+    const createPurchaseContractMutation = useMutation({
+        mutationFn: (data) => base44.entities.PurchaseContract.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['purchaseContracts'] });
+            setPurchaseContractFormOpen(false);
+        }
+    });
+
+    const updatePurchaseContractMutation = useMutation({
+        mutationFn: ({ id, data }) => base44.entities.PurchaseContract.update(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['purchaseContracts'] });
+            setPurchaseContractFormOpen(false);
         }
     });
 
@@ -320,6 +346,15 @@ export default function BuildingDetail() {
     const handleMeterImport = async (meters) => {
         await base44.entities.Meter.bulkCreate(meters);
         queryClient.invalidateQueries({ queryKey: ['meters'] });
+    };
+
+    const handlePurchaseContractSubmit = (data) => {
+        const contract = purchaseContracts[0];
+        if (contract) {
+            updatePurchaseContractMutation.mutate({ id: contract.id, data });
+        } else {
+            createPurchaseContractMutation.mutate(data);
+        }
     };
 
     return (
@@ -954,6 +989,39 @@ export default function BuildingDetail() {
                 </div>
             </DetailSection>
 
+            {/* Kaufvertrag */}
+            <DetailSection 
+                title="Kaufvertrag"
+                icon={FileSignature}
+                summary={purchaseContracts[0] ? `${purchaseContracts[0].kaeufer_name ? purchaseContracts[0].kaeufer_name : 'Käufer'} ${purchaseContracts[0].kaufpreis ? '• ' + purchaseContracts[0].kaufpreis.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : ''}` : 'Noch keine Kaufvertragsdaten hinterlegt'}
+                onEdit={() => setPurchaseContractFormOpen(true)}
+            >
+                {purchaseContracts[0] ? (
+                    <>
+                        <DetailItem label="Verkäufer" value={purchaseContracts[0].verkaeufer_vorname && purchaseContracts[0].verkaeufer_name ? `${purchaseContracts[0].verkaeufer_vorname} ${purchaseContracts[0].verkaeufer_name}` : null} />
+                        <DetailItem label="Käufer" value={purchaseContracts[0].kaeufer_vorname && purchaseContracts[0].kaeufer_name ? `${purchaseContracts[0].kaeufer_vorname} ${purchaseContracts[0].kaeufer_name}` : null} />
+                        <DetailItem 
+                            label="Kaufvertrag Datum" 
+                            value={purchaseContracts[0].kaufvertrag_datum ? format(parseISO(purchaseContracts[0].kaufvertrag_datum), 'dd.MM.yyyy', { locale: de }) : null} 
+                        />
+                        <DetailItem label="Notar" value={purchaseContracts[0].notar_name} />
+                        <DetailItem label="Notar Ort" value={purchaseContracts[0].notar_ort} />
+                        <DetailItem label="Kaufpreis" value={purchaseContracts[0].kaufpreis ? purchaseContracts[0].kaufpreis.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : null} />
+                        <DetailItem label="Kaufpreis Grundstück" value={purchaseContracts[0].kaufpreis_grundstueck ? purchaseContracts[0].kaufpreis_grundstueck.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : null} />
+                        <DetailItem label="Kaufpreis Gebäude" value={purchaseContracts[0].kaufpreis_gebaeude ? purchaseContracts[0].kaufpreis_gebaeude.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : null} />
+                        <DetailItem 
+                            label="Übergabe Datum" 
+                            value={purchaseContracts[0].uebergabe_datum ? format(parseISO(purchaseContracts[0].uebergabe_datum), 'dd.MM.yyyy', { locale: de }) : null} 
+                        />
+                        <DetailItem label="Inventar mitverkauft" value={purchaseContracts[0].inventar_mitverkauft} />
+                    </>
+                ) : (
+                    <div className="col-span-full text-center py-4 text-slate-500">
+                        Noch keine Kaufvertragsdaten hinterlegt
+                    </div>
+                )}
+            </DetailSection>
+
             {/* Form & Delete Dialog */}
             <BuildingForm
                 open={formOpen}
@@ -1032,6 +1100,15 @@ export default function BuildingDetail() {
                         onOpenChange={setMeterImportOpen}
                         onImport={handleMeterImport}
                         building={building}
+                    />
+
+                    <PurchaseContractForm
+                        open={purchaseContractFormOpen}
+                        onOpenChange={setPurchaseContractFormOpen}
+                        onSubmit={handlePurchaseContractSubmit}
+                        initialData={purchaseContracts[0]}
+                        isLoading={createPurchaseContractMutation.isPending || updatePurchaseContractMutation.isPending}
+                        buildingId={buildingId}
                     />
                     </div>
                     );
