@@ -25,6 +25,7 @@ import { Loader2, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import GebaeudeManager from './GebaeudeManager';
 import FlaechenEinheitenManager from './FlaechenEinheitenManager';
+import GrundbuchForm from './GrundbuchForm';
 
 export default function BuildingForm({ open, onOpenChange, onSubmit, initialData, isLoading, section, editingUnitIndex }) {
     const { register, handleSubmit, reset, formState: { errors } } = useForm({
@@ -33,6 +34,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
     
     const [gebaeude, setGebaeude] = React.useState([]);
     const [flaechenEinheiten, setFlaechenEinheiten] = React.useState([]);
+    const [grundbuch, setGrundbuch] = React.useState({});
     const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
     const [checkingDependencies, setCheckingDependencies] = React.useState(false);
     const [dependencies, setDependencies] = React.useState(null);
@@ -49,6 +51,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
             lage: 'Lage bearbeiten',
             gebaeude: 'Gebäude bearbeiten',
             flaechen: 'Flächen/Einheiten bearbeiten',
+            grundbuch: 'Grundbuch bearbeiten',
             baudaten: 'Baudaten bearbeiten',
             ausstattung: 'Ausstattung bearbeiten',
             energieausweis: 'Energieausweis-Daten bearbeiten'
@@ -71,10 +74,12 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
             } else {
                 setFlaechenEinheiten(initialData.flaechen_einheiten || []);
             }
+            setGrundbuch(initialData.grundbuch || {});
         } else {
             reset({});
             setGebaeude([{ bezeichnung: 'Gebäude 1', lage_auf_grundstueck: '', eigene_hausnummer: '', gebaeude_standard: 'mittel' }]);
             setFlaechenEinheiten([]);
+            setGrundbuch({});
         }
     }, [initialData, reset, open, editingUnitIndex]);
 
@@ -88,6 +93,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
             ...data,
             gebaeude_data: gebaeude,
             flaechen_einheiten: finalFlaechenEinheiten,
+            grundbuch: grundbuch,
             purchase_price: data.purchase_price ? parseFloat(data.purchase_price) : null,
             year_built: data.year_built ? parseInt(data.year_built) : null,
             total_units: data.total_units ? parseInt(data.total_units) : null,

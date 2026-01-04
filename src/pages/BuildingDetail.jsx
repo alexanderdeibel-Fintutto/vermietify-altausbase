@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
@@ -415,6 +415,53 @@ export default function BuildingDetail() {
                 <DetailItem label="CO2 Emissionen" value={building.co2_emissions} />
                 <DetailItem label="Primärenergiebedarf" value={building.primary_energy_demand} />
                 <DetailItem label="Endenergiebedarf" value={building.final_energy_demand} />
+            </DetailSection>
+
+            {/* Grundbuch */}
+            <DetailSection 
+                title="Grundbuch"
+                icon={FileText}
+                summary={building.grundbuch?.deckblatt?.blatt_nummer || building.grundbuch?.deckblatt?.amtsgericht ? `${building.grundbuch?.deckblatt?.amtsgericht ? building.grundbuch.deckblatt.amtsgericht : ''}${building.grundbuch?.deckblatt?.blatt_nummer ? (building.grundbuch?.deckblatt?.amtsgericht ? ' • Blatt ' : 'Blatt ') + building.grundbuch.deckblatt.blatt_nummer : ''}${building.grundbuch?.bestandsverzeichnis?.length > 0 ? ' • ' + building.grundbuch.bestandsverzeichnis.length + ' Einträge' : ''}` : null}
+                onEdit={() => handleEditSection('grundbuch')}
+            >
+                {building.grundbuch?.deckblatt && (
+                    <>
+                        <div className="col-span-full">
+                            <h4 className="font-semibold text-slate-800 mb-2">Deckblatt</h4>
+                        </div>
+                        <DetailItem label="Amtsgericht" value={building.grundbuch.deckblatt.amtsgericht} />
+                        <DetailItem label="Grundbuchbezirk" value={building.grundbuch.deckblatt.grundbuchbezirk} />
+                        <DetailItem label="Band-Nummer" value={building.grundbuch.deckblatt.band_nummer} />
+                        <DetailItem label="Blatt-Nummer" value={building.grundbuch.deckblatt.blatt_nummer} />
+                        <DetailItem 
+                            label="Datum" 
+                            value={building.grundbuch.deckblatt.datum ? format(parseISO(building.grundbuch.deckblatt.datum), 'dd.MM.yyyy', { locale: de }) : null} 
+                        />
+                    </>
+                )}
+                {building.grundbuch?.abteilung1 && (
+                    <>
+                        <div className="col-span-full mt-4">
+                            <h4 className="font-semibold text-slate-800 mb-2">Abteilung 1 - Eigentümer</h4>
+                        </div>
+                        <DetailItem label="Name" value={building.grundbuch.abteilung1.eigentuemer_name} />
+                        <DetailItem label="Vorname" value={building.grundbuch.abteilung1.eigentuemer_vorname} />
+                        <DetailItem label="Wohnort" value={building.grundbuch.abteilung1.eigentuemer_wohnort} />
+                        <DetailItem label="Anteil" value={building.grundbuch.abteilung1.eigentuemer_anteil} />
+                        <DetailItem label="Erwerbsgrund" value={building.grundbuch.abteilung1.erwerbsgrund} />
+                        <DetailItem 
+                            label="Erwerbsdatum" 
+                            value={building.grundbuch.abteilung1.erwerbsdatum ? format(parseISO(building.grundbuch.abteilung1.erwerbsdatum), 'dd.MM.yyyy', { locale: de }) : null} 
+                        />
+                    </>
+                )}
+                {building.grundbuch?.bestandsverzeichnis && building.grundbuch.bestandsverzeichnis.length > 0 && (
+                    <>
+                        <div className="col-span-full mt-4">
+                            <h4 className="font-semibold text-slate-800 mb-2">Bestandsverzeichnis ({building.grundbuch.bestandsverzeichnis.length})</h4>
+                        </div>
+                    </>
+                )}
             </DetailSection>
 
             {/* Form & Delete Dialog */}
