@@ -68,21 +68,22 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                 </DialogHeader>
                 <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 mt-4">
                     <div className="grid grid-cols-1 gap-4">
-                        {!section && (
-                            <div>
-                                <Label htmlFor="name">Name *</Label>
-                                <Input 
-                                    id="name"
-                                    {...register('name', { required: true })}
-                                    placeholder="z.B. Mein Wohnhaus"
-                                    className={errors.name ? 'border-red-500' : ''}
-                                />
-                            </div>
-                        )}
+                       {!section && (
+                           <div>
+                               <Label htmlFor="name">Name *</Label>
+                               <Input 
+                                   id="name"
+                                   {...register('name', { required: true })}
+                                   placeholder="z.B. Mein Wohnhaus"
+                                   className={errors.name ? 'border-red-500' : ''}
+                               />
+                           </div>
+                       )}
 
-                        {shouldShowSection('lage') && (
-                        <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
-                            {!section && <h3 className="font-semibold text-slate-800 mb-3">Lage</h3>}
+                       {shouldShowSection('lage') && (
+                       <>
+                       <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
+                           {!section && <h3 className="font-semibold text-slate-800 mb-3">Lage</h3>}
                             <div className="space-y-3">
                                 <div>
                                     <Label htmlFor="address">Straße *</Label>
@@ -203,9 +204,11 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 </div>
                             </div>
                         </div>
+                        </>
                         )}
 
                         {shouldShowSection('baudaten') && (
+                        <>
                         <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
                             {!section && <h3 className="font-semibold text-slate-800 mb-3">Baudaten</h3>}
                             <div className="space-y-3">
@@ -283,9 +286,11 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 </div>
                             </div>
                         </div>
+                        </>
                         )}
 
                         {shouldShowSection('ausstattung') && (
+                        <>
                         <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
                             {!section && <h3 className="font-semibold text-slate-800 mb-3">Ausstattung</h3>}
                             <div className="space-y-3">
@@ -365,9 +370,11 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 </div>
                             </div>
                         </div>
+                        </>
                         )}
 
                         {shouldShowSection('energieausweis') && (
+                        <>
                         <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
                             {!section && <h3 className="font-semibold text-slate-800 mb-3">Energieausweis-Daten</h3>}
                             <div className="space-y-3">
@@ -437,9 +444,11 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 </div>
                             </div>
                         </div>
+                        </>
                         )}
 
                         {!section && (
+                        <>
                         <div className="pt-4 border-t border-slate-200">
                             <h3 className="font-semibold text-slate-800 mb-3">Eigentümer</h3>
                             <div className="space-y-3">
@@ -479,9 +488,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 </div>
                             </div>
                         </div>
-                        )}
 
-                        {!section && (
                         <div className="pt-4 border-t border-slate-200">
                             <h3 className="font-semibold text-slate-800 mb-3">Ansprechpartner</h3>
                             <div className="space-y-3">
@@ -512,9 +519,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 </div>
                             </div>
                         </div>
-                        )}
 
-                        {!section && (
                         <div className="pt-4 border-t border-slate-200">
                             <h3 className="font-semibold text-slate-800 mb-3">Bankverbindung</h3>
                             <div className="space-y-3">
@@ -536,9 +541,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 </div>
                             </div>
                         </div>
-                        )}
 
-                        {!section && (
                         <div>
                             <Label htmlFor="notes">Notizen</Label>
                             <Textarea 
@@ -548,6 +551,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 rows={3}
                             />
                         </div>
+                        </>
                         )}
                     </div>
 
