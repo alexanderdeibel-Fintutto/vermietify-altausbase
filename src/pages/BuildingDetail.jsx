@@ -31,36 +31,39 @@ const DetailSection = ({ title, icon: Icon, children, onEdit, summary }) => {
         child !== false
     );
 
+    if (!hasContent) return null;
+
     return (
         <Card>
-            <CardHeader>
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 flex-1">
-                        <Icon className="w-5 h-5 text-slate-500" />
-                        <CardTitle className="text-lg font-semibold">{title}</CardTitle>
-                        {summary && <span className="text-sm text-slate-500 ml-2">{summary}</span>}
+            <CardHeader className="pb-4">
+                <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3 flex-1">
+                        <div className="mt-1">
+                            <Icon className="w-5 h-5 text-emerald-600" />
+                        </div>
+                        <div className="flex-1">
+                            <CardTitle className="text-lg font-semibold text-slate-800 mb-1">{title}</CardTitle>
+                            {summary && (
+                                <p className="text-slate-600 text-sm leading-relaxed">{summary}</p>
+                            )}
+                        </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-1">
                         {onEdit && (
-                            <Button variant="outline" size="sm" onClick={onEdit}>
-                                <Edit className="w-4 h-4 mr-2" /> Bearbeiten
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit}>
+                                <Edit className="w-4 h-4 text-slate-400 hover:text-slate-600" />
                             </Button>
                         )}
-                        {hasContent && (
-                            <Button variant="ghost" size="sm" onClick={() => setIsExpanded(!isExpanded)}>
-                                {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                            </Button>
-                        )}
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsExpanded(!isExpanded)}>
+                            {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                        </Button>
                     </div>
                 </div>
             </CardHeader>
-            {isExpanded && hasContent && (
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6 pt-0">
+            {isExpanded && (
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6 pt-0 border-t border-slate-100">
                     {children}
                 </CardContent>
-            )}
-            {!hasContent && (
-                <CardContent className="text-slate-500 italic pt-0">Keine Daten vorhanden</CardContent>
             )}
         </Card>
     );
@@ -175,7 +178,7 @@ export default function BuildingDetail() {
             <DetailSection 
                 title="Lage"
                 icon={MapPin}
-                summary={building.address && building.house_number ? `${building.address} ${building.house_number}, ${building.city}` : ''}
+                summary={building.address && building.city ? `${building.address}${building.house_number ? ' ' + building.house_number : ''}, ${building.postal_code} ${building.city}${building.gps_coordinates ? ' • GPS: ' + building.gps_coordinates : ''}${building.garages_parking_spaces ? ' • ' + building.garages_parking_spaces + ' Stellplätze' : ''}` : null}
                 onEdit={() => setFormOpen(true)}
             >
                 <DetailItem label="Straße" value={building.address} />
@@ -190,7 +193,7 @@ export default function BuildingDetail() {
             <DetailSection 
                 title="Baudaten"
                 icon={BuildingIcon}
-                summary={building.year_built ? `Baujahr: ${building.year_built}` : ''}
+                summary={building.year_built || building.construction_method || building.roof_shape ? `${building.year_built ? 'Baujahr ' + building.year_built : ''}${building.construction_method ? (building.year_built ? ' • ' : '') + building.construction_method : ''}${building.roof_shape ? ' • ' + building.roof_shape : ''}` : null}
                 onEdit={() => setFormOpen(true)}
             >
                 <DetailItem label="Baujahr" value={building.year_built} />
@@ -215,7 +218,7 @@ export default function BuildingDetail() {
             <DetailSection 
                 title="Ausstattung"
                 icon={Wrench}
-                summary={building.heating_type ? `Heizung: ${building.heating_type}` : ''}
+                summary={building.heating_type || building.energy_source || building.window_type ? `${building.heating_type ? building.heating_type : ''}${building.energy_source ? (building.heating_type ? ' (' + building.energy_source + ')' : building.energy_source) : ''}${building.window_type ? ' • Fenster: ' + building.window_type : ''}${building.insulation_roof || building.insulation_facade ? ' • Isolierung vorhanden' : ''}` : null}
                 onEdit={() => setFormOpen(true)}
             >
                 <DetailItem label="Heizungsart" value={building.heating_type} />
@@ -232,7 +235,7 @@ export default function BuildingDetail() {
             <DetailSection 
                 title="Energieausweis-Daten"
                 icon={Zap}
-                summary={building.energy_efficiency_class ? `Effizienzklasse: ${building.energy_efficiency_class}` : ''}
+                summary={building.energy_efficiency_class || building.energy_demand_kwh_jahr ? `${building.energy_efficiency_class ? 'Klasse ' + building.energy_efficiency_class : ''}${building.energy_demand_kwh_jahr ? (building.energy_efficiency_class ? ' • ' : '') + building.energy_demand_kwh_jahr + ' kWh/Jahr' : ''}${building.energy_certificate_valid_until ? ' • Gültig bis ' + format(parseISO(building.energy_certificate_valid_until), 'MM/yyyy', { locale: de }) : ''}` : null}
                 onEdit={() => setFormOpen(true)}
             >
                 <DetailItem label="Energieausweis Typ" value={building.energy_certificate_type} />
