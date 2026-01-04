@@ -22,10 +22,14 @@ export default function FlaechenEinheitenManager({ einheiten, onChange, gebaeude
     };
 
     const handleAdd = () => {
-        onChange([...einheiten, { 
-            art: 'Wohneinheit', 
-            gebaeude_index: gebaeude.length > 0 ? 0 : null, 
-            etage: 0, 
+        const lastEinheit = einheiten[einheiten.length - 1];
+        const newEinheit = lastEinheit ? {
+            ...lastEinheit,
+            bezeichnung: ''
+        } : {
+            art: 'Wohneinheit',
+            gebaeude_index: gebaeude.length > 0 ? 0 : null,
+            etage: 0,
             lage: 'mitte',
             bezeichnung: '',
             qm: 0,
@@ -35,7 +39,8 @@ export default function FlaechenEinheitenManager({ einheiten, onChange, gebaeude
             keller: false,
             sat_tv: false,
             internet: 'wlan'
-        }]);
+        };
+        onChange([...einheiten, newEinheit]);
     };
 
     const handleRemove = (index) => {

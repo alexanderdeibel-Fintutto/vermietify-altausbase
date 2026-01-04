@@ -71,6 +71,8 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
             setGebaeude(initialData.gebaeude_data || [{ bezeichnung: 'Gebäude 1', lage_auf_grundstueck: '', eigene_hausnummer: '', gebaeude_standard: 'mittel' }]);
             if (editingUnitIndex !== null && initialData.flaechen_einheiten) {
                 setFlaechenEinheiten([initialData.flaechen_einheiten[editingUnitIndex]]);
+            } else if (section === 'flaechen' && editingUnitIndex === null) {
+                setFlaechenEinheiten([]);
             } else {
                 setFlaechenEinheiten(initialData.flaechen_einheiten || []);
             }
