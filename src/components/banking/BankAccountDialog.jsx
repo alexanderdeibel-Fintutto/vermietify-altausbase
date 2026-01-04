@@ -15,8 +15,10 @@ import { RefreshCw, TrendingUp, TrendingDown, Upload } from 'lucide-react';
 export default function BankAccountDialog({ open, onOpenChange, account, transactions, onSync, onImport, isSyncing }) {
     const sortedTransactions = [...(transactions || [])].sort((a, b) => {
         try {
+            if (!a.transaction_date || !b.transaction_date) return 0;
             const dateA = parseISO(a.transaction_date);
             const dateB = parseISO(b.transaction_date);
+            if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) return 0;
             return dateB.getTime() - dateA.getTime();
         } catch {
             return 0;
@@ -144,9 +146,18 @@ export default function BankAccountDialog({ open, onOpenChange, account, transac
                                                     )}
                                                 </div>
                                                 <div className="flex items-center gap-4 text-sm text-slate-500">
-                                                    <span>
-                                                        {format(parseISO(transaction.transaction_date), 'dd.MM.yyyy', { locale: de })}
-                                                    </span>
+                                                    {transaction.transaction_date && (
+                                                        <span>
+                                                            {(() => {
+                                                                try {
+                                                                    const date = parseISO(transaction.transaction_date);
+                                                                    return isNaN(date.getTime()) ? transaction.transaction_date : format(date, 'dd.MM.yyyy', { locale: de });
+                                                                } catch {
+                                                                    return transaction.transaction_date;
+                                                                }
+                                                            })()}
+                                                        </span>
+                                                    )}
                                                     {transaction.sender_receiver && (
                                                         <span>• {transaction.sender_receiver}</span>
                                                     )}
