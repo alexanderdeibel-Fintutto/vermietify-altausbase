@@ -421,10 +421,10 @@ export default function BuildingDetail() {
             <DetailSection 
                 title="Grundbuch"
                 icon={FileText}
-                summary={building.grundbuch?.deckblatt?.blatt_nummer || building.grundbuch?.deckblatt?.amtsgericht ? `${building.grundbuch?.deckblatt?.amtsgericht ? building.grundbuch.deckblatt.amtsgericht : ''}${building.grundbuch?.deckblatt?.blatt_nummer ? (building.grundbuch?.deckblatt?.amtsgericht ? ' • Blatt ' : 'Blatt ') + building.grundbuch.deckblatt.blatt_nummer : ''}${building.grundbuch?.bestandsverzeichnis?.length > 0 ? ' • ' + building.grundbuch.bestandsverzeichnis.length + ' Einträge' : ''}` : null}
+                summary={building.grundbuch?.deckblatt?.blatt_nummer || building.grundbuch?.deckblatt?.amtsgericht ? `${building.grundbuch?.deckblatt?.amtsgericht ? building.grundbuch.deckblatt.amtsgericht : ''}${building.grundbuch?.deckblatt?.blatt_nummer ? (building.grundbuch?.deckblatt?.amtsgericht ? ' • Blatt ' : 'Blatt ') + building.grundbuch.deckblatt.blatt_nummer : ''}${building.grundbuch?.bestandsverzeichnis?.length > 0 ? ' • ' + building.grundbuch.bestandsverzeichnis.length + ' Einträge' : ''}` : 'Noch keine Grundbuchdaten hinterlegt'}
                 onEdit={() => handleEditSection('grundbuch')}
             >
-                {building.grundbuch?.deckblatt && (
+                {building.grundbuch?.deckblatt ? (
                     <>
                         <div className="col-span-full">
                             <h4 className="font-semibold text-slate-800 mb-2">Deckblatt</h4>
@@ -438,6 +438,10 @@ export default function BuildingDetail() {
                             value={building.grundbuch.deckblatt.datum ? format(parseISO(building.grundbuch.deckblatt.datum), 'dd.MM.yyyy', { locale: de }) : null} 
                         />
                     </>
+                ) : (
+                    <div className="col-span-full text-center py-4 text-slate-500">
+                        Noch keine Grundbuchdaten hinterlegt
+                    </div>
                 )}
                 {building.grundbuch?.abteilung1 && (
                     <>
