@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 
 export default function CashBookDialog({ open, onOpenChange, account }) {
     const [showForm, setShowForm] = useState(false);
+    const [editingTransaction, setEditingTransaction] = useState(null);
     const { register, handleSubmit, reset, watch } = useForm({
         defaultValues: {
             transaction_date: format(new Date(), 'yyyy-MM-dd'),
@@ -42,26 +43,69 @@ export default function CashBookDialog({ open, onOpenChange, account }) {
         enabled: !!account?.id && open
     });
 
+    React.useEffect(() => {
+        if (editingTransaction) {
+            reset({
+                transaction_date: editingTransaction.transaction_date,
+                amount: editingTransaction.amount.toString(),
+                description: editingTransaction.description,
+                sender_receiver: editingTransaction.sender_receiver || '',
+                reference: editingTransaction.reference || ''
+            });
+            setShowForm(true);
+        }
+    }, [editingTransaction, reset]);
+
     const createTransactionMutation = useMutation({
         mutationFn: async (data) => {
-            // Create transaction
-            const transaction = await base44.entities.BankTransaction.create(data);
-            
-            // Update account balance
-            const newBalance = (account.current_balance || 0) + data.amount;
-            await base44.entities.BankAccount.update(account.id, {
-                current_balance: newBalance
-            });
-            
-            return transaction;
+            if (editingTransaction) {
+                // Update transaction
+                const oldAmount = editingTransaction.amount;
+                await base44.entities.BankTransaction.update(editingTransaction.id, data);
+                
+                // Update account balance (remove old amount, add new amount)
+                const balanceDiff = data.amount - oldAmount;
+                const newBalance = (account.current_balance || 0) + balanceDiff;
+                await base44.entities.BankAccount.update(account.id, {
+                    current_balance: newBalance
+                });
+            } else {
+                // Create transaction
+                await base44.entities.BankTransaction.create(data);
+                
+                // Update account balance
+                const newBalance = (account.current_balance || 0) + data.amount;
+                await base44.entities.BankAccount.update(account.id, {
+                    current_balance: newBalance
+                });
+            }
         },
         onSuccess: async () => {
             await queryClient.refetchQueries({ queryKey: ['cashBookTransactions', account.id] });
             await queryClient.refetchQueries({ queryKey: ['bankTransactions'] });
             await queryClient.refetchQueries({ queryKey: ['bankAccounts'] });
             setShowForm(false);
+            setEditingTransaction(null);
             reset();
-            toast.success('Kassenbuchung hinzugefügt');
+            toast.success(editingTransaction ? 'Kassenbuchung aktualisiert' : 'Kassenbuchung hinzugefügt');
+        }
+    });
+
+    const deleteTransactionMutation = useMutation({
+        mutationFn: async (transaction) => {
+            await base44.entities.BankTransaction.delete(transaction.id);
+            
+            // Update account balance (subtract deleted transaction amount)
+            const newBalance = (account.current_balance || 0) - transaction.amount;
+            await base44.entities.BankAccount.update(account.id, {
+                current_balance: newBalance
+            });
+        },
+        onSuccess: async () => {
+            await queryClient.refetchQueries({ queryKey: ['cashBookTransactions', account.id] });
+            await queryClient.refetchQueries({ queryKey: ['bankTransactions'] });
+            await queryClient.refetchQueries({ queryKey: ['bankAccounts'] });
+            toast.success('Kassenbuchung gelöscht');
         }
     });
 
@@ -156,13 +200,16 @@ export default function CashBookDialog({ open, onOpenChange, account }) {
                         <Card className="p-4 border-2 border-emerald-200 bg-emerald-50/50">
                             <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h3 className="font-semibold text-slate-800">Neue Buchung</h3>
+                                    <h3 className="font-semibold text-slate-800">
+                                        {editingTransaction ? 'Buchung bearbeiten' : 'Neue Buchung'}
+                                    </h3>
                                     <Button 
                                         type="button" 
                                         variant="ghost" 
                                         size="sm"
                                         onClick={() => {
                                             setShowForm(false);
+                                            setEditingTransaction(null);
                                             reset();
                                         }}
                                     >
@@ -220,33 +267,68 @@ export default function CashBookDialog({ open, onOpenChange, account }) {
                                         />
                                     </div>
                                 </div>
-                                <div className="flex justify-end gap-2 pt-2">
-                                    <Button 
-                                        type="button" 
-                                        variant="outline" 
-                                        onClick={() => {
-                                            setShowForm(false);
-                                            reset();
-                                        }}
-                                    >
-                                        Abbrechen
-                                    </Button>
-                                    <Button 
-                                        type="submit" 
-                                        className="bg-emerald-600 hover:bg-emerald-700"
-                                        disabled={createTransactionMutation.isPending}
-                                    >
-                                        {createTransactionMutation.isPending && (
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                        )}
-                                        Buchen
-                                    </Button>
+                                <div className="flex justify-between pt-2">
+                                    {editingTransaction && (
+                                        <Button 
+                                            type="button" 
+                                            variant="outline"
+                                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            onClick={() => {
+                                                if (confirm('Möchten Sie diese Buchung wirklich löschen?')) {
+                                                    deleteTransactionMutation.mutate(editingTransaction);
+                                                    setShowForm(false);
+                                                    setEditingTransaction(null);
+                                                    reset();
+                                                }
+                                            }}
+                                            disabled={deleteTransactionMutation.isPending}
+                                        >
+                                            {deleteTransactionMutation.isPending ? (
+                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            ) : (
+                                                'Löschen'
+                                            )}
+                                        </Button>
+                                    )}
+                                    <div className="flex gap-2 ml-auto">
+                                        <Button 
+                                            type="button" 
+                                            variant="outline" 
+                                            onClick={() => {
+                                                setShowForm(false);
+                                                setEditingTransaction(null);
+                                                reset();
+                                            }}
+                                        >
+                                            Abbrechen
+                                        </Button>
+                                        <Button 
+                                            type="submit" 
+                                            className="bg-emerald-600 hover:bg-emerald-700"
+                                            disabled={createTransactionMutation.isPending}
+                                        >
+                                            {createTransactionMutation.isPending && (
+                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            )}
+                                            {editingTransaction ? 'Speichern' : 'Buchen'}
+                                        </Button>
+                                    </div>
                                 </div>
                             </form>
                         </Card>
                     ) : (
                         <Button 
-                            onClick={() => setShowForm(true)}
+                            onClick={() => {
+                                setEditingTransaction(null);
+                                reset({
+                                    transaction_date: format(new Date(), 'yyyy-MM-dd'),
+                                    amount: '',
+                                    description: '',
+                                    sender_receiver: '',
+                                    reference: ''
+                                });
+                                setShowForm(true);
+                            }}
                             className="w-full bg-emerald-600 hover:bg-emerald-700"
                         >
                             <Plus className="w-4 h-4 mr-2" />
@@ -266,7 +348,11 @@ export default function CashBookDialog({ open, onOpenChange, account }) {
                         ) : (
                             <div className="space-y-2">
                                 {sortedTransactions.map((transaction) => (
-                                    <Card key={transaction.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                    <Card 
+                                        key={transaction.id} 
+                                        className="p-4 hover:bg-slate-50 transition-colors cursor-pointer"
+                                        onClick={() => setEditingTransaction(transaction)}
+                                    >
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-1">
