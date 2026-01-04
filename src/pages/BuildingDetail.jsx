@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText, Receipt } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText, Receipt, Plug } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import BuildingForm from '@/components/buildings/BuildingForm';
 import PropertyTaxForm from '@/components/property-tax/PropertyTaxForm';
+import SupplierForm from '@/components/suppliers/SupplierForm';
 
 const DetailSection = ({ title, icon: Icon, children, onEdit, summary }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -91,6 +92,8 @@ export default function BuildingDetail() {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [propertyTaxFormOpen, setPropertyTaxFormOpen] = useState(false);
     const [editingPropertyTax, setEditingPropertyTax] = useState(null);
+    const [supplierFormOpen, setSupplierFormOpen] = useState(false);
+    const [editingSupplier, setEditingSupplier] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: building, isLoading } = useQuery({
@@ -106,6 +109,14 @@ export default function BuildingDetail() {
         queryKey: ['propertyTaxes', buildingId],
         queryFn: async () => {
             return await base44.entities.PropertyTax.filter({ building_id: buildingId });
+        },
+        enabled: !!buildingId
+    });
+
+    const { data: suppliers = [] } = useQuery({
+        queryKey: ['suppliers', buildingId],
+        queryFn: async () => {
+            return await base44.entities.Supplier.filter({ building_id: buildingId });
         },
         enabled: !!buildingId
     });
@@ -148,6 +159,31 @@ export default function BuildingDetail() {
         mutationFn: (id) => base44.entities.PropertyTax.delete(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['propertyTaxes'] });
+        }
+    });
+
+    const createSupplierMutation = useMutation({
+        mutationFn: (data) => base44.entities.Supplier.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+            setSupplierFormOpen(false);
+            setEditingSupplier(null);
+        }
+    });
+
+    const updateSupplierMutation = useMutation({
+        mutationFn: ({ id, data }) => base44.entities.Supplier.update(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+            setSupplierFormOpen(false);
+            setEditingSupplier(null);
+        }
+    });
+
+    const deleteSupplierMutation = useMutation({
+        mutationFn: (id) => base44.entities.Supplier.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['suppliers'] });
         }
     });
 
@@ -205,6 +241,24 @@ export default function BuildingDetail() {
     const handleEditPropertyTax = (tax) => {
         setEditingPropertyTax(tax);
         setPropertyTaxFormOpen(true);
+    };
+
+    const handleSupplierSubmit = (data) => {
+        if (editingSupplier) {
+            updateSupplierMutation.mutate({ id: editingSupplier.id, data });
+        } else {
+            createSupplierMutation.mutate(data);
+        }
+    };
+
+    const handleAddSupplier = () => {
+        setEditingSupplier(null);
+        setSupplierFormOpen(true);
+    };
+
+    const handleEditSupplier = (supplier) => {
+        setEditingSupplier(supplier);
+        setSupplierFormOpen(true);
     };
 
     return (
@@ -626,6 +680,105 @@ export default function BuildingDetail() {
                 </div>
             </DetailSection>
 
+            {/* Versorger */}
+            <DetailSection 
+                title="Versorger"
+                icon={Plug}
+                summary={suppliers.length > 0 ? `${suppliers.length} Versorger hinterlegt` : 'Noch keine Versorger hinterlegt'}
+            >
+                <div className="col-span-full">
+                    {suppliers.length > 0 ? (
+                        <div className="space-y-3">
+                            {suppliers.map((supplier) => (
+                                <Card key={supplier.id} className="p-4">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <h4 className="font-semibold text-slate-800">
+                                                    {supplier.name}
+                                                </h4>
+                                                <span className="text-xs px-2 py-1 rounded bg-emerald-100 text-emerald-700">
+                                                    {supplier.supplier_type}
+                                                </span>
+                                            </div>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                                                {supplier.customer_number && (
+                                                    <div>
+                                                        <p className="text-slate-500">Kundennummer</p>
+                                                        <p className="font-medium text-slate-800">{supplier.customer_number}</p>
+                                                    </div>
+                                                )}
+                                                {supplier.phone && (
+                                                    <div>
+                                                        <p className="text-slate-500">Telefon</p>
+                                                        <p className="font-medium text-slate-800">{supplier.phone}</p>
+                                                    </div>
+                                                )}
+                                                {supplier.email && (
+                                                    <div>
+                                                        <p className="text-slate-500">E-Mail</p>
+                                                        <p className="font-medium text-slate-800">{supplier.email}</p>
+                                                    </div>
+                                                )}
+                                                {supplier.address && (
+                                                    <div className="col-span-2">
+                                                        <p className="text-slate-500">Adresse</p>
+                                                        <p className="font-medium text-slate-800">{supplier.address}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleEditSupplier(supplier)}
+                                                className="h-8 px-2 text-slate-600 hover:text-slate-800"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => {
+                                                    if (confirm('Möchten Sie diesen Versorger wirklich löschen?')) {
+                                                        deleteSupplierMutation.mutate(supplier.id);
+                                                    }
+                                                }}
+                                                className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </Card>
+                            ))}
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleAddSupplier}
+                                className="w-full"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Weiteren Versorger hinzufügen
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="text-center py-8">
+                            <p className="text-slate-500 mb-4">Noch keine Versorger hinterlegt</p>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleAddSupplier}
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Ersten Versorger anlegen
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            </DetailSection>
+
             {/* Form & Delete Dialog */}
             <BuildingForm
                 open={formOpen}
@@ -664,15 +817,27 @@ export default function BuildingDetail() {
                     </AlertDialog>
 
                     <PropertyTaxForm
-                    open={propertyTaxFormOpen}
-                    onOpenChange={(open) => {
-                    setPropertyTaxFormOpen(open);
-                    if (!open) setEditingPropertyTax(null);
-                    }}
-                    onSubmit={handlePropertyTaxSubmit}
-                    initialData={editingPropertyTax}
-                    isLoading={createPropertyTaxMutation.isPending || updatePropertyTaxMutation.isPending}
-                    buildingId={buildingId}
+                        open={propertyTaxFormOpen}
+                        onOpenChange={(open) => {
+                            setPropertyTaxFormOpen(open);
+                            if (!open) setEditingPropertyTax(null);
+                        }}
+                        onSubmit={handlePropertyTaxSubmit}
+                        initialData={editingPropertyTax}
+                        isLoading={createPropertyTaxMutation.isPending || updatePropertyTaxMutation.isPending}
+                        buildingId={buildingId}
+                    />
+
+                    <SupplierForm
+                        open={supplierFormOpen}
+                        onOpenChange={(open) => {
+                            setSupplierFormOpen(open);
+                            if (!open) setEditingSupplier(null);
+                        }}
+                        onSubmit={handleSupplierSubmit}
+                        initialData={editingSupplier}
+                        isLoading={createSupplierMutation.isPending || updateSupplierMutation.isPending}
+                        buildingId={buildingId}
                     />
                     </div>
                     );
