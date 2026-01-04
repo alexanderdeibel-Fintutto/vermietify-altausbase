@@ -203,14 +203,14 @@ export default function BuildingDetail() {
             </DetailSection>
 
             {/* Gebäude */}
-            {building.gebaeude_data && building.gebaeude_data.length > 0 && (
-                <DetailSection 
-                    title="Gebäude"
-                    icon={BuildingIcon}
-                    summary={`${building.gebaeude_data.length} Gebäude auf dem Grundstück`}
-                    onEdit={() => handleEditSection('gebaeude')}
-                >
-                    {building.gebaeude_data.map((geb, index) => (
+            <DetailSection 
+                title="Gebäude"
+                icon={BuildingIcon}
+                summary={building.gebaeude_data && building.gebaeude_data.length > 0 ? `${building.gebaeude_data.length} Gebäude auf dem Grundstück` : 'Noch keine Gebäude angelegt'}
+                onEdit={() => handleEditSection('gebaeude')}
+            >
+                {building.gebaeude_data && building.gebaeude_data.length > 0 ? (
+                    building.gebaeude_data.map((geb, index) => (
                         <div key={index} className="col-span-full">
                             <div className="bg-slate-50 rounded-lg p-4 space-y-2">
                                 <h4 className="font-semibold text-slate-800">{geb.bezeichnung}</h4>
@@ -225,9 +225,13 @@ export default function BuildingDetail() {
                                 )}
                             </div>
                         </div>
-                    ))}
-                </DetailSection>
-            )}
+                    ))
+                ) : (
+                    <div className="col-span-full text-center py-4 text-slate-500">
+                        Noch keine Gebäude angelegt
+                    </div>
+                )}
+            </DetailSection>
 
             {/* Baudaten */}
             <DetailSection 
