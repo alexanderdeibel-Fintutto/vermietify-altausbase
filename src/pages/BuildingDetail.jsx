@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText, Receipt, Plug } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText, Receipt, Plug, Gauge } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import {
 import BuildingForm from '@/components/buildings/BuildingForm';
 import PropertyTaxForm from '@/components/property-tax/PropertyTaxForm';
 import SupplierForm from '@/components/suppliers/SupplierForm';
+import MeterForm from '@/components/meters/MeterForm';
 
 const DetailSection = ({ title, icon: Icon, children, onEdit, summary }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -94,6 +95,8 @@ export default function BuildingDetail() {
     const [editingPropertyTax, setEditingPropertyTax] = useState(null);
     const [supplierFormOpen, setSupplierFormOpen] = useState(false);
     const [editingSupplier, setEditingSupplier] = useState(null);
+    const [meterFormOpen, setMeterFormOpen] = useState(false);
+    const [editingMeter, setEditingMeter] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: building, isLoading } = useQuery({
@@ -117,6 +120,14 @@ export default function BuildingDetail() {
         queryKey: ['suppliers', buildingId],
         queryFn: async () => {
             return await base44.entities.Supplier.filter({ building_id: buildingId });
+        },
+        enabled: !!buildingId
+    });
+
+    const { data: meters = [] } = useQuery({
+        queryKey: ['meters', buildingId],
+        queryFn: async () => {
+            return await base44.entities.Meter.filter({ building_id: buildingId });
         },
         enabled: !!buildingId
     });
@@ -184,6 +195,31 @@ export default function BuildingDetail() {
         mutationFn: (id) => base44.entities.Supplier.delete(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+        }
+    });
+
+    const createMeterMutation = useMutation({
+        mutationFn: (data) => base44.entities.Meter.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['meters'] });
+            setMeterFormOpen(false);
+            setEditingMeter(null);
+        }
+    });
+
+    const updateMeterMutation = useMutation({
+        mutationFn: ({ id, data }) => base44.entities.Meter.update(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['meters'] });
+            setMeterFormOpen(false);
+            setEditingMeter(null);
+        }
+    });
+
+    const deleteMeterMutation = useMutation({
+        mutationFn: (id) => base44.entities.Meter.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['meters'] });
         }
     });
 
@@ -259,6 +295,24 @@ export default function BuildingDetail() {
     const handleEditSupplier = (supplier) => {
         setEditingSupplier(supplier);
         setSupplierFormOpen(true);
+    };
+
+    const handleMeterSubmit = (data) => {
+        if (editingMeter) {
+            updateMeterMutation.mutate({ id: editingMeter.id, data });
+        } else {
+            createMeterMutation.mutate(data);
+        }
+    };
+
+    const handleAddMeter = () => {
+        setEditingMeter(null);
+        setMeterFormOpen(true);
+    };
+
+    const handleEditMeter = (meter) => {
+        setEditingMeter(meter);
+        setMeterFormOpen(true);
     };
 
     return (
@@ -779,6 +833,101 @@ export default function BuildingDetail() {
                 </div>
             </DetailSection>
 
+            {/* Zähler */}
+            <DetailSection 
+                title="Zähler"
+                icon={Gauge}
+                summary={meters.length > 0 ? `${meters.length} Zähler erfasst` : 'Noch keine Zähler erfasst'}
+            >
+                <div className="col-span-full">
+                    {meters.length > 0 ? (
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="border-b border-slate-200">
+                                        <th className="text-left py-2 px-3 text-xs font-medium text-slate-600">Art</th>
+                                        <th className="text-left py-2 px-3 text-xs font-medium text-slate-600">Nummer</th>
+                                        <th className="text-left py-2 px-3 text-xs font-medium text-slate-600">Ort</th>
+                                        <th className="text-left py-2 px-3 text-xs font-medium text-slate-600">Beschreibung</th>
+                                        <th className="text-right py-2 px-3 text-xs font-medium text-slate-600">Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {meters.map((meter) => {
+                                        let locationText = 'Gesamtes Objekt';
+                                        if (meter.location_type === 'gebaeude' && meter.gebaeude_index !== null) {
+                                            locationText = building.gebaeude_data?.[meter.gebaeude_index]?.bezeichnung || `Gebäude ${meter.gebaeude_index + 1}`;
+                                        } else if (meter.location_type === 'unit' && meter.unit_index !== null) {
+                                            const einheit = building.flaechen_einheiten?.[meter.unit_index];
+                                            const gebaeudeBezeichnung = building.gebaeude_data?.[einheit?.gebaeude_index]?.bezeichnung || 'Gebäude';
+                                            locationText = `${gebaeudeBezeichnung} → ${einheit?.bezeichnung || `Einheit ${meter.unit_index + 1}`}`;
+                                        }
+
+                                        return (
+                                            <tr key={meter.id} className="border-b border-slate-100 hover:bg-slate-50">
+                                                <td className="py-3 px-3 text-sm text-slate-800 font-medium">{meter.meter_type}</td>
+                                                <td className="py-3 px-3 text-sm text-slate-600">{meter.meter_number}</td>
+                                                <td className="py-3 px-3 text-sm text-slate-600">{locationText}</td>
+                                                <td className="py-3 px-3 text-sm text-slate-600 max-w-[200px] truncate" title={meter.location_description}>
+                                                    {meter.location_description || '-'}
+                                                </td>
+                                                <td className="py-3 px-3 text-right">
+                                                    <div className="flex justify-end gap-1">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => handleEditMeter(meter)}
+                                                            className="h-7 px-2 text-slate-600 hover:text-slate-800"
+                                                        >
+                                                            <Edit className="w-3.5 h-3.5" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                if (confirm('Möchten Sie diesen Zähler wirklich löschen?')) {
+                                                                    deleteMeterMutation.mutate(meter.id);
+                                                                }
+                                                            }}
+                                                            className="h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                        >
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        </Button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                            <div className="mt-4">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleAddMeter}
+                                    className="w-full"
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Weiteren Zähler hinzufügen
+                                </Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-center py-8">
+                            <p className="text-slate-500 mb-4">Noch keine Zähler erfasst</p>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleAddMeter}
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Ersten Zähler anlegen
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            </DetailSection>
+
             {/* Form & Delete Dialog */}
             <BuildingForm
                 open={formOpen}
@@ -838,6 +987,18 @@ export default function BuildingDetail() {
                         initialData={editingSupplier}
                         isLoading={createSupplierMutation.isPending || updateSupplierMutation.isPending}
                         buildingId={buildingId}
+                    />
+
+                    <MeterForm
+                        open={meterFormOpen}
+                        onOpenChange={(open) => {
+                            setMeterFormOpen(open);
+                            if (!open) setEditingMeter(null);
+                        }}
+                        onSubmit={handleMeterSubmit}
+                        initialData={editingMeter}
+                        isLoading={createMeterMutation.isPending || updateMeterMutation.isPending}
+                        building={building}
                     />
                     </div>
                     );
