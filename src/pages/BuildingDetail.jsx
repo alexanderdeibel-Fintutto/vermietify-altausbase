@@ -237,7 +237,33 @@ export default function BuildingDetail() {
             <DetailSection 
                 title="Flächen/Einheiten"
                 icon={Home}
-                summary={building.flaechen_einheiten && building.flaechen_einheiten.length > 0 ? `${building.flaechen_einheiten.length} Flächen/Einheiten` : 'Noch keine Flächen angelegt'}
+                summary={(() => {
+                    if (!building.flaechen_einheiten || building.flaechen_einheiten.length === 0) {
+                        return 'Noch keine Flächen angelegt';
+                    }
+
+                    const einheiten = building.flaechen_einheiten;
+                    const total = einheiten.length;
+
+                    // Zähle die verschiedenen Arten
+                    const artCounts = {};
+                    einheiten.forEach(e => {
+                        const art = e.art || 'Unbekannt';
+                        artCounts[art] = (artCounts[art] || 0) + 1;
+                    });
+
+                    // Erstelle die Zusammenfassung der Arten
+                    const artSummary = Object.entries(artCounts)
+                        .map(([art, count]) => `${count}x ${art}`)
+                        .join(', ');
+
+                    // Berechne vermietbare QM (nicht "nicht vermietbar")
+                    const vermietbareQm = einheiten
+                        .filter(e => e.art !== 'nicht vermietbar')
+                        .reduce((sum, e) => sum + (e.qm || 0), 0);
+
+                    return `${total} Flächen (${artSummary}) • ${vermietbareQm.toFixed(2)} qm vermietbar`;
+                })()}
                 onEdit={() => handleEditSection('flaechen')}
             >
                 {building.flaechen_einheiten && building.flaechen_einheiten.length > 0 ? (
