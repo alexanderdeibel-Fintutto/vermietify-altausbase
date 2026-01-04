@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText, Receipt } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import BuildingForm from '@/components/buildings/BuildingForm';
+import PropertyTaxForm from '@/components/property-tax/PropertyTaxForm';
 
 const DetailSection = ({ title, icon: Icon, children, onEdit, summary }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -88,6 +89,8 @@ export default function BuildingDetail() {
     const [editingSection, setEditingSection] = useState(null);
     const [editingUnitIndex, setEditingUnitIndex] = useState(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [propertyTaxFormOpen, setPropertyTaxFormOpen] = useState(false);
+    const [editingPropertyTax, setEditingPropertyTax] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: building, isLoading } = useQuery({
@@ -95,6 +98,14 @@ export default function BuildingDetail() {
         queryFn: async () => {
             const buildings = await base44.entities.Building.filter({ id: buildingId });
             return buildings[0];
+        },
+        enabled: !!buildingId
+    });
+
+    const { data: propertyTaxes = [] } = useQuery({
+        queryKey: ['propertyTaxes', buildingId],
+        queryFn: async () => {
+            return await base44.entities.PropertyTax.filter({ building_id: buildingId });
         },
         enabled: !!buildingId
     });
@@ -112,6 +123,31 @@ export default function BuildingDetail() {
         mutationFn: (id) => base44.entities.Building.delete(id),
         onSuccess: () => {
             window.location.href = createPageUrl('Buildings');
+        }
+    });
+
+    const createPropertyTaxMutation = useMutation({
+        mutationFn: (data) => base44.entities.PropertyTax.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['propertyTaxes'] });
+            setPropertyTaxFormOpen(false);
+            setEditingPropertyTax(null);
+        }
+    });
+
+    const updatePropertyTaxMutation = useMutation({
+        mutationFn: ({ id, data }) => base44.entities.PropertyTax.update(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['propertyTaxes'] });
+            setPropertyTaxFormOpen(false);
+            setEditingPropertyTax(null);
+        }
+    });
+
+    const deletePropertyTaxMutation = useMutation({
+        mutationFn: (id) => base44.entities.PropertyTax.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['propertyTaxes'] });
         }
     });
 
@@ -151,6 +187,24 @@ export default function BuildingDetail() {
         setEditingUnitIndex(index);
         setEditingSection('flaechen');
         setFormOpen(true);
+    };
+
+    const handlePropertyTaxSubmit = (data) => {
+        if (editingPropertyTax) {
+            updatePropertyTaxMutation.mutate({ id: editingPropertyTax.id, data });
+        } else {
+            createPropertyTaxMutation.mutate(data);
+        }
+    };
+
+    const handleAddPropertyTax = () => {
+        setEditingPropertyTax(null);
+        setPropertyTaxFormOpen(true);
+    };
+
+    const handleEditPropertyTax = (tax) => {
+        setEditingPropertyTax(tax);
+        setPropertyTaxFormOpen(true);
     };
 
     return (
@@ -471,6 +525,107 @@ export default function BuildingDetail() {
                 )}
             </DetailSection>
 
+            {/* Grundsteuer */}
+            <DetailSection 
+                title="Grundsteuer"
+                icon={Receipt}
+                summary={propertyTaxes.length > 0 ? `${propertyTaxes.length} Bescheid(e)${propertyTaxes[0]?.grundsteuer_jahresbetrag ? ' • ' + propertyTaxes[0].grundsteuer_jahresbetrag.toFixed(2) + ' €/Jahr' : ''}` : 'Noch keine Grundsteuerbescheide hinterlegt'}
+            >
+                <div className="col-span-full">
+                    {propertyTaxes.length > 0 ? (
+                        <div className="space-y-3">
+                            {propertyTaxes.map((tax) => (
+                                <Card key={tax.id} className="p-4">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <h4 className="font-semibold text-slate-800">
+                                                    {tax.grundsteuerbescheid_jahr}
+                                                </h4>
+                                                {tax.grundsteuer_typ && (
+                                                    <span className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600">
+                                                        Typ {tax.grundsteuer_typ}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                                {tax.grundsteuer_jahresbetrag && (
+                                                    <div>
+                                                        <p className="text-slate-500">Jahresbetrag</p>
+                                                        <p className="font-medium text-slate-800">{tax.grundsteuer_jahresbetrag.toFixed(2)} €</p>
+                                                    </div>
+                                                )}
+                                                {tax.grundsteuer_quartalsrate && (
+                                                    <div>
+                                                        <p className="text-slate-500">Quartalsrate</p>
+                                                        <p className="font-medium text-slate-800">{tax.grundsteuer_quartalsrate.toFixed(2)} €</p>
+                                                    </div>
+                                                )}
+                                                {tax.gemeinde_name && (
+                                                    <div>
+                                                        <p className="text-slate-500">Gemeinde</p>
+                                                        <p className="font-medium text-slate-800">{tax.gemeinde_name}</p>
+                                                    </div>
+                                                )}
+                                                {tax.grundsteuerbescheid_nummer && (
+                                                    <div>
+                                                        <p className="text-slate-500">Bescheid-Nr.</p>
+                                                        <p className="font-medium text-slate-800">{tax.grundsteuerbescheid_nummer}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleEditPropertyTax(tax)}
+                                                className="h-8 px-2 text-slate-600 hover:text-slate-800"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => {
+                                                    if (confirm('Möchten Sie diesen Grundsteuerbescheid wirklich löschen?')) {
+                                                        deletePropertyTaxMutation.mutate(tax.id);
+                                                    }
+                                                }}
+                                                className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </Card>
+                            ))}
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleAddPropertyTax}
+                                className="w-full"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Weiteren Bescheid hinzufügen
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="text-center py-8">
+                            <p className="text-slate-500 mb-4">Noch keine Grundsteuerbescheide hinterlegt</p>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleAddPropertyTax}
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Ersten Bescheid anlegen
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            </DetailSection>
+
             {/* Form & Delete Dialog */}
             <BuildingForm
                 open={formOpen}
@@ -505,8 +660,20 @@ export default function BuildingDetail() {
                             Löschen
                         </AlertDialogAction>
                     </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        </div>
-    );
+                    </AlertDialogContent>
+                    </AlertDialog>
+
+                    <PropertyTaxForm
+                    open={propertyTaxFormOpen}
+                    onOpenChange={(open) => {
+                    setPropertyTaxFormOpen(open);
+                    if (!open) setEditingPropertyTax(null);
+                    }}
+                    onSubmit={handlePropertyTaxSubmit}
+                    initialData={editingPropertyTax}
+                    isLoading={createPropertyTaxMutation.isPending || updatePropertyTaxMutation.isPending}
+                    buildingId={buildingId}
+                    />
+                    </div>
+                    );
 }
