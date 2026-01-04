@@ -25,8 +25,7 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Finanzen', href: createPageUrl('Finanzen'), icon: CreditCard, page: 'Finanzen' },
         { name: 'Rechnungen & Belege', href: createPageUrl('Invoices'), icon: FileText, page: 'Invoices' },
         { name: 'Betriebskosten', href: createPageUrl('OperatingCosts'), icon: FileText, page: 'OperatingCosts' },
-        { name: 'Bankkonten', href: createPageUrl('BankAccounts'), icon: Landmark, page: 'BankAccounts' },
-        { name: 'Bankenabgleich', href: createPageUrl('BankReconciliation'), icon: Landmark, page: 'BankReconciliation' },
+        { name: 'Bank/Kasse', href: createPageUrl('BankAccounts'), icon: Landmark, page: 'BankAccounts' },
         { name: 'Auswertungen', href: createPageUrl('Analytics'), icon: BarChart3, page: 'Analytics' },
     ];
 

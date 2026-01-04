@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Landmark, Plus, MoreVertical, Pencil, Trash2, Upload, TrendingUp, TrendingDown, Link2, RefreshCw, Undo2 } from 'lucide-react';
+import { Landmark, Plus, MoreVertical, Pencil, Trash2, Upload, TrendingUp, TrendingDown, Link2, RefreshCw, Undo2, CreditCard, ArrowLeftRight } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'sonner';
 import { parseISO } from 'date-fns';
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ import TransactionImport from '@/components/banking/TransactionImport';
 import AccountTransactionsList from '@/components/banking/AccountTransactionsList';
 import CashBookDialog from '@/components/banking/CashBookDialog';
 import BankAccountDialog from '@/components/banking/BankAccountDialog';
+import BankReconciliation from '@/pages/BankReconciliation';
 
 function BankAccountForm({ open, onOpenChange, onSubmit, initialData, isLoading }) {
     const { register, handleSubmit, reset, setValue, watch } = useForm({
@@ -449,11 +451,28 @@ export default function BankAccounts() {
 
     return (
         <div className="space-y-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-                <div className="flex-1">
-                    <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">Bankkonten</h1>
-                    <p className="text-slate-500 mt-1">{accounts.length} Konten verwalten</p>
-                </div>
+            <div className="flex-1 mb-6">
+                <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">Bank/Kasse</h1>
+                <p className="text-slate-500 mt-1">Konten und Transaktionen verwalten</p>
+            </div>
+
+            <Tabs defaultValue="accounts" className="w-full">
+                <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
+                    <TabsTrigger value="accounts" className="gap-2">
+                        <CreditCard className="w-4 h-4" />
+                        Konten
+                    </TabsTrigger>
+                    <TabsTrigger value="reconciliation" className="gap-2">
+                        <ArrowLeftRight className="w-4 h-4" />
+                        Abgleich
+                    </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="accounts" className="space-y-6">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="flex-1">
+                            <p className="text-slate-500">{accounts.length} Konten verwalten</p>
+                        </div>
                 <div className="flex gap-2 items-center">
                     <Select value={selectedAccountFilter} onValueChange={setSelectedAccountFilter}>
                         <SelectTrigger className="w-48">
