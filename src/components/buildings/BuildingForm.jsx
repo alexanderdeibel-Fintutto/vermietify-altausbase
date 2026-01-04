@@ -22,6 +22,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
         if (!initialData) return 'Neues Gebäude anlegen';
         if (!section) return 'Gebäude bearbeiten';
         const sectionTitles = {
+            name: 'Objekt umbenennen',
             lage: 'Lage bearbeiten',
             baudaten: 'Baudaten bearbeiten',
             ausstattung: 'Ausstattung bearbeiten',
@@ -32,6 +33,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
 
     const shouldShowSection = (sectionName) => {
         if (!section) return true; // Show all if no specific section
+        if (section === 'name') return sectionName === 'name'; // Only show name field
         return section === sectionName;
     };
 
@@ -68,17 +70,17 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                 </DialogHeader>
                 <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 mt-4">
                     <div className="grid grid-cols-1 gap-4">
-                       {!section && (
-                           <div>
-                               <Label htmlFor="name">Name *</Label>
-                               <Input 
-                                   id="name"
-                                   {...register('name', { required: true })}
-                                   placeholder="z.B. Mein Wohnhaus"
-                                   className={errors.name ? 'border-red-500' : ''}
-                               />
-                           </div>
-                       )}
+                        {(!section || section === 'name') && (
+                            <div>
+                                <Label htmlFor="name">Name *</Label>
+                                <Input 
+                                    id="name"
+                                    {...register('name', { required: true })}
+                                    placeholder="z.B. Mein Wohnhaus"
+                                    className={errors.name ? 'border-red-500' : ''}
+                                />
+                            </div>
+                        )}
 
                        {shouldShowSection('lage') && (
                        <>

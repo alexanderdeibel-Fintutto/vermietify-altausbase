@@ -165,13 +165,13 @@ export default function BuildingDetail() {
                 <div className="flex gap-2">
                     <Button 
                         onClick={() => {
-                            setEditingSection(null);
+                            setEditingSection('name');
                             setFormOpen(true);
                         }}
-                        className="bg-emerald-600 hover:bg-emerald-700"
+                        variant="outline"
                     >
                         <Edit className="w-4 h-4 mr-2" />
-                        Gebäude bearbeiten
+                        Umbenennen
                     </Button>
                     <Button 
                         variant="destructive"
