@@ -43,17 +43,8 @@ export default function CashBookDialog({ open, onOpenChange, account }) {
         enabled: !!account?.id && open
     });
 
-    const { data: currentAccount } = useQuery({
-        queryKey: ['bankAccount', account?.id],
-        queryFn: async () => {
-            if (!account?.id) return null;
-            const accounts = await base44.entities.BankAccount.filter({ id: account.id });
-            return accounts[0];
-        },
-        enabled: !!account?.id && open
-    });
-
-    const displayAccount = currentAccount || account;
+    // Calculate actual balance from transactions
+    const actualBalance = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
 
     React.useEffect(() => {
         if (editingTransaction) {
@@ -165,13 +156,13 @@ export default function CashBookDialog({ open, onOpenChange, account }) {
                 <DialogHeader>
                     <div className="flex items-center justify-between">
                         <div>
-                            <DialogTitle className="text-2xl">{displayAccount?.name}</DialogTitle>
+                            <DialogTitle className="text-2xl">{account?.name}</DialogTitle>
                             <p className="text-sm text-slate-500 mt-1">Kassenbuchungen</p>
                         </div>
                         <div className="text-right">
                             <p className="text-sm text-slate-500">Aktueller Stand</p>
                             <p className="text-2xl font-bold text-slate-800">
-                                {displayAccount?.current_balance?.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                                {actualBalance.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
                             </p>
                         </div>
                     </div>

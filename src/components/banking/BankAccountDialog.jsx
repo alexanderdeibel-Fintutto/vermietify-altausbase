@@ -34,6 +34,9 @@ export default function BankAccountDialog({ open, onOpenChange, account, transac
         return acc;
     }, { income: 0, expenses: 0 });
 
+    // Calculate actual balance from transactions
+    const actualBalance = sortedTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+
     const hasFinAPIConnection = account?.finapi_connection_id;
 
     return (
@@ -56,7 +59,7 @@ export default function BankAccountDialog({ open, onOpenChange, account, transac
                         <div className="text-right">
                             <p className="text-sm text-slate-500">Aktueller Stand</p>
                             <p className="text-2xl font-bold text-slate-800">
-                                {account?.current_balance?.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                                {actualBalance.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
                             </p>
                         </div>
                     </div>
