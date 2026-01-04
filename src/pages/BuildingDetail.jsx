@@ -202,6 +202,33 @@ export default function BuildingDetail() {
                 <DetailItem label="Garagen/Stellplätze" value={building.garages_parking_spaces} />
             </DetailSection>
 
+            {/* Gebäude */}
+            {building.gebaeude_data && building.gebaeude_data.length > 0 && (
+                <DetailSection 
+                    title="Gebäude"
+                    icon={BuildingIcon}
+                    summary={`${building.gebaeude_data.length} Gebäude auf dem Grundstück`}
+                    onEdit={() => handleEditSection('gebaeude')}
+                >
+                    {building.gebaeude_data.map((geb, index) => (
+                        <div key={index} className="col-span-full">
+                            <div className="bg-slate-50 rounded-lg p-4 space-y-2">
+                                <h4 className="font-semibold text-slate-800">{geb.bezeichnung}</h4>
+                                {geb.lage_auf_grundstueck && (
+                                    <p className="text-sm text-slate-600">Lage: {geb.lage_auf_grundstueck}</p>
+                                )}
+                                {geb.eigene_hausnummer && (
+                                    <p className="text-sm text-slate-600">Hausnummer: {geb.eigene_hausnummer}</p>
+                                )}
+                                {geb.gebaeude_standard && (
+                                    <p className="text-sm text-slate-600">Standard: {geb.gebaeude_standard}</p>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </DetailSection>
+            )}
+
             {/* Baudaten */}
             <DetailSection 
                 title="Baudaten"
