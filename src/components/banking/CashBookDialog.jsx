@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus, TrendingUp, TrendingDown, X } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function CashBookDialog({ open, onOpenChange, account, transactions }) {
+export default function CashBookDialog({ open, onOpenChange, account }) {
     const [showForm, setShowForm] = useState(false);
     const { register, handleSubmit, reset, watch } = useForm({
         defaultValues: {
@@ -31,6 +31,16 @@ export default function CashBookDialog({ open, onOpenChange, account, transactio
         }
     });
     const queryClient = useQueryClient();
+
+    const { data: transactions = [] } = useQuery({
+        queryKey: ['cashBookTransactions', account?.id],
+        queryFn: async () => {
+            if (!account?.id) return [];
+            const allTransactions = await base44.entities.BankTransaction.filter({ account_id: account.id });
+            return allTransactions;
+        },
+        enabled: !!account?.id && open
+    });
 
     const createTransactionMutation = useMutation({
         mutationFn: async (data) => {
@@ -46,6 +56,7 @@ export default function CashBookDialog({ open, onOpenChange, account, transactio
             return transaction;
         },
         onSuccess: async () => {
+            await queryClient.refetchQueries({ queryKey: ['cashBookTransactions', account.id] });
             await queryClient.refetchQueries({ queryKey: ['bankTransactions'] });
             await queryClient.refetchQueries({ queryKey: ['bankAccounts'] });
             setShowForm(false);

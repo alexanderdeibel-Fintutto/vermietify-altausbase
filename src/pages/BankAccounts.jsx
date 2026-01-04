@@ -678,7 +678,6 @@ export default function BankAccounts() {
                                             open={cashBookOpen}
                                             onOpenChange={setCashBookOpen}
                                             account={selectedCashAccount}
-                                            transactions={selectedCashAccount ? accountTransactionsMap.get(selectedCashAccount.id) || [] : []}
                                         />
 
                                         <BankAccountDialog
