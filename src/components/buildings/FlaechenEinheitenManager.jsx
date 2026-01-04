@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Plus, Trash2 } from 'lucide-react';
 
 export default function FlaechenEinheitenManager({ einheiten, onChange, gebaeude }) {
-    const [artTypes, setArtTypes] = React.useState(['Wohn', 'Gewerbe', 'Neben']);
+    const [artTypes, setArtTypes] = React.useState(['Wohneinheit', 'Gewerbe', 'Ferienwohnung', 'kurzfristige Vermietung', 'Nebenfläche', 'nicht vermietbar']);
     const [newArtType, setNewArtType] = React.useState('');
     const [showAddArt, setShowAddArt] = React.useState(null);
 
@@ -23,7 +23,7 @@ export default function FlaechenEinheitenManager({ einheiten, onChange, gebaeude
 
     const handleAdd = () => {
         onChange([...einheiten, { 
-            art: 'Wohn', 
+            art: 'Wohneinheit', 
             gebaeude_index: gebaeude.length > 0 ? 0 : null, 
             etage: 0, 
             lage: 'mitte',
