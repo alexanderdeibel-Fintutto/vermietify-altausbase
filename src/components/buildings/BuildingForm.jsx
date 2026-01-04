@@ -11,7 +11,18 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2 } from 'lucide-react';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Loader2, Trash2 } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 import GebaeudeManager from './GebaeudeManager';
 import FlaechenEinheitenManager from './FlaechenEinheitenManager';
 
@@ -22,6 +33,10 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
     
     const [gebaeude, setGebaeude] = React.useState([]);
     const [flaechenEinheiten, setFlaechenEinheiten] = React.useState([]);
+    const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+    const [checkingDependencies, setCheckingDependencies] = React.useState(false);
+    const [dependencies, setDependencies] = React.useState(null);
+    const [deleting, setDeleting] = React.useState(false);
 
     const getDialogTitle = () => {
         if (!initialData) return 'Neues Objekt anlegen';
@@ -85,6 +100,45 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
             primary_energy_demand: data.primary_energy_demand ? parseFloat(data.primary_energy_demand) : null,
             final_energy_demand: data.final_energy_demand ? parseFloat(data.final_energy_demand) : null,
         });
+    };
+
+    const handleDeleteClick = async () => {
+        if (!initialData || editingUnitIndex === null) return;
+        
+        setCheckingDependencies(true);
+        try {
+            const response = await base44.functions.invoke('checkFlaechenEinheitDependencies', {
+                buildingId: initialData.id,
+                unitIndex: editingUnitIndex
+            });
+            
+            setDependencies(response.data.dependencies);
+            setDeleteDialogOpen(true);
+        } catch (error) {
+            alert('Fehler beim Überprüfen der Verknüpfungen: ' + error.message);
+        } finally {
+            setCheckingDependencies(false);
+        }
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!initialData || editingUnitIndex === null) return;
+        
+        setDeleting(true);
+        try {
+            await base44.functions.invoke('deleteFlaechenEinheit', {
+                buildingId: initialData.id,
+                unitIndex: editingUnitIndex
+            });
+            
+            setDeleteDialogOpen(false);
+            onOpenChange(false);
+            window.location.reload();
+        } catch (error) {
+            alert('Fehler beim Löschen: ' + error.message);
+        } finally {
+            setDeleting(false);
+        }
     };
 
     return (
@@ -607,21 +661,99 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                         )}
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-4">
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                            Abbrechen
-                        </Button>
-                        <Button 
-                            type="submit" 
-                            className="bg-emerald-600 hover:bg-emerald-700"
-                            disabled={isLoading}
-                        >
-                            {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            {initialData ? 'Speichern' : 'Anlegen'}
-                        </Button>
+                    <div className="flex justify-between items-center gap-3 pt-4">
+                        <div>
+                            {editingUnitIndex !== null && initialData && (
+                                <Button 
+                                    type="button" 
+                                    variant="outline"
+                                    onClick={handleDeleteClick}
+                                    disabled={checkingDependencies}
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                                >
+                                    {checkingDependencies ? (
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                    )}
+                                    Fläche löschen
+                                </Button>
+                            )}
+                        </div>
+                        <div className="flex gap-3">
+                            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                                Abbrechen
+                            </Button>
+                            <Button 
+                                type="submit" 
+                                className="bg-emerald-600 hover:bg-emerald-700"
+                                disabled={isLoading}
+                            >
+                                {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                {initialData ? 'Speichern' : 'Anlegen'}
+                            </Button>
+                        </div>
                     </div>
                 </form>
-            </DialogContent>
-        </Dialog>
-    );
-}
+                </DialogContent>
+
+                <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Fläche/Einheit löschen?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {dependencies?.canDelete ? (
+                                <div className="space-y-2">
+                                    <p>Möchten Sie diese Fläche wirklich löschen?</p>
+                                    {dependencies.warnings?.length > 0 && (
+                                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-2">
+                                            <p className="text-sm text-yellow-800 font-medium">Warnung:</p>
+                                            {dependencies.warnings.map((warning, i) => (
+                                                <p key={i} className="text-sm text-yellow-700">{warning}</p>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    <p className="text-red-600 font-medium">Diese Fläche kann nicht gelöscht werden!</p>
+                                    <p className="text-sm text-slate-600">Die Fläche ist mit folgenden Daten verknüpft:</p>
+                                    <ul className="text-sm text-slate-600 list-disc list-inside space-y-1">
+                                        {dependencies?.contracts?.length > 0 && (
+                                            <li>{dependencies.contracts.length} Mietvertrag(e)</li>
+                                        )}
+                                        {dependencies?.payments?.length > 0 && (
+                                            <li>{dependencies.payments.length} Zahlung(en)</li>
+                                        )}
+                                        {dependencies?.financialItems?.length > 0 && (
+                                            <li>{dependencies.financialItems.length} Finanzposten</li>
+                                        )}
+                                        {dependencies?.operatingCostItems?.length > 0 && (
+                                            <li>{dependencies.operatingCostItems.length} Betriebskostenposten</li>
+                                        )}
+                                    </ul>
+                                    <p className="text-sm text-slate-600 mt-2">
+                                        Bitte entfernen Sie zuerst diese Verknüpfungen, bevor Sie die Fläche löschen.
+                                    </p>
+                                </div>
+                            )}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={deleting}>Abbrechen</AlertDialogCancel>
+                        {dependencies?.canDelete && (
+                            <AlertDialogAction
+                                onClick={handleConfirmDelete}
+                                disabled={deleting}
+                                className="bg-red-600 hover:bg-red-700"
+                            >
+                                {deleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                Löschen
+                            </AlertDialogAction>
+                        )}
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+                </AlertDialog>
+                </Dialog>
+                );
+                }
