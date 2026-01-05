@@ -13,8 +13,9 @@ export default function ShareholderManager({ ownerId, ownerName }) {
     const [showDialog, setShowDialog] = useState(false);
     const [formData, setFormData] = useState({
         gesellschafter_owner_id: '',
-        anteil_prozent: 0,
-        gueltig_von: new Date().toISOString().split('T')[0]
+        anteil_prozent: '',
+        gueltig_von: new Date().toISOString().split('T')[0],
+        bemerkungen: ''
     });
     const queryClient = useQueryClient();
 
@@ -39,18 +40,27 @@ export default function ShareholderManager({ ownerId, ownerName }) {
     });
 
     const createMutation = useMutation({
-        mutationFn: (data) => base44.entities.Shareholder.create(data),
+        mutationFn: async (data) => {
+            try {
+                return await base44.entities.Shareholder.create(data);
+            } catch (error) {
+                console.error('Create shareholder error:', error);
+                throw error;
+            }
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['shareholders', ownerId] });
             toast.success('Gesellschafter hinzugefügt');
             setShowDialog(false);
             setFormData({
                 gesellschafter_owner_id: '',
-                anteil_prozent: 0,
-                gueltig_von: new Date().toISOString().split('T')[0]
+                anteil_prozent: '',
+                gueltig_von: new Date().toISOString().split('T')[0],
+                bemerkungen: ''
             });
         },
         onError: (error) => {
+            console.error('Mutation error:', error);
             toast.error('Fehler: ' + (error.message || 'Unbekannt'));
         }
     });
@@ -78,12 +88,22 @@ export default function ShareholderManager({ ownerId, ownerName }) {
             toast.error('Bitte Gesellschafter auswählen');
             return;
         }
-        createMutation.mutate({
-            owner_id: ownerId,
-            gesellschafter_owner_id: formData.gesellschafter_owner_id,
-            anteil_prozent: parseFloat(formData.anteil_prozent) || 0,
-            gueltig_von: formData.gueltig_von
-        });
+        if (!formData.anteil_prozent || parseFloat(formData.anteil_prozent) <= 0) {
+            toast.error('Bitte Anteil in % angeben');
+            return;
+        }
+        try {
+            createMutation.mutate({
+                owner_id: ownerId,
+                gesellschafter_owner_id: formData.gesellschafter_owner_id,
+                anteil_prozent: parseFloat(formData.anteil_prozent),
+                gueltig_von: formData.gueltig_von,
+                bemerkungen: formData.bemerkungen || ''
+            });
+        } catch (error) {
+            console.error('Error saving shareholder:', error);
+            toast.error('Fehler beim Speichern: ' + error.message);
+        }
     };
 
     const handleUpdateField = (shareholderId, field, value) => {

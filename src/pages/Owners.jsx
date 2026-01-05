@@ -16,9 +16,12 @@ export default function OwnersPage() {
     const [creatingOwner, setCreatingOwner] = useState(false);
     const queryClient = useQueryClient();
 
-    const { data: owners = [], isLoading } = useQuery({
+    const { data: owners = [], isLoading, refetch } = useQuery({
         queryKey: ['owners'],
-        queryFn: () => base44.entities.Owner.list()
+        queryFn: async () => {
+            const result = await base44.entities.Owner.list();
+            return result || [];
+        }
     });
 
     const getOwnerDisplayName = (owner) => {
@@ -157,8 +160,9 @@ export default function OwnersPage() {
                         <DialogTitle>Neuer Eigentümer</DialogTitle>
                     </DialogHeader>
                     <OwnerForm
-                        onSuccess={() => {
-                            queryClient.invalidateQueries({ queryKey: ['owners'] });
+                        onSuccess={async () => {
+                            await queryClient.invalidateQueries({ queryKey: ['owners'] });
+                            await refetch();
                             setCreatingOwner(false);
                         }}
                         onCancel={() => setCreatingOwner(false)}
@@ -175,8 +179,9 @@ export default function OwnersPage() {
                     {editingOwner && (
                         <OwnerForm
                             initialData={editingOwner}
-                            onSuccess={() => {
-                                queryClient.invalidateQueries({ queryKey: ['owners'] });
+                            onSuccess={async () => {
+                                await queryClient.invalidateQueries({ queryKey: ['owners'] });
+                                await refetch();
                                 setEditingOwner(null);
                             }}
                             onCancel={() => setEditingOwner(null)}
