@@ -9,7 +9,6 @@ export default function Building3DVisualization({ kubatur }) {
         );
     }
     
-    const length = kubatur.grundriss_laenge || 10;
     const width = kubatur.grundriss_breite || 10;
     const floors = kubatur.anzahl_vollgeschosse || 2;
     const floorHeight = kubatur.geschosshoehe_standard || 2.5;
@@ -19,373 +18,344 @@ export default function Building3DVisualization({ kubatur }) {
     const roofType = kubatur.dachform?.toLowerCase() || 'sattel';
     const roofAngle = kubatur.dachneigung_grad || 35;
     
-    // Berechne Dachhöhe basierend auf Dachneigung
-    const roofHeight = roofType === 'flach' ? 0.3 : (width / 2) * Math.tan((roofAngle * Math.PI) / 180);
+    // Dachhöhe berechnen
+    const roofHeight = roofType === 'flach' ? 0.5 : (width / 2) * Math.tan((roofAngle * Math.PI) / 180);
     
-    // Gesamthöhe berechnen
-    const totalHeight = (hasBasement ? basementHeight : 0) + floors * floorHeight + roofHeight;
+    // Gesamthöhe
+    const totalBuildingHeight = (hasBasement ? basementHeight : 0) + floors * floorHeight;
+    const totalHeight = totalBuildingHeight + roofHeight;
     
-    // SVG Dimensionen
-    const svgWidth = 600;
-    const svgHeight = 400;
-    const margin = 80;
-    const buildingWidth = 200;
-    const scale = Math.min((svgHeight - margin * 2) / totalHeight, buildingWidth / Math.max(length, width));
+    // SVG Dimensionen und Skalierung
+    const svgWidth = 500;
+    const svgHeight = 350;
+    const buildingWidth = 220;
+    const scale = Math.min(200 / totalHeight, 1.2);
+    const scaledTotalHeight = totalHeight * scale * 10;
     
-    // Startposition
-    const startX = margin + 50;
-    const startY = svgHeight - margin;
+    const startX = 100;
+    const startY = svgHeight - 60;
     
     return (
-        <div className="w-full h-80 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg overflow-hidden relative border border-slate-200">
-            <svg 
-                viewBox={`0 0 ${svgWidth} ${svgHeight}`} 
-                className="w-full h-full"
-            >
+        <div className="w-full h-80 bg-gradient-to-br from-slate-50 via-white to-slate-100 rounded-lg overflow-hidden relative border border-slate-200">
+            <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-full">
                 <defs>
-                    <pattern id="brickPattern" x="0" y="0" width="30" height="15" patternUnits="userSpaceOnUse">
-                        <rect width="30" height="15" fill="#f1f5f9"/>
-                        <rect width="14" height="6" x="1" y="1" fill="#cbd5e1" opacity="0.3"/>
-                        <rect width="14" height="6" x="15" y="8" fill="#cbd5e1" opacity="0.3"/>
-                    </pattern>
-                    
-                    <pattern id="roofTiles" x="0" y="0" width="20" height="10" patternUnits="userSpaceOnUse">
-                        <rect width="20" height="10" fill="#dc2626"/>
-                        <line x1="0" y1="10" x2="20" y2="10" stroke="#7c2d12" strokeWidth="1"/>
-                    </pattern>
+                    <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+                        <polygon points="0,1 4,4 0,7" fill="#475569"/>
+                    </marker>
                 </defs>
                 
-                {/* Gebäude-Querschnitt */}
-                <g>
-                    {/* Keller */}
-                    {hasBasement && (
-                        <>
+                {/* Titel */}
+                <text x="20" y="25" fontSize="16" fontWeight="700" fill="#1e293b">
+                    Schnittansicht
+                </text>
+                
+                {/* Boden-Linie */}
+                <line
+                    x1={startX - 40}
+                    y1={startY + 1}
+                    x2={startX + buildingWidth + 120}
+                    y2={startY + 1}
+                    stroke="#64748b"
+                    strokeWidth="2"
+                />
+                
+                {/* Keller */}
+                {hasBasement && (
+                    <>
+                        <rect
+                            x={startX}
+                            y={startY - basementHeight * scale * 10}
+                            width={buildingWidth}
+                            height={basementHeight * scale * 10}
+                            fill="#a8a29e"
+                            stroke="#57534e"
+                            strokeWidth="2"
+                        />
+                        
+                        {/* Geschoss-Linie oben */}
+                        <line
+                            x1={startX}
+                            y1={startY - basementHeight * scale * 10}
+                            x2={startX + buildingWidth}
+                            y2={startY - basementHeight * scale * 10}
+                            stroke="#44403c"
+                            strokeWidth="2"
+                            strokeDasharray="8,4"
+                        />
+                        
+                        {/* Label KG */}
+                        <text
+                            x={startX + buildingWidth / 2}
+                            y={startY - basementHeight * scale * 5 + 6}
+                            textAnchor="middle"
+                            fontSize="18"
+                            fontWeight="700"
+                            fill="#44403c"
+                        >
+                            KG
+                        </text>
+                    </>
+                )}
+                
+                {/* Geschosse */}
+                {[...Array(floors)].map((_, i) => {
+                    const bottomY = startY - (hasBasement ? basementHeight * scale * 10 : 0) - (i + 1) * floorHeight * scale * 10;
+                    const topY = startY - (hasBasement ? basementHeight * scale * 10 : 0) - i * floorHeight * scale * 10;
+                    const floorLabel = i === 0 ? 'EG' : `${i}.OG`;
+                    
+                    // Hellere Farben abwechselnd
+                    const fillColor = i % 2 === 0 ? '#e2e8f0' : '#cbd5e1';
+                    
+                    return (
+                        <g key={i}>
                             <rect
                                 x={startX}
-                                y={startY - basementHeight * scale}
+                                y={bottomY}
                                 width={buildingWidth}
-                                height={basementHeight * scale}
-                                fill="#78716c"
-                                stroke="#44403c"
+                                height={floorHeight * scale * 10}
+                                fill={fillColor}
+                                stroke="#10b981"
+                                strokeWidth="2"
+                            />
+                            
+                            {/* Geschoss-Trennlinie (gestrichelt) */}
+                            {i < floors - 1 && (
+                                <line
+                                    x1={startX}
+                                    y1={bottomY}
+                                    x2={startX + buildingWidth}
+                                    y2={bottomY}
+                                    stroke="#059669"
+                                    strokeWidth="1.5"
+                                    strokeDasharray="8,4"
+                                />
+                            )}
+                            
+                            {/* Geschoss-Label */}
+                            <text
+                                x={startX + buildingWidth / 2}
+                                y={(topY + bottomY) / 2 + 6}
+                                textAnchor="middle"
+                                fontSize="18"
+                                fontWeight="700"
+                                fill="#047857"
+                            >
+                                {floorLabel}
+                            </text>
+                        </g>
+                    );
+                })}
+                
+                {/* Dach */}
+                {roofType === 'sattel' && (
+                    <>
+                        <path
+                            d={`
+                                M ${startX},${startY - totalBuildingHeight * scale * 10}
+                                L ${startX + buildingWidth / 2},${startY - totalBuildingHeight * scale * 10 - roofHeight * scale * 10}
+                                L ${startX + buildingWidth},${startY - totalBuildingHeight * scale * 10}
+                                Z
+                            `}
+                            fill="#ea580c"
+                            stroke="#9a3412"
+                            strokeWidth="2.5"
+                        />
+                        
+                        {/* Dachgaube bei ausgebautem DG */}
+                        {hasAttic && (
+                            <>
+                                <rect
+                                    x={startX + buildingWidth * 0.35}
+                                    y={startY - totalBuildingHeight * scale * 10 - roofHeight * scale * 4}
+                                    width={buildingWidth * 0.18}
+                                    height={roofHeight * scale * 3}
+                                    fill="#e2e8f0"
+                                    stroke="#64748b"
+                                    strokeWidth="1.5"
+                                />
+                                <rect
+                                    x={startX + buildingWidth * 0.37}
+                                    y={startY - totalBuildingHeight * scale * 10 - roofHeight * scale * 3.8}
+                                    width={buildingWidth * 0.14}
+                                    height={roofHeight * scale * 2.5}
+                                    fill="#93c5fd"
+                                    stroke="#3b82f6"
+                                    strokeWidth="1"
+                                />
+                                
+                                {/* DG Label */}
+                                <text
+                                    x={startX + buildingWidth / 2}
+                                    y={startY - totalBuildingHeight * scale * 10 - roofHeight * scale * 5 + 6}
+                                    textAnchor="middle"
+                                    fontSize="16"
+                                    fontWeight="700"
+                                    fill="#9a3412"
+                                >
+                                    DG
+                                </text>
+                            </>
+                        )}
+                    </>
+                )}
+                
+                {roofType === 'flach' && (
+                    <rect
+                        x={startX}
+                        y={startY - totalBuildingHeight * scale * 10 - roofHeight * scale * 10}
+                        width={buildingWidth}
+                        height={roofHeight * scale * 10}
+                        fill="#475569"
+                        stroke="#334155"
+                        strokeWidth="2"
+                    />
+                )}
+                
+                {roofType === 'walm' && (
+                    <path
+                        d={`
+                            M ${startX - 15},${startY - totalBuildingHeight * scale * 10}
+                            L ${startX + buildingWidth / 2},${startY - totalBuildingHeight * scale * 10 - roofHeight * scale * 10}
+                            L ${startX + buildingWidth + 15},${startY - totalBuildingHeight * scale * 10}
+                            Z
+                        `}
+                        fill="#ea580c"
+                        stroke="#9a3412"
+                        strokeWidth="2.5"
+                    />
+                )}
+                
+                {/* Vertikale Maßlinie rechts */}
+                <g>
+                    {/* Hauptlinie */}
+                    <line
+                        x1={startX + buildingWidth + 50}
+                        y1={startY}
+                        x2={startX + buildingWidth + 50}
+                        y2={startY - scaledTotalHeight}
+                        stroke="#334155"
+                        strokeWidth="2"
+                    />
+                    
+                    {/* Pfeile oben und unten */}
+                    <line
+                        x1={startX + buildingWidth + 50}
+                        y1={startY}
+                        x2={startX + buildingWidth + 45}
+                        y2={startY - 8}
+                        stroke="#334155"
+                        strokeWidth="2"
+                    />
+                    <line
+                        x1={startX + buildingWidth + 50}
+                        y1={startY}
+                        x2={startX + buildingWidth + 55}
+                        y2={startY - 8}
+                        stroke="#334155"
+                        strokeWidth="2"
+                    />
+                    
+                    <line
+                        x1={startX + buildingWidth + 50}
+                        y1={startY - scaledTotalHeight}
+                        x2={startX + buildingWidth + 45}
+                        y2={startY - scaledTotalHeight + 8}
+                        stroke="#334155"
+                        strokeWidth="2"
+                    />
+                    <line
+                        x1={startX + buildingWidth + 50}
+                        y1={startY - scaledTotalHeight}
+                        x2={startX + buildingWidth + 55}
+                        y2={startY - scaledTotalHeight + 8}
+                        stroke="#334155"
+                        strokeWidth="2"
+                    />
+                    
+                    {/* Maßtext */}
+                    <text
+                        x={startX + buildingWidth + 70}
+                        y={startY - scaledTotalHeight / 2 + 6}
+                        fontSize="18"
+                        fontWeight="700"
+                        fill="#1e293b"
+                    >
+                        {totalHeight.toFixed(1)} Meter
+                    </text>
+                    
+                    {/* Einzelne Geschosshöhen-Markierungen */}
+                    {hasBasement && (
+                        <>
+                            <line
+                                x1={startX + buildingWidth + 45}
+                                y1={startY - basementHeight * scale * 10}
+                                x2={startX + buildingWidth + 50}
+                                y2={startY - basementHeight * scale * 10}
+                                stroke="#334155"
                                 strokeWidth="2"
                             />
                             <text
-                                x={startX - 15}
-                                y={startY - basementHeight * scale / 2 + 5}
-                                textAnchor="end"
-                                fontSize="14"
-                                fontWeight="600"
-                                fill="#57534e"
-                            >
-                                KG
-                            </text>
-                            {/* Höhenmaß Keller */}
-                            <line
-                                x1={startX + buildingWidth + 20}
-                                y1={startY}
-                                x2={startX + buildingWidth + 20}
-                                y2={startY - basementHeight * scale}
-                                stroke="#64748b"
-                                strokeWidth="1.5"
-                                markerEnd="url(#arrowEnd)"
-                                markerStart="url(#arrowStart)"
-                            />
-                            <text
-                                x={startX + buildingWidth + 35}
-                                y={startY - basementHeight * scale / 2 + 5}
-                                fontSize="12"
-                                fill="#475569"
-                                fontWeight="500"
+                                x={startX + buildingWidth + 60}
+                                y={startY - basementHeight * scale * 5 + 4}
+                                fontSize="11"
+                                fill="#64748b"
                             >
                                 {basementHeight}m
                             </text>
                         </>
                     )}
                     
-                    {/* Geschosse */}
                     {[...Array(floors)].map((_, i) => {
-                        const floorY = startY - (hasBasement ? basementHeight * scale : 0) - (i + 1) * floorHeight * scale;
-                        const isEG = i === 0;
-                        
+                        const y = startY - (hasBasement ? basementHeight * scale * 10 : 0) - (i + 1) * floorHeight * scale * 10;
                         return (
                             <g key={i}>
-                                <rect
-                                    x={startX}
-                                    y={floorY}
-                                    width={buildingWidth}
-                                    height={floorHeight * scale}
-                                    fill="url(#brickPattern)"
-                                    stroke="#10b981"
-                                    strokeWidth="2.5"
+                                <line
+                                    x1={startX + buildingWidth + 45}
+                                    y1={y}
+                                    x2={startX + buildingWidth + 50}
+                                    y2={y}
+                                    stroke="#334155"
+                                    strokeWidth="2"
                                 />
-                                
-                                {/* Fenster */}
-                                {[1, 2, 3, 4].map((windowNum) => (
-                                    <rect
-                                        key={windowNum}
-                                        x={startX + (buildingWidth / 5) * windowNum - 10}
-                                        y={floorY + floorHeight * scale * 0.25}
-                                        width={20}
-                                        height={floorHeight * scale * 0.5}
-                                        fill="#bfdbfe"
-                                        stroke="#3b82f6"
-                                        strokeWidth="1.5"
-                                        rx="2"
-                                    />
-                                ))}
-                                
-                                {/* Eingangstür nur im EG */}
-                                {isEG && (
-                                    <rect
-                                        x={startX + 25}
-                                        y={floorY + floorHeight * scale * 0.2}
-                                        width={18}
-                                        height={floorHeight * scale * 0.75}
-                                        fill="#92400e"
-                                        stroke="#78350f"
-                                        strokeWidth="1.5"
-                                        rx="1"
-                                    />
-                                )}
-                                
-                                {/* Geschoss-Label */}
-                                <text
-                                    x={startX - 15}
-                                    y={floorY + floorHeight * scale / 2 + 5}
-                                    textAnchor="end"
-                                    fontSize="14"
-                                    fontWeight="600"
-                                    fill="#059669"
-                                >
-                                    {isEG ? 'EG' : `${i}.OG`}
-                                </text>
-                                
-                                {/* Höhenmaß nur beim ersten Geschoss */}
                                 {i === 0 && (
-                                    <>
-                                        <line
-                                            x1={startX + buildingWidth + 20}
-                                            y1={floorY + floorHeight * scale}
-                                            x2={startX + buildingWidth + 20}
-                                            y2={floorY}
-                                            stroke="#64748b"
-                                            strokeWidth="1.5"
-                                            markerEnd="url(#arrowEnd)"
-                                            markerStart="url(#arrowStart)"
-                                        />
-                                        <text
-                                            x={startX + buildingWidth + 35}
-                                            y={floorY + floorHeight * scale / 2 + 5}
-                                            fontSize="12"
-                                            fill="#475569"
-                                            fontWeight="500"
-                                        >
-                                            {floorHeight}m
-                                        </text>
-                                    </>
-                                )}
-                                
-                                {/* Geschosstrennung */}
-                                {i < floors - 1 && (
-                                    <line
-                                        x1={startX}
-                                        y1={floorY}
-                                        x2={startX + buildingWidth}
-                                        y2={floorY}
-                                        stroke="#047857"
-                                        strokeWidth="2"
-                                    />
+                                    <text
+                                        x={startX + buildingWidth + 60}
+                                        y={y + floorHeight * scale * 5 + 4}
+                                        fontSize="11"
+                                        fill="#64748b"
+                                    >
+                                        {floorHeight}m
+                                    </text>
                                 )}
                             </g>
                         );
                     })}
-                    
-                    {/* Dach */}
-                    {roofType === 'sattel' && (
-                        <>
-                            {/* Dachfläche */}
-                            <path
-                                d={`
-                                    M ${startX},${startY - (hasBasement ? basementHeight * scale : 0) - floors * floorHeight * scale}
-                                    L ${startX + buildingWidth / 2},${startY - (hasBasement ? basementHeight * scale : 0) - floors * floorHeight * scale - roofHeight * scale}
-                                    L ${startX + buildingWidth},${startY - (hasBasement ? basementHeight * scale : 0) - floors * floorHeight * scale}
-                                    Z
-                                `}
-                                fill="url(#roofTiles)"
-                                stroke="#7c2d12"
-                                strokeWidth="2.5"
-                            />
-                            
-                            {/* Dachgaube bei ausgebautem DG */}
-                            {hasAttic && (
-                                <g>
-                                    <rect
-                                        x={startX + buildingWidth * 0.35}
-                                        y={startY - (hasBasement ? basementHeight * scale : 0) - floors * floorHeight * scale - roofHeight * scale * 0.4}
-                                        width={buildingWidth * 0.15}
-                                        height={roofHeight * scale * 0.3}
-                                        fill="#f1f5f9"
-                                        stroke="#64748b"
-                                        strokeWidth="1.5"
-                                    />
-                                    <rect
-                                        x={startX + buildingWidth * 0.37}
-                                        y={startY - (hasBasement ? basementHeight * scale : 0) - floors * floorHeight * scale - roofHeight * scale * 0.38}
-                                        width={buildingWidth * 0.11}
-                                        height={roofHeight * scale * 0.25}
-                                        fill="#bfdbfe"
-                                        stroke="#3b82f6"
-                                        strokeWidth="1"
-                                        rx="1"
-                                    />
-                                </g>
-                            )}
-                            
-                            {/* DG Label bei ausgebautem Dach */}
-                            {hasAttic && (
-                                <text
-                                    x={startX - 15}
-                                    y={startY - (hasBasement ? basementHeight * scale : 0) - floors * floorHeight * scale - roofHeight * scale * 0.3}
-                                    textAnchor="end"
-                                    fontSize="14"
-                                    fontWeight="600"
-                                    fill="#f59e0b"
-                                >
-                                    DG
-                                </text>
-                            )}
-                        </>
-                    )}
-                    
-                    {roofType === 'flach' && (
-                        <rect
-                            x={startX}
-                            y={startY - (hasBasement ? basementHeight * scale : 0) - floors * floorHeight * scale - roofHeight * scale}
-                            width={buildingWidth}
-                            height={roofHeight * scale}
-                            fill="#475569"
-                            stroke="#334155"
-                            strokeWidth="2.5"
-                        />
-                    )}
-                    
-                    {roofType === 'walm' && (
-                        <path
-                            d={`
-                                M ${startX - 10},${startY - (hasBasement ? basementHeight * scale : 0) - floors * floorHeight * scale}
-                                L ${startX + buildingWidth / 2},${startY - (hasBasement ? basementHeight * scale : 0) - floors * floorHeight * scale - roofHeight * scale}
-                                L ${startX + buildingWidth + 10},${startY - (hasBasement ? basementHeight * scale : 0) - floors * floorHeight * scale}
-                                Z
-                            `}
-                            fill="url(#roofTiles)"
-                            stroke="#7c2d12"
-                            strokeWidth="2.5"
-                        />
-                    )}
-                    
-                    {/* Gesamthöhen-Maß */}
-                    <g>
-                        <defs>
-                            <marker id="arrowEnd" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
-                                <polygon points="0,2 5,5 0,8" fill="#475569"/>
-                            </marker>
-                            <marker id="arrowStart" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
-                                <polygon points="10,2 5,5 10,8" fill="#475569"/>
-                            </marker>
-                        </defs>
-                        
-                        <line
-                            x1={startX + buildingWidth + 70}
-                            y1={startY}
-                            x2={startX + buildingWidth + 70}
-                            y2={startY - totalHeight * scale}
-                            stroke="#334155"
-                            strokeWidth="2"
-                            markerEnd="url(#arrowEnd)"
-                            markerStart="url(#arrowStart)"
-                        />
-                        
-                        <text
-                            x={startX + buildingWidth + 90}
-                            y={startY - (totalHeight * scale) / 2 + 5}
-                            fontSize="16"
-                            fill="#1e293b"
-                            fontWeight="700"
-                        >
-                            {totalHeight.toFixed(1)}m
-                        </text>
-                    </g>
-                    
-                    {/* Bodenmarkierung */}
-                    <line
-                        x1={startX - 30}
-                        y1={startY}
-                        x2={startX + buildingWidth + 100}
-                        y2={startY}
-                        stroke="#94a3b8"
-                        strokeWidth="2"
-                        strokeDasharray="5,5"
-                    />
-                    
-                    {/* Grundriss-Breite Indikator (Tiefe des Gebäudes) */}
-                    <g opacity="0.6">
-                        <path
-                            d={`
-                                M ${startX + buildingWidth + 30},${startY - (hasBasement ? basementHeight * scale : 0) - 10}
-                                L ${startX + buildingWidth + 60},${startY - (hasBasement ? basementHeight * scale : 0) - 30}
-                                L ${startX + buildingWidth + 60},${startY - (hasBasement ? basementHeight * scale : 0) - floors * floorHeight * scale - 30}
-                                L ${startX + buildingWidth + 30},${startY - (hasBasement ? basementHeight * scale : 0) - floors * floorHeight * scale - 10}
-                                Z
-                            `}
-                            fill="#cbd5e1"
-                            stroke="#94a3b8"
-                            strokeWidth="1.5"
-                        />
-                    </g>
                 </g>
-                
-                {/* Titel */}
-                <text
-                    x="20"
-                    y="30"
-                    fontSize="18"
-                    fontWeight="700"
-                    fill="#1e293b"
-                >
-                    Schnittansicht
-                </text>
             </svg>
             
-            {/* Legende */}
-            <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg px-4 py-3 text-sm space-y-2 shadow-lg border border-slate-200">
-                <div className="flex items-center gap-3">
-                    <div className="w-5 h-5 bg-gradient-to-br from-slate-100 to-slate-200 border-2 border-emerald-500 rounded"></div>
-                    <span className="text-slate-700 font-medium">Geschosse: {floors}</span>
-                </div>
-                {hasBasement && (
+            {/* Legende unten links */}
+            <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg px-4 py-3 shadow-lg border border-slate-200">
+                <div className="text-xs text-slate-600 mb-2 font-semibold">Gebäudedaten</div>
+                <div className="space-y-1.5 text-sm">
                     <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 bg-stone-500 border border-stone-700 rounded"></div>
-                        <span className="text-slate-700">Kellergeschoss</span>
+                        <div className="w-4 h-4 bg-slate-300 border-2 border-emerald-600 rounded"></div>
+                        <span className="text-slate-700">{floors} {floors === 1 ? 'Geschoss' : 'Geschosse'}</span>
                     </div>
-                )}
-                {hasAttic && (
+                    {hasBasement && (
+                        <div className="flex items-center gap-3">
+                            <div className="w-4 h-4 bg-stone-400 border border-stone-700 rounded"></div>
+                            <span className="text-slate-700">Kellergeschoss</span>
+                        </div>
+                    )}
+                    {hasAttic && (
+                        <div className="flex items-center gap-3">
+                            <div className="w-4 h-4 bg-orange-200 border border-orange-500 rounded"></div>
+                            <span className="text-slate-700">DG ausgebaut</span>
+                        </div>
+                    )}
                     <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 bg-amber-100 border border-amber-400 rounded"></div>
-                        <span className="text-slate-700">DG ausgebaut</span>
-                    </div>
-                )}
-                <div className="flex items-center gap-3">
-                    <div className="w-5 h-5 bg-gradient-to-br from-red-600 to-red-800 border border-red-900 rounded"></div>
-                    <span className="text-slate-700">Dach: {kubatur.dachform || 'Sattel'}</span>
-                </div>
-                <div className="pt-2 mt-2 border-t border-slate-200 space-y-1">
-                    <div className="flex justify-between gap-8">
-                        <span className="text-slate-600">Grundfläche:</span>
-                        <span className="font-semibold text-slate-800">{(length * width).toFixed(1)} m²</span>
-                    </div>
-                    <div className="flex justify-between gap-8">
-                        <span className="text-slate-600">L × B:</span>
-                        <span className="font-semibold text-slate-800">{length} × {width} m</span>
+                        <div className="w-4 h-4 bg-orange-500 border border-orange-800 rounded"></div>
+                        <span className="text-slate-700">Dach: {kubatur.dachform || 'Sattel'}</span>
                     </div>
                 </div>
             </div>
