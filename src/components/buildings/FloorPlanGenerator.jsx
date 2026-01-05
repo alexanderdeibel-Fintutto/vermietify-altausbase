@@ -188,8 +188,8 @@ export default function FloorPlanGenerator({ building, onUpdateBuilding }) {
         const alleEinheiten = building?.flaechen_einheiten || [];
         const geschossWohnungen = alleEinheiten.filter(w => String(w.etage) === String(aktivesGeschoss));
         
-        const breite = parseFloat(kubatur.grundriss_breite) || 0;
-        const laenge = parseFloat(kubatur.grundriss_laenge) || 0;
+        const breite = parseFloat(kubatur?.grundriss_breite) || 0;
+        const laenge = parseFloat(kubatur?.grundriss_laenge) || 0;
         const gesamtflaeche = breite * laenge;
         const wohnflaeche = geschossWohnungen.reduce((sum, w) => sum + parseFloat(w.qm || 0), 0);
         const gemeinschaftsflaeche = gesamtflaeche - wohnflaeche;
