@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Eye, Copy } from 'lucide-react';
-import TemplateEditor from './TemplateEditor';
+import AdvancedTemplateEditor from './AdvancedTemplateEditor';
 
 export default function TemplatesList() {
     const [editorOpen, setEditorOpen] = useState(false);
@@ -110,7 +110,7 @@ export default function TemplatesList() {
                 )}
             </div>
 
-            <TemplateEditor
+            <AdvancedTemplateEditor
                 open={editorOpen}
                 onOpenChange={setEditorOpen}
                 initialData={editingTemplate}
