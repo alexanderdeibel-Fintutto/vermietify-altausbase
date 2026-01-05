@@ -8,10 +8,17 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
-import OwnerForm from './OwnerForm';
+
 
 export default function ShareholderManager({ ownerId, ownerName }) {
     const [creatingNewShareholder, setCreatingNewShareholder] = useState(false);
+    const [newShareholderData, setNewShareholderData] = useState({
+        vorname: '',
+        nachname: '',
+        eigentuemer_typ: 'natuerliche_person',
+        anteil_prozent: 0,
+        gueltig_von: new Date().toISOString().split('T')[0]
+    });
     const queryClient = useQueryClient();
 
     const { data: shareholders = [] } = useQuery({
@@ -61,25 +68,42 @@ export default function ShareholderManager({ ownerId, ownerName }) {
         }
     });
 
-    const handleShareholderCreated = (createdOwnerId) => {
-        if (!createdOwnerId) {
-            toast.error('Fehler: Keine Owner-ID erhalten');
-            setCreatingNewShareholder(false);
-            return;
-        }
-        
-        try {
+    const createOwnerMutation = useMutation({
+        mutationFn: (data) => base44.entities.Owner.create(data),
+        onSuccess: async (response) => {
+            const createdOwnerId = response?.id || response;
+            await queryClient.invalidateQueries({ queryKey: ['owners'] });
+            
+            // Jetzt Shareholder erstellen
             createMutation.mutate({
                 owner_id: ownerId,
                 gesellschafter_owner_id: createdOwnerId,
-                anteil_prozent: 0,
-                gueltig_von: new Date().toISOString().split('T')[0]
+                anteil_prozent: newShareholderData.anteil_prozent,
+                gueltig_von: newShareholderData.gueltig_von
             });
-        } catch (error) {
-            console.error('Error in handleShareholderCreated:', error);
-            toast.error('Fehler beim Erstellen');
+        },
+        onError: (error) => {
+            console.error('Error creating owner:', error);
+            toast.error('Fehler beim Erstellen des Eigentümers');
             setCreatingNewShareholder(false);
         }
+    });
+
+    const handleSaveNewShareholder = () => {
+        if (!newShareholderData.nachname) {
+            toast.error('Bitte mindestens einen Namen eingeben');
+            return;
+        }
+        
+        createOwnerMutation.mutate({
+            eigentuemer_typ: newShareholderData.eigentuemer_typ,
+            vorname: newShareholderData.vorname,
+            nachname: newShareholderData.nachname,
+            staatsangehoerigkeit: 'deutsch',
+            land: 'Deutschland',
+            steuerliche_ansaessigkeit: 'inland',
+            aktiv: true
+        });
     };
 
     const handleUpdateField = (shareholderId, field, value) => {
@@ -228,17 +252,79 @@ export default function ShareholderManager({ ownerId, ownerName }) {
             </div>
 
             <Dialog open={creatingNewShareholder} onOpenChange={setCreatingNewShareholder}>
-                <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                <DialogContent className="max-w-md">
                     <DialogHeader>
                         <DialogTitle>Neuer Gesellschafter</DialogTitle>
                     </DialogHeader>
-                    {creatingNewShareholder && (
-                        <OwnerForm
-                            onSuccess={handleShareholderCreated}
-                            onCancel={() => setCreatingNewShareholder(false)}
-                            embedded={true}
-                        />
-                    )}
+                    <div className="space-y-4 py-4">
+                        <div>
+                            <Label>Typ</Label>
+                            <select
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                value={newShareholderData.eigentuemer_typ}
+                                onChange={(e) => setNewShareholderData({...newShareholderData, eigentuemer_typ: e.target.value})}
+                            >
+                                <option value="natuerliche_person">Natürliche Person</option>
+                                <option value="gbr">GbR</option>
+                                <option value="gmbh">GmbH</option>
+                                <option value="ug">UG</option>
+                            </select>
+                        </div>
+                        
+                        {newShareholderData.eigentuemer_typ === 'natuerliche_person' && (
+                            <div>
+                                <Label>Vorname</Label>
+                                <Input
+                                    value={newShareholderData.vorname}
+                                    onChange={(e) => setNewShareholderData({...newShareholderData, vorname: e.target.value})}
+                                />
+                            </div>
+                        )}
+                        
+                        <div>
+                            <Label>{newShareholderData.eigentuemer_typ === 'natuerliche_person' ? 'Nachname' : 'Firmenname'} *</Label>
+                            <Input
+                                value={newShareholderData.nachname}
+                                onChange={(e) => setNewShareholderData({...newShareholderData, nachname: e.target.value})}
+                                required
+                            />
+                        </div>
+                        
+                        <div>
+                            <Label>Anteil (%)</Label>
+                            <Input
+                                type="number"
+                                step="0.01"
+                                value={newShareholderData.anteil_prozent}
+                                onChange={(e) => setNewShareholderData({...newShareholderData, anteil_prozent: parseFloat(e.target.value) || 0})}
+                            />
+                        </div>
+                        
+                        <div>
+                            <Label>Gültig von</Label>
+                            <Input
+                                type="date"
+                                value={newShareholderData.gueltig_von}
+                                onChange={(e) => setNewShareholderData({...newShareholderData, gueltig_von: e.target.value})}
+                            />
+                        </div>
+                        
+                        <div className="flex justify-end gap-2 pt-4">
+                            <Button
+                                variant="outline"
+                                onClick={() => setCreatingNewShareholder(false)}
+                            >
+                                Abbrechen
+                            </Button>
+                            <Button
+                                onClick={handleSaveNewShareholder}
+                                disabled={createOwnerMutation.isPending || createMutation.isPending}
+                                className="bg-emerald-600 hover:bg-emerald-700"
+                            >
+                                Speichern
+                            </Button>
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>
