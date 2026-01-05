@@ -870,11 +870,28 @@ export default function BuildingDetail() {
             </DetailSection>
 
             {/* Eigentümer */}
-            <Card>
-                <div className="p-6">
+            <DetailSection 
+                title="Eigentümer"
+                icon={Users}
+                summary={(() => {
+                    const ownerShares = building?.owner_shares || [];
+                    if (ownerShares.length === 0) return 'Noch keine Eigentümer hinterlegt';
+                    const totalPercent = ownerShares.reduce((sum, s) => sum + (s.anteil_prozent || 0), 0);
+                    if (ownerShares.length === 1) {
+                        const owner = owners.find(o => o.id === ownerShares[0].owner_id);
+                        if (!owner) return 'Eigentümer nicht gefunden';
+                        const name = owner.eigentuemer_typ === 'natuerliche_person' 
+                            ? `${owner.vorname || ''} ${owner.nachname}`.trim()
+                            : owner.nachname;
+                        return `${name} (${ownerShares[0].anteil_prozent}%)`;
+                    }
+                    return `${ownerShares.length} Eigentümer • Gesamt: ${totalPercent.toFixed(2)}%`;
+                })()}
+            >
+                <div className="col-span-full">
                     <OwnersSection buildingId={buildingId} />
                 </div>
-            </Card>
+            </DetailSection>
 
             {/* Grundbuch */}
             <DetailSection 
