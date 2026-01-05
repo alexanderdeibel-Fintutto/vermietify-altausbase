@@ -43,14 +43,9 @@ export default function IntelligentInvoiceWizard({ open, onOpenChange, buildingI
         queryFn: () => base44.entities.Building.list()
     });
 
-    const { data: costCategories = [] } = useQuery({
-        queryKey: ['costCategories'],
-        queryFn: () => base44.entities.CostCategory.list()
-    });
-
-    const { data: taxCategories = [] } = useQuery({
-        queryKey: ['taxCategories'],
-        queryFn: () => base44.entities.TaxCategory.list()
+    const { data: taxLibraries = [] } = useQuery({
+        queryKey: ['taxLibraries'],
+        queryFn: () => base44.entities.BuildingTaxLibrary.list()
     });
 
     const createInvoiceMutation = useMutation({
@@ -81,8 +76,19 @@ export default function IntelligentInvoiceWizard({ open, onOpenChange, buildingI
                 options: [
                     { value: 'PRIVATPERSON', label: 'Privatperson' },
                     { value: 'GBR', label: 'Personengesellschaft (GbR/KG)' },
-                    { value: 'GMBH', label: 'Kapitalgesellschaft (GmbH)' },
-                    { value: 'AG', label: 'Aktiengesellschaft (AG)' }
+                    { value: 'GMBH', label: 'Kapitalgesellschaft (GmbH)' }
+                ],
+                required: true
+            });
+        }
+        
+        if (!building.account_framework) {
+            missing.push({
+                field: 'account_framework',
+                question: 'Welcher Kontenrahmen wird verwendet?',
+                options: [
+                    { value: 'SKR03', label: 'SKR03 (Standard)' },
+                    { value: 'SKR04', label: 'SKR04' }
                 ],
                 required: true
             });
@@ -153,40 +159,27 @@ export default function IntelligentInvoiceWizard({ open, onOpenChange, buildingI
         await base44.entities.Building.update(building.id, updates);
         queryClient.invalidateQueries({ queryKey: ['buildings'] });
         
-        // Install library
-        await installTaxLibrary(building.id, updates.owner_legal_form);
+        // Install tax library using backend function
+        try {
+            await base44.functions.invoke('loadTaxLibrary', {
+                building_id: building.id,
+                legal_form: updates.owner_legal_form,
+                account_framework: updates.account_framework || 'SKR03'
+            });
+            
+            await base44.entities.Building.update(building.id, {
+                tax_library_installed: true
+            });
+            
+            queryClient.invalidateQueries({ queryKey: ['taxLibraries'] });
+            toast.success('Steuerbibliothek installiert');
+        } catch (error) {
+            console.error('Tax library installation error:', error);
+            toast.error('Fehler bei Steuerbibliothek-Installation');
+        }
         
         setMasterDataDialog(null);
         setCurrentStep(STEPS.BASIC_INFO);
-    };
-
-    const installTaxLibrary = async (buildingId, legalForm) => {
-        // Get master categories for this legal form
-        const masterCost = await base44.entities.CostCategory.filter({
-            is_master: true
-        });
-        
-        const masterTax = await base44.entities.TaxCategory.filter({
-            is_master: true,
-            legal_form: legalForm
-        });
-
-        // Copy to building-specific (simplified - in real app would batch create)
-        for (const cat of masterCost) {
-            if (cat.applicable_for_legal_form.includes('ALLE') || 
-                cat.applicable_for_legal_form.includes(legalForm)) {
-                await base44.entities.CostCategory.create({
-                    ...cat,
-                    is_master: false,
-                    building_id: buildingId,
-                    id: undefined
-                });
-            }
-        }
-
-        await base44.entities.Building.update(buildingId, {
-            tax_library_installed: true
-        });
     };
 
     const handleCategorize = async () => {
@@ -197,11 +190,18 @@ export default function IntelligentInvoiceWizard({ open, onOpenChange, buildingI
 
         const building = buildings.find(b => b.id === invoiceData.building_id);
         
-        // Use LLM to suggest category
+        // Check if tax library is installed
+        const library = taxLibraries.find(lib => lib.building_id === building.id);
+        if (!library) {
+            toast.error('Steuerbibliothek nicht installiert');
+            return;
+        }
+        
+        // Use LLM to suggest category from tax library
         try {
-            const categories = costCategories
-                .filter(c => c.building_id === building.id || c.is_master)
-                .map(c => `${c.name} (${c.category_type})`);
+            const categories = library.cost_categories.map(c => 
+                `${c.id}: ${c.name} (${c.type}) - ${c.description}`
+            );
 
             const prompt = `
 Analysiere diese Rechnung und ordne sie der passendsten Kostenkategorie zu:
@@ -212,7 +212,7 @@ Betrag: ${invoiceData.amount}€
 Verfügbare Kategorien:
 ${categories.join('\n')}
 
-Gib NUR den exakten Kategorienamen zurück, nichts anderes.
+Gib NUR die Kategorie-ID zurück (z.B. "PERSONAL_LOEHNE"), nichts anderes.
 `;
 
             const response = await base44.integrations.Core.InvokeLLM({
@@ -220,29 +220,24 @@ Gib NUR den exakten Kategorienamen zurück, nichts anderes.
                 add_context_from_internet: false
             });
 
-            const suggested = costCategories.find(c => 
-                response.toLowerCase().includes(c.name.toLowerCase())
-            );
+            const categoryId = response.trim().replace(/['"]/g, '');
+            const suggested = library.cost_categories.find(c => c.id === categoryId);
 
             if (suggested) {
-                setSuggestedCategory(suggested);
+                const mapping = library.account_mappings.find(m => m.cost_category_id === suggested.id);
                 
-                // Get linked tax category
-                const link = await base44.entities.CostTaxLink.filter({
-                    cost_category_id: suggested.id,
-                    legal_form: building.owner_legal_form
+                setSuggestedCategory({
+                    ...suggested,
+                    accountMapping: mapping
                 });
-                
-                if (link.length > 0) {
-                    const taxCat = taxCategories.find(t => t.id === link[0].tax_category_id);
-                    setSuggestedCategory({ ...suggested, taxCategory: taxCat });
-                }
 
                 // Generate additional questions
                 const questions = generateAdditionalQuestions(suggested, building, invoiceData);
                 setAdditionalQuestions(questions);
                 
                 setCurrentStep(STEPS.CATEGORIZATION);
+            } else {
+                toast.error('Keine passende Kategorie gefunden');
             }
         } catch (error) {
             console.error('Categorization error:', error);
@@ -260,7 +255,7 @@ Gib NUR den exakten Kategorienamen zurück, nichts anderes.
                 question: 'Über wie viele Jahre soll abgeschrieben werden?',
                 type: 'number',
                 unit: 'Jahre',
-                suggested: category.default_afa_duration,
+                suggested: category.standard_depreciation_years,
                 required: true
             });
         }
@@ -285,10 +280,10 @@ Gib NUR den exakten Kategorienamen zurück, nichts anderes.
 
         // 15% rule for private individuals
         if (building.owner_legal_form === 'PRIVATPERSON' && 
-            category.category_type === 'ERHALTUNG' &&
+            category.type === 'ERHALTUNG' &&
             building.purchase_price) {
             const limit = building.purchase_price * 0.15;
-            if (invoice.amount > limit * 0.5) { // Simplified check
+            if (invoice.amount > limit * 0.5) {
                 questions.push({
                     field: 'distribution_years',
                     question: '15%-Grenze könnte überschritten sein. Aufwand verteilen?',
@@ -351,9 +346,9 @@ Gib NUR den exakten Kategorienamen zurück, nichts anderes.
         const finalData = {
             ...invoiceData,
             cost_category_id: suggestedCategory?.id,
-            tax_category_id: suggestedCategory?.taxCategory?.id,
             ...additionalAnswers,
-            validation_status: validationResult.warnings > 0 ? 'missing_optional' : 'complete'
+            validation_status: validationResult.warnings > 0 ? 'missing_optional' : 'complete',
+            status: 'pending'
         };
 
         // Calculate net/vat if needed
@@ -569,12 +564,13 @@ Gib NUR den exakten Kategorienamen zurück, nichts anderes.
                                             {suggestedCategory.name}
                                         </p>
                                         <p className="text-sm text-emerald-700">
-                                            {suggestedCategory.category_type} • {suggestedCategory.tax_treatment}
+                                            {suggestedCategory.type} • {suggestedCategory.tax_treatment}
                                         </p>
-                                        {suggestedCategory.taxCategory && (
+                                        {suggestedCategory.accountMapping && (
                                             <div className="mt-2 text-sm text-slate-600">
-                                                <strong>Steuerkategorie:</strong> {suggestedCategory.taxCategory.form_name}, 
-                                                {suggestedCategory.taxCategory.line_field} - {suggestedCategory.taxCategory.designation}
+                                                <strong>Konto:</strong> {suggestedCategory.accountMapping.account_number} - {suggestedCategory.accountMapping.account_name}
+                                                <br />
+                                                <strong>Steuerformular:</strong> {suggestedCategory.accountMapping.tax_line}
                                             </div>
                                         )}
                                     </div>
