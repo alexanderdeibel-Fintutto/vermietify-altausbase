@@ -275,7 +275,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                         <>
                         <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
                             {!section && <h3 className="font-semibold text-slate-800 mb-3">Kubatur</h3>}
-                            <KubaturForm kubatur={kubatur} onChange={setKubatur} register={register} />
+                            <KubaturForm kubatur={kubatur} onChange={setKubatur} register={register} building={initialData} />
                         </div>
                         </>
                         )}
