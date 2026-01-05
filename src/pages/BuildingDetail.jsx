@@ -615,13 +615,23 @@ export default function BuildingDetail() {
                                         <th className="text-left py-2 px-3 text-xs font-medium text-slate-600">qm</th>
                                         <th className="text-left py-2 px-3 text-xs font-medium text-slate-600">Zimmer</th>
                                         <th className="text-left py-2 px-3 text-xs font-medium text-slate-600">Ausstattung</th>
-                                        <th className="text-right py-2 px-3 text-xs font-medium text-slate-600">Aktionen</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {building.flaechen_einheiten.map((einheit, index) => {
                                         const gebaeudeBezeichnung = building.gebaeude_data?.[einheit.gebaeude_index]?.bezeichnung || '-';
                                         const artLabel = einheit.art || 'Unbekannt';
+                                        
+                                        // Kürzel für Art
+                                        const artKuerzel = {
+                                            'Wohneinheit': 'WE',
+                                            'Gewerbe': 'GW',
+                                            'Ferienwohnung': 'FW',
+                                            'kurzfristige Vermietung': 'KV',
+                                            'Nebenfläche': 'NF',
+                                            'nicht vermietbar': 'NV'
+                                        }[artLabel] || artLabel.substring(0, 2).toUpperCase();
+                                        
                                         const ausstattung = [
                                             einheit.bad && 'Bad',
                                             einheit.kueche && 'Küche',
@@ -634,11 +644,17 @@ export default function BuildingDetail() {
                                         const statusColor = status === 'vermietbar' ? 'bg-emerald-500' : status === 'unvermietbar' ? 'bg-red-500' : 'bg-slate-400';
 
                                         return (
-                                            <tr key={index} className="border-b border-slate-100 hover:bg-slate-50">
+                                            <tr 
+                                                key={index} 
+                                                onClick={() => handleEditUnit(index)}
+                                                className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
+                                            >
                                                 <td className="py-3 px-3">
                                                     <div className={`w-2 h-2 rounded-full ${statusColor}`} title={status}></div>
                                                 </td>
-                                                <td className="py-3 px-3 text-sm text-slate-800">{artLabel}</td>
+                                                <td className="py-3 px-3 text-sm text-slate-800 font-medium" title={artLabel}>
+                                                    {artKuerzel}
+                                                </td>
                                                 <td className="py-3 px-3 text-sm text-slate-800 font-medium">{einheit.bezeichnung || '-'}</td>
                                                 <td className="py-3 px-3 text-sm text-slate-600">{gebaeudeBezeichnung}</td>
                                                 <td className="py-3 px-3 text-sm text-slate-600">{einheit.etage}</td>
@@ -646,16 +662,6 @@ export default function BuildingDetail() {
                                                 <td className="py-3 px-3 text-sm text-slate-600">{einheit.qm || '-'}</td>
                                                 <td className="py-3 px-3 text-sm text-slate-600">{einheit.anzahl_wohnzimmer || '-'}</td>
                                                 <td className="py-3 px-3 text-sm text-slate-600 max-w-[200px] truncate" title={ausstattung}>{ausstattung}</td>
-                                                <td className="py-3 px-3 text-right">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleEditUnit(index)}
-                                                        className="h-7 px-2 text-slate-600 hover:text-slate-800"
-                                                    >
-                                                        <Edit className="w-3.5 h-3.5" />
-                                                    </Button>
-                                                </td>
                                             </tr>
                                         );
                                     })}
