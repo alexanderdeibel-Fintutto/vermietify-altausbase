@@ -6,15 +6,18 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, AlertCircle, CheckCircle, UserPlus, Users } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus, Trash2, AlertCircle, CheckCircle, UserPlus, Users, Edit } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import OwnerSelectDialog from './OwnerSelectDialog';
 import ShareholderManager from './ShareholderManager';
+import OwnerForm from './OwnerForm';
 
 export default function OwnerSharesManager({ shares, onChange, buildingId }) {
     const [selectOwnerOpen, setSelectOwnerOpen] = useState(false);
     const [editingIndex, setEditingIndex] = useState(null);
+    const [editingOwnerId, setEditingOwnerId] = useState(null);
 
     const { data: owners = [] } = useQuery({
         queryKey: ['owners'],
@@ -113,14 +116,24 @@ export default function OwnerSharesManager({ shares, onChange, buildingId }) {
                                         </Badge>
                                     )}
                                 </div>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleRemoveShare(index)}
-                                    className="text-red-600 hover:text-red-700"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </Button>
+                                <div className="flex gap-1">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setEditingOwnerId(share.owner_id)}
+                                        className="text-slate-600 hover:text-slate-800"
+                                    >
+                                        <Edit className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleRemoveShare(index)}
+                                        className="text-red-600 hover:text-red-700"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
@@ -198,6 +211,21 @@ export default function OwnerSharesManager({ shares, onChange, buildingId }) {
                 onSelect={handleAddOwner}
                 excludeIds={shares.map(s => s.owner_id)}
             />
+
+            {editingOwnerId && (
+                <Dialog open={!!editingOwnerId} onOpenChange={(open) => !open && setEditingOwnerId(null)}>
+                    <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle>Eigentümer bearbeiten</DialogTitle>
+                        </DialogHeader>
+                        <OwnerForm
+                            initialData={owners.find(o => o.id === editingOwnerId)}
+                            onSuccess={() => setEditingOwnerId(null)}
+                            onCancel={() => setEditingOwnerId(null)}
+                        />
+                    </DialogContent>
+                </Dialog>
+            )}
         </div>
     );
 }
