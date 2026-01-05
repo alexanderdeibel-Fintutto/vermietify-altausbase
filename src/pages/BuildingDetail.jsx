@@ -92,8 +92,8 @@ const DetailItem = ({ label, value }) => {
 };
 
 export default function BuildingDetail() {
-    const [searchParams] = useSearchParams();
-    const buildingId = searchParams.get('buildingId');
+    const urlParams = new URLSearchParams(window.location.search);
+    const buildingId = urlParams.get('buildingId');
     
     const [formOpen, setFormOpen] = useState(false);
     const [editingSection, setEditingSection] = useState(null);
