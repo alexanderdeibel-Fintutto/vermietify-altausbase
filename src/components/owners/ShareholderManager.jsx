@@ -20,14 +20,13 @@ export default function ShareholderManager({ ownerId, ownerName }) {
         enabled: !!ownerId
     });
 
-    const { data: allOwners = [], isLoading: ownersLoading } = useQuery({
+    const { data: allOwners = [] } = useQuery({
         queryKey: ['owners'],
         queryFn: async () => {
             try {
                 return await base44.entities.Owner.list();
             } catch (error) {
                 console.error('Error loading owners:', error);
-                toast.error('Fehler beim Laden der Eigentümer');
                 return [];
             }
         }
@@ -79,7 +78,10 @@ export default function ShareholderManager({ ownerId, ownerName }) {
         });
     };
 
-    const getOwnerById = (id) => allOwners.find(o => o.id === id);
+    const getOwnerById = (id) => {
+        if (!allOwners || allOwners.length === 0) return null;
+        return allOwners.find(o => o.id === id);
+    };
 
     const totalPercentage = shareholders.reduce((sum, s) => sum + (s.anteil_prozent || 0), 0);
     const isValid = Math.abs(totalPercentage - 100) < 0.01;
@@ -120,19 +122,26 @@ export default function ShareholderManager({ ownerId, ownerName }) {
             <div className="space-y-3">
                 {shareholders.map((shareholder) => {
                     const shareholderOwner = getOwnerById(shareholder.gesellschafter_owner_id);
+                    const displayName = shareholderOwner 
+                        ? `${shareholderOwner.vorname || ''} ${shareholderOwner.nachname || ''}`.trim() || 'Unbekannt'
+                        : 'Wird geladen...';
+                    const ownerType = shareholderOwner?.eigentuemer_typ === 'natuerliche_person' 
+                        ? 'Natürliche Person' 
+                        : shareholderOwner?.eigentuemer_typ?.toUpperCase() || '';
+
                     return (
                         <Card key={shareholder.id}>
                             <CardContent className="p-4">
                                 <div className="flex items-start justify-between mb-3">
                                     <div>
                                         <p className="font-medium text-slate-800">
-                                            {shareholderOwner?.vorname} {shareholderOwner?.nachname}
+                                            {displayName}
                                         </p>
-                                        <p className="text-sm text-slate-500">
-                                            {shareholderOwner?.eigentuemer_typ === 'natuerliche_person' 
-                                                ? 'Natürliche Person' 
-                                                : shareholderOwner?.eigentuemer_typ?.toUpperCase()}
-                                        </p>
+                                        {ownerType && (
+                                            <p className="text-sm text-slate-500">
+                                                {ownerType}
+                                            </p>
+                                        )}
                                     </div>
                                     <Button
                                         variant="ghost"
