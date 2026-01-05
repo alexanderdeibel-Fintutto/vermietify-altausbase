@@ -4,14 +4,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Loader2 } from 'lucide-react';
 
 export default function IMAPAccountForm({ open, onOpenChange, onSubmit, initialData, isLoading }) {
-    const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
+    const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
         defaultValues: initialData || {
-            imap_port: 993,
             use_ssl: true,
+            imap_port: 993,
             is_active: true
         }
     });
@@ -19,15 +19,18 @@ export default function IMAPAccountForm({ open, onOpenChange, onSubmit, initialD
     useEffect(() => {
         if (open) {
             reset(initialData || {
-                imap_port: 993,
                 use_ssl: true,
+                imap_port: 993,
                 is_active: true
             });
         }
     }, [open, initialData, reset]);
 
-    const useSSL = watch('use_ssl');
-    const isActive = watch('is_active');
+    const useSsl = watch('use_ssl');
+
+    const handleFormSubmit = (data) => {
+        onSubmit(data);
+    };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -38,13 +41,13 @@ export default function IMAPAccountForm({ open, onOpenChange, onSubmit, initialD
                     </DialogTitle>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
+                <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 mt-4">
                     <div>
-                        <Label htmlFor="name">Name *</Label>
+                        <Label htmlFor="name">Kontoname *</Label>
                         <Input
                             id="name"
                             {...register('name', { required: true })}
-                            placeholder="z.B. Hausverwaltung Email"
+                            placeholder="z.B. Hauptpostfach"
                             className={errors.name ? 'border-red-500' : ''}
                         />
                     </div>
@@ -55,7 +58,7 @@ export default function IMAPAccountForm({ open, onOpenChange, onSubmit, initialD
                             id="email_address"
                             type="email"
                             {...register('email_address', { required: true })}
-                            placeholder="name@example.com"
+                            placeholder="info@example.com"
                             className={errors.email_address ? 'border-red-500' : ''}
                         />
                     </div>
@@ -66,12 +69,13 @@ export default function IMAPAccountForm({ open, onOpenChange, onSubmit, initialD
                             <Input
                                 id="imap_server"
                                 {...register('imap_server', { required: true })}
-                                placeholder="imap.example.com"
+                                placeholder="imap.gmail.com"
                                 className={errors.imap_server ? 'border-red-500' : ''}
                             />
                         </div>
+
                         <div>
-                            <Label htmlFor="imap_port">Port *</Label>
+                            <Label htmlFor="imap_port">IMAP-Port *</Label>
                             <Input
                                 id="imap_port"
                                 type="number"
@@ -87,7 +91,7 @@ export default function IMAPAccountForm({ open, onOpenChange, onSubmit, initialD
                         <Input
                             id="username"
                             {...register('username', { required: true })}
-                            placeholder="Meist die Email-Adresse"
+                            placeholder="Benutzername"
                             className={errors.username ? 'border-red-500' : ''}
                         />
                     </div>
@@ -98,45 +102,31 @@ export default function IMAPAccountForm({ open, onOpenChange, onSubmit, initialD
                             id="password_encrypted"
                             type="password"
                             {...register('password_encrypted', { required: !initialData })}
-                            placeholder={initialData ? "Leer lassen für keine Änderung" : "Email-Passwort"}
+                            placeholder={initialData ? "Leer lassen, um nicht zu ändern" : "Passwort"}
                             className={errors.password_encrypted ? 'border-red-500' : ''}
                         />
-                        <p className="text-xs text-slate-500 mt-1">
-                            Wird verschlüsselt gespeichert
-                        </p>
+                        {initialData && (
+                            <p className="text-xs text-slate-500 mt-1">
+                                Leer lassen, um das bestehende Passwort beizubehalten
+                            </p>
+                        )}
                     </div>
 
-                    <div className="space-y-3">
-                        <div className="flex items-center space-x-2">
-                            <Checkbox
-                                id="use_ssl"
-                                checked={useSSL}
-                                onCheckedChange={(checked) => setValue('use_ssl', checked)}
-                            />
-                            <label
-                                htmlFor="use_ssl"
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                                SSL/TLS verwenden (empfohlen)
-                            </label>
+                    <div className="flex items-center justify-between py-2">
+                        <div className="space-y-1">
+                            <Label htmlFor="use_ssl">SSL verwenden</Label>
+                            <p className="text-xs text-slate-500">
+                                Empfohlen für sichere Verbindung
+                            </p>
                         </div>
-
-                        <div className="flex items-center space-x-2">
-                            <Checkbox
-                                id="is_active"
-                                checked={isActive}
-                                onCheckedChange={(checked) => setValue('is_active', checked)}
-                            />
-                            <label
-                                htmlFor="is_active"
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                                Konto aktivieren
-                            </label>
-                        </div>
+                        <Switch
+                            id="use_ssl"
+                            checked={useSsl}
+                            onCheckedChange={(checked) => setValue('use_ssl', checked)}
+                        />
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-4">
+                    <div className="flex justify-end gap-3 pt-4 border-t">
                         <Button
                             type="button"
                             variant="outline"
@@ -150,7 +140,7 @@ export default function IMAPAccountForm({ open, onOpenChange, onSubmit, initialD
                             className="bg-emerald-600 hover:bg-emerald-700"
                         >
                             {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            {initialData ? 'Speichern' : 'Erstellen'}
+                            {initialData ? 'Speichern' : 'Hinzufügen'}
                         </Button>
                     </div>
                 </form>
