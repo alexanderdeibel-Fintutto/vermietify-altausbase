@@ -567,7 +567,7 @@ export default function BuildingDetail() {
             <DetailSection 
                 title="Lage"
                 icon={MapPin}
-                summary={building.address && building.city ? `${building.address}${building.house_number ? ' ' + building.house_number : ''}, ${building.postal_code} ${building.city}${building.gps_coordinates ? ' • GPS: ' + building.gps_coordinates : ''}${building.garages_parking_spaces ? ' • ' + building.garages_parking_spaces + ' Stellplätze' : ''}` : null}
+                summary={building.address && building.city ? `${building.address}${building.house_number ? ' ' + building.house_number : ''}, ${building.postal_code} ${building.city}${building.gps_coordinates ? ' • GPS: ' + building.gps_coordinates : ''}${building.garages_parking_spaces ? ' • ' + building.garages_parking_spaces + ' Stellplaetze' : ''}` : null}
                 onEdit={() => handleEditSection('lage')}
             >
                 <DetailItem label="Straße" value={building.address} />
@@ -575,7 +575,7 @@ export default function BuildingDetail() {
                 <DetailItem label="PLZ" value={building.postal_code} />
                 <DetailItem label="Ort" value={building.city} />
                 <DetailItem label="GPS-Koordinaten" value={building.gps_coordinates} />
-                <DetailItem label="Garagen/Stellplätze" value={building.garages_parking_spaces} />
+                <DetailItem label="Garagen/Stellplaetze" value={building.garages_parking_spaces} />
             </DetailSection>
 
             {/* Gebäude */}
@@ -659,10 +659,10 @@ export default function BuildingDetail() {
                         <DetailItem label="Dachgeschoss Fläche" value={building.kubatur.dachgeschoss_flaeche ? `${building.kubatur.dachgeschoss_flaeche} m²` : null} />
                         <DetailItem label="Dachform" value={building.kubatur.dachform} />
                         <DetailItem label="Dachneigung" value={building.kubatur.dachneigung_grad ? `${building.kubatur.dachneigung_grad}°` : null} />
-                        <DetailItem label="Dachüberstand" value={building.kubatur.dachueberstang_m ? `${building.kubatur.dachueberstang_m} m` : null} />
+                        <DetailItem label="Dachuberstand" value={building.kubatur.dachueberstang_m ? `${building.kubatur.dachueberstang_m} m` : null} />
                         <DetailItem label="Wohnfläche Anteil" value={building.kubatur.wohnflaeche_anteil_prozent ? `${building.kubatur.wohnflaeche_anteil_prozent}%` : null} />
                         <DetailItem label="Gewerbefläche Anteil" value={building.kubatur.gewerbeflaeche_anteil_prozent ? `${building.kubatur.gewerbeflaeche_anteil_prozent}%` : null} />
-                        <DetailItem label="Gemeinschaftsfläche Anteil" value={building.kubatur.gemeinschaftsflaeche_anteil_prozent ? `${building.kubatur.gemeinschaftsflaeche_anteil_prozent}%` : null} />
+                        <DetailItem label="Gemeinschaftsflaeche Anteil" value={building.kubatur.gemeinschaftsflaeche_anteil_prozent ? `${building.kubatur.gemeinschaftsflaeche_anteil_prozent}%` : null} />
                     </>
                 ) : (
                     <div className="col-span-full text-center py-4 text-slate-500">
@@ -845,12 +845,12 @@ export default function BuildingDetail() {
             <DetailSection 
                 title="Energieausweis-Daten"
                 icon={Zap}
-                summary={building.energy_efficiency_class || building.energy_demand_kwh_jahr ? `${building.energy_efficiency_class ? 'Klasse ' + building.energy_efficiency_class : ''}${building.energy_demand_kwh_jahr ? (building.energy_efficiency_class ? ' • ' : '') + building.energy_demand_kwh_jahr + ' kWh/Jahr' : ''}${building.energy_certificate_valid_until ? ' • Gültig bis ' + format(parseISO(building.energy_certificate_valid_until), 'MM/yyyy', { locale: de }) : ''}` : null}
+                summary={building.energy_efficiency_class || building.energy_demand_kwh_jahr ? `${building.energy_efficiency_class ? 'Klasse ' + building.energy_efficiency_class : ''}${building.energy_demand_kwh_jahr ? (building.energy_efficiency_class ? ' • ' : '') + building.energy_demand_kwh_jahr + ' kWh/Jahr' : ''}${building.energy_certificate_valid_until ? ' • Gueltig bis ' + format(parseISO(building.energy_certificate_valid_until), 'MM/yyyy', { locale: de }) : ''}` : null}
                 onEdit={() => handleEditSection('energieausweis')}
             >
                 <DetailItem label="Energieausweis Typ" value={building.energy_certificate_type} />
                 <DetailItem 
-                    label="Gültig bis" 
+                    label="Gueltig bis" 
                     value={building.energy_certificate_valid_until ? format(parseISO(building.energy_certificate_valid_until), 'dd.MM.yyyy', { locale: de }) : null} 
                 />
                 <DetailItem label="Energiebedarf kWh/Jahr" value={building.energy_demand_kwh_jahr} />
@@ -862,22 +862,22 @@ export default function BuildingDetail() {
 
             {/* Eigentümer */}
             <DetailSection 
-                title="Eigentümer"
+                title="Eigentuemer"
                 icon={Users}
                 summary={(() => {
                     if (!building.owner_shares || building.owner_shares.length === 0) {
-                        return 'Noch keine Eigentümer hinterlegt';
+                        return 'Noch keine Eigentuemer hinterlegt';
                     }
                     const activeShares = building.owner_shares.filter(s => !s.gueltig_bis || new Date(s.gueltig_bis) > new Date());
                     if (activeShares.length === 1) {
                         const owner = owners.find(o => o.id === activeShares[0].owner_id);
-                        if (!owner) return 'Eigentümer nicht gefunden';
+                        if (!owner) return 'Eigentuemer nicht gefunden';
                         const name = owner.eigentuemer_typ === 'natuerliche_person' 
                             ? `${owner.vorname || ''} ${owner.nachname || ''}`.trim()
                             : owner.nachname || 'Unbekannt';
                         return `${name} (${activeShares[0].anteil_prozent}%)`;
                     }
-                    return `${activeShares.length} Eigentümer`;
+                    return `${activeShares.length} Eigentuemer`;
                 })()}
                 onEdit={() => handleEditSection('eigentuemer')}
             >
@@ -937,7 +937,7 @@ export default function BuildingDetail() {
                         </div>
                     ) : (
                         <div className="text-center py-4 text-slate-500">
-                            Noch keine Eigentümer hinterlegt
+                            Noch keine Eigentuemer hinterlegt
                         </div>
                     )}
                 </div>
@@ -947,7 +947,7 @@ export default function BuildingDetail() {
             <DetailSection 
                 title="Grundbuch"
                 icon={FileText}
-                summary={building.grundbuch?.deckblatt ? `${building.grundbuch.deckblatt.gemeinde || ''}${building.grundbuch.deckblatt.gemeinde && (building.grundbuch.deckblatt.flur || building.grundbuch.deckblatt.flurstueck) ? ' • ' : ''}${building.grundbuch.deckblatt.flur ? 'Flur ' + building.grundbuch.deckblatt.flur : ''}${building.grundbuch.deckblatt.flur && building.grundbuch.deckblatt.flurstueck ? ', ' : ''}${building.grundbuch.deckblatt.flurstueck ? 'Flurstück ' + building.grundbuch.deckblatt.flurstueck : ''}${building.grundbuch.deckblatt.blatt_nummer ? ' • Blatt ' + building.grundbuch.deckblatt.blatt_nummer : ''}${building.grundbuch.bestandsverzeichnis?.length > 0 ? ' • ' + building.grundbuch.bestandsverzeichnis.length + ' Einträge' : ''}` : 'Noch keine Grundbuchdaten hinterlegt'}
+                summary={building.grundbuch?.deckblatt ? `${building.grundbuch.deckblatt.gemeinde || ''}${building.grundbuch.deckblatt.gemeinde && (building.grundbuch.deckblatt.flur || building.grundbuch.deckblatt.flurstueck) ? ' • ' : ''}${building.grundbuch.deckblatt.flur ? 'Flur ' + building.grundbuch.deckblatt.flur : ''}${building.grundbuch.deckblatt.flur && building.grundbuch.deckblatt.flurstueck ? ', ' : ''}${building.grundbuch.deckblatt.flurstueck ? 'Flurstueck ' + building.grundbuch.deckblatt.flurstueck : ''}${building.grundbuch.deckblatt.blatt_nummer ? ' • Blatt ' + building.grundbuch.deckblatt.blatt_nummer : ''}${building.grundbuch.bestandsverzeichnis?.length > 0 ? ' • ' + building.grundbuch.bestandsverzeichnis.length + ' Eintraege' : ''}` : 'Noch keine Grundbuchdaten hinterlegt'}
                 onEdit={() => handleEditSection('grundbuch')}
             >
                 {building.grundbuch?.deckblatt ? (
@@ -965,7 +965,7 @@ export default function BuildingDetail() {
                         />
                         <DetailItem label="Gemeinde" value={building.grundbuch.deckblatt.gemeinde} />
                         <DetailItem label="Flur" value={building.grundbuch.deckblatt.flur} />
-                        <DetailItem label="Flurstück" value={building.grundbuch.deckblatt.flurstueck} />
+                        <DetailItem label="Flurstueck" value={building.grundbuch.deckblatt.flurstueck} />
                     </>
                 ) : (
                     <div className="col-span-full text-center py-4 text-slate-500">
@@ -975,7 +975,7 @@ export default function BuildingDetail() {
                 {building.grundbuch?.abteilung1 && (
                     <>
                         <div className="col-span-full mt-4">
-                            <h4 className="font-semibold text-slate-800 mb-2">Abteilung 1 - Eigentümer</h4>
+                            <h4 className="font-semibold text-slate-800 mb-2">Abteilung 1 - Eigentuemer</h4>
                         </div>
                         <DetailItem label="Name" value={building.grundbuch.abteilung1.eigentuemer_name} />
                         <DetailItem label="Vorname" value={building.grundbuch.abteilung1.eigentuemer_vorname} />
@@ -1625,13 +1625,13 @@ export default function BuildingDetail() {
             <DetailSection 
                 title="Kaufvertrag"
                 icon={FileSignature}
-                summary={purchaseContracts[0] ? `${purchaseContracts[0].kaeufer_name ? purchaseContracts[0].kaeufer_name : 'Käufer'} ${purchaseContracts[0].kaufpreis ? '• ' + purchaseContracts[0].kaufpreis.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : ''}` : 'Noch keine Kaufvertragsdaten hinterlegt'}
+                summary={purchaseContracts[0] ? `${purchaseContracts[0].kaeufer_name ? purchaseContracts[0].kaeufer_name : 'Kaeufer'} ${purchaseContracts[0].kaufpreis ? '• ' + purchaseContracts[0].kaufpreis.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : ''}` : 'Noch keine Kaufvertragsdaten hinterlegt'}
                 onEdit={() => setPurchaseContractFormOpen(true)}
             >
                 {purchaseContracts[0] ? (
                     <>
-                        <DetailItem label="Verkäufer" value={purchaseContracts[0].verkaeufer_vorname && purchaseContracts[0].verkaeufer_name ? `${purchaseContracts[0].verkaeufer_vorname} ${purchaseContracts[0].verkaeufer_name}` : null} />
-                        <DetailItem label="Käufer" value={purchaseContracts[0].kaeufer_vorname && purchaseContracts[0].kaeufer_name ? `${purchaseContracts[0].kaeufer_vorname} ${purchaseContracts[0].kaeufer_name}` : null} />
+                        <DetailItem label="Verkaeufer" value={purchaseContracts[0].verkaeufer_vorname && purchaseContracts[0].verkaeufer_name ? `${purchaseContracts[0].verkaeufer_vorname} ${purchaseContracts[0].verkaeufer_name}` : null} />
+                        <DetailItem label="Kaeufer" value={purchaseContracts[0].kaeufer_vorname && purchaseContracts[0].kaeufer_name ? `${purchaseContracts[0].kaeufer_vorname} ${purchaseContracts[0].kaeufer_name}` : null} />
                         <DetailItem 
                             label="Kaufvertrag Datum" 
                             value={purchaseContracts[0].kaufvertrag_datum ? format(parseISO(purchaseContracts[0].kaufvertrag_datum), 'dd.MM.yyyy', { locale: de }) : null} 
@@ -1639,10 +1639,10 @@ export default function BuildingDetail() {
                         <DetailItem label="Notar" value={purchaseContracts[0].notar_name} />
                         <DetailItem label="Notar Ort" value={purchaseContracts[0].notar_ort} />
                         <DetailItem label="Kaufpreis" value={purchaseContracts[0].kaufpreis ? purchaseContracts[0].kaufpreis.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : null} />
-                        <DetailItem label="Kaufpreis Grundstück" value={purchaseContracts[0].kaufpreis_grundstueck ? purchaseContracts[0].kaufpreis_grundstueck.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : null} />
-                        <DetailItem label="Kaufpreis Gebäude" value={purchaseContracts[0].kaufpreis_gebaeude ? purchaseContracts[0].kaufpreis_gebaeude.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : null} />
+                        <DetailItem label="Kaufpreis Grundstueck" value={purchaseContracts[0].kaufpreis_grundstueck ? purchaseContracts[0].kaufpreis_grundstueck.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : null} />
+                        <DetailItem label="Kaufpreis Gebaeude" value={purchaseContracts[0].kaufpreis_gebaeude ? purchaseContracts[0].kaufpreis_gebaeude.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : null} />
                         <DetailItem 
-                            label="Übergabe Datum" 
+                            label="Uebergabe Datum" 
                             value={purchaseContracts[0].uebergabe_datum ? format(parseISO(purchaseContracts[0].uebergabe_datum), 'dd.MM.yyyy', { locale: de }) : null} 
                         />
                         <DetailItem label="Inventar mitverkauft" value={purchaseContracts[0].inventar_mitverkauft} />
@@ -1674,9 +1674,9 @@ export default function BuildingDetail() {
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Gebäude löschen?</AlertDialogTitle>
+                        <AlertDialogTitle>Gebaeude loeschen?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Möchten Sie dieses Gebäude wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+                            Moechten Sie dieses Gebaeude wirklich loeschen? Diese Aktion kann nicht rueckgaengig gemacht werden.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -1685,7 +1685,7 @@ export default function BuildingDetail() {
                             onClick={() => deleteMutation.mutate(building.id)}
                             className="bg-red-600 hover:bg-red-700"
                         >
-                            Löschen
+                            Loeschen
                         </AlertDialogAction>
                     </AlertDialogFooter>
                     </AlertDialogContent>
