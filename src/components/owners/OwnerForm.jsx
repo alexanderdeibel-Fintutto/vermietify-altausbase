@@ -11,13 +11,15 @@ import { toast } from 'sonner';
 import GesellschafterManager from './GesellschafterManager';
 
 export default function OwnerForm({ initialData, onSuccess, onCancel, embedded = false }) {
-    const [formData, setFormData] = useState(initialData || {
+    const [formData, setFormData] = useState(() => ({
         eigentuemer_typ: 'natuerliche_person',
         staatsangehoerigkeit: 'deutsch',
         land: 'Deutschland',
         steuerliche_ansaessigkeit: 'inland',
-        aktiv: true
-    });
+        aktiv: true,
+        gesellschafter: [],
+        ...initialData
+    }));
 
     const queryClient = useQueryClient();
 
