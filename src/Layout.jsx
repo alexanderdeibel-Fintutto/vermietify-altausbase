@@ -29,7 +29,6 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Steuerbibliothek', href: createPageUrl('TaxLibraryManagement'), icon: BookOpen, page: 'TaxLibraryManagement' },
         { name: 'Betriebskosten', href: createPageUrl('OperatingCosts'), icon: FileText, page: 'OperatingCosts' },
         { name: 'Bank/Kasse', href: createPageUrl('BankAccounts'), icon: Landmark, page: 'BankAccounts' },
-        { name: 'Auswertungen', href: createPageUrl('Analytics'), icon: BarChart3, page: 'Analytics' },
     ];
 
     return (
