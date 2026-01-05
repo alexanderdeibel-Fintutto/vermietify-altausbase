@@ -93,9 +93,9 @@ export default function FloorPlanGenerator({ building, onUpdateBuilding }) {
     };
 
     const zeigeGrundriss = () => {
-        const kubatur = building.kubatur;
-        const gebaeude = building.gebaeude_data || [];
-        const alleEinheiten = building.flaechen_einheiten || [];
+        const kubatur = building?.kubatur || {};
+        const gebaeude = building?.gebaeude_data || [];
+        const alleEinheiten = building?.flaechen_einheiten || [];
         
         const geschossWohnungen = alleEinheiten.filter(w => String(w.etage) === String(aktivesGeschoss));
 
@@ -182,11 +182,13 @@ export default function FloorPlanGenerator({ building, onUpdateBuilding }) {
     };
 
     const berechneFlaechen = () => {
-        const kubatur = building.kubatur;
-        const alleEinheiten = building.flaechen_einheiten || [];
+        const kubatur = building?.kubatur || {};
+        const alleEinheiten = building?.flaechen_einheiten || [];
         const geschossWohnungen = alleEinheiten.filter(w => String(w.etage) === String(aktivesGeschoss));
         
-        const gesamtflaeche = parseFloat(kubatur.grundriss_breite) * parseFloat(kubatur.grundriss_laenge);
+        const breite = parseFloat(kubatur.grundriss_breite) || 0;
+        const laenge = parseFloat(kubatur.grundriss_laenge) || 0;
+        const gesamtflaeche = breite * laenge;
         const wohnflaeche = geschossWohnungen.reduce((sum, w) => sum + parseFloat(w.qm || 0), 0);
         const gemeinschaftsflaeche = gesamtflaeche - wohnflaeche;
 
@@ -194,7 +196,7 @@ export default function FloorPlanGenerator({ building, onUpdateBuilding }) {
             gesamtflaeche: gesamtflaeche.toFixed(1),
             wohnflaeche: wohnflaeche.toFixed(1),
             gemeinschaftsflaeche: gemeinschaftsflaeche.toFixed(1),
-            auslastung: (wohnflaeche / gesamtflaeche * 100).toFixed(1),
+            auslastung: gesamtflaeche > 0 ? (wohnflaeche / gesamtflaeche * 100).toFixed(1) : '0.0',
             anzahl: geschossWohnungen.length
         };
     };
@@ -238,7 +240,7 @@ export default function FloorPlanGenerator({ building, onUpdateBuilding }) {
         );
     }
 
-    const geschosse = [...new Set((building.flaechen_einheiten || []).map(w => String(w.etage)))].sort();
+    const geschosse = [...new Set((building?.flaechen_einheiten || []).map(w => String(w.etage)))].sort();
     const flaechen = berechneFlaechen();
 
     return (
