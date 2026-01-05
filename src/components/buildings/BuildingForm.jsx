@@ -705,6 +705,185 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                         </>
                         )}
 
+                        {shouldShowSection('finanzamt') && (
+                        <>
+                        <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
+                            {!section && <h3 className="font-semibold text-slate-800 mb-3">Finanzamt/Steuern</h3>}
+                            <div className="space-y-4">
+                                <div>
+                                    <h4 className="font-semibold text-slate-700 mb-3">Finanzamt</h4>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <Label>Finanzamt Name</Label>
+                                            <Input 
+                                                value={finanzamtSteuern.finanzamt_name || ''}
+                                                onChange={(e) => setFinanzamtSteuern({...finanzamtSteuern, finanzamt_name: e.target.value})}
+                                                placeholder="Finanzamt München"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label>Finanzamts-Nummer</Label>
+                                            <Input 
+                                                value={finanzamtSteuern.finanzamt_nummer || ''}
+                                                onChange={(e) => setFinanzamtSteuern({...finanzamtSteuern, finanzamt_nummer: e.target.value})}
+                                                placeholder="9181"
+                                                maxLength={4}
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <div className="col-span-2">
+                                                <Label>Straße</Label>
+                                                <Input 
+                                                    value={finanzamtSteuern.finanzamt_strasse || ''}
+                                                    onChange={(e) => setFinanzamtSteuern({...finanzamtSteuern, finanzamt_strasse: e.target.value})}
+                                                    placeholder="Musterstraße 10"
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label>PLZ</Label>
+                                                <Input 
+                                                    value={finanzamtSteuern.finanzamt_plz || ''}
+                                                    onChange={(e) => setFinanzamtSteuern({...finanzamtSteuern, finanzamt_plz: e.target.value})}
+                                                    placeholder="80331"
+                                                    maxLength={5}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <Label>Ort</Label>
+                                            <Input 
+                                                value={finanzamtSteuern.finanzamt_ort || ''}
+                                                onChange={(e) => setFinanzamtSteuern({...finanzamtSteuern, finanzamt_ort: e.target.value})}
+                                                placeholder="München"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <Label>Telefon</Label>
+                                                <Input 
+                                                    value={finanzamtSteuern.finanzamt_telefon || ''}
+                                                    onChange={(e) => setFinanzamtSteuern({...finanzamtSteuern, finanzamt_telefon: e.target.value})}
+                                                    placeholder="+49 89 1252-0"
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label>E-Mail</Label>
+                                                <Input 
+                                                    type="email"
+                                                    value={finanzamtSteuern.finanzamt_email || ''}
+                                                    onChange={(e) => setFinanzamtSteuern({...finanzamtSteuern, finanzamt_email: e.target.value})}
+                                                    placeholder="info@finanzamt.de"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-slate-200">
+                                    <h4 className="font-semibold text-slate-700 mb-3">Steuerdaten</h4>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <Label>Steuernummer Immobilie</Label>
+                                            <Input 
+                                                value={finanzamtSteuern.steuernummer_immobilie || ''}
+                                                onChange={(e) => setFinanzamtSteuern({...finanzamtSteuern, steuernummer_immobilie: e.target.value})}
+                                                placeholder="123/456/78901"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label>Steuer-ID Objekt</Label>
+                                            <Input 
+                                                value={finanzamtSteuern.steuer_id_objekt || ''}
+                                                onChange={(e) => setFinanzamtSteuern({...finanzamtSteuern, steuer_id_objekt: e.target.value})}
+                                                placeholder="12 345 678 901"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label>Aktenzeichen FA</Label>
+                                            <Input 
+                                                value={finanzamtSteuern.aktenzeichen_fa || ''}
+                                                onChange={(e) => setFinanzamtSteuern({...finanzamtSteuern, aktenzeichen_fa: e.target.value})}
+                                                placeholder="AZ-12345-2024"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-slate-200">
+                                    <h4 className="font-semibold text-slate-700 mb-3">Sachbearbeiter</h4>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <Label>Name</Label>
+                                            <Input 
+                                                value={finanzamtSteuern.sachbearbeiter_name || ''}
+                                                onChange={(e) => setFinanzamtSteuern({...finanzamtSteuern, sachbearbeiter_name: e.target.value})}
+                                                placeholder="Max Mustermann"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <div>
+                                                <Label>Telefon</Label>
+                                                <Input 
+                                                    value={finanzamtSteuern.sachbearbeiter_telefon || ''}
+                                                    onChange={(e) => setFinanzamtSteuern({...finanzamtSteuern, sachbearbeiter_telefon: e.target.value})}
+                                                    placeholder="+49 89 1252-123"
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label>E-Mail</Label>
+                                                <Input 
+                                                    type="email"
+                                                    value={finanzamtSteuern.sachbearbeiter_email || ''}
+                                                    onChange={(e) => setFinanzamtSteuern({...finanzamtSteuern, sachbearbeiter_email: e.target.value})}
+                                                    placeholder="sachbearbeiter@finanzamt.de"
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label>Zimmer</Label>
+                                                <Input 
+                                                    value={finanzamtSteuern.sachbearbeiter_zimmer || ''}
+                                                    onChange={(e) => setFinanzamtSteuern({...finanzamtSteuern, sachbearbeiter_zimmer: e.target.value})}
+                                                    placeholder="R. 312"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-slate-200">
+                                    <h4 className="font-semibold text-slate-700 mb-3">Prüfungen</h4>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <Label>Erstmalige Erfassung FA</Label>
+                                            <Input 
+                                                type="date"
+                                                value={finanzamtSteuern.erstmalige_erfassung_fa || ''}
+                                                onChange={(e) => setFinanzamtSteuern({...finanzamtSteuern, erstmalige_erfassung_fa: e.target.value})}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label>Letzte Prüfung FA</Label>
+                                            <Input 
+                                                type="date"
+                                                value={finanzamtSteuern.letzte_pruefung_fa || ''}
+                                                onChange={(e) => setFinanzamtSteuern({...finanzamtSteuern, letzte_pruefung_fa: e.target.value})}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label>Nächste Prüfung geplant</Label>
+                                            <Input 
+                                                type="date"
+                                                value={finanzamtSteuern.naechste_pruefung_geplant || ''}
+                                                onChange={(e) => setFinanzamtSteuern({...finanzamtSteuern, naechste_pruefung_geplant: e.target.value})}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        </>
+                        )}
+
                         {shouldShowSection('energieausweis') && (
                         <>
                         <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
