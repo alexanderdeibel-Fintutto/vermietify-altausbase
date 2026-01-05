@@ -425,18 +425,21 @@ Gib NUR den exakten Kategorienamen zurück, nichts anderes.
                                         <p className="text-sm text-orange-600 font-medium">{q.hint}</p>
                                     )}
                                     <Select
-                                        value={additionalAnswers[q.field]}
-                                        onValueChange={(val) => setAdditionalAnswers(prev => ({
-                                            ...prev,
-                                            [q.field]: val
-                                        }))}
+                                        value={String(additionalAnswers[q.field] ?? '')}
+                                        onValueChange={(val) => {
+                                            const parsed = val === 'true' ? true : val === 'false' ? false : val;
+                                            setAdditionalAnswers(prev => ({
+                                                ...prev,
+                                                [q.field]: parsed
+                                            }));
+                                        }}
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Bitte wählen..." />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {q.options.map(opt => (
-                                                <SelectItem key={opt.value} value={opt.value}>
+                                                <SelectItem key={String(opt.value)} value={String(opt.value)}>
                                                     {opt.label}
                                                     {q.suggested === opt.value && ' ⭐ Empfohlen'}
                                                 </SelectItem>
