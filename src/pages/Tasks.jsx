@@ -24,6 +24,7 @@ import WorkflowManager from '@/components/tasks/WorkflowManager';
 import AutomationManager from '@/components/tasks/AutomationManager';
 import EmailAccountManager from '@/components/tasks/EmailAccountManager';
 import EmailList from '@/components/tasks/EmailList';
+import TaskDashboard from '@/components/tasks/TaskDashboard';
 
 export default function Tasks() {
     const [formOpen, setFormOpen] = useState(false);
