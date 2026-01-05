@@ -57,7 +57,7 @@ export default function DocumentCreateWizard({ open, onOpenChange }) {
     const { data: textBlocks = [] } = useQuery({
         queryKey: ['textBlocks'],
         queryFn: () => base44.entities.TextBlock.list(),
-        enabled: open && currentStep === 3 && selectedTemplate
+        enabled: open && currentStep === 3 && !!selectedTemplate
     });
 
     const createMutation = useMutation({
