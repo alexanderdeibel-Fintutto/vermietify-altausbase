@@ -22,14 +22,20 @@ export default function ShareholderManager({ ownerId, ownerName }) {
         queryKey: ['shareholders', ownerId],
         queryFn: async () => {
             if (!ownerId) return [];
-            return await base44.entities.Shareholder.filter({ owner_id: ownerId });
+            const result = await base44.entities.Shareholder.filter({ owner_id: ownerId });
+            return result || [];
         },
-        enabled: !!ownerId
+        enabled: !!ownerId,
+        retry: false
     });
 
     const { data: allOwners = [] } = useQuery({
         queryKey: ['owners'],
-        queryFn: () => base44.entities.Owner.list()
+        queryFn: async () => {
+            const result = await base44.entities.Owner.list();
+            return result || [];
+        },
+        retry: false
     });
 
     const createMutation = useMutation({
