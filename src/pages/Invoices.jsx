@@ -42,6 +42,7 @@ import {
 import { Plus, Search, MoreVertical, Pencil, Trash2, FileText, Building2, TrendingUp, TrendingDown, Filter, Download, Tag, Users, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import InvoiceForm from '@/components/invoices/InvoiceForm';
+import InvoiceFormWithTaxLibrary from '@/components/invoices/InvoiceFormWithTaxLibrary';
 import IntelligentInvoiceWizard from '@/components/invoices/IntelligentInvoiceWizard';
 import CostTypeForm from '@/components/cost-types/CostTypeForm';
 import RecipientForm from '@/components/recipients/RecipientForm';
@@ -1122,7 +1123,7 @@ export default function Invoices() {
             </Tabs>
 
             {/* Invoice Form Dialog */}
-            <InvoiceForm
+            <InvoiceFormWithTaxLibrary
                 open={invoiceFormOpen}
                 onOpenChange={setInvoiceFormOpen}
                 invoice={editingInvoice}
