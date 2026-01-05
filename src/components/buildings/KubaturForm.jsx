@@ -84,17 +84,16 @@ export default function KubaturForm({ kubatur, onChange, register, building }) {
         const erfassteGewerbeQm = gewerbeeinheiten.reduce((sum, e) => sum + (parseFloat(e.qm) || 0), 0);
         const erfassteGesamtQm = erfassteEinheiten.reduce((sum, e) => sum + (parseFloat(e.qm) || 0), 0);
         
-        // SOLL-WERTE: Theoretisch nutzbare Fläche basierend auf Kubatur
-        // Netto-Nutzfläche = Brutto-Grundfläche minus Abzüge für Wände, Treppen, Flure (ca. 20-25%)
-        const nettoNutzflaeche = bruttoGrundflaeche * 0.78; // 78% der Brutto-Fläche ist realistisch nutzbar
-        
-        // Wenn Nutzungsanteile angegeben sind, berechne SOLL-Werte
+        // Wenn Nutzungsanteile angegeben sind, berechne SOLL-Werte basierend auf Kubatur
         const wohnflaecheAnteil = localKubatur.wohnflaeche_anteil_prozent || 0;
         const gewerbeflaecheAnteil = localKubatur.gewerbeflaeche_anteil_prozent || 0;
         const gemeinschaftsflaecheAnteil = localKubatur.gemeinschaftsflaeche_anteil_prozent || 0;
         
-        const sollWohnflaeche = nettoNutzflaeche * (wohnflaecheAnteil / 100);
-        const sollGewerbeflaeche = nettoNutzflaeche * (gewerbeflaecheAnteil / 100);
+        // Theoretisch nutzbare Fläche aus Kubatur (ca. 78% der BGF)
+        const theoretischeNutzflaeche = bruttoGrundflaeche * 0.78;
+        
+        const sollWohnflaeche = theoretischeNutzflaeche * (wohnflaecheAnteil / 100);
+        const sollGewerbeflaeche = theoretischeNutzflaeche * (gewerbeflaecheAnteil / 100);
         
         // Plausibilitätsprüfung: Vergleiche erfasste Wohnfläche mit theoretisch verfügbarer Fläche
         let plausibilitaet = { status: 'ok', text: 'Daten fehlen', color: 'slate' };
@@ -113,8 +112,8 @@ export default function KubaturForm({ kubatur, onChange, register, building }) {
                 plausibilitaet = { status: 'error', text: 'Unplausibel', color: 'red' };
             }
             
-            // Prüfe auch, ob erfasste Gesamtfläche die Netto-Nutzfläche überschreitet
-            if (erfassteGesamtQm > nettoNutzflaeche * 1.05) {
+            // Prüfe auch, ob erfasste Gesamtfläche die theoretisch nutzbare Fläche überschreitet
+            if (erfassteGesamtQm > theoretischeNutzflaeche * 1.05) {
                 plausibilitaet = { status: 'error', text: 'Zu viel Fläche erfasst', color: 'red' };
             }
         }
@@ -122,7 +121,7 @@ export default function KubaturForm({ kubatur, onChange, register, building }) {
         setCalculatedValues({
             bruttoRauminhalt,
             bruttoGrundflaeche,
-            nettoNutzflaeche,
+            theoretischeNutzflaeche,
             sollWohnflaeche,
             sollGewerbeflaeche,
             erfassteAnzahl,
@@ -397,21 +396,23 @@ ABGLEICH:
                         </p>
                         <p className="text-xs text-slate-500 mt-1">= Grundfläche × Geschosse</p>
                     </Card>
-                    <Card className="p-3 bg-blue-50">
-                        <Label className="text-xs text-slate-500">Netto-Nutzfläche (ca.)</Label>
-                        <p className="text-lg font-semibold text-blue-800">
-                            {calculatedValues.nettoNutzflaeche?.toFixed(2) || '0.00'} m²
+                    <Card className="p-3 bg-slate-50">
+                        <Label className="text-xs text-slate-500">Theoretisch nutzbar (Kubatur)</Label>
+                        <p className="text-lg font-semibold text-slate-700">
+                            {calculatedValues.theoretischeNutzflaeche?.toFixed(2) || '0.00'} m²
                         </p>
                         <p className="text-xs text-slate-500 mt-1">≈ 78% der BGF (abzgl. Wände, Treppen)</p>
                     </Card>
                     <Card className="p-3 bg-slate-50">
-                        <Label className="text-xs text-slate-500">Theoretisch verfügbar</Label>
+                        <Label className="text-xs text-slate-500">Davon SOLL-Wohnfläche</Label>
                         <p className="text-sm font-medium text-slate-700">
-                            {calculatedValues.sollWohnflaeche > 0 && (
-                                <span>Wohn: {calculatedValues.sollWohnflaeche?.toFixed(1)} m²</span>
+                            {calculatedValues.sollWohnflaeche > 0 ? (
+                                <span>{calculatedValues.sollWohnflaeche?.toFixed(1)} m²</span>
+                            ) : (
+                                <span className="text-slate-400">-</span>
                             )}
                         </p>
-                        <p className="text-xs text-slate-500 mt-1">Basierend auf Nutzungsanteilen</p>
+                        <p className="text-xs text-slate-500 mt-1">Basierend auf Wohnflächenanteil</p>
                     </Card>
                 </div>
             </div>
@@ -511,7 +512,7 @@ ABGLEICH:
                                     </div>
                                     <p className="text-sm text-slate-600">
                                         {calculatedValues.plausibilitaet.status === 'error' && calculatedValues.plausibilitaet.text === 'Zu viel Fläche erfasst'
-                                            ? `Die erfasste Gesamtfläche (${calculatedValues.erfassteGesamtQm?.toFixed(1)} m²) überschreitet die theoretisch nutzbare Fläche (${calculatedValues.nettoNutzflaeche?.toFixed(1)} m²). Bitte prüfen Sie die Kubatur-Maße oder die Flächenangaben der Einheiten.`
+                                            ? `Die erfasste Gesamtfläche (${calculatedValues.erfassteGesamtQm?.toFixed(1)} m²) überschreitet die theoretisch nutzbare Fläche (${calculatedValues.theoretischeNutzflaeche?.toFixed(1)} m²). Bitte prüfen Sie die Kubatur-Maße oder die Flächenangaben der Einheiten.`
                                             : Math.abs(calculatedValues.abweichung || 0) > 15
                                             ? `Die erfasste Wohnfläche (${calculatedValues.erfassteWohnQm?.toFixed(1)} m²) weicht stark von der theoretisch verfügbaren Wohnfläche (${calculatedValues.sollWohnflaeche?.toFixed(1)} m²) ab. Bitte überprüfen Sie die Eingaben bei Kubatur, Nutzungsanteilen und Wohneinheiten.`
                                             : Math.abs(calculatedValues.abweichung || 0) > 5
