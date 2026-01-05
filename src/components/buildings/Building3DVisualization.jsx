@@ -1,6 +1,20 @@
 import React from 'react';
 
 export default function Building3DVisualization({ kubatur }) {
+    // Key zur Erzwingung von Re-Render bei Änderungen
+    const vizKey = React.useMemo(() => {
+        return JSON.stringify({
+            l: kubatur?.grundriss_laenge,
+            b: kubatur?.grundriss_breite,
+            f: kubatur?.anzahl_vollgeschosse,
+            fh: kubatur?.geschosshoehe_standard,
+            kb: kubatur?.kellergeschoss,
+            da: kubatur?.dachgeschoss_ausgebaut,
+            df: kubatur?.dachform,
+            dn: kubatur?.dachneigung_grad
+        });
+    }, [kubatur]);
+    
     if (!kubatur?.grundriss_laenge || !kubatur?.grundriss_breite) {
         return (
             <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center">
