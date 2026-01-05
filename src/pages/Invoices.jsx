@@ -735,7 +735,11 @@ export default function Invoices() {
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="text-sm">
-                                                            {costType ? (
+                                                            {invoice.cost_category_id ? (
+                                                                <Badge variant="outline" className="bg-emerald-50 text-emerald-700">
+                                                                    Tax: {invoice.cost_category_id}
+                                                                </Badge>
+                                                            ) : costType ? (
                                                                 <div>
                                                                     <p className="font-medium">{costType.main_category}</p>
                                                                     <p className="text-xs text-slate-500">{costType.sub_category}</p>

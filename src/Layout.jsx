@@ -11,7 +11,8 @@ import {
     Landmark,
     Menu,
     X,
-    ChevronRight
+    ChevronRight,
+    BookOpen
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,7 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Dokumente', href: createPageUrl('Documents'), icon: FileText, page: 'Documents' },
         { name: 'Finanzen', href: createPageUrl('Finanzen'), icon: CreditCard, page: 'Finanzen' },
         { name: 'Rechnungen & Belege', href: createPageUrl('Invoices'), icon: FileText, page: 'Invoices' },
+        { name: 'Steuerbibliothek', href: createPageUrl('TaxLibraryManagement'), icon: BookOpen, page: 'TaxLibraryManagement' },
         { name: 'Betriebskosten', href: createPageUrl('OperatingCosts'), icon: FileText, page: 'OperatingCosts' },
         { name: 'Bank/Kasse', href: createPageUrl('BankAccounts'), icon: Landmark, page: 'BankAccounts' },
         { name: 'Auswertungen', href: createPageUrl('Analytics'), icon: BarChart3, page: 'Analytics' },
