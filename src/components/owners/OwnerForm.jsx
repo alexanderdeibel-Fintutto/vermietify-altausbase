@@ -31,8 +31,12 @@ export default function OwnerForm({ initialData, onSuccess, onCancel, embedded =
             queryClient.invalidateQueries({ queryKey: ['owners'] });
             toast.success(initialData ? 'Eigentümer aktualisiert' : 'Eigentümer erstellt');
             if (onSuccess) {
-                onSuccess(response.id || response.data?.id);
+                onSuccess(response.id);
             }
+        },
+        onError: (error) => {
+            console.error('Owner save error:', error);
+            toast.error('Fehler beim Speichern: ' + (error.message || 'Unbekannter Fehler'));
         }
     });
 
