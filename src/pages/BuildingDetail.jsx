@@ -30,6 +30,7 @@ import PurchaseContractForm from '@/components/purchase-contract/PurchaseContrac
 import FinancingForm from '@/components/financing/FinancingForm';
 import InsuranceForm from '@/components/insurance/InsuranceForm';
 import FloorPlanGenerator from '@/components/buildings/FloorPlanGenerator';
+import OwnersSection from '@/components/buildings/OwnersSection';
 
 const DetailSection = ({ title, icon: Icon, children, onEdit, summary }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -869,87 +870,11 @@ export default function BuildingDetail() {
             </DetailSection>
 
             {/* Eigentümer */}
-            <DetailSection 
-                title="Eigentuemer"
-                icon={Users}
-                summary={(() => {
-                    if (!building.owner_shares || building.owner_shares.length === 0) {
-                        return 'Noch keine Eigentuemer hinterlegt';
-                    }
-                    const activeShares = building.owner_shares.filter(s => !s.gueltig_bis || new Date(s.gueltig_bis) > new Date());
-                    if (activeShares.length === 1) {
-                        const owner = owners.find(o => o.id === activeShares[0].owner_id);
-                        if (!owner) return 'Eigentuemer nicht gefunden';
-                        const name = owner.eigentuemer_typ === 'natuerliche_person' 
-                            ? `${owner.vorname || ''} ${owner.nachname || ''}`.trim()
-                            : owner.nachname || 'Unbekannt';
-                        return `${name} (${activeShares[0].anteil_prozent}%)`;
-                    }
-                    return `${activeShares.length} Eigentuemer`;
-                })()}
-                onEdit={() => handleEditSection('eigentuemer')}
-            >
-                <div className="col-span-full">
-                    {building.owner_shares && building.owner_shares.length > 0 ? (
-                        <div className="space-y-3">
-                            {building.owner_shares.map((share, index) => {
-                                const owner = owners.find(o => o.id === share.owner_id);
-                                if (!owner) return null;
-                                
-                                const displayName = owner.eigentuemer_typ === 'natuerliche_person'
-                                    ? `${owner.vorname || ''} ${owner.nachname || ''}`.trim() || 'Unbekannt'
-                                    : owner.nachname || 'Unbekannt';
-                                
-                                const isActive = !share.gueltig_bis || new Date(share.gueltig_bis) > new Date();
-
-                                return (
-                                    <Card key={index} className="p-4">
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <h4 className="font-semibold text-slate-800">{displayName}</h4>
-                                                    <span className="text-lg font-bold text-emerald-600">
-                                                        {share.anteil_prozent}%
-                                                    </span>
-                                                    {!isActive && (
-                                                        <Badge variant="outline" className="text-xs">Inaktiv</Badge>
-                                                    )}
-                                                </div>
-                                                <div className="grid grid-cols-3 gap-3 text-sm">
-                                                    <div>
-                                                        <p className="text-slate-500">Gültig von</p>
-                                                        <p className="font-medium text-slate-800">
-                                                            {share.gueltig_von ? format(parseISO(share.gueltig_von), 'dd.MM.yyyy', { locale: de }) : '-'}
-                                                        </p>
-                                                    </div>
-                                                    {share.grund_aenderung && (
-                                                        <div>
-                                                            <p className="text-slate-500">Grund</p>
-                                                            <p className="font-medium text-slate-800">{share.grund_aenderung}</p>
-                                                        </div>
-                                                    )}
-                                                    {share.notarvertrag_datum && (
-                                                        <div>
-                                                            <p className="text-slate-500">Notarvertrag</p>
-                                                            <p className="font-medium text-slate-800">
-                                                                {format(parseISO(share.notarvertrag_datum), 'dd.MM.yyyy', { locale: de })}
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </Card>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <div className="text-center py-4 text-slate-500">
-                            Noch keine Eigentuemer hinterlegt
-                        </div>
-                    )}
+            <Card>
+                <div className="p-6">
+                    <OwnersSection buildingId={buildingId} />
                 </div>
-            </DetailSection>
+            </Card>
 
             {/* Grundbuch */}
             <DetailSection 
