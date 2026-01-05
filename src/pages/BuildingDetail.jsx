@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText, Receipt, Plug, Gauge, Upload, FileSignature, Landmark, ShieldCheck, Box } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText, Receipt, Plug, Gauge, Upload, FileSignature, Landmark, ShieldCheck, Box, Layout } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import MeterImportDialog from '@/components/meters/MeterImportDialog';
 import PurchaseContractForm from '@/components/purchase-contract/PurchaseContractForm';
 import FinancingForm from '@/components/financing/FinancingForm';
 import InsuranceForm from '@/components/insurance/InsuranceForm';
+import FloorPlanGenerator from '@/components/buildings/FloorPlanGenerator';
 
 const DetailSection = ({ title, icon: Icon, children, onEdit, summary }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -566,6 +567,31 @@ export default function BuildingDetail() {
                     </div>
                 )}
             </DetailSection>
+
+            {/* Grundrisse */}
+            <Card>
+                <CardHeader className="pb-4">
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3 flex-1">
+                            <div className="mt-1">
+                                <Layout className="w-5 h-5 text-emerald-600" />
+                            </div>
+                            <div className="flex-1">
+                                <CardTitle className="text-lg font-semibold text-slate-800 mb-1">Grundrisse</CardTitle>
+                                <p className="text-slate-600 text-sm leading-relaxed">
+                                    Automatisch generierte Grundriss-Visualisierung basierend auf Kubatur und Einheiten
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="pt-0 border-t border-slate-100">
+                    <FloorPlanGenerator 
+                        building={building} 
+                        onUpdateBuilding={(data) => updateMutation.mutate({ id: building.id, data })}
+                    />
+                </CardContent>
+            </Card>
 
             {/* Kubatur */}
             <DetailSection 
