@@ -11,9 +11,17 @@ import OwnerForm from './OwnerForm';
 export default function OwnerSelectDialog({ open, onOpenChange, onSelect, excludeIds = [] }) {
     const [createMode, setCreateMode] = useState(false);
     
-    const { data: owners = [] } = useQuery({
+    const { data: owners = [], isLoading } = useQuery({
         queryKey: ['owners'],
-        queryFn: () => base44.entities.Owner.list()
+        queryFn: async () => {
+            try {
+                return await base44.entities.Owner.list();
+            } catch (error) {
+                console.error('Error loading owners:', error);
+                return [];
+            }
+        },
+        enabled: open
     });
 
     const availableOwners = owners.filter(o => !excludeIds.includes(o.id));
@@ -46,8 +54,13 @@ export default function OwnerSelectDialog({ open, onOpenChange, onSelect, exclud
 
                 {!createMode ? (
                     <div className="space-y-4">
-                        <div className="grid grid-cols-1 gap-3">
-                            {availableOwners.map((owner) => {
+                        {isLoading ? (
+                            <div className="text-center py-8 text-slate-500">
+                                Lade Eigentümer...
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-3">
+                                {availableOwners.map((owner) => {
                                 const displayName = owner.eigentuemer_typ === 'natuerliche_person'
                                     ? `${owner.vorname || ''} ${owner.nachname}`.trim()
                                     : owner.nachname;
@@ -81,12 +94,13 @@ export default function OwnerSelectDialog({ open, onOpenChange, onSelect, exclud
                                 );
                             })}
 
-                            {availableOwners.length === 0 && (
-                                <div className="text-center py-8 text-slate-500">
-                                    Keine verfügbaren Eigentümer
-                                </div>
-                            )}
-                        </div>
+                                {availableOwners.length === 0 && (
+                                    <div className="text-center py-8 text-slate-500">
+                                        Keine verfügbaren Eigentümer
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         <Button
                             type="button"

@@ -19,9 +19,17 @@ export default function ShareholderManager({ ownerId, ownerName }) {
         enabled: !!ownerId
     });
 
-    const { data: allOwners = [] } = useQuery({
+    const { data: allOwners = [], isLoading: ownersLoading } = useQuery({
         queryKey: ['owners'],
-        queryFn: () => base44.entities.Owner.list()
+        queryFn: async () => {
+            try {
+                return await base44.entities.Owner.list();
+            } catch (error) {
+                console.error('Error loading owners:', error);
+                toast.error('Fehler beim Laden der Eigentümer');
+                return [];
+            }
+        }
     });
 
     const createMutation = useMutation({
@@ -50,6 +58,11 @@ export default function ShareholderManager({ ownerId, ownerName }) {
     });
 
     const handleAddShareholder = (selectedOwnerId) => {
+        if (!selectedOwnerId) {
+            toast.error('Bitte wählen Sie einen Eigentümer aus');
+            return;
+        }
+        
         createMutation.mutate({
             owner_id: ownerId,
             gesellschafter_owner_id: selectedOwnerId,
