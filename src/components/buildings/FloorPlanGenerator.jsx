@@ -11,6 +11,8 @@ export default function FloorPlanGenerator({ building, onUpdateBuilding }) {
     const [aktivesGeschoss, setAktivesGeschoss] = useState('EG');
     const [validierung, setValidierung] = useState(null);
     const [fehlendeDaten, setFehlendeDaten] = useState([]);
+    const [editierteWerte, setEditierteWerte] = useState({});
+    const [speichert, setSpeichert] = useState(false);
 
     useEffect(() => {
         pruefeVollstaendigkeit();
@@ -201,6 +203,38 @@ export default function FloorPlanGenerator({ building, onUpdateBuilding }) {
         };
     };
 
+    const handleInputChange = (feld, wert) => {
+        setEditierteWerte(prev => ({
+            ...prev,
+            [feld]: wert
+        }));
+    };
+
+    const handleSpeichern = async () => {
+        setSpeichert(true);
+        
+        const updatedBuilding = { ...building };
+        
+        // Kubatur-Updates
+        if (!updatedBuilding.kubatur) {
+            updatedBuilding.kubatur = {};
+        }
+        
+        if (editierteWerte.grundriss_laenge) {
+            updatedBuilding.kubatur.grundriss_laenge = parseFloat(editierteWerte.grundriss_laenge);
+        }
+        if (editierteWerte.grundriss_breite) {
+            updatedBuilding.kubatur.grundriss_breite = parseFloat(editierteWerte.grundriss_breite);
+        }
+        if (editierteWerte.anzahl_vollgeschosse) {
+            updatedBuilding.kubatur.anzahl_vollgeschosse = parseInt(editierteWerte.anzahl_vollgeschosse);
+        }
+        
+        await onUpdateBuilding(updatedBuilding);
+        setEditierteWerte({});
+        setSpeichert(false);
+    };
+
     if (validierung === 'fehler') {
         return (
             <div className="p-8 border-2 border-orange-300 rounded-lg bg-gradient-to-br from-orange-50 to-white">
@@ -212,25 +246,54 @@ export default function FloorPlanGenerator({ building, onUpdateBuilding }) {
 
                 <Card className="p-6 mb-6">
                     <div className="space-y-4">
-                        {fehlendeDaten.map((fehler, index) => (
-                            <div key={index} className="flex items-start gap-3 p-4 bg-orange-50 border-l-4 border-orange-500 rounded">
-                                <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
-                                <div className="flex-1">
-                                    <div className="font-semibold text-slate-800">{fehler.bezeichnung}</div>
-                                    {fehler.hilfe && (
-                                        <div className="text-sm text-slate-600 mt-1">{fehler.hilfe}</div>
-                                    )}
+                        {fehlendeDaten.map((fehler, index) => {
+                            const istKubatur = fehler.typ === 'kubatur' && fehler.feld;
+                            const aktuellerWert = building?.kubatur?.[fehler.feld] || '';
+                            
+                            return (
+                                <div key={index} className="flex items-start gap-3 p-4 bg-orange-50 border-l-4 border-orange-500 rounded">
+                                    <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                                    <div className="flex-1">
+                                        <div className="font-semibold text-slate-800 mb-2">{fehler.bezeichnung}</div>
+                                        {fehler.hilfe && (
+                                            <div className="text-sm text-slate-600 mb-3">{fehler.hilfe}</div>
+                                        )}
+                                        
+                                        {istKubatur && (
+                                            <div className="mt-2">
+                                                <Input
+                                                    type="number"
+                                                    step="0.01"
+                                                    placeholder={`${fehler.bezeichnung} eingeben`}
+                                                    value={editierteWerte[fehler.feld] ?? aktuellerWert}
+                                                    onChange={(e) => handleInputChange(fehler.feld, e.target.value)}
+                                                    className="max-w-xs"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </Card>
 
                 <div className="text-center">
                     <p className="text-sm text-slate-600 mb-4">
-                        Bitte vervollständigen Sie die Gebäudedaten im entsprechenden Bereich oben.
+                        {fehlendeDaten.some(f => f.typ === 'kubatur' && f.feld) 
+                            ? 'Geben Sie die fehlenden Werte ein und speichern Sie:'
+                            : 'Bitte vervollständigen Sie die Gebäudedaten im entsprechenden Bereich oben.'}
                     </p>
                     <div className="flex gap-3 justify-center">
+                        {fehlendeDaten.some(f => f.typ === 'kubatur' && f.feld) && (
+                            <Button 
+                                onClick={handleSpeichern}
+                                disabled={speichert || Object.keys(editierteWerte).length === 0}
+                                className="bg-emerald-600 hover:bg-emerald-700"
+                            >
+                                {speichert ? 'Speichert...' : 'Speichern'}
+                            </Button>
+                        )}
                         <Button variant="outline" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                             ↑ Zu den Gebäudedaten
                         </Button>
