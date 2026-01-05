@@ -20,6 +20,8 @@ import {
 import TaskForm from '@/components/tasks/TaskForm';
 import TaskList from '@/components/tasks/TaskList';
 import TaskStats from '@/components/tasks/TaskStats';
+import WorkflowManager from '@/components/tasks/WorkflowManager';
+import AutomationManager from '@/components/tasks/AutomationManager';
 
 export default function Tasks() {
     const [formOpen, setFormOpen] = useState(false);
@@ -148,23 +150,11 @@ export default function Tasks() {
                 </TabsContent>
 
                 <TabsContent value="workflows" className="mt-6">
-                    <Card>
-                        <CardContent className="p-8 text-center">
-                            <Settings className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                            <h3 className="text-lg font-semibold text-slate-800 mb-2">Workflow-Management</h3>
-                            <p className="text-slate-600 mb-4">Wird in Phase 2 implementiert</p>
-                        </CardContent>
-                    </Card>
+                    <WorkflowManager />
                 </TabsContent>
 
                 <TabsContent value="rules" className="mt-6">
-                    <Card>
-                        <CardContent className="p-8 text-center">
-                            <Filter className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                            <h3 className="text-lg font-semibold text-slate-800 mb-2">Regeln & Automatisierungen</h3>
-                            <p className="text-slate-600 mb-4">Wird in Phase 4 implementiert</p>
-                        </CardContent>
-                    </Card>
+                    <AutomationManager />
                 </TabsContent>
             </Tabs>
 
