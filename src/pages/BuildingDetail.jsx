@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText, Receipt, Plug, Gauge, Upload, FileSignature, Landmark, ShieldCheck, Box, Layout, Scale, TrendingDown, Users } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
@@ -91,10 +91,8 @@ const DetailItem = ({ label, value }) => {
 };
 
 export default function BuildingDetail() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const buildingId = urlParams.get('buildingId');
-    
-    console.log('BuildingDetail - buildingId from URL:', buildingId);
+    const [searchParams] = useSearchParams();
+    const buildingId = searchParams.get('buildingId');
     
     const [formOpen, setFormOpen] = useState(false);
     const [editingSection, setEditingSection] = useState(null);
@@ -117,9 +115,7 @@ export default function BuildingDetail() {
     const { data: building, isLoading, error } = useQuery({
         queryKey: ['building', buildingId],
         queryFn: async () => {
-            console.log('Fetching building with ID:', buildingId);
             const buildings = await base44.entities.Building.filter({ id: buildingId });
-            console.log('Found buildings:', buildings);
             if (!buildings || buildings.length === 0) {
                 throw new Error('Gebäude nicht gefunden');
             }
