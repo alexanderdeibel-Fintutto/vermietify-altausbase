@@ -112,27 +112,20 @@ export default function Tasks() {
             <TaskStats tasks={tasks} />
 
             {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="overview" className="flex items-center gap-2">
-                        <ListTodo className="w-4 h-4" />
-                        Übersicht
-                    </TabsTrigger>
-                    <TabsTrigger value="emails" className="flex items-center gap-2">
-                        <Mail className="w-4 h-4" />
-                        Emails
-                    </TabsTrigger>
-                    <TabsTrigger value="workflows" className="flex items-center gap-2">
-                        <Settings className="w-4 h-4" />
-                        Workflows
-                    </TabsTrigger>
-                    <TabsTrigger value="rules" className="flex items-center gap-2">
-                        <Filter className="w-4 h-4" />
-                        Regeln
-                    </TabsTrigger>
+            <Tabs defaultValue="overview" className="w-full">
+                <TabsList className="grid w-full grid-cols-5">
+                    <TabsTrigger value="overview">Übersicht</TabsTrigger>
+                    <TabsTrigger value="tasks">Tasks</TabsTrigger>
+                    <TabsTrigger value="workflows">Workflows</TabsTrigger>
+                    <TabsTrigger value="emails">Emails</TabsTrigger>
+                    <TabsTrigger value="rules">Automatisierung</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="mt-6">
+                    <TaskDashboard />
+                </TabsContent>
+
+                <TabsContent value="tasks" className="mt-6">
                     <TaskList 
                         tasks={tasks}
                         priorities={priorities}
@@ -142,6 +135,10 @@ export default function Tasks() {
                     />
                 </TabsContent>
 
+                <TabsContent value="workflows" className="mt-6">
+                    <WorkflowManager />
+                </TabsContent>
+
                 <TabsContent value="emails" className="mt-6">
                     <div className="space-y-6">
                         <EmailAccountManager />
@@ -149,14 +146,9 @@ export default function Tasks() {
                             <h2 className="text-xl font-semibold text-slate-800 mb-4">Empfangene Emails</h2>
                             <EmailList onCreateTask={(data) => {
                                 setFormOpen(true);
-                                // Pre-fill form with email data
                             }} />
                         </div>
                     </div>
-                </TabsContent>
-
-                <TabsContent value="workflows" className="mt-6">
-                    <WorkflowManager />
                 </TabsContent>
 
                 <TabsContent value="rules" className="mt-6">
