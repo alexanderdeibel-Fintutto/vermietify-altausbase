@@ -261,7 +261,7 @@ export default function WorkflowStepsEditor({ open, onOpenChange, workflow }) {
                             Speichern
                         </Button>
                     </div>
-                </form>
+                </div>
             </DialogContent>
         </Dialog>
     );
