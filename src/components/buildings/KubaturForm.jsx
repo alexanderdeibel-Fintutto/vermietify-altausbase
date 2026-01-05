@@ -383,6 +383,23 @@ ABGLEICH:
             {/* Abgleich mit Wohneinheiten */}
             <div className="pt-3 border-t border-slate-200">
                 <h4 className="font-medium text-slate-700 mb-3">Abgleich mit erfassten Wohneinheiten</h4>
+                
+                {/* Fehlende Daten für Berechnung */}
+                {(!localKubatur.wohnflaeche_anteil_prozent || localKubatur.wohnflaeche_anteil_prozent === 0) && (
+                    <Card className="p-4 mb-4 border-2 border-orange-200 bg-orange-50">
+                        <div className="flex items-start gap-3">
+                            <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5" />
+                            <div className="flex-1">
+                                <h5 className="font-semibold text-slate-800 mb-1">Wohnflächenanteil erforderlich</h5>
+                                <p className="text-sm text-slate-600">
+                                    Für den automatischen Abgleich benötigen Sie den <strong>Wohnfläche Anteil (%)</strong> unter "Nutzungsverteilung" oben. 
+                                    Dieser gibt an, wie viel Prozent der Brutto-Grundfläche als Wohnfläche genutzt wird (typischerweise 75-85%).
+                                </p>
+                            </div>
+                        </div>
+                    </Card>
+                )}
+
                 <div className="space-y-3">
                     <div className="grid grid-cols-3 gap-3">
                         <Card className="p-3 bg-slate-50">
@@ -410,7 +427,7 @@ ABGLEICH:
                     </div>
 
                     {/* Plausibilitätsprüfung */}
-                    {calculatedValues.plausibilitaet && Math.abs(calculatedValues.abweichung || 0) > 0 && (
+                    {calculatedValues.plausibilitaet && Math.abs(calculatedValues.abweichung || 0) > 0 && localKubatur.wohnflaeche_anteil_prozent > 0 && (
                         <Card className={`p-4 border-2 ${
                             calculatedValues.plausibilitaet.status === 'error' ? 'border-red-200 bg-red-50' :
                             calculatedValues.plausibilitaet.status === 'warn' ? 'border-orange-200 bg-orange-50' :
