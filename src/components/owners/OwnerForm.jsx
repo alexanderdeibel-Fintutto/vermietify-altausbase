@@ -21,17 +21,18 @@ export default function OwnerForm({ initialData, onSuccess, onCancel, embedded =
     const queryClient = useQueryClient();
 
     const saveMutation = useMutation({
-        mutationFn: (data) => {
+        mutationFn: async (data) => {
             if (initialData?.id) {
-                return base44.entities.Owner.update(initialData.id, data);
+                return await base44.entities.Owner.update(initialData.id, data);
             }
-            return base44.entities.Owner.create(data);
+            return await base44.entities.Owner.create(data);
         },
-        onSuccess: (response) => {
-            queryClient.invalidateQueries({ queryKey: ['owners'] });
+        onSuccess: async (response) => {
+            await queryClient.invalidateQueries({ queryKey: ['owners'] });
             toast.success(initialData ? 'Eigentümer aktualisiert' : 'Eigentümer erstellt');
             if (onSuccess) {
-                onSuccess(response.id);
+                const ownerId = response?.id || response;
+                onSuccess(ownerId);
             }
         },
         onError: (error) => {
