@@ -50,7 +50,7 @@ export default function Building3DVisualization({ kubatur }) {
     const startY = svgHeight - 60;
     
     return (
-        <div className="w-full h-80 bg-gradient-to-br from-slate-50 via-white to-slate-100 rounded-lg overflow-hidden relative border border-slate-200">
+        <div key={vizKey} className="w-full h-80 bg-gradient-to-br from-slate-50 via-white to-slate-100 rounded-lg overflow-hidden relative border border-slate-200">
             <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-full">
                 <defs>
                     <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
