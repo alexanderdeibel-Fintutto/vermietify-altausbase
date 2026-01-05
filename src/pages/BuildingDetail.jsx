@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText, Receipt, Plug, Gauge, Upload, FileSignature, Landmark, ShieldCheck, Box, Layout, Scale } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText, Receipt, Plug, Gauge, Upload, FileSignature, Landmark, ShieldCheck, Box, Layout, Scale, TrendingDown } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
@@ -1372,6 +1372,57 @@ export default function BuildingDetail() {
                         </div>
                     )}
                 </div>
+            </DetailSection>
+
+            {/* AfA/Abschreibung */}
+            <DetailSection 
+                title="AfA/Abschreibung"
+                icon={TrendingDown}
+                summary={building.afa_abschreibung?.afa_prozentsatz || building.afa_abschreibung?.afa_methode ? `${building.afa_abschreibung.afa_prozentsatz ? building.afa_abschreibung.afa_prozentsatz + '% ' : ''}${building.afa_abschreibung.afa_methode || ''}${building.afa_abschreibung.sonderabschreibung_art && building.afa_abschreibung.sonderabschreibung_art !== 'keine' ? ' • Sonder-AfA' : ''}${building.afa_abschreibung.denkmalschutz_bescheinigung ? ' • Denkmal' : ''}` : 'Noch keine AfA-Daten hinterlegt'}
+                onEdit={() => handleEditSection('afa')}
+            >
+                {building.afa_abschreibung && Object.keys(building.afa_abschreibung).length > 0 ? (
+                    <>
+                        <div className="col-span-full">
+                            <h4 className="font-semibold text-slate-800 mb-2">Kosten</h4>
+                        </div>
+                        <DetailItem label="Herstellungskosten" value={building.afa_abschreibung.herstellungskosten ? building.afa_abschreibung.herstellungskosten.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : null} />
+                        <DetailItem label="Modernisierungskosten" value={building.afa_abschreibung.modernisierungskosten ? building.afa_abschreibung.modernisierungskosten.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : null} />
+                        
+                        <div className="col-span-full mt-4">
+                            <h4 className="font-semibold text-slate-800 mb-2">AfA-Daten</h4>
+                        </div>
+                        <DetailItem label="AfA-Prozentsatz" value={building.afa_abschreibung.afa_prozentsatz ? `${building.afa_abschreibung.afa_prozentsatz}%` : null} />
+                        <DetailItem label="AfA-Methode" value={building.afa_abschreibung.afa_methode} />
+                        <DetailItem 
+                            label="AfA-Beginn" 
+                            value={building.afa_abschreibung.afa_beginn ? format(parseISO(building.afa_abschreibung.afa_beginn), 'dd.MM.yyyy', { locale: de }) : null} 
+                        />
+                        <DetailItem 
+                            label="AfA-Ende" 
+                            value={building.afa_abschreibung.afa_ende ? format(parseISO(building.afa_abschreibung.afa_ende), 'dd.MM.yyyy', { locale: de }) : null} 
+                        />
+                        
+                        {(building.afa_abschreibung.sonderabschreibung_art || building.afa_abschreibung.denkmalschutz_bescheinigung) && (
+                            <>
+                                <div className="col-span-full mt-4">
+                                    <h4 className="font-semibold text-slate-800 mb-2">Sonderabschreibung</h4>
+                                </div>
+                                <DetailItem label="Sonder-AfA Art" value={building.afa_abschreibung.sonderabschreibung_art} />
+                                <DetailItem label="Sonder-AfA Prozentsatz" value={building.afa_abschreibung.sonderabschreibung_prozent ? `${building.afa_abschreibung.sonderabschreibung_prozent}%` : null} />
+                                <DetailItem label="Denkmalschutz" value={building.afa_abschreibung.denkmalschutz_bescheinigung} />
+                                <DetailItem 
+                                    label="Denkmalschutz Datum" 
+                                    value={building.afa_abschreibung.denkmalschutz_datum ? format(parseISO(building.afa_abschreibung.denkmalschutz_datum), 'dd.MM.yyyy', { locale: de }) : null} 
+                                />
+                            </>
+                        )}
+                    </>
+                ) : (
+                    <div className="col-span-full text-center py-4 text-slate-500">
+                        Noch keine AfA-Daten hinterlegt
+                    </div>
+                )}
             </DetailSection>
 
             {/* Finanzamt/Steuern */}

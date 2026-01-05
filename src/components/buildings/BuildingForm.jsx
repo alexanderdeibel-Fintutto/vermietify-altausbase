@@ -39,6 +39,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
     const [kubatur, setKubatur] = React.useState({});
     const [gebaeudeTyp, setGebaeudeTyp] = React.useState('gebaeude');
     const [finanzamtSteuern, setFinanzamtSteuern] = React.useState({});
+    const [afaAbschreibung, setAfaAbschreibung] = React.useState({});
     const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
     const [checkingDependencies, setCheckingDependencies] = React.useState(false);
     const [dependencies, setDependencies] = React.useState(null);
@@ -57,6 +58,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
             flaechen: 'Flächen/Einheiten bearbeiten',
             kubatur: 'Kubatur bearbeiten',
             grundbuch: 'Grundbuch bearbeiten',
+            afa: 'AfA/Abschreibung bearbeiten',
             finanzamt: 'Finanzamt/Steuern bearbeiten',
             baudaten: 'Baudaten bearbeiten',
             ausstattung: 'Ausstattung bearbeiten',
@@ -112,6 +114,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
             kubatur: kubatur,
             grundbuch: grundbuch,
             finanzamt_steuern: finanzamtSteuern,
+            afa_abschreibung: afaAbschreibung,
             purchase_price: data.purchase_price ? parseFloat(data.purchase_price) : null,
             year_built: data.year_built ? parseInt(data.year_built) : null,
             total_units: data.total_units ? parseInt(data.total_units) : null,
@@ -288,7 +291,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                         <div className="pt-4 border-t border-slate-200">
                             <h3 className="font-semibold text-slate-800 mb-3">Allgemeine Angaben</h3>
                             <div className="space-y-3">
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-3 gap-4">
                                     <div>
                                         <Label htmlFor="year_built">Baujahr</Label>
                                         <Input 
@@ -296,6 +299,16 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                             type="number"
                                             {...register('year_built')}
                                             placeholder="1990"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="eigennutzung_prozent">Eigennutzung (%)</Label>
+                                        <Input 
+                                            id="eigennutzung_prozent"
+                                            type="number"
+                                            step="0.01"
+                                            {...register('eigennutzung_prozent')}
+                                            placeholder="50"
                                         />
                                     </div>
                                     <div>
@@ -335,6 +348,24 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                             step="0.01"
                                             {...register('purchase_price')}
                                             placeholder="250000"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label htmlFor="vermietungsabsicht_ab">Vermietungsabsicht ab</Label>
+                                        <Input 
+                                            id="vermietungsabsicht_ab"
+                                            type="date"
+                                            {...register('vermietungsabsicht_ab')}
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="erstmalige_vermietung">Erstmalige Vermietung</Label>
+                                        <Input 
+                                            id="erstmalige_vermietung"
+                                            type="date"
+                                            {...register('erstmalige_vermietung')}
                                         />
                                     </div>
                                 </div>
@@ -877,6 +908,144 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                                 onChange={(e) => setFinanzamtSteuern({...finanzamtSteuern, naechste_pruefung_geplant: e.target.value})}
                                             />
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        </>
+                        )}
+
+                        {shouldShowSection('afa') && (
+                        <>
+                        <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
+                            {!section && <h3 className="font-semibold text-slate-800 mb-3">AfA/Abschreibung</h3>}
+                            <div className="space-y-4">
+                                <div>
+                                    <h4 className="font-semibold text-slate-700 mb-3">Kosten</h4>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <Label>Herstellungskosten (€)</Label>
+                                            <Input 
+                                                type="number"
+                                                step="0.01"
+                                                value={afaAbschreibung.herstellungskosten || ''}
+                                                onChange={(e) => setAfaAbschreibung({...afaAbschreibung, herstellungskosten: e.target.value ? parseFloat(e.target.value) : null})}
+                                                placeholder="50000.00"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label>Modernisierungskosten (€)</Label>
+                                            <Input 
+                                                type="number"
+                                                step="0.01"
+                                                value={afaAbschreibung.modernisierungskosten || ''}
+                                                onChange={(e) => setAfaAbschreibung({...afaAbschreibung, modernisierungskosten: e.target.value ? parseFloat(e.target.value) : null})}
+                                                placeholder="30000.00"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-slate-200">
+                                    <h4 className="font-semibold text-slate-700 mb-3">AfA-Daten</h4>
+                                    <div className="space-y-3">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <Label>AfA-Prozentsatz (%)</Label>
+                                                <Input 
+                                                    type="number"
+                                                    step="0.01"
+                                                    value={afaAbschreibung.afa_prozentsatz || ''}
+                                                    onChange={(e) => setAfaAbschreibung({...afaAbschreibung, afa_prozentsatz: e.target.value ? parseFloat(e.target.value) : null})}
+                                                    placeholder="2.0"
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label>AfA-Methode</Label>
+                                                <select 
+                                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                    value={afaAbschreibung.afa_methode || ''}
+                                                    onChange={(e) => setAfaAbschreibung({...afaAbschreibung, afa_methode: e.target.value})}
+                                                >
+                                                    <option value="">Auswählen...</option>
+                                                    <option value="linear">Linear</option>
+                                                    <option value="degressiv">Degressiv</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <Label>AfA-Beginn</Label>
+                                                <Input 
+                                                    type="date"
+                                                    value={afaAbschreibung.afa_beginn || ''}
+                                                    onChange={(e) => setAfaAbschreibung({...afaAbschreibung, afa_beginn: e.target.value})}
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label>AfA-Ende</Label>
+                                                <Input 
+                                                    type="date"
+                                                    value={afaAbschreibung.afa_ende || ''}
+                                                    onChange={(e) => setAfaAbschreibung({...afaAbschreibung, afa_ende: e.target.value})}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-slate-200">
+                                    <h4 className="font-semibold text-slate-700 mb-3">Sonderabschreibung</h4>
+                                    <div className="space-y-3">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <Label>Sonder-AfA Art</Label>
+                                                <select 
+                                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                                    value={afaAbschreibung.sonderabschreibung_art || 'keine'}
+                                                    onChange={(e) => setAfaAbschreibung({...afaAbschreibung, sonderabschreibung_art: e.target.value})}
+                                                >
+                                                    <option value="keine">Keine</option>
+                                                    <option value="paragraph_7h">§7h EStG</option>
+                                                    <option value="paragraph_7i">§7i EStG</option>
+                                                    <option value="denkmal">Denkmalschutz</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <Label>Sonder-AfA Prozentsatz (%)</Label>
+                                                <Input 
+                                                    type="number"
+                                                    step="0.01"
+                                                    value={afaAbschreibung.sonderabschreibung_prozent || ''}
+                                                    onChange={(e) => setAfaAbschreibung({...afaAbschreibung, sonderabschreibung_prozent: e.target.value ? parseFloat(e.target.value) : null})}
+                                                    placeholder="9.0"
+                                                    disabled={!afaAbschreibung.sonderabschreibung_art || afaAbschreibung.sonderabschreibung_art === 'keine'}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox 
+                                                id="denkmalschutz"
+                                                checked={afaAbschreibung.denkmalschutz_bescheinigung || false}
+                                                onCheckedChange={(checked) => setAfaAbschreibung({...afaAbschreibung, denkmalschutz_bescheinigung: checked})}
+                                            />
+                                            <label
+                                                htmlFor="denkmalschutz"
+                                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                            >
+                                                Denkmalschutz-Bescheinigung vorhanden
+                                            </label>
+                                        </div>
+                                        {afaAbschreibung.denkmalschutz_bescheinigung && (
+                                            <div>
+                                                <Label>Datum Denkmalschutz-Bescheinigung</Label>
+                                                <Input 
+                                                    type="date"
+                                                    value={afaAbschreibung.denkmalschutz_datum || ''}
+                                                    onChange={(e) => setAfaAbschreibung({...afaAbschreibung, denkmalschutz_datum: e.target.value})}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
