@@ -11,7 +11,6 @@ import { Plus, Trash2, AlertCircle, CheckCircle, UserPlus, Users, Edit } from 'l
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import OwnerSelectDialog from './OwnerSelectDialog';
-import ShareholderManager from './ShareholderManager';
 import OwnerForm from './OwnerForm';
 
 export default function OwnerSharesManager({ shares, onChange, buildingId }) {
@@ -119,24 +118,14 @@ export default function OwnerSharesManager({ shares, onChange, buildingId }) {
                                         </Badge>
                                     )}
                                 </div>
-                                <div className="flex gap-1">
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setEditingOwnerId(share.owner_id)}
-                                        className="text-slate-600 hover:text-slate-800"
-                                    >
-                                        <Edit className="w-4 h-4" />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleRemoveShare(index)}
-                                        className="text-red-600 hover:text-red-700"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                </div>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleRemoveShare(index)}
+                                    className="text-red-600 hover:text-red-700"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </Button>
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
@@ -182,16 +171,7 @@ export default function OwnerSharesManager({ shares, onChange, buildingId }) {
                                 </div>
                             </div>
 
-                            {/* Shareholder Management for Legal Entities */}
-                            {isLegalEntity(share.owner_id) && share.owner_id && (
-                                <div className="mt-4 pt-4 border-t border-slate-200">
-                                    <ShareholderManager 
-                                        key={share.owner_id}
-                                        ownerId={share.owner_id} 
-                                        ownerName={getOwnerName(share.owner_id)}
-                                    />
-                                </div>
-                            )}
+
                         </div>
                     </Card>
                 ))}
@@ -225,25 +205,7 @@ export default function OwnerSharesManager({ shares, onChange, buildingId }) {
                 </Dialog>
             )}
 
-            {/* Edit Owner Dialog */}
-            <Dialog open={!!editingOwnerId} onOpenChange={(open) => !open && setEditingOwnerId(null)}>
-                <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>Eigentümer bearbeiten</DialogTitle>
-                    </DialogHeader>
-                    {editingOwnerId && owners.find(o => o.id === editingOwnerId) && (
-                        <OwnerForm
-                            initialData={owners.find(o => o.id === editingOwnerId)}
-                            onSuccess={async () => {
-                                await queryClient.invalidateQueries({ queryKey: ['owners'] });
-                                await refetchOwners();
-                                setEditingOwnerId(null);
-                            }}
-                            onCancel={() => setEditingOwnerId(null)}
-                        />
-                    )}
-                </DialogContent>
-            </Dialog>
+
         </div>
     );
 }
