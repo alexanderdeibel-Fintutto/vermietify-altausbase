@@ -38,6 +38,10 @@ export default function ShareholderManager({ ownerId, ownerName }) {
             queryClient.invalidateQueries({ queryKey: ['shareholders', ownerId] });
             toast.success('Gesellschafter hinzugefügt');
             setSelectDialogOpen(false);
+        },
+        onError: (error) => {
+            console.error('Error creating shareholder:', error);
+            toast.error('Fehler beim Hinzufügen: ' + (error.message || 'Unbekannter Fehler'));
         }
     });
 
@@ -206,12 +210,14 @@ export default function ShareholderManager({ ownerId, ownerName }) {
                 )}
             </div>
 
-            <OwnerSelectDialog
-                open={selectDialogOpen}
-                onOpenChange={setSelectDialogOpen}
-                onSelect={handleAddShareholder}
-                excludeIds={[ownerId, ...shareholders.map(s => s.gesellschafter_owner_id)]}
-            />
+            {selectDialogOpen && (
+                <OwnerSelectDialog
+                    open={selectDialogOpen}
+                    onOpenChange={setSelectDialogOpen}
+                    onSelect={handleAddShareholder}
+                    excludeIds={[ownerId, ...shareholders.map(s => s.gesellschafter_owner_id)]}
+                />
+            )}
         </div>
     );
 }
