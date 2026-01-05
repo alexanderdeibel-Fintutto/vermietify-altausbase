@@ -22,6 +22,7 @@ export default function Layout({ children, currentPageName }) {
     const navigation = [
         { name: 'Dashboard', href: createPageUrl('Dashboard'), icon: Home, page: 'Dashboard' },
         { name: 'Objekte', href: createPageUrl('Buildings'), icon: Building2, page: 'Buildings' },
+        { name: 'Eigentümer', href: createPageUrl('Owners'), icon: Users, page: 'Owners' },
         { name: 'Mieter', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts' },
         { name: 'Dokumente', href: createPageUrl('Documents'), icon: FileText, page: 'Documents' },
         { name: 'Finanzen', href: createPageUrl('Finanzen'), icon: CreditCard, page: 'Finanzen' },
