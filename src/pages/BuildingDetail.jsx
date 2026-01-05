@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText, Receipt, Plug, Gauge, Upload, FileSignature, Landmark, ShieldCheck, Box, Layout } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText, Receipt, Plug, Gauge, Upload, FileSignature, Landmark, ShieldCheck, Box, Layout, Scale } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
@@ -1372,6 +1372,72 @@ export default function BuildingDetail() {
                         </div>
                     )}
                 </div>
+            </DetailSection>
+
+            {/* Finanzamt/Steuern */}
+            <DetailSection 
+                title="Finanzamt/Steuern"
+                icon={Scale}
+                summary={building.finanzamt_steuern?.finanzamt_name || building.finanzamt_steuern?.steuernummer_immobilie ? `${building.finanzamt_steuern.finanzamt_name || ''}${building.finanzamt_steuern.finanzamt_name && building.finanzamt_steuern.steuernummer_immobilie ? ' • ' : ''}${building.finanzamt_steuern.steuernummer_immobilie ? 'St.-Nr. ' + building.finanzamt_steuern.steuernummer_immobilie : ''}` : 'Noch keine Finanzamt-Daten hinterlegt'}
+                onEdit={() => handleEditSection('finanzamt')}
+            >
+                {building.finanzamt_steuern && Object.keys(building.finanzamt_steuern).length > 0 ? (
+                    <>
+                        <div className="col-span-full">
+                            <h4 className="font-semibold text-slate-800 mb-2">Finanzamt</h4>
+                        </div>
+                        <DetailItem label="Finanzamt Name" value={building.finanzamt_steuern.finanzamt_name} />
+                        <DetailItem label="Finanzamts-Nummer" value={building.finanzamt_steuern.finanzamt_nummer} />
+                        <DetailItem label="Straße" value={building.finanzamt_steuern.finanzamt_strasse} />
+                        <DetailItem label="PLZ" value={building.finanzamt_steuern.finanzamt_plz} />
+                        <DetailItem label="Ort" value={building.finanzamt_steuern.finanzamt_ort} />
+                        <DetailItem label="Telefon" value={building.finanzamt_steuern.finanzamt_telefon} />
+                        <DetailItem label="E-Mail" value={building.finanzamt_steuern.finanzamt_email} />
+                        
+                        <div className="col-span-full mt-4">
+                            <h4 className="font-semibold text-slate-800 mb-2">Steuerdaten</h4>
+                        </div>
+                        <DetailItem label="Steuernummer Immobilie" value={building.finanzamt_steuern.steuernummer_immobilie} />
+                        <DetailItem label="Steuer-ID Objekt" value={building.finanzamt_steuern.steuer_id_objekt} />
+                        <DetailItem label="Aktenzeichen FA" value={building.finanzamt_steuern.aktenzeichen_fa} />
+                        
+                        {(building.finanzamt_steuern.sachbearbeiter_name || building.finanzamt_steuern.sachbearbeiter_telefon || building.finanzamt_steuern.sachbearbeiter_email) && (
+                            <>
+                                <div className="col-span-full mt-4">
+                                    <h4 className="font-semibold text-slate-800 mb-2">Sachbearbeiter</h4>
+                                </div>
+                                <DetailItem label="Name" value={building.finanzamt_steuern.sachbearbeiter_name} />
+                                <DetailItem label="Telefon" value={building.finanzamt_steuern.sachbearbeiter_telefon} />
+                                <DetailItem label="E-Mail" value={building.finanzamt_steuern.sachbearbeiter_email} />
+                                <DetailItem label="Zimmer" value={building.finanzamt_steuern.sachbearbeiter_zimmer} />
+                            </>
+                        )}
+                        
+                        {(building.finanzamt_steuern.erstmalige_erfassung_fa || building.finanzamt_steuern.letzte_pruefung_fa || building.finanzamt_steuern.naechste_pruefung_geplant) && (
+                            <>
+                                <div className="col-span-full mt-4">
+                                    <h4 className="font-semibold text-slate-800 mb-2">Prüfungen</h4>
+                                </div>
+                                <DetailItem 
+                                    label="Erstmalige Erfassung FA" 
+                                    value={building.finanzamt_steuern.erstmalige_erfassung_fa ? format(parseISO(building.finanzamt_steuern.erstmalige_erfassung_fa), 'dd.MM.yyyy', { locale: de }) : null} 
+                                />
+                                <DetailItem 
+                                    label="Letzte Prüfung FA" 
+                                    value={building.finanzamt_steuern.letzte_pruefung_fa ? format(parseISO(building.finanzamt_steuern.letzte_pruefung_fa), 'dd.MM.yyyy', { locale: de }) : null} 
+                                />
+                                <DetailItem 
+                                    label="Nächste Prüfung geplant" 
+                                    value={building.finanzamt_steuern.naechste_pruefung_geplant ? format(parseISO(building.finanzamt_steuern.naechste_pruefung_geplant), 'dd.MM.yyyy', { locale: de }) : null} 
+                                />
+                            </>
+                        )}
+                    </>
+                ) : (
+                    <div className="col-span-full text-center py-4 text-slate-500">
+                        Noch keine Finanzamt-Daten hinterlegt
+                    </div>
+                )}
             </DetailSection>
 
             {/* Kaufvertrag */}
