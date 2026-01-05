@@ -39,9 +39,10 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, MoreVertical, Pencil, Trash2, FileText, Building2, TrendingUp, TrendingDown, Filter, Download, Tag, Users } from 'lucide-react';
+import { Plus, Search, MoreVertical, Pencil, Trash2, FileText, Building2, TrendingUp, TrendingDown, Filter, Download, Tag, Users, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import InvoiceForm from '@/components/invoices/InvoiceForm';
+import IntelligentInvoiceWizard from '@/components/invoices/IntelligentInvoiceWizard';
 import CostTypeForm from '@/components/cost-types/CostTypeForm';
 import RecipientForm from '@/components/recipients/RecipientForm';
 
@@ -51,6 +52,7 @@ export default function Invoices() {
     
     // Invoice state
     const [invoiceFormOpen, setInvoiceFormOpen] = useState(false);
+    const [intelligentWizardOpen, setIntelligentWizardOpen] = useState(false);
     const [editingInvoice, setEditingInvoice] = useState(null);
     const [deleteInvoice, setDeleteInvoice] = useState(null);
     const [invoiceSearchTerm, setInvoiceSearchTerm] = useState('');
@@ -475,26 +477,40 @@ export default function Invoices() {
                         {activeTab === 'recipients' && `${filteredRecipients.length} ${filteredRecipients.length === 1 ? 'Empfänger' : 'Empfänger'}`}
                     </p>
                 </div>
-                <Button 
-                    onClick={() => {
-                        if (activeTab === 'invoices') {
-                            setEditingInvoice(null);
-                            setInvoiceFormOpen(true);
-                        } else if (activeTab === 'cost-types') {
-                            setEditingCostType(null);
-                            setCostTypeFormOpen(true);
-                        } else if (activeTab === 'recipients') {
-                            setEditingRecipient(null);
-                            setRecipientFormOpen(true);
-                        }
-                    }}
-                    className="bg-emerald-600 hover:bg-emerald-700 gap-2"
-                >
-                    <Plus className="w-4 h-4" />
-                    {activeTab === 'invoices' && 'Neue Rechnung'}
-                    {activeTab === 'cost-types' && 'Neue Kostenart'}
-                    {activeTab === 'recipients' && 'Neuer Empfänger'}
-                </Button>
+                <div className="flex gap-2">
+                    {activeTab === 'invoices' && (
+                        <Button 
+                            onClick={() => {
+                                setEditingInvoice(null);
+                                setIntelligentWizardOpen(true);
+                            }}
+                            className="bg-purple-600 hover:bg-purple-700 gap-2"
+                        >
+                            <Sparkles className="w-4 h-4" />
+                            Smart-Erfassung
+                        </Button>
+                    )}
+                    <Button 
+                        onClick={() => {
+                            if (activeTab === 'invoices') {
+                                setEditingInvoice(null);
+                                setInvoiceFormOpen(true);
+                            } else if (activeTab === 'cost-types') {
+                                setEditingCostType(null);
+                                setCostTypeFormOpen(true);
+                            } else if (activeTab === 'recipients') {
+                                setEditingRecipient(null);
+                                setRecipientFormOpen(true);
+                            }
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+                    >
+                        <Plus className="w-4 h-4" />
+                        {activeTab === 'invoices' && 'Neue Rechnung'}
+                        {activeTab === 'cost-types' && 'Neue Kostenart'}
+                        {activeTab === 'recipients' && 'Neuer Empfänger'}
+                    </Button>
+                </div>
             </div>
 
             {/* Tabs */}
@@ -1114,6 +1130,12 @@ export default function Invoices() {
                 units={units}
                 contracts={contracts}
                 onSuccess={handleInvoiceSubmit}
+            />
+
+            {/* Intelligent Invoice Wizard */}
+            <IntelligentInvoiceWizard
+                open={intelligentWizardOpen}
+                onOpenChange={setIntelligentWizardOpen}
             />
 
             {/* Cost Type Form Dialog */}
