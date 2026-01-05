@@ -27,6 +27,7 @@ import GebaeudeManager from './GebaeudeManager';
 import FlaechenEinheitenManager from './FlaechenEinheitenManager';
 import GrundbuchForm from './GrundbuchForm';
 import KubaturForm from './KubaturForm';
+import OwnerSharesManager from '../owners/OwnerSharesManager';
 
 export default function BuildingForm({ open, onOpenChange, onSubmit, initialData, isLoading, section, editingUnitIndex }) {
     const { register, handleSubmit, reset, formState: { errors } } = useForm({
@@ -40,6 +41,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
     const [gebaeudeTyp, setGebaeudeTyp] = React.useState('gebaeude');
     const [finanzamtSteuern, setFinanzamtSteuern] = React.useState({});
     const [afaAbschreibung, setAfaAbschreibung] = React.useState({});
+    const [ownerShares, setOwnerShares] = React.useState([]);
     const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
     const [checkingDependencies, setCheckingDependencies] = React.useState(false);
     const [dependencies, setDependencies] = React.useState(null);
@@ -58,6 +60,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
             flaechen: 'Flächen/Einheiten bearbeiten',
             kubatur: 'Kubatur bearbeiten',
             grundbuch: 'Grundbuch bearbeiten',
+            eigentuemer: 'Eigentümer bearbeiten',
             afa: 'AfA/Abschreibung bearbeiten',
             finanzamt: 'Finanzamt/Steuern bearbeiten',
             baudaten: 'Baudaten bearbeiten',
@@ -113,6 +116,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
             flaechen_einheiten: finalFlaechenEinheiten,
             kubatur: kubatur,
             grundbuch: grundbuch,
+            owner_shares: ownerShares,
             finanzamt_steuern: finanzamtSteuern,
             afa_abschreibung: afaAbschreibung,
             purchase_price: data.purchase_price ? parseFloat(data.purchase_price) : null,
@@ -553,6 +557,19 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                         <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
                             {!section && <h3 className="font-semibold text-slate-800 mb-3">Grundbuch</h3>}
                             <GrundbuchForm grundbuch={grundbuch} onChange={setGrundbuch} />
+                        </div>
+                        </>
+                        )}
+
+                        {shouldShowSection('eigentuemer') && (
+                        <>
+                        <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
+                            {!section && <h3 className="font-semibold text-slate-800 mb-3">Eigentümer</h3>}
+                            <OwnerSharesManager 
+                                shares={ownerShares} 
+                                onChange={setOwnerShares}
+                                buildingId={initialData?.id}
+                            />
                         </div>
                         </>
                         )}
