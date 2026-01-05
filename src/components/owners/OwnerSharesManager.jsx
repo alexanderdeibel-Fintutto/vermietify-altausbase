@@ -6,10 +6,11 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, AlertCircle, CheckCircle, UserPlus } from 'lucide-react';
+import { Plus, Trash2, AlertCircle, CheckCircle, UserPlus, Users } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import OwnerSelectDialog from './OwnerSelectDialog';
+import ShareholderManager from './ShareholderManager';
 
 export default function OwnerSharesManager({ shares, onChange, buildingId }) {
     const [selectOwnerOpen, setSelectOwnerOpen] = useState(false);
@@ -31,6 +32,11 @@ export default function OwnerSharesManager({ shares, onChange, buildingId }) {
             return `${owner.vorname || ''} ${owner.nachname}`.trim();
         }
         return owner.nachname;
+    };
+
+    const isLegalEntity = (ownerId) => {
+        const owner = owners.find(o => o.id === ownerId);
+        return owner && owner.eigentuemer_typ !== 'natuerliche_person';
     };
 
     const handleAddOwner = (ownerId) => {
@@ -100,6 +106,12 @@ export default function OwnerSharesManager({ shares, onChange, buildingId }) {
                                     <Badge variant="outline">
                                         {share.anteil_prozent}%
                                     </Badge>
+                                    {isLegalEntity(share.owner_id) && (
+                                        <Badge className="bg-blue-100 text-blue-700">
+                                            <Users className="w-3 h-3 mr-1" />
+                                            Kapitalgesellschaft
+                                        </Badge>
+                                    )}
                                 </div>
                                 <Button
                                     variant="ghost"
@@ -153,6 +165,16 @@ export default function OwnerSharesManager({ shares, onChange, buildingId }) {
                                     />
                                 </div>
                             </div>
+
+                            {/* Shareholder Management for Legal Entities */}
+                            {isLegalEntity(share.owner_id) && (
+                                <div className="mt-4 pt-4 border-t border-slate-200">
+                                    <ShareholderManager 
+                                        ownerId={share.owner_id} 
+                                        ownerName={getOwnerName(share.owner_id)}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </Card>
                 ))}
