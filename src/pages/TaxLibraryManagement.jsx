@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Building2, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { BookOpen, Building2, FileText, CheckCircle, AlertCircle, Plus } from 'lucide-react';
 import TaxLibraryInstallDialog from '@/components/tax-library/TaxLibraryInstallDialog';
 import TaxLibraryOverview from '@/components/tax-library/TaxLibraryOverview';
+import CustomCategoryManager from '@/components/tax-library/CustomCategoryManager';
 
 export default function TaxLibraryManagement() {
     const [selectedBuildingId, setSelectedBuildingId] = useState(null);
@@ -125,7 +126,26 @@ export default function TaxLibraryManagement() {
                         )}
                     </div>
 
-                    <TaxLibraryOverview buildingId={selectedBuildingId} />
+                    <Tabs defaultValue="overview">
+                        <TabsList>
+                            <TabsTrigger value="overview" className="gap-2">
+                                <BookOpen className="w-4 h-4" />
+                                Bibliothek
+                            </TabsTrigger>
+                            <TabsTrigger value="custom" className="gap-2">
+                                <Plus className="w-4 h-4" />
+                                Eigene Kategorien
+                            </TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="overview" className="mt-6">
+                            <TaxLibraryOverview buildingId={selectedBuildingId} />
+                        </TabsContent>
+
+                        <TabsContent value="custom" className="mt-6">
+                            <CustomCategoryManager buildingId={selectedBuildingId} />
+                        </TabsContent>
+                    </Tabs>
                 </div>
             )}
 

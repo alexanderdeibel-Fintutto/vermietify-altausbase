@@ -344,28 +344,124 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
     
+    // Lade custom categories
+    const customCategories = await base44.asServiceRole.entities.CustomCostCategory.filter({
+      building_id: building_id,
+      is_active: true
+    });
+    
     // Prüfe ob bereits installiert
     const existing = await base44.entities.BuildingTaxLibrary.filter({ building_id });
     if (existing && existing.length > 0) {
+      // Merge custom categories into existing library
+      const lib = existing[0];
+      const mergedCategories = [
+        ...lib.cost_categories,
+        ...customCategories.map(cc => ({
+          id: cc.id,
+          name: cc.name,
+          name_short: cc.name_short,
+          type: cc.category_type,
+          applies_to_legal_form: cc.applicable_for_legal_form,
+          applies_to_usage: cc.applicable_for_usage,
+          tax_treatment: cc.tax_treatment,
+          standard_depreciation_years: cc.default_afa_duration,
+          can_be_allocated: cc.allocatable,
+          requires_additional_info: cc.requires_additional_info,
+          description: cc.description,
+          is_custom: true
+        }))
+      ];
+      
+      const mergedMappings = [
+        ...lib.account_mappings,
+        ...customCategories.map(cc => {
+          const accountField = `${account_framework.toLowerCase()}_${legal_form.toLowerCase()}`;
+          const afaAccountField = `afa_${account_framework.toLowerCase()}_${legal_form.toLowerCase()}`;
+          
+          return {
+            cost_category_id: cc.id,
+            cost_category_name: cc.name,
+            cost_category_type: cc.category_type,
+            tax_treatment: cc.tax_treatment,
+            account_number: cc[accountField],
+            account_name: cc.name,
+            tax_line: cc[`tax_line_${legal_form.toLowerCase()}`],
+            requires_additional_info: cc.requires_additional_info,
+            standard_depreciation_years: cc.default_afa_duration,
+            can_be_allocated: cc.allocatable,
+            afa_account: cc.tax_treatment === 'AFA' ? cc[afaAccountField] : null,
+            is_custom: true
+          };
+        })
+      ];
+      
       return Response.json({ 
         error: 'Tax library already installed for this building',
-        existing: existing[0]
+        existing: {
+          ...lib,
+          cost_categories: mergedCategories,
+          account_mappings: mergedMappings
+        },
+        has_custom: customCategories.length > 0
       }, { status: 400 });
     }
     
-    // Filtere Kostenkategorien
+    // Filtere Master Kostenkategorien
     const filteredCategories = COST_CATEGORIES.filter(cat => 
       cat.applies_to_legal_form.includes('ALLE') || 
       cat.applies_to_legal_form.includes(legal_form)
     );
+    
+    // Füge Custom-Kategorien hinzu
+    const allCategories = [
+      ...filteredCategories,
+      ...customCategories.map(cc => ({
+        id: cc.id,
+        name: cc.name,
+        name_short: cc.name_short,
+        type: cc.category_type,
+        applies_to_legal_form: cc.applicable_for_legal_form,
+        applies_to_usage: cc.applicable_for_usage,
+        tax_treatment: cc.tax_treatment,
+        standard_depreciation_years: cc.default_afa_duration,
+        can_be_allocated: cc.allocatable,
+        requires_additional_info: cc.requires_additional_info,
+        description: cc.description,
+        is_custom: true
+      }))
+    ];
     
     // Hole passende Konten
     const accounts = account_framework === 'SKR03' 
       ? (ACCOUNTS_SKR03[legal_form] || ACCOUNTS_SKR03.PRIVATPERSON)
       : (ACCOUNTS_SKR04[legal_form] || ACCOUNTS_SKR04.PRIVATPERSON);
     
-    // Erstelle vollständige Mapping-Liste
-    const fullMapping = filteredCategories.map(cat => {
+    // Erstelle vollständige Mapping-Liste (Master + Custom)
+    const fullMapping = allCategories.map(cat => {
+      // Custom categories have their own mapping
+      if (cat.is_custom) {
+        const accountField = `${account_framework.toLowerCase()}_${legal_form.toLowerCase()}`;
+        const afaAccountField = `afa_${account_framework.toLowerCase()}_${legal_form.toLowerCase()}`;
+        const customCat = customCategories.find(cc => cc.id === cat.id);
+        
+        return {
+          cost_category_id: cat.id,
+          cost_category_name: cat.name,
+          cost_category_type: cat.type,
+          tax_treatment: cat.tax_treatment,
+          account_number: customCat?.[accountField],
+          account_name: cat.name,
+          tax_line: customCat?.[`tax_line_${legal_form.toLowerCase()}`],
+          requires_additional_info: cat.requires_additional_info,
+          standard_depreciation_years: cat.standard_depreciation_years,
+          can_be_allocated: cat.can_be_allocated,
+          afa_account: cat.tax_treatment === 'AFA' ? customCat?.[afaAccountField] : null,
+          is_custom: true
+        };
+      }
+      
+      // Master categories use MAPPING_MATRIX
       const mapping = MAPPING_MATRIX[cat.id];
       if (!mapping || !mapping[legal_form]) {
         return null;
@@ -385,7 +481,8 @@ Deno.serve(async (req) => {
         requires_additional_info: cat.requires_additional_info,
         standard_depreciation_years: cat.standard_depreciation_years,
         can_be_allocated: cat.can_be_allocated,
-        afa_account: mapping[legal_form].afa_account?.[account_framework] || null
+        afa_account: mapping[legal_form].afa_account?.[account_framework] || null,
+        is_custom: false
       };
     }).filter(Boolean);
     
@@ -395,17 +492,18 @@ Deno.serve(async (req) => {
       legal_form: legal_form,
       account_framework: account_framework,
       installed_at: new Date().toISOString(),
-      cost_categories: filteredCategories,
+      cost_categories: allCategories,
       account_mappings: fullMapping,
       accounts: accounts
     });
     
     return Response.json({
       success: true,
-      installed_categories: filteredCategories.length,
+      installed_categories: allCategories.length,
+      custom_categories: customCategories.length,
       legal_form: legal_form,
       account_framework: account_framework,
-      message: `Tax library successfully installed for building ${building_id}`
+      message: `Tax library successfully installed for building ${building_id} (${customCategories.length} custom categories included)`
     });
     
   } catch (error) {
