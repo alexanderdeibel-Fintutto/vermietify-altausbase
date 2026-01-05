@@ -425,6 +425,183 @@ export default function SimpleOwnerForm({ buildingId, initialOwner, onSuccess })
                             </div>
                         </TabsContent>
 
+                        <TabsContent value="contact" className="space-y-3 mt-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <Label>Telefon privat</Label>
+                                    <Input
+                                        value={ownerData.telefon_privat || ''}
+                                        onChange={(e) => updateOwnerData('telefon_privat', e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <Label>Telefon geschäftlich</Label>
+                                    <Input
+                                        value={ownerData.telefon_geschaeftlich || ''}
+                                        onChange={(e) => updateOwnerData('telefon_geschaeftlich', e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <Label>Mobil</Label>
+                                    <Input
+                                        value={ownerData.mobil || ''}
+                                        onChange={(e) => updateOwnerData('mobil', e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <Label>Fax</Label>
+                                    <Input
+                                        value={ownerData.fax || ''}
+                                        onChange={(e) => updateOwnerData('fax', e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <Label>Email privat</Label>
+                                    <Input
+                                        type="email"
+                                        value={ownerData.email_privat || ''}
+                                        onChange={(e) => updateOwnerData('email_privat', e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <Label>Email geschäftlich</Label>
+                                    <Input
+                                        type="email"
+                                        value={ownerData.email_geschaeftlich || ''}
+                                        onChange={(e) => updateOwnerData('email_geschaeftlich', e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <Label>Bevorzugte Kontaktart</Label>
+                                <select
+                                    className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm"
+                                    value={ownerData.bevorzugte_kontaktart || ''}
+                                    onChange={(e) => updateOwnerData('bevorzugte_kontaktart', e.target.value)}
+                                >
+                                    <option value="">Auswählen...</option>
+                                    <option value="email">Email</option>
+                                    <option value="telefon">Telefon</option>
+                                    <option value="post">Post</option>
+                                </select>
+                            </div>
+                        </TabsContent>
+
+                        <TabsContent value="bank" className="space-y-3 mt-4">
+                            <div>
+                                <Label>Bank Name</Label>
+                                <Input
+                                    value={ownerData.bank_name || ''}
+                                    onChange={(e) => updateOwnerData('bank_name', e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <Label>IBAN</Label>
+                                <Input
+                                    value={ownerData.iban || ''}
+                                    onChange={(e) => updateOwnerData('iban', e.target.value)}
+                                    placeholder="DE89 3704 0044 0532 0130 00"
+                                />
+                            </div>
+                            <div>
+                                <Label>BIC</Label>
+                                <Input
+                                    value={ownerData.bic || ''}
+                                    onChange={(e) => updateOwnerData('bic', e.target.value)}
+                                    placeholder="COBADEFFXXX"
+                                />
+                            </div>
+                            <div>
+                                <Label>Kontoinhaber (falls abweichend)</Label>
+                                <Input
+                                    value={ownerData.kontoinhaber || ''}
+                                    onChange={(e) => updateOwnerData('kontoinhaber', e.target.value)}
+                                />
+                            </div>
+                        </TabsContent>
+
+                        <TabsContent value="tax" className="space-y-3 mt-4">
+                            <div>
+                                <Label>Steuer-ID</Label>
+                                <Input
+                                    value={ownerData.steuer_id || ''}
+                                    onChange={(e) => updateOwnerData('steuer_id', e.target.value)}
+                                    placeholder="12 345 678 901"
+                                />
+                            </div>
+                            <div>
+                                <Label>Steuernummer privat</Label>
+                                <Input
+                                    value={ownerData.steuernummer_privat || ''}
+                                    onChange={(e) => updateOwnerData('steuernummer_privat', e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <Label>Steuernummer gewerblich</Label>
+                                <Input
+                                    value={ownerData.steuernummer_gewerblich || ''}
+                                    onChange={(e) => updateOwnerData('steuernummer_gewerblich', e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <Label>Steuerliche Ansässigkeit</Label>
+                                <select
+                                    className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm"
+                                    value={ownerData.steuerliche_ansaessigkeit}
+                                    onChange={(e) => updateOwnerData('steuerliche_ansaessigkeit', e.target.value)}
+                                >
+                                    <option value="inland">Inland</option>
+                                    <option value="eu_ausland">EU-Ausland</option>
+                                    <option value="drittland">Drittland</option>
+                                </select>
+                            </div>
+                            <div>
+                                <Label>Zuständiges Finanzamt</Label>
+                                <Input
+                                    value={ownerData.zustaendiges_finanzamt || ''}
+                                    onChange={(e) => updateOwnerData('zustaendiges_finanzamt', e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <Label>FA-Steuernummer</Label>
+                                <Input
+                                    value={ownerData.fa_steuernummer || ''}
+                                    onChange={(e) => updateOwnerData('fa_steuernummer', e.target.value)}
+                                />
+                            </div>
+
+                            <div className="pt-3 border-t space-y-3">
+                                <h4 className="font-semibold text-slate-700">Umsatzsteuer</h4>
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="ust_pflichtig"
+                                        checked={ownerData.umsatzsteuer_pflichtig || false}
+                                        onCheckedChange={(checked) => updateOwnerData('umsatzsteuer_pflichtig', checked)}
+                                    />
+                                    <label htmlFor="ust_pflichtig" className="text-sm">Umsatzsteuerpflichtig</label>
+                                </div>
+                                {ownerData.umsatzsteuer_pflichtig && (
+                                    <>
+                                        <div>
+                                            <Label>USt-ID Nummer</Label>
+                                            <Input
+                                                value={ownerData.ust_id_nummer || ''}
+                                                onChange={(e) => updateOwnerData('ust_id_nummer', e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id="kleinunternehmer"
+                                                checked={ownerData.kleinunternehmer_regelung || false}
+                                                onCheckedChange={(checked) => updateOwnerData('kleinunternehmer_regelung', checked)}
+                                            />
+                                            <label htmlFor="kleinunternehmer" className="text-sm">Kleinunternehmerregelung</label>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </TabsContent>
+
                         <TabsContent value="business" className="space-y-3 mt-4">
                             <div className="flex items-center space-x-2">
                                 <Checkbox
