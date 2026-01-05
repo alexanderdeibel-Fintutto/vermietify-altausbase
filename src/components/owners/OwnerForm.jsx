@@ -16,7 +16,12 @@ export default function OwnerForm({ initialData, onSuccess, onCancel, embedded =
             staatsangehoerigkeit: 'deutsch',
             land: 'Deutschland',
             steuerliche_ansaessigkeit: 'inland',
-            aktiv: true
+            aktiv: true,
+            nachname: '',
+            vorname: '',
+            strasse: '',
+            plz: '',
+            ort: ''
         };
         
         if (initialData) {
@@ -29,17 +34,27 @@ export default function OwnerForm({ initialData, onSuccess, onCancel, embedded =
 
     const saveMutation = useMutation({
         mutationFn: async (data) => {
-            if (initialData?.id) {
-                return await base44.entities.Owner.update(initialData.id, data);
+            try {
+                if (initialData?.id) {
+                    return await base44.entities.Owner.update(initialData.id, data);
+                }
+                const result = await base44.entities.Owner.create(data);
+                return result;
+            } catch (error) {
+                console.error('Save mutation error:', error);
+                throw error;
             }
-            return await base44.entities.Owner.create(data);
         },
         onSuccess: async (response) => {
-            await queryClient.invalidateQueries({ queryKey: ['owners'] });
-            toast.success(initialData ? 'Eigentümer aktualisiert' : 'Eigentümer erstellt');
-            if (onSuccess) {
-                const ownerId = response?.id || response;
-                onSuccess(ownerId);
+            try {
+                await queryClient.invalidateQueries({ queryKey: ['owners'] });
+                toast.success(initialData ? 'Eigentümer aktualisiert' : 'Eigentümer erstellt');
+                if (onSuccess) {
+                    const ownerId = response?.id || response;
+                    onSuccess(ownerId);
+                }
+            } catch (error) {
+                console.error('OnSuccess error:', error);
             }
         },
         onError: (error) => {
@@ -59,7 +74,12 @@ export default function OwnerForm({ initialData, onSuccess, onCancel, embedded =
             }
         }
         
-        saveMutation.mutate(formData);
+        try {
+            saveMutation.mutate(formData);
+        } catch (error) {
+            console.error('Submit error:', error);
+            toast.error('Fehler beim Absenden');
+        }
     };
 
     const updateField = (field, value) => {
