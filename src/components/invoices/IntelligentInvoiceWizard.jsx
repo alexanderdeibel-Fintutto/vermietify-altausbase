@@ -152,34 +152,36 @@ export default function IntelligentInvoiceWizard({ open, onOpenChange, buildingI
         };
     };
 
-    const handleMasterDataSave = async (answers) => {
+    const handleMasterDataSave = async () => {
         const building = buildings.find(b => b.id === invoiceData.building_id);
-        const updates = { ...answers, vat_option_checked: true };
+        const updates = { ...additionalAnswers, vat_option_checked: true };
         
-        await base44.entities.Building.update(building.id, updates);
-        queryClient.invalidateQueries({ queryKey: ['buildings'] });
-        
-        // Install tax library using backend function
         try {
-            await base44.functions.invoke('loadTaxLibrary', {
+            await base44.entities.Building.update(building.id, updates);
+            queryClient.invalidateQueries({ queryKey: ['buildings'] });
+            
+            // Install tax library using backend function
+            const response = await base44.functions.invoke('loadTaxLibrary', {
                 building_id: building.id,
                 legal_form: updates.owner_legal_form,
                 account_framework: updates.account_framework || 'SKR03'
             });
             
-            await base44.entities.Building.update(building.id, {
-                tax_library_installed: true
-            });
+            if (!response.data.already_installed) {
+                await base44.entities.Building.update(building.id, {
+                    tax_library_installed: true
+                });
+            }
             
             queryClient.invalidateQueries({ queryKey: ['taxLibraries'] });
-            toast.success('Steuerbibliothek installiert');
+            toast.success('Stammdaten gespeichert');
+            
+            setMasterDataDialog(null);
+            setCurrentStep(STEPS.BASIC_INFO);
         } catch (error) {
-            console.error('Tax library installation error:', error);
-            toast.error('Fehler bei Steuerbibliothek-Installation');
+            console.error('Save error:', error);
+            toast.error('Fehler beim Speichern');
         }
-        
-        setMasterDataDialog(null);
-        setCurrentStep(STEPS.BASIC_INFO);
     };
 
     const handleCategorize = async () => {
@@ -449,7 +451,7 @@ Gib NUR die Kategorie-ID zurück (z.B. "PERSONAL_LOEHNE"), nichts anderes.
                                     Abbrechen
                                 </Button>
                                 <Button 
-                                    onClick={() => handleMasterDataSave(additionalAnswers)}
+                                    onClick={handleMasterDataSave}
                                     disabled={masterDataDialog.some(q => q.required && !additionalAnswers[q.field])}
                                 >
                                     Speichern & Fortfahren
