@@ -23,7 +23,15 @@ export default function ShareholderManager({ ownerId, ownerName }) {
 
     const { data: shareholders = [] } = useQuery({
         queryKey: ['shareholders', ownerId],
-        queryFn: () => base44.entities.Shareholder.filter({ owner_id: ownerId }),
+        queryFn: async () => {
+            try {
+                if (!ownerId) return [];
+                return await base44.entities.Shareholder.filter({ owner_id: ownerId });
+            } catch (error) {
+                console.error('Error loading shareholders:', error);
+                return [];
+            }
+        },
         enabled: !!ownerId
     });
 
@@ -38,6 +46,10 @@ export default function ShareholderManager({ ownerId, ownerName }) {
             }
         }
     });
+
+    if (!ownerId) {
+        return <div className="text-slate-500 text-sm">Keine Owner-ID vorhanden</div>;
+    }
 
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.Shareholder.create(data),

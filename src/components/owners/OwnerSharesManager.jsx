@@ -183,9 +183,10 @@ export default function OwnerSharesManager({ shares, onChange, buildingId }) {
                             </div>
 
                             {/* Shareholder Management for Legal Entities */}
-                            {isLegalEntity(share.owner_id) && (
+                            {isLegalEntity(share.owner_id) && share.owner_id && (
                                 <div className="mt-4 pt-4 border-t border-slate-200">
                                     <ShareholderManager 
+                                        key={share.owner_id}
                                         ownerId={share.owner_id} 
                                         ownerName={getOwnerName(share.owner_id)}
                                     />
@@ -225,20 +226,24 @@ export default function OwnerSharesManager({ shares, onChange, buildingId }) {
             )}
 
             {/* Edit Owner Dialog */}
-            {editingOwnerId && (
-                <Dialog open={!!editingOwnerId} onOpenChange={(open) => !open && setEditingOwnerId(null)}>
-                    <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle>Eigentümer bearbeiten</DialogTitle>
-                        </DialogHeader>
+            <Dialog open={!!editingOwnerId} onOpenChange={(open) => !open && setEditingOwnerId(null)}>
+                <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Eigentümer bearbeiten</DialogTitle>
+                    </DialogHeader>
+                    {editingOwnerId && owners.find(o => o.id === editingOwnerId) && (
                         <OwnerForm
                             initialData={owners.find(o => o.id === editingOwnerId)}
-                            onSuccess={() => setEditingOwnerId(null)}
+                            onSuccess={async () => {
+                                await queryClient.invalidateQueries({ queryKey: ['owners'] });
+                                await refetchOwners();
+                                setEditingOwnerId(null);
+                            }}
                             onCancel={() => setEditingOwnerId(null)}
                         />
-                    </DialogContent>
-                </Dialog>
-            )}
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
