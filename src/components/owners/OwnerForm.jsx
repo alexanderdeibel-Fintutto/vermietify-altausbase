@@ -44,6 +44,15 @@ export default function OwnerForm({ initialData, onSuccess, onCancel, embedded =
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        
+        // Im embedded Modus: Minimale Validierung
+        if (embedded) {
+            if (!formData.nachname || formData.nachname.trim() === '') {
+                toast.error('Bitte mindestens einen Namen eingeben');
+                return;
+            }
+        }
+        
         saveMutation.mutate(formData);
     };
 
@@ -66,12 +75,12 @@ export default function OwnerForm({ initialData, onSuccess, onCancel, embedded =
 
                 <TabsContent value="basic" className="space-y-3 mt-4">
                     <div>
-                        <Label>Eigentümer-Typ *</Label>
+                        <Label>Eigentümer-Typ {!embedded && '*'}</Label>
                         <select
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                             value={formData.eigentuemer_typ}
                             onChange={(e) => updateField('eigentuemer_typ', e.target.value)}
-                            required
+                            required={!embedded}
                         >
                             <option value="natuerliche_person">Natürliche Person</option>
                             <option value="gbr">GbR</option>
