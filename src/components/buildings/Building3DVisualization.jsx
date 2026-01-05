@@ -71,7 +71,7 @@ function Building({ kubatur }) {
 }
 
 export default function Building3DVisualization({ kubatur }) {
-    if (!kubatur.grundriss_laenge || !kubatur.grundriss_breite) {
+    if (!kubatur?.grundriss_laenge || !kubatur?.grundriss_breite) {
         return (
             <div className="w-full h-64 bg-slate-100 rounded-lg flex items-center justify-center">
                 <p className="text-slate-500">Geben Sie Grundriss-Maße ein für 3D-Ansicht</p>
@@ -80,20 +80,20 @@ export default function Building3DVisualization({ kubatur }) {
     }
     
     return (
-        <div className="w-full h-64 bg-gradient-to-b from-sky-200 to-slate-100 rounded-lg">
-            <Suspense fallback={
-                <div className="w-full h-full flex items-center justify-center">
-                    <p className="text-slate-500">Lädt 3D-Ansicht...</p>
-                </div>
-            }>
-                <Canvas camera={{ position: [15, 10, 15], fov: 50 }}>
+        <div className="w-full h-64 bg-gradient-to-b from-sky-200 to-slate-100 rounded-lg overflow-hidden">
+            <Canvas 
+                camera={{ position: [15, 10, 15], fov: 50 }}
+                gl={{ antialias: true, alpha: false }}
+                dpr={[1, 2]}
+            >
+                <Suspense fallback={null}>
                     <ambientLight intensity={0.6} />
                     <directionalLight position={[10, 10, 5]} intensity={1} />
                     <Building kubatur={kubatur} />
-                    <OrbitControls enablePan={false} />
-                    <gridHelper args={[20, 20]} />
-                </Canvas>
-            </Suspense>
+                    <OrbitControls enablePan={false} enableZoom={true} />
+                    <gridHelper args={[20, 20, '#cccccc', '#eeeeee']} />
+                </Suspense>
+            </Canvas>
         </div>
     );
 }
