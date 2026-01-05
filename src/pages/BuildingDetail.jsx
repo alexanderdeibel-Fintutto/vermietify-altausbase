@@ -829,9 +829,10 @@ export default function BuildingDetail() {
                     const activeShares = building.owner_shares.filter(s => !s.gueltig_bis || new Date(s.gueltig_bis) > new Date());
                     if (activeShares.length === 1) {
                         const owner = owners.find(o => o.id === activeShares[0].owner_id);
-                        const name = owner?.eigentuemer_typ === 'natuerliche_person' 
-                            ? `${owner.vorname || ''} ${owner.nachname}`.trim()
-                            : owner?.nachname || 'Unbekannt';
+                        if (!owner) return 'Eigentümer nicht gefunden';
+                        const name = owner.eigentuemer_typ === 'natuerliche_person' 
+                            ? `${owner.vorname || ''} ${owner.nachname || ''}`.trim()
+                            : owner.nachname || 'Unbekannt';
                         return `${name} (${activeShares[0].anteil_prozent}%)`;
                     }
                     return `${activeShares.length} Eigentümer`;
@@ -843,9 +844,11 @@ export default function BuildingDetail() {
                         <div className="space-y-3">
                             {building.owner_shares.map((share, index) => {
                                 const owner = owners.find(o => o.id === share.owner_id);
-                                const displayName = owner?.eigentuemer_typ === 'natuerliche_person'
-                                    ? `${owner.vorname || ''} ${owner.nachname}`.trim()
-                                    : owner?.nachname || 'Unbekannt';
+                                if (!owner) return null;
+                                
+                                const displayName = owner.eigentuemer_typ === 'natuerliche_person'
+                                    ? `${owner.vorname || ''} ${owner.nachname || ''}`.trim() || 'Unbekannt'
+                                    : owner.nachname || 'Unbekannt';
                                 
                                 const isActive = !share.gueltig_bis || new Date(share.gueltig_bis) > new Date();
 
