@@ -1,5 +1,7 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +10,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from 'lucide-react';
 
 export default function TaskForm({ open, onOpenChange, onSubmit, initialData, priorities, isLoading }) {
+    const { data: buildings = [] } = useQuery({
+        queryKey: ['buildings'],
+        queryFn: () => base44.entities.Building.list()
+    });
+
+    const { data: tenants = [] } = useQuery({
+        queryKey: ['tenants'],
+        queryFn: () => base44.entities.Tenant.list()
+    });
     const { register, handleSubmit, reset, formState: { errors } } = useForm({
         defaultValues: initialData || {
             status: 'offen'
@@ -108,6 +119,40 @@ export default function TaskForm({ open, onOpenChange, onSubmit, initialData, pr
                                 {...register('next_action')}
                                 placeholder="z.B. Dokument erstellen"
                             />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <Label htmlFor="assigned_object_id">Zugeordnetes Objekt</Label>
+                            <select
+                                id="assigned_object_id"
+                                {...register('assigned_object_id')}
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            >
+                                <option value="">Kein Objekt</option>
+                                {buildings.map(building => (
+                                    <option key={building.id} value={building.id}>
+                                        {building.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <Label htmlFor="assigned_tenant_id">Zugeordneter Mieter</Label>
+                            <select
+                                id="assigned_tenant_id"
+                                {...register('assigned_tenant_id')}
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            >
+                                <option value="">Kein Mieter</option>
+                                {tenants.map(tenant => (
+                                    <option key={tenant.id} value={tenant.id}>
+                                        {tenant.first_name} {tenant.last_name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 

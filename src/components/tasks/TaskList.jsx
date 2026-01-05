@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +12,8 @@ import {
     Building2,
     FileText,
     Filter,
-    Search
+    Search,
+    User
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -18,6 +21,18 @@ import { de } from 'date-fns/locale';
 export default function TaskList({ tasks, priorities, onEdit, onDelete, isLoading }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [priorityFilter, setPriorityFilter] = useState('all');
+    const [objectFilter, setObjectFilter] = useState('all');
+
+    const { data: buildings = [] } = useQuery({
+        queryKey: ['buildings'],
+        queryFn: () => base44.entities.Building.list()
+    });
+
+    const { data: tenants = [] } = useQuery({
+        queryKey: ['tenants'],
+        queryFn: () => base44.entities.Tenant.list()
+    });
 
     const getPriorityColor = (priorityId) => {
         const priority = priorities.find(p => p.id === priorityId);
@@ -56,11 +71,23 @@ export default function TaskList({ tasks, priorities, onEdit, onDelete, isLoadin
         return new Date(dueDate) < new Date();
     };
 
+    const getBuildingName = (buildingId) => {
+        const building = buildings.find(b => b.id === buildingId);
+        return building?.name || null;
+    };
+
+    const getTenantName = (tenantId) => {
+        const tenant = tenants.find(t => t.id === tenantId);
+        return tenant ? `${tenant.first_name} ${tenant.last_name}` : null;
+    };
+
     const filteredTasks = tasks.filter(task => {
         const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             task.description?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
-        return matchesSearch && matchesStatus;
+        const matchesPriority = priorityFilter === 'all' || task.priority_id === priorityFilter;
+        const matchesObject = objectFilter === 'all' || task.assigned_object_id === objectFilter;
+        return matchesSearch && matchesStatus && matchesPriority && matchesObject;
     });
 
     if (isLoading) {
@@ -78,8 +105,8 @@ export default function TaskList({ tasks, priorities, onEdit, onDelete, isLoadin
             {/* Filter */}
             <Card>
                 <CardContent className="p-4">
-                    <div className="flex flex-col md:flex-row gap-4">
-                        <div className="flex-1 relative">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="relative">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <Input
                                 placeholder="Tasks durchsuchen..."
@@ -99,6 +126,30 @@ export default function TaskList({ tasks, priorities, onEdit, onDelete, isLoadin
                             <option value="wartend">Wartend</option>
                             <option value="erledigt">Erledigt</option>
                             <option value="abgebrochen">Abgebrochen</option>
+                        </select>
+                        <select
+                            value={priorityFilter}
+                            onChange={(e) => setPriorityFilter(e.target.value)}
+                            className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        >
+                            <option value="all">Alle Prioritäten</option>
+                            {priorities.map(priority => (
+                                <option key={priority.id} value={priority.id}>
+                                    {priority.name}
+                                </option>
+                            ))}
+                        </select>
+                        <select
+                            value={objectFilter}
+                            onChange={(e) => setObjectFilter(e.target.value)}
+                            className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        >
+                            <option value="all">Alle Objekte</option>
+                            {buildings.map(building => (
+                                <option key={building.id} value={building.id}>
+                                    {building.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
                 </CardContent>
@@ -149,13 +200,25 @@ export default function TaskList({ tasks, priorities, onEdit, onDelete, isLoadin
                                             </p>
                                         )}
 
-                                        <div className="flex items-center gap-4 text-sm text-slate-500">
+                                        <div className="flex items-center gap-4 text-sm text-slate-500 flex-wrap">
                                             {task.due_date && (
                                                 <div className="flex items-center gap-1">
                                                     <Calendar className="w-4 h-4" />
                                                     <span>
                                                         {format(parseISO(task.due_date), 'dd.MM.yyyy', { locale: de })}
                                                     </span>
+                                                </div>
+                                            )}
+                                            {task.assigned_object_id && (
+                                                <div className="flex items-center gap-1">
+                                                    <Building2 className="w-4 h-4" />
+                                                    <span>{getBuildingName(task.assigned_object_id)}</span>
+                                                </div>
+                                            )}
+                                            {task.assigned_tenant_id && (
+                                                <div className="flex items-center gap-1">
+                                                    <User className="w-4 h-4" />
+                                                    <span>{getTenantName(task.assigned_tenant_id)}</span>
                                                 </div>
                                             )}
                                             {task.next_action && (
