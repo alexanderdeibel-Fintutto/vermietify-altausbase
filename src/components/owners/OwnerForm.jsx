@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import GesellschafterManager from './GesellschafterManager';
 
 export default function OwnerForm({ initialData, onSuccess, onCancel, embedded = false }) {
     const [formData, setFormData] = useState(initialData || {
@@ -55,12 +56,13 @@ export default function OwnerForm({ initialData, onSuccess, onCancel, embedded =
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <Tabs defaultValue="basic" className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
+                <TabsList className="grid w-full grid-cols-6">
                     <TabsTrigger value="basic">Basis</TabsTrigger>
                     <TabsTrigger value="contact">Kontakt</TabsTrigger>
                     <TabsTrigger value="bank">Bank</TabsTrigger>
                     <TabsTrigger value="tax">Steuern</TabsTrigger>
                     <TabsTrigger value="business">Gewerbe</TabsTrigger>
+                    {!isNaturalPerson && <TabsTrigger value="gesellschafter">Gesellschafter</TabsTrigger>}
                 </TabsList>
 
                 <TabsContent value="basic" className="space-y-3 mt-4">
@@ -443,6 +445,16 @@ export default function OwnerForm({ initialData, onSuccess, onCancel, embedded =
                         </>
                     )}
                 </TabsContent>
+
+                {!isNaturalPerson && (
+                    <TabsContent value="gesellschafter" className="space-y-3 mt-4">
+                        <GesellschafterManager
+                            gesellschafter={formData.gesellschafter || []}
+                            onChange={(gesellschafter) => setFormData({ ...formData, gesellschafter })}
+                            currentOwnerId={initialData?.id}
+                        />
+                    </TabsContent>
+                )}
             </Tabs>
 
             <div className="flex justify-end gap-3 pt-4 border-t">
