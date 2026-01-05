@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
@@ -25,7 +25,7 @@ export default function TaskForm({ open, onOpenChange, onSubmit, initialData, pr
         }
     });
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (open) {
             reset(initialData || { status: 'offen' });
         }

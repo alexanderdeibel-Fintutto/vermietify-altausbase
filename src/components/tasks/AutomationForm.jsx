@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ export default function AutomationForm({ open, onOpenChange, onSubmit, initialDa
         }
     });
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (open) {
             reset(initialData || {
                 trigger_type: 'time_based',

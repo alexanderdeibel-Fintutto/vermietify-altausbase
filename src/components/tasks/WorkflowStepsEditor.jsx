@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -23,7 +23,7 @@ export default function WorkflowStepsEditor({ open, onOpenChange, workflow }) {
         enabled: !!workflow?.id
     });
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (steps.length > 0) {
             setLocalSteps([...steps].sort((a, b) => a.step_order - b.step_order));
         } else if (workflow) {

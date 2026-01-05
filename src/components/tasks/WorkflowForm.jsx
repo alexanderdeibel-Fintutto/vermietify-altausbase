@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ export default function WorkflowForm({ open, onOpenChange, onSubmit, initialData
         }
     });
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (open) {
             reset(initialData || { is_default: false, is_active: true });
         }
