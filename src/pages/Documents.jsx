@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, FileCode, Type, FolderOpen, Sparkles } from 'lucide-react';
 import DocumentsList from '../components/documents/DocumentsList';
@@ -8,7 +8,7 @@ import OriginalsList from '../components/documents/OriginalsList';
 import PDFTemplateImporter from '../components/documents/PDFTemplateImporter';
 
 export default function DocumentsPage() {
-    const [importerOpen, setImporterOpen] = React.useState(false);
+    const [importerOpen, setImporterOpen] = useState(false);
     
     return (
         <div className="space-y-6">
