@@ -41,14 +41,22 @@ export default function ShareholderManager({ ownerId, ownerName }) {
 
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.Shareholder.create(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['shareholders', ownerId] });
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['shareholders', ownerId] });
             toast.success('Gesellschafter hinzugefügt');
             setCreatingNewShareholder(false);
+            setNewShareholderData({
+                vorname: '',
+                nachname: '',
+                eigentuemer_typ: 'natuerliche_person',
+                anteil_prozent: 0,
+                gueltig_von: new Date().toISOString().split('T')[0]
+            });
         },
         onError: (error) => {
             console.error('Error creating shareholder:', error);
             toast.error('Fehler beim Hinzufügen: ' + (error.message || 'Unbekannter Fehler'));
+            setCreatingNewShareholder(false);
         }
     });
 

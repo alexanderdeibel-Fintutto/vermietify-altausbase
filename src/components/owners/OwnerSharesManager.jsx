@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,8 +17,9 @@ import OwnerForm from './OwnerForm';
 export default function OwnerSharesManager({ shares, onChange, buildingId }) {
     const [creatingNewOwner, setCreatingNewOwner] = useState(false);
     const [editingOwnerId, setEditingOwnerId] = useState(null);
+    const queryClient = useQueryClient();
 
-    const { data: owners = [] } = useQuery({
+    const { data: owners = [], refetch: refetchOwners } = useQuery({
         queryKey: ['owners'],
         queryFn: () => base44.entities.Owner.list()
     });
@@ -41,7 +42,10 @@ export default function OwnerSharesManager({ shares, onChange, buildingId }) {
         return owner && owner.eigentuemer_typ !== 'natuerliche_person';
     };
 
-    const handleOwnerCreated = (ownerId) => {
+    const handleOwnerCreated = async (ownerId) => {
+        await queryClient.invalidateQueries({ queryKey: ['owners'] });
+        await refetchOwners();
+        
         const remainingShare = Math.max(0, 100 - totalShares);
         const newShare = {
             owner_id: ownerId,
