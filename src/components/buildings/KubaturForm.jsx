@@ -41,8 +41,9 @@ export default function KubaturForm({ kubatur, onChange, register, building }) {
         const floors = localKubatur.anzahl_vollgeschosse || 0;
         const floorHeight = localKubatur.geschosshoehe_standard || 2.5;
         
-        // Grundfläche
+        // Grundfläche pro Geschoss
         const grundflaeche = l * b;
+        // Brutto-Grundfläche = Grundfläche * Anzahl Geschosse
         const bruttoGrundflaeche = grundflaeche * floors;
         
         // Volumen Geschosse
@@ -67,37 +68,67 @@ export default function KubaturForm({ kubatur, onChange, register, building }) {
         // Brutto-Rauminhalt
         const bruttoRauminhalt = geschossVolumen + kellerVolumen + dachVolumen;
         
-        // Flächenaufteilung (mit 20% Abschlag für Wände, Treppen, etc.)
+        // IST-WERTE aus erfassten Einheiten (PRIMÄR)
+        const erfassteEinheiten = building?.flaechen_einheiten || [];
+        const wohneinheiten = erfassteEinheiten.filter(e => {
+            const art = e.art?.toLowerCase() || '';
+            return art.includes('wohn') || art === 'wohneinheit';
+        });
+        const gewerbeeinheiten = erfassteEinheiten.filter(e => {
+            const art = e.art?.toLowerCase() || '';
+            return art.includes('gewerb');
+        });
+        
+        const erfassteAnzahl = wohneinheiten.length;
+        const erfassteWohnQm = wohneinheiten.reduce((sum, e) => sum + (parseFloat(e.qm) || 0), 0);
+        const erfassteGewerbeQm = gewerbeeinheiten.reduce((sum, e) => sum + (parseFloat(e.qm) || 0), 0);
+        const erfassteGesamtQm = erfassteEinheiten.reduce((sum, e) => sum + (parseFloat(e.qm) || 0), 0);
+        
+        // SOLL-WERTE: Theoretisch nutzbare Fläche basierend auf Kubatur
+        // Netto-Nutzfläche = Brutto-Grundfläche minus Abzüge für Wände, Treppen, Flure (ca. 20-25%)
+        const nettoNutzflaeche = bruttoGrundflaeche * 0.78; // 78% der Brutto-Fläche ist realistisch nutzbar
+        
+        // Wenn Nutzungsanteile angegeben sind, berechne SOLL-Werte
         const wohnflaecheAnteil = localKubatur.wohnflaeche_anteil_prozent || 0;
         const gewerbeflaecheAnteil = localKubatur.gewerbeflaeche_anteil_prozent || 0;
+        const gemeinschaftsflaecheAnteil = localKubatur.gemeinschaftsflaeche_anteil_prozent || 0;
         
-        const wohnflaecheBerechnet = bruttoGrundflaeche * (wohnflaecheAnteil / 100) * 0.8;
-        const gewerbeflaecheBerechnet = bruttoGrundflaeche * (gewerbeflaecheAnteil / 100) * 0.8;
+        const sollWohnflaeche = nettoNutzflaeche * (wohnflaecheAnteil / 100);
+        const sollGewerbeflaeche = nettoNutzflaeche * (gewerbeflaecheAnteil / 100);
         
-        // Abgleich mit erfassten Wohneinheiten
-        const erfassteEinheiten = building?.flaechen_einheiten || [];
-        const erfassteAnzahl = erfassteEinheiten.filter(e => e.art?.toLowerCase().includes('wohn')).length;
-        const erfassteQm = erfassteEinheiten.reduce((sum, e) => sum + (e.qm || 0), 0);
+        // Plausibilitätsprüfung: Vergleiche erfasste Wohnfläche mit theoretisch verfügbarer Fläche
+        let plausibilitaet = { status: 'ok', text: 'Daten fehlen', color: 'slate' };
+        let abweichung = 0;
         
-        // Abweichung
-        const abweichung = wohnflaecheBerechnet > 0 ? ((erfassteQm - wohnflaecheBerechnet) / wohnflaecheBerechnet) * 100 : 0;
-        
-        // Plausibilität
-        let plausibilitaet = { status: 'ok', text: 'Plausibel', color: 'emerald' };
-        const abwAbs = Math.abs(abweichung);
-        if (abwAbs > 15) {
-            plausibilitaet = { status: 'error', text: 'Unplausibel', color: 'red' };
-        } else if (abwAbs > 5) {
-            plausibilitaet = { status: 'warn', text: 'Prüfen', color: 'orange' };
+        if (bruttoGrundflaeche > 0 && erfassteWohnQm > 0 && wohnflaecheAnteil > 0) {
+            // Abweichung zwischen erfasster Wohnfläche und SOLL-Wohnfläche
+            abweichung = ((erfassteWohnQm - sollWohnflaeche) / sollWohnflaeche) * 100;
+            const abwAbs = Math.abs(abweichung);
+            
+            if (abwAbs <= 5) {
+                plausibilitaet = { status: 'ok', text: 'Plausibel', color: 'emerald' };
+            } else if (abwAbs <= 15) {
+                plausibilitaet = { status: 'warn', text: 'Prüfen empfohlen', color: 'orange' };
+            } else {
+                plausibilitaet = { status: 'error', text: 'Unplausibel', color: 'red' };
+            }
+            
+            // Prüfe auch, ob erfasste Gesamtfläche die Netto-Nutzfläche überschreitet
+            if (erfassteGesamtQm > nettoNutzflaeche * 1.05) {
+                plausibilitaet = { status: 'error', text: 'Zu viel Fläche erfasst', color: 'red' };
+            }
         }
         
         setCalculatedValues({
             bruttoRauminhalt,
             bruttoGrundflaeche,
-            wohnflaecheBerechnet,
-            gewerbeflaecheBerechnet,
+            nettoNutzflaeche,
+            sollWohnflaeche,
+            sollGewerbeflaeche,
             erfassteAnzahl,
-            erfassteQm,
+            erfassteWohnQm,
+            erfassteGewerbeQm,
+            erfassteGesamtQm,
             abweichung,
             plausibilitaet
         });
@@ -351,7 +382,7 @@ ABGLEICH:
 
             {/* Berechnungen */}
             <div className="pt-3 border-t border-slate-200">
-                <h4 className="font-medium text-slate-700 mb-3">Automatische Berechnungen</h4>
+                <h4 className="font-medium text-slate-700 mb-3">Kubatur-Berechnungen</h4>
                 <div className="grid grid-cols-2 gap-3">
                     <Card className="p-3 bg-slate-50">
                         <Label className="text-xs text-slate-500">Brutto-Rauminhalt</Label>
@@ -360,22 +391,27 @@ ABGLEICH:
                         </p>
                     </Card>
                     <Card className="p-3 bg-slate-50">
-                        <Label className="text-xs text-slate-500">Brutto-Grundfläche</Label>
+                        <Label className="text-xs text-slate-500">Brutto-Grundfläche (BGF)</Label>
                         <p className="text-lg font-semibold text-slate-800">
                             {calculatedValues.bruttoGrundflaeche?.toFixed(2) || '0.00'} m²
                         </p>
+                        <p className="text-xs text-slate-500 mt-1">= Grundfläche × Geschosse</p>
                     </Card>
                     <Card className="p-3 bg-blue-50">
-                        <Label className="text-xs text-slate-500">Wohnfläche (berechnet WoFlV)</Label>
+                        <Label className="text-xs text-slate-500">Netto-Nutzfläche (ca.)</Label>
                         <p className="text-lg font-semibold text-blue-800">
-                            {calculatedValues.wohnflaecheBerechnet?.toFixed(2) || '0.00'} m²
+                            {calculatedValues.nettoNutzflaeche?.toFixed(2) || '0.00'} m²
                         </p>
+                        <p className="text-xs text-slate-500 mt-1">≈ 78% der BGF (abzgl. Wände, Treppen)</p>
                     </Card>
                     <Card className="p-3 bg-slate-50">
-                        <Label className="text-xs text-slate-500">Gewerbefläche (berechnet)</Label>
-                        <p className="text-lg font-semibold text-slate-800">
-                            {calculatedValues.gewerbeflaecheBerechnet?.toFixed(2) || '0.00'} m²
+                        <Label className="text-xs text-slate-500">Theoretisch verfügbar</Label>
+                        <p className="text-sm font-medium text-slate-700">
+                            {calculatedValues.sollWohnflaeche > 0 && (
+                                <span>Wohn: {calculatedValues.sollWohnflaeche?.toFixed(1)} m²</span>
+                            )}
                         </p>
+                        <p className="text-xs text-slate-500 mt-1">Basierend auf Nutzungsanteilen</p>
                     </Card>
                 </div>
             </div>
@@ -401,30 +437,55 @@ ABGLEICH:
                 )}
 
                 <div className="space-y-3">
-                    <div className="grid grid-cols-3 gap-3">
-                        <Card className="p-3 bg-slate-50">
-                            <Label className="text-xs text-slate-500">Erfasste Wohnungen</Label>
-                            <p className="text-lg font-semibold text-slate-800">
-                                {calculatedValues.erfassteAnzahl || 0} Einheiten
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <Card className="p-3 bg-emerald-50 border-emerald-200">
+                            <Label className="text-xs text-slate-500">Erfasste Wohneinheiten</Label>
+                            <p className="text-lg font-semibold text-emerald-700">
+                                {calculatedValues.erfassteAnzahl || 0} WE
+                            </p>
+                        </Card>
+                        <Card className="p-3 bg-emerald-50 border-emerald-200">
+                            <Label className="text-xs text-slate-500">Erfasste Wohnfläche</Label>
+                            <p className="text-lg font-semibold text-emerald-700">
+                                {calculatedValues.erfassteWohnQm?.toFixed(2) || '0.00'} m²
                             </p>
                         </Card>
                         <Card className="p-3 bg-slate-50">
-                            <Label className="text-xs text-slate-500">Erfasste Gesamtfläche</Label>
-                            <p className="text-lg font-semibold text-slate-800">
-                                {calculatedValues.erfassteQm?.toFixed(2) || '0.00'} m²
+                            <Label className="text-xs text-slate-500">Erfasste Gewerbefläche</Label>
+                            <p className="text-lg font-semibold text-slate-700">
+                                {calculatedValues.erfassteGewerbeQm?.toFixed(2) || '0.00'} m²
                             </p>
                         </Card>
                         <Card className="p-3 bg-slate-50">
-                            <Label className="text-xs text-slate-500">Abweichung</Label>
-                            <p className={`text-lg font-semibold ${
-                                Math.abs(calculatedValues.abweichung || 0) > 15 ? 'text-red-600' :
-                                Math.abs(calculatedValues.abweichung || 0) > 5 ? 'text-orange-600' :
-                                'text-emerald-600'
-                            }`}>
-                                {calculatedValues.abweichung?.toFixed(1) || '0.0'}%
+                            <Label className="text-xs text-slate-500">Alle Flächen gesamt</Label>
+                            <p className="text-lg font-semibold text-slate-800">
+                                {calculatedValues.erfassteGesamtQm?.toFixed(2) || '0.00'} m²
                             </p>
                         </Card>
                     </div>
+                    
+                    {calculatedValues.sollWohnflaeche > 0 && calculatedValues.erfassteWohnQm > 0 && (
+                        <Card className="p-3 bg-blue-50">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <Label className="text-xs text-slate-500">Abweichung SOLL vs. IST</Label>
+                                    <p className={`text-lg font-semibold ${
+                                        Math.abs(calculatedValues.abweichung || 0) > 15 ? 'text-red-600' :
+                                        Math.abs(calculatedValues.abweichung || 0) > 5 ? 'text-orange-600' :
+                                        'text-emerald-600'
+                                    }`}>
+                                        {calculatedValues.abweichung > 0 ? '+' : ''}{calculatedValues.abweichung?.toFixed(1) || '0.0'}%
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <Label className="text-xs text-slate-500">SOLL-Wohnfläche</Label>
+                                    <p className="text-sm font-medium text-slate-700">
+                                        {calculatedValues.sollWohnflaeche?.toFixed(2)} m²
+                                    </p>
+                                </div>
+                            </div>
+                        </Card>
+                    )}
 
                     {/* Plausibilitätsprüfung */}
                     {calculatedValues.plausibilitaet && Math.abs(calculatedValues.abweichung || 0) > 0 && localKubatur.wohnflaeche_anteil_prozent > 0 && (
@@ -449,11 +510,13 @@ ABGLEICH:
                                         </Badge>
                                     </div>
                                     <p className="text-sm text-slate-600">
-                                        {Math.abs(calculatedValues.abweichung || 0) > 15
-                                            ? 'Die Abweichung ist sehr hoch. Bitte überprüfen Sie die Eingaben bei Kubatur und Wohneinheiten.'
+                                        {calculatedValues.plausibilitaet.status === 'error' && calculatedValues.plausibilitaet.text === 'Zu viel Fläche erfasst'
+                                            ? `Die erfasste Gesamtfläche (${calculatedValues.erfassteGesamtQm?.toFixed(1)} m²) überschreitet die theoretisch nutzbare Fläche (${calculatedValues.nettoNutzflaeche?.toFixed(1)} m²). Bitte prüfen Sie die Kubatur-Maße oder die Flächenangaben der Einheiten.`
+                                            : Math.abs(calculatedValues.abweichung || 0) > 15
+                                            ? `Die erfasste Wohnfläche (${calculatedValues.erfassteWohnQm?.toFixed(1)} m²) weicht stark von der theoretisch verfügbaren Wohnfläche (${calculatedValues.sollWohnflaeche?.toFixed(1)} m²) ab. Bitte überprüfen Sie die Eingaben bei Kubatur, Nutzungsanteilen und Wohneinheiten.`
                                             : Math.abs(calculatedValues.abweichung || 0) > 5
-                                            ? 'Die Abweichung ist moderat. Eine Überprüfung wird empfohlen.'
-                                            : 'Die Werte sind plausibel.'}
+                                            ? `Moderate Abweichung zwischen erfasster und theoretischer Wohnfläche. Eine Überprüfung wird empfohlen.`
+                                            : 'Die erfasste Wohnfläche entspricht der theoretisch verfügbaren Fläche. Die Werte sind plausibel.'}
                                     </p>
                                 </div>
                             </div>
