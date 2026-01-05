@@ -25,6 +25,8 @@ import AutomationManager from '@/components/tasks/AutomationManager';
 import EmailAccountManager from '@/components/tasks/EmailAccountManager';
 import EmailList from '@/components/tasks/EmailList';
 import TaskDashboard from '@/components/tasks/TaskDashboard';
+import TaskKanban from '@/components/tasks/TaskKanban';
+import TaskCalendar from '@/components/tasks/TaskCalendar';
 
 export default function Tasks() {
     const [formOpen, setFormOpen] = useState(false);
@@ -113,12 +115,14 @@ export default function Tasks() {
 
             {/* Tabs */}
             <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
+                <TabsList className="grid w-full grid-cols-7">
                     <TabsTrigger value="overview">Übersicht</TabsTrigger>
-                    <TabsTrigger value="tasks">Tasks</TabsTrigger>
+                    <TabsTrigger value="tasks">Liste</TabsTrigger>
+                    <TabsTrigger value="kanban">Kanban</TabsTrigger>
+                    <TabsTrigger value="calendar">Kalender</TabsTrigger>
                     <TabsTrigger value="workflows">Workflows</TabsTrigger>
                     <TabsTrigger value="emails">Emails</TabsTrigger>
-                    <TabsTrigger value="rules">Automatisierung</TabsTrigger>
+                    <TabsTrigger value="rules">Regeln</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="mt-6">
@@ -132,6 +136,22 @@ export default function Tasks() {
                         onEdit={handleEdit}
                         onDelete={handleDelete}
                         isLoading={isLoading}
+                    />
+                </TabsContent>
+
+                <TabsContent value="kanban" className="mt-6">
+                    <TaskKanban 
+                        tasks={tasks}
+                        priorities={priorities}
+                        onEdit={handleEdit}
+                    />
+                </TabsContent>
+
+                <TabsContent value="calendar" className="mt-6">
+                    <TaskCalendar 
+                        tasks={tasks}
+                        priorities={priorities}
+                        onTaskClick={handleEdit}
                     />
                 </TabsContent>
 
