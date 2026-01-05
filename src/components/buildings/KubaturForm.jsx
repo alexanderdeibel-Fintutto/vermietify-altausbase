@@ -436,6 +436,7 @@ ABGLEICH:
                     )}
                 </div>
             </div>
+            </div>
         </div>
     );
 }
