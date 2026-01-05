@@ -1,74 +1,6 @@
-import React, { Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
-
-function Building({ kubatur }) {
-    const length = kubatur.grundriss_laenge || 10;
-    const width = kubatur.grundriss_breite || 8;
-    const floors = kubatur.anzahl_vollgeschosse || 3;
-    const floorHeight = kubatur.geschosshoehe_standard || 2.5;
-    const totalHeight = floors * floorHeight;
-    
-    // Kellergeschoss
-    const hasBasement = kubatur.kellergeschoss;
-    const basementHeight = hasBasement ? 2.5 : 0;
-    
-    // Dachform
-    const roofType = kubatur.dachform?.toLowerCase() || 'flach';
-    const roofAngle = kubatur.dachneigung_grad || 35;
-    const roofHeight = roofType === 'sattel' ? (width / 2) * Math.tan((roofAngle * Math.PI) / 180) : 0.3;
-    
-    const scale = Math.min(8 / Math.max(length, width), 1.5);
-    
-    return (
-        <group scale={scale}>
-            {/* Keller */}
-            {hasBasement && (
-                <mesh position={[0, -basementHeight / 2, 0]}>
-                    <boxGeometry args={[length, basementHeight, width]} />
-                    <meshStandardMaterial color="#6b6b6b" />
-                </mesh>
-            )}
-            
-            {/* Hauptgebäude - Geschosse */}
-            {[...Array(floors)].map((_, i) => (
-                <group key={i}>
-                    <mesh position={[0, i * floorHeight + floorHeight / 2, 0]}>
-                        <boxGeometry args={[length, floorHeight, width]} />
-                        <meshStandardMaterial 
-                            color="#e0e0e0" 
-                            transparent 
-                            opacity={0.7}
-                        />
-                    </mesh>
-                    <mesh position={[0, (i + 1) * floorHeight, 0]}>
-                        <boxGeometry args={[length + 0.1, 0.05, width + 0.1]} />
-                        <meshStandardMaterial color="#333333" />
-                    </mesh>
-                </group>
-            ))}
-            
-            {/* Dach */}
-            {roofType === 'sattel' ? (
-                <group position={[0, totalHeight + roofHeight / 2, 0]}>
-                    <mesh rotation={[Math.atan(roofHeight / (width / 2)), 0, 0]}>
-                        <boxGeometry args={[length, 0.1, Math.sqrt((width / 2) ** 2 + roofHeight ** 2)]} />
-                        <meshStandardMaterial color="#8B4513" />
-                    </mesh>
-                    <mesh rotation={[-Math.atan(roofHeight / (width / 2)), 0, 0]}>
-                        <boxGeometry args={[length, 0.1, Math.sqrt((width / 2) ** 2 + roofHeight ** 2)]} />
-                        <meshStandardMaterial color="#8B4513" />
-                    </mesh>
-                </group>
-            ) : (
-                <mesh position={[0, totalHeight + roofHeight / 2, 0]}>
-                    <boxGeometry args={[length, roofHeight, width]} />
-                    <meshStandardMaterial color="#999999" />
-                </mesh>
-            )}
-        </group>
-    );
-}
+import React from 'react';
+import { Card } from '@/components/ui/card';
+import { Box, Maximize } from 'lucide-react';
 
 export default function Building3DVisualization({ kubatur }) {
     if (!kubatur?.grundriss_laenge || !kubatur?.grundriss_breite) {
@@ -79,16 +11,83 @@ export default function Building3DVisualization({ kubatur }) {
         );
     }
     
+    const length = kubatur.grundriss_laenge || 0;
+    const width = kubatur.grundriss_breite || 0;
+    const floors = kubatur.anzahl_vollgeschosse || 0;
+    const hasBasement = kubatur.kellergeschoss;
+    const hasAttic = kubatur.dachgeschoss_ausgebaut;
+    
     return (
-        <div className="w-full h-64 bg-gradient-to-b from-sky-200 to-slate-100 rounded-lg overflow-hidden">
-            <Canvas camera={{ position: [15, 10, 15], fov: 50 }}>
-                <Suspense fallback={null}>
-                    <ambientLight intensity={0.6} />
-                    <directionalLight position={[10, 10, 5]} intensity={1} />
-                    <Building kubatur={kubatur} />
-                    <OrbitControls enablePan={false} enableZoom={true} />
-                </Suspense>
-            </Canvas>
-        </div>
+        <Card className="w-full p-6 bg-gradient-to-br from-slate-50 to-slate-100">
+            <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                    <Box className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                    <h4 className="font-semibold text-slate-800">Gebäude-Übersicht</h4>
+                    <p className="text-sm text-slate-500">Schematische Darstellung</p>
+                </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-600">Grundfläche</span>
+                        <span className="font-semibold text-slate-800">{length} × {width} m</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-600">Vollgeschosse</span>
+                        <span className="font-semibold text-slate-800">{floors}</span>
+                    </div>
+                    {kubatur.geschosshoehe_standard && (
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm text-slate-600">Geschosshöhe</span>
+                            <span className="font-semibold text-slate-800">{kubatur.geschosshoehe_standard} m</span>
+                        </div>
+                    )}
+                </div>
+                
+                <div className="space-y-3">
+                    {hasBasement && (
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                            <span className="text-sm text-slate-600">Kellergeschoss vorhanden</span>
+                        </div>
+                    )}
+                    {hasAttic && (
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                            <span className="text-sm text-slate-600">Dachgeschoss ausgebaut</span>
+                        </div>
+                    )}
+                    {kubatur.dachform && (
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
+                            <span className="text-sm text-slate-600">Dachform: {kubatur.dachform}</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+            
+            {/* Visual representation */}
+            <div className="mt-6 flex items-end justify-center gap-2 h-32">
+                {hasBasement && (
+                    <div className="w-16 h-6 bg-slate-400 rounded-b-lg"></div>
+                )}
+                <div className="flex flex-col items-center gap-0.5">
+                    {[...Array(floors)].map((_, i) => (
+                        <div 
+                            key={i} 
+                            className="w-24 h-8 bg-emerald-200 border-2 border-emerald-300 flex items-center justify-center"
+                        >
+                            <span className="text-xs text-emerald-700 font-medium">{floors - i}. OG</span>
+                        </div>
+                    ))}
+                    {hasAttic && (
+                        <div className="w-0 h-0 border-l-[48px] border-l-transparent border-r-[48px] border-r-transparent border-b-[24px] border-b-amber-300"></div>
+                    )}
+                </div>
+            </div>
+        </Card>
     );
 }
