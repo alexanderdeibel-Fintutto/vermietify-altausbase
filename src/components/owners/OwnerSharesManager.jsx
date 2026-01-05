@@ -160,6 +160,7 @@ export default function OwnerSharesManager({ shares, onChange, buildingId }) {
 
             {/* Add Owner Button */}
             <Button
+                type="button"
                 variant="outline"
                 onClick={() => setSelectOwnerOpen(true)}
                 className="w-full"

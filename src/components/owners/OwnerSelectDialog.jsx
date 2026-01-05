@@ -89,6 +89,7 @@ export default function OwnerSelectDialog({ open, onOpenChange, onSelect, exclud
                         </div>
 
                         <Button
+                            type="button"
                             variant="outline"
                             onClick={() => setCreateMode(true)}
                             className="w-full"
