@@ -32,8 +32,10 @@ export default function Building3DVisualization({ kubatur }) {
     const roofType = kubatur.dachform?.toLowerCase() || 'sattel';
     const roofAngle = kubatur.dachneigung_grad || 35;
     
-    // Dachhöhe berechnen
-    const roofHeight = roofType === 'flach' ? 0.5 : (width / 2) * Math.tan((roofAngle * Math.PI) / 180);
+    // Dachhöhe berechnen - Flachdach ignoriert Neigung
+    const roofHeight = (roofType === 'flach' || roofType === 'flachdach') 
+        ? 0.5 
+        : (width / 2) * Math.tan((roofAngle * Math.PI) / 180);
     
     // Gesamthöhe
     const totalBuildingHeight = (hasBasement ? basementHeight : 0) + floors * floorHeight;
@@ -213,7 +215,7 @@ export default function Building3DVisualization({ kubatur }) {
                     </>
                 )}
                 
-                {roofType === 'flach' && (
+                {(roofType === 'flach' || roofType === 'flachdach') && (
                     <rect
                         x={startX}
                         y={startY - totalBuildingHeight * scale * 10 - roofHeight * scale * 10}

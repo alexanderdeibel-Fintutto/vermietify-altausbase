@@ -26,6 +26,14 @@ export default function KubaturForm({ kubatur, onChange, register, building }) {
     React.useEffect(() => {
         calculateValues();
     }, [localKubatur, building]);
+    
+    // Berechnung auch bei Änderung triggern
+    React.useEffect(() => {
+        const timer = setTimeout(() => {
+            calculateValues();
+        }, 100);
+        return () => clearTimeout(timer);
+    }, [localKubatur]);
 
     const calculateValues = () => {
         const l = localKubatur.grundriss_laenge || 0;
