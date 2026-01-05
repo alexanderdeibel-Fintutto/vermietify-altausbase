@@ -10,14 +10,20 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function OwnerForm({ initialData, onSuccess, onCancel, embedded = false }) {
-    const [formData, setFormData] = useState(() => ({
-        eigentuemer_typ: 'natuerliche_person',
-        staatsangehoerigkeit: 'deutsch',
-        land: 'Deutschland',
-        steuerliche_ansaessigkeit: 'inland',
-        aktiv: true,
-        ...initialData
-    }));
+    const [formData, setFormData] = useState(() => {
+        const defaults = {
+            eigentuemer_typ: 'natuerliche_person',
+            staatsangehoerigkeit: 'deutsch',
+            land: 'Deutschland',
+            steuerliche_ansaessigkeit: 'inland',
+            aktiv: true
+        };
+        
+        if (initialData) {
+            return { ...defaults, ...initialData };
+        }
+        return defaults;
+    });
 
     const queryClient = useQueryClient();
 
