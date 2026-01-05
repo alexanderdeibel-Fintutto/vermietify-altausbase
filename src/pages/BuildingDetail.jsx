@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText, Receipt, Plug, Gauge, Upload, FileSignature, Landmark, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, MapPin, Wrench, Zap, Building as BuildingIcon, Home, ChevronDown, ChevronUp, Plus, FileText, Receipt, Plug, Gauge, Upload, FileSignature, Landmark, ShieldCheck, Box } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
@@ -563,6 +563,37 @@ export default function BuildingDetail() {
                 ) : (
                     <div className="col-span-full text-center py-4 text-slate-500">
                         Noch keine Gebäude angelegt
+                    </div>
+                )}
+            </DetailSection>
+
+            {/* Kubatur */}
+            <DetailSection 
+                title="Kubatur"
+                icon={Box}
+                summary={building.kubatur?.grundriss_laenge || building.kubatur?.grundriss_breite || building.kubatur?.anzahl_vollgeschosse ? `${building.kubatur.grundriss_laenge || '?'} x ${building.kubatur.grundriss_breite || '?'} m${building.kubatur.anzahl_vollgeschosse ? ' • ' + building.kubatur.anzahl_vollgeschosse + ' Geschosse' : ''}${building.kubatur.kellergeschoss ? ' • Keller' : ''}${building.kubatur.dachgeschoss_ausgebaut ? ' • DG ausgebaut' : ''}` : 'Noch keine Kubatur-Daten hinterlegt'}
+                onEdit={() => handleEditSection('kubatur')}
+            >
+                {building.kubatur && Object.keys(building.kubatur).length > 0 ? (
+                    <>
+                        <DetailItem label="Grundriss Länge" value={building.kubatur.grundriss_laenge ? `${building.kubatur.grundriss_laenge} m` : null} />
+                        <DetailItem label="Grundriss Breite" value={building.kubatur.grundriss_breite ? `${building.kubatur.grundriss_breite} m` : null} />
+                        <DetailItem label="Anzahl Vollgeschosse" value={building.kubatur.anzahl_vollgeschosse} />
+                        <DetailItem label="Geschosshöhe Standard" value={building.kubatur.geschosshoehe_standard ? `${building.kubatur.geschosshoehe_standard} m` : null} />
+                        <DetailItem label="Kellergeschoss" value={building.kubatur.kellergeschoss} />
+                        <DetailItem label="Kellergeschoss Fläche" value={building.kubatur.kellergeschoss_flaeche ? `${building.kubatur.kellergeschoss_flaeche} m²` : null} />
+                        <DetailItem label="Dachgeschoss ausgebaut" value={building.kubatur.dachgeschoss_ausgebaut} />
+                        <DetailItem label="Dachgeschoss Fläche" value={building.kubatur.dachgeschoss_flaeche ? `${building.kubatur.dachgeschoss_flaeche} m²` : null} />
+                        <DetailItem label="Dachform" value={building.kubatur.dachform} />
+                        <DetailItem label="Dachneigung" value={building.kubatur.dachneigung_grad ? `${building.kubatur.dachneigung_grad}°` : null} />
+                        <DetailItem label="Dachüberstand" value={building.kubatur.dachueberstang_m ? `${building.kubatur.dachueberstang_m} m` : null} />
+                        <DetailItem label="Wohnfläche Anteil" value={building.kubatur.wohnflaeche_anteil_prozent ? `${building.kubatur.wohnflaeche_anteil_prozent}%` : null} />
+                        <DetailItem label="Gewerbefläche Anteil" value={building.kubatur.gewerbeflaeche_anteil_prozent ? `${building.kubatur.gewerbeflaeche_anteil_prozent}%` : null} />
+                        <DetailItem label="Gemeinschaftsfläche Anteil" value={building.kubatur.gemeinschaftsflaeche_anteil_prozent ? `${building.kubatur.gemeinschaftsflaeche_anteil_prozent}%` : null} />
+                    </>
+                ) : (
+                    <div className="col-span-full text-center py-4 text-slate-500">
+                        Noch keine Kubatur-Daten hinterlegt
                     </div>
                 )}
             </DetailSection>

@@ -26,6 +26,7 @@ import { base44 } from '@/api/base44Client';
 import GebaeudeManager from './GebaeudeManager';
 import FlaechenEinheitenManager from './FlaechenEinheitenManager';
 import GrundbuchForm from './GrundbuchForm';
+import KubaturForm from './KubaturForm';
 
 export default function BuildingForm({ open, onOpenChange, onSubmit, initialData, isLoading, section, editingUnitIndex }) {
     const { register, handleSubmit, reset, formState: { errors } } = useForm({
@@ -35,6 +36,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
     const [gebaeude, setGebaeude] = React.useState([]);
     const [flaechenEinheiten, setFlaechenEinheiten] = React.useState([]);
     const [grundbuch, setGrundbuch] = React.useState({});
+    const [kubatur, setKubatur] = React.useState({});
     const [gebaeudeTyp, setGebaeudeTyp] = React.useState('gebaeude');
     const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
     const [checkingDependencies, setCheckingDependencies] = React.useState(false);
@@ -52,6 +54,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
             lage: 'Lage bearbeiten',
             gebaeude: 'Gebäude bearbeiten',
             flaechen: 'Flächen/Einheiten bearbeiten',
+            kubatur: 'Kubatur bearbeiten',
             grundbuch: 'Grundbuch bearbeiten',
             baudaten: 'Baudaten bearbeiten',
             ausstattung: 'Ausstattung bearbeiten',
@@ -79,11 +82,13 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                 setFlaechenEinheiten(initialData.flaechen_einheiten || []);
             }
             setGrundbuch(initialData.grundbuch || {});
+            setKubatur(initialData.kubatur || {});
         } else {
             reset({});
             setGebaeude([{ bezeichnung: 'Gebäude 1', lage_auf_grundstueck: '', eigene_hausnummer: '', gebaeude_standard: 'mittel' }]);
             setFlaechenEinheiten([]);
             setGrundbuch({});
+            setKubatur({});
         }
     }, [initialData, reset, open, editingUnitIndex]);
 
@@ -102,6 +107,7 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
             gebaeude_typ: gebaeudeTyp,
             gebaeude_data: gebaeude,
             flaechen_einheiten: finalFlaechenEinheiten,
+            kubatur: kubatur,
             grundbuch: grundbuch,
             purchase_price: data.purchase_price ? parseFloat(data.purchase_price) : null,
             year_built: data.year_built ? parseInt(data.year_built) : null,
@@ -261,6 +267,15 @@ export default function BuildingForm({ open, onOpenChange, onSubmit, initialData
                                 gebaeude={gebaeude}
                                 editingUnitIndex={editingUnitIndex}
                             />
+                        </div>
+                        </>
+                        )}
+
+                        {shouldShowSection('kubatur') && (
+                        <>
+                        <div className={!section ? "pt-4 border-t border-slate-200" : ""}>
+                            {!section && <h3 className="font-semibold text-slate-800 mb-3">Kubatur</h3>}
+                            <KubaturForm kubatur={kubatur} onChange={setKubatur} register={register} />
                         </div>
                         </>
                         )}
