@@ -62,12 +62,24 @@ export default function ShareholderManager({ ownerId, ownerName }) {
     });
 
     const handleShareholderCreated = (createdOwnerId) => {
-        createMutation.mutate({
-            owner_id: ownerId,
-            gesellschafter_owner_id: createdOwnerId,
-            anteil_prozent: 0,
-            gueltig_von: new Date().toISOString().split('T')[0]
-        });
+        if (!createdOwnerId) {
+            toast.error('Fehler: Keine Owner-ID erhalten');
+            setCreatingNewShareholder(false);
+            return;
+        }
+        
+        try {
+            createMutation.mutate({
+                owner_id: ownerId,
+                gesellschafter_owner_id: createdOwnerId,
+                anteil_prozent: 0,
+                gueltig_von: new Date().toISOString().split('T')[0]
+            });
+        } catch (error) {
+            console.error('Error in handleShareholderCreated:', error);
+            toast.error('Fehler beim Erstellen');
+            setCreatingNewShareholder(false);
+        }
     };
 
     const handleUpdateField = (shareholderId, field, value) => {
@@ -215,20 +227,20 @@ export default function ShareholderManager({ ownerId, ownerName }) {
                 )}
             </div>
 
-            {creatingNewShareholder && (
-                <Dialog open={creatingNewShareholder} onOpenChange={setCreatingNewShareholder}>
-                    <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle>Neuer Gesellschafter</DialogTitle>
-                        </DialogHeader>
+            <Dialog open={creatingNewShareholder} onOpenChange={setCreatingNewShareholder}>
+                <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Neuer Gesellschafter</DialogTitle>
+                    </DialogHeader>
+                    {creatingNewShareholder && (
                         <OwnerForm
                             onSuccess={handleShareholderCreated}
                             onCancel={() => setCreatingNewShareholder(false)}
                             embedded={true}
                         />
-                    </DialogContent>
-                </Dialog>
-            )}
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
