@@ -6,19 +6,44 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 
-export default function SimpleShareholderForm({ ownerId, ownerName, onSuccess, onCancel }) {
-    const [shareholders, setShareholders] = useState([{
-        eigentuemer_typ: 'natuerliche_person',
-        vorname: '',
-        nachname: '',
-        anteil_prozent: '',
-        gueltig_von: new Date().toISOString().split('T')[0],
-        staatsangehoerigkeit: 'deutsch',
-        land: 'Deutschland',
-        steuerliche_ansaessigkeit: 'inland',
-        aktiv: true
-    }]);
+export default function SimpleShareholderForm({ ownerId, ownerName, existingShareholders, allOwners, onSuccess, onCancel }) {
+    const [shareholders, setShareholders] = useState(() => {
+        if (existingShareholders && existingShareholders.length > 0) {
+            // Bearbeitungs-Modus: Lade existierende Gesellschafter
+            return existingShareholders.map(sh => {
+                const owner = allOwners.find(o => o.id === sh.gesellschafter_owner_id);
+                return {
+                    id: sh.id,
+                    gesellschafter_owner_id: sh.gesellschafter_owner_id,
+                    eigentuemer_typ: owner?.eigentuemer_typ || 'natuerliche_person',
+                    vorname: owner?.vorname || '',
+                    nachname: owner?.nachname || '',
+                    anteil_prozent: sh.anteil_prozent,
+                    gueltig_von: sh.gueltig_von,
+                    staatsangehoerigkeit: owner?.staatsangehoerigkeit || 'deutsch',
+                    land: owner?.land || 'Deutschland',
+                    steuerliche_ansaessigkeit: owner?.steuerliche_ansaessigkeit || 'inland',
+                    aktiv: owner?.aktiv !== false,
+                    ...owner
+                };
+            });
+        }
+        // Erstellen-Modus: Leeres Formular
+        return [{
+            eigentuemer_typ: 'natuerliche_person',
+            vorname: '',
+            nachname: '',
+            anteil_prozent: '',
+            gueltig_von: new Date().toISOString().split('T')[0],
+            staatsangehoerigkeit: 'deutsch',
+            land: 'Deutschland',
+            steuerliche_ansaessigkeit: 'inland',
+            aktiv: true
+        }];
+    });
     const [saving, setSaving] = useState(false);
+    
+    const isEditing = existingShareholders && existingShareholders.length > 0;
 
     const addShareholder = () => {
         setShareholders([...shareholders, {
@@ -74,7 +99,7 @@ export default function SimpleShareholderForm({ ownerId, ownerName, onSuccess, o
                     <strong>Gesellschafter von:</strong> {ownerName}
                 </p>
                 <p className="text-xs text-blue-600 mt-1">
-                    Die Anteile aller Gesellschafter müssen zusammen 100% ergeben
+                    {isEditing ? 'Bearbeiten Sie die Gesellschafter (100% erforderlich)' : 'Die Anteile aller Gesellschafter müssen zusammen 100% ergeben'}
                 </p>
             </div>
 

@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Users, Trash2 } from 'lucide-react';
+import { Plus, Users, Trash2, Edit } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { toast } from 'sonner';
 import SimpleOwnerForm from '../owners/SimpleOwnerForm';
@@ -13,6 +13,8 @@ import SimpleShareholderForm from '../owners/SimpleShareholderForm';
 export default function OwnersSection({ buildingId }) {
     const [addingOwners, setAddingOwners] = useState(false);
     const [addingShareholdersFor, setAddingShareholdersFor] = useState(null);
+    const [editingOwner, setEditingOwner] = useState(null);
+    const [editingShareholdersFor, setEditingShareholdersFor] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: building } = useQuery({
@@ -54,6 +56,23 @@ export default function OwnersSection({ buildingId }) {
             queryClient.invalidateQueries({ queryKey: ['owners'] });
             queryClient.invalidateQueries({ queryKey: ['building', buildingId] });
             toast.success('Eigentümer gelöscht');
+        }
+    });
+
+    const updateOwnerMutation = useMutation({
+        mutationFn: ({ id, data }) => base44.entities.Owner.update(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['owners'] });
+            toast.success('Eigentümer aktualisiert');
+            setEditingOwner(null);
+        }
+    });
+
+    const deleteShareholderMutation = useMutation({
+        mutationFn: (id) => base44.entities.Shareholder.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['shareholders'] });
+            toast.success('Gesellschafter gelöscht');
         }
     });
 
@@ -135,6 +154,54 @@ export default function OwnersSection({ buildingId }) {
         return owner && owner.eigentuemer_typ !== 'natuerliche_person';
     };
 
+    const handleEditOwner = async (ownerData) => {
+        try {
+            await updateOwnerMutation.mutateAsync({
+                id: editingOwner.id,
+                data: ownerData
+            });
+        } catch (error) {
+            console.error('Error updating owner:', error);
+            toast.error('Fehler: ' + error.message);
+        }
+    };
+
+    const handleEditShareholders = async (shareholdersData) => {
+        try {
+            const existingShareholders = getShareholdersForOwner(editingShareholdersFor.id);
+            
+            // Alte Gesellschafter löschen
+            for (const sh of existingShareholders) {
+                await deleteShareholderMutation.mutateAsync(sh.id);
+            }
+
+            // Neue Gesellschafter erstellen
+            for (const shareholderData of shareholdersData) {
+                const created = await base44.entities.Owner.create({
+                    eigentuemer_typ: shareholderData.eigentuemer_typ,
+                    vorname: shareholderData.vorname,
+                    nachname: shareholderData.nachname,
+                    aktiv: true
+                });
+
+                await base44.entities.Shareholder.create({
+                    owner_id: editingShareholdersFor.id,
+                    gesellschafter_owner_id: created.id,
+                    anteil_prozent: parseFloat(shareholderData.anteil_prozent),
+                    gueltig_von: shareholderData.gueltig_von
+                });
+            }
+
+            await queryClient.invalidateQueries({ queryKey: ['shareholders'] });
+            await queryClient.invalidateQueries({ queryKey: ['owners'] });
+            setEditingShareholdersFor(null);
+            toast.success('Gesellschafter aktualisiert');
+        } catch (error) {
+            console.error('Error updating shareholders:', error);
+            toast.error('Fehler: ' + error.message);
+        }
+    };
+
     const ownerShares = building?.owner_shares || [];
     const totalPercent = ownerShares.reduce((sum, s) => sum + (s.anteil_prozent || 0), 0);
 
@@ -149,14 +216,16 @@ export default function OwnersSection({ buildingId }) {
                         </span>
                     </p>
                 </div>
-                <Button
-                    onClick={() => setAddingOwners(true)}
-                    size="sm"
-                    className="bg-emerald-600 hover:bg-emerald-700"
-                >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Eigentümer hinzufügen
-                </Button>
+                {totalPercent < 100 && (
+                    <Button
+                        onClick={() => setAddingOwners(true)}
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700"
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Eigentümer hinzufügen
+                    </Button>
+                )}
             </div>
 
             <div className="space-y-3">
@@ -186,23 +255,33 @@ export default function OwnersSection({ buildingId }) {
                                             )}
                                         </div>
                                     </div>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={async () => {
-                                            if (confirm('Eigentümer wirklich löschen?')) {
-                                                const updatedShares = ownerShares.filter((_, i) => i !== index);
-                                                await updateBuildingMutation.mutateAsync({
-                                                    id: buildingId,
-                                                    data: { owner_shares: updatedShares }
-                                                });
-                                                await deleteOwnerMutation.mutateAsync(owner.id);
-                                            }
-                                        }}
-                                        className="text-red-600"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
+                                    <div className="flex gap-1">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setEditingOwner(owner)}
+                                            className="text-slate-600"
+                                        >
+                                            <Edit className="w-4 h-4" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={async () => {
+                                                if (confirm('Eigentümer wirklich löschen?')) {
+                                                    const updatedShares = ownerShares.filter((_, i) => i !== index);
+                                                    await updateBuildingMutation.mutateAsync({
+                                                        id: buildingId,
+                                                        data: { owner_shares: updatedShares }
+                                                    });
+                                                    await deleteOwnerMutation.mutateAsync(owner.id);
+                                                }
+                                            }}
+                                            className="text-red-600"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                    </div>
                                 </div>
 
                                 {isLegalEntity(owner) && (
@@ -218,14 +297,28 @@ export default function OwnersSection({ buildingId }) {
                                                     <span className="text-slate-500 ml-2">Keine</span>
                                                 )}
                                             </div>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => setAddingShareholdersFor(owner)}
-                                            >
-                                                <Users className="w-4 h-4 mr-2" />
-                                                Gesellschafter hinzufügen
-                                            </Button>
+                                            <div className="flex gap-1">
+                                                {shareholders.length > 0 && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => setEditingShareholdersFor(owner)}
+                                                        className="text-slate-600"
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </Button>
+                                                )}
+                                                {shareholderPercent < 100 && (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => setAddingShareholdersFor(owner)}
+                                                    >
+                                                        <Users className="w-4 h-4 mr-2" />
+                                                        Gesellschafter hinzufügen
+                                                    </Button>
+                                                )}
+                                            </div>
                                         </div>
                                         {shareholders.length > 0 && (
                                             <div className="space-y-1 mt-2">
@@ -281,6 +374,39 @@ export default function OwnersSection({ buildingId }) {
                             ownerName={getOwnerName(addingShareholdersFor.id)}
                             onSuccess={handleSaveShareholders}
                             onCancel={() => setAddingShareholdersFor(null)}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={!!editingOwner} onOpenChange={(open) => !open && setEditingOwner(null)}>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Eigentümer bearbeiten</DialogTitle>
+                    </DialogHeader>
+                    {editingOwner && (
+                        <SimpleOwnerForm
+                            buildingId={buildingId}
+                            initialOwner={editingOwner}
+                            onSuccess={handleEditOwner}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={!!editingShareholdersFor} onOpenChange={(open) => !open && setEditingShareholdersFor(null)}>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Gesellschafter bearbeiten</DialogTitle>
+                    </DialogHeader>
+                    {editingShareholdersFor && (
+                        <SimpleShareholderForm
+                            ownerId={editingShareholdersFor.id}
+                            ownerName={getOwnerName(editingShareholdersFor.id)}
+                            existingShareholders={getShareholdersForOwner(editingShareholdersFor.id)}
+                            allOwners={allOwners}
+                            onSuccess={handleEditShareholders}
+                            onCancel={() => setEditingShareholdersFor(null)}
                         />
                     )}
                 </DialogContent>
