@@ -21,6 +21,7 @@ export default function OwnerSelectDialog({ open, onOpenChange, onSelect, exclud
     const handleSelect = (ownerId) => {
         onSelect(ownerId);
         onOpenChange(false);
+        setCreateMode(false);
     };
 
     const handleOwnerCreated = (ownerId) => {
@@ -29,8 +30,15 @@ export default function OwnerSelectDialog({ open, onOpenChange, onSelect, exclud
         onOpenChange(false);
     };
 
+    const handleDialogChange = (isOpen) => {
+        onOpenChange(isOpen);
+        if (!isOpen) {
+            setCreateMode(false);
+        }
+    };
+
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={open} onOpenChange={handleDialogChange}>
             <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Eigentümer auswählen</DialogTitle>
