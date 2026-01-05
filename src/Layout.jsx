@@ -26,7 +26,12 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Dokumente', href: createPageUrl('Documents'), icon: FileText, page: 'Documents' },
         { name: 'Finanzen', href: createPageUrl('Finanzen'), icon: CreditCard, page: 'Finanzen' },
         { name: 'Rechnungen & Belege', href: createPageUrl('Invoices'), icon: FileText, page: 'Invoices' },
-        { name: 'Steuerbibliothek', href: createPageUrl('TaxLibraryManagement'), icon: BookOpen, page: 'TaxLibraryManagement' },
+        { name: 'Steuer', icon: BookOpen, subItems: [
+            { name: 'Übersicht', href: createPageUrl('TaxOverview'), page: 'TaxOverview' },
+            { name: 'Formulare', href: createPageUrl('TaxForms'), page: 'TaxForms' },
+            { name: 'Erklärungen', href: createPageUrl('TaxDeclarations'), page: 'TaxDeclarations' },
+            { name: 'Bibliothek', href: createPageUrl('TaxLibraryManagement'), page: 'TaxLibraryManagement' },
+        ]},
         { name: 'Betriebskosten', href: createPageUrl('OperatingCosts'), icon: FileText, page: 'OperatingCosts' },
         { name: 'Bank/Kasse', href: createPageUrl('BankAccounts'), icon: Landmark, page: 'BankAccounts' },
     ];
@@ -63,6 +68,41 @@ export default function Layout({ children, currentPageName }) {
 
                 <nav className="p-4 space-y-1">
                     {navigation.map((item) => {
+                        if (item.subItems) {
+                            const isAnySubActive = item.subItems.some(sub => currentPageName === sub.page);
+                            return (
+                                <div key={item.name} className="space-y-1">
+                                    <div className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600">
+                                        <item.icon className="w-5 h-5 text-slate-400" />
+                                        {item.name}
+                                    </div>
+                                    <div className="ml-4 space-y-1">
+                                        {item.subItems.map((subItem) => {
+                                            const isActive = currentPageName === subItem.page;
+                                            return (
+                                                <Link
+                                                    key={subItem.name}
+                                                    to={subItem.href}
+                                                    onClick={() => setSidebarOpen(false)}
+                                                    className={cn(
+                                                        "flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                                                        isActive 
+                                                            ? "bg-emerald-50 text-emerald-700" 
+                                                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                                    )}
+                                                >
+                                                    {subItem.name}
+                                                    {isActive && (
+                                                        <ChevronRight className="w-4 h-4 ml-auto text-emerald-500" />
+                                                    )}
+                                                </Link>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        }
+                        
                         const isActive = currentPageName === item.page;
                         return (
                             <Link

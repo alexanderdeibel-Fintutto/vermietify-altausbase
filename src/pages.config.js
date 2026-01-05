@@ -15,6 +15,9 @@ import Invoices from './pages/Invoices';
 import OperatingCosts from './pages/OperatingCosts';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import UnitDetail from './pages/UnitDetail';
+import TaxOverview from './pages/TaxOverview';
+import TaxForms from './pages/TaxForms';
+import TaxDeclarations from './pages/TaxDeclarations';
 import __Layout from './Layout.jsx';
 
 
@@ -36,6 +39,9 @@ export const PAGES = {
     "OperatingCosts": OperatingCosts,
     "TaxLibraryManagement": TaxLibraryManagement,
     "UnitDetail": UnitDetail,
+    "TaxOverview": TaxOverview,
+    "TaxForms": TaxForms,
+    "TaxDeclarations": TaxDeclarations,
 }
 
 export const pagesConfig = {
