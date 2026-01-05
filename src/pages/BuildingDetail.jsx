@@ -342,15 +342,6 @@ export default function BuildingDetail() {
         }
     });
 
-    if (isLoading) {
-        return (
-            <div className="space-y-8">
-                <Skeleton className="h-8 w-48" />
-                <Skeleton className="h-64 rounded-2xl" />
-            </div>
-        );
-    }
-
     if (!buildingId) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -361,6 +352,15 @@ export default function BuildingDetail() {
                         <Button>Zurück zu Gebäuden</Button>
                     </Link>
                 </div>
+            </div>
+        );
+    }
+
+    if (isLoading) {
+        return (
+            <div className="space-y-8">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-64 rounded-2xl" />
             </div>
         );
     }
