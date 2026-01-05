@@ -108,11 +108,11 @@ export default function OwnerForm({ initialData, onSuccess, onCancel, embedded =
                                 />
                             </div>
                             <div>
-                                <Label>Vorname *</Label>
+                                <Label>Vorname {!embedded && '*'}</Label>
                                 <Input
                                     value={formData.vorname || ''}
                                     onChange={(e) => updateField('vorname', e.target.value)}
-                                    required={isNaturalPerson}
+                                    required={isNaturalPerson && !embedded}
                                 />
                             </div>
                         </div>
@@ -120,11 +120,11 @@ export default function OwnerForm({ initialData, onSuccess, onCancel, embedded =
 
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <Label>{isNaturalPerson ? 'Nachname' : 'Firmenname'} *</Label>
+                            <Label>{isNaturalPerson ? 'Nachname' : 'Firmenname'} {!embedded && '*'}</Label>
                             <Input
                                 value={formData.nachname || ''}
                                 onChange={(e) => updateField('nachname', e.target.value)}
-                                required
+                                required={!embedded}
                             />
                         </div>
                         {!isNaturalPerson && (
@@ -160,12 +160,12 @@ export default function OwnerForm({ initialData, onSuccess, onCancel, embedded =
                     )}
 
                     <div>
-                        <Label>Staatsangehörigkeit *</Label>
+                        <Label>Staatsangehörigkeit {!embedded && '*'}</Label>
                         <select
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                             value={formData.staatsangehoerigkeit}
                             onChange={(e) => updateField('staatsangehoerigkeit', e.target.value)}
-                            required
+                            required={!embedded}
                         >
                             <option value="deutsch">Deutsch</option>
                             <option value="eu">EU</option>
@@ -176,28 +176,28 @@ export default function OwnerForm({ initialData, onSuccess, onCancel, embedded =
                     <div className="space-y-3 pt-3 border-t">
                         <h4 className="font-semibold text-slate-700">Adresse</h4>
                         <div>
-                            <Label>Straße und Hausnummer *</Label>
+                            <Label>Straße und Hausnummer {!embedded && '*'}</Label>
                             <Input
                                 value={formData.strasse || ''}
                                 onChange={(e) => updateField('strasse', e.target.value)}
-                                required
+                                required={!embedded}
                             />
                         </div>
                         <div className="grid grid-cols-3 gap-3">
                             <div>
-                                <Label>PLZ *</Label>
+                                <Label>PLZ {!embedded && '*'}</Label>
                                 <Input
                                     value={formData.plz || ''}
                                     onChange={(e) => updateField('plz', e.target.value)}
-                                    required
+                                    required={!embedded}
                                 />
                             </div>
                             <div className="col-span-2">
-                                <Label>Ort *</Label>
+                                <Label>Ort {!embedded && '*'}</Label>
                                 <Input
                                     value={formData.ort || ''}
                                     onChange={(e) => updateField('ort', e.target.value)}
-                                    required
+                                    required={!embedded}
                                 />
                             </div>
                         </div>
