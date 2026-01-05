@@ -170,7 +170,14 @@ export default function BuildingDetail() {
 
     const { data: owners = [] } = useQuery({
         queryKey: ['owners'],
-        queryFn: () => base44.entities.Owner.list()
+        queryFn: async () => {
+            try {
+                return await base44.entities.Owner.list();
+            } catch (error) {
+                console.error('Error loading owners:', error);
+                return [];
+            }
+        }
     });
 
     const updateMutation = useMutation({
