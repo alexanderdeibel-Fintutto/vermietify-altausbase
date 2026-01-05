@@ -93,10 +93,15 @@ const DetailItem = ({ label, value }) => {
 
 export default function BuildingDetail() {
     const [searchParams] = useSearchParams();
-    const buildingId = searchParams.get('buildingId');
+    let buildingId = searchParams.get('buildingId');
     
-    console.log('BuildingDetail - buildingId:', buildingId);
-    console.log('BuildingDetail - window.location.search:', window.location.search);
+    // Fallback: Wenn buildingId nicht in URL, aus sessionStorage lesen
+    if (!buildingId) {
+        buildingId = sessionStorage.getItem('currentBuildingId');
+    } else {
+        // Wenn buildingId vorhanden, im sessionStorage speichern
+        sessionStorage.setItem('currentBuildingId', buildingId);
+    }
     
     const [formOpen, setFormOpen] = useState(false);
     const [editingSection, setEditingSection] = useState(null);
