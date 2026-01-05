@@ -93,6 +93,9 @@ const DetailItem = ({ label, value }) => {
 export default function BuildingDetail() {
     const urlParams = new URLSearchParams(window.location.search);
     const buildingId = urlParams.get('buildingId');
+    
+    console.log('BuildingDetail - buildingId from URL:', buildingId);
+    
     const [formOpen, setFormOpen] = useState(false);
     const [editingSection, setEditingSection] = useState(null);
     const [editingUnitIndex, setEditingUnitIndex] = useState(null);
@@ -111,13 +114,19 @@ export default function BuildingDetail() {
     const [editingInsurance, setEditingInsurance] = useState(null);
     const queryClient = useQueryClient();
 
-    const { data: building, isLoading } = useQuery({
+    const { data: building, isLoading, error } = useQuery({
         queryKey: ['building', buildingId],
         queryFn: async () => {
+            console.log('Fetching building with ID:', buildingId);
             const buildings = await base44.entities.Building.filter({ id: buildingId });
+            console.log('Found buildings:', buildings);
+            if (!buildings || buildings.length === 0) {
+                throw new Error('Gebäude nicht gefunden');
+            }
             return buildings[0];
         },
-        enabled: !!buildingId
+        enabled: !!buildingId,
+        retry: false
     });
 
     const { data: propertyTaxes = [] } = useQuery({
@@ -346,11 +355,40 @@ export default function BuildingDetail() {
         );
     }
 
+    if (!buildingId) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold text-slate-800 mb-2">Keine Gebäude-ID in URL</h2>
+                    <p className="text-slate-600 mb-4">Bitte wählen Sie ein Gebäude aus der Liste.</p>
+                    <Link to={createPageUrl('Buildings')}>
+                        <Button>Zurück zu Gebäuden</Button>
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold text-slate-800 mb-2">Fehler beim Laden</h2>
+                    <p className="text-slate-600 mb-4">{error.message}</p>
+                    <Link to={createPageUrl('Buildings')}>
+                        <Button>Zurück zu Gebäuden</Button>
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
     if (!building) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <div className="text-center">
                     <h2 className="text-2xl font-bold text-slate-800 mb-2">Gebäude nicht gefunden</h2>
+                    <p className="text-slate-600 mb-4">ID: {buildingId}</p>
                     <Link to={createPageUrl('Buildings')}>
                         <Button>Zurück zu Gebäuden</Button>
                     </Link>
