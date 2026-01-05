@@ -81,17 +81,12 @@ export default function Building3DVisualization({ kubatur }) {
     
     return (
         <div className="w-full h-64 bg-gradient-to-b from-sky-200 to-slate-100 rounded-lg overflow-hidden">
-            <Canvas 
-                camera={{ position: [15, 10, 15], fov: 50 }}
-                gl={{ antialias: true, alpha: false }}
-                dpr={[1, 2]}
-            >
+            <Canvas camera={{ position: [15, 10, 15], fov: 50 }}>
                 <Suspense fallback={null}>
                     <ambientLight intensity={0.6} />
                     <directionalLight position={[10, 10, 5]} intensity={1} />
                     <Building kubatur={kubatur} />
                     <OrbitControls enablePan={false} enableZoom={true} />
-                    <gridHelper args={[20, 20, '#cccccc', '#eeeeee']} />
                 </Suspense>
             </Canvas>
         </div>
