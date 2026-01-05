@@ -20,15 +20,16 @@ export default function Layout({ children, currentPageName }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const navigation = [
-        { name: 'Dashboard', href: createPageUrl('Dashboard'), icon: Home, page: 'Dashboard' },
-        { name: 'Objekte', href: createPageUrl('Buildings'), icon: Building2, page: 'Buildings' },
-        { name: 'Mieter', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts' },
-        { name: 'Dokumente', href: createPageUrl('Documents'), icon: FileText, page: 'Documents' },
-        { name: 'Finanzen', href: createPageUrl('Finanzen'), icon: CreditCard, page: 'Finanzen' },
-        { name: 'Rechnungen & Belege', href: createPageUrl('Invoices'), icon: FileText, page: 'Invoices' },
-        { name: 'Steuer', href: createPageUrl('Tax'), icon: BookOpen, page: 'Tax' },
-        { name: 'Betriebskosten', href: createPageUrl('OperatingCosts'), icon: FileText, page: 'OperatingCosts' },
-        { name: 'Bank/Kasse', href: createPageUrl('BankAccounts'), icon: Landmark, page: 'BankAccounts' },
+    { name: 'Dashboard', href: createPageUrl('Dashboard'), icon: Home, page: 'Dashboard' },
+    { name: 'Objekte', href: createPageUrl('Buildings'), icon: Building2, page: 'Buildings' },
+    { name: 'Mieter', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts' },
+    { name: 'Aufgaben', href: createPageUrl('Tasks'), icon: FileText, page: 'Tasks' },
+    { name: 'Dokumente', href: createPageUrl('Documents'), icon: FileText, page: 'Documents' },
+    { name: 'Finanzen', href: createPageUrl('Finanzen'), icon: CreditCard, page: 'Finanzen' },
+    { name: 'Rechnungen & Belege', href: createPageUrl('Invoices'), icon: FileText, page: 'Invoices' },
+    { name: 'Steuer', href: createPageUrl('Tax'), icon: BookOpen, page: 'Tax' },
+    { name: 'Betriebskosten', href: createPageUrl('OperatingCosts'), icon: FileText, page: 'OperatingCosts' },
+    { name: 'Bank/Kasse', href: createPageUrl('BankAccounts'), icon: Landmark, page: 'BankAccounts' },
     ];
 
     return (
