@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { ChevronRight, ChevronLeft, Check, FileText, Building2, Home, Users, FileSignature } from 'lucide-react';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
 
 const STEPS = [
