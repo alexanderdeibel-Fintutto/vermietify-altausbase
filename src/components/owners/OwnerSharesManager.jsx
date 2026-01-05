@@ -15,8 +15,7 @@ import ShareholderManager from './ShareholderManager';
 import OwnerForm from './OwnerForm';
 
 export default function OwnerSharesManager({ shares, onChange, buildingId }) {
-    const [selectOwnerOpen, setSelectOwnerOpen] = useState(false);
-    const [editingIndex, setEditingIndex] = useState(null);
+    const [creatingNewOwner, setCreatingNewOwner] = useState(false);
     const [editingOwnerId, setEditingOwnerId] = useState(null);
 
     const { data: owners = [] } = useQuery({
@@ -42,7 +41,7 @@ export default function OwnerSharesManager({ shares, onChange, buildingId }) {
         return owner && owner.eigentuemer_typ !== 'natuerliche_person';
     };
 
-    const handleAddOwner = (ownerId) => {
+    const handleOwnerCreated = (ownerId) => {
         const remainingShare = Math.max(0, 100 - totalShares);
         const newShare = {
             owner_id: ownerId,
@@ -51,7 +50,7 @@ export default function OwnerSharesManager({ shares, onChange, buildingId }) {
             grund_aenderung: 'kauf'
         };
         onChange([...shares, newShare]);
-        setSelectOwnerOpen(false);
+        setCreatingNewOwner(false);
     };
 
     const handleUpdateShare = (index, field, value) => {
@@ -197,7 +196,7 @@ export default function OwnerSharesManager({ shares, onChange, buildingId }) {
             <Button
                 type="button"
                 variant="outline"
-                onClick={() => setSelectOwnerOpen(true)}
+                onClick={() => setCreatingNewOwner(true)}
                 className="w-full"
                 disabled={totalShares >= 100}
             >
@@ -205,13 +204,23 @@ export default function OwnerSharesManager({ shares, onChange, buildingId }) {
                 Eigentümer hinzufügen
             </Button>
 
-            <OwnerSelectDialog
-                open={selectOwnerOpen}
-                onOpenChange={setSelectOwnerOpen}
-                onSelect={handleAddOwner}
-                excludeIds={shares.map(s => s.owner_id)}
-            />
+            {/* Create New Owner Dialog */}
+            {creatingNewOwner && (
+                <Dialog open={creatingNewOwner} onOpenChange={setCreatingNewOwner}>
+                    <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle>Neuer Eigentümer</DialogTitle>
+                        </DialogHeader>
+                        <OwnerForm
+                            onSuccess={handleOwnerCreated}
+                            onCancel={() => setCreatingNewOwner(false)}
+                            embedded={true}
+                        />
+                    </DialogContent>
+                </Dialog>
+            )}
 
+            {/* Edit Owner Dialog */}
             {editingOwnerId && (
                 <Dialog open={!!editingOwnerId} onOpenChange={(open) => !open && setEditingOwnerId(null)}>
                     <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">

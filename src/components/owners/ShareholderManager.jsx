@@ -5,12 +5,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
-import OwnerSelectDialog from './OwnerSelectDialog';
+import OwnerForm from './OwnerForm';
 
 export default function ShareholderManager({ ownerId, ownerName }) {
-    const [selectDialogOpen, setSelectDialogOpen] = useState(false);
+    const [creatingNewShareholder, setCreatingNewShareholder] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: shareholders = [] } = useQuery({
@@ -37,7 +38,7 @@ export default function ShareholderManager({ ownerId, ownerName }) {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['shareholders', ownerId] });
             toast.success('Gesellschafter hinzugefügt');
-            setSelectDialogOpen(false);
+            setCreatingNewShareholder(false);
         },
         onError: (error) => {
             console.error('Error creating shareholder:', error);
@@ -61,15 +62,10 @@ export default function ShareholderManager({ ownerId, ownerName }) {
         }
     });
 
-    const handleAddShareholder = (selectedOwnerId) => {
-        if (!selectedOwnerId) {
-            toast.error('Bitte wählen Sie einen Eigentümer aus');
-            return;
-        }
-        
+    const handleShareholderCreated = (createdOwnerId) => {
         createMutation.mutate({
             owner_id: ownerId,
-            gesellschafter_owner_id: selectedOwnerId,
+            gesellschafter_owner_id: createdOwnerId,
             anteil_prozent: 0,
             gueltig_von: new Date().toISOString().split('T')[0]
         });
@@ -96,7 +92,7 @@ export default function ShareholderManager({ ownerId, ownerName }) {
                     <p className="text-sm text-slate-600">von {ownerName}</p>
                 </div>
                 <Button 
-                    onClick={() => setSelectDialogOpen(true)}
+                    onClick={() => setCreatingNewShareholder(true)}
                     size="sm"
                     className="bg-emerald-600 hover:bg-emerald-700"
                 >
@@ -199,7 +195,7 @@ export default function ShareholderManager({ ownerId, ownerName }) {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setSelectDialogOpen(true)}
+                                onClick={() => setCreatingNewShareholder(true)}
                                 className="mt-4"
                             >
                                 <Plus className="w-4 h-4 mr-2" />
@@ -210,13 +206,19 @@ export default function ShareholderManager({ ownerId, ownerName }) {
                 )}
             </div>
 
-            {selectDialogOpen && (
-                <OwnerSelectDialog
-                    open={selectDialogOpen}
-                    onOpenChange={setSelectDialogOpen}
-                    onSelect={handleAddShareholder}
-                    excludeIds={[ownerId, ...shareholders.map(s => s.gesellschafter_owner_id)]}
-                />
+            {creatingNewShareholder && (
+                <Dialog open={creatingNewShareholder} onOpenChange={setCreatingNewShareholder}>
+                    <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle>Neuer Gesellschafter</DialogTitle>
+                        </DialogHeader>
+                        <OwnerForm
+                            onSuccess={handleShareholderCreated}
+                            onCancel={() => setCreatingNewShareholder(false)}
+                            embedded={true}
+                        />
+                    </DialogContent>
+                </Dialog>
             )}
         </div>
     );
