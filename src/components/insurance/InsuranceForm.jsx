@@ -361,7 +361,11 @@ export default function InsuranceForm({ open, onOpenChange, onSubmit, initialDat
                                 </Button>
                                 <Button 
                                     type="button"
-                                    onClick={() => handleFormSubmit(watch(), true)}
+                                    onClick={async () => {
+                                        await createBookingsInDatabase();
+                                        toast.success(`${bookingSuggestions.length} Buchungen angelegt`);
+                                        onOpenChange(false);
+                                    }}
                                     className="bg-emerald-600 hover:bg-emerald-700"
                                     disabled={isLoading}
                                 >
