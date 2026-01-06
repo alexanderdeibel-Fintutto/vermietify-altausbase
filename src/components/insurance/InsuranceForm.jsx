@@ -12,7 +12,8 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2, Sparkles } from 'lucide-react';
-import BookingPreviewDialog from '../bookings/BookingPreviewDialog';
+import BookingPreviewSection from '../bookings/BookingPreviewSection';
+import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
 const VERSICHERUNGSTYPEN = [
@@ -27,8 +28,9 @@ const VERSICHERUNGSTYPEN = [
 const ZAHLUNGSWEISEN = ['jährlich', 'halbjährlich', 'vierteljährlich', 'monatlich'];
 
 export default function InsuranceForm({ open, onOpenChange, onSubmit, initialData, isLoading, buildingId }) {
-    const [bookingPreviewOpen, setBookingPreviewOpen] = React.useState(false);
-    const [savedInsuranceId, setSavedInsuranceId] = React.useState(null);
+    const [bookingSuggestions, setBookingSuggestions] = React.useState(null);
+    const [isGeneratingBookings, setIsGeneratingBookings] = React.useState(false);
+    const [savedInsurance, setSavedInsurance] = React.useState(null);
     
     const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
         defaultValues: { 
@@ -52,7 +54,28 @@ export default function InsuranceForm({ open, onOpenChange, onSubmit, initialDat
         }
     }, [initialData, reset, buildingId, open]);
 
-    const handleFormSubmit = async (data) => {
+    const generateBookings = async (insurance) => {
+        setIsGeneratingBookings(true);
+        try {
+            const response = await base44.functions.invoke('generateBookingsFromSource', {
+                source_type: 'Versicherung',
+                source_id: insurance.id
+            });
+            
+            setBookingSuggestions(response.data.booking_suggestions.map(s => ({
+                ...s,
+                building_id: response.data.building_id
+            })));
+            setSavedInsurance(insurance);
+        } catch (error) {
+            toast.error('Fehler beim Generieren der Buchungen');
+            console.error(error);
+        } finally {
+            setIsGeneratingBookings(false);
+        }
+    };
+
+    const handleFormSubmit = async (data, createBookings = false) => {
         try {
             const result = await onSubmit({
                 ...data,
@@ -61,14 +84,64 @@ export default function InsuranceForm({ open, onOpenChange, onSubmit, initialDat
                 selbstbeteiligung: data.selbstbeteiligung ? parseFloat(data.selbstbeteiligung) : null,
             });
             
-            if (result?.id) {
-                setSavedInsuranceId(result.id);
-                setBookingPreviewOpen(true);
+            if (result?.id && !initialData) {
+                // Neu angelegt - Buchungen generieren
+                await generateBookings(result);
+            } else if (createBookings && bookingSuggestions) {
+                // Buchungen erstellen
+                await createBookingsInDatabase();
+                toast.success('Versicherung und Buchungen angelegt');
+                onOpenChange(false);
+            } else {
+                toast.success('Versicherung gespeichert');
+                if (!createBookings) {
+                    onOpenChange(false);
+                }
             }
         } catch (error) {
             console.error('Error submitting insurance:', error);
             toast.error('Fehler beim Speichern');
         }
+    };
+
+    const createBookingsInDatabase = async () => {
+        const user = await base44.auth.me();
+        
+        const bookingsToCreate = bookingSuggestions.map(suggestion => ({
+            building_id: suggestion.building_id,
+            unit_id: suggestion.unit_id || undefined,
+            source_type: 'Versicherung',
+            source_id: savedInsurance.id,
+            source_version: 1,
+            due_date: suggestion.due_date,
+            original_due_date: suggestion.due_date,
+            amount: suggestion.amount,
+            original_amount: suggestion.amount,
+            description: suggestion.description,
+            booking_status: 'Geplant',
+            paid_amount: 0,
+            outstanding_amount: suggestion.amount,
+            linked_transaction_ids: [],
+            linked_payment_ids: [],
+            is_automatically_created: true,
+            is_future_booking: false,
+            last_updated: new Date().toISOString(),
+            changed_by: user?.email || 'System',
+            is_cancelled: false
+        }));
+
+        await Promise.all(
+            bookingsToCreate.map(booking => 
+                base44.entities.GeneratedFinancialBooking.create(booking)
+            )
+        );
+
+        // Markiere Quelle als verarbeitet
+        await base44.entities.Insurance.update(savedInsurance.id, {
+            bookings_created: true,
+            bookings_created_at: new Date().toISOString(),
+            number_of_generated_bookings: bookingSuggestions.length
+        });
     };
 
     return (
@@ -267,32 +340,48 @@ export default function InsuranceForm({ open, onOpenChange, onSubmit, initialDat
                         />
                     </div>
 
+                    <BookingPreviewSection bookingSuggestions={bookingSuggestions} />
+
                     <div className="flex justify-end gap-3 pt-4">
                         <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                             Abbrechen
                         </Button>
-                        <Button 
-                            type="submit" 
-                            className="bg-emerald-600 hover:bg-emerald-700"
-                            disabled={isLoading}
-                        >
-                            {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            {initialData ? 'Speichern' : 'Anlegen'}
-                        </Button>
+                        {bookingSuggestions ? (
+                            <>
+                                <Button 
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                        toast.success('Versicherung gespeichert (Buchungen verworfen)');
+                                        onOpenChange(false);
+                                    }}
+                                    disabled={isLoading}
+                                >
+                                    Nur Versicherung
+                                </Button>
+                                <Button 
+                                    type="button"
+                                    onClick={() => handleFormSubmit(watch(), true)}
+                                    className="bg-emerald-600 hover:bg-emerald-700"
+                                    disabled={isLoading}
+                                >
+                                    {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                    Versicherung und Buchungen anlegen
+                                </Button>
+                            </>
+                        ) : (
+                            <Button 
+                                type="submit" 
+                                className="bg-emerald-600 hover:bg-emerald-700"
+                                disabled={isLoading || isGeneratingBookings}
+                            >
+                                {(isLoading || isGeneratingBookings) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                {initialData ? 'Speichern' : 'Anlegen'}
+                            </Button>
+                        )}
                     </div>
-                </form>
-            </DialogContent>
-
-            <BookingPreviewDialog
-                open={bookingPreviewOpen}
-                onOpenChange={setBookingPreviewOpen}
-                sourceType="Versicherung"
-                sourceId={savedInsuranceId}
-                onSuccess={() => {
-                    setBookingPreviewOpen(false);
-                    onOpenChange(false);
-                }}
-            />
-        </Dialog>
+                    </form>
+                    </DialogContent>
+                    </Dialog>
     );
 }
