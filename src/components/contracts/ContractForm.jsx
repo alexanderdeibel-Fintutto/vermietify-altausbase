@@ -153,6 +153,13 @@ export default function ContractForm({
             try {
                 await generateFinancialItemsForContract(pendingContract, [], partialAmount);
                 setPendingContract(null);
+                
+                toast.success('Mietvertrag gespeichert', {
+                    action: {
+                        label: 'Buchungen generieren',
+                        onClick: () => setBookingPreviewOpen(true)
+                    }
+                });
             } catch (error) {
                 console.error('Error generating financial items with partial rent:', error);
             }
