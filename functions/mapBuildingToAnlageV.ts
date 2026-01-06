@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
             zeile_13: contracts.reduce((sum, c) => sum + ((c.rent_cold || 0) * 12), 0),
 
             // Werbungskosten - AfA
-            zeile_33: this.calculateAfA(buildingData, tax_year),
+            zeile_33: calculateAfA(buildingData, tax_year),
 
             // Grundsteuer
             zeile_51: propertyTax.length > 0 ? (propertyTax[0].grundsteuer_jahresbetrag || 0) : 0,
