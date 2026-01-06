@@ -31,6 +31,7 @@ import TaskCalendar from '@/components/tasks/TaskCalendar';
 import ActivityLogViewer from '@/components/tasks/ActivityLogViewer';
 import PerformanceMonitor from '@/components/tasks/PerformanceMonitor';
 import SetupWizard from '@/components/tasks/SetupWizard';
+import TestingPanel from '@/components/tasks/TestingPanel';
 
 export default function Tasks() {
     const [formOpen, setFormOpen] = useState(false);
@@ -134,7 +135,7 @@ export default function Tasks() {
 
             {/* Tabs */}
             <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="grid w-full grid-cols-8">
+                <TabsList className="grid w-full grid-cols-9">
                     <TabsTrigger value="overview">Übersicht</TabsTrigger>
                     <TabsTrigger value="tasks">Liste</TabsTrigger>
                     <TabsTrigger value="kanban">Kanban</TabsTrigger>
@@ -143,6 +144,7 @@ export default function Tasks() {
                     <TabsTrigger value="emails">Emails</TabsTrigger>
                     <TabsTrigger value="rules">Regeln</TabsTrigger>
                     <TabsTrigger value="logs">Protokoll</TabsTrigger>
+                    <TabsTrigger value="testing">Testing</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="mt-6">
@@ -197,6 +199,10 @@ export default function Tasks() {
 
                 <TabsContent value="logs" className="mt-6">
                     <ActivityLogViewer entityType="task" />
+                </TabsContent>
+
+                <TabsContent value="testing" className="mt-6">
+                    <TestingPanel />
                 </TabsContent>
                 </Tabs>
 
