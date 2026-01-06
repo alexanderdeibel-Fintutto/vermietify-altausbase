@@ -14,13 +14,16 @@ export default function BookingPreviewDialog({ open, onOpenChange, sourceType, s
 
     const generateMutation = useMutation({
         mutationFn: async () => {
+            console.log('Calling generateBookingsFromSource with:', { source_type: sourceType, source_id: sourceId });
             const response = await base44.functions.invoke('generateBookingsFromSource', {
                 source_type: sourceType,
                 source_id: sourceId
             });
+            console.log('Generate response:', response);
             return response.data;
         },
         onSuccess: (data) => {
+            console.log('Success data:', data);
             setBookingSuggestions(data.booking_suggestions);
             if (data.booking_suggestions.length > 0) {
                 // Versuche Kostenkategorie zu finden
@@ -29,7 +32,9 @@ export default function BookingPreviewDialog({ open, onOpenChange, sourceType, s
             }
         },
         onError: (error) => {
-            toast.error('Fehler beim Generieren: ' + error.message);
+            console.error('Generate error full:', error);
+            console.error('Error response data:', error.response?.data);
+            toast.error('Fehler beim Generieren: ' + (error.response?.data?.error || error.message));
         }
     });
 
