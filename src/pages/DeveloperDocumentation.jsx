@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { 
     FileText, 
     Download, 
@@ -126,6 +127,8 @@ export default function DeveloperDocumentation() {
     const [previewDoc, setPreviewDoc] = useState(null);
     const [generatingAll, setGeneratingAll] = useState(false);
     const [selectedTypes, setSelectedTypes] = useState([]);
+    const [currentGenerating, setCurrentGenerating] = useState(null);
+    const [progress, setProgress] = useState(0);
     const queryClient = useQueryClient();
 
     const { data: documentations = [], isLoading } = useQuery({
@@ -164,23 +167,27 @@ export default function DeveloperDocumentation() {
 
     const handleGenerateAll = async () => {
         setGeneratingAll(true);
+        setProgress(0);
         let successCount = 0;
         let errorCount = 0;
         
         for (let i = 0; i < DOCUMENTATION_TYPES.length; i++) {
             const docType = DOCUMENTATION_TYPES[i];
+            setCurrentGenerating(docType.title);
+            setProgress(((i + 1) / DOCUMENTATION_TYPES.length) * 100);
+            
             try {
                 await generateMutation.mutateAsync(docType.type);
                 successCount++;
-                toast.success(`${docType.title} generiert (${i + 1}/${DOCUMENTATION_TYPES.length})`);
             } catch (error) {
                 errorCount++;
                 console.error(`Failed to generate ${docType.type}:`, error);
-                toast.error(`Fehler bei ${docType.title}`);
             }
         }
         
         setGeneratingAll(false);
+        setCurrentGenerating(null);
+        setProgress(0);
         toast.success(`Fertig: ${successCount} erfolgreich, ${errorCount} Fehler`);
     };
 
@@ -210,8 +217,82 @@ export default function DeveloperDocumentation() {
 
     const handleDownloadPDF = async (doc) => {
         try {
+            // Konvertiere Markdown zu HTML mit Styling
+            const ReactMarkdown = (await import('react-markdown')).default;
+            const { renderToString } = await import('react-dom/server');
+            
+            const htmlContent = renderToString(
+                <ReactMarkdown>{doc.content_markdown}</ReactMarkdown>
+            );
+            
+            const styledHtml = `
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <style>
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            padding: 40px; 
+                            line-height: 1.6;
+                            color: #333;
+                        }
+                        h1 { 
+                            color: #10b981; 
+                            border-bottom: 2px solid #10b981; 
+                            padding-bottom: 10px;
+                        }
+                        h2 { 
+                            color: #059669; 
+                            margin-top: 30px;
+                        }
+                        h3 { 
+                            color: #047857;
+                        }
+                        code { 
+                            background: #f3f4f6; 
+                            padding: 2px 6px; 
+                            border-radius: 3px;
+                            font-family: 'Courier New', monospace;
+                        }
+                        pre { 
+                            background: #1f2937; 
+                            color: #f9fafb; 
+                            padding: 15px; 
+                            border-radius: 5px;
+                            overflow-x: auto;
+                        }
+                        pre code {
+                            background: transparent;
+                            color: #f9fafb;
+                        }
+                        table { 
+                            border-collapse: collapse; 
+                            width: 100%; 
+                            margin: 20px 0;
+                        }
+                        th, td { 
+                            border: 1px solid #d1d5db; 
+                            padding: 12px; 
+                            text-align: left;
+                        }
+                        th { 
+                            background: #f3f4f6; 
+                            font-weight: bold;
+                        }
+                        blockquote {
+                            border-left: 4px solid #10b981;
+                            padding-left: 20px;
+                            margin-left: 0;
+                            color: #666;
+                        }
+                    </style>
+                </head>
+                <body>${htmlContent}</body>
+                </html>
+            `;
+            
             const response = await base44.functions.invoke('generatePDF', {
-                html: `<html><body style="font-family: Arial, sans-serif; padding: 20px;">${doc.content_markdown.replace(/\n/g, '<br>')}</body></html>`,
+                html: styledHtml,
                 fileName: `${doc.documentation_type}.pdf`
             });
             
@@ -269,6 +350,26 @@ export default function DeveloperDocumentation() {
                 </CardContent>
             </Card>
 
+            {/* Auswahl-Buttons */}
+            {DOCUMENTATION_TYPES.length > 0 && (
+                <div className="flex gap-2">
+                    <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setSelectedTypes(DOCUMENTATION_TYPES.map(t => t.type))}
+                    >
+                        Alle auswählen
+                    </Button>
+                    <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setSelectedTypes([])}
+                    >
+                        Keine auswählen
+                    </Button>
+                </div>
+            )}
+
             {/* Sammel-Aktionen */}
             <div className="flex gap-3 flex-wrap">
                 <Button 
@@ -280,7 +381,7 @@ export default function DeveloperDocumentation() {
                     {generatingAll ? (
                         <>
                             <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                            Generiere alle ({DOCUMENTATION_TYPES.findIndex(t => generateMutation.variables === t.type) + 1}/{DOCUMENTATION_TYPES.length})
+                            {currentGenerating}...
                         </>
                     ) : (
                         <>
@@ -289,6 +390,22 @@ export default function DeveloperDocumentation() {
                         </>
                     )}
                 </Button>
+            </div>
+
+            {/* Progress Bar */}
+            {generatingAll && (
+                <Card className="bg-blue-50 border-blue-200">
+                    <CardContent className="p-4">
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-sm text-blue-900">
+                                <span>Generierung läuft...</span>
+                                <span>{Math.round(progress)}%</span>
+                            </div>
+                            <Progress value={progress} className="h-2" />
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
                 <Button 
                     variant="outline" 
                     size="lg"
