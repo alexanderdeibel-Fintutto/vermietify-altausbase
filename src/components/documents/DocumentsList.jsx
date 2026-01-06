@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, FileText, Eye, Edit, Trash2, Download, Send, CheckCircle, Mail } from 'lucide-react';
+import { Plus, FileText, Eye, Edit, Trash2, Download, Send, CheckCircle, Mail, Upload } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import DocumentCreateWizard from './DocumentCreateWizard';
@@ -24,6 +24,7 @@ const STATUS_CONFIG = {
 
 export default function DocumentsList() {
     const [wizardOpen, setWizardOpen] = useState(false);
+    const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
     const [previewDocument, setPreviewDocument] = useState(null);
     const [sendLetterDocument, setSendLetterDocument] = useState(null);
     const [filterStatus, setFilterStatus] = useState('all');
@@ -232,6 +233,11 @@ export default function DocumentsList() {
             <DocumentCreateWizard
                 open={wizardOpen}
                 onOpenChange={setWizardOpen}
+            />
+
+            <PDFUploadDialog
+                open={uploadDialogOpen}
+                onOpenChange={setUploadDialogOpen}
             />
 
             {previewDocument && (
