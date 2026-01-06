@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
         });
 
         // AfA berechnen (Zeile 33-35)
-        const afa = this.calculateAfA(building, tax_year);
+        const afa = calculateAfA(building, tax_year);
 
         // Schuldzinsen (Zeile 39-41)
         let schuldzinsen = 0;
@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
                 afa_details: {
                     purchase_price: building.purchase_price,
                     year_built: building.year_built,
-                    afa_rate: this.getAfARate(building)
+                    afa_rate: getAfARate(building)
                 }
             }
         });
@@ -141,7 +141,7 @@ function calculateAfA(building, taxYear) {
     }
 
     const buildYear = building.year_built || new Date(building.purchase_date).getFullYear();
-    const afaRate = this.getAfARate(building);
+    const afaRate = getAfARate(building);
 
     // Nur Gebäudeanteil (80% Standard wenn nicht explizit)
     const buildingValue = building.purchase_price * 0.8;
