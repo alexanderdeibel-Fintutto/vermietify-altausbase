@@ -12,9 +12,12 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
+import BookingPreviewDialog from '../bookings/BookingPreviewDialog';
 
 export default function PropertyTaxForm({ open, onOpenChange, onSubmit, initialData, isLoading, buildingId }) {
+    const [bookingPreviewOpen, setBookingPreviewOpen] = React.useState(false);
+    const [savedPropertyTaxId, setSavedPropertyTaxId] = React.useState(null);
     const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
         defaultValues: initialData || { building_id: buildingId }
     });
@@ -27,8 +30,8 @@ export default function PropertyTaxForm({ open, onOpenChange, onSubmit, initialD
         }
     }, [initialData, reset, buildingId, open]);
 
-    const handleFormSubmit = (data) => {
-        onSubmit({
+    const handleFormSubmit = async (data) => {
+        const result = await onSubmit({
             ...data,
             grundsteuerbescheid_jahr: data.grundsteuerbescheid_jahr ? parseInt(data.grundsteuerbescheid_jahr) : null,
             grundsteuermessbetrag: data.grundsteuermessbetrag ? parseFloat(data.grundsteuermessbetrag) : null,
@@ -39,6 +42,11 @@ export default function PropertyTaxForm({ open, onOpenChange, onSubmit, initialD
             grundsteuer_quartalsrate: data.grundsteuer_quartalsrate ? parseFloat(data.grundsteuer_quartalsrate) : null,
             grundsteuer_vorjahr_betrag: data.grundsteuer_vorjahr_betrag ? parseFloat(data.grundsteuer_vorjahr_betrag) : null,
         });
+        
+        if (result?.id && !initialData) {
+            setSavedPropertyTaxId(result.id);
+            setBookingPreviewOpen(true);
+        }
     };
 
     const sepaMandat = watch('sepa_mandat_vorhanden');
@@ -402,6 +410,17 @@ export default function PropertyTaxForm({ open, onOpenChange, onSubmit, initialD
                     </div>
                 </form>
             </DialogContent>
+
+            <BookingPreviewDialog
+                open={bookingPreviewOpen}
+                onOpenChange={setBookingPreviewOpen}
+                sourceType="Grundsteuer"
+                sourceId={savedPropertyTaxId}
+                onSuccess={() => {
+                    setBookingPreviewOpen(false);
+                    onOpenChange(false);
+                }}
+            />
         </Dialog>
     );
 }

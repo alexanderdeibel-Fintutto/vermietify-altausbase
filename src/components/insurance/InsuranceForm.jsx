@@ -11,7 +11,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
+import BookingPreviewDialog from '../bookings/BookingPreviewDialog';
 
 const VERSICHERUNGSTYPEN = [
     'Wohngebäudeversicherung',
@@ -25,6 +26,9 @@ const VERSICHERUNGSTYPEN = [
 const ZAHLUNGSWEISEN = ['jährlich', 'halbjährlich', 'vierteljährlich', 'monatlich'];
 
 export default function InsuranceForm({ open, onOpenChange, onSubmit, initialData, isLoading, buildingId }) {
+    const [bookingPreviewOpen, setBookingPreviewOpen] = React.useState(false);
+    const [savedInsuranceId, setSavedInsuranceId] = React.useState(null);
+    
     const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
         defaultValues: initialData || { building_id: buildingId, zahlungsweise: 'jährlich' }
     });
@@ -37,13 +41,18 @@ export default function InsuranceForm({ open, onOpenChange, onSubmit, initialDat
         }
     }, [initialData, reset, buildingId, open]);
 
-    const handleFormSubmit = (data) => {
-        onSubmit({
+    const handleFormSubmit = async (data) => {
+        const result = await onSubmit({
             ...data,
             praemie_jaehrlich: data.praemie_jaehrlich ? parseFloat(data.praemie_jaehrlich) : null,
             deckungssumme: data.deckungssumme ? parseFloat(data.deckungssumme) : null,
             selbstbeteiligung: data.selbstbeteiligung ? parseFloat(data.selbstbeteiligung) : null,
         });
+        
+        if (result?.id && !initialData) {
+            setSavedInsuranceId(result.id);
+            setBookingPreviewOpen(true);
+        }
     };
 
     return (
@@ -257,6 +266,17 @@ export default function InsuranceForm({ open, onOpenChange, onSubmit, initialDat
                     </div>
                 </form>
             </DialogContent>
+
+            <BookingPreviewDialog
+                open={bookingPreviewOpen}
+                onOpenChange={setBookingPreviewOpen}
+                sourceType="Versicherung"
+                sourceId={savedInsuranceId}
+                onSuccess={() => {
+                    setBookingPreviewOpen(false);
+                    onOpenChange(false);
+                }}
+            />
         </Dialog>
     );
 }

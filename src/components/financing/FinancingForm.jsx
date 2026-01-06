@@ -11,9 +11,12 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
+import BookingPreviewDialog from '../bookings/BookingPreviewDialog';
 
 export default function FinancingForm({ open, onOpenChange, onSubmit, initialData, isLoading, buildingId }) {
+    const [bookingPreviewOpen, setBookingPreviewOpen] = React.useState(false);
+    const [savedFinancingId, setSavedFinancingId] = React.useState(null);
     const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
         defaultValues: initialData || { building_id: buildingId }
     });
@@ -26,8 +29,8 @@ export default function FinancingForm({ open, onOpenChange, onSubmit, initialDat
         }
     }, [initialData, reset, buildingId, open]);
 
-    const handleFormSubmit = (data) => {
-        onSubmit({
+    const handleFormSubmit = async (data) => {
+        const result = await onSubmit({
             ...data,
             kreditbetrag: data.kreditbetrag ? parseFloat(data.kreditbetrag) : null,
             zinssatz: data.zinssatz ? parseFloat(data.zinssatz) : null,
@@ -38,6 +41,11 @@ export default function FinancingForm({ open, onOpenChange, onSubmit, initialDat
             sondertilgung_betrag: data.sondertilgung_betrag ? parseFloat(data.sondertilgung_betrag) : null,
             bereitstellungszins: data.bereitstellungszins ? parseFloat(data.bereitstellungszins) : null,
         });
+        
+        if (result?.id && !initialData) {
+            setSavedFinancingId(result.id);
+            setBookingPreviewOpen(true);
+        }
     };
 
     const sondertilgungMoeglich = watch('sondertilgung_moeglich');
@@ -279,6 +287,17 @@ export default function FinancingForm({ open, onOpenChange, onSubmit, initialDat
                     </div>
                 </form>
             </DialogContent>
+
+            <BookingPreviewDialog
+                open={bookingPreviewOpen}
+                onOpenChange={setBookingPreviewOpen}
+                sourceType="Kredit"
+                sourceId={savedFinancingId}
+                onSuccess={() => {
+                    setBookingPreviewOpen(false);
+                    onOpenChange(false);
+                }}
+            />
         </Dialog>
     );
 }

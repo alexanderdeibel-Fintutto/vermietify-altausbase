@@ -18,9 +18,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Plus, X } from 'lucide-react';
+import { Loader2, Plus, X, Sparkles } from 'lucide-react';
 import { generateFinancialItemsForContract, regenerateContractFinancialItems, needsPartialRentDialog, calculatePartialRent } from './generateFinancialItems';
 import PartialRentDialog from './PartialRentDialog';
+import BookingPreviewDialog from '../bookings/BookingPreviewDialog';
 import { base44 } from '@/api/base44Client';
 
 export default function ContractForm({ 
@@ -37,6 +38,8 @@ export default function ContractForm({
     const [suggestedPartialRent, setSuggestedPartialRent] = React.useState(0);
     const [newTenantMode, setNewTenantMode] = React.useState(false);
     const [newSecondTenantMode, setNewSecondTenantMode] = React.useState(false);
+    const [bookingPreviewOpen, setBookingPreviewOpen] = React.useState(false);
+    const [savedContractId, setSavedContractId] = React.useState(null);
     
     const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
         defaultValues: initialData || { status: 'active', is_unlimited: true, deposit_paid: false, deposit_installments: 1 }
@@ -126,11 +129,16 @@ export default function ContractForm({
 
         const submittedContract = await onSubmit(contractData);
 
-        if (submittedContract && !initialData && needsPartialRentDialog(contractData)) {
-            const partialAmount = calculatePartialRent(contractData, new Date(contractData.start_date));
-            setSuggestedPartialRent(partialAmount);
-            setPendingContract({ ...submittedContract, partialRentAmount: partialAmount, needsPartialRentConfirmation: true });
-            setPartialRentDialogOpen(true);
+        if (submittedContract && !initialData) {
+            if (needsPartialRentDialog(contractData)) {
+                const partialAmount = calculatePartialRent(contractData, new Date(contractData.start_date));
+                setSuggestedPartialRent(partialAmount);
+                setPendingContract({ ...submittedContract, partialRentAmount: partialAmount, needsPartialRentConfirmation: true });
+                setPartialRentDialogOpen(true);
+            } else {
+                setSavedContractId(submittedContract.id);
+                setBookingPreviewOpen(true);
+            }
         }
     };
 
@@ -530,6 +538,17 @@ export default function ContractForm({
                 contract={pendingContract}
                 partialAmount={suggestedPartialRent}
                 onConfirm={handlePartialRentConfirm}
+            />
+
+            <BookingPreviewDialog
+                open={bookingPreviewOpen}
+                onOpenChange={setBookingPreviewOpen}
+                sourceType="Mietvertrag"
+                sourceId={savedContractId}
+                onSuccess={() => {
+                    setBookingPreviewOpen(false);
+                    onOpenChange(false);
+                }}
             />
         </Dialog>
     );

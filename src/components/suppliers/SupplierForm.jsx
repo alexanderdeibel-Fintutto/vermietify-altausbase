@@ -10,7 +10,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
+import BookingPreviewDialog from '../bookings/BookingPreviewDialog';
 
 const DEFAULT_SUPPLIER_TYPES = [
     'Wasserversorger',
@@ -22,6 +23,9 @@ const DEFAULT_SUPPLIER_TYPES = [
 ];
 
 export default function SupplierForm({ open, onOpenChange, onSubmit, initialData, isLoading, buildingId }) {
+    const [bookingPreviewOpen, setBookingPreviewOpen] = React.useState(false);
+    const [savedSupplierId, setSavedSupplierId] = React.useState(null);
+    
     const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
         defaultValues: initialData || { building_id: buildingId }
     });
@@ -53,8 +57,13 @@ export default function SupplierForm({ open, onOpenChange, onSubmit, initialData
         }
     };
 
-    const handleFormSubmit = (data) => {
-        onSubmit(data);
+    const handleFormSubmit = async (data) => {
+        const result = await onSubmit(data);
+        
+        if (result?.id && !initialData) {
+            setSavedSupplierId(result.id);
+            setBookingPreviewOpen(true);
+        }
     };
 
     return (
@@ -204,6 +213,17 @@ export default function SupplierForm({ open, onOpenChange, onSubmit, initialData
                     </div>
                 </form>
             </DialogContent>
+
+            <BookingPreviewDialog
+                open={bookingPreviewOpen}
+                onOpenChange={setBookingPreviewOpen}
+                sourceType="Versorger"
+                sourceId={savedSupplierId}
+                onSuccess={() => {
+                    setBookingPreviewOpen(false);
+                    onOpenChange(false);
+                }}
+            />
         </Dialog>
     );
 }
