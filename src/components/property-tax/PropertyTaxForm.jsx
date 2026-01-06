@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2, Sparkles } from 'lucide-react';
 import BookingPreviewDialog from '../bookings/BookingPreviewDialog';
+import { toast } from 'sonner';
 
 export default function PropertyTaxForm({ open, onOpenChange, onSubmit, initialData, isLoading, buildingId }) {
     const [bookingPreviewOpen, setBookingPreviewOpen] = React.useState(false);
@@ -43,9 +44,14 @@ export default function PropertyTaxForm({ open, onOpenChange, onSubmit, initialD
             grundsteuer_vorjahr_betrag: data.grundsteuer_vorjahr_betrag ? parseFloat(data.grundsteuer_vorjahr_betrag) : null,
         });
         
-        if (result?.id && !initialData) {
+        if (result?.id) {
             setSavedPropertyTaxId(result.id);
-            setBookingPreviewOpen(true);
+            toast.success('Grundsteuer gespeichert', {
+                action: {
+                    label: 'Buchungen generieren',
+                    onClick: () => setBookingPreviewOpen(true)
+                }
+            });
         }
     };
 

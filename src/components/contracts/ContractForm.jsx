@@ -22,6 +22,7 @@ import { Loader2, Plus, X, Sparkles } from 'lucide-react';
 import { generateFinancialItemsForContract, regenerateContractFinancialItems, needsPartialRentDialog, calculatePartialRent } from './generateFinancialItems';
 import PartialRentDialog from './PartialRentDialog';
 import BookingPreviewDialog from '../bookings/BookingPreviewDialog';
+import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 
 export default function ContractForm({ 
@@ -129,15 +130,20 @@ export default function ContractForm({
 
         const submittedContract = await onSubmit(contractData);
 
-        if (submittedContract && !initialData) {
+        if (submittedContract) {
+            setSavedContractId(submittedContract.id);
             if (needsPartialRentDialog(contractData)) {
                 const partialAmount = calculatePartialRent(contractData, new Date(contractData.start_date));
                 setSuggestedPartialRent(partialAmount);
                 setPendingContract({ ...submittedContract, partialRentAmount: partialAmount, needsPartialRentConfirmation: true });
                 setPartialRentDialogOpen(true);
             } else {
-                setSavedContractId(submittedContract.id);
-                setBookingPreviewOpen(true);
+                toast.success('Mietvertrag gespeichert', {
+                    action: {
+                        label: 'Buchungen generieren',
+                        onClick: () => setBookingPreviewOpen(true)
+                    }
+                });
             }
         }
     };

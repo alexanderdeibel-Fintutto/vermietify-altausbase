@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2, Sparkles } from 'lucide-react';
 import BookingPreviewDialog from '../bookings/BookingPreviewDialog';
+import { toast } from 'sonner';
 
 const DEFAULT_SUPPLIER_TYPES = [
     'Wasserversorger',
@@ -60,9 +61,14 @@ export default function SupplierForm({ open, onOpenChange, onSubmit, initialData
     const handleFormSubmit = async (data) => {
         const result = await onSubmit(data);
         
-        if (result?.id && !initialData) {
+        if (result?.id) {
             setSavedSupplierId(result.id);
-            setBookingPreviewOpen(true);
+            toast.success('Versorger gespeichert', {
+                action: {
+                    label: 'Buchungen generieren',
+                    onClick: () => setBookingPreviewOpen(true)
+                }
+            });
         }
     };
 

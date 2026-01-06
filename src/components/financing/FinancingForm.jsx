@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2, Sparkles } from 'lucide-react';
 import BookingPreviewDialog from '../bookings/BookingPreviewDialog';
+import { toast } from 'sonner';
 
 export default function FinancingForm({ open, onOpenChange, onSubmit, initialData, isLoading, buildingId }) {
     const [bookingPreviewOpen, setBookingPreviewOpen] = React.useState(false);
@@ -42,9 +43,14 @@ export default function FinancingForm({ open, onOpenChange, onSubmit, initialDat
             bereitstellungszins: data.bereitstellungszins ? parseFloat(data.bereitstellungszins) : null,
         });
         
-        if (result?.id && !initialData) {
+        if (result?.id) {
             setSavedFinancingId(result.id);
-            setBookingPreviewOpen(true);
+            toast.success('Finanzierung gespeichert', {
+                action: {
+                    label: 'Buchungen generieren',
+                    onClick: () => setBookingPreviewOpen(true)
+                }
+            });
         }
     };
 

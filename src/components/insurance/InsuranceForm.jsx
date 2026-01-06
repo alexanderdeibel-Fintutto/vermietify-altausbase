@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2, Sparkles } from 'lucide-react';
 import BookingPreviewDialog from '../bookings/BookingPreviewDialog';
+import { toast } from 'sonner';
 
 const VERSICHERUNGSTYPEN = [
     'Wohngebäudeversicherung',
@@ -49,9 +50,14 @@ export default function InsuranceForm({ open, onOpenChange, onSubmit, initialDat
             selbstbeteiligung: data.selbstbeteiligung ? parseFloat(data.selbstbeteiligung) : null,
         });
         
-        if (result?.id && !initialData) {
+        if (result?.id) {
             setSavedInsuranceId(result.id);
-            setBookingPreviewOpen(true);
+            toast.success('Versicherung gespeichert', {
+                action: {
+                    label: 'Buchungen generieren',
+                    onClick: () => setBookingPreviewOpen(true)
+                }
+            });
         }
     };
 
