@@ -23,6 +23,14 @@ Deno.serve(async (req) => {
         });
 
         let docId = existing[0]?.id;
+        let versionNumber = 1;
+        let previousVersionId = null;
+
+        // Wenn bereits eine Version existiert, archivieren wir die alte
+        if (existing[0]) {
+            versionNumber = (existing[0].version_number || 1) + 1;
+            previousVersionId = existing[0].id;
+        }
 
         // Status auf "generating" setzen
         if (docId) {
@@ -120,7 +128,9 @@ Deno.serve(async (req) => {
                 generation_duration_seconds: duration,
                 last_generated_at: new Date().toISOString(),
                 status: 'completed',
-                error_message: null
+                error_message: null,
+                version_number: versionNumber,
+                previous_version_id: previousVersionId
             });
 
             return Response.json({

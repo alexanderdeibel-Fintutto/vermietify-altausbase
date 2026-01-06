@@ -26,12 +26,15 @@ import {
     BookOpen,
     Trash2,
     Clock,
-    Play
+    Play,
+    Search,
+    History
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import ReactMarkdown from 'react-markdown';
 
 const DOCUMENTATION_TYPES = [
@@ -132,6 +135,8 @@ export default function DeveloperDocumentation() {
     const [currentGenerating, setCurrentGenerating] = useState(null);
     const [progress, setProgress] = useState(0);
     const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showVersionHistory, setShowVersionHistory] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: documentations = [], isLoading } = useQuery({
@@ -588,9 +593,27 @@ export default function DeveloperDocumentation() {
                 </Card>
             )}
 
+            {/* Suchfeld */}
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <Input
+                    type="text"
+                    placeholder="Dokumentationen durchsuchen..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                />
+            </div>
+
             {/* Dokumentations-Bereiche */}
             <div className="grid gap-4">
-                {DOCUMENTATION_TYPES.map((docType) => {
+                {DOCUMENTATION_TYPES.filter(docType => {
+                    if (!searchQuery) return true;
+                    const query = searchQuery.toLowerCase();
+                    return docType.title.toLowerCase().includes(query) || 
+                           docType.description.toLowerCase().includes(query) ||
+                           docType.type.toLowerCase().includes(query);
+                }).map((docType) => {
                     const doc = getDocumentation(docType.type);
                     const Icon = docType.icon;
                     const isGenerating = doc?.status === 'generating';
@@ -702,6 +725,16 @@ export default function DeveloperDocumentation() {
                                                 <Eye className="w-4 h-4 mr-1" />
                                                 Vorschau
                                             </Button>
+                                            {doc.version_number > 1 && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => setShowVersionHistory(doc)}
+                                                >
+                                                    <History className="w-4 h-4 mr-1" />
+                                                    v{doc.version_number}
+                                                </Button>
+                                            )}
                                             <Button
                                                 variant="outline"
                                                 size="sm"
@@ -743,6 +776,58 @@ export default function DeveloperDocumentation() {
                     </DialogHeader>
                     <div className="prose prose-slate max-w-none">
                         <ReactMarkdown>{previewDoc?.content_markdown || ''}</ReactMarkdown>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Version History Dialog */}
+            <Dialog open={!!showVersionHistory} onOpenChange={(open) => !open && setShowVersionHistory(null)}>
+                <DialogContent className="max-w-3xl">
+                    <DialogHeader>
+                        <DialogTitle>Versionsverlauf: {showVersionHistory?.title}</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <Card className="bg-emerald-50 border-emerald-200">
+                            <CardContent className="p-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="font-semibold text-emerald-900">
+                                            Version {showVersionHistory?.version_number} (Aktuell)
+                                        </p>
+                                        <p className="text-sm text-emerald-700">
+                                            {showVersionHistory?.last_generated_at && 
+                                                format(new Date(showVersionHistory.last_generated_at), 'dd.MM.yyyy HH:mm', { locale: de })}
+                                        </p>
+                                        <p className="text-sm text-emerald-700">
+                                            Größe: {formatBytes(showVersionHistory?.file_size_bytes)}
+                                        </p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setPreviewDoc(showVersionHistory)}
+                                        >
+                                            <Eye className="w-4 h-4 mr-1" />
+                                            Anzeigen
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => handleDownloadMarkdown(showVersionHistory)}
+                                        >
+                                            <Download className="w-4 h-4 mr-1" />
+                                            Download
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        
+                        <p className="text-sm text-slate-600">
+                            Hinweis: Ältere Versionen werden derzeit nicht gespeichert. 
+                            Diese Funktion zeigt die Versionsnummer und Metadaten der aktuellen Version.
+                        </p>
                     </div>
                 </DialogContent>
             </Dialog>
