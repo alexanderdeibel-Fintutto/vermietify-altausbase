@@ -28,7 +28,10 @@ import {
     Clock,
     Play,
     Search,
-    History
+    History,
+    Copy,
+    BarChart3,
+    FileCheck
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -336,6 +339,28 @@ export default function DeveloperDocumentation() {
         return `${(kb / 1024).toFixed(1)} MB`;
     };
 
+    const handleCopyToClipboard = (doc) => {
+        navigator.clipboard.writeText(doc.content_markdown);
+        toast.success('In Zwischenablage kopiert');
+    };
+
+    // Statistiken berechnen
+    const stats = {
+        total: DOCUMENTATION_TYPES.length,
+        completed: documentations.filter(d => d.status === 'completed').length,
+        generating: documentations.filter(d => d.status === 'generating').length,
+        outdated: documentations.filter(d => 
+            d.status === 'completed' && 
+            d.last_generated_at && 
+            new Date(d.last_generated_at) < new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        ).length,
+        totalSize: documentations.reduce((sum, d) => sum + (d.file_size_bytes || 0), 0),
+        avgDuration: documentations.filter(d => d.generation_duration_seconds).length > 0
+            ? documentations.reduce((sum, d) => sum + (d.generation_duration_seconds || 0), 0) / 
+              documentations.filter(d => d.generation_duration_seconds).length
+            : 0
+    };
+
     if (isLoading) {
         return <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-emerald-600" /></div>;
     }
@@ -353,6 +378,69 @@ export default function DeveloperDocumentation() {
                         Letzte Aktualisierung: {format(lastUpdate, 'dd.MM.yyyy HH:mm:ss', { locale: de })} Uhr
                     </p>
                 )}
+            </div>
+
+            {/* Statistik-Dashboard */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <Card>
+                    <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                            <FileCheck className="w-8 h-8 text-emerald-600" />
+                            <div>
+                                <p className="text-2xl font-bold text-slate-900">{stats.completed}/{stats.total}</p>
+                                <p className="text-xs text-slate-600">Erstellt</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+                
+                <Card>
+                    <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                            <AlertTriangle className="w-8 h-8 text-yellow-600" />
+                            <div>
+                                <p className="text-2xl font-bold text-slate-900">{stats.outdated}</p>
+                                <p className="text-xs text-slate-600">Veraltet</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+                
+                <Card>
+                    <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                            <Archive className="w-8 h-8 text-blue-600" />
+                            <div>
+                                <p className="text-2xl font-bold text-slate-900">{formatBytes(stats.totalSize)}</p>
+                                <p className="text-xs text-slate-600">Gesamt</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+                
+                <Card>
+                    <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                            <Clock className="w-8 h-8 text-purple-600" />
+                            <div>
+                                <p className="text-2xl font-bold text-slate-900">{stats.avgDuration.toFixed(1)}s</p>
+                                <p className="text-xs text-slate-600">Ø Dauer</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+                
+                <Card>
+                    <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                            <Loader2 className={`w-8 h-8 text-slate-600 ${stats.generating > 0 ? 'animate-spin' : ''}`} />
+                            <div>
+                                <p className="text-2xl font-bold text-slate-900">{stats.generating}</p>
+                                <p className="text-xs text-slate-600">In Arbeit</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* Info Box */}
@@ -724,6 +812,14 @@ export default function DeveloperDocumentation() {
                                             >
                                                 <Eye className="w-4 h-4 mr-1" />
                                                 Vorschau
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleCopyToClipboard(doc)}
+                                            >
+                                                <Copy className="w-4 h-4 mr-1" />
+                                                Kopieren
                                             </Button>
                                             {doc.version_number > 1 && (
                                                 <Button
