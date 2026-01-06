@@ -37,40 +37,37 @@ Deno.serve(async (req) => {
                 sourceData = sources[0];
                 buildingId = sourceData.building_id;
 
-                // Quartalsraten generieren
                 const quarterlyAmount = sourceData.grundsteuer_quartalsrate || (sourceData.grundsteuer_jahresbetrag / 4);
+                const baseYear = sourceData.grundsteuerbescheid_jahr;
+                const endDate = new Date();
+                endDate.setFullYear(endDate.getFullYear() + 1); // Heute + 1 Jahr
                 
-                if (sourceData.faelligkeit_q1) {
-                    bookingSuggestions.push({
-                        due_date: sourceData.faelligkeit_q1,
-                        amount: quarterlyAmount,
-                        description: `Grundsteuer ${sourceData.grundsteuerbescheid_jahr} - 1. Rate (Q1)`,
-                        cost_category_suggestion: 'Grundsteuer'
-                    });
-                }
-                if (sourceData.faelligkeit_q2) {
-                    bookingSuggestions.push({
-                        due_date: sourceData.faelligkeit_q2,
-                        amount: quarterlyAmount,
-                        description: `Grundsteuer ${sourceData.grundsteuerbescheid_jahr} - 2. Rate (Q2)`,
-                        cost_category_suggestion: 'Grundsteuer'
-                    });
-                }
-                if (sourceData.faelligkeit_q3) {
-                    bookingSuggestions.push({
-                        due_date: sourceData.faelligkeit_q3,
-                        amount: quarterlyAmount,
-                        description: `Grundsteuer ${sourceData.grundsteuerbescheid_jahr} - 3. Rate (Q3)`,
-                        cost_category_suggestion: 'Grundsteuer'
-                    });
-                }
-                if (sourceData.faelligkeit_q4) {
-                    bookingSuggestions.push({
-                        due_date: sourceData.faelligkeit_q4,
-                        amount: quarterlyAmount,
-                        description: `Grundsteuer ${sourceData.grundsteuerbescheid_jahr} - 4. Rate (Q4)`,
-                        cost_category_suggestion: 'Grundsteuer'
-                    });
+                // Alle Quartale vom Bescheidjahr bis heute + 1 Jahr
+                const quarterDates = [
+                    { date: sourceData.faelligkeit_q1, quarter: 'Q1' },
+                    { date: sourceData.faelligkeit_q2, quarter: 'Q2' },
+                    { date: sourceData.faelligkeit_q3, quarter: 'Q3' },
+                    { date: sourceData.faelligkeit_q4, quarter: 'Q4' }
+                ];
+                
+                let currentYear = baseYear;
+                while (currentYear <= endDate.getFullYear() + 1) {
+                    for (const q of quarterDates) {
+                        if (!q.date) continue;
+                        
+                        const baseDate = new Date(q.date);
+                        const dueDate = new Date(currentYear, baseDate.getMonth(), baseDate.getDate());
+                        
+                        if (dueDate <= endDate) {
+                            bookingSuggestions.push({
+                                due_date: dueDate.toISOString().split('T')[0],
+                                amount: quarterlyAmount,
+                                description: `Grundsteuer ${currentYear} - ${q.quarter}`,
+                                cost_category_suggestion: 'Grundsteuer'
+                            });
+                        }
+                    }
+                    currentYear++;
                 }
                 break;
             }
@@ -145,15 +142,16 @@ Deno.serve(async (req) => {
                 const monthlyRate = sourceData.monatsrate;
                 const laufzeitMonate = sourceData.laufzeit_monate;
                 const startDate = new Date(sourceData.vertragsbeginn);
+                const endDate = new Date();
+                endDate.setFullYear(endDate.getFullYear() + 1); // Heute + 1 Jahr
                 const zinssatz = sourceData.zinssatz / 100;
-                const tilgungssatz = sourceData.tilgungssatz / 100;
                 const kreditbetrag = sourceData.kreditbetrag;
 
-                // Generiere erste 12 Monate (später mehr über Zukunftsgenerierung)
-                for (let i = 0; i < Math.min(12, laufzeitMonate); i++) {
-                    const dueDate = new Date(startDate);
-                    dueDate.setMonth(dueDate.getMonth() + i);
-
+                // Generiere vom Vertragsbeginn bis heute + 1 Jahr
+                let i = 0;
+                let currentDate = new Date(startDate);
+                
+                while (currentDate <= endDate && i < laufzeitMonate) {
                     // Vereinfachte Berechnung (annuitätisch)
                     const restschuld = kreditbetrag * Math.pow(1 + zinssatz / 12, i) - 
                                       (monthlyRate * (Math.pow(1 + zinssatz / 12, i) - 1) / (zinssatz / 12));
@@ -162,7 +160,7 @@ Deno.serve(async (req) => {
 
                     // Tilgung
                     bookingSuggestions.push({
-                        due_date: dueDate.toISOString().split('T')[0],
+                        due_date: currentDate.toISOString().split('T')[0],
                         amount: tilgung,
                         description: `Kreditrate ${i + 1} - Tilgung`,
                         cost_category_suggestion: 'Darlehen-Tilgung (nicht abzugsfähig)'
@@ -170,11 +168,15 @@ Deno.serve(async (req) => {
 
                     // Zinsen
                     bookingSuggestions.push({
-                        due_date: dueDate.toISOString().split('T')[0],
+                        due_date: currentDate.toISOString().split('T')[0],
                         amount: zinsen,
                         description: `Kreditrate ${i + 1} - Zinsen`,
                         cost_category_suggestion: 'Schuldzinsen'
                     });
+                    
+                    currentDate = new Date(currentDate);
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                    i++;
                 }
                 break;
             }
@@ -190,44 +192,45 @@ Deno.serve(async (req) => {
                 const amount = sourceData.monthly_amount;
                 const rhythm = sourceData.payment_rhythm || 'Monatlich';
                 const startDate = sourceData.contract_date ? new Date(sourceData.contract_date) : new Date();
+                const endDate = new Date();
+                endDate.setFullYear(endDate.getFullYear() + 1); // Heute + 1 Jahr
 
-                let numberOfPayments = 12;
                 let amountPerPayment = amount;
                 let monthsBetween = 1;
 
                 switch (rhythm) {
                     case 'Monatlich':
-                        numberOfPayments = 12;
                         amountPerPayment = amount;
                         monthsBetween = 1;
                         break;
                     case 'Vierteljährlich':
-                        numberOfPayments = 4;
                         amountPerPayment = amount;
                         monthsBetween = 3;
                         break;
                     case 'Halbjährlich':
-                        numberOfPayments = 2;
                         amountPerPayment = amount;
                         monthsBetween = 6;
                         break;
                     case 'Jährlich':
-                        numberOfPayments = 1;
                         amountPerPayment = amount;
                         monthsBetween = 12;
                         break;
                 }
 
-                for (let i = 0; i < numberOfPayments; i++) {
-                    const dueDate = new Date(startDate);
-                    dueDate.setMonth(dueDate.getMonth() + (i * monthsBetween));
-                    
+                let currentDate = new Date(startDate);
+                let rateNumber = 1;
+                
+                while (currentDate <= endDate) {
                     bookingSuggestions.push({
-                        due_date: dueDate.toISOString().split('T')[0],
+                        due_date: currentDate.toISOString().split('T')[0],
                         amount: amountPerPayment,
-                        description: `${sourceData.supplier_type} - ${sourceData.name} - Rate ${i + 1}`,
+                        description: `${sourceData.supplier_type} - ${sourceData.name} - Rate ${rateNumber}`,
                         cost_category_suggestion: sourceData.supplier_type
                     });
+                    
+                    currentDate = new Date(currentDate);
+                    currentDate.setMonth(currentDate.getMonth() + monthsBetween);
+                    rateNumber++;
                 }
                 break;
             }
@@ -246,25 +249,27 @@ Deno.serve(async (req) => {
                 }
 
                 const startDate = new Date(sourceData.start_date);
-                const endDate = sourceData.end_date ? new Date(sourceData.end_date) : null;
+                const contractEndDate = sourceData.end_date ? new Date(sourceData.end_date) : null;
+                const futureEndDate = new Date();
+                futureEndDate.setFullYear(futureEndDate.getFullYear() + 1); // Heute + 1 Jahr
+                const endDate = contractEndDate && contractEndDate < futureEndDate ? contractEndDate : futureEndDate;
                 const rentDueDay = sourceData.rent_due_day || 1;
 
-                // Generiere 12 Monate Mietzahlungen
-                const monthsToGenerate = endDate ? 
-                    Math.min(12, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24 * 30))) : 12;
-
-                for (let i = 0; i < monthsToGenerate; i++) {
-                    const dueDate = new Date(startDate);
-                    dueDate.setMonth(dueDate.getMonth() + i);
-                    dueDate.setDate(rentDueDay);
-
+                // Generiere vom Vertragsbeginn bis heute + 1 Jahr (oder Vertragsende, falls früher)
+                let currentDate = new Date(startDate);
+                currentDate.setDate(rentDueDay);
+                
+                while (currentDate <= endDate) {
                     bookingSuggestions.push({
-                        due_date: dueDate.toISOString().split('T')[0],
+                        due_date: currentDate.toISOString().split('T')[0],
                         amount: sourceData.total_rent,
-                        description: `Miete ${dueDate.getFullYear()}-${String(dueDate.getMonth() + 1).padStart(2, '0')}`,
+                        description: `Miete ${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`,
                         cost_category_suggestion: 'Mieteinnahmen',
                         unit_id: sourceData.unit_id
                     });
+                    
+                    currentDate = new Date(currentDate);
+                    currentDate.setMonth(currentDate.getMonth() + 1);
                 }
                 break;
             }
