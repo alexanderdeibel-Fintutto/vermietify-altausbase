@@ -28,7 +28,10 @@ export default function SupplierForm({ open, onOpenChange, onSubmit, initialData
     const [savedSupplierId, setSavedSupplierId] = React.useState(null);
     
     const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
-        defaultValues: initialData || { building_id: buildingId }
+        defaultValues: { 
+            building_id: buildingId,
+            supplier_type: ''
+        }
     });
 
     const [supplierTypes, setSupplierTypes] = React.useState(DEFAULT_SUPPLIER_TYPES);
@@ -36,15 +39,23 @@ export default function SupplierForm({ open, onOpenChange, onSubmit, initialData
     const [customTypeName, setCustomTypeName] = React.useState('');
 
     React.useEffect(() => {
-        if (initialData) {
-            reset(initialData);
-            if (!DEFAULT_SUPPLIER_TYPES.includes(initialData.supplier_type)) {
-                if (!supplierTypes.includes(initialData.supplier_type)) {
-                    setSupplierTypes([...DEFAULT_SUPPLIER_TYPES, initialData.supplier_type]);
+        if (open) {
+            if (initialData) {
+                reset({
+                    ...initialData,
+                    supplier_type: initialData.supplier_type || ''
+                });
+                if (!DEFAULT_SUPPLIER_TYPES.includes(initialData.supplier_type)) {
+                    if (!supplierTypes.includes(initialData.supplier_type)) {
+                        setSupplierTypes([...DEFAULT_SUPPLIER_TYPES, initialData.supplier_type]);
+                    }
                 }
+            } else {
+                reset({ 
+                    building_id: buildingId,
+                    supplier_type: ''
+                });
             }
-        } else {
-            reset({ building_id: buildingId });
         }
     }, [initialData, reset, buildingId, open]);
 

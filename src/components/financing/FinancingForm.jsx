@@ -19,14 +19,25 @@ export default function FinancingForm({ open, onOpenChange, onSubmit, initialDat
     const [bookingPreviewOpen, setBookingPreviewOpen] = React.useState(false);
     const [savedFinancingId, setSavedFinancingId] = React.useState(null);
     const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
-        defaultValues: initialData || { building_id: buildingId }
+        defaultValues: { 
+            building_id: buildingId,
+            sondertilgung_moeglich: false
+        }
     });
 
     React.useEffect(() => {
-        if (initialData) {
-            reset(initialData);
-        } else {
-            reset({ building_id: buildingId });
+        if (open) {
+            if (initialData) {
+                reset({
+                    ...initialData,
+                    sondertilgung_moeglich: initialData.sondertilgung_moeglich || false
+                });
+            } else {
+                reset({ 
+                    building_id: buildingId,
+                    sondertilgung_moeglich: false
+                });
+            }
         }
     }, [initialData, reset, buildingId, open]);
 
