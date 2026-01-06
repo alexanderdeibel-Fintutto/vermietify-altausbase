@@ -215,8 +215,6 @@ export default function BuildingDetail() {
         mutationFn: (data) => base44.entities.PropertyTax.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['propertyTaxes'] });
-            setPropertyTaxFormOpen(false);
-            setEditingPropertyTax(null);
         }
     });
 
@@ -224,8 +222,6 @@ export default function BuildingDetail() {
         mutationFn: ({ id, data }) => base44.entities.PropertyTax.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['propertyTaxes'] });
-            setPropertyTaxFormOpen(false);
-            setEditingPropertyTax(null);
         }
     });
 
@@ -240,8 +236,6 @@ export default function BuildingDetail() {
         mutationFn: (data) => base44.entities.Supplier.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-            setSupplierFormOpen(false);
-            setEditingSupplier(null);
         }
     });
 
@@ -249,8 +243,6 @@ export default function BuildingDetail() {
         mutationFn: ({ id, data }) => base44.entities.Supplier.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-            setSupplierFormOpen(false);
-            setEditingSupplier(null);
         }
     });
 
@@ -290,7 +282,6 @@ export default function BuildingDetail() {
         mutationFn: (data) => base44.entities.PurchaseContract.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['purchaseContracts'] });
-            setPurchaseContractFormOpen(false);
         }
     });
 
@@ -298,7 +289,6 @@ export default function BuildingDetail() {
         mutationFn: ({ id, data }) => base44.entities.PurchaseContract.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['purchaseContracts'] });
-            setPurchaseContractFormOpen(false);
         }
     });
 
@@ -306,8 +296,6 @@ export default function BuildingDetail() {
         mutationFn: (data) => base44.entities.Financing.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['financings'] });
-            setFinancingFormOpen(false);
-            setEditingFinancing(null);
         }
     });
 
@@ -315,8 +303,6 @@ export default function BuildingDetail() {
         mutationFn: ({ id, data }) => base44.entities.Financing.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['financings'] });
-            setFinancingFormOpen(false);
-            setEditingFinancing(null);
         }
     });
 
@@ -331,8 +317,6 @@ export default function BuildingDetail() {
         mutationFn: (data) => base44.entities.Insurance.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['insurances'] });
-            setInsuranceFormOpen(false);
-            setEditingInsurance(null);
         }
     });
 
@@ -340,8 +324,6 @@ export default function BuildingDetail() {
         mutationFn: ({ id, data }) => base44.entities.Insurance.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['insurances'] });
-            setInsuranceFormOpen(false);
-            setEditingInsurance(null);
         }
     });
 

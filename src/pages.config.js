@@ -11,6 +11,7 @@ import Documents from './pages/Documents';
 import FinAPICallback from './pages/FinAPICallback';
 import FinancialItems from './pages/FinancialItems';
 import Finanzen from './pages/Finanzen';
+import GeneratedBookings from './pages/GeneratedBookings';
 import Invoices from './pages/Invoices';
 import OperatingCosts from './pages/OperatingCosts';
 import Tasks from './pages/Tasks';
@@ -18,7 +19,6 @@ import Tax from './pages/Tax';
 import TaxForms from './pages/TaxForms';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import UnitDetail from './pages/UnitDetail';
-import GeneratedBookings from './pages/GeneratedBookings';
 import __Layout from './Layout.jsx';
 
 
@@ -36,6 +36,7 @@ export const PAGES = {
     "FinAPICallback": FinAPICallback,
     "FinancialItems": FinancialItems,
     "Finanzen": Finanzen,
+    "GeneratedBookings": GeneratedBookings,
     "Invoices": Invoices,
     "OperatingCosts": OperatingCosts,
     "Tasks": Tasks,
@@ -43,7 +44,6 @@ export const PAGES = {
     "TaxForms": TaxForms,
     "TaxLibraryManagement": TaxLibraryManagement,
     "UnitDetail": UnitDetail,
-    "GeneratedBookings": GeneratedBookings,
 }
 
 export const pagesConfig = {
