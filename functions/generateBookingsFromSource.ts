@@ -16,6 +16,8 @@ Deno.serve(async (req) => {
         }
 
         const { source_type, source_id } = await req.json();
+        
+        console.log('Generate bookings request:', { source_type, source_id });
 
         if (!source_type || !source_id) {
             return Response.json({ error: 'source_type und source_id erforderlich' }, { status: 400 });
@@ -282,6 +284,11 @@ Deno.serve(async (req) => {
 
     } catch (error) {
         console.error('Generate bookings error:', error);
-        return Response.json({ error: error.message }, { status: 500 });
+        console.error('Error stack:', error.stack);
+        return Response.json({ 
+            error: error.message,
+            stack: error.stack,
+            details: error.toString()
+        }, { status: 500 });
     }
 });
