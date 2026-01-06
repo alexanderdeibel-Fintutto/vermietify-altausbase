@@ -12,6 +12,7 @@ export default function AutomationManager() {
     const [formOpen, setFormOpen] = useState(false);
     const [editingAutomation, setEditingAutomation] = useState(null);
     const queryClient = useQueryClient();
+    const { logActivity } = useActivityLogger();
 
     const { data: automations = [], isLoading } = useQuery({
         queryKey: ['automations'],

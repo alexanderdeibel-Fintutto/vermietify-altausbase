@@ -15,6 +15,7 @@ import {
     BookOpen
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import NotificationCenter from '@/components/notifications/NotificationCenter';
 
 export default function Layout({ children, currentPageName }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -103,6 +104,7 @@ export default function Layout({ children, currentPageName }) {
                             <Menu className="w-5 h-5 text-slate-600" />
                         </button>
                         <div className="flex-1" />
+                        <NotificationCenter />
                     </div>
                 </header>
 

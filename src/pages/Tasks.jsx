@@ -15,7 +15,8 @@ import {
     Calendar,
     ListTodo,
     Mail,
-    Settings
+    Settings,
+    Activity
 } from 'lucide-react';
 import TaskForm from '@/components/tasks/TaskForm';
 import TaskList from '@/components/tasks/TaskList';
@@ -27,6 +28,8 @@ import EmailList from '@/components/tasks/EmailList';
 import TaskDashboard from '@/components/tasks/TaskDashboard';
 import TaskKanban from '@/components/tasks/TaskKanban';
 import TaskCalendar from '@/components/tasks/TaskCalendar';
+import ActivityLogViewer from '@/components/tasks/ActivityLogViewer';
+import PerformanceMonitor from '@/components/tasks/PerformanceMonitor';
 
 export default function Tasks() {
     const [formOpen, setFormOpen] = useState(false);
@@ -113,9 +116,12 @@ export default function Tasks() {
             {/* Statistics */}
             <TaskStats tasks={tasks} />
 
+            {/* Performance Monitor */}
+            <PerformanceMonitor />
+
             {/* Tabs */}
             <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="grid w-full grid-cols-7">
+                <TabsList className="grid w-full grid-cols-8">
                     <TabsTrigger value="overview">Übersicht</TabsTrigger>
                     <TabsTrigger value="tasks">Liste</TabsTrigger>
                     <TabsTrigger value="kanban">Kanban</TabsTrigger>
@@ -123,6 +129,7 @@ export default function Tasks() {
                     <TabsTrigger value="workflows">Workflows</TabsTrigger>
                     <TabsTrigger value="emails">Emails</TabsTrigger>
                     <TabsTrigger value="rules">Regeln</TabsTrigger>
+                    <TabsTrigger value="logs">Protokoll</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="mt-6">
@@ -174,7 +181,11 @@ export default function Tasks() {
                 <TabsContent value="rules" className="mt-6">
                     <AutomationManager />
                 </TabsContent>
-            </Tabs>
+
+                <TabsContent value="logs" className="mt-6">
+                    <ActivityLogViewer entityType="task" />
+                </TabsContent>
+                </Tabs>
 
             {/* Task Form Dialog */}
             <TaskForm
