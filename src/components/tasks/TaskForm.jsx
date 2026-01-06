@@ -132,15 +132,15 @@ export default function TaskForm({ open, onOpenChange, onSubmit, initialData, pr
 
                     <div>
                         <Label htmlFor="description">Beschreibung</Label>
-                            <Textarea
-                                id="description"
-                                {...register('description')}
-                                placeholder="Detaillierte Beschreibung..."
-                                rows={4}
-                            />
-                        </div>
+                        <Textarea
+                            id="description"
+                            {...register('description')}
+                            placeholder="Detaillierte Beschreibung..."
+                            rows={4}
+                        />
+                    </div>
 
-                        {/* KI-Workflow-Vorschlag */}
+                    {/* KI-Workflow-Vorschlag */}
                         {suggestedWorkflow && (
                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                                 <div className="flex items-start gap-3">
@@ -231,9 +231,9 @@ export default function TaskForm({ open, onOpenChange, onSubmit, initialData, pr
                                 ))}
                             </select>
                         </div>
-                        </div>
+                    </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="next_action">Nächste Aktion</Label>
                             <Input
@@ -242,7 +242,7 @@ export default function TaskForm({ open, onOpenChange, onSubmit, initialData, pr
                                 placeholder="z.B. Dokument erstellen"
                             />
                         </div>
-                        </div>
+                    </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
