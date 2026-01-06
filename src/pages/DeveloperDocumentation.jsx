@@ -22,7 +22,8 @@ import {
     Shield,
     AlertTriangle,
     Archive,
-    BookOpen
+    BookOpen,
+    Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -162,15 +163,24 @@ export default function DeveloperDocumentation() {
 
     const handleGenerateAll = async () => {
         setGeneratingAll(true);
-        for (const docType of DOCUMENTATION_TYPES) {
+        let successCount = 0;
+        let errorCount = 0;
+        
+        for (let i = 0; i < DOCUMENTATION_TYPES.length; i++) {
+            const docType = DOCUMENTATION_TYPES[i];
             try {
                 await generateMutation.mutateAsync(docType.type);
+                successCount++;
+                toast.success(`${docType.title} generiert (${i + 1}/${DOCUMENTATION_TYPES.length})`);
             } catch (error) {
+                errorCount++;
                 console.error(`Failed to generate ${docType.type}:`, error);
+                toast.error(`Fehler bei ${docType.title}`);
             }
         }
+        
         setGeneratingAll(false);
-        toast.success('Alle Dokumentationen wurden generiert');
+        toast.success(`Fertig: ${successCount} erfolgreich, ${errorCount} Fehler`);
     };
 
     const handleDownloadMarkdown = (doc) => {
@@ -269,7 +279,7 @@ export default function DeveloperDocumentation() {
                     {generatingAll ? (
                         <>
                             <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                            Generiere alle...
+                            Generiere alle ({DOCUMENTATION_TYPES.findIndex(t => generateMutation.variables === t.type) + 1}/{DOCUMENTATION_TYPES.length})
                         </>
                     ) : (
                         <>
@@ -300,7 +310,66 @@ export default function DeveloperDocumentation() {
                     }}
                 >
                     <Download className="w-5 h-5 mr-2" />
-                    Alle als Markdown herunterladen
+                    Alle als Markdown
+                </Button>
+                <Button 
+                    variant="outline" 
+                    size="lg"
+                    onClick={async () => {
+                        const allDocs = documentations.filter(d => d.content_markdown);
+                        if (allDocs.length === 0) {
+                            toast.error('Keine Dokumentationen zum Download vorhanden');
+                            return;
+                        }
+                        
+                        const JSZip = (await import('https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm')).default;
+                        const zip = new JSZip();
+                        
+                        allDocs.forEach(doc => {
+                            zip.file(`${doc.documentation_type}.md`, doc.content_markdown);
+                            if (doc.content_json) {
+                                zip.file(`${doc.documentation_type}.json`, JSON.stringify(doc.content_json, null, 2));
+                            }
+                        });
+                        
+                        const content = await zip.generateAsync({ type: 'blob' });
+                        const url = window.URL.createObjectURL(content);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+                        a.download = `app-dokumentation-${timestamp}.zip`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        a.remove();
+                        toast.success('ZIP-Archiv erstellt');
+                    }}
+                >
+                    <Archive className="w-5 h-5 mr-2" />
+                    Alle als ZIP
+                </Button>
+                <Button 
+                    variant="outline" 
+                    size="lg"
+                    onClick={async () => {
+                        if (!confirm('Wirklich alle Dokumentationen löschen? Dies kann nicht rückgängig gemacht werden.')) {
+                            return;
+                        }
+                        
+                        try {
+                            for (const doc of documentations) {
+                                await base44.entities.GeneratedDocumentation.delete(doc.id);
+                            }
+                            queryClient.invalidateQueries({ queryKey: ['generated-documentations'] });
+                            toast.success('Alle Dokumentationen gelöscht');
+                        } catch (error) {
+                            toast.error('Fehler beim Löschen: ' + error.message);
+                        }
+                    }}
+                    className="text-red-600 hover:text-red-700"
+                >
+                    <Trash2 className="w-5 h-5 mr-2" />
+                    Alle löschen
                 </Button>
             </div>
 

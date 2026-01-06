@@ -195,6 +195,11 @@ function getDescriptionForType(type) {
 
 async function generateDatabaseStructureDoc(entities) {
     let doc = '# Datenbankstruktur - Immobilienverwaltung\n\n';
+    doc += '**Metadaten:**\n';
+    doc += `- Generiert am: ${new Date().toLocaleString('de-DE')}\n`;
+    doc += '- Dateityp: Datenbank-Dokumentation\n';
+    doc += '- Verwendungszweck: Diese Dokumentation kann an KI-Assistenten wie Claude übergeben werden\n\n';
+    doc += '---\n\n';
     doc += '## Übersicht\n\n';
     doc += `Diese Dokumentation beschreibt die vollständige Datenbankstruktur mit ${Object.keys(entities).length} Entitäten.\n\n`;
     
@@ -251,6 +256,10 @@ async function generateDatabaseStructureDoc(entities) {
 
 async function generateModuleArchitectureDoc(entities) {
     let doc = '# Modul-Architektur\n\n';
+    doc += '**Metadaten:**\n';
+    doc += `- Generiert am: ${new Date().toLocaleString('de-DE')}\n`;
+    doc += '- Verwendungszweck: KI-Assistent Kontextinformation\n\n';
+    doc += '---\n\n';
     doc += '## Hauptmodule\n\n';
     doc += '### 1. Objektverwaltung\n';
     doc += '- Building (Gebäude)\n- Unit (Wohneinheiten)\n- Meter (Zähler)\n\n';
@@ -286,6 +295,9 @@ async function generateModuleArchitectureJSON(entities) {
 
 async function generateMasterDataDoc(entities) {
     let doc = '# Master Data & Konstanten\n\n';
+    doc += '**Metadaten:**\n';
+    doc += `- Generiert am: ${new Date().toLocaleString('de-DE')}\n\n`;
+    doc += '---\n\n';
     doc += '## Status-Werte\n\n';
     doc += '### Dokument-Status\n';
     doc += '- zu_erledigen\n- erinnern\n- erstellt\n- geaendert\n- versendet\n- unterschrieben\n- gescannt\n\n';
@@ -303,7 +315,9 @@ async function generateMasterDataJSON(entities) {
 
 async function generateBusinessLogicDoc(entities) {
     let doc = '# Geschäftslogik & Validierungen\n\n';
-    
+    doc += '**Metadaten:**\n';
+    doc += `- Generiert am: ${new Date().toLocaleString('de-DE')}\n\n`;
+    doc += '---\n\n';
     doc += '## 1. Automatische Buchungsgenerierung\n\n';
     doc += '### Grundsteuerbescheid\n';
     doc += '- **Quelle**: PropertyTax Entity\n';
@@ -575,7 +589,9 @@ async function generateDocumentGenerationDoc(base44) {
 
 async function generateUserWorkflowsDoc() {
     let doc = '# User-Workflows\n\n';
-    
+    doc += '**Metadaten:**\n';
+    doc += `- Generiert am: ${new Date().toLocaleString('de-DE')}\n\n`;
+    doc += '---\n\n';
     doc += '## 1. Neues Gebäude anlegen\n\n';
     doc += '**Ziel**: Erfassung eines neuen Immobilienobjekts\n\n';
     doc += '**Schritte**:\n';
@@ -883,11 +899,58 @@ async function generateErrorHandlingDoc() {
 
 async function generateDataMigrationDoc(entities) {
     let doc = '# Daten-Migration & Historisierung\n\n';
-    doc += '## Versionierung\n';
-    doc += 'Folgende Entitäten unterstützen Versionierung:\n';
-    doc += '- PropertyTax (version_number, predecessor_id)\n';
-    doc += '- Insurance (version_number, predecessor_id)\n';
-    doc += '- Financing (version_number, predecessor_id)\n\n';
+    
+    doc += '## Versionierungs-System\n\n';
+    doc += '### Entitäten mit Versionierung\n\n';
+    doc += 'Folgende Entitäten unterstützen vollständige Versionierung:\n\n';
+    doc += '| Entity | Version-Felder |\n';
+    doc += '|--------|----------------|\n';
+    doc += '| PropertyTax | version_number, predecessor_id, is_current_valid |\n';
+    doc += '| Insurance | version_number, predecessor_id, is_current_valid |\n';
+    doc += '| Financing | version_number, predecessor_id, is_current_valid |\n';
+    doc += '| Supplier | version_number, predecessor_id, is_current_valid |\n';
+    doc += '| LeaseContract | version_number, predecessor_id, is_current_valid |\n\n';
+
+    doc += '### Versionierungs-Workflow\n\n';
+    doc += '**Bei Änderung eines versionierten Objekts**:\n\n';
+    doc += '1. **Alte Version archivieren**:\n';
+    doc += '   ```javascript\n';
+    doc += '   await base44.entities.PropertyTax.update(oldId, {\n';
+    doc += '     is_current_valid: false\n';
+    doc += '   });\n';
+    doc += '   ```\n\n';
+
+    doc += '2. **Neue Version erstellen**:\n';
+    doc += '   ```javascript\n';
+    doc += '   const newVersion = await base44.entities.PropertyTax.create({\n';
+    doc += '     ...updatedData,\n';
+    doc += '     version_number: oldVersion.version_number + 1,\n';
+    doc += '     predecessor_id: oldVersion.id,\n';
+    doc += '     is_current_valid: true\n';
+    doc += '   });\n';
+    doc += '   ```\n\n';
+
+    doc += '3. **Buchungen beibehalten**:\n';
+    doc += '   - Alte Buchungen bleiben mit `source_id` = alte Version\n';
+    doc += '   - Neue Buchungen werden mit `source_id` = neue Version erstellt\n';
+    doc += '   - Historische Buchungen bleiben unverändert\n\n';
+
+    doc += '## Change History\n\n';
+    doc += '**Dokument Change-Tracking**: Dokumentiert alle Änderungen mit Zeitstempel, User und Änderungstyp\n\n';
+
+    doc += '## Data Snapshots\n\n';
+    doc += '**Dokumente**: `data_snapshot` speichert alle verwendeten Daten zum Erstellungszeitpunkt\n\n';
+
+    doc += '## Migration-Funktionen\n\n';
+    doc += '### Vorhandene Migrations\n';
+    doc += '1. migrateInvoicesToFinancialModel\n';
+    doc += '2. migratePaymentsToFinancialItems\n';
+    doc += '3. migrateUnitsToGebaeude\n';
+    doc += '4. migrateUnitsToBuildingFlaechen\n\n';
+
+    doc += '## Soft-Delete Pattern\n\n';
+    doc += '**Implementierung**: `is_cancelled`, `cancelled_at`, `cancelled_by`, `cancellation_reason`\n\n';
+
     return doc;
 }
 
