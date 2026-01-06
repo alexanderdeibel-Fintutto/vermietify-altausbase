@@ -462,24 +462,62 @@ export default function DeveloperDocumentation() {
                 </CardContent>
             </Card>
 
-            {/* Auswahl-Buttons */}
-            {DOCUMENTATION_TYPES.length > 0 && (
-                <div className="flex gap-2">
-                    <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => setSelectedTypes(DOCUMENTATION_TYPES.map(t => t.type))}
-                    >
-                        Alle auswählen
-                    </Button>
-                    <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => setSelectedTypes([])}
-                    >
-                        Keine auswählen
-                    </Button>
-                </div>
+            {/* Auswahl-Aktionen */}
+            {selectedTypes.length > 0 && (
+                <Card className="bg-emerald-50 border-emerald-200">
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between flex-wrap gap-3">
+                            <div className="flex items-center gap-3">
+                                <CheckCircle className="w-5 h-5 text-emerald-600" />
+                                <div>
+                                    <p className="font-semibold text-emerald-900">
+                                        {selectedTypes.length} Dokumentation{selectedTypes.length !== 1 ? 'en' : ''} ausgewählt
+                                    </p>
+                                    <p className="text-sm text-emerald-700">
+                                        Bereit für Batch-Operationen
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex gap-2 flex-wrap">
+                                <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={async () => {
+                                        const selectedDocs = documentations.filter(d => 
+                                            selectedTypes.includes(d.documentation_type) && d.content_markdown
+                                        );
+                                        if (selectedDocs.length === 0) {
+                                            toast.error('Keine generierten Dokumentationen ausgewählt');
+                                            return;
+                                        }
+                                        const combined = selectedDocs.map(d => `# ${d.title}\n\n${d.content_markdown}`).join('\n\n---\n\n');
+                                        const blob = new Blob([combined], { type: 'text/markdown' });
+                                        const url = window.URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `selected-docs-${Date.now()}.md`;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        window.URL.revokeObjectURL(url);
+                                        a.remove();
+                                        toast.success('Ausgewählte Dokumentationen exportiert');
+                                    }}
+                                    disabled={generatingAll}
+                                >
+                                    <Download className="w-4 h-4 mr-1" />
+                                    Exportieren
+                                </Button>
+                                <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => setSelectedTypes([])}
+                                >
+                                    Auswahl aufheben
+                                </Button>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
             )}
 
             {/* Sammel-Aktionen */}
