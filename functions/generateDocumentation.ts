@@ -982,80 +982,382 @@ async function generateMasterDataJSON(entities) {
 }
 
 async function generateBusinessLogicDoc(entities) {
-    let doc = '# Geschäftslogik & Validierungen\n\n';
+    let doc = '# Geschäftslogik & Validierungen - Immobilienverwaltung\n\n';
     doc += '**Metadaten:**\n';
-    doc += `- Generiert am: ${new Date().toLocaleString('de-DE')}\n\n`;
+    doc += `- Generiert am: ${new Date().toLocaleString('de-DE')}\n`;
+    doc += '- Verwendungszweck: KI-Assistent Kontextinformation\n\n';
     doc += '---\n\n';
+    
+    doc += '## Übersicht\n\n';
+    doc += 'Diese Dokumentation beschreibt alle Geschäftsregeln, Validierungen, Berechnungen\n';
+    doc += 'und Automatismen der Immobilienverwaltungs-App.\n\n';
+    
     doc += '## 1. Automatische Buchungsgenerierung\n\n';
-    doc += '### Grundsteuerbescheid\n';
-    doc += '- **Quelle**: PropertyTax Entity\n';
-    doc += '- **Frequenz**: Quartalsweise (Q1-Q4)\n';
-    doc += '- **Logik**: `grundsteuer_quartalsrate` wird auf die jeweiligen Fälligkeitstermine gebucht\n';
-    doc += '- **Kostenkategorie**: Grundsteuer\n\n';
-
-    doc += '### Versicherungen\n';
-    doc += '- **Quelle**: Insurance Entity\n';
-    doc += '- **Frequenz**: Gemäß `payment_rhythm` (Monatlich, Vierteljährlich, Halbjährlich, Jährlich)\n';
-    doc += '- **Logik**: `premium_amount` wird entsprechend aufgeteilt\n';
-    doc += '- **Kostenkategorie**: Versicherung\n\n';
-
-    doc += '### Kredite/Finanzierungen\n';
-    doc += '- **Quelle**: Financing Entity\n';
-    doc += '- **Frequenz**: Monatlich\n';
-    doc += '- **Logik**: `monthly_rate` wird auf das jeweilige Monatsende gebucht\n';
-    doc += '- **Kostenkategorie**: Finanzierung\n\n';
-
-    doc += '### Versorger\n';
-    doc += '- **Quelle**: Supplier Entity\n';
-    doc += '- **Frequenz**: Gemäß `payment_rhythm`\n';
-    doc += '- **Logik**: `monthly_amount` wird entsprechend verteilt\n';
-    doc += '- **Kostenkategorie**: Je nach Versorgertyp\n\n';
-
-    doc += '### Mietverträge\n';
-    doc += '- **Quelle**: LeaseContract Entity\n';
-    doc += '- **Frequenz**: Monatlich\n';
-    doc += '- **Logik**: `total_rent` wird auf den `rent_due_day` gebucht\n';
-    doc += '- **Kostenkategorie**: Mieteinnahme\n\n';
-
+    doc += '### 1.1 Grundsteuerbescheid (PropertyTax)\n\n';
+    doc += '**Quelle**: PropertyTax Entity\n\n';
+    doc += '**Trigger**: Button "Buchungen generieren" auf PropertyTax-Formular\n\n';
+    doc += '**Generierungslogik**:\n';
+    doc += '- Erstellt 4 Buchungen für Q1-Q4\n';
+    doc += '- Betrag pro Buchung: `grundsteuer_quartalsrate`\n';
+    doc += '- Fälligkeitsdatum: `faelligkeit_q1`, `faelligkeit_q2`, `faelligkeit_q3`, `faelligkeit_q4`\n';
+    doc += '- Kostenkategorie: Grundsteuer (automatisch zugeordnet)\n';
+    doc += '- Beschreibung: "Grundsteuer Q[1-4] {jahr} - {building_name}"\n\n';
+    doc += '**Validierungen**:\n';
+    doc += '- ✅ BLOCKER: `grundsteuerbescheid_jahr` muss gesetzt sein\n';
+    doc += '- ✅ BLOCKER: `grundsteuer_quartalsrate` muss > 0 sein\n';
+    doc += '- ✅ BLOCKER: Alle 4 Fälligkeitstermine müssen gesetzt sein\n';
+    doc += '- ⚠️ WARNING: Falls bereits Buchungen existieren (`bookings_created = true`)\n\n';
+    doc += '**Berechnungen**:\n';
+    doc += '```javascript\n';
+    doc += 'grundsteuer_quartalsrate = grundsteuer_jahresbetrag / 4\n';
+    doc += '```\n\n';
+    
+    doc += '### 1.2 Versicherungen (Insurance)\n\n';
+    doc += '**Quelle**: Insurance Entity\n\n';
+    doc += '**Trigger**: Button "Buchungen generieren"\n\n';
+    doc += '**Generierungslogik**:\n';
+    doc += '- Anzahl Buchungen abhängig von `payment_rhythm`:\n';
+    doc += '  - Monatlich: 12 Buchungen\n';
+    doc += '  - Vierteljährlich: 4 Buchungen\n';
+    doc += '  - Halbjährlich: 2 Buchungen\n';
+    doc += '  - Jährlich: 1 Buchung\n';
+    doc += '- Betrag pro Buchung: `premium_amount` / Anzahl Buchungen\n';
+    doc += '- Fälligkeitsdatum: Ab `start_date` im jeweiligen Rhythmus\n';
+    doc += '- Kostenkategorie: Versicherung\n\n';
+    doc += '**Validierungen**:\n';
+    doc += '- ✅ BLOCKER: `premium_amount` muss > 0 sein\n';
+    doc += '- ✅ BLOCKER: `start_date` muss gesetzt sein\n';
+    doc += '- ✅ BLOCKER: `payment_rhythm` muss gewählt sein\n';
+    doc += '- ⚠️ WARNING: `end_date` sollte in der Zukunft liegen (falls gesetzt)\n\n';
+    
+    doc += '### 1.3 Kredite/Finanzierungen (Financing)\n\n';
+    doc += '**Quelle**: Financing Entity\n\n';
+    doc += '**Generierungslogik**:\n';
+    doc += '- Monatliche Buchungen von `start_date` bis `end_date`\n';
+    doc += '- Betrag: `monthly_rate`\n';
+    doc += '- Fälligkeitsdatum: Jeweils Monatsende\n';
+    doc += '- Kostenkategorie: Finanzierungskosten (Zinsen)\n\n';
+    doc += '**Validierungen**:\n';
+    doc += '- ✅ BLOCKER: `monthly_rate` muss > 0 sein\n';
+    doc += '- ✅ BLOCKER: `start_date` muss vor `end_date` liegen\n';
+    doc += '- ✅ BLOCKER: Laufzeit maximal 50 Jahre (Plausibilitätsprüfung)\n\n';
+    doc += '**Berechnungen** (informativ):\n';
+    doc += '```javascript\n';
+    doc += 'total_interest = (monthly_rate * anzahl_monate) - loan_amount\n';
+    doc += 'gesamt_rueckzahlung = monthly_rate * anzahl_monate\n';
+    doc += '```\n\n';
+    
+    doc += '### 1.4 Versorger (Supplier)\n\n';
+    doc += '**Quelle**: Supplier Entity\n\n';
+    doc += '**Generierungslogik**:\n';
+    doc += '- Buchungen entsprechend `payment_rhythm`\n';
+    doc += '- Betrag: `monthly_amount` angepasst an Rhythmus\n';
+    doc += '- Kostenkategorie: Abhängig von `supplier_type` (Strom, Gas, Wasser, etc.)\n\n';
+    doc += '**Validierungen**:\n';
+    doc += '- ✅ BLOCKER: `monthly_amount` muss > 0 sein\n';
+    doc += '- ✅ BLOCKER: `supplier_type` muss gewählt sein\n';
+    doc += '- ⚠️ WARNING: `contract_date` sollte in der Vergangenheit liegen\n\n';
+    
+    doc += '### 1.5 Mietverträge (LeaseContract)\n\n';
+    doc += '**Quelle**: LeaseContract Entity\n\n';
+    doc += '**Generierungslogik**:\n';
+    doc += '- Monatliche Mietforderungen (Payment Entity)\n';
+    doc += '- Betrag: `total_rent`\n';
+    doc += '- Fälligkeitsdatum: `rent_due_day` jeden Monats\n';
+    doc += '- Automatische Erstellung bei Vertragserstellung\n\n';
+    doc += '**Validierungen**:\n';
+    doc += '- ✅ BLOCKER: `base_rent` > 0\n';
+    doc += '- ✅ BLOCKER: `total_rent` = `base_rent` + `utilities` + `heating`\n';
+    doc += '- ✅ BLOCKER: `start_date` muss gesetzt sein\n';
+    doc += '- ✅ BLOCKER: Bei befristet: `end_date` muss nach `start_date` liegen\n';
+    doc += '- ✅ BLOCKER: `rent_due_day` zwischen 1 und 31\n';
+    doc += '- ⚠️ WARNING: `deposit` sollte ≤ 3 * `base_rent` sein (gesetzliche Vorgabe)\n';
+    doc += '- ⚠️ WARNING: Bei Kündigung: `termination_date` + `notice_period_months` = letzter Miettag\n\n';
+    
+    doc += '### 1.6 Kaufvertrag & AfA (PurchaseContract)\n\n';
+    doc += '**Quelle**: PurchaseContract Entity\n\n';
+    doc += '**Generierungslogik**:\n';
+    doc += '- Jährliche AfA-Buchungen (Abschreibung)\n';
+    doc += '- Separate Berechnung für Gebäude und Anschaffungsnebenkosten\n';
+    doc += '- Monatsgenaue anteilige Berechnung im ersten Jahr\n\n';
+    doc += '**Validierungen**:\n';
+    doc += '- ✅ BLOCKER: `purchase_price` > 0\n';
+    doc += '- ✅ BLOCKER: `purchase_date` muss gesetzt sein\n';
+    doc += '- ⚠️ WARNING: `land_value` sollte < `purchase_price` sein\n';
+    doc += '- ⚠️ WARNING: Gebäude-Wert sollte plausibel sein (70-90% des Kaufpreises)\n\n';
+    doc += '**Berechnungen**:\n';
+    doc += '```javascript\n';
+    doc += '// AfA nur für Gebäude, nicht für Grundstück\n';
+    doc += 'gebaeude_wert = purchase_price - land_value\n';
+    doc += 'afa_rate = 0.02 // 2% linear für Wohngebäude\n';
+    doc += 'jaehrliche_afa = gebaeude_wert * afa_rate\n';
+    doc += '\n';
+    doc += '// Erstes Jahr anteilig\n';
+    doc += 'monate_im_ersten_jahr = 13 - purchase_date.month\n';
+    doc += 'afa_erstes_jahr = jaehrliche_afa * (monate_im_ersten_jahr / 12)\n';
+    doc += '```\n\n';
+    
     doc += '## 2. Versionierung & Historisierung\n\n';
-    doc += '### Entitäten mit Versionierung\n';
+    doc += '### 2.1 Entitäten mit Versionierung\n\n';
     doc += 'Folgende Entitäten unterstützen vollständige Versionierung:\n\n';
-    doc += '- PropertyTax (version_number, predecessor_id, is_current_valid)\n';
-    doc += '- Insurance (version_number, predecessor_id, is_current_valid)\n';
-    doc += '- Financing (version_number, predecessor_id, is_current_valid)\n';
-    doc += '- Supplier (version_number, predecessor_id, is_current_valid)\n';
-    doc += '- LeaseContract (version_number, predecessor_id, is_current_valid)\n\n';
-
-    doc += '### Logik\n';
-    doc += '1. Bei Änderung wird `is_current_valid` auf false gesetzt\n';
-    doc += '2. Neue Version wird erstellt mit `predecessor_id` = alte ID\n';
-    doc += '3. `version_number` wird inkrementiert\n';
-    doc += '4. Bestehende Buchungen bleiben unverändert\n';
-    doc += '5. Neue Buchungen werden aus neuer Version generiert\n\n';
-
-    doc += '## 3. Validierungen\n\n';
-    doc += '### Mietverträge\n';
-    doc += '- `start_date` muss vor `end_date` liegen (falls befristet)\n';
-    doc += '- `base_rent` + `utilities` + `heating` = `total_rent`\n';
-    doc += '- `deposit` maximal 3 Monatsmieten\n';
-    doc += '- `rent_due_day` zwischen 1 und 31\n\n';
-
-    doc += '### Buchungen\n';
-    doc += '- `paid_amount` darf nicht größer als `amount` sein\n';
-    doc += '- `outstanding_amount` = `amount` - `paid_amount`\n';
-    doc += '- Status-Übergänge: Geplant → Gebucht → TeilweiseBezahlt → Bezahlt\n\n';
-
-    doc += '## 4. Berechnungen\n\n';
-    doc += '### AfA (Abschreibung)\n';
-    doc += '- Lineare Abschreibung über Nutzungsdauer\n';
-    doc += '- Monatsgenaue Berechnung ab Kaufdatum\n';
-    doc += '- Separate Abschreibung für Gebäude und Anschaffungsnebenkosten\n\n';
-
-    doc += '### Betriebskostenabrechnung\n';
-    doc += '- Umlegbare Kosten werden nach Verteilerschlüssel aufgeteilt\n';
-    doc += '- Direkte Kosten werden 1:1 zugeordnet\n';
-    doc += '- Vorauszahlungen werden mit tatsächlichen Kosten verrechnet\n\n';
-
+    doc += '| Entity | Version-Felder | Zweck |\n';
+    doc += '|--------|----------------|-------|\n';
+    doc += '| PropertyTax | version_number, predecessor_id, is_current_valid | Grundsteueränderungen nachvollziehen |\n';
+    doc += '| Insurance | version_number, predecessor_id, is_current_valid | Versicherungswechsel dokumentieren |\n';
+    doc += '| Financing | version_number, predecessor_id, is_current_valid | Umschuldungen tracken |\n';
+    doc += '| Supplier | version_number, predecessor_id, is_current_valid | Versorgerwechsel nachvollziehen |\n';
+    doc += '| LeaseContract | version_number, predecessor_id, is_current_valid | Mieterhöhungen historisieren |\n\n';
+    
+    doc += '### 2.2 Versionierungs-Workflow\n\n';
+    doc += '**Trigger**: User ändert eine versionierte Entity\n\n';
+    doc += '**Ablauf**:\n';
+    doc += '1. System setzt `is_current_valid = false` bei alter Version\n';
+    doc += '2. Neue Version wird erstellt mit:\n';
+    doc += '   - `version_number = alte_version + 1`\n';
+    doc += '   - `predecessor_id = alte_id`\n';
+    doc += '   - `is_current_valid = true`\n';
+    doc += '3. Bereits generierte Buchungen bleiben unverändert und referenzieren weiterhin alte Version\n';
+    doc += '4. Neue Buchungen (ab Änderungsdatum) werden aus neuer Version generiert\n\n';
+    doc += '**Validierungen**:\n';
+    doc += '- ✅ BLOCKER: Nur aktuelle Version (`is_current_valid = true`) kann geändert werden\n';
+    doc += '- ⚠️ WARNING: Bei Änderung mit bestehenden Buchungen: Hinweis, dass alte Buchungen erhalten bleiben\n\n';
+    
+    doc += '## 3. Detaillierte Validierungen nach Modul\n\n';
+    
+    doc += '### 3.1 Mieterverwaltung\n\n';
+    doc += '**LeaseContract**:\n';
+    doc += '- ✅ BLOCKER: `unit_id` muss existieren und verfügbar sein\n';
+    doc += '- ✅ BLOCKER: `tenant_id` muss existieren\n';
+    doc += '- ✅ BLOCKER: `base_rent`, `utilities`, `heating` müssen ≥ 0 sein\n';
+    doc += '- ✅ BLOCKER: `total_rent = base_rent + utilities + heating` (automatisch berechnet)\n';
+    doc += '- ✅ BLOCKER: Keine überlappenden Verträge für dieselbe Unit\n';
+    doc += '- ⚠️ WARNING: `deposit ≤ 3 * base_rent` (gesetzliche Obergrenze)\n';
+    doc += '- ⚠️ WARNING: Bei `deposit_installments > 1`: Rate sollte plausibel sein\n\n';
+    doc += '**RentChange (Mieterhöhung)**:\n';
+    doc += '- ✅ BLOCKER: `new_rent > old_rent` (keine Mietsenkung über RentChange)\n';
+    doc += '- ✅ BLOCKER: `effective_date` muss in der Zukunft liegen\n';
+    doc += '- ⚠️ WARNING: Erhöhung > 20% innerhalb 3 Jahre → Hinweis auf Mietpreisbremse\n';
+    doc += '- ⚠️ WARNING: Erhöhung ohne Begründung bei > 10% → Hinweis auf Begründungspflicht\n\n';
+    
+    doc += '### 3.2 Finanzverwaltung\n\n';
+    doc += '**GeneratedFinancialBooking**:\n';
+    doc += '- ✅ BLOCKER: `amount > 0`\n';
+    doc += '- ✅ BLOCKER: `due_date` muss gesetzt sein\n';
+    doc += '- ✅ BLOCKER: `building_id` muss existieren\n';
+    doc += '- ✅ BLOCKER: `source_type` und `source_id` müssen gesetzt sein\n';
+    doc += '- ✅ BLOCKER: Status-Übergang nur vorwärts: Geplant → Gebucht → TeilweiseBezahlt → Bezahlt\n';
+    doc += '- ✅ BLOCKER: `paid_amount ≤ amount`\n';
+    doc += '- ✅ BLOCKER: `outstanding_amount = amount - paid_amount` (automatisch berechnet)\n\n';
+    doc += '**Invoice**:\n';
+    doc += '- ✅ BLOCKER: `invoice_date` muss gesetzt sein\n';
+    doc += '- ✅ BLOCKER: `total_amount > 0`\n';
+    doc += '- ✅ BLOCKER: `cost_category_id` muss existieren (in BuildingTaxLibrary)\n';
+    doc += '- ⚠️ WARNING: Duplikate-Erkennung bei gleicher `invoice_number` vom selben Supplier\n\n';
+    doc += '**BankTransaction Matching**:\n';
+    doc += '- ⚠️ AI-SUGGESTION: Bei ähnlichen Beträgen und Terminen → Matching-Vorschlag\n';
+    doc += '- ⚠️ WARNING: Transaction > 30 Tage ohne Zuordnung\n';
+    doc += '- ⚠️ WARNING: Mehrfach-Zuordnung einer Transaction nicht möglich\n\n';
+    
+    doc += '### 3.3 Steuern\n\n';
+    doc += '**Anlage V (Vermietung & Verpachtung)**:\n';
+    doc += '- ✅ BLOCKER: Gebäude muss vollständig erfasst sein (Adresse, Kaufdatum, etc.)\n';
+    doc += '- ✅ BLOCKER: Abrechnungsjahr muss gewählt sein\n';
+    doc += '- ⚠️ WARNING: Einnahmen = 0 → Hinweis auf fehlende Mietverträge\n';
+    doc += '- ⚠️ WARNING: Werbungskosten > Einnahmen → Verlust, steuerlich relevant\n';
+    doc += '- ⚠️ WARNING: AfA fehlt trotz Kaufvertrag → Hinweis\n\n';
+    doc += '**15%-Regel (Erhaltung vs. Herstellung)**:\n';
+    doc += '```javascript\n';
+    doc += '// Automatische Prüfung bei Rechnungserfassung\n';
+    doc += 'summe_instandhaltung_3_jahre = sum(erhaltungskosten)\n';
+    doc += 'gebaeude_wert = purchase_price - land_value\n';
+    doc += '\n';
+    doc += 'if (summe_instandhaltung_3_jahre > gebaeude_wert * 0.15) {\n';
+    doc += '  → ⚠️ WARNING: "15%-Grenze überschritten - Herstellungskosten prüfen!"\n';
+    doc += '}\n';
+    doc += '```\n\n';
+    
+    doc += '### 3.4 Betriebskosten\n\n';
+    doc += '**OperatingCostStatement**:\n';
+    doc += '- ✅ BLOCKER: Abrechnungszeitraum muss 12 Monate umfassen\n';
+    doc += '- ✅ BLOCKER: Mindestens 1 LeaseContract muss ausgewählt sein\n';
+    doc += '- ✅ BLOCKER: Verteilerschlüssel müssen für alle Positionen definiert sein\n';
+    doc += '- ⚠️ WARNING: Vorauszahlungen fehlen → Hinweis auf incomplete Abrechnung\n';
+    doc += '- ⚠️ WARNING: Kosten-Abweichung > 30% zum Vorjahr → Plausibilitätsprüfung\n\n';
+    doc += '**Verteilerschlüssel-Berechnung**:\n';
+    doc += '```javascript\n';
+    doc += '// Nach Wohnfläche\n';
+    doc += 'anteil_unit = unit.flaeche / gesamt_wohnflaeche\n';
+    doc += 'kosten_unit = gesamtkosten * anteil_unit\n';
+    doc += '\n';
+    doc += '// Nach Personen\n';
+    doc += 'anteil_unit = contract.number_of_persons / gesamt_personen\n';
+    doc += 'kosten_unit = gesamtkosten * anteil_unit\n';
+    doc += '\n';
+    doc += '// Nach Verbrauch (Zähler)\n';
+    doc += 'anteil_unit = (zaehlerstand_end - zaehlerstand_start) / gesamt_verbrauch\n';
+    doc += 'kosten_unit = gesamtkosten * anteil_unit\n';
+    doc += '```\n\n';
+    
+    doc += '### 3.5 Dokumentenverwaltung\n\n';
+    doc += '**Document**:\n';
+    doc += '- ✅ BLOCKER: `name` muss gesetzt sein\n';
+    doc += '- ✅ BLOCKER: Bei Versand: `recipient_address` muss vollständig sein\n';
+    doc += '- ⚠️ WARNING: Dokument ohne PDF → kann nicht versendet werden\n';
+    doc += '- ⚠️ WARNING: Status "versendet" aber kein LetterShipment → Inkonsistenz\n\n';
+    doc += '**Template**:\n';
+    doc += '- ✅ BLOCKER: `content` darf nicht leer sein\n';
+    doc += '- ✅ BLOCKER: Platzhalter müssen korrekte Syntax haben: `{{entity.field}}`\n';
+    doc += '- ⚠️ WARNING: Unbekannte Platzhalter → werden nicht ersetzt\n\n';
+    
+    doc += '## 4. Berechnungslogiken\n\n';
+    
+    doc += '### 4.1 AfA (Abschreibung für Abnutzung)\n\n';
+    doc += '**Berechnung**:\n';
+    doc += '```javascript\n';
+    doc += '// Lineare Abschreibung Wohngebäude\n';
+    doc += 'nutzungsdauer = 50 // Jahre\n';
+    doc += 'afa_rate = 1 / nutzungsdauer // 2% pro Jahr\n';
+    doc += '\n';
+    doc += '// Nur Gebäudewert, nicht Grundstück\n';
+    doc += 'gebaeude_wert = purchase_price - land_value\n';
+    doc += '\n';
+    doc += '// Jährliche AfA\n';
+    doc += 'jaehrliche_afa = gebaeude_wert * afa_rate\n';
+    doc += '\n';
+    doc += '// Erstes Jahr: Anteilig ab Kaufmonat\n';
+    doc += 'monate_im_ersten_jahr = 12 - purchase_month + 1\n';
+    doc += 'afa_erstes_jahr = jaehrliche_afa * (monate_im_ersten_jahr / 12)\n';
+    doc += '\n';
+    doc += '// Separate AfA für Anschaffungsnebenkosten\n';
+    doc += 'anschaffungsnebenkosten = notary_fees + broker_fees + land_transfer_tax\n';
+    doc += 'afa_nebenkosten = anschaffungsnebenkosten * afa_rate\n';
+    doc += '```\n\n';
+    
+    doc += '### 4.2 Mieteinnahmen (Anlage V)\n\n';
+    doc += '**Berechnung**:\n';
+    doc += '```javascript\n';
+    doc += '// Alle aktiven Mietverträge im Abrechnungsjahr\n';
+    doc += 'contracts = LeaseContract.filter(year, building_id)\n';
+    doc += '\n';
+    doc += 'gesamt_einnahmen = 0\n';
+    doc += 'for (contract of contracts) {\n';
+    doc += '  // Anzahl Monate im Abrechnungsjahr\n';
+    doc += '  monate = calculate_months_in_year(contract, year)\n';
+    doc += '  einnahmen += contract.total_rent * monate\n';
+    doc += '}\n';
+    doc += '\n';
+    doc += '// Berücksichtigung: Mietrückstände, Nachzahlungen, Kautionsverwendung\n';
+    doc += '```\n\n';
+    
+    doc += '### 4.3 Werbungskosten (Anlage V)\n\n';
+    doc += '**Kategorisierung**:\n';
+    doc += '```javascript\n';
+    doc += '// Sofort absetzbare Werbungskosten\n';
+    doc += 'erhaltungskosten = sum(invoices where tax_treatment = "SOFORT")\n';
+    doc += '\n';
+    doc += '// Beispiele:\n';
+    doc += '- Grundsteuer\n';
+    doc += '- Versicherungen\n';
+    doc += '- Hausverwaltung\n';
+    doc += '- Reparaturen (Erhaltung)\n';
+    doc += '- Nebenkosten die nicht umgelegt werden\n';
+    doc += '\n';
+    doc += '// Nur über AfA absetzbar\n';
+    doc += 'herstellungskosten = sum(invoices where tax_treatment = "AFA")\n';
+    doc += '\n';
+    doc += '// Beispiele:\n';
+    doc += '- Sanierung\n';
+    doc += '- Anbau\n';
+    doc += '- Wesentliche Modernisierung\n';
+    doc += '\n';
+    doc += '// Gesamt-Werbungskosten für Anlage V\n';
+    doc += 'werbungskosten = erhaltungskosten + afa_betrag + zinsen\n';
+    doc += '```\n\n';
+    
+    doc += '### 4.4 Betriebskostenabrechnung\n\n';
+    doc += '**Berechnung pro Mieter**:\n';
+    doc += '```javascript\n';
+    doc += '// 1. Gesamtkosten ermitteln\n';
+    doc += 'gesamtkosten = sum(alle_positionen)\n';
+    doc += '\n';
+    doc += '// 2. Umlegbare vs. nicht umlegbare Kosten trennen\n';
+    doc += 'umlegbare_kosten = sum(positionen where umlegbar = true)\n';
+    doc += '\n';
+    doc += '// 3. Anteil pro Wohnung berechnen\n';
+    doc += 'for (position of positionen) {\n';
+    doc += '  if (position.verteilerschluessel == "Fläche") {\n';
+    doc += '    anteil = unit.flaeche / gesamt_wohnflaeche\n';
+    doc += '  } else if (position.verteilerschluessel == "Personen") {\n';
+    doc += '    anteil = contract.number_of_persons / gesamt_personen\n';
+    doc += '  } else if (position.verteilerschluessel == "Verbrauch") {\n';
+    doc += '    anteil = verbrauch_unit / gesamt_verbrauch\n';
+    doc += '  }\n';
+    doc += '  \n';
+    doc += '  kosten_unit += position.betrag * anteil\n';
+    doc += '}\n';
+    doc += '\n';
+    doc += '// 4. Vorauszahlungen verrechnen\n';
+    doc += 'geleistete_vorauszahlungen = contract.utilities * 12\n';
+    doc += 'nachzahlung_oder_guthaben = kosten_unit - geleistete_vorauszahlungen\n';
+    doc += '```\n\n';
+    
+    doc += '### 4.5 Kreditberechnung (informativ)\n\n';
+    doc += '**Annuitätendarlehen**:\n';
+    doc += '```javascript\n';
+    doc += '// Monatliche Rate berechnen\n';
+    doc += 'p = loan_amount // Darlehensbetrag\n';
+    doc += 'i = interest_rate / 12 / 100 // Monatlicher Zinssatz\n';
+    doc += 'n = duration_years * 12 // Anzahl Monate\n';
+    doc += '\n';
+    doc += 'monthly_rate = p * (i * Math.pow(1 + i, n)) / (Math.pow(1 + i, n) - 1)\n';
+    doc += '\n';
+    doc += '// Zinsen und Tilgung pro Rate\n';
+    doc += 'zinsen_monat_1 = p * i\n';
+    doc += 'tilgung_monat_1 = monthly_rate - zinsen_monat_1\n';
+    doc += '```\n\n';
+    
+    doc += '## 5. Fehlermeldungen & User Feedback\n\n';
+    
+    doc += '### 5.1 Blocker (Kritische Fehler)\n\n';
+    doc += 'Verhindern das Speichern/Fortfahren:\n';
+    doc += '- "Pflichtfeld darf nicht leer sein"\n';
+    doc += '- "Betrag muss größer als 0 sein"\n';
+    doc += '- "Enddatum muss nach Startdatum liegen"\n';
+    doc += '- "Unit ist bereits vermietet in diesem Zeitraum"\n';
+    doc += '- "Summe der Miete stimmt nicht überein"\n\n';
+    
+    doc += '### 5.2 Warnings (Hinweise)\n\n';
+    doc += 'Lassen Speichern zu, warnen aber:\n';
+    doc += '- "⚠️ Kaution überschreitet gesetzliche Obergrenze (3 Monatsmieten)"\n';
+    doc += '- "⚠️ Mieterhöhung > 20% in 3 Jahren - Mietpreisbremse beachten!"\n';
+    doc += '- "⚠️ 15%-Regel überschritten - Prüfung auf Herstellungskosten empfohlen"\n';
+    doc += '- "⚠️ Bereits Buchungen vorhanden - alte Buchungen bleiben bestehen"\n';
+    doc += '- "⚠️ Keine Buchungen für dieses Jahr - Anlage V unvollständig"\n\n';
+    
+    doc += '### 5.3 Info (Informationen)\n\n';
+    doc += 'Reine Informationen ohne Warnung:\n';
+    doc += '- "ℹ️ Buchungen erfolgreich generiert (4 Quartale)"\n';
+    doc += '- "ℹ️ Neue Version erstellt - alte Version archiviert"\n';
+    doc += '- "ℹ️ Automatisches Matching gefunden: 3 Transaktionen"\n\n';
+    
+    doc += '## 6. Automatische Plausibilitätsprüfungen\n\n';
+    
+    doc += '### 6.1 Finanzen\n';
+    doc += '- Transaktion > €10.000 ohne Kategorie → Hinweis\n';
+    doc += '- Negative Einnahmen → Storno-Vermerk erforderlich\n';
+    doc += '- Doppelte Rechnungsnummer vom gleichen Lieferanten → Duplikat-Warnung\n';
+    doc += '- Rechnungsdatum in der Zukunft → Plausibilitätsprüfung\n\n';
+    
+    doc += '### 6.2 Verträge\n';
+    doc += '- Mietvertrag ohne Kaution → Hinweis (unüblich)\n';
+    doc += '- Miete < €100 oder > €10.000 → Plausibilitätsprüfung\n';
+    doc += '- Versicherungssumme deutlich < Gebäudewert → Unterversicherung-Warnung\n\n';
+    
+    doc += '### 6.3 Steuern\n';
+    doc += '- Verlust aus Vermietung > 3 Jahre → Hinweis auf Liebhaberei-Prüfung\n';
+    doc += '- AfA > Gebäudewert → Berechnungsfehler\n';
+    doc += '- Keine Einnahmen trotz Mietverträgen → Daten unvollständig\n\n';
+    
     return doc;
 }
 
