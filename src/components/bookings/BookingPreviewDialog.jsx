@@ -24,7 +24,10 @@ export default function BookingPreviewDialog({ open, onOpenChange, sourceType, s
         },
         onSuccess: (data) => {
             console.log('Success data:', data);
-            setBookingSuggestions(data.booking_suggestions);
+            setBookingSuggestions(data.booking_suggestions.map(s => ({
+                ...s,
+                building_id: data.building_id
+            })));
             if (data.booking_suggestions.length > 0) {
                 // Versuche Kostenkategorie zu finden
                 const suggestion = data.booking_suggestions[0].cost_category_suggestion;
@@ -39,10 +42,9 @@ export default function BookingPreviewDialog({ open, onOpenChange, sourceType, s
     });
 
     const createMutation = useMutation({
-        mutationFn: async () => {
-            const buildingId = bookingSuggestions[0]?.building_id || sourceId;
+        mutationFn: async (buildingIdFromParent) => {
             const bookingsToCreate = bookingSuggestions.map(suggestion => ({
-                building_id: buildingId,
+                building_id: buildingIdFromParent,
                 unit_id: suggestion.unit_id,
                 source_type: sourceType,
                 source_id: sourceId,
@@ -186,7 +188,7 @@ export default function BookingPreviewDialog({ open, onOpenChange, sourceType, s
                         Abbrechen
                     </Button>
                     <Button
-                        onClick={() => createMutation.mutate()}
+                        onClick={() => createMutation.mutate(bookingSuggestions[0]?.building_id)}
                         disabled={!bookingSuggestions || createMutation.isPending}
                         className="bg-emerald-600 hover:bg-emerald-700"
                     >
