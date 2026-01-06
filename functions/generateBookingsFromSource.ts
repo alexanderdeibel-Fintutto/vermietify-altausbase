@@ -276,7 +276,7 @@ Deno.serve(async (req) => {
             success: true,
             source_type,
             source_id,
-            building_id,
+            building_id: buildingId,
             source_data: sourceData,
             booking_suggestions: bookingSuggestions,
             count: bookingSuggestions.length
