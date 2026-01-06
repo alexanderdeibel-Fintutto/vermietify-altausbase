@@ -13,13 +13,14 @@ import FinancialItems from './pages/FinancialItems';
 import Finanzen from './pages/Finanzen';
 import GeneratedBookings from './pages/GeneratedBookings';
 import Invoices from './pages/Invoices';
+import Kommunikation from './pages/Kommunikation';
 import OperatingCosts from './pages/OperatingCosts';
 import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
 import TaxForms from './pages/TaxForms';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import UnitDetail from './pages/UnitDetail';
-import Kommunikation from './pages/Kommunikation';
+import DeveloperDocumentation from './pages/DeveloperDocumentation';
 import __Layout from './Layout.jsx';
 
 
@@ -39,13 +40,14 @@ export const PAGES = {
     "Finanzen": Finanzen,
     "GeneratedBookings": GeneratedBookings,
     "Invoices": Invoices,
+    "Kommunikation": Kommunikation,
     "OperatingCosts": OperatingCosts,
     "Tasks": Tasks,
     "Tax": Tax,
     "TaxForms": TaxForms,
     "TaxLibraryManagement": TaxLibraryManagement,
     "UnitDetail": UnitDetail,
-    "Kommunikation": Kommunikation,
+    "DeveloperDocumentation": DeveloperDocumentation,
 }
 
 export const pagesConfig = {
