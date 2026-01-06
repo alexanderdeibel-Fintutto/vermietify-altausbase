@@ -221,6 +221,34 @@ export default function EmailList({ onCreateTask }) {
                     ))}
                 </div>
             )}
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Email löschen?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Diese Aktion kann nicht rückgängig gemacht werden. Die Email wird permanent gelöscht.
+                            {emailToDelete?.has_task && (
+                                <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded">
+                                    <p className="text-sm text-amber-800">
+                                        ⚠️ Diese Email hat einen verknüpften Task. Der Task bleibt erhalten.
+                                    </p>
+                                </div>
+                            )}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => emailToDelete && deleteMutation.mutate(emailToDelete.id)}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            Löschen
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
