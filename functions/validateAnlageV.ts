@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
 
         // AfA-Berechnung prüfen
         if (form_data.zeile_33 && building) {
-            const expectedAfa = this.calculateExpectedAfA(building, form_data.zeile_7);
+            const expectedAfa = calculateExpectedAfA(building, form_data.zeile_7);
             const diff = Math.abs(form_data.zeile_33 - expectedAfa);
             if (diff > expectedAfa * 0.1) { // >10% Abweichung
                 kritischeFehler.push({
@@ -140,14 +140,14 @@ Deno.serve(async (req) => {
 
         // Degressive AfA prüfen
         if (building && building.year_built >= 2023) {
-            const currentRate = this.getAfARateFromAmount(form_data.zeile_33, building.purchase_price);
+            const currentRate = getAfARateFromAmount(form_data.zeile_33, building.purchase_price);
             if (currentRate < 3.0) {
                 hinweise.push({
                     severity: 'info',
                     category: 'optimization',
                     message: 'Degressive AfA für Neubau ab 2023 möglich',
                     detail: 'Sie können 3% statt 2% AfA nutzen',
-                    potential_savings: this.calculateAfASavings(building, 2.0, 3.0),
+                    potential_savings: calculateAfASavings(building, 2.0, 3.0),
                     action: 'Prüfen Sie degressive AfA (3% für 4 Jahre, dann 2%)'
                 });
             }
@@ -155,7 +155,7 @@ Deno.serve(async (req) => {
 
         // Sonderabschreibungen
         if (!form_data.zeile_37 && building) {
-            const eligibleFor7b = this.checkEligibilityPara7b(building);
+            const eligibleFor7b = checkEligibilityPara7b(building);
             if (eligibleFor7b) {
                 hinweise.push({
                     severity: 'info',
@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
 
         // Verbilligte Vermietung prüfen (66%-Regel)
         if (form_data.zeile_15 && building) {
-            const ortsüblicheVergleichsmiete = this.estimateVergleichsmiete(building);
+            const ortsüblicheVergleichsmiete = estimateVergleichsmiete(building);
             const vereinbarteMiete = form_data.zeile_15 / 12; // Jahresmiete → Monatsmiete
             
             if (vereinbarteMiete < ortsüblicheVergleichsmiete * 0.66) {
