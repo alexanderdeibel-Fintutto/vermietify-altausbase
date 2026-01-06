@@ -90,45 +90,47 @@ Deno.serve(async (req) => {
                 const yearlyAmount = sourceData.praemie_jaehrlich;
                 const paymentMethod = sourceData.zahlungsweise || 'jährlich';
                 const startDate = sourceData.vertragsbeginn ? new Date(sourceData.vertragsbeginn) : new Date();
+                const today = new Date();
+                const futureDate = new Date(today);
+                futureDate.setFullYear(futureDate.getFullYear() + 1);
 
-                let numberOfPayments = 1;
                 let amountPerPayment = yearlyAmount;
                 let monthsBetween = 12;
 
                 switch (paymentMethod) {
                     case 'monatlich':
-                        numberOfPayments = 12;
                         amountPerPayment = yearlyAmount / 12;
                         monthsBetween = 1;
                         break;
                     case 'vierteljährlich':
-                        numberOfPayments = 4;
                         amountPerPayment = yearlyAmount / 4;
                         monthsBetween = 3;
                         break;
                     case 'halbjährlich':
-                        numberOfPayments = 2;
                         amountPerPayment = yearlyAmount / 2;
                         monthsBetween = 6;
                         break;
                     case 'jährlich':
-                        numberOfPayments = 1;
                         amountPerPayment = yearlyAmount;
                         monthsBetween = 12;
                         break;
                 }
 
-                // Generiere erste 12 Monate Buchungen
-                for (let i = 0; i < numberOfPayments; i++) {
-                    const dueDate = new Date(startDate);
-                    dueDate.setMonth(dueDate.getMonth() + (i * monthsBetween));
-                    
+                // Generiere Buchungen vom Vertragsbeginn bis 1 Jahr in die Zukunft
+                let currentDate = new Date(startDate);
+                let rateNumber = 1;
+                
+                while (currentDate <= futureDate) {
                     bookingSuggestions.push({
-                        due_date: dueDate.toISOString().split('T')[0],
+                        due_date: currentDate.toISOString().split('T')[0],
                         amount: amountPerPayment,
-                        description: `${sourceData.versicherungstyp} - ${paymentMethod} Rate ${i + 1}`,
+                        description: `${sourceData.versicherungstyp} - ${paymentMethod} Rate ${rateNumber}`,
                         cost_category_suggestion: sourceData.versicherungstyp
                     });
+                    
+                    currentDate = new Date(currentDate);
+                    currentDate.setMonth(currentDate.getMonth() + monthsBetween);
+                    rateNumber++;
                 }
                 break;
             }
