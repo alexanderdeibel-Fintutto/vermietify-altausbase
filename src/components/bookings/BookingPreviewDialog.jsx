@@ -102,8 +102,11 @@ export default function BookingPreviewDialog({ open, onOpenChange, sourceType, s
     const loadCostCategory = async (suggestion) => {
         try {
             const categories = await base44.entities.CostCategory.filter({ name: suggestion });
+            console.log('Cost category search for', suggestion, ':', categories);
             if (categories.length > 0) {
                 setCostCategoryId(categories[0].id);
+            } else {
+                console.warn('No cost category found for:', suggestion);
             }
         } catch (error) {
             console.error('Load cost category error:', error);
@@ -198,7 +201,17 @@ export default function BookingPreviewDialog({ open, onOpenChange, sourceType, s
                         Abbrechen
                     </Button>
                     <Button
-                        onClick={() => createMutation.mutate(bookingSuggestions[0]?.building_id)}
+                        onClick={() => {
+                            console.log('Button clicked!');
+                            console.log('bookingSuggestions:', bookingSuggestions);
+                            console.log('building_id:', bookingSuggestions?.[0]?.building_id);
+                            if (bookingSuggestions?.[0]?.building_id) {
+                                createMutation.mutate(bookingSuggestions[0].building_id);
+                            } else {
+                                console.error('No building_id found!');
+                                toast.error('Keine building_id gefunden');
+                            }
+                        }}
                         disabled={!bookingSuggestions || createMutation.isPending}
                         className="bg-emerald-600 hover:bg-emerald-700"
                     >
