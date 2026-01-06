@@ -28,10 +28,10 @@ export default function BookingPreviewDialog({ open, onOpenChange, sourceType, s
                 ...s,
                 building_id: data.building_id
             })));
-            if (data.booking_suggestions.length > 0) {
+            if (data.booking_suggestions.length > 0 && data.building_id) {
                 // Versuche Kostenkategorie zu finden
                 const suggestion = data.booking_suggestions[0].cost_category_suggestion;
-                loadCostCategory(suggestion);
+                loadCostCategory(suggestion, data.building_id);
             }
         },
         onError: (error) => {
@@ -99,14 +99,26 @@ export default function BookingPreviewDialog({ open, onOpenChange, sourceType, s
         }
     });
 
-    const loadCostCategory = async (suggestion) => {
+    const loadCostCategory = async (suggestion, buildingId) => {
         try {
-            const categories = await base44.entities.CostCategory.filter({ name: suggestion });
-            console.log('Cost category search for', suggestion, ':', categories);
-            if (categories.length > 0) {
-                setCostCategoryId(categories[0].id);
-            } else {
-                console.warn('No cost category found for:', suggestion);
+            // Suche in der BuildingTaxLibrary nach der passenden Kategorie
+            const libraries = await base44.entities.BuildingTaxLibrary.filter({ building_id: buildingId });
+            console.log('Tax library for building:', libraries);
+            
+            if (libraries.length > 0) {
+                const library = libraries[0];
+                const matchingCategory = library.cost_categories?.find(cat => 
+                    cat.name.toLowerCase().includes(suggestion.toLowerCase()) ||
+                    suggestion.toLowerCase().includes(cat.name.toLowerCase())
+                );
+                
+                console.log('Matching category for', suggestion, ':', matchingCategory);
+                
+                if (matchingCategory) {
+                    setCostCategoryId(matchingCategory.id);
+                } else {
+                    console.warn('No cost category found for:', suggestion);
+                }
             }
         } catch (error) {
             console.error('Load cost category error:', error);
