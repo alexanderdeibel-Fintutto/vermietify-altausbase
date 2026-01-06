@@ -52,38 +52,106 @@ export default function SendLetterDialog({ open, onOpenChange, document }) {
                 throw new Error('Keine PDF-Datei vorhanden');
             }
 
-            // PDF laden und zu Base64 konvertieren
-            const pdfResponse = await fetch(document.pdf_url);
-            const pdfBlob = await pdfResponse.blob();
-            const base64 = await new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result.split(',')[1]);
-                reader.readAsDataURL(pdfBlob);
+            // Warnung bei bereits versendetem Dokument
+            if (document.versandstatus === 'versendet') {
+                const confirmed = window.confirm(
+                    `Dieses Dokument wurde bereits am ${new Date(document.versandt_am).toLocaleString('de-DE')} versendet.\n\nMöchten Sie es erneut versenden?`
+                );
+                if (!confirmed) {
+                    throw new Error('Versand abgebrochen');
+                }
+            }
+
+            // Dokument-Status auf "in_versand" setzen
+            await base44.entities.Document.update(document.id, {
+                versandstatus: 'in_versand'
             });
 
-            // MD5 Checksum berechnen (vereinfacht - in Produktion crypto.subtle.digest verwenden)
-            const checksum = btoa(base64.substring(0, 100));
+            try {
+                // PDF laden und zu Base64 konvertieren
+                const pdfResponse = await fetch(document.pdf_url);
+                if (!pdfResponse.ok) {
+                    throw new Error('PDF konnte nicht geladen werden');
+                }
 
-            const response = await base44.functions.invoke('letterxpress', {
-                action: 'send_letter',
-                pdf_base64: base64,
-                checksum: checksum,
-                filename: document.name || 'Dokument.pdf',
-                color: options.color,
-                mode: options.mode,
-                registered: options.shipping_type,
-                dispatch_date: options.dispatch_date || undefined,
-                notice: options.notice || undefined,
-                document_id: document.id,
-                building_id: document.building_id,
-                recipient_address: document.recipient_address || 'Empfänger nicht definiert',
-                document_type: document.category || 'Dokument'
-            });
-            return response.data;
+                const pdfBlob = await pdfResponse.blob();
+                
+                // Größenprüfung (max 50 MB)
+                if (pdfBlob.size > 50 * 1024 * 1024) {
+                    throw new Error('PDF ist zu groß (max. 50 MB)');
+                }
+
+                const base64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                    reader.readAsDataURL(pdfBlob);
+                });
+
+                // MD5 Checksum berechnen
+                const encoder = new TextEncoder();
+                const data = encoder.encode(base64);
+                const hashBuffer = await crypto.subtle.digest('MD5', data).catch(() => {
+                    // Fallback wenn MD5 nicht verfügbar
+                    return encoder.encode(base64.substring(0, 100));
+                });
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const checksum = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+                const response = await base44.functions.invoke('letterxpress', {
+                    action: 'send_letter',
+                    pdf_base64: base64,
+                    checksum: checksum,
+                    filename: document.name || 'Dokument.pdf',
+                    color: options.color,
+                    mode: options.mode,
+                    registered: options.shipping_type,
+                    dispatch_date: options.dispatch_date || undefined,
+                    notice: options.notice || undefined,
+                    document_id: document.id,
+                    building_id: document.building_id,
+                    recipient_address: document.recipient_address || document.recipient_name || 'Empfänger nicht definiert',
+                    document_type: document.category || 'Dokument'
+                });
+
+                // Dokument-Status auf "versendet" setzen und Details speichern
+                const now = new Date().toISOString();
+                await base44.entities.Document.update(document.id, {
+                    versandstatus: 'versendet',
+                    versandt_am: now,
+                    lxp_job_id: response.data.job_id,
+                    versandart: options.shipping_type,
+                    status: 'versendet',
+                    sent_date: now,
+                    change_history: [
+                        ...(document.change_history || []),
+                        {
+                            timestamp: now,
+                            user: 'current_user',
+                            change_type: 'Brief versendet via LetterXpress',
+                            old_value: document.versandstatus || 'nicht_versendet',
+                            new_value: JSON.stringify({
+                                versandart: options.shipping_type,
+                                kosten_brutto: response.data.cost_gross,
+                                lxp_job_id: response.data.job_id,
+                                status: response.data.status
+                            })
+                        }
+                    ]
+                });
+
+                return response.data;
+            } catch (error) {
+                // Bei Fehler: Status zurücksetzen
+                await base44.entities.Document.update(document.id, {
+                    versandstatus: 'nicht_versendet'
+                });
+                throw error;
+            }
         },
-        onSuccess: () => {
+        onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['letter-shipments'] });
-            toast.success('Brief erfolgreich versendet');
+            queryClient.invalidateQueries({ queryKey: ['documents'] });
+            toast.success(`Brief erfolgreich versendet! Kosten: ${data.cost_gross.toFixed(2)} EUR`);
             onOpenChange(false);
         },
         onError: (error) => {
@@ -134,6 +202,16 @@ export default function SendLetterDialog({ open, onOpenChange, document }) {
                         <div className="text-sm space-y-1">
                             <div><span className="text-slate-600">Name:</span> {document?.name}</div>
                             <div><span className="text-slate-600">Seiten:</span> {document?.seitenanzahl || 'unbekannt'}</div>
+                            {document?.recipient_name && (
+                                <div><span className="text-slate-600">Empfänger:</span> {document.recipient_name}</div>
+                            )}
+                            {document?.versandstatus === 'versendet' && document?.versandt_am && (
+                                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                                    <span className="text-yellow-700 text-xs">
+                                        ⚠️ Bereits versendet am {new Date(document.versandt_am).toLocaleString('de-DE')}
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     </div>
 
