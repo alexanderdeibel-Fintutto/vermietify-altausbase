@@ -390,22 +390,6 @@ export default function DeveloperDocumentation() {
                         </>
                     )}
                 </Button>
-            </div>
-
-            {/* Progress Bar */}
-            {generatingAll && (
-                <Card className="bg-blue-50 border-blue-200">
-                    <CardContent className="p-4">
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-sm text-blue-900">
-                                <span>Generierung läuft...</span>
-                                <span>{Math.round(progress)}%</span>
-                            </div>
-                            <Progress value={progress} className="h-2" />
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
                 <Button 
                     variant="outline" 
                     size="lg"
@@ -522,6 +506,21 @@ export default function DeveloperDocumentation() {
                     Alle löschen
                 </Button>
             </div>
+
+            {/* Progress Bar */}
+            {generatingAll && (
+                <Card className="bg-blue-50 border-blue-200">
+                    <CardContent className="p-4">
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-sm text-blue-900">
+                                <span>Generierung läuft...</span>
+                                <span>{Math.round(progress)}%</span>
+                            </div>
+                            <Progress value={progress} className="h-2" />
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Dokumentations-Bereiche */}
             <div className="grid gap-4">
