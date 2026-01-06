@@ -20,14 +20,31 @@ export default function PropertyTaxForm({ open, onOpenChange, onSubmit, initialD
     const [bookingPreviewOpen, setBookingPreviewOpen] = React.useState(false);
     const [savedPropertyTaxId, setSavedPropertyTaxId] = React.useState(null);
     const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
-        defaultValues: initialData || { building_id: buildingId }
+        defaultValues: { 
+            building_id: buildingId, 
+            grundsteuer_typ: '', 
+            sepa_mandat_vorhanden: false,
+            aenderung_seit_vorjahr: false
+        }
     });
 
     React.useEffect(() => {
-        if (initialData) {
-            reset(initialData);
-        } else {
-            reset({ building_id: buildingId });
+        if (open) {
+            if (initialData) {
+                reset({
+                    ...initialData,
+                    grundsteuer_typ: initialData.grundsteuer_typ || '',
+                    sepa_mandat_vorhanden: initialData.sepa_mandat_vorhanden || false,
+                    aenderung_seit_vorjahr: initialData.aenderung_seit_vorjahr || false
+                });
+            } else {
+                reset({ 
+                    building_id: buildingId, 
+                    grundsteuer_typ: '', 
+                    sepa_mandat_vorhanden: false,
+                    aenderung_seit_vorjahr: false
+                });
+            }
         }
     }, [initialData, reset, buildingId, open]);
 
@@ -346,7 +363,8 @@ export default function PropertyTaxForm({ open, onOpenChange, onSubmit, initialD
                             <div className="flex items-center space-x-2">
                                 <Checkbox 
                                     id="aenderung_seit_vorjahr"
-                                    {...register('aenderung_seit_vorjahr')}
+                                    checked={watch('aenderung_seit_vorjahr')}
+                                    onCheckedChange={(checked) => setValue('aenderung_seit_vorjahr', checked)}
                                 />
                                 <Label htmlFor="aenderung_seit_vorjahr">Änderung seit Vorjahr</Label>
                             </div>
