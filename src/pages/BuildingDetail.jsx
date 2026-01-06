@@ -419,11 +419,13 @@ export default function BuildingDetail() {
         setFormOpen(true);
     };
 
-    const handlePropertyTaxSubmit = (data) => {
+    const handlePropertyTaxSubmit = async (data) => {
         if (editingPropertyTax) {
-            updatePropertyTaxMutation.mutate({ id: editingPropertyTax.id, data });
+            await updatePropertyTaxMutation.mutateAsync({ id: editingPropertyTax.id, data });
+            return { id: editingPropertyTax.id };
         } else {
-            createPropertyTaxMutation.mutate(data);
+            const result = await createPropertyTaxMutation.mutateAsync(data);
+            return result;
         }
     };
 
@@ -437,11 +439,13 @@ export default function BuildingDetail() {
         setPropertyTaxFormOpen(true);
     };
 
-    const handleSupplierSubmit = (data) => {
+    const handleSupplierSubmit = async (data) => {
         if (editingSupplier) {
-            updateSupplierMutation.mutate({ id: editingSupplier.id, data });
+            await updateSupplierMutation.mutateAsync({ id: editingSupplier.id, data });
+            return { id: editingSupplier.id };
         } else {
-            createSupplierMutation.mutate(data);
+            const result = await createSupplierMutation.mutateAsync(data);
+            return result;
         }
     };
 
@@ -478,20 +482,24 @@ export default function BuildingDetail() {
         queryClient.invalidateQueries({ queryKey: ['meters'] });
     };
 
-    const handlePurchaseContractSubmit = (data) => {
+    const handlePurchaseContractSubmit = async (data) => {
         const contract = purchaseContracts[0];
         if (contract) {
-            updatePurchaseContractMutation.mutate({ id: contract.id, data });
+            await updatePurchaseContractMutation.mutateAsync({ id: contract.id, data });
+            return { id: contract.id };
         } else {
-            createPurchaseContractMutation.mutate(data);
+            const result = await createPurchaseContractMutation.mutateAsync(data);
+            return result;
         }
     };
 
-    const handleFinancingSubmit = (data) => {
+    const handleFinancingSubmit = async (data) => {
         if (editingFinancing) {
-            updateFinancingMutation.mutate({ id: editingFinancing.id, data });
+            await updateFinancingMutation.mutateAsync({ id: editingFinancing.id, data });
+            return { id: editingFinancing.id };
         } else {
-            createFinancingMutation.mutate(data);
+            const result = await createFinancingMutation.mutateAsync(data);
+            return result;
         }
     };
 
@@ -505,11 +513,13 @@ export default function BuildingDetail() {
         setFinancingFormOpen(true);
     };
 
-    const handleInsuranceSubmit = (data) => {
+    const handleInsuranceSubmit = async (data) => {
         if (editingInsurance) {
-            updateInsuranceMutation.mutate({ id: editingInsurance.id, data });
+            await updateInsuranceMutation.mutateAsync({ id: editingInsurance.id, data });
+            return { id: editingInsurance.id };
         } else {
-            createInsuranceMutation.mutate(data);
+            const result = await createInsuranceMutation.mutateAsync(data);
+            return result;
         }
     };
 
