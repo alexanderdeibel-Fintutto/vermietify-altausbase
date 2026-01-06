@@ -24,7 +24,9 @@ import {
     AlertTriangle,
     Archive,
     BookOpen,
-    Trash2
+    Trash2,
+    Clock,
+    Play
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -129,11 +131,25 @@ export default function DeveloperDocumentation() {
     const [selectedTypes, setSelectedTypes] = useState([]);
     const [currentGenerating, setCurrentGenerating] = useState(null);
     const [progress, setProgress] = useState(0);
+    const [showScheduleDialog, setShowScheduleDialog] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: documentations = [], isLoading } = useQuery({
         queryKey: ['generated-documentations'],
         queryFn: () => base44.entities.GeneratedDocumentation.list('-last_generated_at')
+    });
+
+    const { data: scheduledTasks = [] } = useQuery({
+        queryKey: ['scheduled-tasks'],
+        queryFn: async () => {
+            try {
+                const response = await base44.functions.invoke('listScheduledTasks', {});
+                return response.data?.tasks || [];
+            } catch (error) {
+                console.error('Failed to fetch scheduled tasks:', error);
+                return [];
+            }
+        }
     });
 
     const { data: lastUpdate } = useQuery({
@@ -505,6 +521,56 @@ export default function DeveloperDocumentation() {
                     <Trash2 className="w-5 h-5 mr-2" />
                     Alle löschen
                 </Button>
+                <Button 
+                    variant="outline" 
+                    size="lg"
+                    onClick={async () => {
+                        const outdated = documentations.filter(d => 
+                            d.status === 'completed' && 
+                            d.last_generated_at && 
+                            new Date(d.last_generated_at) < new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+                        );
+                        
+                        if (outdated.length === 0) {
+                            toast.info('Alle Dokumentationen sind aktuell');
+                            return;
+                        }
+                        
+                        setGeneratingAll(true);
+                        setProgress(0);
+                        let successCount = 0;
+                        
+                        for (let i = 0; i < outdated.length; i++) {
+                            const doc = outdated[i];
+                            setCurrentGenerating(doc.title);
+                            setProgress(((i + 1) / outdated.length) * 100);
+                            
+                            try {
+                                await generateMutation.mutateAsync(doc.documentation_type);
+                                successCount++;
+                            } catch (error) {
+                                console.error(`Failed to update ${doc.documentation_type}:`, error);
+                            }
+                        }
+                        
+                        setGeneratingAll(false);
+                        setCurrentGenerating(null);
+                        setProgress(0);
+                        toast.success(`${successCount} veraltete Dokumentationen aktualisiert`);
+                    }}
+                    disabled={generatingAll}
+                >
+                    <RefreshCw className="w-5 h-5 mr-2" />
+                    Veraltete aktualisieren
+                </Button>
+                <Button 
+                    variant="outline" 
+                    size="lg"
+                    onClick={() => setShowScheduleDialog(true)}
+                >
+                    <Clock className="w-5 h-5 mr-2" />
+                    Automatische Updates
+                </Button>
             </div>
 
             {/* Progress Bar */}
@@ -677,6 +743,75 @@ export default function DeveloperDocumentation() {
                     </DialogHeader>
                     <div className="prose prose-slate max-w-none">
                         <ReactMarkdown>{previewDoc?.content_markdown || ''}</ReactMarkdown>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Schedule Dialog */}
+            <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Automatische Dokumentations-Updates</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600">
+                            Richten Sie automatische Updates ein, damit die Dokumentation immer aktuell bleibt.
+                        </p>
+                        
+                        {scheduledTasks.find(t => t.function_name === 'updateDocumentation') ? (
+                            <Card className="bg-green-50 border-green-200">
+                                <CardContent className="p-4">
+                                    <div className="flex items-center gap-3">
+                                        <CheckCircle className="w-5 h-5 text-green-600" />
+                                        <div>
+                                            <p className="font-medium text-green-900">Automatische Updates aktiv</p>
+                                            <p className="text-sm text-green-700">
+                                                Die Dokumentation wird automatisch wöchentlich aktualisiert.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            <Card className="bg-slate-50">
+                                <CardContent className="p-4">
+                                    <div className="space-y-3">
+                                        <p className="text-sm text-slate-700">
+                                            Empfehlung: Wöchentliche Updates jeden Montag um 3:00 Uhr
+                                        </p>
+                                        <Button
+                                            onClick={async () => {
+                                                try {
+                                                    await base44.functions.invoke('createScheduledTask', {
+                                                        name: 'Dokumentations-Update',
+                                                        description: 'Automatische Aktualisierung aller Entwickler-Dokumentationen',
+                                                        function_name: 'updateDocumentation',
+                                                        repeat_unit: 'weeks',
+                                                        repeat_on_days: [1],
+                                                        start_time: '03:00',
+                                                        is_active: true
+                                                    });
+                                                    queryClient.invalidateQueries({ queryKey: ['scheduled-tasks'] });
+                                                    toast.success('Automatische Updates aktiviert');
+                                                } catch (error) {
+                                                    toast.error('Fehler: ' + error.message);
+                                                }
+                                            }}
+                                            className="bg-emerald-600 hover:bg-emerald-700"
+                                        >
+                                            <Play className="w-4 h-4 mr-2" />
+                                            Automatische Updates aktivieren
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+                        
+                        <div className="flex justify-end">
+                            <Button variant="outline" onClick={() => setShowScheduleDialog(false)}>
+                                Schließen
+                            </Button>
+                        </div>
                     </div>
                 </DialogContent>
             </Dialog>
