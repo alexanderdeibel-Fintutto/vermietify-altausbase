@@ -55,6 +55,41 @@ export default function DocumentPreviewDialog({ document, open, onOpenChange, on
                         </Button>
                     </div>
 
+                    {document?.versandstatus === 'versendet' && (
+                        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                            <h3 className="font-medium text-emerald-900 mb-2">📮 Versand-Information</h3>
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                    <p className="text-emerald-600">Versandstatus</p>
+                                    <p className="font-medium text-emerald-900">Versendet</p>
+                                </div>
+                                {document.versandt_am && (
+                                    <div>
+                                        <p className="text-emerald-600">Versendet am</p>
+                                        <p className="font-medium text-emerald-900">
+                                            {new Date(document.versandt_am).toLocaleString('de-DE')}
+                                        </p>
+                                    </div>
+                                )}
+                                {document.versandart && (
+                                    <div>
+                                        <p className="text-emerald-600">Versandart</p>
+                                        <p className="font-medium text-emerald-900">
+                                            {document.versandart === 'r1' ? 'Einschreiben Einwurf' : 
+                                             document.versandart === 'r2' ? 'Einschreiben' : 'Normal'}
+                                        </p>
+                                    </div>
+                                )}
+                                {document.lxp_job_id && (
+                                    <div>
+                                        <p className="text-emerald-600">LetterXpress Job-ID</p>
+                                        <p className="font-medium text-emerald-900">{document.lxp_job_id}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     <div className="border-t pt-4">
                         <div 
                             className="prose prose-sm max-w-none bg-white p-8 border rounded-lg"
