@@ -30,11 +30,13 @@ import TaskKanban from '@/components/tasks/TaskKanban';
 import TaskCalendar from '@/components/tasks/TaskCalendar';
 import ActivityLogViewer from '@/components/tasks/ActivityLogViewer';
 import PerformanceMonitor from '@/components/tasks/PerformanceMonitor';
+import SetupWizard from '@/components/tasks/SetupWizard';
 
 export default function Tasks() {
     const [formOpen, setFormOpen] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
     const [activeTab, setActiveTab] = useState('overview');
+    const [setupWizardOpen, setSetupWizardOpen] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: tasks = [], isLoading } = useQuery({
@@ -46,6 +48,17 @@ export default function Tasks() {
         queryKey: ['taskPriorities'],
         queryFn: () => base44.entities.TaskPriority.list('sort_order')
     });
+
+    // Setup-Wizard beim ersten Start anzeigen
+    React.useEffect(() => {
+        const checkSetup = async () => {
+            const workflows = await base44.entities.Workflow.list();
+            if (workflows.length === 0) {
+                setSetupWizardOpen(true);
+            }
+        };
+        checkSetup();
+    }, []);
 
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.Task.create(data),
@@ -195,7 +208,16 @@ export default function Tasks() {
                 initialData={editingTask}
                 priorities={priorities}
                 isLoading={createMutation.isPending || updateMutation.isPending}
-            />
-        </div>
-    );
-}
+                />
+
+                {/* Setup Wizard */}
+                <SetupWizard
+                open={setupWizardOpen}
+                onComplete={() => {
+                    setSetupWizardOpen(false);
+                    queryClient.invalidateQueries();
+                }}
+                />
+                </div>
+                );
+                }
