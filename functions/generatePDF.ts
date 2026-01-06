@@ -54,10 +54,16 @@ Deno.serve(async (req) => {
         const file = new File([pdfBuffer], fileName, { type: 'application/pdf' });
         const { file_url } = await base44.asServiceRole.integrations.Core.UploadFile({ file });
 
+        // Seitenzahl extrahieren
+        const { PDFDocument } = await import('npm:pdf-lib@1.17.1');
+        const pdfDoc = await PDFDocument.load(pdfBuffer);
+        const pages = pdfDoc.getPageCount();
+
         return Response.json({ 
             success: true, 
             file_url,
-            fileName 
+            fileName,
+            pages
         });
 
     } catch (error) {

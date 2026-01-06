@@ -10,6 +10,7 @@ import { de } from 'date-fns/locale';
 import DocumentCreateWizard from './DocumentCreateWizard';
 import DocumentPreviewDialog from './DocumentPreviewDialog';
 import SendLetterDialog from '../letterxpress/SendLetterDialog';
+import PDFUploadDialog from './PDFUploadDialog';
 
 const STATUS_CONFIG = {
     zu_erledigen: { label: 'Zu erledigen', color: 'bg-slate-100 text-slate-700', icon: FileText },
@@ -92,10 +93,16 @@ export default function DocumentsList() {
                         );
                     })}
                 </div>
-                <Button onClick={() => setWizardOpen(true)} className="bg-emerald-600 hover:bg-emerald-700">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Neues Dokument
-                </Button>
+                <div className="flex gap-2">
+                    <Button onClick={() => setUploadDialogOpen(true)} variant="outline">
+                        <Upload className="w-4 h-4 mr-2" />
+                        PDF hochladen
+                    </Button>
+                    <Button onClick={() => setWizardOpen(true)} className="bg-emerald-600 hover:bg-emerald-700">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Neues Dokument
+                    </Button>
+                </div>
             </div>
 
             <div className="grid gap-4">

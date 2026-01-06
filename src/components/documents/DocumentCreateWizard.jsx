@@ -69,7 +69,7 @@ export default function DocumentCreateWizard({ open, onOpenChange }) {
                 try {
                     const pdfResponse = await base44.functions.invoke('generatePDF', {
                         html: doc.content,
-                        document_id: doc.id
+                        fileName: `${doc.name}.pdf`
                     });
                     
                     if (pdfResponse.data?.pdf_url) {

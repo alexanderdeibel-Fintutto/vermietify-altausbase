@@ -69,12 +69,27 @@ export default function OriginalsList() {
             try {
                 const { file_url } = await base44.integrations.Core.UploadFile({ file });
                 
+                let metadata = null;
+                // PDF-Metadaten extrahieren
+                if (file.type === 'application/pdf') {
+                    try {
+                        const metadataResponse = await base44.functions.invoke('extractPDFMetadata', {
+                            pdf_url: file_url
+                        });
+                        metadata = metadataResponse.data?.metadata;
+                    } catch (error) {
+                        console.error('Metadata extraction failed:', error);
+                    }
+                }
+                
                 await createMutation.mutateAsync({
                     file_url,
                     file_name: file.name,
                     file_size: file.size,
                     file_type: file.type.includes('pdf') ? 'PDF' : file.type.includes('image') ? 'JPG/PNG' : 'Sonstiges',
-                    status: 'unverknuepft'
+                    status: 'unverknuepft',
+                    pages: metadata?.pages || null,
+                    metadata: metadata || null
                 });
             } catch (error) {
                 toast.error(`Fehler beim Upload von ${file.name}`);
