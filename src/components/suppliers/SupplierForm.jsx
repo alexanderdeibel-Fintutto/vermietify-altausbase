@@ -70,16 +70,16 @@ export default function SupplierForm({ open, onOpenChange, onSubmit, initialData
     };
 
     const handleFormSubmit = async (data) => {
-        const result = await onSubmit(data);
-        
-        if (result?.id) {
-            setSavedSupplierId(result.id);
-            toast.success('Versorger gespeichert', {
-                action: {
-                    label: 'Buchungen generieren',
-                    onClick: () => setBookingPreviewOpen(true)
-                }
-            });
+        try {
+            const result = await onSubmit(data);
+            
+            if (result?.id) {
+                setSavedSupplierId(result.id);
+                setBookingPreviewOpen(true);
+            }
+        } catch (error) {
+            console.error('Error submitting supplier:', error);
+            toast.error('Fehler beim Speichern');
         }
     };
 

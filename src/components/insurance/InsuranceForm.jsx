@@ -61,16 +61,9 @@ export default function InsuranceForm({ open, onOpenChange, onSubmit, initialDat
                 selbstbeteiligung: data.selbstbeteiligung ? parseFloat(data.selbstbeteiligung) : null,
             });
             
-            console.log('Insurance submit result:', result);
-            
             if (result?.id) {
                 setSavedInsuranceId(result.id);
-                toast.success('Versicherung gespeichert', {
-                    action: {
-                        label: 'Buchungen generieren',
-                        onClick: () => setBookingPreviewOpen(true)
-                    }
-                });
+                setBookingPreviewOpen(true);
             }
         } catch (error) {
             console.error('Error submitting insurance:', error);

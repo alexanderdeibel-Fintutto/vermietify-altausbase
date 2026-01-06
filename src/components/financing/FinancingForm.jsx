@@ -42,26 +42,26 @@ export default function FinancingForm({ open, onOpenChange, onSubmit, initialDat
     }, [initialData, reset, buildingId, open]);
 
     const handleFormSubmit = async (data) => {
-        const result = await onSubmit({
-            ...data,
-            kreditbetrag: data.kreditbetrag ? parseFloat(data.kreditbetrag) : null,
-            zinssatz: data.zinssatz ? parseFloat(data.zinssatz) : null,
-            tilgungssatz: data.tilgungssatz ? parseFloat(data.tilgungssatz) : null,
-            laufzeit_monate: data.laufzeit_monate ? parseInt(data.laufzeit_monate) : null,
-            monatsrate: data.monatsrate ? parseFloat(data.monatsrate) : null,
-            restschuld: data.restschuld ? parseFloat(data.restschuld) : null,
-            sondertilgung_betrag: data.sondertilgung_betrag ? parseFloat(data.sondertilgung_betrag) : null,
-            bereitstellungszins: data.bereitstellungszins ? parseFloat(data.bereitstellungszins) : null,
-        });
-        
-        if (result?.id) {
-            setSavedFinancingId(result.id);
-            toast.success('Finanzierung gespeichert', {
-                action: {
-                    label: 'Buchungen generieren',
-                    onClick: () => setBookingPreviewOpen(true)
-                }
+        try {
+            const result = await onSubmit({
+                ...data,
+                kreditbetrag: data.kreditbetrag ? parseFloat(data.kreditbetrag) : null,
+                zinssatz: data.zinssatz ? parseFloat(data.zinssatz) : null,
+                tilgungssatz: data.tilgungssatz ? parseFloat(data.tilgungssatz) : null,
+                laufzeit_monate: data.laufzeit_monate ? parseInt(data.laufzeit_monate) : null,
+                monatsrate: data.monatsrate ? parseFloat(data.monatsrate) : null,
+                restschuld: data.restschuld ? parseFloat(data.restschuld) : null,
+                sondertilgung_betrag: data.sondertilgung_betrag ? parseFloat(data.sondertilgung_betrag) : null,
+                bereitstellungszins: data.bereitstellungszins ? parseFloat(data.bereitstellungszins) : null,
             });
+            
+            if (result?.id) {
+                setSavedFinancingId(result.id);
+                setBookingPreviewOpen(true);
+            }
+        } catch (error) {
+            console.error('Error submitting financing:', error);
+            toast.error('Fehler beim Speichern');
         }
     };
 

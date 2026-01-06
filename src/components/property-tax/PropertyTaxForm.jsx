@@ -49,26 +49,26 @@ export default function PropertyTaxForm({ open, onOpenChange, onSubmit, initialD
     }, [initialData, reset, buildingId, open]);
 
     const handleFormSubmit = async (data) => {
-        const result = await onSubmit({
-            ...data,
-            grundsteuerbescheid_jahr: data.grundsteuerbescheid_jahr ? parseInt(data.grundsteuerbescheid_jahr) : null,
-            grundsteuermessbetrag: data.grundsteuermessbetrag ? parseFloat(data.grundsteuermessbetrag) : null,
-            hebesatz_grundsteuer_a: data.hebesatz_grundsteuer_a ? parseFloat(data.hebesatz_grundsteuer_a) : null,
-            hebesatz_grundsteuer_b: data.hebesatz_grundsteuer_b ? parseFloat(data.hebesatz_grundsteuer_b) : null,
-            hebesatz_grundsteuer_c: data.hebesatz_grundsteuer_c ? parseFloat(data.hebesatz_grundsteuer_c) : null,
-            grundsteuer_jahresbetrag: data.grundsteuer_jahresbetrag ? parseFloat(data.grundsteuer_jahresbetrag) : null,
-            grundsteuer_quartalsrate: data.grundsteuer_quartalsrate ? parseFloat(data.grundsteuer_quartalsrate) : null,
-            grundsteuer_vorjahr_betrag: data.grundsteuer_vorjahr_betrag ? parseFloat(data.grundsteuer_vorjahr_betrag) : null,
-        });
-        
-        if (result?.id) {
-            setSavedPropertyTaxId(result.id);
-            toast.success('Grundsteuer gespeichert', {
-                action: {
-                    label: 'Buchungen generieren',
-                    onClick: () => setBookingPreviewOpen(true)
-                }
+        try {
+            const result = await onSubmit({
+                ...data,
+                grundsteuerbescheid_jahr: data.grundsteuerbescheid_jahr ? parseInt(data.grundsteuerbescheid_jahr) : null,
+                grundsteuermessbetrag: data.grundsteuermessbetrag ? parseFloat(data.grundsteuermessbetrag) : null,
+                hebesatz_grundsteuer_a: data.hebesatz_grundsteuer_a ? parseFloat(data.hebesatz_grundsteuer_a) : null,
+                hebesatz_grundsteuer_b: data.hebesatz_grundsteuer_b ? parseFloat(data.hebesatz_grundsteuer_b) : null,
+                hebesatz_grundsteuer_c: data.hebesatz_grundsteuer_c ? parseFloat(data.hebesatz_grundsteuer_c) : null,
+                grundsteuer_jahresbetrag: data.grundsteuer_jahresbetrag ? parseFloat(data.grundsteuer_jahresbetrag) : null,
+                grundsteuer_quartalsrate: data.grundsteuer_quartalsrate ? parseFloat(data.grundsteuer_quartalsrate) : null,
+                grundsteuer_vorjahr_betrag: data.grundsteuer_vorjahr_betrag ? parseFloat(data.grundsteuer_vorjahr_betrag) : null,
             });
+            
+            if (result?.id) {
+                setSavedPropertyTaxId(result.id);
+                setBookingPreviewOpen(true);
+            }
+        } catch (error) {
+            console.error('Error submitting property tax:', error);
+            toast.error('Fehler beim Speichern');
         }
     };
 
