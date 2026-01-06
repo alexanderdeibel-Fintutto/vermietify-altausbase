@@ -32,6 +32,7 @@ import ActivityLogViewer from '@/components/tasks/ActivityLogViewer';
 import PerformanceMonitor from '@/components/tasks/PerformanceMonitor';
 import SetupWizard from '@/components/tasks/SetupWizard';
 import TestingPanel from '@/components/tasks/TestingPanel';
+import { HelpButton } from '@/components/shared/HelpSystem';
 
 export default function Tasks() {
     const [formOpen, setFormOpen] = useState(false);
@@ -118,13 +119,16 @@ export default function Tasks() {
                     <h1 className="text-2xl font-bold text-slate-800">Aufgaben</h1>
                     <p className="text-slate-500">Verwalten Sie alle Tasks und Workflows</p>
                 </div>
-                <Button 
-                    onClick={handleAddNew}
-                    className="bg-emerald-600 hover:bg-emerald-700"
-                >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Neuer Task
-                </Button>
+                <div className="flex items-center gap-2">
+                    <HelpButton context="dashboard_overview" />
+                    <Button 
+                        onClick={handleAddNew}
+                        className="bg-emerald-600 hover:bg-emerald-700"
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Neuer Task
+                    </Button>
+                </div>
             </div>
 
             {/* Statistics */}
