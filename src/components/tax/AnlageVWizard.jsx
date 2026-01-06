@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, CheckCircle2, AlertTriangle, Info } from 'lucide-react';
 import { toast } from 'sonner';
+import AnlageVValidationResults from './AnlageVValidationResults';
 
 export default function AnlageVWizard({ open, onOpenChange, building, taxYear }) {
     const [step, setStep] = useState(1);
@@ -15,6 +16,9 @@ export default function AnlageVWizard({ open, onOpenChange, building, taxYear })
     const [einnahmen, setEinnahmen] = useState(null);
     const [werbungskosten, setWerbungskosten] = useState(null);
     const [validation, setValidation] = useState(null);
+    const [kritischeFehler, setKritischeFehler] = useState([]);
+    const [warnungen, setWarnungen] = useState([]);
+    const [hinweise, setHinweise] = useState([]);
     const queryClient = useQueryClient();
 
     const totalSteps = 5;
@@ -75,6 +79,9 @@ export default function AnlageVWizard({ open, onOpenChange, building, taxYear })
             });
 
             setValidation(response.data.validation);
+            setKritischeFehler(response.data.kritische_fehler || []);
+            setWarnungen(response.data.warnungen || []);
+            setHinweise(response.data.hinweise || []);
             return response.data.validation;
         } catch (error) {
             console.error('Validation error:', error);
@@ -291,28 +298,6 @@ export default function AnlageVWizard({ open, onOpenChange, building, taxYear })
                             </div>
                         ) : validation ? (
                             <div className="space-y-4">
-                                {/* Status Badge */}
-                                <div className="flex items-center gap-3">
-                                    {validation.status === 'valid' && (
-                                        <>
-                                            <CheckCircle2 className="w-8 h-8 text-emerald-600" />
-                                            <div>
-                                                <p className="font-semibold text-emerald-800">Validierung erfolgreich</p>
-                                                <p className="text-sm text-slate-600">Keine kritischen Fehler gefunden</p>
-                                            </div>
-                                        </>
-                                    )}
-                                    {validation.status === 'warning' && (
-                                        <>
-                                            <AlertTriangle className="w-8 h-8 text-yellow-600" />
-                                            <div>
-                                                <p className="font-semibold text-yellow-800">Warnungen vorhanden</p>
-                                                <p className="text-sm text-slate-600">Prüfen Sie die Hinweise</p>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-
                                 {/* Summary */}
                                 <div className="grid grid-cols-3 gap-4">
                                     <div className="p-4 bg-red-50 rounded-lg text-center">
@@ -328,6 +313,14 @@ export default function AnlageVWizard({ open, onOpenChange, building, taxYear })
                                         <p className="text-sm text-blue-800">Hinweise</p>
                                     </div>
                                 </div>
+
+                                {/* Detaillierte Ergebnisse */}
+                                <AnlageVValidationResults
+                                    validation={validation}
+                                    kritischeFehler={kritischeFehler}
+                                    warnungen={warnungen}
+                                    hinweise={hinweise}
+                                />
                             </div>
                         ) : (
                             <Button onClick={validateData} className="w-full">

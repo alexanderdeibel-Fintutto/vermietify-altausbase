@@ -12,14 +12,17 @@ import {
     CheckCircle2,
     AlertTriangle,
     Info,
-    Download
+    Download,
+    Layers
 } from 'lucide-react';
 import AnlageVWizard from '@/components/tax/AnlageVWizard';
+import InitializeTaxSystem from '@/components/tax/InitializeTaxSystem';
 
 export default function TaxForms() {
     const [wizardOpen, setWizardOpen] = useState(false);
     const [selectedBuilding, setSelectedBuilding] = useState(null);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear() - 1);
+    const [multiCreateLoading, setMultiCreateLoading] = useState(false);
 
     const { data: buildings = [] } = useQuery({
         queryKey: ['buildings'],
@@ -34,6 +37,32 @@ export default function TaxForms() {
     const handleCreateAnlageV = (building) => {
         setSelectedBuilding(building);
         setWizardOpen(true);
+    };
+
+    const handleCreateAllAnlagen = async () => {
+        if (buildings.length === 0) return;
+        
+        if (!confirm(`Anlage V für alle ${buildings.length} Objekte erstellen?`)) {
+            return;
+        }
+
+        setMultiCreateLoading(true);
+        try {
+            const response = await base44.functions.invoke('createMultipleAnlagenV', {
+                building_ids: buildings.map(b => b.id),
+                tax_year: selectedYear
+            });
+
+            if (response.data.success) {
+                alert(`${response.data.summary.successful} von ${response.data.summary.total} Anlagen erfolgreich erstellt`);
+                queryClient.invalidateQueries({ queryKey: ['anlageVSubmissions'] });
+            }
+        } catch (error) {
+            console.error('Multi create error:', error);
+            alert('Fehler beim Erstellen der Anlagen');
+        } finally {
+            setMultiCreateLoading(false);
+        }
     };
 
     const getStatusBadge = (status) => {
@@ -73,7 +102,9 @@ export default function TaxForms() {
                 </TabsList>
 
                 {/* Übersicht */}
-                <TabsContent value="overview" className="mt-6">
+                <TabsContent value="overview" className="mt-6 space-y-6">
+                    {/* Initialisierung */}
+                    <InitializeTaxSystem />
                     <div className="grid gap-4 md:grid-cols-3 mb-6">
                         <Card>
                             <CardContent className="p-6">
@@ -214,9 +245,28 @@ export default function TaxForms() {
                                         </select>
                                     </div>
 
-                                    <h3 className="font-semibold text-slate-800 mb-3">
-                                        Objekt auswählen
-                                    </h3>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="font-semibold text-slate-800">
+                                            Objekt auswählen
+                                        </h3>
+                                        <Button
+                                            variant="outline"
+                                            onClick={handleCreateAllAnlagen}
+                                            disabled={multiCreateLoading}
+                                        >
+                                            {multiCreateLoading ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                    Erstelle...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Layers className="w-4 h-4 mr-2" />
+                                                    Alle erstellen
+                                                </>
+                                            )}
+                                        </Button>
+                                    </div>
                                     <div className="grid gap-4">
                                         {buildings.map(building => (
                                             <div key={building.id} 
