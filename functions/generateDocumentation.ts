@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
                     break;
                 
                 case 'module_architecture':
-                    content_markdown = await generateModuleArchitectureDoc(allEntities);
+                    content_markdown = await generateModuleArchitectureDoc(allEntities, changes, versionNumber);
                     content_json = await generateModuleArchitectureJSON(allEntities);
                     break;
                 
@@ -336,23 +336,329 @@ async function generateDatabaseStructureDoc(entities, changes = [], versionNumbe
     return doc;
 }
 
-async function generateModuleArchitectureDoc(entities) {
-    let doc = '# Modul-Architektur\n\n';
+async function generateModuleArchitectureDoc(entities, changes = [], versionNumber = 1) {
+    const moduleCount = 10;
+    let doc = '# Modul-Architektur - Immobilienverwaltung\n\n';
     doc += '**Metadaten:**\n';
     doc += `- Generiert am: ${new Date().toLocaleString('de-DE')}\n`;
-    doc += '- Verwendungszweck: KI-Assistent Kontextinformation\n\n';
+    doc += `- Dokumentations-Version: ${versionNumber}\n`;
+    doc += `- Anzahl Module: ${moduleCount}\n`;
+    doc += `- Anzahl Änderungen seit letzter Version: ${changes.length}\n\n`;
+    doc += '**Verwendungszweck:**\n';
+    doc += 'Diese Dokumentation kann an KI-Assistenten wie Claude (Anthropic) übergeben werden,\n';
+    doc += 'um vollständiges Verständnis der App-Struktur zu ermöglichen.\n\n';
+    
+    if (changes.length > 0) {
+        doc += '**Änderungen seit letzter Version:**\n';
+        changes.forEach(change => {
+            doc += `- ${change.aenderung_beschreibung}`;
+            if (change.betroffene_entitaet) {
+                doc += ` (${change.betroffene_entitaet})`;
+            }
+            doc += '\n';
+        });
+        doc += '\n';
+    }
+    
+    doc += '**Wichtiger Hinweis:**\n';
+    doc += 'Diese Dokumentation wurde automatisch generiert. Manuelle Änderungen werden\n';
+    doc += 'bei erneuter Generierung überschrieben.\n\n';
     doc += '---\n\n';
+    
+    doc += '## Übersicht\n\n';
+    doc += 'Die Immobilienverwaltungs-App ist modular aufgebaut und besteht aus 10 Hauptmodulen,\n';
+    doc += 'die jeweils spezifische Aufgabenbereiche abdecken und eng miteinander verzahnt sind.\n\n';
+    
     doc += '## Hauptmodule\n\n';
-    doc += '### 1. Objektverwaltung\n';
-    doc += '- Building (Gebäude)\n- Unit (Wohneinheiten)\n- Meter (Zähler)\n\n';
-    doc += '### 2. Mieterverwaltung\n';
-    doc += '- Tenant (Mieter)\n- LeaseContract (Mietverträge)\n- Payment (Zahlungen)\n\n';
-    doc += '### 3. Finanzverwaltung\n';
-    doc += '- BankAccount (Bankkonten)\n- BankTransaction (Transaktionen)\n- GeneratedFinancialBooking (Generierte Buchungen)\n- Invoice (Rechnungen)\n\n';
-    doc += '### 4. Dokumentenverwaltung\n';
-    doc += '- Document (Dokumente)\n- Template (Vorlagen)\n- TextBlock (Textbausteine)\n- DocumentOriginal (Originale)\n\n';
-    doc += '### 5. Kommunikation\n';
-    doc += '- Email (E-Mails)\n- LetterXpressCredential (Postversand-Zugangsdaten)\n- LetterShipment (Briefsendungen)\n\n';
+    
+    doc += '### 1. Objektverwaltung\n\n';
+    doc += '**Hauptfunktion:** Verwaltung von Immobilien, Wohneinheiten und Zählern\n\n';
+    doc += '**Datenbank-Tabellen:**\n';
+    doc += '- Building (Gebäude-Stammdaten)\n';
+    doc += '- Unit (Wohneinheiten)\n';
+    doc += '- Meter (Zähler für Strom, Gas, Wasser)\n';
+    doc += '- Gebaeude (Erweiterte Gebäudestruktur)\n';
+    doc += '- PurchaseContract (Kaufverträge)\n\n';
+    doc += '**Abhängigkeiten von:**\n';
+    doc += '- Eigentümer-Modul (Owner, Shareholder)\n';
+    doc += '- Steuer-Modul (BuildingTaxLibrary)\n\n';
+    doc += '**Liefert Daten an:**\n';
+    doc += '- Mieterverwaltung (Unit → LeaseContract)\n';
+    doc += '- Finanzverwaltung (Building → GeneratedFinancialBooking)\n';
+    doc += '- Steuern (Building → PropertyTax, AnlageV)\n';
+    doc += '- Betriebskosten (Building → OperatingCostStatement)\n\n';
+    doc += '**Nutzergruppen:** Verwalter, Eigentümer\n\n';
+    doc += '**Haupt-Workflows:**\n';
+    doc += '- Neues Gebäude anlegen mit Stammdaten, Adresse und Eigentümerstruktur\n';
+    doc += '- Wohneinheiten erstellen und Gebäude zuordnen\n';
+    doc += '- Zähler erfassen und Wohneinheiten zuweisen\n';
+    doc += '- Kaufverträge dokumentieren und AfA-Berechnung starten\n\n';
+    
+    doc += '### 2. Mieterverwaltung\n\n';
+    doc += '**Hauptfunktion:** Verwaltung von Mietern, Mietverträgen und Mietforderungen\n\n';
+    doc += '**Datenbank-Tabellen:**\n';
+    doc += '- Tenant (Mieter-Stammdaten)\n';
+    doc += '- LeaseContract (Mietverträge)\n';
+    doc += '- Payment (Mietforderungen)\n';
+    doc += '- RentChange (Mieterhöhungen)\n\n';
+    doc += '**Abhängigkeiten von:**\n';
+    doc += '- Objektverwaltung (Unit)\n';
+    doc += '- Dokumentenverwaltung (Document, Template)\n\n';
+    doc += '**Liefert Daten an:**\n';
+    doc += '- Finanzverwaltung (Payment → BankTransaction Matching)\n';
+    doc += '- Betriebskosten (LeaseContract → Abrechnung)\n';
+    doc += '- Dokumentenverwaltung (Mietvertrag, Nebenkostenabrechnung)\n\n';
+    doc += '**Nutzergruppen:** Verwalter\n\n';
+    doc += '**Haupt-Workflows:**\n';
+    doc += '- Mieter anlegen mit Kontaktdaten\n';
+    doc += '- Mietvertrag erstellen und Wohneinheit zuordnen\n';
+    doc += '- Automatische Generierung monatlicher Mietforderungen\n';
+    doc += '- Mieterhöhung dokumentieren mit Versionierung\n';
+    doc += '- Mietverhältnis kündigen und Auszugstermin festlegen\n\n';
+    
+    doc += '### 3. Finanzverwaltung\n\n';
+    doc += '**Hauptfunktion:** Verwaltung von Finanzen, Buchungen, Zahlungen und Banking\n\n';
+    doc += '**Datenbank-Tabellen:**\n';
+    doc += '- BankAccount (Bankkonten)\n';
+    doc += '- BankTransaction (Banktransaktionen)\n';
+    doc += '- GeneratedFinancialBooking (Geplante Buchungen)\n';
+    doc += '- Invoice (Rechnungen)\n';
+    doc += '- FinancialItem (Finanzposten)\n';
+    doc += '- PaymentTransactionLink (Zuordnung Zahlung ↔ Transaktion)\n';
+    doc += '- FinancialItemTransactionLink (Zuordnung Item ↔ Transaktion)\n\n';
+    doc += '**Abhängigkeiten von:**\n';
+    doc += '- Objektverwaltung (Building)\n';
+    doc += '- Mieterverwaltung (LeaseContract, Payment)\n';
+    doc += '- Verträge & Kosten (PropertyTax, Insurance, Financing, Supplier)\n';
+    doc += '- Steuer-Modul (CostCategory, BuildingTaxLibrary)\n\n';
+    doc += '**Liefert Daten an:**\n';
+    doc += '- Steuern (Buchungen → Anlage V, EÜR)\n';
+    doc += '- Betriebskosten (Buchungen → Abrechnung)\n\n';
+    doc += '**Nutzergruppen:** Verwalter, Steuerberater\n\n';
+    doc += '**Haupt-Workflows:**\n';
+    doc += '- Bankkonto verbinden via FinAPI\n';
+    doc += '- Transaktionen automatisch importieren\n';
+    doc += '- Buchungen aus Verträgen generieren (Miete, Grundsteuer, etc.)\n';
+    doc += '- Transaktionen mit Buchungen matchen (AI-gestützt)\n';
+    doc += '- Rechnungen erfassen und Kosten kategorisieren\n';
+    doc += '- Zahlungsströme analysieren und Reports erstellen\n\n';
+    
+    doc += '### 4. Dokumentenverwaltung\n\n';
+    doc += '**Hauptfunktion:** Erstellung und Verwaltung von Dokumenten mit Template-System\n\n';
+    doc += '**Datenbank-Tabellen:**\n';
+    doc += '- Document (Dokumente)\n';
+    doc += '- Template (Dokumentvorlagen)\n';
+    doc += '- TextBlock (Textbausteine)\n';
+    doc += '- DocumentOriginal (Gescannte Originale)\n\n';
+    doc += '**Abhängigkeiten von:**\n';
+    doc += '- Objektverwaltung (Building, Unit)\n';
+    doc += '- Mieterverwaltung (Tenant, LeaseContract)\n';
+    doc += '- Kommunikation (LetterXpress für Versand)\n\n';
+    doc += '**Liefert Daten an:**\n';
+    doc += '- Kommunikation (PDF für Postversand)\n';
+    doc += '- Aufgaben & Workflows (Dokument → Task)\n\n';
+    doc += '**Nutzergruppen:** Verwalter\n\n';
+    doc += '**Haupt-Workflows:**\n';
+    doc += '- Template erstellen mit Platzhaltern und Styling\n';
+    doc += '- Textbausteine für Wiederverwendung definieren\n';
+    doc += '- Dokument erstellen (Wizard): Template + Datenquellen + Textbausteine\n';
+    doc += '- PDF generieren mit Puppeteer\n';
+    doc += '- Dokument per Post versenden via LetterXpress\n';
+    doc += '- Original-Dokumente hochladen und verlinken\n\n';
+    
+    doc += '### 5. Kommunikation\n\n';
+    doc += '**Hauptfunktion:** Postversand, E-Mail-Integration und Korrespondenzverwaltung\n\n';
+    doc += '**Datenbank-Tabellen:**\n';
+    doc += '- Email (E-Mails)\n';
+    doc += '- LetterXpressCredential (API-Zugangsdaten)\n';
+    doc += '- LetterShipment (Briefsendungen)\n';
+    doc += '- IMAPAccount (E-Mail-Konten)\n\n';
+    doc += '**Abhängigkeiten von:**\n';
+    doc += '- Dokumentenverwaltung (Document → PDF)\n';
+    doc += '- Externe Integration: LetterXpress API\n\n';
+    doc += '**Liefert Daten an:**\n';
+    doc += '- Aufgaben & Workflows (E-Mail → Task-Erstellung)\n';
+    doc += '- Dokumentenverwaltung (Versandstatus-Update)\n\n';
+    doc += '**Nutzergruppen:** Verwalter\n\n';
+    doc += '**Haupt-Workflows:**\n';
+    doc += '- LetterXpress-Account konfigurieren\n';
+    doc += '- Dokument per Post versenden (Normal, R1, R2)\n';
+    doc += '- Tracking-Codes automatisch abrufen\n';
+    doc += '- Postausgangsbuch führen\n';
+    doc += '- E-Mail-Konten verbinden via IMAP\n';
+    doc += '- E-Mails automatisch analysieren und Tasks erstellen\n\n';
+    
+    doc += '### 6. Steuern\n\n';
+    doc += '**Hauptfunktion:** Steuerliche Verwaltung, Anlage V, AfA-Berechnung\n\n';
+    doc += '**Datenbank-Tabellen:**\n';
+    doc += '- PropertyTax (Grundsteuerbescheide)\n';
+    doc += '- TaxForm (Steuerformulare)\n';
+    doc += '- TaxFormField (Formularfelder)\n';
+    doc += '- AnlageVSubmission (Anlage V Abgaben)\n';
+    doc += '- BuildingTaxLibrary (Steuerliche Bibliothek)\n';
+    doc += '- CostCategory (Kostenkategorien)\n';
+    doc += '- AfASchedule (AfA-Pläne)\n\n';
+    doc += '**Abhängigkeiten von:**\n';
+    doc += '- Objektverwaltung (Building, PurchaseContract)\n';
+    doc += '- Finanzverwaltung (GeneratedFinancialBooking, Invoice)\n';
+    doc += '- Mieterverwaltung (LeaseContract → Einnahmen)\n\n';
+    doc += '**Liefert Daten an:**\n';
+    doc += '- Finanzverwaltung (Kostenkategorien für Buchungen)\n';
+    doc += '- Externe Integration: ELSTER (geplant)\n\n';
+    doc += '**Nutzergruppen:** Verwalter, Steuerberater, Eigentümer\n\n';
+    doc += '**Haupt-Workflows:**\n';
+    doc += '- Steuerliche Bibliothek initialisieren (SKR03/SKR04)\n';
+    doc += '- Grundsteuerbescheid erfassen\n';
+    doc += '- AfA-Plan aus Kaufvertrag generieren\n';
+    doc += '- Anlage V erstellen für ein Gebäude\n';
+    doc += '- Einnahmen und Werbungskosten automatisch berechnen\n';
+    doc += '- Anlage V als PDF exportieren\n\n';
+    
+    doc += '### 7. Verträge & Kosten\n\n';
+    doc += '**Hauptfunktion:** Verwaltung von Versicherungen, Krediten und Versorgern\n\n';
+    doc += '**Datenbank-Tabellen:**\n';
+    doc += '- Insurance (Versicherungen)\n';
+    doc += '- Financing (Kredite/Finanzierungen)\n';
+    doc += '- Supplier (Versorger)\n\n';
+    doc += '**Abhängigkeiten von:**\n';
+    doc += '- Objektverwaltung (Building)\n';
+    doc += '- Steuer-Modul (CostCategory)\n\n';
+    doc += '**Liefert Daten an:**\n';
+    doc += '- Finanzverwaltung (Buchungen generieren)\n';
+    doc += '- Betriebskosten (Umlegbare Kosten)\n\n';
+    doc += '**Nutzergruppen:** Verwalter\n\n';
+    doc += '**Haupt-Workflows:**\n';
+    doc += '- Versicherung erfassen (Gebäude, Haftpflicht, etc.)\n';
+    doc += '- Kredit/Finanzierung dokumentieren\n';
+    doc += '- Versorger anlegen (Strom, Gas, Wasser, etc.)\n';
+    doc += '- Automatische Buchungsgenerierung aus Verträgen\n';
+    doc += '- Verträge aktualisieren mit Versionierung\n\n';
+    
+    doc += '### 8. Aufgaben & Workflows\n\n';
+    doc += '**Hauptfunktion:** Task-Management und Workflow-Automatisierung\n\n';
+    doc += '**Datenbank-Tabellen:**\n';
+    doc += '- Task (Aufgaben)\n';
+    doc += '- TaskStatus (Status-Definitionen)\n';
+    doc += '- TaskPriority (Prioritäten)\n';
+    doc += '- Workflow (Workflows)\n';
+    doc += '- WorkflowStep (Workflow-Schritte)\n';
+    doc += '- Automation (Automatisierungen)\n\n';
+    doc += '**Abhängigkeiten von:**\n';
+    doc += '- Dokumentenverwaltung (Document → Task)\n';
+    doc += '- Kommunikation (Email → Task-Analyse)\n';
+    doc += '- Alle Module (Tasks können überall erstellt werden)\n\n';
+    doc += '**Liefert Daten an:**\n';
+    doc += '- Benachrichtigungen (Task → Notification)\n';
+    doc += '- Dokumentenverwaltung (Task → Dokument erstellen)\n\n';
+    doc += '**Nutzergruppen:** Verwalter\n\n';
+    doc += '**Haupt-Workflows:**\n';
+    doc += '- Task manuell erstellen\n';
+    doc += '- Task automatisch aus E-Mail generieren (AI)\n';
+    doc += '- Workflow definieren (z.B. Mieterhöhung-Prozess)\n';
+    doc += '- Automatisierung einrichten (Trigger → Aktion)\n';
+    doc += '- Tasks filtern, sortieren und verwalten\n';
+    doc += '- Kanban-Board und Kalender-Ansicht nutzen\n\n';
+    
+    doc += '### 9. Eigentümer\n\n';
+    doc += '**Hauptfunktion:** Verwaltung von Eigentümern und Gesellschafterstrukturen\n\n';
+    doc += '**Datenbank-Tabellen:**\n';
+    doc += '- Owner (Eigentümer)\n';
+    doc += '- Shareholder (Gesellschafter)\n';
+    doc += '- OwnerRelationship (Eigentümer-Beziehungen)\n\n';
+    doc += '**Abhängigkeiten von:**\n';
+    doc += '- Objektverwaltung (Building)\n\n';
+    doc += '**Liefert Daten an:**\n';
+    doc += '- Steuern (Eigentümer → Anlage V)\n';
+    doc += '- Finanzverwaltung (Eigentümeranteile für Aufteilung)\n\n';
+    doc += '**Nutzergruppen:** Verwalter\n\n';
+    doc += '**Haupt-Workflows:**\n';
+    doc += '- Einzeleigentümer anlegen\n';
+    doc += '- Gesellschaft (GbR, GmbH) erstellen\n';
+    doc += '- Gesellschafter mit Anteilen definieren\n';
+    doc += '- Eigentümer zu Gebäuden zuordnen\n';
+    doc += '- Eigentümerwechsel dokumentieren\n\n';
+    
+    doc += '### 10. Betriebskosten\n\n';
+    doc += '**Hauptfunktion:** Erstellung von Betriebskostenabrechnungen\n\n';
+    doc += '**Datenbank-Tabellen:**\n';
+    doc += '- OperatingCostStatement (Abrechnungen)\n';
+    doc += '- OperatingCostStatementItem (Abrechnungspositionen)\n\n';
+    doc += '**Abhängigkeiten von:**\n';
+    doc += '- Objektverwaltung (Building, Unit)\n';
+    doc += '- Mieterverwaltung (LeaseContract)\n';
+    doc += '- Finanzverwaltung (GeneratedFinancialBooking)\n';
+    doc += '- Verträge & Kosten (Supplier)\n\n';
+    doc += '**Liefert Daten an:**\n';
+    doc += '- Dokumentenverwaltung (Abrechnung als PDF)\n';
+    doc += '- Mieterverwaltung (Nachzahlung/Guthaben → Payment)\n\n';
+    doc += '**Nutzergruppen:** Verwalter\n\n';
+    doc += '**Haupt-Workflows:**\n';
+    doc += '- Abrechnungszeitraum und Gebäude wählen\n';
+    doc += '- Mietverträge für Abrechnung auswählen\n';
+    doc += '- Kosten erfassen oder aus Buchungen importieren\n';
+    doc += '- Verteilerschlüssel festlegen (Fläche, Personen, etc.)\n';
+    doc += '- Abrechnung automatisch berechnen\n';
+    doc += '- Vorschau prüfen und finalisieren\n';
+    doc += '- PDF-Dokumente für jeden Mieter generieren\n\n';
+    
+    doc += '## Modul-Abhängigkeiten Diagramm\n\n';
+    doc += '```\n';
+    doc += '┌─────────────────┐\n';
+    doc += '│  Eigentümer     │\n';
+    doc += '└────────┬────────┘\n';
+    doc += '         │\n';
+    doc += '         ↓\n';
+    doc += '┌─────────────────┐      ┌─────────────────┐\n';
+    doc += '│ Objektverwaltung│──────│  Verträge &     │\n';
+    doc += '│                 │      │  Kosten         │\n';
+    doc += '└────────┬────────┘      └────────┬────────┘\n';
+    doc += '         │                        │\n';
+    doc += '         ↓                        │\n';
+    doc += '┌─────────────────┐               │\n';
+    doc += '│ Mieterverwaltung│               │\n';
+    doc += '└────────┬────────┘               │\n';
+    doc += '         │                        │\n';
+    doc += '         ↓                        ↓\n';
+    doc += '┌──────────────────────────────────────┐\n';
+    doc += '│        Finanzverwaltung              │\n';
+    doc += '└────────┬─────────────────────────────┘\n';
+    doc += '         │\n';
+    doc += '    ┌────┴────┐\n';
+    doc += '    ↓         ↓\n';
+    doc += '┌─────────┐ ┌──────────────┐\n';
+    doc += '│ Steuern │ │ Betriebskost.│\n';
+    doc += '└─────────┘ └──────────────┘\n';
+    doc += '\n';
+    doc += '┌─────────────────┐      ┌─────────────────┐\n';
+    doc += '│ Dokumentenverw. │◄─────│  Kommunikation  │\n';
+    doc += '└─────────────────┘      └─────────────────┘\n';
+    doc += '\n';
+    doc += '┌─────────────────────────────────────────┐\n';
+    doc += '│    Aufgaben & Workflows (übergreifend)  │\n';
+    doc += '└─────────────────────────────────────────┘\n';
+    doc += '```\n\n';
+    
+    doc += '## Datenfluss-Beispiele\n\n';
+    doc += '### Beispiel 1: Neuer Mietvertrag\n';
+    doc += '1. **Objektverwaltung:** Unit wird ausgewählt\n';
+    doc += '2. **Mieterverwaltung:** LeaseContract wird erstellt\n';
+    doc += '3. **Finanzverwaltung:** Monatliche Mietforderungen (Payment) werden automatisch generiert\n';
+    doc += '4. **Steuern:** Mieteinnahmen fließen in Anlage V ein\n\n';
+    
+    doc += '### Beispiel 2: Grundsteuerbescheid erfassen\n';
+    doc += '1. **Objektverwaltung:** Building wird ausgewählt\n';
+    doc += '2. **Verträge & Kosten:** PropertyTax wird erfasst\n';
+    doc += '3. **Finanzverwaltung:** Quartalsweise Buchungen werden generiert\n';
+    doc += '4. **Steuern:** Grundsteuer wird als Werbungskosten in Anlage V übernommen\n\n';
+    
+    doc += '### Beispiel 3: Betriebskostenabrechnung\n';
+    doc += '1. **Betriebskosten:** OperatingCostStatement wird erstellt\n';
+    doc += '2. **Objektverwaltung:** Building und Units werden ausgewählt\n';
+    doc += '3. **Mieterverwaltung:** LeaseContracts definieren Abrechnungszeitraum\n';
+    doc += '4. **Finanzverwaltung:** Kosten aus GeneratedFinancialBooking werden importiert\n';
+    doc += '5. **Dokumentenverwaltung:** PDF wird generiert\n';
+    doc += '6. **Kommunikation:** Abrechnung wird per Post versendet\n\n';
+    
     return doc;
 }
 
