@@ -31,14 +31,20 @@ export default function InsuranceForm({ open, onOpenChange, onSubmit, initialDat
     const [savedInsuranceId, setSavedInsuranceId] = React.useState(null);
     
     const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
-        defaultValues: initialData || { building_id: buildingId, zahlungsweise: 'jährlich' }
+        defaultValues: { building_id: buildingId, zahlungsweise: 'jährlich', versicherungstyp: '' }
     });
 
     React.useEffect(() => {
-        if (initialData) {
-            reset(initialData);
-        } else {
-            reset({ building_id: buildingId, zahlungsweise: 'jährlich' });
+        if (open) {
+            if (initialData) {
+                reset({
+                    ...initialData,
+                    versicherungstyp: initialData.versicherungstyp || '',
+                    zahlungsweise: initialData.zahlungsweise || 'jährlich'
+                });
+            } else {
+                reset({ building_id: buildingId, zahlungsweise: 'jährlich', versicherungstyp: '' });
+            }
         }
     }, [initialData, reset, buildingId, open]);
 
