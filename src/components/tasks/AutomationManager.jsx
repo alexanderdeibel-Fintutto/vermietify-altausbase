@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Edit, Trash2, Zap, Clock, FileText } from 'lucide-react';
+import { toast } from 'sonner';
 import AutomationForm from './AutomationForm';
+import { useActivityLogger } from './useActivityLogger';
 
 export default function AutomationManager() {
     const [formOpen, setFormOpen] = useState(false);
@@ -20,32 +22,61 @@ export default function AutomationManager() {
     });
 
     const createMutation = useMutation({
-        mutationFn: (data) => base44.entities.Automation.create(data),
+        mutationFn: async (data) => {
+            const result = await base44.entities.Automation.create(data);
+            await logActivity('automation_erstellt', 'automation', result.id, null, data);
+            await base44.functions.invoke('createNotification', {
+                title: 'Automatisierung erstellt',
+                message: `"${data.name}" wurde erfolgreich erstellt`,
+                type: 'success',
+                entity_type: 'automation',
+                entity_id: result.id
+            });
+            return result;
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['automations'] });
             setFormOpen(false);
+            toast.success('Automatisierung erstellt');
         }
     });
 
     const updateMutation = useMutation({
-        mutationFn: ({ id, data }) => base44.entities.Automation.update(id, data),
+        mutationFn: async ({ id, data }) => {
+            const old = automations.find(a => a.id === id);
+            const result = await base44.entities.Automation.update(id, data);
+            await logActivity('automation_aktualisiert', 'automation', id, old, data);
+            return result;
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['automations'] });
             setFormOpen(false);
             setEditingAutomation(null);
+            toast.success('Automatisierung aktualisiert');
         }
     });
 
     const deleteMutation = useMutation({
-        mutationFn: (id) => base44.entities.Automation.delete(id),
+        mutationFn: async (id) => {
+            await logActivity('automation_gelöscht', 'automation', id);
+            return base44.entities.Automation.delete(id);
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['automations'] });
+            toast.success('Automatisierung gelöscht');
         }
     });
 
     const toggleMutation = useMutation({
-        mutationFn: ({ id, isActive }) => 
-            base44.entities.Automation.update(id, { is_active: !isActive }),
+        mutationFn: async ({ id, isActive }) => {
+            const result = await base44.entities.Automation.update(id, { is_active: !isActive });
+            await logActivity(
+                isActive ? 'automation_deaktiviert' : 'automation_aktiviert',
+                'automation',
+                id
+            );
+            return result;
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['automations'] });
         }
