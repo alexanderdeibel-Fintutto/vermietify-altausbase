@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
                 let currentDate = new Date(startDate);
                 let rateNumber = 1;
                 
-                while (currentDate <= futureDate) {
+                while (currentDate <= endDate) {
                     bookingSuggestions.push({
                         due_date: currentDate.toISOString().split('T')[0],
                         amount: amountPerPayment,
