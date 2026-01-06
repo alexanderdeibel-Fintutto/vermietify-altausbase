@@ -31,7 +31,9 @@ import {
     History,
     Copy,
     BarChart3,
-    FileCheck
+    FileCheck,
+    Package,
+    Star
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -140,6 +142,7 @@ export default function DeveloperDocumentation() {
     const [showScheduleDialog, setShowScheduleDialog] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [showVersionHistory, setShowVersionHistory] = useState(null);
+    const [showExportPresets, setShowExportPresets] = useState(false);
     const queryClient = useQueryClient();
 
     const { data: documentations = [], isLoading } = useQuery({
@@ -664,6 +667,14 @@ export default function DeveloperDocumentation() {
                     <Clock className="w-5 h-5 mr-2" />
                     Automatische Updates
                 </Button>
+                <Button 
+                    variant="outline" 
+                    size="lg"
+                    onClick={() => setShowExportPresets(true)}
+                >
+                    <Package className="w-5 h-5 mr-2" />
+                    Export-Presets
+                </Button>
             </div>
 
             {/* Progress Bar */}
@@ -924,6 +935,162 @@ export default function DeveloperDocumentation() {
                             Hinweis: Ältere Versionen werden derzeit nicht gespeichert. 
                             Diese Funktion zeigt die Versionsnummer und Metadaten der aktuellen Version.
                         </p>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Export Presets Dialog */}
+            <Dialog open={showExportPresets} onOpenChange={setShowExportPresets}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Export-Presets</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-600">
+                            Wählen Sie ein vordefiniertes Export-Set für verschiedene Anwendungsfälle.
+                        </p>
+                        
+                        <div className="grid gap-3">
+                            {/* KI-Assistant Full Package */}
+                            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={async () => {
+                                const types = ['executive_summary', 'database_structure', 'module_architecture', 'business_logic', 'external_integrations'];
+                                const docs = documentations.filter(d => types.includes(d.documentation_type) && d.content_markdown);
+                                if (docs.length === 0) {
+                                    toast.error('Bitte generieren Sie zuerst die benötigten Dokumentationen');
+                                    return;
+                                }
+                                const combined = docs.map(d => `# ${d.title}\n\n${d.content_markdown}`).join('\n\n---\n\n');
+                                const blob = new Blob([combined], { type: 'text/markdown' });
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `ai-assistant-full-${Date.now()}.md`;
+                                document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                                a.remove();
+                                toast.success('KI-Assistant Paket exportiert');
+                                setShowExportPresets(false);
+                            }}>
+                                <CardContent className="p-4">
+                                    <div className="flex items-start gap-3">
+                                        <Star className="w-6 h-6 text-yellow-600 mt-1" />
+                                        <div className="flex-1">
+                                            <p className="font-semibold text-slate-900">KI-Assistant (Komplett)</p>
+                                            <p className="text-sm text-slate-600 mt-1">
+                                                Executive Summary, Datenbankstruktur, Module, Geschäftslogik und Integrationen
+                                            </p>
+                                            <Badge variant="outline" className="mt-2">5 Dokumentationen</Badge>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Developer Onboarding */}
+                            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={async () => {
+                                const types = ['executive_summary', 'module_architecture', 'user_workflows', 'error_handling'];
+                                const docs = documentations.filter(d => types.includes(d.documentation_type) && d.content_markdown);
+                                if (docs.length === 0) {
+                                    toast.error('Bitte generieren Sie zuerst die benötigten Dokumentationen');
+                                    return;
+                                }
+                                const combined = docs.map(d => `# ${d.title}\n\n${d.content_markdown}`).join('\n\n---\n\n');
+                                const blob = new Blob([combined], { type: 'text/markdown' });
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `developer-onboarding-${Date.now()}.md`;
+                                document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                                a.remove();
+                                toast.success('Developer-Onboarding Paket exportiert');
+                                setShowExportPresets(false);
+                            }}>
+                                <CardContent className="p-4">
+                                    <div className="flex items-start gap-3">
+                                        <Code className="w-6 h-6 text-blue-600 mt-1" />
+                                        <div className="flex-1">
+                                            <p className="font-semibold text-slate-900">Developer Onboarding</p>
+                                            <p className="text-sm text-slate-600 mt-1">
+                                                Übersicht, Architektur, Workflows und Fehlerbehandlung für neue Entwickler
+                                            </p>
+                                            <Badge variant="outline" className="mt-2">4 Dokumentationen</Badge>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Technical Deep Dive */}
+                            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={async () => {
+                                const types = ['database_structure', 'business_logic', 'data_migration', 'permissions_roles'];
+                                const docs = documentations.filter(d => types.includes(d.documentation_type) && d.content_markdown);
+                                if (docs.length === 0) {
+                                    toast.error('Bitte generieren Sie zuerst die benötigten Dokumentationen');
+                                    return;
+                                }
+                                const combined = docs.map(d => `# ${d.title}\n\n${d.content_markdown}`).join('\n\n---\n\n');
+                                const blob = new Blob([combined], { type: 'text/markdown' });
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `technical-deep-dive-${Date.now()}.md`;
+                                document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                                a.remove();
+                                toast.success('Technical Deep-Dive exportiert');
+                                setShowExportPresets(false);
+                            }}>
+                                <CardContent className="p-4">
+                                    <div className="flex items-start gap-3">
+                                        <Database className="w-6 h-6 text-purple-600 mt-1" />
+                                        <div className="flex-1">
+                                            <p className="font-semibold text-slate-900">Technical Deep-Dive</p>
+                                            <p className="text-sm text-slate-600 mt-1">
+                                                Datenbank, Geschäftslogik, Migration und Berechtigungen für technische Analysen
+                                            </p>
+                                            <Badge variant="outline" className="mt-2">4 Dokumentationen</Badge>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* User Documentation */}
+                            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={async () => {
+                                const types = ['user_workflows', 'document_generation', 'permissions_roles'];
+                                const docs = documentations.filter(d => types.includes(d.documentation_type) && d.content_markdown);
+                                if (docs.length === 0) {
+                                    toast.error('Bitte generieren Sie zuerst die benötigten Dokumentationen');
+                                    return;
+                                }
+                                const combined = docs.map(d => `# ${d.title}\n\n${d.content_markdown}`).join('\n\n---\n\n');
+                                const blob = new Blob([combined], { type: 'text/markdown' });
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `user-documentation-${Date.now()}.md`;
+                                document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                                a.remove();
+                                toast.success('User-Documentation exportiert');
+                                setShowExportPresets(false);
+                            }}>
+                                <CardContent className="p-4">
+                                    <div className="flex items-start gap-3">
+                                        <BookOpen className="w-6 h-6 text-emerald-600 mt-1" />
+                                        <div className="flex-1">
+                                            <p className="font-semibold text-slate-900">User-Dokumentation</p>
+                                            <p className="text-sm text-slate-600 mt-1">
+                                                Workflows, Dokumentengenerierung und Berechtigungen für Endnutzer
+                                            </p>
+                                            <Badge variant="outline" className="mt-2">3 Dokumentationen</Badge>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
                     </div>
                 </DialogContent>
             </Dialog>
