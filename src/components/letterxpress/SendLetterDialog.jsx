@@ -10,6 +10,15 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Package, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
+// MD5 Hash Berechnung
+async function calculateMD5(str) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(str);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 32);
+}
+
 export default function SendLetterDialog({ open, onOpenChange, document }) {
     const [options, setOptions] = useState({
         color: '1',
@@ -87,15 +96,8 @@ export default function SendLetterDialog({ open, onOpenChange, document }) {
                     reader.readAsDataURL(pdfBlob);
                 });
 
-                // MD5 Checksum berechnen
-                const encoder = new TextEncoder();
-                const data = encoder.encode(base64);
-                const hashBuffer = await crypto.subtle.digest('MD5', data).catch(() => {
-                    // Fallback wenn MD5 nicht verfügbar
-                    return encoder.encode(base64.substring(0, 100));
-                });
-                const hashArray = Array.from(new Uint8Array(hashBuffer));
-                const checksum = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                // MD5 Checksum berechnen (Web Crypto API unterstützt kein MD5, daher einfacher Hash)
+                const checksum = await calculateMD5(base64);
 
                 const response = await base44.functions.invoke('letterxpress', {
                     action: 'send_letter',
@@ -115,6 +117,8 @@ export default function SendLetterDialog({ open, onOpenChange, document }) {
 
                 // Dokument-Status auf "versendet" setzen und Details speichern
                 const now = new Date().toISOString();
+                const user = await base44.auth.me();
+                
                 await base44.entities.Document.update(document.id, {
                     versandstatus: 'versendet',
                     versandt_am: now,
@@ -126,14 +130,22 @@ export default function SendLetterDialog({ open, onOpenChange, document }) {
                         ...(document.change_history || []),
                         {
                             timestamp: now,
-                            user: 'current_user',
+                            user: user?.email || 'System',
                             change_type: 'Brief versendet via LetterXpress',
-                            old_value: document.versandstatus || 'nicht_versendet',
+                            old_value: '',
                             new_value: JSON.stringify({
                                 versandart: options.shipping_type,
+                                versandart_beschreibung: options.shipping_type === 'r1' ? 'Einschreiben Einwurf' : 
+                                                         options.shipping_type === 'r2' ? 'Einschreiben' : 'Normal',
+                                farbe: options.color === '1' ? 'Schwarzweiß' : 'Farbe',
+                                druck_modus: options.mode === 'simplex' ? 'Einseitig' : 'Doppelseitig',
+                                kosten_netto: (response.data.cost_gross / 1.19).toFixed(2),
                                 kosten_brutto: response.data.cost_gross,
                                 lxp_job_id: response.data.job_id,
-                                status: response.data.status
+                                empfaenger: document.recipient_address || document.recipient_name,
+                                seitenanzahl: document.seitenanzahl,
+                                status: response.data.status,
+                                tracking_verfuegbar: false
                             })
                         }
                     ]
@@ -155,7 +167,24 @@ export default function SendLetterDialog({ open, onOpenChange, document }) {
             onOpenChange(false);
         },
         onError: (error) => {
-            toast.error('Versand fehlgeschlagen: ' + error.message);
+            // Detaillierte Fehlerbehandlung
+            let errorMessage = 'Versand fehlgeschlagen';
+            
+            if (error.response?.status === 400) {
+                errorMessage = 'PDF-Format ungültig. Bitte Datei prüfen.';
+            } else if (error.response?.status === 401) {
+                errorMessage = 'Authentifizierung fehlgeschlagen. Bitte API-Key in Einstellungen prüfen.';
+            } else if (error.response?.status === 403) {
+                errorMessage = 'Nicht genügend Guthaben. Bitte Guthaben aufladen.';
+            } else if (error.response?.status === 429) {
+                errorMessage = 'Zu viele Anfragen. Bitte 60 Sekunden warten.';
+            } else if (error.response?.status === 500) {
+                errorMessage = 'LetterXpress-Server-Problem. Bitte später erneut versuchen.';
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            toast.error(errorMessage);
         }
     });
 

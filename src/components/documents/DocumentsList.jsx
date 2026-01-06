@@ -130,32 +130,46 @@ export default function DocumentsList() {
                                         </div>
                                         
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-3">
-                                            {doc.building_id && (
-                                                <div>
-                                                    <p className="text-slate-500">Gebäude</p>
-                                                    <p className="font-medium text-slate-800">{getBuildingName(doc.building_id)}</p>
-                                                </div>
-                                            )}
-                                            {doc.tenant_id && (
-                                                <div>
-                                                    <p className="text-slate-500">Mieter</p>
-                                                    <p className="font-medium text-slate-800">{getTenantName(doc.tenant_id)}</p>
-                                                </div>
-                                            )}
-                                            <div>
-                                                <p className="text-slate-500">Erstellt</p>
-                                                <p className="font-medium text-slate-800">
-                                                    {format(new Date(doc.created_date), 'dd.MM.yyyy', { locale: de })}
-                                                </p>
-                                            </div>
-                                            {doc.reminder_date && (
-                                                <div>
-                                                    <p className="text-slate-500">Erinnerung</p>
-                                                    <p className="font-medium text-slate-800">
-                                                        {format(new Date(doc.reminder_date), 'dd.MM.yyyy', { locale: de })}
-                                                    </p>
-                                                </div>
-                                            )}
+                                           {doc.building_id && (
+                                               <div>
+                                                   <p className="text-slate-500">Gebäude</p>
+                                                   <p className="font-medium text-slate-800">{getBuildingName(doc.building_id)}</p>
+                                               </div>
+                                           )}
+                                           {doc.tenant_id && (
+                                               <div>
+                                                   <p className="text-slate-500">Mieter</p>
+                                                   <p className="font-medium text-slate-800">{getTenantName(doc.tenant_id)}</p>
+                                               </div>
+                                           )}
+                                           <div>
+                                               <p className="text-slate-500">Erstellt</p>
+                                               <p className="font-medium text-slate-800">
+                                                   {format(new Date(doc.created_date), 'dd.MM.yyyy', { locale: de })}
+                                               </p>
+                                           </div>
+                                           {doc.versandstatus === 'versendet' && doc.versandt_am && (
+                                               <div>
+                                                   <p className="text-slate-500">Versendet</p>
+                                                   <p className="font-medium text-emerald-600">
+                                                       {format(new Date(doc.versandt_am), 'dd.MM.yyyy HH:mm', { locale: de })}
+                                                   </p>
+                                                   {doc.versandart && (
+                                                       <p className="text-xs text-slate-500">
+                                                           {doc.versandart === 'r1' ? 'Einschreiben Einwurf' : 
+                                                            doc.versandart === 'r2' ? 'Einschreiben' : 'Normal'}
+                                                       </p>
+                                                   )}
+                                               </div>
+                                           )}
+                                           {doc.reminder_date && !doc.versandt_am && (
+                                               <div>
+                                                   <p className="text-slate-500">Erinnerung</p>
+                                                   <p className="font-medium text-slate-800">
+                                                       {format(new Date(doc.reminder_date), 'dd.MM.yyyy', { locale: de })}
+                                                   </p>
+                                               </div>
+                                           )}
                                         </div>
                                     </div>
 
