@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
                 const effectiveStart = startDate > yearStartDate ? startDate : yearStartDate;
                 const effectiveEnd = endDate < yearEndDate ? endDate : yearEndDate;
                 
-                const months = this.calculateMonthsBetween(effectiveStart, effectiveEnd);
+                const months = calculateMonthsBetween(effectiveStart, effectiveEnd);
                 sollMiete += (contract.rent_cold || 0) * months;
             }
         }
