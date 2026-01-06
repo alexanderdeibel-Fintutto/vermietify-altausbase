@@ -197,22 +197,54 @@ async function generateDatabaseStructureDoc(entities) {
     let doc = '# Datenbankstruktur - Immobilienverwaltung\n\n';
     doc += '## Übersicht\n\n';
     doc += `Diese Dokumentation beschreibt die vollständige Datenbankstruktur mit ${Object.keys(entities).length} Entitäten.\n\n`;
-    doc += '## Entitäten\n\n';
+    
+    // Gruppierung der Entitäten
+    const groups = {
+        'Objektverwaltung': ['Building', 'Unit', 'Meter', 'Gebaeude'],
+        'Mieterverwaltung': ['Tenant', 'LeaseContract', 'Payment', 'RentChange'],
+        'Finanzverwaltung': ['BankAccount', 'BankTransaction', 'GeneratedFinancialBooking', 'Invoice', 'FinancialItem', 'FinancialItemTransactionLink'],
+        'Dokumentenverwaltung': ['Document', 'Template', 'TextBlock', 'DocumentOriginal'],
+        'Kommunikation': ['Email', 'LetterXpressCredential', 'LetterShipment', 'IMAPAccount'],
+        'Steuern': ['PropertyTax', 'TaxForm', 'TaxFormField', 'AnlageVSubmission', 'BuildingTaxLibrary', 'CostCategory'],
+        'Verträge & Kosten': ['Insurance', 'Financing', 'Supplier', 'PurchaseContract'],
+        'Aufgaben & Workflows': ['Task', 'TaskStatus', 'TaskPriority', 'Workflow', 'WorkflowStep', 'Automation'],
+        'Eigentümer': ['Owner', 'Shareholder', 'OwnerRelationship'],
+        'Betriebskosten': ['OperatingCostStatement', 'OperatingCostStatementItem'],
+        'Sonstiges': ['Notification', 'ActivityLog', 'Recipient']
+    };
 
-    for (const [name, schema] of Object.entries(entities)) {
-        doc += `### ${name}\n\n`;
-        doc += '**Felder:**\n\n';
-        
-        if (schema?.properties) {
-            for (const [fieldName, field] of Object.entries(schema.properties)) {
-                const required = schema.required?.includes(fieldName) ? '(erforderlich)' : '(optional)';
-                const type = field.type || 'unknown';
-                const description = field.description || '';
-                doc += `- **${fieldName}** ${required}: ${type} - ${description}\n`;
+    for (const [groupName, entityNames] of Object.entries(groups)) {
+        const groupEntities = entityNames.filter(name => entities[name]);
+        if (groupEntities.length === 0) continue;
+
+        doc += `## ${groupName}\n\n`;
+
+        for (const name of groupEntities) {
+            const schema = entities[name];
+            doc += `### ${name}\n\n`;
+            
+            if (schema?.properties) {
+                doc += '| Feld | Typ | Pflicht | Beschreibung |\n';
+                doc += '|------|-----|---------|-------------|\n';
+                
+                for (const [fieldName, field] of Object.entries(schema.properties)) {
+                    const required = schema.required?.includes(fieldName) ? '✓' : '';
+                    const type = field.type || 'unknown';
+                    const enumValues = field.enum ? ` (${field.enum.join(', ')})` : '';
+                    const description = (field.description || '').replace(/\n/g, ' ');
+                    doc += `| ${fieldName} | ${type}${enumValues} | ${required} | ${description} |\n`;
+                }
             }
+            doc += '\n';
         }
-        doc += '\n';
     }
+
+    doc += '## Built-in Felder\n\n';
+    doc += 'Alle Entitäten haben automatisch folgende Felder:\n\n';
+    doc += '- **id**: Eindeutige ID\n';
+    doc += '- **created_date**: Erstellungszeitpunkt\n';
+    doc += '- **updated_date**: Letzter Update-Zeitpunkt\n';
+    doc += '- **created_by**: E-Mail des Erstellers\n\n';
 
     return doc;
 }
@@ -271,13 +303,77 @@ async function generateMasterDataJSON(entities) {
 
 async function generateBusinessLogicDoc(entities) {
     let doc = '# Geschäftslogik & Validierungen\n\n';
-    doc += '## Automatische Buchungsgenerierung\n\n';
-    doc += 'Das System generiert automatisch Buchungen aus:\n';
-    doc += '- Grundsteuerbescheiden (quartalsweise)\n';
-    doc += '- Versicherungen (gemäß Zahlungsrhythmus)\n';
-    doc += '- Krediten (monatliche Raten)\n';
-    doc += '- Versorgern (monatlich/quartalsweise)\n';
-    doc += '- Mietverträgen (monatliche Mieteinnahmen)\n\n';
+    
+    doc += '## 1. Automatische Buchungsgenerierung\n\n';
+    doc += '### Grundsteuerbescheid\n';
+    doc += '- **Quelle**: PropertyTax Entity\n';
+    doc += '- **Frequenz**: Quartalsweise (Q1-Q4)\n';
+    doc += '- **Logik**: `grundsteuer_quartalsrate` wird auf die jeweiligen Fälligkeitstermine gebucht\n';
+    doc += '- **Kostenkategorie**: Grundsteuer\n\n';
+
+    doc += '### Versicherungen\n';
+    doc += '- **Quelle**: Insurance Entity\n';
+    doc += '- **Frequenz**: Gemäß `payment_rhythm` (Monatlich, Vierteljährlich, Halbjährlich, Jährlich)\n';
+    doc += '- **Logik**: `premium_amount` wird entsprechend aufgeteilt\n';
+    doc += '- **Kostenkategorie**: Versicherung\n\n';
+
+    doc += '### Kredite/Finanzierungen\n';
+    doc += '- **Quelle**: Financing Entity\n';
+    doc += '- **Frequenz**: Monatlich\n';
+    doc += '- **Logik**: `monthly_rate` wird auf das jeweilige Monatsende gebucht\n';
+    doc += '- **Kostenkategorie**: Finanzierung\n\n';
+
+    doc += '### Versorger\n';
+    doc += '- **Quelle**: Supplier Entity\n';
+    doc += '- **Frequenz**: Gemäß `payment_rhythm`\n';
+    doc += '- **Logik**: `monthly_amount` wird entsprechend verteilt\n';
+    doc += '- **Kostenkategorie**: Je nach Versorgertyp\n\n';
+
+    doc += '### Mietverträge\n';
+    doc += '- **Quelle**: LeaseContract Entity\n';
+    doc += '- **Frequenz**: Monatlich\n';
+    doc += '- **Logik**: `total_rent` wird auf den `rent_due_day` gebucht\n';
+    doc += '- **Kostenkategorie**: Mieteinnahme\n\n';
+
+    doc += '## 2. Versionierung & Historisierung\n\n';
+    doc += '### Entitäten mit Versionierung\n';
+    doc += 'Folgende Entitäten unterstützen vollständige Versionierung:\n\n';
+    doc += '- PropertyTax (version_number, predecessor_id, is_current_valid)\n';
+    doc += '- Insurance (version_number, predecessor_id, is_current_valid)\n';
+    doc += '- Financing (version_number, predecessor_id, is_current_valid)\n';
+    doc += '- Supplier (version_number, predecessor_id, is_current_valid)\n';
+    doc += '- LeaseContract (version_number, predecessor_id, is_current_valid)\n\n';
+
+    doc += '### Logik\n';
+    doc += '1. Bei Änderung wird `is_current_valid` auf false gesetzt\n';
+    doc += '2. Neue Version wird erstellt mit `predecessor_id` = alte ID\n';
+    doc += '3. `version_number` wird inkrementiert\n';
+    doc += '4. Bestehende Buchungen bleiben unverändert\n';
+    doc += '5. Neue Buchungen werden aus neuer Version generiert\n\n';
+
+    doc += '## 3. Validierungen\n\n';
+    doc += '### Mietverträge\n';
+    doc += '- `start_date` muss vor `end_date` liegen (falls befristet)\n';
+    doc += '- `base_rent` + `utilities` + `heating` = `total_rent`\n';
+    doc += '- `deposit` maximal 3 Monatsmieten\n';
+    doc += '- `rent_due_day` zwischen 1 und 31\n\n';
+
+    doc += '### Buchungen\n';
+    doc += '- `paid_amount` darf nicht größer als `amount` sein\n';
+    doc += '- `outstanding_amount` = `amount` - `paid_amount`\n';
+    doc += '- Status-Übergänge: Geplant → Gebucht → TeilweiseBezahlt → Bezahlt\n\n';
+
+    doc += '## 4. Berechnungen\n\n';
+    doc += '### AfA (Abschreibung)\n';
+    doc += '- Lineare Abschreibung über Nutzungsdauer\n';
+    doc += '- Monatsgenaue Berechnung ab Kaufdatum\n';
+    doc += '- Separate Abschreibung für Gebäude und Anschaffungsnebenkosten\n\n';
+
+    doc += '### Betriebskostenabrechnung\n';
+    doc += '- Umlegbare Kosten werden nach Verteilerschlüssel aufgeteilt\n';
+    doc += '- Direkte Kosten werden 1:1 zugeordnet\n';
+    doc += '- Vorauszahlungen werden mit tatsächlichen Kosten verrechnet\n\n';
+
     return doc;
 }
 
@@ -304,11 +400,90 @@ async function generateDocumentGenerationDoc(base44) {
 
 async function generateUserWorkflowsDoc() {
     let doc = '# User-Workflows\n\n';
-    doc += '## Workflow: Neues Gebäude anlegen\n';
+    
+    doc += '## 1. Neues Gebäude anlegen\n\n';
+    doc += '**Ziel**: Erfassung eines neuen Immobilienobjekts\n\n';
+    doc += '**Schritte**:\n';
     doc += '1. Navigation zu "Objekte"\n';
     doc += '2. Klick auf "Gebäude hinzufügen"\n';
-    doc += '3. Eingabe der Gebäudedaten\n';
-    doc += '4. Speichern\n\n';
+    doc += '3. Eingabe der Stammdaten (Name, Adresse, PLZ, Stadt)\n';
+    doc += '4. Optional: Kaufdaten erfassen\n';
+    doc += '5. Optional: Eigentümer zuordnen\n';
+    doc += '6. Speichern\n';
+    doc += '7. System erstellt automatisch Gebäude-ID\n\n';
+
+    doc += '## 2. Mietvertrag erstellen\n\n';
+    doc += '**Ziel**: Erfassung eines neuen Mietverhältnisses\n\n';
+    doc += '**Voraussetzung**: Gebäude und Wohneinheit existieren\n\n';
+    doc += '**Schritte**:\n';
+    doc += '1. Navigation zu "Mieter"\n';
+    doc += '2. Klick auf "Neuer Vertrag"\n';
+    doc += '3. Wohneinheit auswählen\n';
+    doc += '4. Mieter auswählen oder neu anlegen\n';
+    doc += '5. Vertragsdaten eingeben:\n';
+    doc += '   - Mietbeginn\n';
+    doc += '   - Befristet oder unbefristet\n';
+    doc += '   - Kaltmiete, Nebenkosten, Heizkosten\n';
+    doc += '   - Kaution\n';
+    doc += '   - Fälligkeitstag\n';
+    doc += '6. Speichern\n';
+    doc += '7. System generiert automatisch monatliche Mietbuchungen\n\n';
+
+    doc += '## 3. Dokument erstellen und versenden\n\n';
+    doc += '**Ziel**: Schriftliche Kommunikation mit Mieter\n\n';
+    doc += '**Schritte**:\n';
+    doc += '1. Navigation zu "Dokumente"\n';
+    doc += '2. Klick auf "Neues Dokument"\n';
+    doc += '3. Template auswählen (z.B. Mieterhöhung, Nebenkostenabrechnung)\n';
+    doc += '4. Datenquellen verknüpfen (Gebäude, Mieter, Vertrag)\n';
+    doc += '5. Textbausteine hinzufügen\n';
+    doc += '6. Vorschau prüfen\n';
+    doc += '7. Dokument erstellen\n';
+    doc += '8. PDF wird automatisch generiert\n';
+    doc += '9. Optional: Per Post versenden via LetterXpress\n';
+    doc += '10. System tracked Versandstatus und Zustellinformationen\n\n';
+
+    doc += '## 4. Buchungen generieren\n\n';
+    doc += '**Ziel**: Automatische Finanzplanung erstellen\n\n';
+    doc += '**Schritte**:\n';
+    doc += '1. Stammdaten erfassen (Grundsteuer, Versicherung, Kredit, etc.)\n';
+    doc += '2. Klick auf "Buchungen generieren"\n';
+    doc += '3. System analysiert Daten und erstellt Buchungsvorschläge\n';
+    doc += '4. Vorschau prüfen\n';
+    doc += '5. Buchungen bestätigen\n';
+    doc += '6. System erstellt alle Buchungen für das Jahr\n';
+    doc += '7. Buchungen erscheinen in "Generierte Buchungen"\n\n';
+
+    doc += '## 5. Bankkonten synchronisieren\n\n';
+    doc += '**Ziel**: Automatischer Import von Kontobewegungen\n\n';
+    doc += '**Schritte**:\n';
+    doc += '1. Navigation zu "Bank/Kasse"\n';
+    doc += '2. Klick auf "Konto verbinden"\n';
+    doc += '3. FinAPI-Autorisierung durchführen\n';
+    doc += '4. Bank auswählen und anmelden\n';
+    doc += '5. Konten importieren\n';
+    doc += '6. Automatische Synchronisierung startet\n';
+    doc += '7. Transaktionen werden kategorisiert\n';
+    doc += '8. Matching mit generierten Buchungen\n\n';
+
+    doc += '## 6. Betriebskostenabrechnung erstellen\n\n';
+    doc += '**Ziel**: Jahresabrechnung für Mieter\n\n';
+    doc += '**Schritte**:\n';
+    doc += '1. Navigation zu "Betriebskosten"\n';
+    doc += '2. Klick auf "Neue Abrechnung"\n';
+    doc += '3. Abrechnungsjahr und Gebäude wählen\n';
+    doc += '4. Mietverträge auswählen\n';
+    doc += '5. Kosten erfassen oder aus Buchungen importieren\n';
+    doc += '6. Verteilerschlüssel festlegen\n';
+    doc += '7. System berechnet automatisch:\n';
+    doc += '   - Gesamtkosten\n';
+    doc += '   - Anteil pro Mieter\n';
+    doc += '   - Geleistete Vorauszahlungen\n';
+    doc += '   - Nach-/Rückzahlung\n';
+    doc += '8. Vorschau und Plausibilitätsprüfung\n';
+    doc += '9. Abrechnung finalisieren\n';
+    doc += '10. Optional: Dokumente automatisch generieren\n\n';
+
     return doc;
 }
 
