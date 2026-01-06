@@ -598,10 +598,52 @@ export default function DeveloperDocumentation() {
                     variant="outline" 
                     size="lg"
                     onClick={async () => {
+                        const outdated = documentations.filter(d => 
+                            d.status === 'completed' && 
+                            d.last_generated_at && 
+                            new Date(d.last_generated_at) < new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+                        );
+
+                        if (outdated.length === 0) {
+                            toast.info('Alle Dokumentationen sind aktuell');
+                            return;
+                        }
+
+                        setGeneratingAll(true);
+                        setProgress(0);
+                        let successCount = 0;
+
+                        for (let i = 0; i < outdated.length; i++) {
+                            const doc = outdated[i];
+                            setCurrentGenerating(doc.title);
+                            setProgress(((i + 1) / outdated.length) * 100);
+
+                            try {
+                                await generateMutation.mutateAsync(doc.documentation_type);
+                                successCount++;
+                            } catch (error) {
+                                console.error(`Failed to update ${doc.documentation_type}:`, error);
+                            }
+                        }
+
+                        setGeneratingAll(false);
+                        setCurrentGenerating(null);
+                        setProgress(0);
+                        toast.success(`${successCount} veraltete Dokumentationen aktualisiert`);
+                    }}
+                    disabled={generatingAll}
+                >
+                    <RefreshCw className="w-5 h-5 mr-2" />
+                    Veraltete aktualisieren
+                </Button>
+                <Button 
+                    variant="outline" 
+                    size="lg"
+                    onClick={async () => {
                         if (!confirm('Wirklich alle Dokumentationen löschen? Dies kann nicht rückgängig gemacht werden.')) {
                             return;
                         }
-                        
+
                         try {
                             for (const doc of documentations) {
                                 await base44.entities.GeneratedDocumentation.delete(doc.id);
