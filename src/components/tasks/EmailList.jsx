@@ -5,15 +5,27 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Mail, Search, CheckCircle, Clock, Sparkles, Plus } from 'lucide-react';
+import { Mail, Search, CheckCircle, Clock, Sparkles, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function EmailList({ onCreateTask }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [analyzingEmail, setAnalyzingEmail] = useState(null);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [emailToDelete, setEmailToDelete] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: emails = [], isLoading } = useQuery({
@@ -21,11 +33,20 @@ export default function EmailList({ onCreateTask }) {
         queryFn: () => base44.entities.Email.list('-received_date')
     });
 
+    const { data: accounts = [] } = useQuery({
+        queryKey: ['imapAccounts'],
+        queryFn: () => base44.entities.IMAPAccount.list()
+    });
+
     const analyzeMutation = useMutation({
-        mutationFn: async (emailId) => {
-            setAnalyzingEmail(emailId);
-            const response = await base44.functions.invoke('analyzeEmailForTask', { email_id: emailId });
-            return { emailId, suggestion: response.data };
+        mutationFn: async (email) => {
+            const account = accounts.find(a => a.id === email.imap_account_id);
+            if (!account?.ai_analysis_enabled) {
+                throw new Error('KI-Analyse ist für dieses Konto nicht aktiviert');
+            }
+            setAnalyzingEmail(email.id);
+            const response = await base44.functions.invoke('analyzeEmailForTask', { email_id: email.id });
+            return { emailId: email.id, suggestion: response.data };
         },
         onSuccess: ({ emailId, suggestion }) => {
             queryClient.invalidateQueries({ queryKey: ['emails'] });
@@ -35,6 +56,30 @@ export default function EmailList({ onCreateTask }) {
         onError: (error) => {
             toast.error('Analyse fehlgeschlagen: ' + error.message);
             setAnalyzingEmail(null);
+        }
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: (emailId) => base44.entities.Email.delete(emailId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['emails'] });
+            toast.success('Email gelöscht');
+            setDeleteDialogOpen(false);
+            setEmailToDelete(null);
+        }
+    });
+
+    const deleteAllProcessedMutation = useMutation({
+        mutationFn: async () => {
+            const processedEmails = emails.filter(e => e.is_processed);
+            for (const email of processedEmails) {
+                await base44.entities.Email.delete(email.id);
+            }
+            return processedEmails.length;
+        },
+        onSuccess: (count) => {
+            queryClient.invalidateQueries({ queryKey: ['emails'] });
+            toast.success(`${count} verarbeitete Emails gelöscht`);
         }
     });
 
@@ -71,7 +116,7 @@ export default function EmailList({ onCreateTask }) {
     });
 
     const handleAnalyze = (email) => {
-        analyzeMutation.mutate(email.id);
+        analyzeMutation.mutate(email);
     };
 
     const handleCreateTask = (email) => {
@@ -90,6 +135,8 @@ export default function EmailList({ onCreateTask }) {
         return <div className="text-center py-8 text-slate-500">Lade Emails...</div>;
     }
 
+    const hasProcessedEmails = emails.some(e => e.is_processed);
+
     return (
         <div className="space-y-4">
             <Card>
@@ -104,16 +151,34 @@ export default function EmailList({ onCreateTask }) {
                                 className="pl-10"
                             />
                         </div>
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                        >
-                            <option value="all">Alle Emails</option>
-                            <option value="unprocessed">Unbearbeitet</option>
-                            <option value="processed">Verarbeitet</option>
-                            <option value="has_task">Mit Task</option>
-                        </select>
+                        <div className="flex gap-2">
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="flex-1 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            >
+                                <option value="all">Alle Emails</option>
+                                <option value="unprocessed">Unbearbeitet</option>
+                                <option value="processed">Verarbeitet</option>
+                                <option value="has_task">Mit Task</option>
+                            </select>
+                            {hasProcessedEmails && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        if (confirm('Alle verarbeiteten Emails löschen?')) {
+                                            deleteAllProcessedMutation.mutate();
+                                        }
+                                    }}
+                                    disabled={deleteAllProcessedMutation.isPending}
+                                    className="text-red-600 hover:text-red-700"
+                                >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Verarbeitete löschen
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -182,26 +247,39 @@ export default function EmailList({ onCreateTask }) {
                                         )}
 
                                         <div className="flex gap-2">
-                                            {!email.ai_suggested_task && !email.has_task && (
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => handleAnalyze(email)}
-                                                    disabled={analyzingEmail === email.id}
-                                                >
-                                                    {analyzingEmail === email.id ? (
-                                                        <>
-                                                            <Clock className="w-4 h-4 mr-2 animate-spin" />
-                                                            Analysiere...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Sparkles className="w-4 h-4 mr-2" />
-                                                            KI-Analyse
-                                                        </>
-                                                    )}
-                                                </Button>
-                                            )}
+                                            {!email.ai_suggested_task && !email.has_task && (() => {
+                                                const account = accounts.find(a => a.id === email.imap_account_id);
+                                                return account?.ai_analysis_enabled ? (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleAnalyze(email)}
+                                                        disabled={analyzingEmail === email.id}
+                                                    >
+                                                        {analyzingEmail === email.id ? (
+                                                            <>
+                                                                <Clock className="w-4 h-4 mr-2 animate-spin" />
+                                                                Analysiere...
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Sparkles className="w-4 h-4 mr-2" />
+                                                                KI-Analyse
+                                                            </>
+                                                        )}
+                                                    </Button>
+                                                ) : (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        disabled
+                                                        title="KI-Analyse ist für dieses Konto nicht aktiviert"
+                                                    >
+                                                        <AlertTriangle className="w-4 h-4 mr-2" />
+                                                        KI deaktiviert
+                                                    </Button>
+                                                );
+                                            })()}
                                             {!email.has_task && (
                                                 <Button
                                                     size="sm"
@@ -213,6 +291,17 @@ export default function EmailList({ onCreateTask }) {
                                                     Task erstellen
                                                 </Button>
                                             )}
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => {
+                                                    setEmailToDelete(email);
+                                                    setDeleteDialogOpen(true);
+                                                }}
+                                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>

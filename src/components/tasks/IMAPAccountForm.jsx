@@ -126,6 +126,57 @@ export default function IMAPAccountForm({ open, onOpenChange, onSubmit, initialD
                         />
                     </div>
 
+                    <div className="border-t border-slate-200 pt-4 mt-4">
+                        <h3 className="font-medium text-slate-900 mb-3">Datenschutz-Einstellungen</h3>
+                        
+                        <div className="space-y-3">
+                            <div className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    id="ai_analysis_enabled"
+                                    {...register('ai_analysis_enabled')}
+                                    className="rounded border-slate-300"
+                                />
+                                <Label htmlFor="ai_analysis_enabled" className="font-normal cursor-pointer">
+                                    KI-Analyse für Task-Vorschläge aktivieren (Opt-in)
+                                </Label>
+                            </div>
+
+                            <div className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    id="auto_delete_processed"
+                                    {...register('auto_delete_processed')}
+                                    className="rounded border-slate-300"
+                                />
+                                <Label htmlFor="auto_delete_processed" className="font-normal cursor-pointer">
+                                    Verarbeitete Emails automatisch löschen
+                                </Label>
+                            </div>
+
+                            <div>
+                                <Label htmlFor="delete_after_days">Emails löschen nach (Tage)</Label>
+                                <Input
+                                    id="delete_after_days"
+                                    type="number"
+                                    {...register('delete_after_days')}
+                                    placeholder="30"
+                                    min="1"
+                                />
+                                <p className="text-xs text-slate-500 mt-1">
+                                    Verarbeitete Emails werden nach dieser Zeit automatisch gelöscht
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p className="text-xs text-blue-800">
+                                <strong>Datenschutz:</strong> Ohne KI-Analyse werden Emails nur gespeichert, 
+                                aber nicht automatisch verarbeitet. Sie können manuell Tasks erstellen.
+                            </p>
+                        </div>
+                    </div>
+
                     <div className="flex justify-end gap-3 pt-4 border-t">
                         <Button
                             type="button"
