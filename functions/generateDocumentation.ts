@@ -32,6 +32,27 @@ Deno.serve(async (req) => {
             previousVersionId = existing[0].id;
         }
 
+        // Hole unverarbeitete Changes für Metadaten
+        const bereichMapping = {
+            'database_structure': 'database',
+            'module_architecture': 'modules',
+            'master_data': 'masterdata',
+            'business_logic': 'businesslogic',
+            'external_integrations': 'integrations',
+            'document_generation': 'documents',
+            'user_workflows': 'workflows',
+            'permissions_roles': 'permissions',
+            'error_handling': 'errors',
+            'data_migration': 'migration',
+            'executive_summary': 'database'
+        };
+
+        const bereich = bereichMapping[documentation_type];
+        const changes = bereich ? await base44.entities.DocumentationChange.filter({
+            bereich,
+            doku_aktualisiert: false
+        }) : [];
+
         // Status auf "generating" setzen
         if (docId) {
             await base44.entities.GeneratedDocumentation.update(docId, {
@@ -58,7 +79,7 @@ Deno.serve(async (req) => {
             
             switch (documentation_type) {
                 case 'database_structure':
-                    content_markdown = await generateDatabaseStructureDoc(allEntities);
+                    content_markdown = await generateDatabaseStructureDoc(allEntities, changes, versionNumber);
                     content_json = { entities: allEntities };
                     break;
                 
@@ -130,8 +151,18 @@ Deno.serve(async (req) => {
                 status: 'completed',
                 error_message: null,
                 version_number: versionNumber,
-                previous_version_id: previousVersionId
+                previous_version_id: previousVersionId,
+                changes_summary: changes.length > 0 ? changes.map(c => c.aenderung_beschreibung).join('; ') : null
             });
+
+            // Markiere Changes als verarbeitet
+            if (bereich && changes.length > 0) {
+                for (const change of changes) {
+                    await base44.entities.DocumentationChange.update(change.id, {
+                        doku_aktualisiert: true
+                    });
+                }
+            }
 
             return Response.json({
                 success: true,
@@ -203,12 +234,33 @@ function getDescriptionForType(type) {
     return descriptions[type] || '';
 }
 
-async function generateDatabaseStructureDoc(entities) {
+async function generateDatabaseStructureDoc(entities, changes = [], versionNumber = 1) {
     let doc = '# Datenbankstruktur - Immobilienverwaltung\n\n';
     doc += '**Metadaten:**\n';
     doc += `- Generiert am: ${new Date().toLocaleString('de-DE')}\n`;
-    doc += '- Dateityp: Datenbank-Dokumentation\n';
-    doc += '- Verwendungszweck: Diese Dokumentation kann an KI-Assistenten wie Claude übergeben werden\n\n';
+    doc += `- Dokumentations-Version: ${versionNumber}\n`;
+    doc += `- Anzahl Tabellen: ${Object.keys(entities).length}\n`;
+    doc += `- Anzahl Änderungen seit letzter Version: ${changes.length}\n`;
+    doc += '- Dateityp: Datenbank-Dokumentation\n\n';
+    doc += '**Verwendungszweck:**\n';
+    doc += 'Diese Dokumentation kann an KI-Assistenten wie Claude (Anthropic) übergeben werden,\n';
+    doc += 'um vollständiges Verständnis der App-Struktur zu ermöglichen.\n\n';
+    
+    if (changes.length > 0) {
+        doc += '**Änderungen seit letzter Version:**\n';
+        changes.forEach(change => {
+            doc += `- ${change.aenderung_beschreibung}`;
+            if (change.betroffene_entitaet) {
+                doc += ` (${change.betroffene_entitaet})`;
+            }
+            doc += '\n';
+        });
+        doc += '\n';
+    }
+    
+    doc += '**Wichtiger Hinweis:**\n';
+    doc += 'Diese Dokumentation wurde automatisch generiert. Manuelle Änderungen werden\n';
+    doc += 'bei erneuter Generierung überschrieben.\n\n';
     doc += '---\n\n';
     doc += '## Übersicht\n\n';
     doc += `Diese Dokumentation beschreibt die vollständige Datenbankstruktur mit ${Object.keys(entities).length} Entitäten.\n\n`;
@@ -237,19 +289,39 @@ async function generateDatabaseStructureDoc(entities) {
         for (const name of groupEntities) {
             const schema = entities[name];
             doc += `### ${name}\n\n`;
-            
+
             if (schema?.properties) {
-                doc += '| Feld | Typ | Pflicht | Beschreibung |\n';
-                doc += '|------|-----|---------|-------------|\n';
-                
+                doc += '| Feldname | Datentyp | Pflichtfeld | Standardwert | Beschreibung |\n';
+                doc += '|----------|----------|-------------|--------------|-------------|\n';
+
                 for (const [fieldName, field] of Object.entries(schema.properties)) {
-                    const required = schema.required?.includes(fieldName) ? '✓' : '';
+                    const required = schema.required?.includes(fieldName) ? 'Ja' : 'Nein';
                     const type = field.type || 'unknown';
                     const enumValues = field.enum ? ` (${field.enum.join(', ')})` : '';
+                    const defaultValue = field.default !== undefined ? String(field.default) : '-';
                     const description = (field.description || '').replace(/\n/g, ' ');
-                    doc += `| ${fieldName} | ${type}${enumValues} | ${required} | ${description} |\n`;
+                    doc += `| ${fieldName} | ${type}${enumValues} | ${required} | ${defaultValue} | ${description} |\n`;
                 }
             }
+
+            // Beziehungen dokumentieren
+            const relationships = [];
+            if (schema?.properties) {
+                for (const [fieldName, field] of Object.entries(schema.properties)) {
+                    if (fieldName.endsWith('_id') && fieldName !== 'id') {
+                        const relatedEntity = fieldName.slice(0, -3).split('_').map(w => 
+                            w.charAt(0).toUpperCase() + w.slice(1)
+                        ).join('');
+                        relationships.push(`- **${fieldName}**: Referenz zu ${relatedEntity} (n:1)`);
+                    }
+                }
+            }
+
+            if (relationships.length > 0) {
+                doc += '\n**Beziehungen:**\n';
+                doc += relationships.join('\n') + '\n';
+            }
+
             doc += '\n';
         }
     }
