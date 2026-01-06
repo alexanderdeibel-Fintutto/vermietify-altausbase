@@ -5,25 +5,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Loader2 } from 'lucide-react';
 
 export default function WorkflowForm({ open, onOpenChange, onSubmit, initialData, isLoading }) {
-    const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
+    const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
         defaultValues: initialData || {
-            is_default: false,
-            is_active: true
+            is_active: true,
+            is_default: false
         }
     });
 
     useEffect(() => {
         if (open) {
-            reset(initialData || { is_default: false, is_active: true });
+            reset(initialData || {
+                is_active: true,
+                is_default: false
+            });
         }
     }, [open, initialData, reset]);
 
-    const isDefault = watch('is_default');
     const isActive = watch('is_active');
+    const isDefault = watch('is_default');
+
+    const handleFormSubmit = (data) => {
+        onSubmit(data);
+    };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -34,13 +41,13 @@ export default function WorkflowForm({ open, onOpenChange, onSubmit, initialData
                     </DialogTitle>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
+                <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 mt-4">
                     <div>
-                        <Label htmlFor="name">Name *</Label>
+                        <Label htmlFor="name">Workflow-Name *</Label>
                         <Input
                             id="name"
                             {...register('name', { required: true })}
-                            placeholder="z.B. Standard Mietvertrag"
+                            placeholder="z.B. Mahnung Prozess"
                             className={errors.name ? 'border-red-500' : ''}
                         />
                     </div>
@@ -50,7 +57,7 @@ export default function WorkflowForm({ open, onOpenChange, onSubmit, initialData
                         <Textarea
                             id="description"
                             {...register('description')}
-                            placeholder="Workflow-Beschreibung..."
+                            placeholder="Was macht dieser Workflow?"
                             rows={3}
                         />
                     </div>
@@ -60,41 +67,42 @@ export default function WorkflowForm({ open, onOpenChange, onSubmit, initialData
                         <Input
                             id="document_type"
                             {...register('document_type')}
-                            placeholder="z.B. Mietvertrag, Mahnung, Kündigung"
+                            placeholder="z.B. Mahnung, Kündigung"
+                        />
+                        <p className="text-xs text-slate-500 mt-1">
+                            Optional: Zugehöriger Dokumenttyp
+                        </p>
+                    </div>
+
+                    <div className="flex items-center justify-between py-2 border-t">
+                        <div className="space-y-1">
+                            <Label htmlFor="is_active">Workflow aktiv</Label>
+                            <p className="text-xs text-slate-500">
+                                Nur aktive Workflows können ausgeführt werden
+                            </p>
+                        </div>
+                        <Switch
+                            id="is_active"
+                            checked={isActive}
+                            onCheckedChange={(checked) => setValue('is_active', checked)}
                         />
                     </div>
 
-                    <div className="space-y-3">
-                        <div className="flex items-center space-x-2">
-                            <Checkbox
-                                id="is_default"
-                                checked={isDefault}
-                                onCheckedChange={(checked) => setValue('is_default', checked)}
-                            />
-                            <label
-                                htmlFor="is_default"
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                                Standard-Workflow für diesen Dokumenttyp
-                            </label>
+                    <div className="flex items-center justify-between py-2 border-t">
+                        <div className="space-y-1">
+                            <Label htmlFor="is_default">Standard-Workflow</Label>
+                            <p className="text-xs text-slate-500">
+                                Wird automatisch bei Erstellung vorgeschlagen
+                            </p>
                         </div>
-
-                        <div className="flex items-center space-x-2">
-                            <Checkbox
-                                id="is_active"
-                                checked={isActive}
-                                onCheckedChange={(checked) => setValue('is_active', checked)}
-                            />
-                            <label
-                                htmlFor="is_active"
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                                Workflow aktiv
-                            </label>
-                        </div>
+                        <Switch
+                            id="is_default"
+                            checked={isDefault}
+                            onCheckedChange={(checked) => setValue('is_default', checked)}
+                        />
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-4">
+                    <div className="flex justify-end gap-3 pt-4 border-t">
                         <Button
                             type="button"
                             variant="outline"

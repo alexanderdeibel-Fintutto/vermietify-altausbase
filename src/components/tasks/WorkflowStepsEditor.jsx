@@ -1,40 +1,54 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, GripVertical, Loader2 } from 'lucide-react';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { 
+    Plus, 
+    Edit, 
+    Trash2, 
+    GripVertical,
+    FileText,
+    Mail,
+    CheckCircle,
+    RefreshCw
+} from 'lucide-react';
+import { toast } from 'sonner';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 
-export default function WorkflowStepsEditor({ open, onOpenChange, workflow }) {
+export default function WorkflowStepsEditor({ workflowId, workflowName }) {
+    const [formOpen, setFormOpen] = useState(false);
+    const [editingStep, setEditingStep] = useState(null);
     const queryClient = useQueryClient();
-    const [localSteps, setLocalSteps] = useState([]);
 
     const { data: steps = [], isLoading } = useQuery({
-        queryKey: ['workflowSteps', workflow?.id],
+        queryKey: ['workflowSteps', workflowId],
         queryFn: async () => {
-            if (!workflow?.id) return [];
-            return await base44.entities.WorkflowStep.filter({ workflow_id: workflow.id });
+            const allSteps = await base44.entities.WorkflowStep.filter({ 
+                workflow_id: workflowId 
+            });
+            return allSteps.sort((a, b) => a.step_order - b.step_order);
         },
-        enabled: !!workflow?.id
+        enabled: !!workflowId
     });
-
-    useEffect(() => {
-        if (steps.length > 0) {
-            setLocalSteps([...steps].sort((a, b) => a.step_order - b.step_order));
-        } else if (workflow) {
-            setLocalSteps([]);
-        }
-    }, [steps, workflow]);
 
     const createMutation = useMutation({
         mutationFn: (data) => base44.entities.WorkflowStep.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['workflowSteps'] });
+            setFormOpen(false);
+            setEditingStep(null);
+            toast.success('Schritt erstellt');
         }
     });
 
@@ -42,6 +56,9 @@ export default function WorkflowStepsEditor({ open, onOpenChange, workflow }) {
         mutationFn: ({ id, data }) => base44.entities.WorkflowStep.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['workflowSteps'] });
+            setFormOpen(false);
+            setEditingStep(null);
+            toast.success('Schritt aktualisiert');
         }
     });
 
@@ -49,219 +66,270 @@ export default function WorkflowStepsEditor({ open, onOpenChange, workflow }) {
         mutationFn: (id) => base44.entities.WorkflowStep.delete(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['workflowSteps'] });
+            toast.success('Schritt gelöscht');
         }
     });
 
-    const handleAddStep = () => {
-        const newStep = {
-            workflow_id: workflow.id,
-            step_order: localSteps.length + 1,
-            step_name: '',
-            action_type: 'create_document',
-            action_config: {},
-            next_step_delay_days: 0,
-            is_automated: false,
-            isNew: true
+    const getActionIcon = (actionType) => {
+        switch (actionType) {
+            case 'create_document': return FileText;
+            case 'send_email': return Mail;
+            case 'create_task': return CheckCircle;
+            case 'update_status': return RefreshCw;
+            default: return FileText;
+        }
+    };
+
+    const getActionLabel = (actionType) => {
+        const labels = {
+            'create_document': 'Dokument erstellen',
+            'send_email': 'Email senden',
+            'create_task': 'Task erstellen',
+            'update_status': 'Status aktualisieren'
         };
-        setLocalSteps([...localSteps, newStep]);
+        return labels[actionType] || actionType;
     };
 
-    const handleUpdateStep = (index, field, value) => {
-        const updated = [...localSteps];
-        updated[index] = { ...updated[index], [field]: value };
-        setLocalSteps(updated);
-    };
+    return (
+        <div className="space-y-4">
+            <div className="flex justify-between items-center">
+                <div>
+                    <h3 className="text-lg font-semibold text-slate-800">
+                        Workflow-Schritte: {workflowName}
+                    </h3>
+                    <p className="text-sm text-slate-600">
+                        {steps.length} Schritt{steps.length !== 1 ? 'e' : ''}
+                    </p>
+                </div>
+                <Button
+                    onClick={() => {
+                        setEditingStep(null);
+                        setFormOpen(true);
+                    }}
+                    size="sm"
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Schritt hinzufügen
+                </Button>
+            </div>
 
-    const handleDeleteStep = (index) => {
-        const step = localSteps[index];
-        if (step.id) {
-            deleteMutation.mutate(step.id);
+            {steps.length === 0 ? (
+                <Card>
+                    <CardContent className="p-8 text-center">
+                        <p className="text-slate-500 mb-4">Noch keine Schritte definiert</p>
+                        <Button onClick={() => setFormOpen(true)} variant="outline" size="sm">
+                            <Plus className="w-4 h-4 mr-2" />
+                            Ersten Schritt hinzufügen
+                        </Button>
+                    </CardContent>
+                </Card>
+            ) : (
+                <div className="space-y-3">
+                    {steps.map((step, index) => {
+                        const Icon = getActionIcon(step.action_type);
+                        return (
+                            <Card key={step.id}>
+                                <CardContent className="p-4">
+                                    <div className="flex items-start gap-3">
+                                        <div className="flex items-center gap-2">
+                                            <GripVertical className="w-5 h-5 text-slate-400" />
+                                            <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-semibold text-sm">
+                                                {step.step_order}
+                                            </div>
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <Icon className="w-4 h-4 text-slate-600" />
+                                                <h4 className="font-semibold text-slate-800">
+                                                    {step.step_name}
+                                                </h4>
+                                                <Badge variant="outline">
+                                                    {getActionLabel(step.action_type)}
+                                                </Badge>
+                                                {step.is_automated && (
+                                                    <Badge className="bg-blue-100 text-blue-700">
+                                                        Automatisch
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            {step.next_step_delay_days > 0 && (
+                                                <p className="text-sm text-slate-600">
+                                                    Verzögerung: {step.next_step_delay_days} Tag{step.next_step_delay_days !== 1 ? 'e' : ''}
+                                                </p>
+                                            )}
+                                            {step.next_step_condition && (
+                                                <p className="text-sm text-slate-600">
+                                                    Bedingung: {step.next_step_condition}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => {
+                                                    setEditingStep(step);
+                                                    setFormOpen(true);
+                                                }}
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => {
+                                                    if (confirm('Schritt löschen?')) {
+                                                        deleteMutation.mutate(step.id);
+                                                    }
+                                                }}
+                                                className="text-red-600 hover:text-red-700"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        );
+                    })}
+                </div>
+            )}
+
+            <StepForm
+                open={formOpen}
+                onOpenChange={setFormOpen}
+                onSubmit={(data) => {
+                    const stepData = {
+                        ...data,
+                        workflow_id: workflowId,
+                        step_order: editingStep ? editingStep.step_order : steps.length + 1,
+                        action_config: typeof data.action_config === 'string' 
+                            ? JSON.parse(data.action_config || '{}') 
+                            : data.action_config
+                    };
+                    
+                    if (editingStep) {
+                        updateMutation.mutate({ id: editingStep.id, data: stepData });
+                    } else {
+                        createMutation.mutate(stepData);
+                    }
+                }}
+                initialData={editingStep}
+                isLoading={createMutation.isPending || updateMutation.isPending}
+            />
+        </div>
+    );
+}
+
+function StepForm({ open, onOpenChange, onSubmit, initialData, isLoading }) {
+    const [formData, setFormData] = useState(initialData || {
+        step_name: '',
+        action_type: 'create_document',
+        action_config: {},
+        next_step_delay_days: 0,
+        is_automated: false
+    });
+
+    React.useEffect(() => {
+        if (open) {
+            setFormData(initialData || {
+                step_name: '',
+                action_type: 'create_document',
+                action_config: {},
+                next_step_delay_days: 0,
+                is_automated: false
+            });
         }
-        const updated = localSteps.filter((_, i) => i !== index);
-        setLocalSteps(updated.map((s, i) => ({ ...s, step_order: i + 1 })));
-    };
+    }, [open, initialData]);
 
-    const handleSaveAll = async () => {
-        for (const step of localSteps) {
-            if (step.isNew && step.step_name) {
-                const { isNew, ...stepData } = step;
-                await createMutation.mutateAsync(stepData);
-            } else if (step.id) {
-                const { id, ...stepData } = step;
-                await updateMutation.mutateAsync({ id, data: stepData });
-            }
-        }
-        onOpenChange(false);
-    };
-
-    const handleDragEnd = (result) => {
-        if (!result.destination) return;
-
-        const items = Array.from(localSteps);
-        const [reorderedItem] = items.splice(result.source.index, 1);
-        items.splice(result.destination.index, 0, reorderedItem);
-
-        const reordered = items.map((item, index) => ({
-            ...item,
-            step_order: index + 1
-        }));
-
-        setLocalSteps(reordered);
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onSubmit(formData);
     };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
-                    <DialogTitle>Workflow-Schritte: {workflow?.name}</DialogTitle>
+                    <DialogTitle>
+                        {initialData ? 'Schritt bearbeiten' : 'Neuer Schritt'}
+                    </DialogTitle>
                 </DialogHeader>
 
-                <div className="space-y-4 mt-4">
-                    <DragDropContext onDragEnd={handleDragEnd}>
-                        <Droppable droppableId="steps">
-                            {(provided) => (
-                                <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
-                                    {localSteps.map((step, index) => (
-                                        <Draggable key={index} draggableId={`step-${index}`} index={index}>
-                                            {(provided) => (
-                                                <Card
-                                                    ref={provided.innerRef}
-                                                    {...provided.draggableProps}
-                                                >
-                                                    <CardContent className="p-4">
-                                                        <div className="flex items-start gap-3">
-                                                            <div {...provided.dragHandleProps} className="mt-2">
-                                                                <GripVertical className="w-5 h-5 text-slate-400" />
-                                                            </div>
-                                                            <div className="flex-1 space-y-3">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-semibold">
-                                                                        {step.step_order}
-                                                                    </div>
-                                                                    <Input
-                                                                        value={step.step_name}
-                                                                        onChange={(e) => handleUpdateStep(index, 'step_name', e.target.value)}
-                                                                        placeholder="Schritt-Name"
-                                                                        className="flex-1"
-                                                                    />
-                                                                    <Button
-                                                                        variant="ghost"
-                                                                        size="icon"
-                                                                        onClick={() => handleDeleteStep(index)}
-                                                                        className="text-red-600 hover:text-red-700"
-                                                                    >
-                                                                        <Trash2 className="w-4 h-4" />
-                                                                    </Button>
-                                                                </div>
+                <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                    <div>
+                        <Label>Schritt-Name *</Label>
+                        <Input
+                            value={formData.step_name}
+                            onChange={(e) => setFormData({ ...formData, step_name: e.target.value })}
+                            placeholder="z.B. Mahnung erstellen"
+                            required
+                        />
+                    </div>
 
-                                                                <div className="grid grid-cols-2 gap-3">
-                                                                    <div>
-                                                                        <Label className="text-xs">Aktion</Label>
-                                                                        <select
-                                                                            value={step.action_type}
-                                                                            onChange={(e) => handleUpdateStep(index, 'action_type', e.target.value)}
-                                                                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                                                        >
-                                                                            <option value="create_document">Dokument erstellen</option>
-                                                                            <option value="send_email">Email versenden</option>
-                                                                            <option value="create_task">Task erstellen</option>
-                                                                            <option value="update_status">Status ändern</option>
-                                                                        </select>
-                                                                    </div>
-
-                                                                    <div>
-                                                                        <Label className="text-xs">Verzögerung (Tage)</Label>
-                                                                        <Input
-                                                                            type="number"
-                                                                            value={step.next_step_delay_days}
-                                                                            onChange={(e) => handleUpdateStep(index, 'next_step_delay_days', parseInt(e.target.value) || 0)}
-                                                                            className="h-9"
-                                                                            min="0"
-                                                                        />
-                                                                    </div>
-                                                                </div>
-
-                                                                <div>
-                                                                    <Label className="text-xs">Bedingung (optional)</Label>
-                                                                    <Input
-                                                                        value={step.next_step_condition || ''}
-                                                                        onChange={(e) => handleUpdateStep(index, 'next_step_condition', e.target.value)}
-                                                                        placeholder="z.B. status == 'versendet'"
-                                                                        className="h-9"
-                                                                    />
-                                                                </div>
-
-                                                                <div className="flex items-center space-x-2">
-                                                                    <Checkbox
-                                                                        id={`automated-${index}`}
-                                                                        checked={step.is_automated}
-                                                                        onCheckedChange={(checked) => handleUpdateStep(index, 'is_automated', checked)}
-                                                                    />
-                                                                    <label
-                                                                        htmlFor={`automated-${index}`}
-                                                                        className="text-sm font-medium leading-none"
-                                                                    >
-                                                                        Automatisch ausführen
-                                                                    </label>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </CardContent>
-                                                </Card>
-                                            )}
-                                        </Draggable>
-                                    ))}
-                                    {provided.placeholder}
-                                </div>
-                            )}
-                        </Droppable>
-                    </DragDropContext>
-
-                    {localSteps.length === 0 && (
-                        <Card>
-                            <CardContent className="p-8 text-center">
-                                <p className="text-slate-500 mb-4">Noch keine Schritte definiert</p>
-                                <Button onClick={handleAddStep} variant="outline">
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Ersten Schritt hinzufügen
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {localSteps.length > 0 && (
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleAddStep}
-                            className="w-full"
+                    <div>
+                        <Label>Aktionstyp *</Label>
+                        <select
+                            value={formData.action_type}
+                            onChange={(e) => setFormData({ ...formData, action_type: e.target.value })}
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                         >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Schritt hinzufügen
-                        </Button>
-                    )}
+                            <option value="create_document">Dokument erstellen</option>
+                            <option value="send_email">Email senden</option>
+                            <option value="create_task">Task erstellen</option>
+                            <option value="update_status">Status aktualisieren</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <Label>Aktions-Konfiguration (JSON)</Label>
+                        <Textarea
+                            value={typeof formData.action_config === 'object' 
+                                ? JSON.stringify(formData.action_config, null, 2) 
+                                : formData.action_config}
+                            onChange={(e) => setFormData({ ...formData, action_config: e.target.value })}
+                            placeholder='{"template": "Mahnung 1"}'
+                            rows={4}
+                        />
+                    </div>
+
+                    <div>
+                        <Label>Verzögerung (Tage)</Label>
+                        <Input
+                            type="number"
+                            value={formData.next_step_delay_days}
+                            onChange={(e) => setFormData({ ...formData, next_step_delay_days: parseInt(e.target.value) || 0 })}
+                            min="0"
+                        />
+                    </div>
+
+                    <div>
+                        <Label>Bedingung für nächsten Schritt</Label>
+                        <Input
+                            value={formData.next_step_condition || ''}
+                            onChange={(e) => setFormData({ ...formData, next_step_condition: e.target.value })}
+                            placeholder="Optional"
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between py-2 border-t">
+                        <Label>Automatisch ausführen</Label>
+                        <Switch
+                            checked={formData.is_automated}
+                            onCheckedChange={(checked) => setFormData({ ...formData, is_automated: checked })}
+                        />
+                    </div>
 
                     <div className="flex justify-end gap-3 pt-4 border-t">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => onOpenChange(false)}
-                        >
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                             Abbrechen
                         </Button>
-                        <Button
-                            type="button"
-                            onClick={handleSaveAll}
-                            disabled={isLoading || createMutation.isPending || updateMutation.isPending}
-                            className="bg-emerald-600 hover:bg-emerald-700"
-                        >
-                            {(isLoading || createMutation.isPending || updateMutation.isPending) && (
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            )}
-                            Speichern
+                        <Button type="submit" disabled={isLoading} className="bg-emerald-600 hover:bg-emerald-700">
+                            {initialData ? 'Speichern' : 'Erstellen'}
                         </Button>
                     </div>
-                </div>
+                </form>
             </DialogContent>
         </Dialog>
     );
