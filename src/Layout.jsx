@@ -27,6 +27,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Aufgaben', href: createPageUrl('Tasks'), icon: FileText, page: 'Tasks' },
     { name: 'Dokumente', href: createPageUrl('Documents'), icon: FileText, page: 'Documents' },
     { name: 'Finanzen', href: createPageUrl('Finanzen'), icon: CreditCard, page: 'Finanzen' },
+    { name: 'Generierte Buchungen', href: createPageUrl('GeneratedBookings'), icon: FileText, page: 'GeneratedBookings' },
     { name: 'Rechnungen & Belege', href: createPageUrl('Invoices'), icon: FileText, page: 'Invoices' },
     { name: 'Steuerformulare', href: createPageUrl('TaxForms'), icon: BookOpen, page: 'TaxForms' },
     { name: 'Betriebskosten', href: createPageUrl('OperatingCosts'), icon: FileText, page: 'OperatingCosts' },

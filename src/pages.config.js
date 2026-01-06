@@ -15,9 +15,10 @@ import Invoices from './pages/Invoices';
 import OperatingCosts from './pages/OperatingCosts';
 import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
+import TaxForms from './pages/TaxForms';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import UnitDetail from './pages/UnitDetail';
-import TaxForms from './pages/TaxForms';
+import GeneratedBookings from './pages/GeneratedBookings';
 import __Layout from './Layout.jsx';
 
 
@@ -39,9 +40,10 @@ export const PAGES = {
     "OperatingCosts": OperatingCosts,
     "Tasks": Tasks,
     "Tax": Tax,
+    "TaxForms": TaxForms,
     "TaxLibraryManagement": TaxLibraryManagement,
     "UnitDetail": UnitDetail,
-    "TaxForms": TaxForms,
+    "GeneratedBookings": GeneratedBookings,
 }
 
 export const pagesConfig = {
