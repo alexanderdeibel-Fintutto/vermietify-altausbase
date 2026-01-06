@@ -379,22 +379,197 @@ async function generateBusinessLogicDoc(entities) {
 
 async function generateExternalIntegrationsDoc() {
     let doc = '# Externe Integrationen\n\n';
-    doc += '## LetterXpress API\n';
-    doc += '- Briefversand (national)\n';
-    doc += '- Einschreiben (R1, R2)\n';
-    doc += '- Tracking-Codes\n\n';
-    doc += '## FinAPI\n';
-    doc += '- Bank-Kontosynchronisation\n';
-    doc += '- Transaktionsimport\n\n';
+    
+    doc += '## 1. LetterXpress API\n\n';
+    doc += '**Zweck**: Automatisierter Postversand von Dokumenten\n\n';
+    doc += '**Base URL**: https://api.letterxpress.de/v1\n\n';
+    doc += '**Authentifizierung**: API-Key + Username\n\n';
+    doc += '**Funktionen**:\n';
+    doc += '- `check_balance`: Aktuelles Guthaben abrufen\n';
+    doc += '- `calculate_price`: Kosten für einen Brief berechnen\n';
+    doc += '- `send_letter`: Brief versenden\n';
+    doc += '- `get_job`: Job-Status und Tracking-Code abrufen\n\n';
+
+    doc += '**Versandoptionen**:\n';
+    doc += '- Normal: Standard-Briefversand\n';
+    doc += '- R1 (Einschreiben Einwurf): +3,69 EUR\n';
+    doc += '- R2 (Einschreiben): +4,05 EUR\n\n';
+
+    doc += '**Druckoptionen**:\n';
+    doc += '- Farbe: Schwarzweiß (1) oder Farbe (4)\n';
+    doc += '- Modus: Simplex (einseitig) oder Duplex (doppelseitig)\n\n';
+
+    doc += '**Workflow**:\n';
+    doc += '1. PDF hochladen und MD5-Checksum berechnen\n';
+    doc += '2. Brief erstellen mit `send_letter`\n';
+    doc += '3. Job-ID und Kosten erhalten\n';
+    doc += '4. In LetterShipment Entity speichern\n';
+    doc += '5. Periodisch Status mit `get_job` abrufen\n';
+    doc += '6. Tracking-Code aktualisieren sobald verfügbar\n\n';
+
+    doc += '**Rate Limits**: 1 Request pro Sekunde, 60 Sekunden Timeout bei Überschreitung\n\n';
+
+    doc += '## 2. FinAPI\n\n';
+    doc += '**Zweck**: Bankkonten-Synchronisation und Transaktionsimport\n\n';
+    doc += '**Base URL**: Über Environment-Variable `FINAPI_BASE_URL`\n\n';
+    doc += '**Authentifizierung**: OAuth 2.0 mit Client-ID und Client-Secret\n\n';
+    doc += '**Funktionen**:\n';
+    doc += '- `finapiConnect`: Neue Bankverbindung herstellen\n';
+    doc += '- `finapiImportAccounts`: Konten importieren\n';
+    doc += '- `finapiSync`: Transaktionen synchronisieren\n\n';
+
+    doc += '**Workflow**:\n';
+    doc += '1. User autorisiert FinAPI-Zugriff\n';
+    doc += '2. Bank-Login über FinAPI Web Form\n';
+    doc += '3. Konten werden importiert und in BankAccount gespeichert\n';
+    doc += '4. Connection-ID und User-ID werden gespeichert\n';
+    doc += '5. Automatische/manuelle Synchronisation lädt neue Transaktionen\n';
+    doc += '6. Transaktionen werden in BankTransaction gespeichert\n';
+    doc += '7. AI-gestütztes Matching mit generierten Buchungen\n\n';
+
+    doc += '**Datenfluss**:\n';
+    doc += '```\n';
+    doc += 'FinAPI → BankTransaction → AI-Matching → PaymentTransactionLink → GeneratedFinancialBooking\n';
+    doc += '```\n\n';
+
+    doc += '## 3. Base44 Core Integrations\n\n';
+    doc += '**InvokeLLM**: KI-gestützte Datenanalyse\n';
+    doc += '- Dokumentenanalyse (PDF-Extraktion)\n';
+    doc += '- E-Mail-Analyse für Task-Erstellung\n';
+    doc += '- Intelligente Transaktions-Kategorisierung\n\n';
+
+    doc += '**SendEmail**: E-Mail-Versand\n';
+    doc += '- Benachrichtigungen\n';
+    doc += '- Erinnerungen\n';
+    doc += '- Automatische Reports\n\n';
+
+    doc += '**UploadFile**: Datei-Upload\n';
+    doc += '- Dokument-PDFs\n';
+    doc += '- Originale (gescannte Dokumente)\n';
+    doc += '- Logos und Assets\n\n';
+
+    doc += '**GenerateImage**: KI-Bildgenerierung\n';
+    doc += '- Platzhalter-Bilder\n';
+    doc += '- Marketing-Material\n\n';
+
+    doc += '**ExtractDataFromUploadedFile**: Datenextraktion\n';
+    doc += '- CSV-Import\n';
+    doc += '- PDF-Datenextraktion\n';
+    doc += '- Strukturierte Datenübernahme\n\n';
+
     return doc;
 }
 
 async function generateDocumentGenerationDoc(base44) {
     let doc = '# Dokumenten-Generierung\n\n';
-    doc += '## Template-System\n';
-    doc += 'Das System unterstützt HTML-basierte Templates mit Platzhaltern.\n\n';
-    doc += '## PDF-Generierung\n';
-    doc += 'PDFs werden via Puppeteer generiert mit Seitenzahlextraktion via pdf-lib.\n\n';
+    
+    doc += '## Architektur-Übersicht\n\n';
+    doc += '```\n';
+    doc += 'Template + Datenquellen + Textbausteine → HTML → Puppeteer → PDF → Storage\n';
+    doc += '```\n\n';
+
+    doc += '## 1. Template-System\n\n';
+    doc += '**Entity**: Template\n\n';
+    doc += '**Struktur**:\n';
+    doc += '- `header_html`: Kopfbereich (Logo, Absenderadresse)\n';
+    doc += '- `content`: Hauptinhalt mit Platzhaltern\n';
+    doc += '- `footer_html`: Fußbereich (Kontaktdaten, rechtliche Hinweise)\n';
+    doc += '- `styles`: CSS-Styling (Schriftarten, Farben, Layout)\n';
+    doc += '- `tables`: Tabellendefinitionen für strukturierte Daten\n';
+    doc += '- `required_data_sources`: Benötigte Datenquellen (building, tenant, contract, etc.)\n\n';
+
+    doc += '**Platzhalter-Syntax**:\n';
+    doc += '- `{{building.name}}` - Gebäudename\n';
+    doc += '- `{{tenant.first_name}}` - Vorname des Mieters\n';
+    doc += '- `{{contract.base_rent}}` - Kaltmiete\n';
+    doc += '- `{{current_date}}` - Aktuelles Datum\n';
+    doc += '- `{{textblock:id}}` - Textbaustein einbinden\n\n';
+
+    doc += '**Standard-Templates**:\n';
+    doc += '- Mieterhöhung\n';
+    doc += '- Nebenkostenabrechnung\n';
+    doc += '- Kündigung\n';
+    doc += '- Mietvertrag\n';
+    doc += '- Übergabeprotokoll\n';
+    doc += '- Zahlungserinnerung\n\n';
+
+    doc += '## 2. Textbausteine\n\n';
+    doc += '**Entity**: TextBlock\n\n';
+    doc += '**Zweck**: Wiederverwendbare Textpassagen\n\n';
+    doc += '**Kategorien**:\n';
+    doc += '- Begrüßungen\n';
+    doc += '- Rechtliche Hinweise\n';
+    doc += '- Kündigungsfristen\n';
+    doc += '- Zahlungshinweise\n';
+    doc += '- Grußformeln\n\n';
+
+    doc += '**Verwendung**:\n';
+    doc += '- User wählt relevante Textbausteine aus\n';
+    doc += '- System fügt sie in Template ein\n';
+    doc += '- Platzhalter werden ersetzt\n\n';
+
+    doc += '## 3. PDF-Generierung\n\n';
+    doc += '**Funktion**: `generatePDF`\n\n';
+    doc += '**Technologie**: Puppeteer (Headless Chrome)\n\n';
+    doc += '**Prozess**:\n';
+    doc += '1. HTML-Inhalt wird zusammengestellt\n';
+    doc += '2. Puppeteer startet Headless Browser\n';
+    doc += '3. HTML wird gerendert\n';
+    doc += '4. PDF wird generiert mit:\n';
+    doc += '   - A4-Format\n';
+    doc += '   - Seitenränder (20mm)\n';
+    doc += '   - Kopf-/Fußzeilen\n';
+    doc += '   - Seitenzahlen\n';
+    doc += '5. PDF-Buffer wird erstellt\n';
+    doc += '6. pdf-lib extrahiert Metadaten (Seitenzahl)\n';
+    doc += '7. PDF wird zu Storage hochgeladen\n';
+    doc += '8. URL und Metadaten werden zurückgegeben\n\n';
+
+    doc += '**Rückgabe**:\n';
+    doc += '```json\n';
+    doc += '{\n';
+    doc += '  "file_url": "https://...",\n';
+    doc += '  "fileName": "dokument.pdf",\n';
+    doc += '  "pages": 3\n';
+    doc += '}\n';
+    doc += '```\n\n';
+
+    doc += '## 4. Dokument-Workflow\n\n';
+    doc += '**Wizard-Steps**:\n\n';
+    doc += '**Step 1: Template-Auswahl**\n';
+    doc += '- User wählt Template-Typ\n';
+    doc += '- System filtert passende Templates\n\n';
+
+    doc += '**Step 2: Datenquellen**\n';
+    doc += '- User verknüpft Gebäude, Mieter, Vertrag, etc.\n';
+    doc += '- System lädt benötigte Daten\n';
+    doc += '- Empfängeradresse wird automatisch befüllt\n\n';
+
+    doc += '**Step 3: Textbausteine**\n';
+    doc += '- User wählt relevante Textbausteine\n';
+    doc += '- Vorschau zeigt kombinierten Text\n\n';
+
+    doc += '**Step 4: Preview & Erstellen**\n';
+    doc += '- System generiert HTML-Vorschau\n';
+    doc += '- User prüft und bestätigt\n';
+    doc += '- Dokument wird erstellt:\n';
+    doc += '  - Document Entity wird gespeichert\n';
+    doc += '  - PDF wird generiert\n';
+    doc += '  - Seitenzahl wird gespeichert\n';
+    doc += '  - Change History wird angelegt\n';
+    doc += '  - Data Snapshot wird gespeichert\n\n';
+
+    doc += '## 5. Versand-Integration\n\n';
+    doc += '**Post-Versand (LetterXpress)**:\n';
+    doc += '- PDF wird an LetterXpress gesendet\n';
+    doc += '- Versandart wählbar (Normal, R1, R2)\n';
+    doc += '- Tracking-Code wird gespeichert\n';
+    doc += '- Versandstatus wird aktualisiert\n\n';
+
+    doc += '**E-Mail-Versand**:\n';
+    doc += '- PDF als Anhang\n';
+    doc += '- Automatische Versandbestätigung\n\n';
+
     return doc;
 }
 
@@ -489,16 +664,220 @@ async function generateUserWorkflowsDoc() {
 
 async function generatePermissionsDoc() {
     let doc = '# Berechtigungen & Rollen\n\n';
-    doc += '## Rollen\n';
-    doc += '- **Admin**: Vollzugriff auf alle Funktionen\n';
-    doc += '- **User**: Eingeschränkter Zugriff\n\n';
+    
+    doc += '## Rollen-System\n\n';
+    doc += '**Built-in User Entity Felder**:\n';
+    doc += '- `email`: Eindeutige E-Mail-Adresse\n';
+    doc += '- `full_name`: Vollständiger Name\n';
+    doc += '- `role`: Rolle (admin oder user)\n\n';
+
+    doc += '## Rollen-Definitionen\n\n';
+    doc += '### Admin\n';
+    doc += '**Berechtigungen**:\n';
+    doc += '- Vollzugriff auf alle Daten\n';
+    doc += '- CRUD-Operationen auf allen Entitäten\n';
+    doc += '- Zugriff auf alle Backend-Funktionen\n';
+    doc += '- User-Verwaltung (Einladungen versenden)\n';
+    doc += '- Systemeinstellungen verwalten\n';
+    doc += '- Entwickler-Dokumentation generieren\n';
+    doc += '- Scheduled Tasks verwalten\n\n';
+
+    doc += '### User (Standard)\n';
+    doc += '**Berechtigungen**:\n';
+    doc += '- Lesen: Alle Daten\n';
+    doc += '- Erstellen: Alle Entitäten außer User\n';
+    doc += '- Aktualisieren: Alle Entitäten außer User\n';
+    doc += '- Löschen: Alle Entitäten außer User\n';
+    doc += '- Eigenes Profil bearbeiten\n';
+    doc += '- Keine System-Einstellungen\n\n';
+
+    doc += '## User Entity Security\n\n';
+    doc += '**Spezielle Regel für User Entity**:\n';
+    doc += '- Nur Admin kann andere User listen, erstellen, bearbeiten oder löschen\n';
+    doc += '- Regular User kann nur sein eigenes User-Objekt lesen und bearbeiten\n';
+    doc += '- User-Einladungen können nur von Admin versendet werden\n\n';
+
+    doc += '## Authentifizierung\n\n';
+    doc += '**Login-Flow**:\n';
+    doc += '1. User navigiert zur App\n';
+    doc += '2. Base44 prüft Authentifizierung\n';
+    doc += '3. Falls nicht authentifiziert: Redirect zu Login\n';
+    doc += '4. Nach Login: Redirect zurück zur ursprünglichen URL\n\n';
+
+    doc += '**Session-Handling**:\n';
+    doc += '- JWT-Token in Cookies\n';
+    doc += '- Automatische Token-Refresh\n';
+    doc += '- Logout via `base44.auth.logout()`\n\n';
+
+    doc += '## Backend-Funktionen\n\n';
+    doc += '**User-Context**:\n';
+    doc += '```javascript\n';
+    doc += 'const base44 = createClientFromRequest(req);\n';
+    doc += 'const user = await base44.auth.me();\n';
+    doc += '// user.email, user.role\n';
+    doc += '```\n\n';
+
+    doc += '**Service-Role**:\n';
+    doc += '```javascript\n';
+    doc += '// Für Admin-Operationen\n';
+    doc += 'await base44.asServiceRole.entities.User.list();\n';
+    doc += '```\n\n';
+
+    doc += '## Admin-Only Funktionen\n\n';
+    doc += '**Backend-Funktionen die Admin-Rechte erfordern**:\n';
+    doc += '- `updateLetterTrackingCodes` (Scheduled Task)\n';
+    doc += '- Alle Scheduled Task-Funktionen\n';
+    doc += '- User-Einladungen\n';
+    doc += '- System-Migrations\n\n';
+
+    doc += '**Implementierung**:\n';
+    doc += '```javascript\n';
+    doc += 'const user = await base44.auth.me();\n';
+    doc += 'if (user?.role !== "admin") {\n';
+    doc += '  return Response.json(\n';
+    doc += '    { error: "Forbidden: Admin access required" },\n';
+    doc += '    { status: 403 }\n';
+    doc += '  );\n';
+    doc += '}\n';
+    doc += '```\n\n';
+
+    doc += '## App-Sichtbarkeit\n\n';
+    doc += '**Public App**:\n';
+    doc += '- App ist öffentlich zugänglich\n';
+    doc += '- Login-Flow für geschützte Bereiche\n';
+    doc += '- Gastbesucher können Landing-Pages sehen\n\n';
+
     return doc;
 }
 
 async function generateErrorHandlingDoc() {
     let doc = '# Fehlerbehandlung & Logging\n\n';
-    doc += '## Fehlerbehandlung\n';
-    doc += 'Fehler werden via toast-Benachrichtigungen angezeigt.\n\n';
+    
+    doc += '## Frontend-Fehlerbehandlung\n\n';
+    doc += '**Toast-Benachrichtigungen (Sonner)**:\n';
+    doc += '```javascript\n';
+    doc += 'import { toast } from "sonner";\n\n';
+    doc += 'toast.success("Erfolgreich gespeichert");\n';
+    doc += 'toast.error("Fehler beim Speichern: " + error.message);\n';
+    doc += 'toast.info("Hinweis: Bitte prüfen");\n';
+    doc += 'toast.warning("Warnung: Guthaben niedrig");\n';
+    doc += '```\n\n';
+
+    doc += '**React Query Error Handling**:\n';
+    doc += '```javascript\n';
+    doc += 'const mutation = useMutation({\n';
+    doc += '  mutationFn: async (data) => { ... },\n';
+    doc += '  onSuccess: () => {\n';
+    doc += '    toast.success("Gespeichert");\n';
+    doc += '  },\n';
+    doc += '  onError: (error) => {\n';
+    doc += '    toast.error("Fehler: " + error.message);\n';
+    doc += '  }\n';
+    doc += '});\n';
+    doc += '```\n\n';
+
+    doc += '## Backend-Fehlerbehandlung\n\n';
+    doc += '**Standard-Pattern**:\n';
+    doc += '```javascript\n';
+    doc += 'Deno.serve(async (req) => {\n';
+    doc += '  try {\n';
+    doc += '    const base44 = createClientFromRequest(req);\n';
+    doc += '    const user = await base44.auth.me();\n';
+    doc += '    \n';
+    doc += '    if (!user) {\n';
+    doc += '      return Response.json(\n';
+    doc += '        { error: "Unauthorized" },\n';
+    doc += '        { status: 401 }\n';
+    doc += '      );\n';
+    doc += '    }\n';
+    doc += '    \n';
+    doc += '    // Business Logic\n';
+    doc += '    \n';
+    doc += '    return Response.json({ success: true });\n';
+    doc += '  } catch (error) {\n';
+    doc += '    console.error("Function error:", error);\n';
+    doc += '    return Response.json(\n';
+    doc += '      { error: error.message },\n';
+    doc += '      { status: 500 }\n';
+    doc += '    );\n';
+    doc += '  }\n';
+    doc += '});\n';
+    doc += '```\n\n';
+
+    doc += '**HTTP Status Codes**:\n';
+    doc += '- `200`: Erfolg\n';
+    doc += '- `400`: Bad Request (ungültige Parameter)\n';
+    doc += '- `401`: Unauthorized (nicht authentifiziert)\n';
+    doc += '- `403`: Forbidden (keine Berechtigung)\n';
+    doc += '- `404`: Not Found\n';
+    doc += '- `429`: Too Many Requests (Rate Limit)\n';
+    doc += '- `500`: Internal Server Error\n\n';
+
+    doc += '## Logging\n\n';
+    doc += '**Console Logging**:\n';
+    doc += '```javascript\n';
+    doc += 'console.log("Info message");\n';
+    doc += 'console.warn("Warning message");\n';
+    doc += 'console.error("Error message", error);\n';
+    doc += '```\n\n';
+
+    doc += '**Strukturiertes Logging**:\n';
+    doc += '```javascript\n';
+    doc += 'console.log("Processing payment", {\n';
+    doc += '  transaction_id: tx.id,\n';
+    doc += '  amount: tx.amount,\n';
+    doc += '  status: tx.status\n';
+    doc += '});\n';
+    doc += '```\n\n';
+
+    doc += '## Activity Log\n\n';
+    doc += '**Entity**: ActivityLog\n\n';
+    doc += '**Zweck**: Audit-Trail für wichtige Aktionen\n\n';
+    doc += '**Verwendung**:\n';
+    doc += '```javascript\n';
+    doc += 'await base44.entities.ActivityLog.create({\n';
+    doc += '  action: "document_sent",\n';
+    doc += '  entity_type: "Document",\n';
+    doc += '  entity_id: doc.id,\n';
+    doc += '  details: {\n';
+    doc += '    recipient: doc.recipient_name,\n';
+    doc += '    method: "letterxpress"\n';
+    doc += '  }\n';
+    doc += '});\n';
+    doc += '```\n\n';
+
+    doc += '## Notifications\n\n';
+    doc += '**Entity**: Notification\n\n';
+    doc += '**Typen**:\n';
+    doc += '- `info`: Informationen\n';
+    doc += '- `success`: Erfolgsmeldungen\n';
+    doc += '- `warning`: Warnungen\n';
+    doc += '- `error`: Fehlermeldungen\n\n';
+
+    doc += '**Benachrichtigungs-Center**:\n';
+    doc += '- Bell-Icon im Header\n';
+    doc += '- Ungelesene Benachrichtigungen (Badge)\n';
+    doc += '- Als gelesen markieren\n';
+    doc += '- Filtern nach Typ\n\n';
+
+    doc += '## Fehler-Szenarien\n\n';
+    doc += '### LetterXpress Fehler\n';
+    doc += '- `400`: PDF ungültig → "PDF-Format ungültig"\n';
+    doc += '- `401`: Auth fehlgeschlagen → "API-Key prüfen"\n';
+    doc += '- `403`: Kein Guthaben → "Guthaben aufladen"\n';
+    doc += '- `429`: Rate Limit → "60 Sekunden warten"\n';
+    doc += '- `500`: Server-Error → "Später erneut versuchen"\n\n';
+
+    doc += '### FinAPI Fehler\n';
+    doc += '- Connection fehlgeschlagen\n';
+    doc += '- Bank-Login ungültig\n';
+    doc += '- Session abgelaufen\n\n';
+
+    doc += '### Datenbank-Fehler\n';
+    doc += '- Constraint-Violations\n';
+    doc += '- Duplicate-Keys\n';
+    doc += '- Foreign-Key-Violations\n\n';
+
     return doc;
 }
 
@@ -514,17 +893,141 @@ async function generateDataMigrationDoc(entities) {
 
 async function generateExecutiveSummaryDoc(entities) {
     let doc = '# Executive Summary - Immobilienverwaltungs-App\n\n';
-    doc += '## Überblick\n';
-    doc += 'Die Immobilienverwaltungs-App ist eine umfassende Lösung zur Verwaltung von Immobilien, Mietern und Finanzen.\n\n';
-    doc += `## Datenbankstruktur\n`;
-    doc += `- ${Object.keys(entities).length} Haupt-Entitäten\n`;
-    doc += '- Vollständige Historisierung wichtiger Daten\n\n';
-    doc += '## Hauptfunktionen\n';
-    doc += '- Objektverwaltung mit Gebäuden und Einheiten\n';
-    doc += '- Mieterverwaltung mit Verträgen\n';
-    doc += '- Automatische Buchungsgenerierung\n';
-    doc += '- Dokumenten-Management mit Template-System\n';
-    doc += '- Postversand via LetterXpress\n';
-    doc += '- Bankkonten-Synchronisation via FinAPI\n\n';
+    doc += '_Kompakte Gesamtübersicht der App-Architektur (generiert am ' + new Date().toLocaleDateString('de-DE') + ')_\n\n';
+    
+    doc += '## 🏢 Überblick\n\n';
+    doc += 'Die Immobilienverwaltungs-App ist eine umfassende Full-Stack-Lösung zur professionellen Verwaltung von Immobilienportfolios, Mietern und Finanzen. Die Anwendung digitalisiert und automatisiert alle wesentlichen Prozesse der Immobilienverwaltung.\n\n';
+    
+    doc += '## 📊 Technologie-Stack\n\n';
+    doc += '**Frontend**:\n';
+    doc += '- React 18 mit TypeScript\n';
+    doc += '- Tailwind CSS für Styling\n';
+    doc += '- shadcn/ui Komponenten\n';
+    doc += '- React Query für State Management\n';
+    doc += '- React Router für Navigation\n\n';
+
+    doc += '**Backend**:\n';
+    doc += '- Base44 BaaS (Backend-as-a-Service)\n';
+    doc += '- Deno Runtime für serverless Functions\n';
+    doc += '- PostgreSQL Datenbank\n';
+    doc += '- RESTful API\n\n';
+
+    doc += '**Integrationen**:\n';
+    doc += '- LetterXpress (Postversand)\n';
+    doc += '- FinAPI (Banking)\n';
+    doc += '- Puppeteer (PDF-Generierung)\n';
+    doc += '- Base44 Core (LLM, Email, File Upload)\n\n';
+
+    doc += `## 🗄️ Datenbankstruktur\n\n`;
+    doc += `- **${Object.keys(entities).length} Haupt-Entitäten**\n`;
+    doc += '- Vollständige Historisierung und Versionierung\n';
+    doc += '- Referentielle Integrität\n';
+    doc += '- Soft-Delete für kritische Daten\n';
+    doc += '- Automatische Timestamps (created_date, updated_date)\n';
+    doc += '- User-Tracking (created_by)\n\n';
+
+    doc += '## ⚡ Kernfunktionen\n\n';
+    
+    doc += '### 1. Objektverwaltung\n';
+    doc += '- Gebäude mit vollständigen Stammdaten\n';
+    doc += '- Wohneinheiten und Flächen-Management\n';
+    doc += '- Zählerverwaltung (Strom, Gas, Wasser)\n';
+    doc += '- Kaufverträge und Eigentümerstrukturen\n\n';
+
+    doc += '### 2. Mieterverwaltung\n';
+    doc += '- Digitale Mietverträge\n';
+    doc += '- Automatische Mietforderungen\n';
+    doc += '- Mieterhöhungen mit Historisierung\n';
+    doc += '- Nebenkostenabrechnungen\n\n';
+
+    doc += '### 3. Finanzmanagement\n';
+    doc += '- Automatische Buchungsgenerierung aus:\n';
+    doc += '  - Grundsteuerbescheiden (quartalsweise)\n';
+    doc += '  - Versicherungen (flexibler Rhythmus)\n';
+    doc += '  - Krediten (monatlich)\n';
+    doc += '  - Versorgern (variabel)\n';
+    doc += '  - Mietverträgen (monatlich)\n';
+    doc += '- Bankkonten-Synchronisation via FinAPI\n';
+    doc += '- Intelligentes Transaction-Matching\n';
+    doc += '- Rechnungsverwaltung\n';
+    doc += '- Kostenkategorien nach SKR03/SKR04\n\n';
+
+    doc += '### 4. Dokumentenverwaltung\n';
+    doc += '- Template-basierte Dokumentenerstellung\n';
+    doc += '- HTML zu PDF-Konvertierung (Puppeteer)\n';
+    doc += '- Wiederverwendbare Textbausteine\n';
+    doc += '- Automatische Platzhalter-Ersetzung\n';
+    doc += '- Versionshistorie und Snapshots\n';
+    doc += '- Original-Dokumente (Scans) verwalten\n\n';
+
+    doc += '### 5. Kommunikation\n';
+    doc += '- Postversand via LetterXpress API\n';
+    doc += '- Einschreiben (R1, R2) mit Tracking\n';
+    doc += '- E-Mail-Integration (IMAP)\n';
+    doc += '- KI-gestützte E-Mail-Analyse\n';
+    doc += '- Postausgangsbuch\n\n';
+
+    doc += '### 6. Aufgabenverwaltung\n';
+    doc += '- Task-Management mit Prioritäten\n';
+    doc += '- Workflows und Automatisierungen\n';
+    doc += '- E-Mail-basierte Task-Erstellung\n';
+    doc += '- Benachrichtigungen und Erinnerungen\n\n';
+
+    doc += '### 7. Steuer-Modul\n';
+    doc += '- Anlage V Erstellung (Vermietung & Verpachtung)\n';
+    doc += '- AfA-Berechnung (Abschreibungen)\n';
+    doc += '- Steuerliche Bibliothek (SKR03/SKR04)\n';
+    doc += '- Kostenkategorien nach Steuerrecht\n';
+    doc += '- EÜR-Vorbereitung\n\n';
+
+    doc += '## 🔄 Automatisierung\n\n';
+    doc += '**Scheduled Tasks**:\n';
+    doc += '- Automatische Tracking-Code-Updates (täglich)\n';
+    doc += '- E-Mail-Synchronisation\n';
+    doc += '- Bankkonten-Updates\n';
+    doc += '- Zahlungserinnerungen\n\n';
+
+    doc += '**Trigger-basierte Automatisierung**:\n';
+    doc += '- Buchungsgenerierung bei Vertragserstellung\n';
+    doc += '- Dokumentenerstellung bei Status-Änderungen\n';
+    doc += '- Benachrichtigungen bei wichtigen Events\n\n';
+
+    doc += '## 🔐 Sicherheit & Berechtigungen\n\n';
+    doc += '- Rollenbasiertes System (Admin, User)\n';
+    doc += '- JWT-basierte Authentifizierung\n';
+    doc += '- Sichere API-Integration mit Secrets\n';
+    doc += '- Audit-Trail (ActivityLog)\n';
+    doc += '- Verschlüsselte Credentials (API-Keys)\n\n';
+
+    doc += '## 📈 Besondere Features\n\n';
+    doc += '1. **Intelligente Versionierung**: Vollständige Historie bei Vertragsänderungen\n';
+    doc += '2. **Data Snapshots**: Dokumente bleiben reproduzierbar\n';
+    doc += '3. **KI-Integration**: LLM für Datenanalyse und Extraktion\n';
+    doc += '4. **Entwickler-Dokumentation**: Automatische App-Dokumentation\n';
+    doc += '5. **Responsive Design**: Mobile-first Approach\n\n';
+
+    doc += '## 🎯 Zielgruppe\n\n';
+    doc += '- Private Vermieter (1-50 Einheiten)\n';
+    doc += '- Hausverwaltungen (Klein bis Mittel)\n';
+    doc += '- Eigentümergemeinschaften (GbR, GmbH)\n';
+    doc += '- Immobilien-Investoren\n\n';
+
+    doc += '## 📦 Deployment\n\n';
+    doc += '- Hosted auf Base44 Platform\n';
+    doc += '- Serverless Functions (Deno Deploy)\n';
+    doc += '- CDN für statische Assets\n';
+    doc += '- Automatische Backups\n';
+    doc += '- High Availability\n\n';
+
+    doc += '## 🚀 Performance\n\n';
+    doc += '- React Query Caching\n';
+    doc += '- Optimistic Updates\n';
+    doc += '- Lazy Loading\n';
+    doc += '- Batch Operations\n';
+    doc += '- Efficient Database Queries\n\n';
+
+    doc += '---\n\n';
+    doc += '_Diese Zusammenfassung gibt einen Überblick über die wichtigsten Aspekte der Immobilienverwaltungs-App. Für detaillierte Informationen siehe die spezifischen Dokumentations-Bereiche._\n';
+
     return doc;
 }
