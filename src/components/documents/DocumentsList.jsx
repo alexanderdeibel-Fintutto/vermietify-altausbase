@@ -4,11 +4,12 @@ import { base44 } from '@/api/base44Client';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, FileText, Eye, Edit, Trash2, Download, Send, CheckCircle } from 'lucide-react';
+import { Plus, FileText, Eye, Edit, Trash2, Download, Send, CheckCircle, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import DocumentCreateWizard from './DocumentCreateWizard';
 import DocumentPreviewDialog from './DocumentPreviewDialog';
+import SendLetterDialog from '../letterxpress/SendLetterDialog';
 
 const STATUS_CONFIG = {
     zu_erledigen: { label: 'Zu erledigen', color: 'bg-slate-100 text-slate-700', icon: FileText },
@@ -23,6 +24,7 @@ const STATUS_CONFIG = {
 export default function DocumentsList() {
     const [wizardOpen, setWizardOpen] = useState(false);
     const [previewDocument, setPreviewDocument] = useState(null);
+    const [sendLetterDocument, setSendLetterDocument] = useState(null);
     const [filterStatus, setFilterStatus] = useState('all');
     const queryClient = useQueryClient();
 
@@ -167,14 +169,24 @@ export default function DocumentsList() {
                                             <Eye className="w-4 h-4 text-slate-600" />
                                         </Button>
                                         {doc.pdf_url && (
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => window.open(doc.pdf_url, '_blank')}
-                                                title="PDF herunterladen"
-                                            >
-                                                <Download className="w-4 h-4 text-slate-600" />
-                                            </Button>
+                                            <>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => window.open(doc.pdf_url, '_blank')}
+                                                    title="PDF herunterladen"
+                                                >
+                                                    <Download className="w-4 h-4 text-slate-600" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => setSendLetterDocument(doc)}
+                                                    title="Per Post versenden"
+                                                >
+                                                    <Mail className="w-4 h-4 text-emerald-600" />
+                                                </Button>
+                                            </>
                                         )}
                                         <Button
                                             variant="ghost"
@@ -210,6 +222,14 @@ export default function DocumentsList() {
                         updateStatusMutation.mutate({ id: previewDocument.id, status });
                         setPreviewDocument(null);
                     }}
+                />
+            )}
+
+            {sendLetterDocument && (
+                <SendLetterDialog
+                    open={!!sendLetterDocument}
+                    onOpenChange={(open) => !open && setSendLetterDocument(null)}
+                    document={sendLetterDocument}
                 />
             )}
         </div>
