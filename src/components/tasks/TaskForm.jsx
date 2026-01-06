@@ -14,6 +14,7 @@ import { useActivityLogger } from './useActivityLogger';
 
 export default function TaskForm({ open, onOpenChange, onSubmit, initialData, priorities, isLoading }) {
     const [suggestedWorkflow, setSuggestedWorkflow] = useState(null);
+    const [intelligentSuggestions, setIntelligentSuggestions] = useState(null);
     const [loadingWorkflow, setLoadingWorkflow] = useState(false);
     const { logActivity } = useActivityLogger();
 
@@ -45,37 +46,55 @@ export default function TaskForm({ open, onOpenChange, onSubmit, initialData, pr
         if (open) {
             reset(initialData || { status: 'offen' });
             setSuggestedWorkflow(null);
+            setIntelligentSuggestions(null);
         }
     }, [open, initialData, reset]);
 
-    // KI-Workflow-Vorschlag
+    // KI-Intelligente Vorschläge (Workflow, Objekt, Priorität, Fälligkeit)
     useEffect(() => {
-        const getSuggestion = async () => {
+        const getSuggestions = async () => {
             if (!open || initialData || !title || title.length < 5) return;
             
             setLoadingWorkflow(true);
             try {
-                const response = await base44.functions.invoke('suggestWorkflow', {
+                const response = await base44.functions.invoke('suggestTaskDetails', {
                     task_title: title,
                     task_description: description || ''
                 });
                 
-                if (response.data.suggested_workflow && response.data.confidence > 60) {
-                    setSuggestedWorkflow(response.data);
-                    toast.info('Workflow-Vorschlag verfügbar', {
-                        description: response.data.reasoning
+                if (response.data.suggestions && response.data.suggestions.confidence > 30) {
+                    const suggestions = response.data.suggestions;
+                    setIntelligentSuggestions(suggestions);
+                    
+                    // Automatisch Felder ausfüllen
+                    if (suggestions.building_id) {
+                        setValue('assigned_object_id', suggestions.building_id);
+                    }
+                    if (suggestions.priority_id) {
+                        setValue('priority_id', suggestions.priority_id);
+                    }
+                    if (suggestions.workflow_id) {
+                        setValue('workflow_id', suggestions.workflow_id);
+                    }
+                    if (suggestions.due_date) {
+                        const dateStr = new Date(suggestions.due_date).toISOString().slice(0, 16);
+                        setValue('due_date', dateStr);
+                    }
+                    
+                    toast.info('Intelligente Vorschläge angewendet', {
+                        description: `${suggestions.confidence}% Übereinstimmung`
                     });
                 }
             } catch (error) {
-                console.error('Workflow suggestion failed:', error);
+                console.error('Task suggestions failed:', error);
             } finally {
                 setLoadingWorkflow(false);
             }
         };
 
-        const timer = setTimeout(getSuggestion, 1000);
+        const timer = setTimeout(getSuggestions, 1000);
         return () => clearTimeout(timer);
-    }, [title, description, open, initialData]);
+    }, [title, description, open, initialData, setValue]);
 
     const handleFormSubmit = async (data) => {
         const taskData = {
@@ -140,33 +159,34 @@ export default function TaskForm({ open, onOpenChange, onSubmit, initialData, pr
                         />
                     </div>
 
-                    {/* KI-Workflow-Vorschlag */}
-                        {suggestedWorkflow && (
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    {/* KI-Intelligente Vorschläge */}
+                        {intelligentSuggestions && (
+                            <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4">
                                 <div className="flex items-start gap-3">
                                     <Sparkles className="w-5 h-5 text-blue-600 mt-0.5" />
                                     <div className="flex-1">
-                                        <h4 className="font-medium text-blue-900 mb-1">
-                                            KI-Empfehlung: {suggestedWorkflow.suggested_workflow?.name}
+                                        <h4 className="font-medium text-blue-900 mb-2">
+                                            ✨ Intelligente Vorschläge angewendet
                                         </h4>
-                                        <p className="text-sm text-blue-700 mb-3">
-                                            {suggestedWorkflow.reasoning}
-                                        </p>
+                                        <div className="space-y-1 text-sm text-blue-800 mb-3">
+                                            {intelligentSuggestions.reasoning.map((reason, idx) => (
+                                                <div key={idx} className="flex items-center gap-2">
+                                                    <div className="w-1 h-1 rounded-full bg-blue-600" />
+                                                    {reason}
+                                                </div>
+                                            ))}
+                                        </div>
                                         <Badge className="bg-blue-600">
-                                            {suggestedWorkflow.confidence}% Übereinstimmung
+                                            {intelligentSuggestions.confidence}% Übereinstimmung
                                         </Badge>
                                         <Button
                                             type="button"
                                             size="sm"
                                             variant="outline"
                                             className="ml-2"
-                                            onClick={() => {
-                                                setValue('workflow_id', suggestedWorkflow.suggested_workflow.id);
-                                                toast.success('Workflow übernommen');
-                                                setSuggestedWorkflow(null);
-                                            }}
+                                            onClick={() => setIntelligentSuggestions(null)}
                                         >
-                                            Übernehmen
+                                            OK
                                         </Button>
                                     </div>
                                 </div>
