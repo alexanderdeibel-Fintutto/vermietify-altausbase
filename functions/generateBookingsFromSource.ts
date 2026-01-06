@@ -81,9 +81,13 @@ Deno.serve(async (req) => {
                 sourceData = sources[0];
                 buildingId = sourceData.building_id;
 
+                if (!sourceData.praemie_jaehrlich) {
+                    return Response.json({ error: 'Jährliche Prämie fehlt' }, { status: 400 });
+                }
+
                 const yearlyAmount = sourceData.praemie_jaehrlich;
-                const paymentMethod = sourceData.zahlungsweise;
-                const startDate = new Date(sourceData.vertragsbeginn);
+                const paymentMethod = sourceData.zahlungsweise || 'jährlich';
+                const startDate = sourceData.vertragsbeginn ? new Date(sourceData.vertragsbeginn) : new Date();
 
                 let numberOfPayments = 1;
                 let amountPerPayment = yearlyAmount;
