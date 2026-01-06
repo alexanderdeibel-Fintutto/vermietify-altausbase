@@ -90,9 +90,8 @@ Deno.serve(async (req) => {
                 const yearlyAmount = sourceData.praemie_jaehrlich;
                 const paymentMethod = sourceData.zahlungsweise || 'jährlich';
                 const startDate = sourceData.vertragsbeginn ? new Date(sourceData.vertragsbeginn) : new Date();
-                const today = new Date();
-                const futureDate = new Date(today);
-                futureDate.setFullYear(futureDate.getFullYear() + 1);
+                const endDate = new Date();
+                endDate.setFullYear(endDate.getFullYear() + 1); // Heute + 1 Jahr
 
                 let amountPerPayment = yearlyAmount;
                 let monthsBetween = 12;
