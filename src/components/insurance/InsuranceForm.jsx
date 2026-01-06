@@ -49,21 +49,28 @@ export default function InsuranceForm({ open, onOpenChange, onSubmit, initialDat
     }, [initialData, reset, buildingId, open]);
 
     const handleFormSubmit = async (data) => {
-        const result = await onSubmit({
-            ...data,
-            praemie_jaehrlich: data.praemie_jaehrlich ? parseFloat(data.praemie_jaehrlich) : null,
-            deckungssumme: data.deckungssumme ? parseFloat(data.deckungssumme) : null,
-            selbstbeteiligung: data.selbstbeteiligung ? parseFloat(data.selbstbeteiligung) : null,
-        });
-        
-        if (result?.id) {
-            setSavedInsuranceId(result.id);
-            toast.success('Versicherung gespeichert', {
-                action: {
-                    label: 'Buchungen generieren',
-                    onClick: () => setBookingPreviewOpen(true)
-                }
+        try {
+            const result = await onSubmit({
+                ...data,
+                praemie_jaehrlich: data.praemie_jaehrlich ? parseFloat(data.praemie_jaehrlich) : null,
+                deckungssumme: data.deckungssumme ? parseFloat(data.deckungssumme) : null,
+                selbstbeteiligung: data.selbstbeteiligung ? parseFloat(data.selbstbeteiligung) : null,
             });
+            
+            console.log('Insurance submit result:', result);
+            
+            if (result?.id) {
+                setSavedInsuranceId(result.id);
+                toast.success('Versicherung gespeichert', {
+                    action: {
+                        label: 'Buchungen generieren',
+                        onClick: () => setBookingPreviewOpen(true)
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error submitting insurance:', error);
+            toast.error('Fehler beim Speichern');
         }
     };
 
