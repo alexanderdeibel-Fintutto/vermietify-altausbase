@@ -283,9 +283,28 @@ export default function TaxForms() {
                                                     </p>
                                                 </div>
                                                 <div className="flex gap-2">
-                                                    <Button size="sm" variant="outline">
+                                                    <Button 
+                                                        size="sm" 
+                                                        variant="outline"
+                                                        onClick={async () => {
+                                                            try {
+                                                                const response = await base44.functions.invoke('exportAnlageVPDF', {
+                                                                    submission_id: submission.id
+                                                                });
+                                                                const blob = new Blob([response.data], { type: 'application/pdf' });
+                                                                const url = window.URL.createObjectURL(blob);
+                                                                const a = document.createElement('a');
+                                                                a.href = url;
+                                                                a.download = `Anlage_V_${submission.tax_year}.pdf`;
+                                                                a.click();
+                                                                window.URL.revokeObjectURL(url);
+                                                            } catch (error) {
+                                                                console.error('Export error:', error);
+                                                            }
+                                                        }}
+                                                    >
                                                         <Download className="w-4 h-4 mr-2" />
-                                                        Export
+                                                        PDF
                                                     </Button>
                                                     <Button size="sm" variant="outline">
                                                         Bearbeiten
