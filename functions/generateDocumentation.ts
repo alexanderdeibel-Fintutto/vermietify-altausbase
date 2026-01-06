@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
                     break;
                 
                 case 'master_data':
-                    content_markdown = await generateMasterDataDoc(allEntities);
+                    content_markdown = await generateMasterDataDoc(allEntities, changes, versionNumber);
                     content_json = await generateMasterDataJSON(allEntities);
                     break;
                 
@@ -681,16 +681,296 @@ async function generateModuleArchitectureJSON(entities) {
     };
 }
 
-async function generateMasterDataDoc(entities) {
-    let doc = '# Master Data & Konstanten\n\n';
+async function generateMasterDataDoc(entities, changes = [], versionNumber = 1) {
+    // Zähle alle Enum-Felder
+    let totalEnums = 0;
+    for (const schema of Object.values(entities)) {
+        if (schema?.properties) {
+            for (const field of Object.values(schema.properties)) {
+                if (field.enum) totalEnums++;
+            }
+        }
+    }
+
+    let doc = '# Master Data & Konstanten - Immobilienverwaltung\n\n';
     doc += '**Metadaten:**\n';
-    doc += `- Generiert am: ${new Date().toLocaleString('de-DE')}\n\n`;
+    doc += `- Generiert am: ${new Date().toLocaleString('de-DE')}\n`;
+    doc += `- Dokumentations-Version: ${versionNumber}\n`;
+    doc += `- Anzahl Konstanten-Gruppen: ${totalEnums}\n`;
+    doc += `- Anzahl Änderungen seit letzter Version: ${changes.length}\n\n`;
+    doc += '**Verwendungszweck:**\n';
+    doc += 'Diese Dokumentation kann an KI-Assistenten wie Claude (Anthropic) übergeben werden,\n';
+    doc += 'um vollständiges Verständnis der App-Struktur zu ermöglichen.\n\n';
+    
+    if (changes.length > 0) {
+        doc += '**Änderungen seit letzter Version:**\n';
+        changes.forEach(change => {
+            doc += `- ${change.aenderung_beschreibung}`;
+            if (change.betroffene_entitaet) {
+                doc += ` (${change.betroffene_entitaet})`;
+            }
+            doc += '\n';
+        });
+        doc += '\n';
+    }
+    
+    doc += '**Wichtiger Hinweis:**\n';
+    doc += 'Diese Dokumentation wurde automatisch generiert. Manuelle Änderungen werden\n';
+    doc += 'bei erneuter Generierung überschrieben.\n\n';
     doc += '---\n\n';
-    doc += '## Status-Werte\n\n';
-    doc += '### Dokument-Status\n';
-    doc += '- zu_erledigen\n- erinnern\n- erstellt\n- geaendert\n- versendet\n- unterschrieben\n- gescannt\n\n';
-    doc += '### Buchungs-Status\n';
-    doc += '- Geplant\n- Gebucht\n- TeilweiseBezahlt\n- Bezahlt\n\n';
+    
+    doc += '## Übersicht\n\n';
+    doc += 'Diese Dokumentation enthält alle Master Data und Konstanten der Immobilienverwaltungs-App.\n';
+    doc += 'Master Data sind vordefinierte Auswahloptionen und Kategorien, die in Dropdown-Feldern,\n';
+    doc += 'Validierungen und Geschäftslogik verwendet werden.\n\n';
+    
+    // Gruppierung nach Verwendungsbereich
+    const groups = {
+        'Dokumente & Kommunikation': ['Document', 'Template', 'LetterShipment', 'Task'],
+        'Finanzen & Buchungen': ['GeneratedFinancialBooking', 'Invoice', 'BankTransaction', 'Payment'],
+        'Immobilien & Verträge': ['Building', 'LeaseContract', 'PropertyTax', 'Insurance', 'Financing', 'Supplier'],
+        'Kostenkategorien & Steuern': ['CostCategory', 'BuildingTaxLibrary', 'TaxForm'],
+        'Organisationsformen': ['Owner', 'Building']
+    };
+    
+    for (const [groupName, entityNames] of Object.entries(groups)) {
+        const groupEntities = entityNames.filter(name => entities[name]);
+        if (groupEntities.length === 0) continue;
+        
+        doc += `## ${groupName}\n\n`;
+        
+        for (const entityName of groupEntities) {
+            const schema = entities[entityName];
+            if (!schema?.properties) continue;
+            
+            let hasEnums = false;
+            for (const [fieldName, field] of Object.entries(schema.properties)) {
+                if (field.enum) {
+                    if (!hasEnums) {
+                        doc += `### ${entityName}\n\n`;
+                        hasEnums = true;
+                    }
+                    
+                    doc += `**${fieldName}**\n\n`;
+                    doc += `*Verwendungszweck:* ${field.description || 'Auswahlfeld'}\n\n`;
+                    doc += '| Anzeigetext | Interner Wert | Beschreibung |\n';
+                    doc += '|-------------|---------------|-------------|\n';
+                    
+                    field.enum.forEach(value => {
+                        let displayText = value;
+                        let description = '';
+                        
+                        // Spezifische Übersetzungen
+                        switch(fieldName) {
+                            case 'status':
+                                if (entityName === 'Document') {
+                                    const statusMap = {
+                                        'zu_erledigen': ['Zu erledigen', 'Dokument muss noch bearbeitet werden'],
+                                        'erinnern': ['Erinnern', 'Erinnerung für dieses Dokument setzen'],
+                                        'erstellt': ['Erstellt', 'Dokument wurde erstellt'],
+                                        'geaendert': ['Geändert', 'Dokument wurde nach Erstellung geändert'],
+                                        'versendet': ['Versendet', 'Dokument wurde per Post/Email versendet'],
+                                        'unterschrieben': ['Unterschrieben', 'Dokument wurde unterschrieben'],
+                                        'gescannt': ['Gescannt', 'Original wurde eingescannt']
+                                    };
+                                    if (statusMap[value]) {
+                                        displayText = statusMap[value][0];
+                                        description = statusMap[value][1];
+                                    }
+                                } else if (entityName === 'LeaseContract') {
+                                    const statusMap = {
+                                        'active': ['Aktiv', 'Mietvertrag ist aktuell gültig'],
+                                        'terminated': ['Gekündigt', 'Mietvertrag wurde gekündigt'],
+                                        'expired': ['Abgelaufen', 'Mietvertrag ist ausgelaufen']
+                                    };
+                                    if (statusMap[value]) {
+                                        displayText = statusMap[value][0];
+                                        description = statusMap[value][1];
+                                    }
+                                } else if (entityName === 'GeneratedFinancialBooking') {
+                                    const statusMap = {
+                                        'Geplant': ['Geplant', 'Buchung ist geplant, noch nicht bezahlt'],
+                                        'Gebucht': ['Gebucht', 'Buchung wurde gebucht'],
+                                        'TeilweiseBezahlt': ['Teilweise bezahlt', 'Buchung wurde teilweise bezahlt'],
+                                        'Bezahlt': ['Bezahlt', 'Buchung wurde vollständig bezahlt']
+                                    };
+                                    if (statusMap[value]) {
+                                        displayText = statusMap[value][0];
+                                        description = statusMap[value][1];
+                                    }
+                                } else if (entityName === 'Task') {
+                                    const statusMap = {
+                                        'offen': ['Offen', 'Task muss noch erledigt werden'],
+                                        'in_bearbeitung': ['In Bearbeitung', 'Task wird gerade bearbeitet'],
+                                        'wartend': ['Wartend', 'Task wartet auf externe Aktion'],
+                                        'erledigt': ['Erledigt', 'Task wurde abgeschlossen'],
+                                        'abgebrochen': ['Abgebrochen', 'Task wurde abgebrochen']
+                                    };
+                                    if (statusMap[value]) {
+                                        displayText = statusMap[value][0];
+                                        description = statusMap[value][1];
+                                    }
+                                }
+                                break;
+                            case 'category':
+                                if (entityName === 'Document' || entityName === 'Template') {
+                                    const catMap = {
+                                        'Mietrecht': ['Mietrecht', 'Dokumente rund um Mietverträge und Mietrecht'],
+                                        'Verwaltung': ['Verwaltung', 'Verwaltungsdokumente'],
+                                        'Finanzen': ['Finanzen', 'Finanzielle Dokumente'],
+                                        'Übergabeprotokolle': ['Übergabeprotokolle', 'Wohnungsübergabe-Protokolle'],
+                                        'Sonstiges': ['Sonstiges', 'Andere Dokumententypen']
+                                    };
+                                    if (catMap[value]) {
+                                        displayText = catMap[value][0];
+                                        description = catMap[value][1];
+                                    }
+                                }
+                                break;
+                            case 'category_type':
+                                const typeMap = {
+                                    'ERHALTUNG': ['Erhaltung', 'Erhaltungsaufwendungen (sofort absetzbar)'],
+                                    'HERSTELLUNG': ['Herstellung', 'Herstellungskosten (nur über AfA absetzbar)'],
+                                    'BETRIEB': ['Betrieb', 'Betriebskosten (umlagefähig)'],
+                                    'FINANZIERUNG': ['Finanzierung', 'Finanzierungskosten (Zinsen)']
+                                };
+                                if (typeMap[value]) {
+                                    displayText = typeMap[value][0];
+                                    description = typeMap[value][1];
+                                }
+                                break;
+                            case 'tax_treatment':
+                                const taxMap = {
+                                    'SOFORT': ['Sofort absetzbar', 'Kann sofort als Werbungskosten abgesetzt werden'],
+                                    'AFA': ['AfA', 'Nur über Abschreibung (AfA) absetzbar'],
+                                    'VERTEILT': ['Verteilt', 'Wird auf mehrere Jahre verteilt abgesetzt'],
+                                    'NICHT_ABSETZBAR': ['Nicht absetzbar', 'Steuerlich nicht absetzbar']
+                                };
+                                if (taxMap[value]) {
+                                    displayText = taxMap[value][0];
+                                    description = taxMap[value][1];
+                                }
+                                break;
+                            case 'versandart':
+                                const versandMap = {
+                                    'normal': ['Normal', 'Standard-Briefversand'],
+                                    'r1': ['Einschreiben Einwurf', 'Mit Zustellnachweis (R1)'],
+                                    'r2': ['Einschreiben', 'Mit persönlicher Zustellung (R2)']
+                                };
+                                if (versandMap[value]) {
+                                    displayText = versandMap[value][0];
+                                    description = versandMap[value][1];
+                                }
+                                break;
+                            case 'source_type':
+                                const sourceMap = {
+                                    'Versorger': ['Versorger', 'Strom, Gas, Wasser, etc.'],
+                                    'Grundsteuer': ['Grundsteuer', 'Grundsteuerbescheid'],
+                                    'Versicherung': ['Versicherung', 'Gebäudeversicherung, Haftpflicht, etc.'],
+                                    'Kredit': ['Kredit', 'Kreditrate/Finanzierung'],
+                                    'AfA': ['AfA', 'Abschreibung'],
+                                    'Kaufvertrag': ['Kaufvertrag', 'Aus Kaufvertrag generiert'],
+                                    'Mietvertrag': ['Mietvertrag', 'Mieteinnahmen']
+                                };
+                                if (sourceMap[value]) {
+                                    displayText = sourceMap[value][0];
+                                    description = sourceMap[value][1];
+                                }
+                                break;
+                            case 'payment_rhythm':
+                                const rhythmMap = {
+                                    'Monatlich': ['Monatlich', 'Zahlung jeden Monat'],
+                                    'Vierteljährlich': ['Vierteljährlich', 'Zahlung alle 3 Monate'],
+                                    'Halbjährlich': ['Halbjährlich', 'Zahlung alle 6 Monate'],
+                                    'Jährlich': ['Jährlich', 'Zahlung einmal pro Jahr']
+                                };
+                                if (rhythmMap[value]) {
+                                    displayText = rhythmMap[value][0];
+                                    description = rhythmMap[value][1];
+                                }
+                                break;
+                            case 'legal_form':
+                                const legalMap = {
+                                    'PRIVATPERSON': ['Privatperson', 'Einzelperson als Eigentümer'],
+                                    'GBR': ['GbR', 'Gesellschaft bürgerlichen Rechts'],
+                                    'GMBH': ['GmbH', 'Gesellschaft mit beschränkter Haftung'],
+                                    'AG': ['AG', 'Aktiengesellschaft']
+                                };
+                                if (legalMap[value]) {
+                                    displayText = legalMap[value][0];
+                                    description = legalMap[value][1];
+                                }
+                                break;
+                            case 'account_framework':
+                                const accountMap = {
+                                    'SKR03': ['SKR03', 'Standardkontenrahmen 03 (Prozessgliederung)'],
+                                    'SKR04': ['SKR04', 'Standardkontenrahmen 04 (Abschlussgliederung)']
+                                };
+                                if (accountMap[value]) {
+                                    displayText = accountMap[value][0];
+                                    description = accountMap[value][1];
+                                }
+                                break;
+                        }
+                        
+                        doc += `| ${displayText} | \`${value}\` | ${description} |\n`;
+                    });
+                    doc += '\n';
+                }
+            }
+        }
+    }
+    
+    doc += '## Abhängigkeiten zwischen Konstanten\n\n';
+    doc += '### CostCategory.applicable_for_legal_form\n';
+    doc += 'Kostenkategorien können auf bestimmte Rechtsformen beschränkt sein:\n';
+    doc += '- `ALLE`: Für alle Rechtsformen anwendbar\n';
+    doc += '- `PRIVATPERSON`: Nur für Privatpersonen\n';
+    doc += '- `GBR`: Nur für GbR\n';
+    doc += '- `GMBH`: Nur für GmbH\n';
+    doc += '- `AG`: Nur für AG\n\n';
+    
+    doc += '### CostCategory.applicable_for_usage\n';
+    doc += 'Kostenkategorien können auf bestimmte Nutzungsarten beschränkt sein:\n';
+    doc += '- `ALLE`: Für alle Nutzungsarten\n';
+    doc += '- `WOHNUNG`: Nur für Wohnungen\n';
+    doc += '- `GEWERBE`: Nur für Gewerbeimmobilien\n';
+    doc += '- `GEMISCHT`: Nur für gemischte Nutzung\n\n';
+    
+    doc += '### Document.status → Workflow\n';
+    doc += 'Der Dokumentenstatus folgt typischerweise diesem Workflow:\n';
+    doc += '1. `zu_erledigen` → Initialer Status\n';
+    doc += '2. `erstellt` → Nach Generierung\n';
+    doc += '3. `geaendert` → Falls Änderungen vorgenommen wurden\n';
+    doc += '4. `versendet` → Nach Versand per Post/Email\n';
+    doc += '5. `unterschrieben` → Wenn Unterschrift vorliegt\n';
+    doc += '6. `gescannt` → Wenn Original eingescannt wurde\n\n';
+    
+    doc += '### GeneratedFinancialBooking.booking_status → Zahlungsstatus\n';
+    doc += 'Der Buchungsstatus folgt dem Zahlungsfluss:\n';
+    doc += '1. `Geplant` → Buchung ist geplant\n';
+    doc += '2. `Gebucht` → Buchung wurde gebucht\n';
+    doc += '3. `TeilweiseBezahlt` → Teilzahlung erfolgt\n';
+    doc += '4. `Bezahlt` → Vollständig bezahlt\n\n';
+    
+    doc += '## Verwendung in der App\n\n';
+    doc += '### Frontend (React)\n';
+    doc += 'Master Data werden in Select-Komponenten verwendet:\n';
+    doc += '```jsx\n';
+    doc += '<Select value={status} onValueChange={setStatus}>\n';
+    doc += '  <SelectTrigger><SelectValue /></SelectTrigger>\n';
+    doc += '  <SelectContent>\n';
+    doc += '    <SelectItem value="zu_erledigen">Zu erledigen</SelectItem>\n';
+    doc += '    <SelectItem value="erstellt">Erstellt</SelectItem>\n';
+    doc += '    // ...\n';
+    doc += '  </SelectContent>\n';
+    doc += '</Select>\n';
+    doc += '```\n\n';
+    
+    doc += '### Backend (Validierung)\n';
+    doc += 'Die Enum-Werte werden automatisch durch die JSON-Schema-Validierung geprüft.\n';
+    doc += 'Ungültige Werte werden beim Speichern abgelehnt.\n\n';
+    
     return doc;
 }
 
