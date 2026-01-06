@@ -61,7 +61,30 @@ export default function DocumentCreateWizard({ open, onOpenChange }) {
     });
 
     const createMutation = useMutation({
-        mutationFn: (data) => base44.entities.Document.create(data),
+        mutationFn: async (data) => {
+            const doc = await base44.entities.Document.create(data);
+            
+            // PDF generieren
+            if (doc.content) {
+                try {
+                    const pdfResponse = await base44.functions.invoke('generatePDF', {
+                        html: doc.content,
+                        document_id: doc.id
+                    });
+                    
+                    if (pdfResponse.data?.pdf_url) {
+                        await base44.entities.Document.update(doc.id, {
+                            pdf_url: pdfResponse.data.pdf_url,
+                            seitenanzahl: pdfResponse.data.pages || 1
+                        });
+                    }
+                } catch (error) {
+                    console.error('PDF generation failed:', error);
+                }
+            }
+            
+            return doc;
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['documents'] });
             toast.success('Dokument erfolgreich erstellt');
@@ -96,6 +119,18 @@ export default function DocumentCreateWizard({ open, onOpenChange }) {
             return;
         }
 
+        // Empfängerdaten ermitteln
+        const tenantData = tenants.find(t => t.id === dataSources.tenant);
+        const buildingData = buildings.find(b => b.id === dataSources.building);
+        
+        let recipientName = '';
+        let recipientAddress = '';
+        
+        if (tenantData) {
+            recipientName = `${tenantData.first_name} ${tenantData.last_name}`;
+            recipientAddress = `${recipientName}\n${buildingData?.address || ''}\n${buildingData?.postal_code || ''} ${buildingData?.city || ''}`.trim();
+        }
+
         const documentData = {
             name: documentName,
             template_id: selectedTemplate.id,
@@ -106,6 +141,10 @@ export default function DocumentCreateWizard({ open, onOpenChange }) {
             unit_id: dataSources.unit,
             contract_id: dataSources.contract,
             tenant_id: dataSources.tenant,
+            recipient_name: recipientName,
+            recipient_address: recipientAddress,
+            seitenanzahl: 1,
+            versandstatus: 'nicht_versendet',
             selected_text_blocks: selectedTextBlocks,
             data_snapshot: {
                 ...dataSources,
