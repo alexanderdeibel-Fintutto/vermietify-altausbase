@@ -43,9 +43,11 @@ export default function BookingPreviewDialog({ open, onOpenChange, sourceType, s
 
     const createMutation = useMutation({
         mutationFn: async (buildingIdFromParent) => {
+            const user = await base44.auth.me();
+            
             const bookingsToCreate = bookingSuggestions.map(suggestion => ({
                 building_id: buildingIdFromParent,
-                unit_id: suggestion.unit_id,
+                unit_id: suggestion.unit_id || undefined,
                 source_type: sourceType,
                 source_id: sourceId,
                 source_version: 1,
@@ -53,7 +55,7 @@ export default function BookingPreviewDialog({ open, onOpenChange, sourceType, s
                 original_due_date: suggestion.due_date,
                 amount: suggestion.amount,
                 original_amount: suggestion.amount,
-                cost_category_id: costCategoryId,
+                cost_category_id: costCategoryId || undefined,
                 description: suggestion.description,
                 booking_status: 'Geplant',
                 paid_amount: 0,
