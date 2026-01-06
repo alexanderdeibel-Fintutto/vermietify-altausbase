@@ -17,6 +17,7 @@ import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import UnitDetail from './pages/UnitDetail';
+import TaxForms from './pages/TaxForms';
 import __Layout from './Layout.jsx';
 
 
@@ -40,6 +41,7 @@ export const PAGES = {
     "Tax": Tax,
     "TaxLibraryManagement": TaxLibraryManagement,
     "UnitDetail": UnitDetail,
+    "TaxForms": TaxForms,
 }
 
 export const pagesConfig = {
