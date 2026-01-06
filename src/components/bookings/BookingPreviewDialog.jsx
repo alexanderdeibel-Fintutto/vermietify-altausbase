@@ -43,7 +43,9 @@ export default function BookingPreviewDialog({ open, onOpenChange, sourceType, s
 
     const createMutation = useMutation({
         mutationFn: async (buildingIdFromParent) => {
+            console.log('Creating bookings, buildingId:', buildingIdFromParent);
             const user = await base44.auth.me();
+            console.log('User:', user?.email);
             
             const bookingsToCreate = bookingSuggestions.map(suggestion => ({
                 building_id: buildingIdFromParent,
@@ -69,24 +71,30 @@ export default function BookingPreviewDialog({ open, onOpenChange, sourceType, s
                 is_cancelled: false
             }));
 
+            console.log('Creating', bookingsToCreate.length, 'bookings');
+            
             const results = await Promise.all(
                 bookingsToCreate.map(booking => 
                     base44.entities.GeneratedFinancialBooking.create(booking)
                 )
             );
 
+            console.log('Created', results.length, 'bookings');
+
             // Markiere Quelle als verarbeitet
             await updateSourceBookingsCreated();
 
             return results;
         },
-        onSuccess: () => {
-            toast.success(`${bookingSuggestions.length} Buchungen erstellt`);
+        onSuccess: (results) => {
+            console.log('Success! Created bookings:', results.length);
+            toast.success(`${results.length} Buchungen erstellt`);
             queryClient.invalidateQueries({ queryKey: ['generatedBookings'] });
             onSuccess?.();
             onOpenChange(false);
         },
         onError: (error) => {
+            console.error('Create mutation error:', error);
             toast.error('Fehler beim Erstellen: ' + error.message);
         }
     });
