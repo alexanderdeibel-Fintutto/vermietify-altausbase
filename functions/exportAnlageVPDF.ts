@@ -29,128 +29,134 @@ Deno.serve(async (req) => {
 
         const formData = submission.form_data;
 
-        // PDF erstellen mit UTF-8 Support
-        const doc = new jsPDF({
-            compress: true,
-            precision: 2
-        });
-        
-        // Font für deutsche Umlaute setzen
-        doc.setFont('helvetica');
-        
-        const pageWidth = doc.internal.pageSize.width;
+        // PDF erstellen
+        const doc = new jsPDF();
         let y = 20;
+
+        // Helper für formatierte Beträge
+        const formatAmount = (value) => {
+            const num = Number(value || 0);
+            return num.toFixed(2).replace('.', ',') + ' EUR';
+        };
 
         // Header
         doc.setFontSize(16);
-        doc.setFont(undefined, 'bold');
-        doc.text(`Anlage V ${submission.tax_year}`, 20, y);
+        doc.text('Anlage V ' + submission.tax_year, 20, y);
         y += 10;
 
         doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Einkunfte aus Vermietung und Verpachtung', 20, y);
+        doc.text('Einkuenfte aus Vermietung und Verpachtung', 20, y);
         y += 15;
 
         // Grundstuecksdaten
         doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
         doc.text('Grundstuecksdaten', 20, y);
         y += 8;
 
         doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
         
-        const grundstuecksdaten = [
-            ['Lfd. Nr.', submission.sequential_number || 1],
-            ['Objekt', building?.name || ''],
-            ['Adresse', formData.zeile_4 || ''],
-            ['PLZ/Ort', formData.zeile_5 || ''],
-            ['Anschaffung', formData.zeile_7 || ''],
-            ['Wohnflaeche', `${formData.zeile_10 || 0} qm`]
-        ];
-
-        grundstuecksdaten.forEach(([label, value]) => {
-            doc.text(`${label}:`, 20, y);
-            doc.text(String(value), 80, y);
-            y += 6;
-        });
-
+        doc.text('Lfd. Nr.:', 20, y);
+        doc.text(String(submission.sequential_number || 1), 80, y);
+        y += 6;
+        
+        doc.text('Objekt:', 20, y);
+        doc.text(String(building?.name || ''), 80, y);
+        y += 6;
+        
+        doc.text('Adresse:', 20, y);
+        doc.text(String(formData.zeile_4 || ''), 80, y);
+        y += 6;
+        
+        doc.text('PLZ/Ort:', 20, y);
+        doc.text(String(formData.zeile_5 || ''), 80, y);
+        y += 6;
+        
+        doc.text('Anschaffung:', 20, y);
+        doc.text(String(formData.zeile_7 || ''), 80, y);
+        y += 6;
+        
+        doc.text('Wohnflaeche:', 20, y);
+        doc.text((formData.zeile_10 || 0) + ' qm', 80, y);
         y += 10;
 
         // Einnahmen
         doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
         doc.text('Einnahmen', 20, y);
         y += 8;
 
         doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-
-        const einnahmen = [
-            ['Zeile 13', 'Soll-Miete', formData.zeile_13_soll_miete],
-            ['Zeile 14', 'Ist-Miete', formData.zeile_14_ist_miete],
-            ['Zeile 15', 'Vereinnahmt', formData.zeile_15_vereinnahmt],
-            ['Zeile 20', 'Umlagen', formData.zeile_20_umlagen],
-            ['Zeile 32', 'Summe Einnahmen', formData.zeile_32_summe]
-        ];
-
-        einnahmen.forEach(([zeile, label, value]) => {
-            if (value !== undefined && value !== null) {
-                doc.text(`${zeile}: ${label}`, 20, y);
-                doc.text(`${Number(value).toLocaleString('de-DE', { minimumFractionDigits: 2 })} EUR`, 140, y, { align: 'right' });
-                y += 6;
-            }
-        });
-
+        
+        doc.text('Zeile 13: Soll-Miete', 20, y);
+        doc.text(formatAmount(formData.zeile_13_soll_miete), 150, y);
+        y += 6;
+        
+        doc.text('Zeile 14: Ist-Miete', 20, y);
+        doc.text(formatAmount(formData.zeile_14_ist_miete), 150, y);
+        y += 6;
+        
+        doc.text('Zeile 15: Vereinnahmt', 20, y);
+        doc.text(formatAmount(formData.zeile_15_vereinnahmt), 150, y);
+        y += 6;
+        
+        doc.text('Zeile 20: Umlagen', 20, y);
+        doc.text(formatAmount(formData.zeile_20_umlagen), 150, y);
+        y += 6;
+        
+        doc.text('Zeile 32: Summe Einnahmen', 20, y);
+        doc.text(formatAmount(formData.zeile_32_summe), 150, y);
         y += 10;
 
         // Werbungskosten
-        if (y > 250) {
+        if (y > 220) {
             doc.addPage();
             y = 20;
         }
 
         doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
         doc.text('Werbungskosten', 20, y);
         y += 8;
 
         doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-
-        const werbungskosten = [
-            ['Zeile 33', 'AfA', formData.zeile_33_afa],
-            ['Zeile 39', 'Schuldzinsen', formData.zeile_39_schuldzinsen],
-            ['Zeile 48', 'Erhaltungsaufwand', formData.zeile_48_erhaltung],
-            ['Zeile 51', 'Grundsteuer', formData.zeile_51_grundsteuer],
-            ['Zeile 53', 'Verwaltung', formData.zeile_53_verwaltung],
-            ['Zeile 57', 'Versicherung', formData.zeile_57_versicherung],
-            ['Zeile 82', 'Summe Werbungskosten', formData.zeile_82_summe]
-        ];
-
-        werbungskosten.forEach(([zeile, label, value]) => {
-            if (value !== undefined && value !== null) {
-                doc.text(`${zeile}: ${label}`, 20, y);
-                doc.text(`${Number(value).toLocaleString('de-DE', { minimumFractionDigits: 2 })} EUR`, 140, y, { align: 'right' });
-                y += 6;
-            }
-        });
-
+        
+        doc.text('Zeile 33: AfA', 20, y);
+        doc.text(formatAmount(formData.zeile_33_afa), 150, y);
+        y += 6;
+        
+        doc.text('Zeile 39: Schuldzinsen', 20, y);
+        doc.text(formatAmount(formData.zeile_39_schuldzinsen), 150, y);
+        y += 6;
+        
+        doc.text('Zeile 48: Erhaltungsaufwand', 20, y);
+        doc.text(formatAmount(formData.zeile_48_erhaltung), 150, y);
+        y += 6;
+        
+        doc.text('Zeile 51: Grundsteuer', 20, y);
+        doc.text(formatAmount(formData.zeile_51_grundsteuer), 150, y);
+        y += 6;
+        
+        doc.text('Zeile 53: Verwaltung', 20, y);
+        doc.text(formatAmount(formData.zeile_53_verwaltung), 150, y);
+        y += 6;
+        
+        doc.text('Zeile 57: Versicherung', 20, y);
+        doc.text(formatAmount(formData.zeile_57_versicherung), 150, y);
+        y += 6;
+        
+        doc.text('Zeile 82: Summe Werbungskosten', 20, y);
+        doc.text(formatAmount(formData.zeile_82_summe), 150, y);
         y += 10;
 
         // Einkuenfte
         const einkuenfte = (formData.zeile_32_summe || 0) - (formData.zeile_82_summe || 0);
         doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
         doc.text('Zeile 84: Einkuenfte aus V+V', 20, y);
-        doc.text(`${einkuenfte.toLocaleString('de-DE', { minimumFractionDigits: 2 })} EUR`, 140, y, { align: 'right' });
+        doc.text(formatAmount(einkuenfte), 150, y);
 
         // Footer
         y = doc.internal.pageSize.height - 20;
         doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Erstellt am ${new Date().toLocaleDateString('de-DE')}`, 20, y);
+        const dateStr = new Date().toLocaleDateString('de-DE');
+        doc.text('Erstellt am ' + dateStr, 20, y);
 
         const pdfBytes = doc.output('arraybuffer');
 
