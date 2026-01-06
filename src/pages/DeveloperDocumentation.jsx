@@ -125,6 +125,7 @@ const DOCUMENTATION_TYPES = [
 export default function DeveloperDocumentation() {
     const [previewDoc, setPreviewDoc] = useState(null);
     const [generatingAll, setGeneratingAll] = useState(false);
+    const [selectedTypes, setSelectedTypes] = useState([]);
     const queryClient = useQueryClient();
 
     const { data: documentations = [], isLoading } = useQuery({
@@ -352,6 +353,38 @@ export default function DeveloperDocumentation() {
                     variant="outline" 
                     size="lg"
                     onClick={async () => {
+                        if (selectedTypes.length === 0) {
+                            toast.error('Bitte wählen Sie mindestens eine Dokumentation aus');
+                            return;
+                        }
+                        
+                        setGeneratingAll(true);
+                        let successCount = 0;
+                        let errorCount = 0;
+                        
+                        for (const type of selectedTypes) {
+                            try {
+                                await generateMutation.mutateAsync(type);
+                                successCount++;
+                            } catch (error) {
+                                errorCount++;
+                                console.error(`Failed to generate ${type}:`, error);
+                            }
+                        }
+                        
+                        setGeneratingAll(false);
+                        setSelectedTypes([]);
+                        toast.success(`${successCount} Dokumentationen generiert, ${errorCount} Fehler`);
+                    }}
+                    disabled={selectedTypes.length === 0 || generatingAll}
+                >
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    Ausgewählte generieren ({selectedTypes.length})
+                </Button>
+                <Button 
+                    variant="outline" 
+                    size="lg"
+                    onClick={async () => {
                         if (!confirm('Wirklich alle Dokumentationen löschen? Dies kann nicht rückgängig gemacht werden.')) {
                             return;
                         }
@@ -381,10 +414,22 @@ export default function DeveloperDocumentation() {
                     const isGenerating = doc?.status === 'generating';
 
                     return (
-                        <Card key={docType.type}>
+                        <Card key={docType.type} className={selectedTypes.includes(docType.type) ? 'border-2 border-emerald-500' : ''}>
                             <CardHeader>
                                 <div className="flex items-start justify-between">
                                     <div className="flex items-start gap-3 flex-1">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedTypes.includes(docType.type)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setSelectedTypes([...selectedTypes, docType.type]);
+                                                } else {
+                                                    setSelectedTypes(selectedTypes.filter(t => t !== docType.type));
+                                                }
+                                            }}
+                                            className="w-5 h-5 mt-2 cursor-pointer"
+                                        />
                                         <Icon className="w-6 h-6 text-emerald-600 mt-1" />
                                         <div className="flex-1">
                                             <CardTitle className="text-lg">{docType.title}</CardTitle>
@@ -403,7 +448,7 @@ export default function DeveloperDocumentation() {
                                     <div>
                                         {!doc || doc.status === 'not_created' ? (
                                             <Badge variant="outline" className="text-slate-600">
-                                                Nicht erstellt
+                                                ❌ Nicht erstellt
                                             </Badge>
                                         ) : doc.status === 'generating' ? (
                                             <Badge className="bg-blue-100 text-blue-700">
@@ -412,16 +457,27 @@ export default function DeveloperDocumentation() {
                                             </Badge>
                                         ) : doc.status === 'completed' ? (
                                             <div className="text-right">
-                                                <Badge className="bg-emerald-100 text-emerald-700">
-                                                    <CheckCircle className="w-3 h-3 mr-1" />
-                                                    Erstellt
-                                                </Badge>
+                                                {doc.last_generated_at && new Date(doc.last_generated_at) < new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) ? (
+                                                    <Badge className="bg-yellow-100 text-yellow-700 mb-1">
+                                                        ⚠️ Veraltet (>7 Tage)
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge className="bg-emerald-100 text-emerald-700">
+                                                        <CheckCircle className="w-3 h-3 mr-1" />
+                                                        ✅ Aktuell
+                                                    </Badge>
+                                                )}
                                                 <p className="text-xs text-slate-500 mt-1">
                                                     {format(new Date(doc.last_generated_at), 'dd.MM.yyyy HH:mm', { locale: de })}
                                                 </p>
                                                 <p className="text-xs text-slate-500">
                                                     {formatBytes(doc.file_size_bytes)}
                                                 </p>
+                                                {doc.generation_duration_seconds && (
+                                                    <p className="text-xs text-slate-500">
+                                                        {doc.generation_duration_seconds.toFixed(1)}s
+                                                    </p>
+                                                )}
                                             </div>
                                         ) : (
                                             <Badge className="bg-red-100 text-red-700">
