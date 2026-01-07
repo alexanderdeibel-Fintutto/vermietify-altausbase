@@ -26,6 +26,13 @@ import SolutionEditor from '../components/support/SolutionEditor';
 import AutomationRules from '../components/support/AutomationRules';
 import TrendAnalysis from '../components/support/TrendAnalysis';
 import RefreshSettings from '../components/support/RefreshSettings';
+import Dashboard from '../components/support/analytics/Dashboard';
+import ModulAnalysis from '../components/support/analytics/ModulAnalysis';
+import UserSegments from '../components/support/analytics/UserSegments';
+import PerformanceMetrics from '../components/support/analytics/PerformanceMetrics';
+import TimePatterns from '../components/support/analytics/TimePatterns';
+import ImprovementPotentials from '../components/support/analytics/ImprovementPotentials';
+import TeamPerformance from '../components/support/analytics/TeamPerformance';
 import { LineChart, Line, BarChart, Bar, PieChart as RechartsPie, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, subDays } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -335,15 +342,29 @@ export default function SupportCenter() {
 
             {/* Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-5">
+                <TabsList className="grid w-full grid-cols-6">
+                    <TabsTrigger value="dashboard">
+                        📊 Dashboard
+                    </TabsTrigger>
                     <TabsTrigger value="tickets">
                         🎫 Tickets {openProblems.length > 0 && <Badge className="ml-2 bg-red-600">{openProblems.length}</Badge>}
                     </TabsTrigger>
-                    <TabsTrigger value="statistiken">📈 Statistiken</TabsTrigger>
-                    <TabsTrigger value="wissensdatenbank">📚 Wissensdatenbank</TabsTrigger>
+                    <TabsTrigger value="analysen">
+                        📈 Analysen
+                    </TabsTrigger>
+                    <TabsTrigger value="wissensdatenbank">📚 Wissen</TabsTrigger>
                     <TabsTrigger value="trends">🔥 Trends</TabsTrigger>
-                    <TabsTrigger value="automation">⚡ Automation</TabsTrigger>
+                    <TabsTrigger value="automation">⚡ Auto</TabsTrigger>
                 </TabsList>
+
+                {/* TAB: DASHBOARD */}
+                <TabsContent value="dashboard">
+                    <Dashboard 
+                        problems={problems} 
+                        solutions={solutions}
+                        onNavigate={setActiveTab}
+                    />
+                </TabsContent>
 
                 {/* TAB: TICKETS */}
                 <TabsContent value="tickets" className="space-y-4">
@@ -531,79 +552,42 @@ export default function SupportCenter() {
                     )}
                 </TabsContent>
 
-                {/* TAB: STATISTIKEN */}
-                <TabsContent value="statistiken" className="space-y-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                📈 Probleme über Zeit (letzte 30 Tage)
-                                {autoRefresh && <span className="text-xs text-emerald-600">● Auto-Update: 5 Min</span>}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ResponsiveContainer width="100%" height={300}>
-                                <LineChart data={last30Days}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="datum" />
-                                    <YAxis />
-                                    <Tooltip />
-                                    <Legend />
-                                    <Line type="monotone" dataKey="probleme" stroke="#ef4444" name="Neue Probleme" strokeWidth={2} />
-                                    <Line type="monotone" dataKey="gelöst" stroke="#10b981" name="Gelöst" strokeWidth={2} />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </CardContent>
-                    </Card>
+                {/* TAB: ANALYSEN */}
+                <TabsContent value="analysen">
+                    <Tabs defaultValue="modul">
+                        <TabsList className="grid w-full grid-cols-6 mb-4">
+                            <TabsTrigger value="modul">🎯 Module</TabsTrigger>
+                            <TabsTrigger value="user">👥 User</TabsTrigger>
+                            <TabsTrigger value="performance">⏱️ Performance</TabsTrigger>
+                            <TabsTrigger value="zeit">📅 Zeit</TabsTrigger>
+                            <TabsTrigger value="verbesserung">💡 Verbesserung</TabsTrigger>
+                            <TabsTrigger value="team">👨‍💻 Team</TabsTrigger>
+                        </TabsList>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                📊 Top 10 Probleme (diese Woche)
-                                {autoRefresh && <span className="text-xs text-emerald-600">● Auto-Update: 5 Min</span>}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ResponsiveContainer width="100%" height={400}>
-                                <BarChart data={top10Problems} layout="vertical">
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis type="number" />
-                                    <YAxis type="category" dataKey="titel" width={200} />
-                                    <Tooltip />
-                                    <Bar dataKey="anzahl" fill="#3b82f6" />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </CardContent>
-                    </Card>
+                        <TabsContent value="modul">
+                            <ModulAnalysis problems={problems} />
+                        </TabsContent>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                🎯 Kategorie-Verteilung
-                                {autoRefresh && <span className="text-xs text-emerald-600">● Auto-Update: 5 Min</span>}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ResponsiveContainer width="100%" height={300}>
-                                <RechartsPie>
-                                    <Pie
-                                        data={pieData}
-                                        cx="50%"
-                                        cy="50%"
-                                        labelLine={false}
-                                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                                        outerRadius={100}
-                                        fill="#8884d8"
-                                        dataKey="value"
-                                    >
-                                        {pieData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip />
-                                </RechartsPie>
-                            </ResponsiveContainer>
-                        </CardContent>
-                    </Card>
+                        <TabsContent value="user">
+                            <UserSegments problems={problems} />
+                        </TabsContent>
+
+                        <TabsContent value="performance">
+                            <PerformanceMetrics problems={problems} />
+                        </TabsContent>
+
+                        <TabsContent value="zeit">
+                            <TimePatterns problems={problems} />
+                        </TabsContent>
+
+                        <TabsContent value="verbesserung">
+                            <ImprovementPotentials problems={problems} />
+                        </TabsContent>
+
+                        <TabsContent value="team">
+                            <TeamPerformance problems={problems} />
+                        </TabsContent>
+                    </Tabs>
                 </TabsContent>
 
                 {/* TAB: WISSENSDATENBANK */}
