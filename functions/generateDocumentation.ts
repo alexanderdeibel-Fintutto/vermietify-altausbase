@@ -235,16 +235,13 @@ function getDescriptionForType(type) {
 }
 
 async function generateDatabaseStructureDoc(entities, changes = [], versionNumber = 1) {
-    let doc = '# Datenbankstruktur - Immobilienverwaltung\n\n';
+    let doc = '# Datenbankstruktur - VOLLSTÄNDIGE DOKUMENTATION\n\n';
     doc += '**Metadaten:**\n';
     doc += `- Generiert am: ${new Date().toLocaleString('de-DE')}\n`;
     doc += `- Dokumentations-Version: ${versionNumber}\n`;
     doc += `- Anzahl Tabellen: ${Object.keys(entities).length}\n`;
     doc += `- Anzahl Änderungen seit letzter Version: ${changes.length}\n`;
-    doc += '- Dateityp: Datenbank-Dokumentation\n\n';
-    doc += '**Verwendungszweck:**\n';
-    doc += 'Diese Dokumentation kann an KI-Assistenten wie Claude (Anthropic) übergeben werden,\n';
-    doc += 'um vollständiges Verständnis der App-Struktur zu ermöglichen.\n\n';
+    doc += '- Verwendungszweck: KI-Assistent Kontextinformation + Excel-Export\n\n';
     
     if (changes.length > 0) {
         doc += '**Änderungen seit letzter Version:**\n';
@@ -258,82 +255,429 @@ async function generateDatabaseStructureDoc(entities, changes = [], versionNumbe
         doc += '\n';
     }
     
-    doc += '**Wichtiger Hinweis:**\n';
-    doc += 'Diese Dokumentation wurde automatisch generiert. Manuelle Änderungen werden\n';
-    doc += 'bei erneuter Generierung überschrieben.\n\n';
     doc += '---\n\n';
-    doc += '## Übersicht\n\n';
-    doc += `Diese Dokumentation beschreibt die vollständige Datenbankstruktur mit ${Object.keys(entities).length} Entitäten.\n\n`;
+    
+    doc += '## Built-in Felder (ALLE Tabellen)\n\n';
+    doc += 'Jede Tabelle hat automatisch folgende Felder (nicht im Schema aufgeführt):\n\n';
+    doc += '| Feldname | Datentyp | Pflichtfeld | Standardwert | Unique | Beschreibung | Validierung | Beispiel | Berechnet | Abhängigkeiten |\n';
+    doc += '|----------|----------|-------------|--------------|--------|--------------|-------------|----------|-----------|----------------|\n';
+    doc += '| id | string (UUID) | Ja | auto | Ja | Eindeutige Datensatz-ID | UUID v4 Format | "a3f5e7d9-..." | ✅ Auto-generiert | - |\n';
+    doc += '| created_date | datetime | Ja | now() | Nein | Zeitstempel der Erstellung | ISO 8601 | "2024-01-07T15:30:00Z" | ✅ Auto-generiert | - |\n';
+    doc += '| updated_date | datetime | Ja | now() | Nein | Zeitstempel der letzten Änderung | ISO 8601 | "2024-01-07T16:45:00Z" | ✅ Auto-Update bei Änderung | - |\n';
+    doc += '| created_by | string (email) | Ja | user.email | Nein | E-Mail des Erstellers | E-Mail-Format | "verwalter@example.com" | ✅ Aus Auth-Context | - |\n\n';
+    
+    doc += '---\n\n';
     
     // Gruppierung der Entitäten
     const groups = {
-        'Objektverwaltung': ['Building', 'Unit', 'Meter', 'Gebaeude'],
-        'Mieterverwaltung': ['Tenant', 'LeaseContract', 'Payment', 'RentChange'],
-        'Finanzverwaltung': ['BankAccount', 'BankTransaction', 'GeneratedFinancialBooking', 'Invoice', 'FinancialItem', 'FinancialItemTransactionLink'],
-        'Dokumentenverwaltung': ['Document', 'Template', 'TextBlock', 'DocumentOriginal'],
-        'Kommunikation': ['Email', 'LetterXpressCredential', 'LetterShipment', 'IMAPAccount'],
-        'Steuern': ['PropertyTax', 'TaxForm', 'TaxFormField', 'AnlageVSubmission', 'BuildingTaxLibrary', 'CostCategory'],
-        'Verträge & Kosten': ['Insurance', 'Financing', 'Supplier', 'PurchaseContract'],
-        'Aufgaben & Workflows': ['Task', 'TaskStatus', 'TaskPriority', 'Workflow', 'WorkflowStep', 'Automation'],
-        'Eigentümer': ['Owner', 'Shareholder', 'OwnerRelationship'],
-        'Betriebskosten': ['OperatingCostStatement', 'OperatingCostStatementItem'],
-        'Sonstiges': ['Notification', 'ActivityLog', 'Recipient']
+        '1. OBJEKTE & GEBÄUDE': ['Building', 'Unit', 'Meter', 'Gebaeude', 'PurchaseContract'],
+        '2. EIGENTÜMER & BETEILIGUNGEN': ['Owner', 'Shareholder', 'OwnerRelationship'],
+        '3. MIETER & VERTRÄGE': ['Tenant', 'LeaseContract', 'RentChange', 'Payment'],
+        '4. DOKUMENTE & VORLAGEN': ['Document', 'Template', 'TextBlock', 'DocumentOriginal'],
+        '5. BELEGE & BUCHHALTUNG': ['Invoice', 'FinancialItem', 'GeneratedFinancialBooking', 'FinancialItemTransactionLink', 'PaymentTransactionLink'],
+        '6. BANKING': ['BankAccount', 'BankTransaction', 'CategorizationRule'],
+        '7. STEUER & ABRECHNUNG': ['PropertyTax', 'Insurance', 'Financing', 'Supplier', 'TaxForm', 'TaxFormField', 'AnlageVSubmission', 'BuildingTaxLibrary', 'CostCategory', 'AfASchedule', 'BookingGenerationRule', 'EuerCategory', 'TaxCategory', 'CostTaxLink', 'CustomCostCategory', 'CostType'],
+        '8. BETRIEBSKOSTEN': ['OperatingCostStatement', 'OperatingCostStatementItem'],
+        '9. AUFGABEN & WORKFLOWS': ['Task', 'TaskStatus', 'TaskPriority', 'Workflow', 'WorkflowStep', 'Automation'],
+        '10. KOMMUNIKATION': ['Email', 'IMAPAccount', 'LetterXpressCredential', 'LetterShipment', 'Recipient'],
+        '11. SYSTEM & META': ['Notification', 'ActivityLog', 'GeneratedDocumentation', 'DocumentationChange']
     };
 
     for (const [groupName, entityNames] of Object.entries(groups)) {
         const groupEntities = entityNames.filter(name => entities[name]);
         if (groupEntities.length === 0) continue;
 
-        doc += `## ${groupName}\n\n`;
+        doc += `# ${groupName}\n\n`;
 
         for (const name of groupEntities) {
             const schema = entities[name];
-            doc += `### ${name}\n\n`;
+            doc += `## Tabelle: ${name}\n\n`;
 
             if (schema?.properties) {
-                doc += '| Feldname | Datentyp | Pflichtfeld | Standardwert | Beschreibung |\n';
-                doc += '|----------|----------|-------------|--------------|-------------|\n';
+                // 10-Spalten Tabelle
+                doc += '| Feldname | Datentyp | Pflichtfeld | Standardwert | Unique | Beschreibung | Validierungsregeln | Beispielwert | Wird berechnet? | Abhängigkeiten |\n';
+                doc += '|----------|----------|-------------|--------------|--------|--------------|-------------------|--------------|-----------------|----------------|\n';
 
                 for (const [fieldName, field] of Object.entries(schema.properties)) {
                     const required = schema.required?.includes(fieldName) ? 'Ja' : 'Nein';
-                    const type = field.type || 'unknown';
-                    const enumValues = field.enum ? ` (${field.enum.join(', ')})` : '';
+                    
+                    // Datentyp mit Details
+                    let type = field.type || 'unknown';
+                    if (field.format) type += ` (${field.format})`;
+                    if (field.enum) type = 'enum';
+                    if (field.type === 'array') type = `array<${field.items?.type || 'object'}>`;
+                    if (field.type === 'object') type = 'json';
+                    
                     const defaultValue = field.default !== undefined ? String(field.default) : '-';
-                    const description = (field.description || '').replace(/\n/g, ' ');
-                    doc += `| ${fieldName} | ${type}${enumValues} | ${required} | ${defaultValue} | ${description} |\n`;
+                    const unique = 'Nein'; // Base44 hat keine unique constraints außer id
+                    const description = (field.description || '-').replace(/\n/g, ' ');
+                    
+                    // Validierungsregeln
+                    let validation = '';
+                    if (field.enum) validation = `Werte: ${field.enum.join(', ')}`;
+                    if (field.minimum) validation += ` Min: ${field.minimum}`;
+                    if (field.maximum) validation += ` Max: ${field.maximum}`;
+                    if (field.minLength) validation += ` Min. ${field.minLength} Zeichen`;
+                    if (field.maxLength) validation += ` Max. ${field.maxLength} Zeichen`;
+                    if (field.pattern) validation += ` Pattern: ${field.pattern}`;
+                    if (!validation) validation = '-';
+                    
+                    // Beispielwert
+                    let example = getExampleValue(name, fieldName, field);
+                    
+                    // Wird berechnet?
+                    let computed = getComputedInfo(name, fieldName);
+                    
+                    // Abhängigkeiten
+                    let dependencies = getDependencies(name, fieldName, field);
+                    
+                    doc += `| ${fieldName} | ${type} | ${required} | ${defaultValue} | ${unique} | ${description} | ${validation} | ${example} | ${computed} | ${dependencies} |\n`;
+                }
+                
+                // Enum-Werte Details (wenn vorhanden)
+                const enumFields = Object.entries(schema.properties).filter(([_, f]) => f.enum);
+                if (enumFields.length > 0) {
+                    doc += '\n**Enum-Werte Details**:\n\n';
+                    for (const [fieldName, field] of enumFields) {
+                        doc += `**${fieldName}**:\n`;
+                        field.enum.forEach(value => {
+                            const meaning = getEnumMeaning(name, fieldName, value);
+                            doc += `- \`${value}\`: ${meaning}\n`;
+                        });
+                        doc += '\n';
+                    }
                 }
             }
 
-            // Beziehungen dokumentieren
-            const relationships = [];
+            // Meta-Informationen nach der Tabelle
+            doc += '\n**Meta-Informationen**:\n\n';
+            doc += `- **Primary Key**: id (UUID, auto-generiert)\n`;
+            
+            // Foreign Keys
+            const foreignKeys = [];
             if (schema?.properties) {
                 for (const [fieldName, field] of Object.entries(schema.properties)) {
                     if (fieldName.endsWith('_id') && fieldName !== 'id') {
                         const relatedEntity = fieldName.slice(0, -3).split('_').map(w => 
                             w.charAt(0).toUpperCase() + w.slice(1)
                         ).join('');
-                        relationships.push(`- **${fieldName}**: Referenz zu ${relatedEntity} (n:1)`);
+                        const relationship = getRelationshipType(name, fieldName, relatedEntity);
+                        foreignKeys.push(`  - **${fieldName}** → ${relatedEntity}.id (${relationship})`);
                     }
                 }
             }
-
-            if (relationships.length > 0) {
-                doc += '\n**Beziehungen:**\n';
-                doc += relationships.join('\n') + '\n';
+            if (foreignKeys.length > 0) {
+                doc += '- **Foreign Keys**:\n';
+                doc += foreignKeys.join('\n') + '\n';
+            } else {
+                doc += '- **Foreign Keys**: Keine\n';
             }
-
+            
+            // Indizes
+            const indices = getIndices(name);
+            doc += `- **Indizes**: ${indices}\n`;
+            
+            // Trigger/Hooks
+            const hooks = getHooks(name);
+            doc += `- **Trigger/Hooks**: ${hooks}\n`;
+            
+            // Soft-Delete
+            const softDelete = hasSoftDelete(name);
+            doc += `- **Soft-Delete**: ${softDelete}\n`;
+            
+            // Historisierung
+            const historization = getHistorization(name);
+            doc += `- **Historisierung**: ${historization}\n`;
+            
+            // Berechtigungen
+            const permissions = getPermissions(name);
+            doc += `- **Berechtigungen**: ${permissions}\n`;
+            
             doc += '\n';
         }
     }
 
-    doc += '## Built-in Felder\n\n';
-    doc += 'Alle Entitäten haben automatisch folgende Felder:\n\n';
-    doc += '- **id**: Eindeutige ID\n';
-    doc += '- **created_date**: Erstellungszeitpunkt\n';
-    doc += '- **updated_date**: Letzter Update-Zeitpunkt\n';
-    doc += '- **created_by**: E-Mail des Erstellers\n\n';
-
     return doc;
+}
+
+// Helper-Funktionen für Datenbank-Dokumentation
+
+function getExampleValue(entityName, fieldName, field) {
+    // Spezifische Beispiele für bekannte Felder
+    const examples = {
+        'Building': {
+            'name': '"Hauptstraße 1, Berlin"',
+            'address': '"Hauptstraße 1"',
+            'zip_code': '"10115"',
+            'city': '"Berlin"',
+            'building_type': '"Mehrfamilienhaus"',
+            'construction_year': '1995',
+            'total_area': '400',
+            'number_of_units': '6',
+            'land_area': '500',
+            'purchase_price': '450000',
+            'land_value': '150000'
+        },
+        'Unit': {
+            'name': '"Whg. 1.OG links"',
+            'flaeche': '65.5',
+            'rooms': '3',
+            'floor': '1',
+            'building_id': '"uuid-building-123"'
+        },
+        'Tenant': {
+            'first_name': '"Max"',
+            'last_name': '"Mustermann"',
+            'email': '"max@example.com"',
+            'phone': '"+49 176 12345678"',
+            'address': '"Alte Str. 5"',
+            'zip_code': '"12345"',
+            'city': '"Musterstadt"',
+            'birth_date': '"1985-03-15"'
+        },
+        'LeaseContract': {
+            'base_rent': '800',
+            'utilities': '150',
+            'heating': '80',
+            'total_rent': '1030',
+            'deposit': '2400',
+            'start_date': '"2024-02-01"',
+            'end_date': 'null',
+            'rent_due_day': '3',
+            'status': '"active"'
+        },
+        'Invoice': {
+            'invoice_number': '"RE-2024-001"',
+            'invoice_date': '"2024-01-05"',
+            'due_date': '"2024-02-05"',
+            'total_amount': '350.00',
+            'net_amount': '294.12',
+            'tax_amount': '55.88',
+            'tax_rate': '19',
+            'supplier_name': '"Mustermann Versicherungen GmbH"'
+        }
+    };
+    
+    if (examples[entityName] && examples[entityName][fieldName]) {
+        return examples[entityName][fieldName];
+    }
+    
+    // Fallback basierend auf Feldtyp
+    if (field.type === 'string') {
+        if (fieldName.includes('email')) return '"user@example.com"';
+        if (fieldName.includes('phone')) return '"+49 30 12345678"';
+        if (fieldName.includes('name')) return '"Beispiel Name"';
+        if (fieldName.includes('address')) return '"Musterstraße 1"';
+        if (fieldName.includes('city')) return '"Berlin"';
+        if (fieldName.includes('zip')) return '"10115"';
+        if (fieldName.endsWith('_id')) return '"uuid-123-456"';
+        if (field.format === 'date') return '"2024-01-07"';
+        if (field.format === 'date-time') return '"2024-01-07T15:30:00Z"';
+        if (field.enum) return `"${field.enum[0]}"`;
+        return '"Beispiel"';
+    }
+    if (field.type === 'number') {
+        if (fieldName.includes('amount') || fieldName.includes('price')) return '1000.00';
+        if (fieldName.includes('percent') || fieldName.includes('rate')) return '19';
+        if (fieldName.includes('year')) return '2024';
+        if (fieldName.includes('month')) return '12';
+        if (fieldName.includes('day')) return '15';
+        return '100';
+    }
+    if (field.type === 'boolean') return field.default !== undefined ? String(field.default) : 'false';
+    if (field.type === 'array') return '[]';
+    if (field.type === 'object') return '{}';
+    
+    return '-';
+}
+
+function getComputedInfo(entityName, fieldName) {
+    const computed = {
+        'LeaseContract': {
+            'total_rent': '✅ base_rent + utilities + heating'
+        },
+        'GeneratedFinancialBooking': {
+            'outstanding_amount': '✅ amount - paid_amount'
+        },
+        'Invoice': {
+            'net_amount': '✅ total_amount / (1 + tax_rate/100)',
+            'tax_amount': '✅ total_amount - net_amount'
+        },
+        'Building': {
+            'total_area': '❌ Manuell (idealerweise = sum(Unit.flaeche))',
+            'number_of_units': '❌ Manuell (oder = count(Units))'
+        }
+    };
+    
+    return computed[entityName]?.[fieldName] || '-';
+}
+
+function getDependencies(entityName, fieldName, field) {
+    // Spezifische Abhängigkeiten
+    if (fieldName.endsWith('_id')) return `Erforderlich wenn ${entityName} verknüpft werden soll`;
+    if (fieldName === 'end_date' && entityName === 'LeaseContract') return 'Nur bei befristetem Vertrag (is_unlimited=false)';
+    if (fieldName === 'second_tenant_id') return 'Optional bei 2 Hauptmietern';
+    if (fieldName === 'predecessor_id') return 'Nur bei Version > 1';
+    if (fieldName.startsWith('faelligkeit_')) return 'Nur bei Grundsteuer mit 4 Quartalen';
+    
+    return '-';
+}
+
+function getRelationshipType(entityName, fieldName, relatedEntity) {
+    // n:1 ist Standard (viele Entity haben einen Related)
+    // Spezifische Beziehungen
+    const relationships = {
+        'Unit.building_id': '1 Building → n Units (1:n)',
+        'LeaseContract.unit_id': '1 Unit → n LeaseContracts (1:n über Zeit)',
+        'LeaseContract.tenant_id': '1 Tenant → n LeaseContracts (1:n)',
+        'Document.template_id': '1 Template → n Documents (1:n)',
+        'BankTransaction.bank_account_id': '1 BankAccount → n Transactions (1:n)',
+        'GeneratedFinancialBooking.building_id': '1 Building → n Bookings (1:n)',
+        'OwnerRelationship.owner_id': 'n:1',
+        'OwnerRelationship.building_id': 'n:m (über OwnerRelationship)',
+        'Shareholder.owner_id': '1 Owner → n Shareholders (1:n)'
+    };
+    
+    const key = `${entityName}.${fieldName}`;
+    return relationships[key] || 'n:1';
+}
+
+function getIndices(entityName) {
+    // Wichtige Performance-Indizes
+    const indices = {
+        'Building': 'id (PK), zip_code, city',
+        'Unit': 'id (PK), building_id, name',
+        'LeaseContract': 'id (PK), unit_id, tenant_id, start_date, status',
+        'BankTransaction': 'id (PK), bank_account_id, booking_date, amount',
+        'GeneratedFinancialBooking': 'id (PK), building_id, due_date, booking_status',
+        'Invoice': 'id (PK), building_id, invoice_date, supplier_name',
+        'Document': 'id (PK), building_id, tenant_id, status, created_date',
+        'Task': 'id (PK), status, due_date, assigned_object_id'
+    };
+    
+    return indices[entityName] || 'id (PK)';
+}
+
+function getHooks(entityName) {
+    const hooks = {
+        'LeaseContract': 'Bei CREATE: Optional Buchungen generieren (generateBookingsFromSource)',
+        'PropertyTax': 'Bei CREATE/UPDATE: Optional Buchungen generieren',
+        'Insurance': 'Bei CREATE: Optional Buchungen generieren',
+        'Financing': 'Bei CREATE: Optional AfA-Plan generieren',
+        'Document': 'Nach PDF-Generierung: pdf_url und seitenanzahl setzen',
+        'BankTransaction': 'Nach Import: AI-Matching triggern',
+        'GeneratedFinancialBooking': 'Bei UPDATE paid_amount: outstanding_amount neu berechnen'
+    };
+    
+    return hooks[entityName] || 'Keine';
+}
+
+function hasSoftDelete(entityName) {
+    const softDeleteEntities = {
+        'GeneratedFinancialBooking': 'Ja (is_cancelled=true)',
+        'Task': 'Ja (status="abgebrochen")',
+        'Document': 'Nein (hard delete)',
+        'LeaseContract': 'Nein, aber Versionierung (is_current_valid=false)',
+        'Invoice': 'Nein'
+    };
+    
+    return softDeleteEntities[entityName] || 'Nein (hard delete)';
+}
+
+function getHistorization(entityName) {
+    const versionedEntities = [
+        'PropertyTax', 'Insurance', 'Financing', 'Supplier', 'LeaseContract'
+    ];
+    
+    if (versionedEntities.includes(entityName)) {
+        return '✅ Ja (version_number, predecessor_id, is_current_valid)';
+    }
+    
+    if (entityName === 'Document') {
+        return '✅ Ja (change_history Array)';
+    }
+    
+    if (entityName === 'GeneratedDocumentation') {
+        return '✅ Ja (version_number, previous_version_id, changes_summary)';
+    }
+    
+    return 'Nein (nur created_date/updated_date)';
+}
+
+function getPermissions(entityName) {
+    // Basierend auf Rollen-Dokumentation
+    const restrictedEntities = {
+        'User': 'Admin: ALL | User: R (nur eigenes Profil), U (nur eigenes Profil)',
+        'GeneratedDocumentation': 'Admin: ALL | User: R',
+        'ActivityLog': 'Admin: R,C | User: R',
+        'LetterXpressCredential': 'Admin: ALL | User: ALL',
+        'IMAPAccount': 'Admin: ALL | User: ALL'
+    };
+    
+    return restrictedEntities[entityName] || 'Admin: ALL | User: ALL';
+}
+
+function getEnumMeaning(entityName, fieldName, value) {
+    const meanings = {
+        'Document.status': {
+            'zu_erledigen': 'Dokument muss noch bearbeitet werden',
+            'erinnern': 'Erinnerung für dieses Dokument gesetzt',
+            'erstellt': 'Dokument wurde erstellt/generiert',
+            'geaendert': 'Dokument wurde nach Erstellung geändert',
+            'versendet': 'Dokument wurde per Post/E-Mail versendet',
+            'unterschrieben': 'Dokument wurde unterschrieben',
+            'gescannt': 'Original wurde eingescannt und hochgeladen'
+        },
+        'LeaseContract.status': {
+            'active': 'Mietvertrag ist aktuell gültig und aktiv',
+            'terminated': 'Mietvertrag wurde gekündigt (läuft noch bis Kündigungsfrist)',
+            'expired': 'Mietvertrag ist ausgelaufen/beendet'
+        },
+        'GeneratedFinancialBooking.booking_status': {
+            'Geplant': 'Buchung ist geplant, noch nicht bezahlt',
+            'Gebucht': 'Buchung wurde gebucht (bestätigt)',
+            'TeilweiseBezahlt': 'Buchung wurde teilweise bezahlt',
+            'Bezahlt': 'Buchung wurde vollständig bezahlt'
+        },
+        'Task.status': {
+            'offen': 'Task muss noch erledigt werden',
+            'in_bearbeitung': 'Task wird gerade bearbeitet',
+            'wartend': 'Task wartet auf externe Aktion/Rückmeldung',
+            'erledigt': 'Task wurde abgeschlossen',
+            'abgebrochen': 'Task wurde abgebrochen/storniert'
+        },
+        'CostCategory.category_type': {
+            'ERHALTUNG': 'Erhaltungsaufwendungen (sofort absetzbar)',
+            'HERSTELLUNG': 'Herstellungskosten (nur über AfA absetzbar)',
+            'BETRIEB': 'Betriebskosten (oft umlagefähig)',
+            'FINANZIERUNG': 'Finanzierungskosten (Zinsen, Gebühren)'
+        },
+        'CostCategory.tax_treatment': {
+            'SOFORT': 'Sofort als Werbungskosten absetzbar',
+            'AFA': 'Nur über Abschreibung (AfA) absetzbar',
+            'VERTEILT': 'Wird auf mehrere Jahre verteilt',
+            'NICHT_ABSETZBAR': 'Steuerlich nicht absetzbar'
+        },
+        'GeneratedFinancialBooking.source_type': {
+            'Versorger': 'Aus Versorger-Vertrag generiert (Strom, Gas, Wasser)',
+            'Grundsteuer': 'Aus Grundsteuerbescheid generiert',
+            'Versicherung': 'Aus Versicherungsvertrag generiert',
+            'Kredit': 'Aus Kreditvertrag generiert (Raten)',
+            'AfA': 'Abschreibung aus Kaufvertrag',
+            'Kaufvertrag': 'Direkt aus Kaufvertrag generiert',
+            'Mietvertrag': 'Mieteinnahmen aus Mietvertrag'
+        },
+        'LetterShipment.status': {
+            'queue': 'In Warteschlange bei LetterXpress',
+            'hold': 'Wird gedruckt',
+            'done': 'Gedruckt, wird versendet',
+            'sent': 'Versendet und zugestellt',
+            'canceled': 'Storniert'
+        }
+    };
+    
+    const key = `${entityName}.${fieldName}`;
+    return meanings[key]?.[value] || value;
 }
 
 async function generateModuleArchitectureDoc(entities, changes = [], versionNumber = 1) {
