@@ -24,6 +24,8 @@ import Tax from './pages/Tax';
 import TaxForms from './pages/TaxForms';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import UnitDetail from './pages/UnitDetail';
+import WhatsAppSetup from './pages/WhatsAppSetup';
+import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import __Layout from './Layout.jsx';
 
 
@@ -54,6 +56,8 @@ export const PAGES = {
     "TaxForms": TaxForms,
     "TaxLibraryManagement": TaxLibraryManagement,
     "UnitDetail": UnitDetail,
+    "WhatsAppSetup": WhatsAppSetup,
+    "WhatsAppCommunication": WhatsAppCommunication,
 }
 
 export const pagesConfig = {
