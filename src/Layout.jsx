@@ -54,6 +54,7 @@ export default function Layout({ children, currentPageName }) {
         { name: '🔐 Rollen', href: createPageUrl('RoleManagement'), icon: Shield, page: 'RoleManagement' },
         { name: '📦 Module', href: createPageUrl('ModuleManagement'), icon: Package, page: 'ModuleManagement' },
         { name: '🧪 Testing', href: createPageUrl('TestingDashboard'), icon: TestTube, page: 'TestingDashboard' },
+        { name: '📊 Audit Reports', href: createPageUrl('AuditReports'), icon: BarChart3, page: 'AuditReports' },
         { name: 'Objekte', href: createPageUrl('Buildings'), icon: Building2, page: 'Buildings', requiresModule: 'property' },
         { name: 'Mieter', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts', requiresModule: 'tenants' },
         { name: 'Kommunikation', href: createPageUrl('Kommunikation'), icon: MessageSquare, page: 'Kommunikation', requiresModule: 'communication' },
