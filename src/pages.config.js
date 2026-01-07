@@ -7,6 +7,7 @@ import ContractDetail from './pages/ContractDetail';
 import Contracts from './pages/Contracts';
 import CostTypes from './pages/CostTypes';
 import Dashboard from './pages/Dashboard';
+import DeveloperDocumentation from './pages/DeveloperDocumentation';
 import Documents from './pages/Documents';
 import FinAPICallback from './pages/FinAPICallback';
 import FinancialItems from './pages/FinancialItems';
@@ -20,7 +21,7 @@ import Tax from './pages/Tax';
 import TaxForms from './pages/TaxForms';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import UnitDetail from './pages/UnitDetail';
-import DeveloperDocumentation from './pages/DeveloperDocumentation';
+import SupportCenter from './pages/SupportCenter';
 import __Layout from './Layout.jsx';
 
 
@@ -34,6 +35,7 @@ export const PAGES = {
     "Contracts": Contracts,
     "CostTypes": CostTypes,
     "Dashboard": Dashboard,
+    "DeveloperDocumentation": DeveloperDocumentation,
     "Documents": Documents,
     "FinAPICallback": FinAPICallback,
     "FinancialItems": FinancialItems,
@@ -47,7 +49,7 @@ export const PAGES = {
     "TaxForms": TaxForms,
     "TaxLibraryManagement": TaxLibraryManagement,
     "UnitDetail": UnitDetail,
-    "DeveloperDocumentation": DeveloperDocumentation,
+    "SupportCenter": SupportCenter,
 }
 
 export const pagesConfig = {
