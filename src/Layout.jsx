@@ -22,32 +22,58 @@ import {
 import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import SuiteSwitcher from '@/components/suite/SuiteSwitcher';
+import { useUserSuites } from '@/components/suite/useModuleAccess';
 
 export default function Layout({ children, currentPageName }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const { data: userSuites } = useUserSuites();
+
+    // Hilfsfunktion: Prüft ob User Zugriff auf ein Modul hat
+    const hasModuleAccess = (moduleName) => {
+        if (!userSuites) return true; // Während des Ladens: alles anzeigen
+        
+        // Prüfe ob Modul in einer aktiven Suite enthalten ist
+        const hasViaSuite = userSuites.suites?.some(suite => 
+            suite.included_modules?.includes(moduleName)
+        );
+        
+        // Prüfe ob direkter Modul-Zugriff besteht
+        const hasDirectAccess = userSuites.modules?.some(mod => 
+            mod.name === moduleName && mod.access.access_level !== 'none'
+        );
+        
+        return hasViaSuite || hasDirectAccess;
+    };
 
     const navigation = [
         { name: 'Dashboard', href: createPageUrl('Dashboard'), icon: Home, page: 'Dashboard' },
         { name: '🎯 Suite Management', href: createPageUrl('SuiteManagement'), icon: Settings, page: 'SuiteManagement' },
-        { name: 'Objekte', href: createPageUrl('Buildings'), icon: Building2, page: 'Buildings' },
-        { name: 'Mieter', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts' },
-        { name: 'Kommunikation', href: createPageUrl('Kommunikation'), icon: MessageSquare, page: 'Kommunikation' },
-        { name: '💬 WhatsApp', href: createPageUrl('WhatsAppCommunication'), icon: MessageSquare, page: 'WhatsAppCommunication' },
-        { name: '⚙️ WhatsApp Settings', href: createPageUrl('WhatsAppSettings'), icon: Settings, page: 'WhatsAppSettings' },
-        { name: 'Aufgaben', href: createPageUrl('Tasks'), icon: FileText, page: 'Tasks' },
-        { name: 'Dokumente', href: createPageUrl('Documents'), icon: FileText, page: 'Documents' },
-        { name: 'Finanzen', href: createPageUrl('Finanzen'), icon: CreditCard, page: 'Finanzen' },
-        { name: 'Generierte Buchungen', href: createPageUrl('GeneratedBookings'), icon: FileText, page: 'GeneratedBookings' },
-        { name: 'Rechnungen & Belege', href: createPageUrl('Invoices'), icon: FileText, page: 'Invoices' },
-        { name: 'Steuerformulare', href: createPageUrl('TaxForms'), icon: BookOpen, page: 'TaxForms' },
-        { name: 'Betriebskosten', href: createPageUrl('OperatingCosts'), icon: FileText, page: 'OperatingCosts' },
-        { name: 'Bank/Kasse', href: createPageUrl('BankAccounts'), icon: Landmark, page: 'BankAccounts' },
+        { name: 'Objekte', href: createPageUrl('Buildings'), icon: Building2, page: 'Buildings', requiresModule: 'property' },
+        { name: 'Mieter', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts', requiresModule: 'tenants' },
+        { name: 'Kommunikation', href: createPageUrl('Kommunikation'), icon: MessageSquare, page: 'Kommunikation', requiresModule: 'communication' },
+        { name: '💬 WhatsApp', href: createPageUrl('WhatsAppCommunication'), icon: MessageSquare, page: 'WhatsAppCommunication', requiresModule: 'communication' },
+        { name: '⚙️ WhatsApp Settings', href: createPageUrl('WhatsAppSettings'), icon: Settings, page: 'WhatsAppSettings', requiresModule: 'communication' },
+        { name: 'Aufgaben', href: createPageUrl('Tasks'), icon: FileText, page: 'Tasks', requiresModule: 'tasks' },
+        { name: 'Dokumente', href: createPageUrl('Documents'), icon: FileText, page: 'Documents', requiresModule: 'documents' },
+        { name: 'Finanzen', href: createPageUrl('Finanzen'), icon: CreditCard, page: 'Finanzen', requiresModule: 'finance' },
+        { name: 'Generierte Buchungen', href: createPageUrl('GeneratedBookings'), icon: FileText, page: 'GeneratedBookings', requiresModule: 'finance' },
+        { name: 'Rechnungen & Belege', href: createPageUrl('Invoices'), icon: FileText, page: 'Invoices', requiresModule: 'finance' },
+        { name: 'Steuerformulare', href: createPageUrl('TaxForms'), icon: BookOpen, page: 'TaxForms', requiresModule: 'tax_rental' },
+        { name: 'Betriebskosten', href: createPageUrl('OperatingCosts'), icon: FileText, page: 'OperatingCosts', requiresModule: 'property' },
+        { name: 'Bank/Kasse', href: createPageUrl('BankAccounts'), icon: Landmark, page: 'BankAccounts', requiresModule: 'accounts' },
         { name: '───────────', disabled: true },
         { name: '📖 Entwickler-Doku', href: createPageUrl('DeveloperDocumentation'), icon: BookOpen, page: 'DeveloperDocumentation' },
         { name: '🆘 Support-Center', href: createPageUrl('SupportCenter'), icon: AlertCircle, page: 'SupportCenter' },
         { name: '🚀 Projekt-Management', href: createPageUrl('ProjectManagement'), icon: Target, page: 'ProjectManagement' },
         { name: '❓ Hilfe-Center', href: createPageUrl('HilfeCenter'), icon: HelpCircle, page: 'HilfeCenter' },
     ];
+
+    // Filtere Navigation basierend auf Modul-Zugriff
+    const visibleNavigation = navigation.filter(item => {
+        if (item.disabled) return true;
+        if (!item.requiresModule) return true;
+        return hasModuleAccess(item.requiresModule);
+    });
 
     return (
         <div className="min-h-screen bg-slate-50">
@@ -80,7 +106,7 @@ export default function Layout({ children, currentPageName }) {
                 </div>
 
                 <nav className="p-4 space-y-1">
-                    {navigation.map((item) => {
+                    {visibleNavigation.map((item) => {
                         if (item.disabled) {
                             return (
                                 <div key={item.name} className="my-2 border-t border-slate-200" />
