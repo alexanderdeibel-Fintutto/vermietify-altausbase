@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
     Search, RefreshCw, Send, Paperclip, CheckCheck, 
-    Clock, AlertCircle, Info, Loader2, Download
+    Clock, AlertCircle, Info, Loader2, Download, X, FileText as FileTextIcon
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -20,6 +21,8 @@ export default function WhatsAppCommunication() {
     const [messageText, setMessageText] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [filterTab, setFilterTab] = useState('alle');
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [selectedTemplate, setSelectedTemplate] = useState('');
     const queryClient = useQueryClient();
 
     const { data: account } = useQuery({
@@ -28,6 +31,14 @@ export default function WhatsAppCommunication() {
             const accounts = await base44.entities.WhatsAppAccount.list();
             return accounts[0];
         }
+    });
+
+    const { data: templates = [] } = useQuery({
+        queryKey: ['whatsapp-templates-approved'],
+        queryFn: () => base44.entities.WhatsAppTemplate.filter({
+            meta_status: 'genehmigt'
+        }),
+        enabled: !!account
     });
 
     const { data: kontakte = [] } = useQuery({
@@ -118,14 +129,51 @@ export default function WhatsAppCommunication() {
         return true;
     });
 
-    const handleSendMessage = () => {
-        if (!messageText.trim() || !selectedContact) return;
+    const handleSendMessage = async () => {
+        if ((!messageText.trim() && !selectedFile) || !selectedContact) return;
 
-        sendMutation.mutate({
-            whatsapp_contact_id: selectedContact.id,
-            nachricht_text: messageText,
-            kategorie: 'service'
-        });
+        if (selectedFile) {
+            // Upload file first
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            
+            const uploadResponse = await base44.integrations.Core.UploadFile({ file: selectedFile });
+            
+            sendMutation.mutate({
+                whatsapp_contact_id: selectedContact.id,
+                nachricht_text: messageText || 'Dokument',
+                anhang_url: uploadResponse.file_url,
+                anhang_dateiname: selectedFile.name,
+                typ: 'dokument',
+                kategorie: 'service'
+            });
+            setSelectedFile(null);
+        } else {
+            sendMutation.mutate({
+                whatsapp_contact_id: selectedContact.id,
+                nachricht_text: messageText,
+                kategorie: 'service'
+            });
+        }
+    };
+
+    const handleTemplateSelect = (templateId) => {
+        const template = templates.find(t => t.id === templateId);
+        if (template) {
+            setMessageText(template.body_text);
+            setSelectedTemplate(templateId);
+        }
+    };
+
+    const handleFileSelect = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 16 * 1024 * 1024) {
+                toast.error('Datei ist zu groß (max. 16MB)');
+                return;
+            }
+            setSelectedFile(file);
+        }
     };
 
     React.useEffect(() => {
@@ -273,23 +321,36 @@ export default function WhatsAppCommunication() {
                             {nachrichten.map((msg) => (
                                 <div key={msg.id} className={`flex ${msg.richtung === 'ausgehend' ? 'justify-end' : 'justify-start'}`}>
                                     <div className={`max-w-md rounded-lg p-3 ${
-                                        msg.richtung === 'ausgehend' 
-                                            ? 'bg-emerald-600 text-white' 
-                                            : 'bg-white border border-slate-200'
+                                       msg.richtung === 'ausgehend' 
+                                           ? 'bg-emerald-600 text-white' 
+                                           : 'bg-white border border-slate-200'
                                     }`}>
-                                        <p className="text-sm">{msg.nachricht_text}</p>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <p className="text-xs opacity-70">
-                                                {format(new Date(msg.created_at), 'HH:mm', { locale: de })}
-                                            </p>
-                                            {msg.richtung === 'ausgehend' && (
-                                                <>
-                                                    {msg.status === 'gelesen' && <CheckCheck className="w-3 h-3 text-blue-300" />}
-                                                    {msg.status === 'zugestellt' && <CheckCheck className="w-3 h-3" />}
-                                                    {msg.status === 'gesendet' && <Clock className="w-3 h-3" />}
-                                                </>
-                                            )}
-                                        </div>
+                                       {msg.anhang_url && (
+                                           <div className="mb-2 pb-2 border-b border-emerald-500">
+                                               <a
+                                                   href={msg.anhang_url}
+                                                   target="_blank"
+                                                   rel="noopener noreferrer"
+                                                   className="flex items-center gap-2 text-sm underline"
+                                               >
+                                                   <Paperclip className="w-3 h-3" />
+                                                   {msg.anhang_dateiname || 'Anhang'}
+                                               </a>
+                                           </div>
+                                       )}
+                                       <p className="text-sm">{msg.nachricht_text}</p>
+                                       <div className="flex items-center gap-2 mt-1">
+                                           <p className="text-xs opacity-70">
+                                               {format(new Date(msg.created_at), 'HH:mm', { locale: de })}
+                                           </p>
+                                           {msg.richtung === 'ausgehend' && (
+                                               <>
+                                                   {msg.status === 'gelesen' && <CheckCheck className="w-3 h-3 text-blue-300" />}
+                                                   {msg.status === 'zugestellt' && <CheckCheck className="w-3 h-3" />}
+                                                   {msg.status === 'gesendet' && <Clock className="w-3 h-3" />}
+                                               </>
+                                           )}
+                                       </div>
                                     </div>
                                 </div>
                             ))}
@@ -299,6 +360,38 @@ export default function WhatsAppCommunication() {
                         <div className="p-4 border-t border-slate-200">
                             {selectedContact.opt_in_status === 'erteilt' ? (
                                 <div className="space-y-2">
+                                    {templates.length > 0 && (
+                                        <Select value={selectedTemplate} onValueChange={handleTemplateSelect}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Template verwenden (optional)" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {templates.map(t => (
+                                                    <SelectItem key={t.id} value={t.id}>
+                                                        {t.anzeige_name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    )}
+                                    {selectedFile && (
+                                        <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <FileTextIcon className="w-4 h-4 text-slate-600" />
+                                                <span className="text-sm text-slate-700">{selectedFile.name}</span>
+                                                <span className="text-xs text-slate-500">
+                                                    ({(selectedFile.size / 1024).toFixed(1)} KB)
+                                                </span>
+                                            </div>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => setSelectedFile(null)}
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    )}
                                     <Textarea
                                         placeholder="Nachricht schreiben..."
                                         value={messageText}
@@ -312,11 +405,27 @@ export default function WhatsAppCommunication() {
                                         rows={3}
                                     />
                                     <div className="flex justify-between items-center">
-                                        <Button variant="outline" size="sm">
-                                            <Paperclip className="w-4 h-4 mr-2" />
-                                            Anhang
-                                        </Button>
-                                        <Button onClick={handleSendMessage} disabled={sendMutation.isPending || !messageText.trim()}>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => document.getElementById('file-upload').click()}
+                                            >
+                                                <Paperclip className="w-4 h-4 mr-2" />
+                                                Anhang
+                                            </Button>
+                                            <input
+                                                id="file-upload"
+                                                type="file"
+                                                className="hidden"
+                                                onChange={handleFileSelect}
+                                                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                            />
+                                        </div>
+                                        <Button 
+                                            onClick={handleSendMessage} 
+                                            disabled={sendMutation.isPending || (!messageText.trim() && !selectedFile)}
+                                        >
                                             {sendMutation.isPending ? (
                                                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                             ) : (
