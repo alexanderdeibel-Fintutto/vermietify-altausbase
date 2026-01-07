@@ -6,16 +6,18 @@ import TemplatesList from '../components/documents/TemplatesList';
 import TextBlocksList from '../components/documents/TextBlocksList';
 import OriginalsList from '../components/documents/OriginalsList';
 import PDFTemplateImporter from '../components/documents/PDFTemplateImporter';
+import ModuleAccessGuard from '../components/suite/ModuleAccessGuard';
 
 export default function DocumentsPage() {
     const [importerOpen, setImporterOpen] = useState(false);
     
     return (
-        <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold text-slate-800">Dokumente</h1>
-                <p className="text-slate-600">Verwalten Sie Dokumente, Vorlagen und Textbausteine</p>
-            </div>
+        <ModuleAccessGuard moduleName="documents">
+            <div className="space-y-6">
+                <div>
+                    <h1 className="text-3xl font-bold text-slate-800">Dokumente</h1>
+                    <p className="text-slate-600">Verwalten Sie Dokumente, Vorlagen und Textbausteine</p>
+                </div>
 
             <Tabs defaultValue="documents" className="w-full">
                 <TabsList className="grid w-full grid-cols-4">
@@ -62,7 +64,8 @@ export default function DocumentsPage() {
                 <TabsContent value="originals" className="mt-6">
                     <OriginalsList />
                 </TabsContent>
-            </Tabs>
-        </div>
-    );
-}
+                </Tabs>
+                </div>
+                </ModuleAccessGuard>
+                );
+                }
