@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit, Trash2, CheckCircle, Clock, XCircle, Loader2 } from 'lucide-react';
+import { Plus, Edit, Trash2, CheckCircle, Clock, XCircle, Loader2, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -25,11 +25,18 @@ export default function TemplateManager({ accountId }) {
 
     const saveMutation = useMutation({
         mutationFn: async (data) => {
-            if (data.id) {
-                await base44.entities.WhatsAppTemplate.update(data.id, data);
-            } else {
-                await base44.entities.WhatsAppTemplate.create(data);
-            }
+            const response = await base44.functions.invoke('whatsapp_saveTemplate', {
+                template_id: data.id,
+                whatsapp_account_id: accountId,
+                template_name: data.template_name,
+                anzeige_name: data.anzeige_name,
+                kategorie: data.kategorie,
+                sprache: data.sprache,
+                body_text: data.body_text,
+                footer_text: data.footer_text,
+                platzhalter: data.platzhalter
+            });
+            return response.data;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['whatsapp-templates'] });
@@ -40,10 +47,28 @@ export default function TemplateManager({ accountId }) {
     });
 
     const deleteMutation = useMutation({
-        mutationFn: (id) => base44.entities.WhatsAppTemplate.delete(id),
+        mutationFn: async (id) => {
+            const response = await base44.functions.invoke('whatsapp_deleteTemplate', {
+                template_id: id
+            });
+            return response.data;
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['whatsapp-templates'] });
             toast.success('Template gelöscht');
+        }
+    });
+
+    const submitMutation = useMutation({
+        mutationFn: async (templateId) => {
+            const response = await base44.functions.invoke('whatsapp_submitTemplateToMeta', {
+                template_id: templateId
+            });
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['whatsapp-templates'] });
+            toast.success('Template zur Genehmigung eingereicht');
         }
     });
 
@@ -112,6 +137,18 @@ export default function TemplateManager({ accountId }) {
                                 <Badge variant="outline">{template.sprache.toUpperCase()}</Badge>
                             </div>
                             <div className="flex gap-2 mt-3">
+                                {template.meta_status === 'entwurf' && (
+                                    <Button
+                                        variant="default"
+                                        size="sm"
+                                        onClick={() => submitMutation.mutate(template.id)}
+                                        disabled={submitMutation.isPending}
+                                        className="bg-blue-600 hover:bg-blue-700"
+                                    >
+                                        <Send className="w-4 h-4 mr-1" />
+                                        Einreichen
+                                    </Button>
+                                )}
                                 <Button variant="outline" size="sm" onClick={() => handleEdit(template)}>
                                     <Edit className="w-4 h-4 mr-1" />
                                     Bearbeiten
@@ -124,6 +161,7 @@ export default function TemplateManager({ accountId }) {
                                             deleteMutation.mutate(template.id);
                                         }
                                     }}
+                                    disabled={deleteMutation.isPending}
                                 >
                                     <Trash2 className="w-4 h-4 mr-1" />
                                     Löschen
