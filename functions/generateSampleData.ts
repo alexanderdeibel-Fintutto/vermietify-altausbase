@@ -480,21 +480,32 @@ WICHTIG:
             response_json_schema: {
                 type: 'object',
                 properties: {
-                    metadata: { type: 'object' },
-                    buildings: { type: 'array' },
-                    owners: { type: 'array' },
-                    owner_relationships: { type: 'array' },
-                    units: { type: 'array' },
-                    tenants: { type: 'array' },
-                    lease_contracts: { type: 'array' },
-                    purchase_contracts: { type: 'array' },
-                    financings: { type: 'array' },
-                    insurances: { type: 'array' },
-                    property_taxes: { type: 'array' },
-                    suppliers: { type: 'array' },
-                    invoices: { type: 'array' },
-                    operating_cost_statements: { type: 'array' },
-                    anlage_v_submissions: { type: 'array' },
+                    metadata: { 
+                        type: 'object',
+                        properties: {
+                            generated_at: { type: 'string' },
+                            preset: { type: 'string' },
+                            description: { type: 'string' },
+                            total_buildings: { type: 'number' },
+                            total_units: { type: 'number' },
+                            total_contracts: { type: 'number' },
+                            total_invoices: { type: 'number' }
+                        }
+                    },
+                    buildings: { type: 'array', items: { type: 'object' } },
+                    owners: { type: 'array', items: { type: 'object' } },
+                    owner_relationships: { type: 'array', items: { type: 'object' } },
+                    units: { type: 'array', items: { type: 'object' } },
+                    tenants: { type: 'array', items: { type: 'object' } },
+                    lease_contracts: { type: 'array', items: { type: 'object' } },
+                    purchase_contracts: { type: 'array', items: { type: 'object' } },
+                    financings: { type: 'array', items: { type: 'object' } },
+                    insurances: { type: 'array', items: { type: 'object' } },
+                    property_taxes: { type: 'array', items: { type: 'object' } },
+                    suppliers: { type: 'array', items: { type: 'object' } },
+                    invoices: { type: 'array', items: { type: 'object' } },
+                    operating_cost_statements: { type: 'array', items: { type: 'object' } },
+                    anlage_v_submissions: { type: 'array', items: { type: 'object' } },
                     user_journeys: { type: 'object' }
                 }
             }
