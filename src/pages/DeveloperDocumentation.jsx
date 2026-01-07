@@ -419,6 +419,7 @@ export default function DeveloperDocumentation() {
     };
 
     // Statistiken berechnen
+    const priorityDocs = PRIORITY_TYPES.map(t => t.type);
     const stats = {
         total: DOCUMENTATION_TYPES.length,
         completed: documentations.filter(d => d.status === 'completed').length,
@@ -432,7 +433,9 @@ export default function DeveloperDocumentation() {
         avgDuration: documentations.filter(d => d.generation_duration_seconds).length > 0
             ? documentations.reduce((sum, d) => sum + (d.generation_duration_seconds || 0), 0) / 
               documentations.filter(d => d.generation_duration_seconds).length
-            : 0
+            : 0,
+        priority: PRIORITY_TYPES.length,
+        priorityCompleted: documentations.filter(d => priorityDocs.includes(d.documentation_type) && d.status === 'completed').length
     };
 
     if (isLoading) {
@@ -455,7 +458,7 @@ export default function DeveloperDocumentation() {
             </div>
 
             {/* Statistik-Dashboard */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
                 <Card>
                     <CardContent className="p-4">
                         <div className="flex items-center gap-3">
@@ -463,6 +466,18 @@ export default function DeveloperDocumentation() {
                             <div>
                                 <p className="text-2xl font-bold text-slate-900">{stats.completed}/{stats.total}</p>
                                 <p className="text-xs text-slate-600">Erstellt</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+                
+                <Card>
+                    <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                            <Star className="w-8 h-8 text-yellow-600" />
+                            <div>
+                                <p className="text-2xl font-bold text-slate-900">{stats.priorityCompleted}/{stats.priority}</p>
+                                <p className="text-xs text-slate-600">Priorität</p>
                             </div>
                         </div>
                     </CardContent>
@@ -607,9 +622,71 @@ export default function DeveloperDocumentation() {
                     ) : (
                         <>
                             <RefreshCw className="w-5 h-5 mr-2" />
-                            Alle Dokumentationen generieren
+                            Alle {DOCUMENTATION_TYPES.length} generieren
                         </>
                     )}
+                </Button>
+                <Button 
+                    onClick={async () => {
+                        setGeneratingAll(true);
+                        setProgress(0);
+                        let successCount = 0;
+                        
+                        for (let i = 0; i < PRIORITY_TYPES.length; i++) {
+                            const docType = PRIORITY_TYPES[i];
+                            setCurrentGenerating(docType.title);
+                            setProgress(((i + 1) / PRIORITY_TYPES.length) * 100);
+                            
+                            try {
+                                await generateMutation.mutateAsync(docType.type);
+                                successCount++;
+                            } catch (error) {
+                                console.error(`Failed to generate ${docType.type}:`, error);
+                            }
+                        }
+                        
+                        setGeneratingAll(false);
+                        setCurrentGenerating(null);
+                        setProgress(0);
+                        toast.success(`${successCount} wichtige Dokumentationen generiert`);
+                    }}
+                    disabled={generatingAll}
+                    size="lg"
+                    variant="outline"
+                >
+                    <Star className="w-5 h-5 mr-2 text-yellow-600" />
+                    Nur Wichtige generieren
+                </Button>
+                <Button 
+                    onClick={async () => {
+                        setGeneratingAll(true);
+                        setProgress(0);
+                        let successCount = 0;
+                        
+                        for (let i = 0; i < CORE_TYPES.length; i++) {
+                            const docType = CORE_TYPES[i];
+                            setCurrentGenerating(docType.title);
+                            setProgress(((i + 1) / CORE_TYPES.length) * 100);
+                            
+                            try {
+                                await generateMutation.mutateAsync(docType.type);
+                                successCount++;
+                            } catch (error) {
+                                console.error(`Failed to generate ${docType.type}:`, error);
+                            }
+                        }
+                        
+                        setGeneratingAll(false);
+                        setCurrentGenerating(null);
+                        setProgress(0);
+                        toast.success(`${successCount} Kern-Dokumentationen generiert`);
+                    }}
+                    disabled={generatingAll}
+                    size="lg"
+                    variant="outline"
+                >
+                    <Database className="w-5 h-5 mr-2" />
+                    Kern-Doku generieren
                 </Button>
                 <Button 
                     variant="outline" 
@@ -828,56 +905,743 @@ export default function DeveloperDocumentation() {
             </div>
 
             {/* Dokumentations-Bereiche */}
-            <div className="grid gap-4">
-                {DOCUMENTATION_TYPES.filter(docType => {
-                    if (!searchQuery) return true;
-                    const query = searchQuery.toLowerCase();
-                    return docType.title.toLowerCase().includes(query) || 
-                           docType.description.toLowerCase().includes(query) ||
-                           docType.type.toLowerCase().includes(query);
-                }).map((docType) => {
-                    const doc = getDocumentation(docType.type);
-                    const Icon = docType.icon;
-                    const isGenerating = doc?.status === 'generating';
+            <div className="space-y-8">
+                {/* Priorität */}
+                <div>
+                    <div className="flex items-center gap-3 mb-4">
+                        <Star className="w-6 h-6 text-yellow-600" />
+                        <h2 className="text-2xl font-bold text-slate-900">🔥 Priorität: Sofort erstellen</h2>
+                    </div>
+                    <div className="grid gap-4">
+                        {PRIORITY_TYPES.filter(docType => {
+                            if (!searchQuery) return true;
+                            const query = searchQuery.toLowerCase();
+                            return docType.title.toLowerCase().includes(query) || 
+                                   docType.description.toLowerCase().includes(query);
+                        }).map((docType) => {
+                            const doc = getDocumentation(docType.type);
+                            const Icon = docType.icon;
+                            const isGenerating = doc?.status === 'generating';
 
-                    return (
-                        <Card key={docType.type} className={cn(
-                            selectedTypes.includes(docType.type) ? 'border-2 border-emerald-500' : '',
-                            docType.color
-                        )}>
-                            <CardHeader>
-                                <div className="flex items-start justify-between">
-                                    <div className="flex items-start gap-3 flex-1">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedTypes.includes(docType.type)}
-                                            onChange={(e) => {
-                                                if (e.target.checked) {
-                                                    setSelectedTypes([...selectedTypes, docType.type]);
-                                                } else {
-                                                    setSelectedTypes(selectedTypes.filter(t => t !== docType.type));
-                                                }
-                                            }}
-                                            className="w-5 h-5 mt-2 cursor-pointer"
-                                        />
-                                        <Icon className="w-6 h-6 text-emerald-600 mt-1" />
-                                        <div className="flex-1">
-                                            <CardTitle className="text-lg flex items-center gap-2">
-                                                {docType.title}
-                                                {docType.badge && (
-                                                    <Badge variant="outline" className="text-xs">{docType.badge}</Badge>
+                            return (
+                                <Card key={docType.type} className={cn(
+                                    'border-2',
+                                    selectedTypes.includes(docType.type) ? 'border-emerald-500' : 'border-yellow-300 bg-yellow-50'
+                                )}>
+                                    <CardHeader>
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex items-start gap-3 flex-1">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedTypes.includes(docType.type)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setSelectedTypes([...selectedTypes, docType.type]);
+                                                        } else {
+                                                            setSelectedTypes(selectedTypes.filter(t => t !== docType.type));
+                                                        }
+                                                    }}
+                                                    className="w-5 h-5 mt-2 cursor-pointer"
+                                                />
+                                                <Icon className="w-6 h-6 text-yellow-600 mt-1" />
+                                                <div className="flex-1">
+                                                    <CardTitle className="text-lg flex items-center gap-2">
+                                                        {docType.title}
+                                                        <Badge className="bg-yellow-600 text-white">⭐ WICHTIG</Badge>
+                                                        {docType.badge && (
+                                                            <Badge variant="outline" className="text-xs">{docType.badge}</Badge>
+                                                        )}
+                                                    </CardTitle>
+                                                    <CardDescription className="mt-1">
+                                                        {docType.description}
+                                                    </CardDescription>
+                                                    <div className="flex gap-4 mt-2 text-sm text-slate-600">
+                                                        <span>Geschätzte Größe: {docType.estimatedSize}</span>
+                                                        <span>•</span>
+                                                        <span>Geschätzte Dauer: ~{docType.estimatedDuration}s</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Status Badge */}
+                                            <div>
+                                                {!doc || doc.status === 'not_created' ? (
+                                                    <Badge variant="outline" className="text-slate-600">
+                                                        ❌ Nicht erstellt
+                                                    </Badge>
+                                                ) : doc.status === 'generating' ? (
+                                                    <Badge className="bg-blue-100 text-blue-700">
+                                                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                                        In Erstellung...
+                                                    </Badge>
+                                                ) : doc.status === 'completed' ? (
+                                                    <div className="text-right">
+                                                        {doc.last_generated_at && new Date(doc.last_generated_at) < new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) ? (
+                                                            <Badge className="bg-yellow-100 text-yellow-700 mb-1">
+                                                                ⚠️ Veraltet (>7 Tage)
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge className="bg-emerald-100 text-emerald-700">
+                                                                <CheckCircle className="w-3 h-3 mr-1" />
+                                                                ✅ Aktuell
+                                                            </Badge>
+                                                        )}
+                                                        <p className="text-xs text-slate-500 mt-1">
+                                                            {format(new Date(doc.last_generated_at), 'dd.MM.yyyy HH:mm', { locale: de })}
+                                                        </p>
+                                                        <p className="text-xs text-slate-500">
+                                                            {formatBytes(doc.file_size_bytes)}
+                                                        </p>
+                                                        {doc.generation_duration_seconds && (
+                                                            <p className="text-xs text-slate-500">
+                                                                {doc.generation_duration_seconds.toFixed(1)}s
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <Badge className="bg-red-100 text-red-700">
+                                                        <AlertCircle className="w-3 h-3 mr-1" />
+                                                        Fehler
+                                                    </Badge>
                                                 )}
-                                            </CardTitle>
-                                            <CardDescription className="mt-1">
-                                                {docType.description}
-                                            </CardDescription>
-                                            <div className="flex gap-4 mt-2 text-sm text-slate-600">
-                                                <span>Geschätzte Größe: {docType.estimatedSize}</span>
-                                                <span>•</span>
-                                                <span>Geschätzte Dauer: ~{docType.estimatedDuration}s</span>
                                             </div>
                                         </div>
-                                    </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="flex gap-2 flex-wrap">
+                                            <Button
+                                                variant="default"
+                                                size="sm"
+                                                onClick={() => generateMutation.mutate(docType.type)}
+                                                disabled={isGenerating || generatingAll}
+                                                className="bg-emerald-600 hover:bg-emerald-700"
+                                            >
+                                                {isGenerating ? (
+                                                    <>
+                                                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                                        Generiere...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <RefreshCw className="w-4 h-4 mr-1" />
+                                                        Generieren
+                                                    </>
+                                                )}
+                                            </Button>
+
+                                            {doc?.status === 'completed' && (
+                                                <>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => setPreviewDoc(doc)}
+                                                    >
+                                                        <Eye className="w-4 h-4 mr-1" />
+                                                        Vorschau
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleCopyToClipboard(doc)}
+                                                    >
+                                                        <Copy className="w-4 h-4 mr-1" />
+                                                        Kopieren
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleDownloadMarkdown(doc)}
+                                                    >
+                                                        <Download className="w-4 h-4 mr-1" />
+                                                        MD
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleDownloadPDF(doc)}
+                                                    >
+                                                        <FileText className="w-4 h-4 mr-1" />
+                                                        PDF
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleDownloadJSON(doc)}
+                                                    >
+                                                        <FileJson className="w-4 h-4 mr-1" />
+                                                        JSON
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Kern-Dokumentation */}
+                <div>
+                    <div className="flex items-center gap-3 mb-4">
+                        <Database className="w-6 h-6 text-emerald-600" />
+                        <h2 className="text-2xl font-bold text-slate-900">📊 Kern-Dokumentation</h2>
+                    </div>
+                    <div className="grid gap-4">
+                        {CORE_TYPES.filter(docType => {
+                            if (!searchQuery) return true;
+                            const query = searchQuery.toLowerCase();
+                            return docType.title.toLowerCase().includes(query) || 
+                                   docType.description.toLowerCase().includes(query);
+                        }).map((docType) => {
+                            const doc = getDocumentation(docType.type);
+                            const Icon = docType.icon;
+                            const isGenerating = doc?.status === 'generating';
+
+                            return (
+                                <Card key={docType.type} className={selectedTypes.includes(docType.type) ? 'border-2 border-emerald-500' : ''}>
+                                    <CardHeader>
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex items-start gap-3 flex-1">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedTypes.includes(docType.type)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setSelectedTypes([...selectedTypes, docType.type]);
+                                                        } else {
+                                                            setSelectedTypes(selectedTypes.filter(t => t !== docType.type));
+                                                        }
+                                                    }}
+                                                    className="w-5 h-5 mt-2 cursor-pointer"
+                                                />
+                                                <Icon className="w-6 h-6 text-emerald-600 mt-1" />
+                                                <div className="flex-1">
+                                                    <CardTitle className="text-lg">
+                                                        {docType.title}
+                                                    </CardTitle>
+                                                    <CardDescription className="mt-1">
+                                                        {docType.description}
+                                                    </CardDescription>
+                                                    <div className="flex gap-4 mt-2 text-sm text-slate-600">
+                                                        <span>Geschätzte Größe: {docType.estimatedSize}</span>
+                                                        <span>•</span>
+                                                        <span>Geschätzte Dauer: ~{docType.estimatedDuration}s</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Status Badge */}
+                                            <div>
+                                                {!doc || doc.status === 'not_created' ? (
+                                                    <Badge variant="outline" className="text-slate-600">
+                                                        ❌ Nicht erstellt
+                                                    </Badge>
+                                                ) : doc.status === 'generating' ? (
+                                                    <Badge className="bg-blue-100 text-blue-700">
+                                                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                                        In Erstellung...
+                                                    </Badge>
+                                                ) : doc.status === 'completed' ? (
+                                                    <div className="text-right">
+                                                        {doc.last_generated_at && new Date(doc.last_generated_at) < new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) ? (
+                                                            <Badge className="bg-yellow-100 text-yellow-700 mb-1">
+                                                                ⚠️ Veraltet (>7 Tage)
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge className="bg-emerald-100 text-emerald-700">
+                                                                <CheckCircle className="w-3 h-3 mr-1" />
+                                                                ✅ Aktuell
+                                                            </Badge>
+                                                        )}
+                                                        <p className="text-xs text-slate-500 mt-1">
+                                                            {format(new Date(doc.last_generated_at), 'dd.MM.yyyy HH:mm', { locale: de })}
+                                                        </p>
+                                                        <p className="text-xs text-slate-500">
+                                                            {formatBytes(doc.file_size_bytes)}
+                                                        </p>
+                                                        {doc.generation_duration_seconds && (
+                                                            <p className="text-xs text-slate-500">
+                                                                {doc.generation_duration_seconds.toFixed(1)}s
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <Badge className="bg-red-100 text-red-700">
+                                                        <AlertCircle className="w-3 h-3 mr-1" />
+                                                        Fehler
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="flex gap-2 flex-wrap">
+                                            <Button
+                                                variant="default"
+                                                size="sm"
+                                                onClick={() => generateMutation.mutate(docType.type)}
+                                                disabled={isGenerating || generatingAll}
+                                                className="bg-emerald-600 hover:bg-emerald-700"
+                                            >
+                                                {isGenerating ? (
+                                                    <>
+                                                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                                        Generiere...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <RefreshCw className="w-4 h-4 mr-1" />
+                                                        Generieren
+                                                    </>
+                                                )}
+                                            </Button>
+
+                                            {doc?.status === 'completed' && (
+                                                <>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => setPreviewDoc(doc)}
+                                                    >
+                                                        <Eye className="w-4 h-4 mr-1" />
+                                                        Vorschau
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleCopyToClipboard(doc)}
+                                                    >
+                                                        <Copy className="w-4 h-4 mr-1" />
+                                                        Kopieren
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleDownloadMarkdown(doc)}
+                                                    >
+                                                        <Download className="w-4 h-4 mr-1" />
+                                                        MD
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleDownloadPDF(doc)}
+                                                    >
+                                                        <FileText className="w-4 h-4 mr-1" />
+                                                        PDF
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleDownloadJSON(doc)}
+                                                    >
+                                                        <FileJson className="w-4 h-4 mr-1" />
+                                                        JSON
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Kontext & Planung */}
+                <div>
+                    <div className="flex items-center gap-3 mb-4">
+                        <CalendarDays className="w-6 h-6 text-blue-600" />
+                        <h2 className="text-2xl font-bold text-slate-900">📅 Kontext & Planung</h2>
+                    </div>
+                    <div className="grid gap-4">
+                        {CONTEXT_TYPES.filter(docType => {
+                            if (!searchQuery) return true;
+                            const query = searchQuery.toLowerCase();
+                            return docType.title.toLowerCase().includes(query) || 
+                                   docType.description.toLowerCase().includes(query);
+                        }).map((docType) => {
+                            const doc = getDocumentation(docType.type);
+                            const Icon = docType.icon;
+                            const isGenerating = doc?.status === 'generating';
+
+                            return (
+                                <Card key={docType.type} className={selectedTypes.includes(docType.type) ? 'border-2 border-emerald-500' : ''}>
+                                    <CardHeader>
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex items-start gap-3 flex-1">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedTypes.includes(docType.type)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setSelectedTypes([...selectedTypes, docType.type]);
+                                                        } else {
+                                                            setSelectedTypes(selectedTypes.filter(t => t !== docType.type));
+                                                        }
+                                                    }}
+                                                    className="w-5 h-5 mt-2 cursor-pointer"
+                                                />
+                                                <Icon className="w-6 h-6 text-blue-600 mt-1" />
+                                                <div className="flex-1">
+                                                    <CardTitle className="text-lg">{docType.title}</CardTitle>
+                                                    <CardDescription className="mt-1">
+                                                        {docType.description}
+                                                    </CardDescription>
+                                                    <div className="flex gap-4 mt-2 text-sm text-slate-600">
+                                                        <span>Geschätzte Größe: {docType.estimatedSize}</span>
+                                                        <span>•</span>
+                                                        <span>Geschätzte Dauer: ~{docType.estimatedDuration}s</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Status Badge */}
+                                            <div>
+                                                {!doc || doc.status === 'not_created' ? (
+                                                    <Badge variant="outline" className="text-slate-600">
+                                                        ❌ Nicht erstellt
+                                                    </Badge>
+                                                ) : doc.status === 'generating' ? (
+                                                    <Badge className="bg-blue-100 text-blue-700">
+                                                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                                        In Erstellung...
+                                                    </Badge>
+                                                ) : doc.status === 'completed' ? (
+                                                    <div className="text-right">
+                                                        {doc.last_generated_at && new Date(doc.last_generated_at) < new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) ? (
+                                                            <Badge className="bg-yellow-100 text-yellow-700 mb-1">
+                                                                ⚠️ Veraltet (>7 Tage)
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge className="bg-emerald-100 text-emerald-700">
+                                                                <CheckCircle className="w-3 h-3 mr-1" />
+                                                                ✅ Aktuell
+                                                            </Badge>
+                                                        )}
+                                                        <p className="text-xs text-slate-500 mt-1">
+                                                            {format(new Date(doc.last_generated_at), 'dd.MM.yyyy HH:mm', { locale: de })}
+                                                        </p>
+                                                        <p className="text-xs text-slate-500">
+                                                            {formatBytes(doc.file_size_bytes)}
+                                                        </p>
+                                                        {doc.generation_duration_seconds && (
+                                                            <p className="text-xs text-slate-500">
+                                                                {doc.generation_duration_seconds.toFixed(1)}s
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <Badge className="bg-red-100 text-red-700">
+                                                        <AlertCircle className="w-3 h-3 mr-1" />
+                                                        Fehler
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="flex gap-2 flex-wrap">
+                                            <Button
+                                                variant="default"
+                                                size="sm"
+                                                onClick={() => generateMutation.mutate(docType.type)}
+                                                disabled={isGenerating || generatingAll}
+                                                className="bg-emerald-600 hover:bg-emerald-700"
+                                            >
+                                                {isGenerating ? (
+                                                    <>
+                                                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                                        Generiere...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <RefreshCw className="w-4 h-4 mr-1" />
+                                                        Generieren
+                                                    </>
+                                                )}
+                                            </Button>
+
+                                            {doc?.status === 'completed' && (
+                                                <>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => setPreviewDoc(doc)}
+                                                    >
+                                                        <Eye className="w-4 h-4 mr-1" />
+                                                        Vorschau
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleCopyToClipboard(doc)}
+                                                    >
+                                                        <Copy className="w-4 h-4 mr-1" />
+                                                        Kopieren
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleDownloadMarkdown(doc)}
+                                                    >
+                                                        <Download className="w-4 h-4 mr-1" />
+                                                        MD
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleDownloadPDF(doc)}
+                                                    >
+                                                        <FileText className="w-4 h-4 mr-1" />
+                                                        PDF
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleDownloadJSON(doc)}
+                                                    >
+                                                        <FileJson className="w-4 h-4 mr-1" />
+                                                        JSON
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Technische Details */}
+                <div>
+                    <div className="flex items-center gap-3 mb-4">
+                        <Settings className="w-6 h-6 text-purple-600" />
+                        <h2 className="text-2xl font-bold text-slate-900">🔧 Technische Details</h2>
+                    </div>
+                    <div className="grid gap-4">
+                        {TECHNICAL_TYPES.filter(docType => {
+                            if (!searchQuery) return true;
+                            const query = searchQuery.toLowerCase();
+                            return docType.title.toLowerCase().includes(query) || 
+                                   docType.description.toLowerCase().includes(query);
+                        }).map((docType) => {
+                            const doc = getDocumentation(docType.type);
+                            const Icon = docType.icon;
+                            const isGenerating = doc?.status === 'generating';
+
+                            return (
+                                <Card key={docType.type} className={selectedTypes.includes(docType.type) ? 'border-2 border-emerald-500' : ''}>
+                                    <CardHeader>
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex items-start gap-3 flex-1">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedTypes.includes(docType.type)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setSelectedTypes([...selectedTypes, docType.type]);
+                                                        } else {
+                                                            setSelectedTypes(selectedTypes.filter(t => t !== docType.type));
+                                                        }
+                                                    }}
+                                                    className="w-5 h-5 mt-2 cursor-pointer"
+                                                />
+                                                <Icon className="w-6 h-6 text-purple-600 mt-1" />
+                                                <div className="flex-1">
+                                                    <CardTitle className="text-lg">{docType.title}</CardTitle>
+                                                    <CardDescription className="mt-1">
+                                                        {docType.description}
+                                                    </CardDescription>
+                                                    <div className="flex gap-4 mt-2 text-sm text-slate-600">
+                                                        <span>Geschätzte Größe: {docType.estimatedSize}</span>
+                                                        <span>•</span>
+                                                        <span>Geschätzte Dauer: ~{docType.estimatedDuration}s</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Status Badge - Same structure */}
+                                            <div>
+                                                {!doc || doc.status === 'not_created' ? (
+                                                    <Badge variant="outline" className="text-slate-600">
+                                                        ❌ Nicht erstellt
+                                                    </Badge>
+                                                ) : doc.status === 'generating' ? (
+                                                    <Badge className="bg-blue-100 text-blue-700">
+                                                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                                        In Erstellung...
+                                                    </Badge>
+                                                ) : doc.status === 'completed' ? (
+                                                    <div className="text-right">
+                                                        {doc.last_generated_at && new Date(doc.last_generated_at) < new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) ? (
+                                                            <Badge className="bg-yellow-100 text-yellow-700 mb-1">
+                                                                ⚠️ Veraltet (>7 Tage)
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge className="bg-emerald-100 text-emerald-700">
+                                                                <CheckCircle className="w-3 h-3 mr-1" />
+                                                                ✅ Aktuell
+                                                            </Badge>
+                                                        )}
+                                                        <p className="text-xs text-slate-500 mt-1">
+                                                            {format(new Date(doc.last_generated_at), 'dd.MM.yyyy HH:mm', { locale: de })}
+                                                        </p>
+                                                        <p className="text-xs text-slate-500">
+                                                            {formatBytes(doc.file_size_bytes)}
+                                                        </p>
+                                                        {doc.generation_duration_seconds && (
+                                                            <p className="text-xs text-slate-500">
+                                                                {doc.generation_duration_seconds.toFixed(1)}s
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <Badge className="bg-red-100 text-red-700">
+                                                        <AlertCircle className="w-3 h-3 mr-1" />
+                                                        Fehler
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="flex gap-2 flex-wrap">
+                                            <Button
+                                                variant="default"
+                                                size="sm"
+                                                onClick={() => generateMutation.mutate(docType.type)}
+                                                disabled={isGenerating || generatingAll}
+                                                className="bg-emerald-600 hover:bg-emerald-700"
+                                            >
+                                                {isGenerating ? (
+                                                    <>
+                                                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                                        Generiere...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <RefreshCw className="w-4 h-4 mr-1" />
+                                                        Generieren
+                                                    </>
+                                                )}
+                                            </Button>
+
+                                            {doc?.status === 'completed' && (
+                                                <>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => setPreviewDoc(doc)}
+                                                    >
+                                                        <Eye className="w-4 h-4 mr-1" />
+                                                        Vorschau
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleCopyToClipboard(doc)}
+                                                    >
+                                                        <Copy className="w-4 h-4 mr-1" />
+                                                        Kopieren
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleDownloadMarkdown(doc)}
+                                                    >
+                                                        <Download className="w-4 h-4 mr-1" />
+                                                        MD
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleDownloadPDF(doc)}
+                                                    >
+                                                        <FileText className="w-4 h-4 mr-1" />
+                                                        PDF
+                                                    </Button>
+                                                    {doc.content_json && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => handleDownloadJSON(doc)}
+                                                        >
+                                                            <FileJson className="w-4 h-4 mr-1" />
+                                                            JSON
+                                                        </Button>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Alte ungefilterte Liste für Suche */}
+                {searchQuery && (
+                    <div>
+                        <h2 className="text-2xl font-bold text-slate-900 mb-4">🔍 Suchergebnisse</h2>
+                        <div className="grid gap-4">
+                            {DOCUMENTATION_TYPES.filter(docType => {
+                                const query = searchQuery.toLowerCase();
+                                return docType.title.toLowerCase().includes(query) || 
+                                       docType.description.toLowerCase().includes(query) ||
+                                       docType.type.toLowerCase().includes(query);
+                            }).map((docType) => {
+                                const doc = getDocumentation(docType.type);
+                                const Icon = docType.icon;
+                                const isGenerating = doc?.status === 'generating';
+
+                                return (
+                                    <Card key={docType.type} className={cn(
+                                        selectedTypes.includes(docType.type) ? 'border-2 border-emerald-500' : '',
+                                        docType.priority && 'border-2 border-yellow-300 bg-yellow-50'
+                                    )}>
+                                        <CardHeader>
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex items-start gap-3 flex-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedTypes.includes(docType.type)}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setSelectedTypes([...selectedTypes, docType.type]);
+                                                            } else {
+                                                                setSelectedTypes(selectedTypes.filter(t => t !== docType.type));
+                                                            }
+                                                        }}
+                                                        className="w-5 h-5 mt-2 cursor-pointer"
+                                                    />
+                                                    <Icon className={cn(
+                                                        "w-6 h-6 mt-1",
+                                                        docType.priority ? "text-yellow-600" : "text-emerald-600"
+                                                    )} />
+                                                    <div className="flex-1">
+                                                        <CardTitle className="text-lg flex items-center gap-2">
+                                                            {docType.title}
+                                                            {docType.priority && (
+                                                                <Badge className="bg-yellow-600 text-white">⭐ WICHTIG</Badge>
+                                                            )}
+                                                            {docType.badge && (
+                                                                <Badge variant="outline" className="text-xs">{docType.badge}</Badge>
+                                                            )}
+                                                        </CardTitle>
+                                                        <CardDescription className="mt-1">
+                                                            {docType.description}
+                                                        </CardDescription>
+                                                        <div className="flex gap-4 mt-2 text-sm text-slate-600">
+                                                            <span>Geschätzte Größe: {docType.estimatedSize}</span>
+                                                            <span>•</span>
+                                                            <span>Geschätzte Dauer: ~{docType.estimatedDuration}s</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                     
                                     {/* Status Badge */}
                                     <div>
