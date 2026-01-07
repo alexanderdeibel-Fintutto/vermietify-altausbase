@@ -16,7 +16,8 @@ import {
     MessageSquare,
     HelpCircle,
     AlertCircle,
-    Target
+    Target,
+    Settings
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/notifications/NotificationCenter';
