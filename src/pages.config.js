@@ -23,6 +23,7 @@ import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import UnitDetail from './pages/UnitDetail';
 import SupportCenter from './pages/SupportCenter';
 import HilfeCenter from './pages/HilfeCenter';
+import UserFehler from './pages/UserFehler';
 import __Layout from './Layout.jsx';
 
 
@@ -52,6 +53,7 @@ export const PAGES = {
     "UnitDetail": UnitDetail,
     "SupportCenter": SupportCenter,
     "HilfeCenter": HilfeCenter,
+    "UserFehler": UserFehler,
 }
 
 export const pagesConfig = {
