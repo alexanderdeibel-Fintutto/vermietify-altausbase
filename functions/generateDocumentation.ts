@@ -3828,7 +3828,8 @@ async function generateExternalIntegrationsDoc() {
     
     doc += '---\n\n';
     
-    doc += '## 1. LetterXpress API (Postversand)\n\n';
+    // ===== LETTERXPRESS =====
+    doc += '# 1. LETTERXPRESS.DE (POSTVERSAND)\n\n';
     
     doc += '### 1.1 Service-Identifikation\n\n';
     doc += '- **Offizieller Name**: LetterXpress.de API\n';
