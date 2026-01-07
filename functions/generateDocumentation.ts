@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
 // Helper Functions
 
 async function getAllEntitySchemas(base44) {
-    // Erweiterte Liste aller Entities
+    // Hole alle Entities direkt aus der Datenbank
     const entityNames = [
         'Building', 'Unit', 'Tenant', 'LeaseContract', 'Document', 'Template',
         'PropertyTax', 'Insurance', 'Financing', 'Supplier', 'BankAccount',
@@ -238,15 +238,45 @@ async function getAllEntitySchemas(base44) {
     ];
 
     const schemas = {};
+    
+    // Versuche ein Beispiel-Entity zu laden um Schema zu extrahieren
     for (const name of entityNames) {
         try {
-            schemas[name] = await base44.asServiceRole.entities[name].schema();
+            const items = await base44.asServiceRole.entities[name].list('', 1);
+            if (items && items.length > 0) {
+                // Schema aus erstem Item ableiten
+                const schema = inferSchemaFromItem(items[0], name);
+                schemas[name] = schema;
+            }
         } catch (error) {
-            console.log(`Could not fetch schema for ${name}:`, error.message);
+            console.log(`Skipping ${name}:`, error.message);
         }
     }
+    
     console.log(`✅ Loaded ${Object.keys(schemas).length} entity schemas`);
     return schemas;
+}
+
+function inferSchemaFromItem(item, entityName) {
+    const properties = {};
+    
+    for (const [key, value] of Object.entries(item)) {
+        if (['id', 'created_date', 'updated_date', 'created_by'].includes(key)) {
+            continue; // Skip built-in fields
+        }
+        
+        const type = Array.isArray(value) ? 'array' : typeof value;
+        properties[key] = {
+            type: type === 'object' && value !== null ? 'object' : type,
+            description: key
+        };
+    }
+    
+    return {
+        name: entityName,
+        type: 'object',
+        properties
+    };
 }
 
 function getTitleForType(type) {
