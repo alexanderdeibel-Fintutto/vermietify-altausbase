@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import WhatsAppWidget from '@/components/whatsapp/WhatsAppWidget';
 
 export default function Dashboard() {
     const { data: buildings = [], isLoading: loadingBuildings } = useQuery({
@@ -223,8 +224,11 @@ export default function Dashboard() {
                 </Card>
             </div>
 
-            {/* Quick Links */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* WhatsApp Widget & Quick Links */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <WhatsAppWidget />
+                
+                {/* Quick Links */}
                 <Link to={createPageUrl('Buildings')}>
                     <Card className="border-slate-200/50 hover:shadow-md transition-shadow cursor-pointer group">
                         <CardContent className="p-6">

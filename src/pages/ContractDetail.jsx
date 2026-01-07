@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import ContractForm from '@/components/contracts/ContractForm';
 import RentChangeHistory from '@/components/contracts/RentChangeHistory';
+import QuickSendButton from '@/components/whatsapp/QuickSendButton';
 
 export default function ContractDetail() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -141,6 +142,7 @@ export default function ContractDetail() {
                     </div>
                 </div>
                 <div className="flex gap-2">
+                    <QuickSendButton tenantId={contract.tenant_id} />
                     <Button 
                         onClick={() => setFormOpen(true)}
                         className="bg-emerald-600 hover:bg-emerald-700"
