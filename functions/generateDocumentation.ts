@@ -159,8 +159,8 @@ Deno.serve(async (req) => {
                     content_json = { summary: 'Immobilienverwaltungs-App' };
                     break;
                 
-                default:
-                    throw new Error('Unknown documentation type');
+                    default:
+                        throw new Error('Unknown documentation type');
                 }
             }
 
