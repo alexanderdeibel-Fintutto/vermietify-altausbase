@@ -21,12 +21,14 @@ import {
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/notifications/NotificationCenter';
+import SuiteSwitcher from '@/components/suite/SuiteSwitcher';
 
 export default function Layout({ children, currentPageName }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const navigation = [
         { name: 'Dashboard', href: createPageUrl('Dashboard'), icon: Home, page: 'Dashboard' },
+        { name: '🎯 Suite Management', href: createPageUrl('SuiteManagement'), icon: Settings, page: 'SuiteManagement' },
         { name: 'Objekte', href: createPageUrl('Buildings'), icon: Building2, page: 'Buildings' },
         { name: 'Mieter', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts' },
         { name: 'Kommunikation', href: createPageUrl('Kommunikation'), icon: MessageSquare, page: 'Kommunikation' },
@@ -123,7 +125,10 @@ export default function Layout({ children, currentPageName }) {
                             <Menu className="w-5 h-5 text-slate-600" />
                         </button>
                         <div className="flex-1" />
-                        <NotificationCenter />
+                        <div className="flex items-center gap-3">
+                            <SuiteSwitcher />
+                            <NotificationCenter />
+                        </div>
                     </div>
                 </header>
 

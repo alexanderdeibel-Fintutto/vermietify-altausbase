@@ -27,6 +27,7 @@ import UnitDetail from './pages/UnitDetail';
 import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
+import SuiteManagement from './pages/SuiteManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -60,6 +61,7 @@ export const PAGES = {
     "WhatsAppCommunication": WhatsAppCommunication,
     "WhatsAppSettings": WhatsAppSettings,
     "WhatsAppSetup": WhatsAppSetup,
+    "SuiteManagement": SuiteManagement,
 }
 
 export const pagesConfig = {
