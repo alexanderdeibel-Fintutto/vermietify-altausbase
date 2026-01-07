@@ -3808,17 +3808,23 @@ async function generateBusinessLogicDoc(entities) {
 }
 
 async function generateExternalIntegrationsDoc() {
-    let doc = '# Externe Integrationen - Immobilienverwaltung\n\n';
+    let doc = '# Externe Service-Integrationen - VOLLSTÄNDIGE DOKUMENTATION\n\n';
     doc += '**Metadaten:**\n';
     doc += `- Generiert am: ${new Date().toLocaleString('de-DE')}\n`;
-    doc += '- Verwendungszweck: KI-Assistent Kontextinformation\n\n';
+    doc += '- Verwendungszweck: KI-Assistent Kontextinformation\n';
+    doc += '- Anzahl Services: 4 (LetterXpress, finAPI, Core, IMAP)\n';
+    doc += '- Auth-Methoden: API-Key, OAuth2, Basic Auth\n\n';
     doc += '---\n\n';
     
-    doc += '## Übersicht\n\n';
-    doc += 'Die Immobilienverwaltungs-App integriert 3 Haupt-Dienste:\n';
-    doc += '1. **LetterXpress** - Automatisierter Postversand\n';
-    doc += '2. **FinAPI** - Multi-Banking und Transaktions-Import\n';
-    doc += '3. **Base44 Core Services** - LLM, E-Mail, Dateien, Bildgenerierung\n\n';
+    doc += '## ÜBERSICHT ALLER INTEGRATIONEN\n\n';
+    doc += '| Service | Zweck | Auth-Methode | Verwendungs-Häufigkeit | Kosten | Status |\n';
+    doc += '|---------|-------|--------------|------------------------|--------|--------|\n';
+    doc += '| LetterXpress.de | Postversand (Briefe drucken & versenden) | API-Key | Auf Abruf | Pro Brief (~1-4€) | ✅ Aktiv |\n';
+    doc += '| finAPI Access B2C | Multi-Banking (Kontodaten abrufen) | OAuth2 (Client Credentials) | Täglich (Auto-Sync) | Pro Abruf (~0,01€) | ✅ Aktiv |\n';
+    doc += '| Base44 Core | KI, E-Mail, File-Upload | Integriert (API-Key) | Ständig | Inkludiert | ✅ Aktiv |\n';
+    doc += '| IMAP (Generic) | E-Mail-Empfang (diverse Anbieter) | Username + Password | Stündlich (Sync) | Kostenlos | ✅ Aktiv |\n\n';
+    
+    doc += '---\n\n';
     
     doc += '---\n\n';
     
