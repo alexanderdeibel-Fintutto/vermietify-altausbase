@@ -48,6 +48,7 @@ export default function Layout({ children, currentPageName }) {
     const navigation = [
         { name: 'Dashboard', href: createPageUrl('Dashboard'), icon: Home, page: 'Dashboard' },
         { name: '🎯 Suite Management', href: createPageUrl('SuiteManagement'), icon: Settings, page: 'SuiteManagement' },
+        { name: '👥 Benutzerverwaltung', href: createPageUrl('UserManagement'), icon: Users, page: 'UserManagement' },
         { name: 'Objekte', href: createPageUrl('Buildings'), icon: Building2, page: 'Buildings', requiresModule: 'property' },
         { name: 'Mieter', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts', requiresModule: 'tenants' },
         { name: 'Kommunikation', href: createPageUrl('Kommunikation'), icon: MessageSquare, page: 'Kommunikation', requiresModule: 'communication' },

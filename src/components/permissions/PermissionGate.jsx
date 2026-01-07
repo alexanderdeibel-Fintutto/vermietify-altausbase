@@ -1,4 +1,4 @@
-import { usePermissions } from "@/hooks/usePermissions";
+import { usePermissions } from "./usePermissions";
 import { useEffect, useState } from "react";
 
 export default function PermissionGate({ 
