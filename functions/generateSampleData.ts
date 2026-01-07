@@ -516,7 +516,7 @@ WICHTIG:
 
         // Optional: Speichere als Dokumentation
         const doc = await base44.asServiceRole.entities.GeneratedDocumentation.create({
-            documentation_type: 'master_data',
+            documentation_type: 'sample_data',
             title: `Beispieldaten - ${preset}`,
             description: `Anonymisierte, vollständige Beispieldaten für ${preset}`,
             content_markdown: `# Beispieldaten - ${preset}\n\nGeneriert am ${new Date().toISOString()}\n\n## Übersicht\n\n- **Gebäude:** ${sampleData.metadata.total_buildings}\n- **Einheiten:** ${sampleData.metadata.total_units}\n- **Verträge:** ${sampleData.metadata.total_contracts}\n- **Rechnungen:** ${sampleData.metadata.total_invoices}\n\n## Download\n\nDie vollständigen Daten sind als JSON verfügbar.`,

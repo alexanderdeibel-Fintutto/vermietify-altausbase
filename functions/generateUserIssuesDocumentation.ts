@@ -662,7 +662,7 @@ ${buildings.filter(b => !b.purchase_price).length > 0 ? `⚠️ ${buildings.filt
 
         // Speichere Dokumentation
         const doc = await base44.asServiceRole.entities.GeneratedDocumentation.create({
-            documentation_type: 'user_workflows',
+            documentation_type: 'user_issues',
             title: 'User-Issues, Bugs & Edge-Cases',
             description: 'Häufige User-Fragen, typische Fehler, bekannte Bugs und Edge-Cases',
             content_markdown: content,
