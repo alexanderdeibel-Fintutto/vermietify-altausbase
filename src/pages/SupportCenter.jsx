@@ -21,6 +21,9 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from 'sonner';
 import ProblemDetailDialog from '../components/support/ProblemDetailDialog';
+import BugLinkingDialog from '../components/support/BugLinkingDialog';
+import SolutionEditor from '../components/support/SolutionEditor';
+import AutomationRules from '../components/support/AutomationRules';
 
 export default function SupportCenter() {
     const [filters, setFilters] = useState({
@@ -30,6 +33,9 @@ export default function SupportCenter() {
         search: ''
     });
     const [selectedProblem, setSelectedProblem] = useState(null);
+    const [showBugLinking, setShowBugLinking] = useState(false);
+    const [showSolutionEditor, setShowSolutionEditor] = useState(false);
+    const [linkingProblem, setLinkingProblem] = useState(null);
 
     const queryClient = useQueryClient();
 
@@ -275,7 +281,15 @@ export default function SupportCenter() {
                                             {problem.status}
                                         </Badge>
                                     </div>
-                                    <Button variant="ghost" size="sm">
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setLinkingProblem(problem);
+                                            setShowBugLinking(true);
+                                        }}
+                                    >
                                         <Edit className="w-4 h-4" />
                                     </Button>
                                 </div>

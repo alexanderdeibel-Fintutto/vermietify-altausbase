@@ -27,6 +27,7 @@ import { format, subDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import TrendAnalysis from '../components/support/TrendAnalysis';
 
 export default function UserFehler() {
     const [activeTab, setActiveTab] = useState('tickets');
@@ -503,64 +504,7 @@ export default function UserFehler() {
 
                 {/* TAB: TRENDS */}
                 <TabsContent value="trends" className="space-y-4">
-                    <Card className="border-2 border-orange-300">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-orange-900">
-                                <Flame className="w-5 h-5" />
-                                🔥 Neu aufkommende Probleme (letzte 24h)
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {emergingIssues.length === 0 ? (
-                                <p className="text-slate-600 text-center py-4">
-                                    ✅ Keine auffälligen Problem-Häufungen in den letzten 24 Stunden
-                                </p>
-                            ) : (
-                                <div className="space-y-3">
-                                    {emergingIssues.map((issue, i) => (
-                                        <div key={i} className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
-                                            <div className="flex-shrink-0 w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                                                <span className="text-xl font-bold text-orange-700">{issue.anzahl}</span>
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className="font-semibold text-slate-900">{issue.titel}</p>
-                                                <p className="text-sm text-orange-700">
-                                                    {issue.anzahl} Meldungen {issue.anzahl >= 5 ? '⚠️ STEIGEND!' : '→ Beobachten'}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    <Card className="border-2 border-green-300">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-green-900">
-                                <TrendingDown className="w-5 h-5" />
-                                📉 Verbesserte Bereiche
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                                    <CheckCircle2 className="w-8 h-8 text-green-600" />
-                                    <div>
-                                        <p className="font-semibold text-slate-900">Betriebskostenabrechnung</p>
-                                        <p className="text-sm text-green-700">-45% Probleme seit letztem Update</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                                    <CheckCircle2 className="w-8 h-8 text-green-600" />
-                                    <div>
-                                        <p className="font-semibold text-slate-900">Dokumenten-Upload</p>
-                                        <p className="text-sm text-green-700">-30% Fehler durch neue Validierung</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <TrendAnalysis problems={problems} />
                 </TabsContent>
             </Tabs>
         </div>

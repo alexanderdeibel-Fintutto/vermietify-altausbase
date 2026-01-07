@@ -29,10 +29,13 @@ import { format, parseISO, differenceInDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import { toast } from 'sonner';
+import FeatureDialog from '../components/project/FeatureDialog';
 
 export default function ProjectManagement() {
     const [activeTab, setActiveTab] = useState('roadmap');
     const [lastUpdate, setLastUpdate] = useState(new Date());
+    const [showFeatureDialog, setShowFeatureDialog] = useState(false);
+    const [editingFeature, setEditingFeature] = useState(null);
     const queryClient = useQueryClient();
 
     // Auto-Refresh alle 5 Minuten
@@ -130,7 +133,14 @@ export default function ProjectManagement() {
                         <RefreshCw className="w-4 h-4 mr-2" />
                         Aktualisieren
                     </Button>
-                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
+                    <Button 
+                        size="sm" 
+                        className="bg-emerald-600 hover:bg-emerald-700"
+                        onClick={() => {
+                            setEditingFeature(null);
+                            setShowFeatureDialog(true);
+                        }}
+                    >
                         <Plus className="w-4 h-4 mr-2" />
                         Neues Feature
                     </Button>
@@ -231,7 +241,14 @@ export default function ProjectManagement() {
                                         const isDelayed = daysUntil !== null && daysUntil < 0;
 
                                         return (
-                                            <Card key={feature.id} className="bg-white">
+                                            <Card 
+                                                key={feature.id} 
+                                                className="bg-white cursor-pointer hover:shadow-md transition-shadow"
+                                                onClick={() => {
+                                                    setEditingFeature(feature);
+                                                    setShowFeatureDialog(true);
+                                                }}
+                                            >
                                                 <CardContent className="p-4">
                                                     <div className="space-y-3">
                                                         <div className="flex items-start justify-between">
@@ -514,6 +531,13 @@ export default function ProjectManagement() {
                     </Card>
                 </TabsContent>
             </Tabs>
+
+            {/* Feature Dialog */}
+            <FeatureDialog
+                open={showFeatureDialog}
+                onOpenChange={setShowFeatureDialog}
+                feature={editingFeature}
+            />
         </div>
     );
 }
