@@ -731,25 +731,58 @@ export default function DeveloperDocumentation() {
                         }
 
                         try {
-                            const response = await base44.functions.invoke('downloadDocumentationZip', {
-                                documentationTypes: selectedTypes
+                            const JSZip = (await import('https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm')).default;
+                            const zip = new JSZip();
+
+                            const selectedDocs = documentations.filter(d => 
+                                selectedTypes.includes(d.documentation_type) && d.content_markdown
+                            );
+
+                            if (selectedDocs.length === 0) {
+                                toast.error('Keine generierten Dokumentationen ausgewählt');
+                                return;
+                            }
+
+                            const DATEINAMEN = {
+                                'database_structure': '01_datenbankstruktur',
+                                'module_architecture': '02_modul_architektur',
+                                'master_data': '03_stammdaten',
+                                'business_logic': '04_geschaeftslogik',
+                                'external_integrations': '05_integrationen',
+                                'document_generation': '06_dokumente',
+                                'user_workflows': '07_workflows',
+                                'permissions_roles': '08_berechtigungen',
+                                'error_handling': '09_fehlerbehandlung',
+                                'data_migration': '10_datenhistorie',
+                                'executive_summary': '11_zusammenfassung',
+                                'sample_data': '13_beispiel_daten',
+                                'user_issues': '14_faq_probleme',
+                                'timeline_calendar': '15_geschaeftsprozesse',
+                                'performance_data': '16_performance',
+                                'coding_conventions': '18_code_standards',
+                                'testing_qa': '19_testing_qa',
+                            };
+
+                            selectedDocs.forEach(doc => {
+                                const dateiname = DATEINAMEN[doc.documentation_type] || doc.documentation_type;
+                                const inhalt = `# ${doc.title.toUpperCase()}\n\n**Typ:** ${doc.documentation_type}\n**Generiert am:** ${doc.last_generated_at || new Date().toISOString()}\n**Größe:** ${doc.file_size_bytes ? Math.round(doc.file_size_bytes / 1024) + ' KB' : 'unbekannt'}\n\n---\n\n${doc.content_markdown}`;
+                                zip.file(`${dateiname}.md`, inhalt);
                             });
 
-                            if (response.data instanceof Blob || response.data instanceof ArrayBuffer) {
-                                const blob = response.data instanceof Blob 
-                                    ? response.data 
-                                    : new Blob([response.data]);
-                                const url = window.URL.createObjectURL(blob);
-                                const a = document.createElement('a');
-                                a.href = url;
-                                const datum = new Date().toISOString().split('T')[0].replace(/-/g, '');
-                                a.download = `entwickler_doku_${selectedTypes.length}_bereiche_${datum}.zip`;
-                                document.body.appendChild(a);
-                                a.click();
-                                window.URL.revokeObjectURL(url);
-                                a.remove();
-                                toast.success(`${selectedTypes.length} Bereiche heruntergeladen`);
-                            }
+                            const readme = `# Entwickler-Dokumentation Export\n\n**Exportiert am:** ${new Date().toISOString()}\n**Anzahl Bereiche:** ${selectedDocs.length}\n\n## VERWENDUNG\n\nDiese Dokumentationen können einzeln hochgeladen oder analysiert werden.\nJede Datei ist eigenständig und enthält die vollständige Dokumentation\ndes jeweiligen Bereichs.\n\n---\nGeneriert von: base44 Immobilienverwaltung\n`;
+                            zip.file('README.md', readme);
+
+                            const content = await zip.generateAsync({ type: 'blob' });
+                            const url = window.URL.createObjectURL(content);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            const datum = new Date().toISOString().split('T')[0].replace(/-/g, '');
+                            a.download = `entwickler_doku_${selectedDocs.length}_bereiche_${datum}.zip`;
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                            a.remove();
+                            toast.success(`${selectedDocs.length} Bereiche heruntergeladen`);
                         } catch (error) {
                             console.error('Download error:', error);
                             toast.error('Download fehlgeschlagen: ' + error.message);
