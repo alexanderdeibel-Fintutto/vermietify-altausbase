@@ -31,6 +31,7 @@ import SuiteManagement from './pages/SuiteManagement';
 import UserManagement from './pages/UserManagement';
 import RoleManagement from './pages/RoleManagement';
 import TestingDashboard from './pages/TestingDashboard';
+import ModuleManagement from './pages/ModuleManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -68,6 +69,7 @@ export const PAGES = {
     "UserManagement": UserManagement,
     "RoleManagement": RoleManagement,
     "TestingDashboard": TestingDashboard,
+    "ModuleManagement": ModuleManagement,
 }
 
 export const pagesConfig = {
