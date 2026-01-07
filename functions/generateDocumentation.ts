@@ -78,6 +78,21 @@ Deno.serve(async (req) => {
             const allEntities = await getAllEntitySchemas(base44);
             
             switch (documentation_type) {
+                case 'sample_data':
+                    // Rufe spezielle Function für Sample Data
+                    const sampleDataResult = await base44.asServiceRole.functions.invoke('generateSampleData', { preset: 'komplett' });
+                    content_markdown = sampleDataResult.data?.markdown || `# Beispiel-Daten\n\nGeneriert über dedizierte Funktion\n\nDokumentation-ID: ${sampleDataResult.data?.documentation_id}`;
+                    content_json = sampleDataResult.data?.data || {};
+                    break;
+                
+                case 'user_issues':
+                    // Rufe spezielle Function für User Issues
+                    const userIssuesResult = await base44.asServiceRole.functions.invoke('generateUserIssuesDocumentation', {});
+                    const userIssuesDoc = await base44.asServiceRole.entities.GeneratedDocumentation.get(userIssuesResult.data?.documentation_id);
+                    content_markdown = userIssuesDoc.content_markdown;
+                    content_json = userIssuesDoc.content_json || {};
+                    break;
+                
                 case 'database_structure':
                     content_markdown = await generateDatabaseStructureDoc(allEntities, changes, versionNumber);
                     content_json = { entities: allEntities };
