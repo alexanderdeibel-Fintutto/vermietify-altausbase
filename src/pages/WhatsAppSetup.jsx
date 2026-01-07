@@ -11,7 +11,7 @@ import { CheckCircle, ArrowRight, Loader2, ExternalLink, AlertCircle } from 'luc
 import { toast } from 'sonner';
 import { WHATSAPP_CONFIG } from '../components/whatsapp/whatsapp-config';
 import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from './utils';
+import { createPageUrl } from '../utils';
 
 export default function WhatsAppSetup() {
     const [step, setStep] = useState(1);

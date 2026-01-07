@@ -364,13 +364,13 @@ export default function SendLetterDialog({ open, onOpenChange, document }) {
                         </div>
                     )}
 
-                    {/* Versandoptionen */}
+                    {/* LetterXpress-Versandoptionen */}
                     {versandweg === 'letterxpress' && (
-                    <div className="space-y-4">
-                        <h3 className="font-medium text-slate-900">Versandoptionen</h3>
-                        
-                        <div>
-                            <Label>Farbe</Label>
+                        <div className="space-y-4">
+                            <h3 className="font-medium text-slate-900">Versandoptionen</h3>
+                            
+                            <div>
+                                <Label>Farbe</Label>
                             <div className="flex gap-4 mt-2">
                                 <label className="flex items-center gap-2">
                                     <input
@@ -464,38 +464,39 @@ export default function SendLetterDialog({ open, onOpenChange, document }) {
                                 maxLength={255}
                             />
                         </div>
-                    </div>
+                        </div>
+                    )}
 
                     {/* Kostenberechnung */}
-                    {versandweg === 'letterxpress' && (
-                    <div className="p-4 border rounded-lg space-y-3">
-                        <h3 className="font-medium text-slate-900">Kosten</h3>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-slate-600">Gesamtkosten:</span>
-                            <span className="font-bold text-lg">
-                                {calculatedPrice !== null ? `${calculatedPrice.toFixed(2)} EUR` : 'Berechne...'}
-                            </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-slate-600">Aktuelles Guthaben:</span>
-                            <span>{currentCred.balance.toFixed(2)} EUR</span>
-                        </div>
-                        <div className="flex justify-between text-sm pt-2 border-t">
-                            <span className="text-slate-600">Verbleibendes Guthaben:</span>
-                            <span className={insufficientBalance ? 'text-red-600 font-medium' : ''}>
-                                {remainingBalance.toFixed(2)} EUR
-                            </span>
-                        </div>
-
-                        {insufficientBalance && (
-                            <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm">
-                                <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5" />
-                                <div className="text-red-700">
-                                    Nicht genügend Guthaben. Bitte laden Sie Ihr Guthaben in den Einstellungen auf.
-                                </div>
+                    {versandweg === 'letterxpress' && currentCred && (
+                        <div className="p-4 border rounded-lg space-y-3">
+                            <h3 className="font-medium text-slate-900">Kosten</h3>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-slate-600">Gesamtkosten:</span>
+                                <span className="font-bold text-lg">
+                                    {calculatedPrice !== null ? `${calculatedPrice.toFixed(2)} EUR` : 'Berechne...'}
+                                </span>
                             </div>
-                        )}
-                    </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-slate-600">Aktuelles Guthaben:</span>
+                                <span>{currentCred.balance.toFixed(2)} EUR</span>
+                            </div>
+                            <div className="flex justify-between text-sm pt-2 border-t">
+                                <span className="text-slate-600">Verbleibendes Guthaben:</span>
+                                <span className={insufficientBalance ? 'text-red-600 font-medium' : ''}>
+                                    {remainingBalance.toFixed(2)} EUR
+                                </span>
+                            </div>
+
+                            {insufficientBalance && (
+                                <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm">
+                                    <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5" />
+                                    <div className="text-red-700">
+                                        Nicht genügend Guthaben. Bitte laden Sie Ihr Guthaben in den Einstellungen auf.
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     )}
                 </div>
 
