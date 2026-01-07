@@ -1059,7 +1059,7 @@ if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 **3. Secrets nur im Backend:**
 \`\`\`javascript
 // ✅ RICHTIG (Backend)
-const apiKey = Deno.env.get('EXTERNAL_API_KEY');
+const apiKey = Deno.env.get('SOME_API_KEY');
 
 // ❌ FALSCH (Frontend)
 const apiKey = 'sk_live_...'; // NIEMALS!
