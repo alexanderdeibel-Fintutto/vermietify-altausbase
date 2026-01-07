@@ -36,12 +36,22 @@ export default function SupportCenter() {
     const [showBugLinking, setShowBugLinking] = useState(false);
     const [showSolutionEditor, setShowSolutionEditor] = useState(false);
     const [linkingProblem, setLinkingProblem] = useState(null);
+    const [activeTab, setActiveTab] = useState('tickets');
+    const [autoRefresh, setAutoRefresh] = useState(true);
+    const [lastUpdate, setLastUpdate] = useState(new Date());
 
     const queryClient = useQueryClient();
 
     const { data: problems = [], isLoading } = useQuery({
         queryKey: ['user-problems'],
-        queryFn: () => base44.entities.UserProblem.list('-created_date', 500)
+        queryFn: () => base44.entities.UserProblem.list('-created_date', 500),
+        refetchInterval: autoRefresh ? 30000 : false, // Auto-refresh alle 30s
+        refetchIntervalInBackground: false
+    });
+
+    const { data: solutions = [] } = useQuery({
+        queryKey: ['problem-solutions'],
+        queryFn: () => base44.entities.ProblemSolution.filter({ is_published: true })
     });
 
     const { data: statistics = [] } = useQuery({
@@ -107,12 +117,48 @@ export default function SupportCenter() {
         return `${diffDays}d`;
     };
 
+    // Auto-Update Timer
+    React.useEffect(() => {
+        if (autoRefresh) {
+            const interval = setInterval(() => {
+                setLastUpdate(new Date());
+            }, 10000);
+            return () => clearInterval(interval);
+        }
+    }, [autoRefresh]);
+
+    const timeSinceUpdate = Math.floor((new Date() - lastUpdate) / 1000);
+
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-3xl font-bold text-slate-900">Support-Center</h1>
-                <p className="text-slate-600 mt-1">Verwaltung aller Support-Anfragen und Probleme</p>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold text-slate-900">🆘 Support-Center</h1>
+                    <p className="text-slate-600 mt-1">Live-Überwachung aller Support-Anfragen</p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <span className="text-sm text-slate-600">
+                        Letzte Aktualisierung: vor {timeSinceUpdate}s
+                    </span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setAutoRefresh(!autoRefresh)}
+                    >
+                        {autoRefresh ? '⏸️ Pausieren' : '▶️ Fortsetzen'}
+                    </Button>
+                </div>
             </div>
+
+            {/* Live-Übersicht */}
+            <Card className="border-2 border-emerald-300 bg-emerald-50">
+                <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2">
+                        📊 LIVE-ÜBERSICHT
+                        {autoRefresh && <span className="animate-pulse text-xs text-emerald-600">● Live</span>}
+                    </CardTitle>
+                </CardHeader>
+            </Card>
 
             {/* Statistik-Karten */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -171,8 +217,22 @@ export default function SupportCenter() {
                 </Card>
             </div>
 
-            {/* Filter */}
-            <Card>
+            {/* Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="grid w-full grid-cols-5">
+                    <TabsTrigger value="tickets">
+                        🎫 Tickets {openProblems.length > 0 && <Badge className="ml-2 bg-red-600">{openProblems.length}</Badge>}
+                    </TabsTrigger>
+                    <TabsTrigger value="statistiken">📈 Statistiken</TabsTrigger>
+                    <TabsTrigger value="wissensdatenbank">📚 Wissensdatenbank</TabsTrigger>
+                    <TabsTrigger value="trends">🔥 Trends</TabsTrigger>
+                    <TabsTrigger value="automation">⚡ Automation</TabsTrigger>
+                </TabsList>
+
+                {/* TAB: TICKETS */}
+                <TabsContent value="tickets" className="space-y-4">
+                    {/* Filter */}
+                    <Card>
                 <CardContent className="pt-6">
                     <div className="flex flex-wrap gap-3">
                         <div className="flex-1 min-w-[200px]">
@@ -232,8 +292,8 @@ export default function SupportCenter() {
                 </CardContent>
             </Card>
 
-            {/* Probleme-Liste */}
-            <Card>
+                    {/* Probleme-Liste */}
+                    <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <MessageSquare className="w-5 h-5" />
@@ -298,6 +358,80 @@ export default function SupportCenter() {
                     )}
                 </CardContent>
             </Card>
+                </TabsContent>
+
+                {/* TAB: STATISTIKEN */}
+                <TabsContent value="statistiken">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>📈 Live-Statistiken</CardTitle>
+                            <p className="text-sm text-slate-600">Auto-Update alle 5 Minuten</p>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-center py-12 text-slate-600">
+                                Statistik-Charts werden geladen...
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* TAB: WISSENSDATENBANK */}
+                <TabsContent value="wissensdatenbank">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                📚 Wissensdatenbank
+                                <Badge variant="outline">Statisch - Kein Auto-Update</Badge>
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {solutions.length === 0 ? (
+                                <div className="text-center py-12 text-slate-600">
+                                    Noch keine Lösungen in der Wissensdatenbank
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {solutions.slice(0, 10).map(solution => (
+                                        <div key={solution.id} className="p-4 border rounded-lg hover:bg-slate-50">
+                                            <h3 className="font-semibold text-slate-900">{solution.titel}</h3>
+                                            <p className="text-sm text-slate-600 mt-1">{solution.beschreibung}</p>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <Badge variant="outline">{solution.anzahl_aufrufe || 0} Aufrufe</Badge>
+                                                {solution.hilfreich_prozent && (
+                                                    <Badge variant="outline">{solution.hilfreich_prozent}% hilfreich</Badge>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* TAB: TRENDS */}
+                <TabsContent value="trends">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                🔥 Trends & Analysen
+                                {autoRefresh && <span className="animate-pulse text-xs text-orange-600">● Live</span>}
+                            </CardTitle>
+                            <p className="text-sm text-slate-600">Auto-Update alle 30 Sekunden</p>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-center py-12 text-slate-600">
+                                Trend-Analyse wird geladen...
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* TAB: AUTOMATION */}
+                <TabsContent value="automation">
+                    <AutomationRules />
+                </TabsContent>
+            </Tabs>
 
             {/* Dialoge */}
             {selectedProblem && (

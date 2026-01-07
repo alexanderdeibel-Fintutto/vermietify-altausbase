@@ -36,6 +36,7 @@ export default function ProjectManagement() {
     const [lastUpdate, setLastUpdate] = useState(new Date());
     const [showFeatureDialog, setShowFeatureDialog] = useState(false);
     const [editingFeature, setEditingFeature] = useState(null);
+    const [autoRefresh, setAutoRefresh] = useState(true);
     const queryClient = useQueryClient();
 
     // Auto-Refresh alle 5 Minuten

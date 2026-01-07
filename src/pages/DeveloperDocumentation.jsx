@@ -62,23 +62,12 @@ const PRIORITY_TYPES = [
     {
         type: 'user_issues',
         title: 'Häufige Probleme & FAQ',
-        description: 'Top 20 User-Fragen, typische Fehler, bekannte Bugs, Limitierungen, Edge-Cases und deren Lösungen',
+        description: 'Top 20 User-Fragen, typische Fehler, bekannte Bugs, Limitierungen, Edge-Cases und deren Lösungen (statische Wissensdatenbank)',
         icon: Bug,
         estimatedSize: '300 KB',
         estimatedDuration: 25,
         priority: true,
         group: 'priority'
-    },
-    {
-        type: 'support_fehler',
-        title: 'User-Fehler & Support-Statistik',
-        description: 'Live-Aggregation aller gemeldeten Probleme mit Statistiken, Trends und Lösungsdatenbank',
-        icon: MessageSquare,
-        estimatedSize: '400 KB',
-        estimatedDuration: 20,
-        priority: true,
-        group: 'priority',
-        badge: 'Live-Daten'
     }
 ];
 
@@ -192,15 +181,6 @@ const CONTEXT_TYPES = [
         icon: CalendarDays,
         estimatedSize: '200 KB',
         estimatedDuration: 15,
-        group: 'context'
-    },
-    {
-        type: 'roadmap_techdebt',
-        title: 'Roadmap & Zukunftspläne',
-        description: 'Features in Entwicklung, geplante Features, langfristige Vision und bekannte Tech-Debt',
-        icon: BarChart3,
-        estimatedSize: '100 KB',
-        estimatedDuration: 10,
         group: 'context'
     }
 ];
