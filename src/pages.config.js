@@ -17,6 +17,7 @@ import HilfeCenter from './pages/HilfeCenter';
 import Invoices from './pages/Invoices';
 import Kommunikation from './pages/Kommunikation';
 import OperatingCosts from './pages/OperatingCosts';
+import ProjectManagement from './pages/ProjectManagement';
 import SupportCenter from './pages/SupportCenter';
 import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
@@ -24,7 +25,6 @@ import TaxForms from './pages/TaxForms';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import UnitDetail from './pages/UnitDetail';
 import UserFehler from './pages/UserFehler';
-import ProjectManagement from './pages/ProjectManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -48,6 +48,7 @@ export const PAGES = {
     "Invoices": Invoices,
     "Kommunikation": Kommunikation,
     "OperatingCosts": OperatingCosts,
+    "ProjectManagement": ProjectManagement,
     "SupportCenter": SupportCenter,
     "Tasks": Tasks,
     "Tax": Tax,
@@ -55,7 +56,6 @@ export const PAGES = {
     "TaxLibraryManagement": TaxLibraryManagement,
     "UnitDetail": UnitDetail,
     "UserFehler": UserFehler,
-    "ProjectManagement": ProjectManagement,
 }
 
 export const pagesConfig = {
