@@ -74,11 +74,22 @@ Deno.serve(async (req) => {
         let content_json = {};
 
         try {
-            // Alle Entities abrufen für die Dokumentation
-            const allEntities = await getAllEntitySchemas(base44);
-            
-            switch (documentation_type) {
-                case 'sample_data':
+            // Spezielle Cases für delegierte Funktionen
+            if (documentation_type === 'sample_data') {
+                const sampleDataResult = await base44.asServiceRole.functions.invoke('generateSampleData', { preset: 'komplett' });
+                content_markdown = sampleDataResult.data?.markdown || `# Beispiel-Daten\n\nGeneriert über dedizierte Funktion\n\nDokumentation-ID: ${sampleDataResult.data?.documentation_id}`;
+                content_json = sampleDataResult.data?.data || {};
+            } else if (documentation_type === 'user_issues') {
+                const userIssuesResult = await base44.asServiceRole.functions.invoke('generateUserIssuesDocumentation', {});
+                const userIssuesDoc = await base44.asServiceRole.entities.GeneratedDocumentation.get(userIssuesResult.data?.documentation_id);
+                content_markdown = userIssuesDoc.content_markdown;
+                content_json = userIssuesDoc.content_json || {};
+            } else {
+                // Alle Entities abrufen für die Dokumentation
+                const allEntities = await getAllEntitySchemas(base44);
+                
+                switch (documentation_type) {
+                    case 'sample_data':
                     // Rufe spezielle Function für Sample Data
                     const sampleDataResult = await base44.asServiceRole.functions.invoke('generateSampleData', { preset: 'komplett' });
                     content_markdown = sampleDataResult.data?.markdown || `# Beispiel-Daten\n\nGeneriert über dedizierte Funktion\n\nDokumentation-ID: ${sampleDataResult.data?.documentation_id}`;
@@ -150,6 +161,7 @@ Deno.serve(async (req) => {
                 
                 default:
                     throw new Error('Unknown documentation type');
+                }
             }
 
             const endTime = Date.now();
