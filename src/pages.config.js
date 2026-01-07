@@ -29,6 +29,8 @@ import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
 import SuiteManagement from './pages/SuiteManagement';
 import UserManagement from './pages/UserManagement';
+import RoleManagement from './pages/RoleManagement';
+import TestingDashboard from './pages/TestingDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -64,6 +66,8 @@ export const PAGES = {
     "WhatsAppSetup": WhatsAppSetup,
     "SuiteManagement": SuiteManagement,
     "UserManagement": UserManagement,
+    "RoleManagement": RoleManagement,
+    "TestingDashboard": TestingDashboard,
 }
 
 export const pagesConfig = {

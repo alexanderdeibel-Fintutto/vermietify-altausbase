@@ -17,7 +17,9 @@ import {
     HelpCircle,
     AlertCircle,
     Target,
-    Settings
+    Settings,
+    Shield,
+    TestTube
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/notifications/NotificationCenter';
@@ -49,6 +51,8 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Dashboard', href: createPageUrl('Dashboard'), icon: Home, page: 'Dashboard' },
         { name: '🎯 Suite Management', href: createPageUrl('SuiteManagement'), icon: Settings, page: 'SuiteManagement' },
         { name: '👥 Benutzerverwaltung', href: createPageUrl('UserManagement'), icon: Users, page: 'UserManagement' },
+        { name: '🔐 Rollen', href: createPageUrl('RoleManagement'), icon: Shield, page: 'RoleManagement' },
+        { name: '🧪 Testing', href: createPageUrl('TestingDashboard'), icon: TestTube, page: 'TestingDashboard' },
         { name: 'Objekte', href: createPageUrl('Buildings'), icon: Building2, page: 'Buildings', requiresModule: 'property' },
         { name: 'Mieter', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts', requiresModule: 'tenants' },
         { name: 'Kommunikation', href: createPageUrl('Kommunikation'), icon: MessageSquare, page: 'Kommunikation', requiresModule: 'communication' },
