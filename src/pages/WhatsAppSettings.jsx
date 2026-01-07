@@ -4,9 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Settings, MessageSquare, Mail, FileText } from 'lucide-react';
+import { Settings, MessageSquare, Mail, FileText, BarChart3, Users } from 'lucide-react';
 import TemplateManager from '../components/whatsapp/TemplateManager';
 import OptInManager from '../components/whatsapp/OptInManager';
+import WhatsAppDashboard from '../components/whatsapp/WhatsAppDashboard';
+import BulkMessaging from '../components/whatsapp/BulkMessaging';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 
@@ -88,8 +90,16 @@ export default function WhatsAppSettings() {
                 </CardContent>
             </Card>
 
-            <Tabs defaultValue="templates">
-                <TabsList className="grid w-full grid-cols-2">
+            <Tabs defaultValue="dashboard">
+                <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="dashboard">
+                        <BarChart3 className="w-4 h-4 mr-2" />
+                        Dashboard
+                    </TabsTrigger>
+                    <TabsTrigger value="bulk">
+                        <Users className="w-4 h-4 mr-2" />
+                        Massenversand
+                    </TabsTrigger>
                     <TabsTrigger value="templates">
                         <FileText className="w-4 h-4 mr-2" />
                         Templates
@@ -99,6 +109,12 @@ export default function WhatsAppSettings() {
                         Einwilligungen
                     </TabsTrigger>
                 </TabsList>
+                <TabsContent value="dashboard" className="mt-6">
+                    <WhatsAppDashboard accountId={account.id} />
+                </TabsContent>
+                <TabsContent value="bulk" className="mt-6">
+                    <BulkMessaging accountId={account.id} />
+                </TabsContent>
                 <TabsContent value="templates" className="mt-6">
                     <TemplateManager accountId={account.id} />
                 </TabsContent>
