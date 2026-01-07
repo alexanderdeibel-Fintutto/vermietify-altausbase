@@ -4,13 +4,14 @@ import { base44 } from '@/api/base44Client';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, FileText, Eye, Edit, Trash2, Download, Send, CheckCircle, Mail, Upload } from 'lucide-react';
+import { Plus, FileText, Eye, Edit, Trash2, Download, Send, CheckCircle, Mail, Upload, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import DocumentCreateWizard from './DocumentCreateWizard';
 import DocumentPreviewDialog from './DocumentPreviewDialog';
 import SendLetterDialog from '../letterxpress/SendLetterDialog';
 import PDFUploadDialog from './PDFUploadDialog';
+import SendDocumentDialog from '../whatsapp/SendDocumentDialog';
 
 const STATUS_CONFIG = {
     zu_erledigen: { label: 'Zu erledigen', color: 'bg-slate-100 text-slate-700', icon: FileText },
@@ -27,6 +28,7 @@ export default function DocumentsList() {
     const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
     const [previewDocument, setPreviewDocument] = useState(null);
     const [sendLetterDocument, setSendLetterDocument] = useState(null);
+    const [sendWhatsAppDocument, setSendWhatsAppDocument] = useState(null);
     const [filterStatus, setFilterStatus] = useState('all');
     const queryClient = useQueryClient();
 
@@ -208,6 +210,14 @@ export default function DocumentsList() {
                                                 >
                                                     <Mail className="w-4 h-4 text-emerald-600" />
                                                 </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => setSendWhatsAppDocument(doc)}
+                                                    title="Per WhatsApp versenden"
+                                                >
+                                                    <MessageSquare className="w-4 h-4 text-green-600" />
+                                                </Button>
                                             </>
                                         )}
                                         <Button
@@ -257,6 +267,14 @@ export default function DocumentsList() {
                     open={!!sendLetterDocument}
                     onOpenChange={(open) => !open && setSendLetterDocument(null)}
                     document={sendLetterDocument}
+                />
+            )}
+
+            {sendWhatsAppDocument && (
+                <SendDocumentDialog
+                    open={!!sendWhatsAppDocument}
+                    onOpenChange={(open) => !open && setSendWhatsAppDocument(null)}
+                    document={sendWhatsAppDocument}
                 />
             )}
         </div>
