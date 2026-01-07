@@ -1362,85 +1362,495 @@ async function generateBusinessLogicDoc(entities) {
 }
 
 async function generateExternalIntegrationsDoc() {
-    let doc = '# Externe Integrationen\n\n';
+    let doc = '# Externe Integrationen - Immobilienverwaltung\n\n';
+    doc += '**Metadaten:**\n';
+    doc += `- Generiert am: ${new Date().toLocaleString('de-DE')}\n`;
+    doc += '- Verwendungszweck: KI-Assistent Kontextinformation\n\n';
+    doc += '---\n\n';
     
-    doc += '## 1. LetterXpress API\n\n';
-    doc += '**Zweck**: Automatisierter Postversand von Dokumenten\n\n';
-    doc += '**Base URL**: https://api.letterxpress.de/v1\n\n';
-    doc += '**Authentifizierung**: API-Key + Username\n\n';
-    doc += '**Funktionen**:\n';
-    doc += '- `check_balance`: Aktuelles Guthaben abrufen\n';
-    doc += '- `calculate_price`: Kosten für einen Brief berechnen\n';
-    doc += '- `send_letter`: Brief versenden\n';
-    doc += '- `get_job`: Job-Status und Tracking-Code abrufen\n\n';
-
-    doc += '**Versandoptionen**:\n';
-    doc += '- Normal: Standard-Briefversand\n';
-    doc += '- R1 (Einschreiben Einwurf): +3,69 EUR\n';
-    doc += '- R2 (Einschreiben): +4,05 EUR\n\n';
-
-    doc += '**Druckoptionen**:\n';
-    doc += '- Farbe: Schwarzweiß (1) oder Farbe (4)\n';
-    doc += '- Modus: Simplex (einseitig) oder Duplex (doppelseitig)\n\n';
-
-    doc += '**Workflow**:\n';
-    doc += '1. PDF hochladen und MD5-Checksum berechnen\n';
-    doc += '2. Brief erstellen mit `send_letter`\n';
-    doc += '3. Job-ID und Kosten erhalten\n';
-    doc += '4. In LetterShipment Entity speichern\n';
-    doc += '5. Periodisch Status mit `get_job` abrufen\n';
-    doc += '6. Tracking-Code aktualisieren sobald verfügbar\n\n';
-
-    doc += '**Rate Limits**: 1 Request pro Sekunde, 60 Sekunden Timeout bei Überschreitung\n\n';
-
-    doc += '## 2. FinAPI\n\n';
-    doc += '**Zweck**: Bankkonten-Synchronisation und Transaktionsimport\n\n';
-    doc += '**Base URL**: Über Environment-Variable `FINAPI_BASE_URL`\n\n';
-    doc += '**Authentifizierung**: OAuth 2.0 mit Client-ID und Client-Secret\n\n';
-    doc += '**Funktionen**:\n';
-    doc += '- `finapiConnect`: Neue Bankverbindung herstellen\n';
-    doc += '- `finapiImportAccounts`: Konten importieren\n';
-    doc += '- `finapiSync`: Transaktionen synchronisieren\n\n';
-
-    doc += '**Workflow**:\n';
-    doc += '1. User autorisiert FinAPI-Zugriff\n';
-    doc += '2. Bank-Login über FinAPI Web Form\n';
-    doc += '3. Konten werden importiert und in BankAccount gespeichert\n';
-    doc += '4. Connection-ID und User-ID werden gespeichert\n';
-    doc += '5. Automatische/manuelle Synchronisation lädt neue Transaktionen\n';
-    doc += '6. Transaktionen werden in BankTransaction gespeichert\n';
-    doc += '7. AI-gestütztes Matching mit generierten Buchungen\n\n';
-
-    doc += '**Datenfluss**:\n';
-    doc += '```\n';
-    doc += 'FinAPI → BankTransaction → AI-Matching → PaymentTransactionLink → GeneratedFinancialBooking\n';
+    doc += '## Übersicht\n\n';
+    doc += 'Die Immobilienverwaltungs-App integriert 3 Haupt-Dienste:\n';
+    doc += '1. **LetterXpress** - Automatisierter Postversand\n';
+    doc += '2. **FinAPI** - Multi-Banking und Transaktions-Import\n';
+    doc += '3. **Base44 Core Services** - LLM, E-Mail, Dateien, Bildgenerierung\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## 1. LetterXpress API (Postversand)\n\n';
+    
+    doc += '### 1.1 Service-Identifikation\n\n';
+    doc += '- **Offizieller Name**: LetterXpress.de API\n';
+    doc += '- **Version**: v1\n';
+    doc += '- **Base URL**: `https://api.letterxpress.de/v1`\n';
+    doc += '- **Anbieter**: LetterXpress GmbH, Deutschland\n';
+    doc += '- **Zweck**: Automatisierter Versand von Briefen per Post (normal, Einschreiben R1/R2) ohne manuelle Postaufgabe\n\n';
+    
+    doc += '### 1.2 Verwendung in der App\n\n';
+    doc += '**Module**: Dokumentenverwaltung, Kommunikation\n\n';
+    doc += '**User-Aktionen die API-Calls triggern**:\n';
+    doc += '- User klickt "Per Post versenden" bei einem Dokument\n';
+    doc += '- Scheduled Task läuft täglich: `updateLetterTrackingCodes` (Admin-only)\n';
+    doc += '- User prüft Guthaben in LetterXpress-Einstellungen\n\n';
+    doc += '**Häufigkeit**: Auf Abruf (pro Dokument), täglich für Tracking-Updates\n\n';
+    
+    doc += '### 1.3 Datenfluss OUTBOUND (App → LetterXpress)\n\n';
+    doc += '**Endpoint**: `POST https://api.letterxpress.de/v1/send`\n\n';
+    doc += '**Datenformat**: JSON + Base64-encoded PDF\n\n';
+    doc += '**Datenquellen**:\n';
+    doc += '- `Document` Entity: name, recipient_name, recipient_address, pdf_url\n';
+    doc += '- `LetterXpressCredential` Entity: username, api_key, mode\n\n';
+    doc += '**Beispiel-Request**:\n';
+    doc += '```json\n';
+    doc += '{\n';
+    doc += '  "auth": {\n';
+    doc += '    "username": "user@example.com",\n';
+    doc += '    "apikey": "abc123xyz456"\n';
+    doc += '  },\n';
+    doc += '  "letter": {\n';
+    doc += '    "base64_file": "JVBERi0xLjcKJeLjz9...",\n';
+    doc += '    "base64_checksum": "a3f2e1d4c5b6a7",\n';
+    doc += '    "specification": {\n';
+    doc += '      "color": "1",          // 1=SW, 4=Farbe\n';
+    doc += '      "mode": "simplex",     // simplex oder duplex\n';
+    doc += '      "ship": "national"     // national oder international\n';
+    doc += '    },\n';
+    doc += '    "attaching": {\n';
+    doc += '      "send": "r2"           // normal, r1 (Einwurf), r2 (Einschreiben)\n';
+    doc += '    },\n';
+    doc += '    "notice": "Mieterhöhung - Gebäude Hauptstraße 1"\n';
+    doc += '  }\n';
+    doc += '}\n';
     doc += '```\n\n';
-
-    doc += '## 3. Base44 Core Integrations\n\n';
-    doc += '**InvokeLLM**: KI-gestützte Datenanalyse\n';
-    doc += '- Dokumentenanalyse (PDF-Extraktion)\n';
-    doc += '- E-Mail-Analyse für Task-Erstellung\n';
-    doc += '- Intelligente Transaktions-Kategorisierung\n\n';
-
-    doc += '**SendEmail**: E-Mail-Versand\n';
-    doc += '- Benachrichtigungen\n';
-    doc += '- Erinnerungen\n';
-    doc += '- Automatische Reports\n\n';
-
-    doc += '**UploadFile**: Datei-Upload\n';
-    doc += '- Dokument-PDFs\n';
-    doc += '- Originale (gescannte Dokumente)\n';
-    doc += '- Logos und Assets\n\n';
-
-    doc += '**GenerateImage**: KI-Bildgenerierung\n';
-    doc += '- Platzhalter-Bilder\n';
-    doc += '- Marketing-Material\n\n';
-
-    doc += '**ExtractDataFromUploadedFile**: Datenextraktion\n';
-    doc += '- CSV-Import\n';
-    doc += '- PDF-Datenextraktion\n';
-    doc += '- Strukturierte Datenübernahme\n\n';
-
+    
+    doc += '**Daten-Mapping (App → API)**:\n';
+    doc += '| App-Feld | API-Parameter | Transformation |\n';
+    doc += '|----------|---------------|----------------|\n';
+    doc += '| Document.pdf_url | letter.base64_file | PDF fetchen, base64 encoden |\n';
+    doc += '| - (calculated) | letter.base64_checksum | SHA-256 Hash (32 chars) |\n';
+    doc += '| Document.versandart | letter.attaching.send | "normal" / "r1" / "r2" |\n';
+    doc += '| LetterXpressCredential.username | auth.username | Direkt |\n';
+    doc += '| LetterXpressCredential.api_key | auth.apikey | Direkt |\n';
+    doc += '| Document.name | letter.notice | Optional, für interne Referenz |\n\n';
+    
+    doc += '### 1.4 Datenfluss INBOUND (LetterXpress → App)\n\n';
+    doc += '**Beispiel-Response (send_letter)**:\n';
+    doc += '```json\n';
+    doc += '{\n';
+    doc += '  "job": {\n';
+    doc += '    "id": 12345678,\n';
+    doc += '    "status": "queue",\n';
+    doc += '    "price": {\n';
+    doc += '      "net": 1.20,\n';
+    doc += '      "gross": 1.43\n';
+    doc += '    },\n';
+    doc += '    "letter": {\n';
+    doc += '      "pages": 3,\n';
+    doc += '      "filename": "Mieterhoehung_2024.pdf"\n';
+    doc += '    }\n';
+    doc += '  }\n';
+    doc += '}\n';
+    doc += '```\n\n';
+    doc += '**Beispiel-Response (get_job mit Tracking)**:\n';
+    doc += '```json\n';
+    doc += '{\n';
+    doc += '  "job": {\n';
+    doc += '    "id": 12345678,\n';
+    doc += '    "status": "sent",\n';
+    doc += '    "tracking_code": "1234567890DE",\n';
+    doc += '    "dispatch_date": "2024-01-07"\n';
+    doc += '  }\n';
+    doc += '}\n';
+    doc += '```\n\n';
+    doc += '**Daten-Mapping (API-Response → App)**:\n';
+    doc += '| API-Feld | App-Feld | Entity |\n';
+    doc += '|----------|----------|--------|\n';
+    doc += '| job.id | lxp_job_id | LetterShipment |\n';
+    doc += '| job.status | status | LetterShipment (queue/hold/done/sent) |\n';
+    doc += '| job.price.net | cost_net | LetterShipment |\n';
+    doc += '| job.price.gross | cost_gross | LetterShipment |\n';
+    doc += '| job.letter.pages | pages | LetterShipment |\n';
+    doc += '| job.tracking_code | tracking_code | LetterShipment |\n';
+    doc += '| job.dispatch_date | dispatch_date | LetterShipment |\n';
+    doc += '| - | versandstatus="versendet" | Document |\n';
+    doc += '| - | versandt_am=now() | Document |\n\n';
+    
+    doc += '### 1.5 Authentifizierung\n\n';
+    doc += '- **Methode**: API-Key Authentication (im Request-Body)\n';
+    doc += '- **Credentials-Speicherung**: `LetterXpressCredential` Entity (1 Account pro App)\n';
+    doc += '- **Felder**:\n';
+    doc += '  - `username`: LetterXpress-E-Mail\n';
+    doc += '  - `api_key`: API-Key (verschlüsselt in DB)\n';
+    doc += '  - `mode`: "test" oder "live"\n';
+    doc += '- **Token-Refresh**: Nicht erforderlich (statischer API-Key)\n\n';
+    
+    doc += '### 1.6 Fehlerbehandlung\n\n';
+    doc += '**Mögliche Fehler**:\n';
+    doc += '- `400 Bad Request`: PDF ungültig, fehlende Parameter\n';
+    doc += '- `401 Unauthorized`: API-Key falsch oder abgelaufen\n';
+    doc += '- `403 Forbidden`: Kein Guthaben\n';
+    doc += '- `429 Too Many Requests`: Rate Limit überschritten (> 1 req/sec)\n';
+    doc += '- `500 Internal Server Error`: LetterXpress-Systemfehler\n\n';
+    doc += '**App-Reaktion**:\n';
+    doc += '```javascript\n';
+    doc += 'try {\n';
+    doc += '  const response = await axios.post(url, data);\n';
+    doc += '} catch (error) {\n';
+    doc += '  if (error.response?.status === 403) {\n';
+    doc += '    return { error: "Kein Guthaben - bitte aufladen" };\n';
+    doc += '  } else if (error.response?.status === 429) {\n';
+    doc += '    // Warte 60 Sekunden und retry\n';
+    doc += '    await sleep(60000);\n';
+    doc += '    return retry();\n';
+    doc += '  } else {\n';
+    doc += '    return { error: "Versand fehlgeschlagen: " + error.message };\n';
+    doc += '  }\n';
+    doc += '}\n';
+    doc += '```\n\n';
+    doc += '**Logging**: Alle Requests/Responses werden in LetterShipment Entity gespeichert\n\n';
+    doc += '**Timeouts**: 30 Sekunden pro Request (Axios default)\n\n';
+    
+    doc += '### 1.7 Compliance & Rechtliches\n\n';
+    doc += '- **DSGVO**: ✅ Konform (deutscher Anbieter, Server in Deutschland)\n';
+    doc += '- **Übertragene Daten**: Empfänger-Name, Adresse, Dokumenteninhalt (PDF)\n';
+    doc += '- **AV-Vertrag**: Erforderlich (muss User mit LetterXpress abschließen)\n';
+    doc += '- **Datenspeicherung**: LetterXpress speichert PDFs 30 Tage, dann automatische Löschung\n\n';
+    
+    doc += '### 1.8 Kosten & Limits\n\n';
+    doc += '**Preismodell**: Pay-per-Letter (Guthaben-System)\n';
+    doc += '- 1-2 Seiten SW: ~€0,70-1,00 netto\n';
+    doc += '- Einschreiben Einwurf (R1): +€3,69\n';
+    doc += '- Einschreiben (R2): +€4,05\n';
+    doc += '- Farbdruck: +€0,10 pro Seite\n\n';
+    doc += '**Rate Limits**: Max. 1 Request/Sekunde (automatischer 60s Timeout bei Überschreitung)\n\n';
+    doc += '**Sonstiges**: Test-Mode kostenlos, aber keine echte Zustellung\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## 2. FinAPI (Multi-Banking)\n\n';
+    
+    doc += '### 2.1 Service-Identifikation\n\n';
+    doc += '- **Offizieller Name**: finAPI Access B2C (finleap connect GmbH)\n';
+    doc += '- **Version**: API v1\n';
+    doc += '- **Base URL**: Konfiguriert via `FINAPI_BASE_URL` Secret (z.B. https://sandbox.finapi.io)\n';
+    doc += '- **Anbieter**: finleap connect GmbH (Teil von finAPI)\n';
+    doc += '- **Zweck**: PSD2-konforme Multi-Banking-Integration für Transaktions-Import und Kontostandsabfragen\n\n';
+    
+    doc += '### 2.2 Verwendung in der App\n\n';
+    doc += '**Module**: Finanzverwaltung, Banking\n\n';
+    doc += '**User-Aktionen**:\n';
+    doc += '- User klickt "Bankkonto verbinden" → `finapiConnect`\n';
+    doc += '- User wählt Bank aus und gibt Zugangsdaten ein (im FinAPI Web Form)\n';
+    doc += '- User klickt "Konten importieren" → `finapiImportAccounts`\n';
+    doc += '- User klickt "Transaktionen synchronisieren" oder automatischer Sync → `finapiSync`\n\n';
+    doc += '**Häufigkeit**: Täglich automatisch (Scheduled Task) + manuell auf Abruf\n\n';
+    
+    doc += '### 2.3 Datenfluss OUTBOUND (App → FinAPI)\n\n';
+    doc += '#### 2.3.1 Verbindung herstellen (finapiConnect)\n\n';
+    doc += '**Endpoint**: `POST /api/v1/bankConnections/import`\n\n';
+    doc += '**Beispiel-Request**:\n';
+    doc += '```json\n';
+    doc += '{\n';
+    doc += '  "bankId": 280,\n';
+    doc += '  "credentials": [\n';
+    doc += '    { "label": "Onlinebanking-Nutzer", "value": "12345678" },\n';
+    doc += '    { "label": "PIN", "value": "****" }\n';
+    doc += '  ],\n';
+    doc += '  "storeSecrets": true,\n';
+    doc += '  "skipPositionsDownload": false\n';
+    doc += '}\n';
+    doc += '```\n\n';
+    doc += '**Datenquellen**: User-Input im Frontend (Bank-Auswahl, Zugangsdaten)\n\n';
+    
+    doc += '#### 2.3.2 Konten importieren (finapiImportAccounts)\n\n';
+    doc += '**Endpoint**: `GET /api/v1/accounts`\n\n';
+    doc += '**Query-Parameter**:\n';
+    doc += '```\n';
+    doc += '?ids={bankConnectionId}\n';
+    doc += '```\n\n';
+    
+    doc += '#### 2.3.3 Transaktionen synchronisieren (finapiSync)\n\n';
+    doc += '**Endpoint**: `POST /api/v1/bankConnections/update`\n\n';
+    doc += '**Beispiel-Request**:\n';
+    doc += '```json\n';
+    doc += '{\n';
+    doc += '  "bankConnectionId": 12345,\n';
+    doc += '  "skipPositionsDownload": false,\n';
+    doc += '  "loadOwnerData": false\n';
+    doc += '}\n';
+    doc += '```\n\n';
+    
+    doc += '### 2.4 Datenfluss INBOUND (FinAPI → App)\n\n';
+    doc += '**Beispiel-Response (Konten)**:\n';
+    doc += '```json\n';
+    doc += '{\n';
+    doc += '  "accounts": [\n';
+    doc += '    {\n';
+    doc += '      "id": 123456,\n';
+    doc += '      "accountName": "Girokonto",\n';
+    doc += '      "iban": "DE89370400440532013000",\n';
+    doc += '      "accountType": "CHECKING",\n';
+    doc += '      "balance": 5432.10,\n';
+    doc += '      "currency": "EUR"\n';
+    doc += '    }\n';
+    doc += '  ]\n';
+    doc += '}\n';
+    doc += '```\n\n';
+    doc += '**Beispiel-Response (Transaktionen)**:\n';
+    doc += '```json\n';
+    doc += '{\n';
+    doc += '  "transactions": [\n';
+    doc += '    {\n';
+    doc += '      "id": 987654,\n';
+    doc += '      "amount": -350.00,\n';
+    doc += '      "purpose": "Miete Januar 2024",\n';
+    doc += '      "counterpartName": "Max Mustermann",\n';
+    doc += '      "counterpartIban": "DE12345678901234567890",\n';
+    doc += '      "bankBookingDate": "2024-01-05",\n';
+    doc += '      "valueDate": "2024-01-05"\n';
+    doc += '    }\n';
+    doc += '  ]\n';
+    doc += '}\n';
+    doc += '```\n\n';
+    doc += '**Daten-Mapping (API → App)**:\n';
+    doc += '| FinAPI-Feld | App-Feld | Entity |\n';
+    doc += '|-------------|----------|--------|\n';
+    doc += '| account.id | finapi_connection_id | BankAccount |\n';
+    doc += '| account.accountName | name | BankAccount |\n';
+    doc += '| account.iban | iban | BankAccount |\n';
+    doc += '| account.balance | current_balance | BankAccount |\n';
+    doc += '| transaction.id | finapi_transaction_id | BankTransaction |\n';
+    doc += '| transaction.amount | amount | BankTransaction |\n';
+    doc += '| transaction.purpose | purpose | BankTransaction |\n';
+    doc += '| transaction.counterpartName | counterpart_name | BankTransaction |\n';
+    doc += '| transaction.counterpartIban | counterpart_iban | BankTransaction |\n';
+    doc += '| transaction.bankBookingDate | booking_date | BankTransaction |\n\n';
+    
+    doc += '### 2.5 Authentifizierung\n\n';
+    doc += '- **Methode**: OAuth 2.0 Client Credentials Flow\n';
+    doc += '- **Secrets**:\n';
+    doc += '  - `FINAPI_CLIENT_ID`: OAuth Client-ID\n';
+    doc += '  - `FINAPI_CLIENT_SECRET`: OAuth Client-Secret\n';
+    doc += '  - `FINAPI_BASE_URL`: API-Endpunkt\n';
+    doc += '- **Token-Refresh**:\n';
+    doc += '```javascript\n';
+    doc += 'const tokenResponse = await axios.post(\n';
+    doc += '  `${FINAPI_BASE_URL}/oauth/token`,\n';
+    doc += '  new URLSearchParams({\n';
+    doc += '    grant_type: "client_credentials",\n';
+    doc += '    client_id: FINAPI_CLIENT_ID,\n';
+    doc += '    client_secret: FINAPI_CLIENT_SECRET\n';
+    doc += '  })\n';
+    doc += ');\n';
+    doc += 'const accessToken = tokenResponse.data.access_token;\n';
+    doc += '```\n\n';
+    doc += '- **Berechtigungen**: Voller Zugriff auf Bank-Konten und Transaktionen (im User-Scope)\n\n';
+    
+    doc += '### 2.6 Fehlerbehandlung\n\n';
+    doc += '**Mögliche Fehler**:\n';
+    doc += '- `400 Bad Request`: Ungültige Bank-ID oder Credentials\n';
+    doc += '- `401 Unauthorized`: OAuth-Token abgelaufen\n';
+    doc += '- `403 Forbidden`: Bank-Zugang gesperrt oder TAN erforderlich\n';
+    doc += '- `451 Unavailable For Legal Reasons`: PSD2-Limit erreicht (90 Tage)\n';
+    doc += '- `500 Internal Server Error`: FinAPI-Systemfehler\n';
+    doc += '- `503 Service Unavailable`: Bank-Server nicht erreichbar\n\n';
+    doc += '**App-Reaktion**:\n';
+    doc += '- Bei 401: Token automatisch erneuern und Request wiederholen\n';
+    doc += '- Bei 403/451: User-Benachrichtigung, manuelle Neuverbindung erforderlich\n';
+    doc += '- Bei 503: Retry nach 5 Minuten (max. 3 Versuche)\n\n';
+    doc += '**Logging**: Alle Sync-Vorgänge werden in ActivityLog gespeichert\n\n';
+    
+    doc += '### 2.7 Compliance & Rechtliches\n\n';
+    doc += '- **PSD2**: ✅ Voll konform (BaFin-lizenziert)\n';
+    doc += '- **DSGVO**: ✅ Konform (EU-Server)\n';
+    doc += '- **Übertragene Daten**: Bank-Zugangsdaten, Transaktionen, Kontostände\n';
+    doc += '- **Datenspeicherung**: Zugangsdaten verschlüsselt bei FinAPI, Transaktionen lokal in App\n';
+    doc += '- **90-Tage-Regel**: PSD2 erfordert Neuverbindung alle 90 Tage (TAN-Eingabe)\n';
+    doc += '- **Lizenz**: FinAPI ist als Zahlungsauslösedienst bei BaFin registriert\n\n';
+    
+    doc += '### 2.8 Kosten & Limits\n\n';
+    doc += '**Preismodell**: Typischerweise Abo-Modell (z.B. €X/User/Monat)\n';
+    doc += '- Sandbox: Kostenlos (Test-Banken)\n';
+    doc += '- Produktiv: Lizenzgebühr (abhängig vom Vertrag)\n\n';
+    doc += '**Rate Limits**:\n';
+    doc += '- Sandbox: 100 Requests/Minute\n';
+    doc += '- Produktiv: Je nach Vertrag (typischerweise höher)\n\n';
+    doc += '**PSD2-Limits**: Max. 4 Transaktions-Abrufe pro Tag pro Konto\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## 3. Base44 Core Services\n\n';
+    
+    doc += '### 3.1 InvokeLLM (KI-Assistent)\n\n';
+    doc += '**Zweck**: LLM-basierte Datenanalyse, Extraktion, Kategorisierung\n\n';
+    doc += '**Verwendung**:\n';
+    doc += '- PDF-Extraktion (Rechnungen, Bescheide)\n';
+    doc += '- E-Mail-Analyse für automatische Task-Erstellung\n';
+    doc += '- Transaktions-Kategorisierung (AI-Matching)\n';
+    doc += '- Template-Vorschlag aus PDF-Upload\n\n';
+    doc += '**Beispiel-Request**:\n';
+    doc += '```javascript\n';
+    doc += 'const result = await base44.integrations.Core.InvokeLLM({\n';
+    doc += '  prompt: "Extrahiere aus diesem PDF: Rechnungsnummer, Datum, Betrag, Lieferant",\n';
+    doc += '  file_urls: ["https://storage.../rechnung.pdf"],\n';
+    doc += '  response_json_schema: {\n';
+    doc += '    type: "object",\n';
+    doc += '    properties: {\n';
+    doc += '      invoice_number: { type: "string" },\n';
+    doc += '      invoice_date: { type: "string", format: "date" },\n';
+    doc += '      total_amount: { type: "number" },\n';
+    doc += '      supplier_name: { type: "string" }\n';
+    doc += '    }\n';
+    doc += '  }\n';
+    doc += '});\n';
+    doc += '```\n\n';
+    doc += '**Response**: Strukturiertes JSON-Objekt (kein Parsing nötig)\n\n';
+    
+    doc += '### 3.2 SendEmail\n\n';
+    doc += '**Zweck**: Transaktionale E-Mails versenden\n\n';
+    doc += '**Verwendung**:\n';
+    doc += '- Benachrichtigungen (Dokument versendet, Zahlung eingegangen)\n';
+    doc += '- Erinnerungen (Miete fällig, Aufgabe überfällig)\n';
+    doc += '- Reports (Monats-Übersicht)\n\n';
+    doc += '**Beispiel-Request**:\n';
+    doc += '```javascript\n';
+    doc += 'await base44.integrations.Core.SendEmail({\n';
+    doc += '  from_name: "ImmoVerwalter",\n';
+    doc += '  to: "verwalter@example.com",\n';
+    doc += '  subject: "Neue Mietzahlung eingegangen",\n';
+    doc += '  body: "Mieter Max Mustermann hat €850 überwiesen."\n';
+    doc += '});\n';
+    doc += '```\n\n';
+    
+    doc += '### 3.3 UploadFile\n\n';
+    doc += '**Zweck**: Dateien zu Cloud-Storage hochladen\n\n';
+    doc += '**Verwendung**:\n';
+    doc += '- Generierte PDFs speichern\n';
+    doc += '- Gescannte Original-Dokumente speichern\n';
+    doc += '- Logos und Assets hochladen\n\n';
+    doc += '**Beispiel-Request**:\n';
+    doc += '```javascript\n';
+    doc += 'const { file_url } = await base44.integrations.Core.UploadFile({\n';
+    doc += '  file: pdfBlob\n';
+    doc += '});\n';
+    doc += '// file_url: "https://storage.base44.com/files/user123/doc456.pdf"\n';
+    doc += '```\n\n';
+    
+    doc += '### 3.4 GenerateImage\n\n';
+    doc += '**Zweck**: KI-Bildgenerierung (DALL-E, Stable Diffusion)\n\n';
+    doc += '**Verwendung**:\n';
+    doc += '- Platzhalter-Bilder für Objekte ohne Foto\n';
+    doc += '- Marketing-Material generieren\n\n';
+    doc += '**Beispiel-Request**:\n';
+    doc += '```javascript\n';
+    doc += 'const { url } = await base44.integrations.Core.GenerateImage({\n';
+    doc += '  prompt: "Moderne Wohnanlage, 3 Stockwerke, Fotorealistisch"\n';
+    doc += '});\n';
+    doc += '```\n\n';
+    
+    doc += '### 3.5 ExtractDataFromUploadedFile\n\n';
+    doc += '**Zweck**: Strukturierte Daten aus Dateien extrahieren\n\n';
+    doc += '**Verwendung**:\n';
+    doc += '- CSV-Import (Bulk-Daten)\n';
+    doc += '- PDF-Tabellen extrahieren (z.B. Betriebskostenabrechnung vom Vorjahr)\n';
+    doc += '- Excel-Import\n\n';
+    doc += '**Beispiel-Request**:\n';
+    doc += '```javascript\n';
+    doc += 'const result = await base44.integrations.Core.ExtractDataFromUploadedFile({\n';
+    doc += '  file_url: "https://storage.../nk-abrechnung-2023.pdf",\n';
+    doc += '  json_schema: {\n';
+    doc += '    type: "object",\n';
+    doc += '    properties: {\n';
+    doc += '      items: {\n';
+    doc += '        type: "array",\n';
+    doc += '        items: {\n';
+    doc += '          type: "object",\n';
+    doc += '          properties: {\n';
+    doc += '            kostenart: { type: "string" },\n';
+    doc += '            betrag: { type: "number" }\n';
+    doc += '          }\n';
+    doc += '        }\n';
+    doc += '      }\n';
+    doc += '    }\n';
+    doc += '  }\n';
+    doc += '});\n';
+    doc += '// result: { status: "success", output: [...] }\n';
+    doc += '```\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## 4. Geplante Integrationen (nicht implementiert)\n\n';
+    
+    doc += '### 4.1 ELSTER (Steuer-Übermittlung)\n\n';
+    doc += '**Zweck**: Elektronische Steuererklärung (Anlage V) an Finanzamt übermitteln\n\n';
+    doc += '**Status**: 🚧 Geplant, nicht implementiert\n\n';
+    doc += '**Anforderungen**:\n';
+    doc += '- ELSTER-Zertifikat erforderlich (kostenpflichtig)\n';
+    doc += '- ERiC (ELSTER Rich Client) Integration\n';
+    doc += '- Validierung nach offiziellen XSD-Schemas\n';
+    doc += '- Test-Übermittlung an Clearingstelle erforderlich\n\n';
+    
+    doc += '### 4.2 OCR-Services (Dokumenten-Scanning)\n\n';
+    doc += '**Zweck**: Gescannte Dokumente automatisch auslesen\n\n';
+    doc += '**Status**: 🚧 Teilweise via InvokeLLM implementiert (Vision-Modelle)\n\n';
+    doc += '**Alternative**: Google Cloud Vision API, AWS Textract\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## 5. Service-Abhängigkeiten\n\n';
+    
+    doc += '### 5.1 Dokumenten-Versand Workflow\n\n';
+    doc += '```\n';
+    doc += '1. User erstellt Dokument (Template + Daten)\n';
+    doc += '2. App generiert HTML\n';
+    doc += '3. Puppeteer (lokal) → PDF\n';
+    doc += '4. Base44.UploadFile → PDF zu Storage\n';
+    doc += '5. LetterXpress.send_letter → Postversand\n';
+    doc += '6. LetterShipment Entity speichern\n';
+    doc += '7. Scheduled Task: LetterXpress.get_job → Tracking-Update\n';
+    doc += '```\n\n';
+    doc += '**Abhängigkeiten**: UploadFile muss vor LetterXpress erfolgen\n\n';
+    doc += '**Rollback**: Bei Fehler in Schritt 5 → PDF bleibt gespeichert, Dokument-Status "erstellt"\n\n';
+    
+    doc += '### 5.2 Banking & Matching Workflow\n\n';
+    doc += '```\n';
+    doc += '1. User verbindet Bank via FinAPI\n';
+    doc += '2. FinAPI → Konten importieren → BankAccount\n';
+    doc += '3. FinAPI → Transaktionen abrufen → BankTransaction\n';
+    doc += '4. Scheduled Task oder manuell: Sync\n';
+    doc += '5. AI-Matching (InvokeLLM):\n';
+    doc += '   - Transaktions-Text analysieren\n';
+    doc += '   - Mit GeneratedFinancialBooking abgleichen\n';
+    doc += '   - PaymentTransactionLink erstellen\n';
+    doc += '6. User bestätigt Matches oder korrigiert\n';
+    doc += '```\n\n';
+    doc += '**Abhängigkeiten**: FinAPI-Sync muss vor AI-Matching erfolgen\n\n';
+    doc += '**Rollback**: Matches können jederzeit gelöscht werden (PaymentTransactionLink.delete)\n\n';
+    
+    doc += '### 5.3 Rechnungs-Extraktion Workflow\n\n';
+    doc += '```\n';
+    doc += '1. User lädt Rechnungs-PDF hoch\n';
+    doc += '2. Base44.UploadFile → PDF zu Storage\n';
+    doc += '3. InvokeLLM (mit file_urls):\n';
+    doc += '   - PDF analysieren\n';
+    doc += '   - Strukturierte Daten extrahieren (Betrag, Datum, Lieferant, etc.)\n';
+    doc += '4. Invoice Entity erstellen mit extrahierten Daten\n';
+    doc += '5. Optional: Automatische Buchung generieren (GeneratedFinancialBooking)\n';
+    doc += '```\n\n';
+    doc += '**Abhängigkeiten**: UploadFile vor InvokeLLM\n\n';
+    doc += '**Fallback**: Bei LLM-Fehler → Manuelle Eingabe erforderlich\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## 6. Zusammenfassung: Service-Matrix\n\n';
+    doc += '| Service | Zweck | Auth | Rate Limit | Kosten | Status |\n';
+    doc += '|---------|-------|------|------------|--------|--------|\n';
+    doc += '| LetterXpress | Postversand | API-Key | 1/sec | Pay-per-Letter | ✅ Aktiv |\n';
+    doc += '| FinAPI | Multi-Banking | OAuth2 | 100/min | Abo | ✅ Aktiv |\n';
+    doc += '| Base44 InvokeLLM | KI-Analyse | Built-in | - | Inkludiert | ✅ Aktiv |\n';
+    doc += '| Base44 SendEmail | E-Mail | Built-in | - | Inkludiert | ✅ Aktiv |\n';
+    doc += '| Base44 UploadFile | Storage | Built-in | - | Inkludiert | ✅ Aktiv |\n';
+    doc += '| ELSTER | Steuer | Zertifikat | - | Zertifikat | 🚧 Geplant |\n\n';
+    
     return doc;
 }
 
