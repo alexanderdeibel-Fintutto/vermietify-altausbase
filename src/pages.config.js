@@ -35,6 +35,7 @@ import WhatsAppSetup from './pages/WhatsAppSetup';
 import UserDetail from './pages/UserDetail';
 import AuditReports from './pages/AuditReports';
 import PermissionDashboard from './pages/PermissionDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -76,6 +77,7 @@ export const PAGES = {
     "UserDetail": UserDetail,
     "AuditReports": AuditReports,
     "PermissionDashboard": PermissionDashboard,
+    "AdminDashboard": AdminDashboard,
 }
 
 export const pagesConfig = {
