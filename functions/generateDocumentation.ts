@@ -1714,44 +1714,626 @@ async function generateMasterDataDoc(entities, changes = [], versionNumber = 1) 
     
     doc += '---\n\n';
     
-    // Gruppierung nach Verwendungsbereich
-    const groups = {
-        'Dokumente & Kommunikation': ['Document', 'Template', 'LetterShipment', 'Task'],
-        'Finanzen & Buchungen': ['GeneratedFinancialBooking', 'Invoice', 'BankTransaction', 'Payment'],
-        'Immobilien & Verträge': ['Building', 'LeaseContract', 'PropertyTax', 'Insurance', 'Financing', 'Supplier'],
-        'Kostenkategorien & Steuern': ['CostCategory', 'BuildingTaxLibrary', 'TaxForm'],
-        'Organisationsformen': ['Owner', 'Building']
-    };
+    // ALLE KONSTANTEN-GRUPPEN DOKUMENTIEREN
+    doc += '# 2. OBJEKTTYPEN (Building Types)\n\n';
     
-    for (const [groupName, entityNames] of Object.entries(groups)) {
-        const groupEntities = entityNames.filter(name => entities[name]);
-        if (groupEntities.length === 0) continue;
-        
-        doc += `## ${groupName}\n\n`;
-        
-        for (const entityName of groupEntities) {
-            const schema = entities[entityName];
-            if (!schema?.properties) continue;
-            
-            let hasEnums = false;
-            for (const [fieldName, field] of Object.entries(schema.properties)) {
-                if (field.enum) {
-                    if (!hasEnums) {
-                        doc += `### ${entityName}\n\n`;
-                        hasEnums = true;
-                    }
-                    
-                    doc += `**${fieldName}**\n\n`;
-                    doc += `*Verwendungszweck:* ${field.description || 'Auswahlfeld'}\n\n`;
-                    doc += '| Anzeigetext | Interner Wert | Beschreibung |\n';
-                    doc += '|-------------|---------------|-------------|\n';
-                    
-                    field.enum.forEach(value => {
-                        let displayText = value;
-                        let description = '';
-                        
-                        // Spezifische Übersetzungen
-                        switch(fieldName) {
+    doc += '## 2.1 HAUPT-OBJEKTTYPEN\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| OBJEKTTYP | Einfamilienhaus | einfamilienhaus | Wohnimmobilie | Building.building_type | ✅ AfA 2% (50 Jahre) | N/A | - | Nein | Keine NK-Umlage (Eigentümer bewohnt) | EFH, selbst bewohnt oder vermietet, 150m² |\n';
+    doc += '| OBJEKTTYP | Zweifamilienhaus | zweifamilienhaus | Wohnimmobilie | Building.building_type | ✅ AfA 2% | ✅ Anteilig | - | Nein | 2 Units, oft 1 selbst bewohnt | ZFH, EG vermietet, OG selbst genutzt |\n';
+    doc += '| OBJEKTTYP | Mehrfamilienhaus | mehrfamilienhaus | Wohnimmobilie | Building.building_type | ✅ AfA 2% | ✅ Ja | Min. 3 Wohneinheiten | ✅ Ja | Standard-Fall für Betriebskosten | MFH mit 6 Wohnungen, voll vermietet |\n';
+    doc += '| OBJEKTTYP | Reihenhaus | reihenhaus | Wohnimmobilie | Building.building_type | ✅ AfA 2% | N/A | - | Nein | Meist Eigentümer-bewohnt | Reihenhaus in Siedlung |\n';
+    doc += '| OBJEKTTYP | Eigentumswohnung | eigentumswohnung | Wohnimmobilie | Building.building_type | ✅ AfA 2% | ⚠️ Teils (WEG-Umlage) | Nur einzelne Wohnung | Nein | Sonderfall: WEG-Verwaltung | ETW 85m², in 20-Parteien-Haus |\n';
+    doc += '| OBJEKTTYP | Gewerbeimmobilie (Büro) | gewerbe_buero | Gewerbe | Building.building_type | ✅ AfA 3% (33 Jahre) | N/A (Gewerbemiete) | - | Nein | Andere Kündigungsfristen | Bürogebäude, 4 Etagen |\n';
+    doc += '| OBJEKTTYP | Gewerbeimmobilie (Laden) | gewerbe_laden | Gewerbe | Building.building_type | ✅ AfA 3% | N/A | - | Nein | Keine Mietpreisbremse | Ladenlokal Erdgeschoss |\n';
+    doc += '| OBJEKTTYP | Gewerbeimmobilie (Lager) | gewerbe_lager | Gewerbe | Building.building_type | ✅ AfA 3% | N/A | - | Nein | Oft längere Kündigungsfristen | Lagerhalle 800m² |\n';
+    doc += '| OBJEKTTYP | Gemischt (Wohnen + Gewerbe) | gemischt | Mischnutzung | Building.building_type | ✅ Getrennte AfA (2% + 3%) | ⚠️ Anteilig | Flächenaufteilung erforderlich | Nein | Komplexe Berechnung | EG Laden (100m²), OG+DG Wohnungen (200m²) |\n';
+    doc += '| OBJEKTTYP | Ferienimmobilie | ferienwohnung | Sonderform | Building.building_type | ⚠️ Liebhaberei-Prüfung! | N/A | Nur bei < 75% Vermietung | Nein | Eigene Nutzung problematisch | Ferienwohnung Ostsee, 8 Wochen selbst genutzt |\n';
+    doc += '| OBJEKTTYP | Grundstück (unbebaut) | grundstueck | Boden | Building.building_type | ❌ Keine AfA (Boden nicht abschreibbar) | N/A | - | Nein | Nur Grundsteuer absetzbar | Baugrundstück 500m², wartet auf Bebauung |\n';
+    doc += '| OBJEKTTYP | Denkmalgeschützt | denkmal | Wohnimmobilie | Building.building_type | ✅✅ Sonder-AfA möglich (§7i EStG) | ✅ Ja | Denkmalschutz-Bescheinigung | Nein | Erhöhte AfA 9% über 8 Jahre | Altbau unter Denkmalschutz, Sanierung gefördert |\n\n';
+    
+    doc += '**Steuerliche Besonderheiten pro Objekttyp**:\n';
+    doc += '```\n';
+    doc += 'WOHNIMMOBILIE:\n';
+    doc += '  - AfA: 2% linear (§7 Abs. 4 Nr. 2a EStG)\n';
+    doc += '  - Nutzungsdauer: 50 Jahre\n';
+    doc += '  - Mietpreisbremse: Ja (in Ballungsgebieten)\n';
+    doc += '  - Betriebskosten: Umlegbar nach BetrKV\n';
+    doc += '\n';
+    doc += 'GEWERBEIMMOBILIE:\n';
+    doc += '  - AfA: 3% linear (§7 Abs. 4 Nr. 1 EStG)\n';
+    doc += '  - Nutzungsdauer: 33 Jahre\n';
+    doc += '  - Mietpreisbremse: Nein\n';
+    doc += '  - Betriebskosten: Verhandelbar (kein BetrKV)\n';
+    doc += '\n';
+    doc += 'GEMISCHT:\n';
+    doc += '  - AfA: Anteilig (Wohnanteil 2%, Gewerbeanteil 3%)\n';
+    doc += '  - Flächenaufteilung erforderlich!\n';
+    doc += '  - Beispiel: 200m² Wohnen (2%) + 100m² Gewerbe (3%)\n';
+    doc += '    → Wohnen-AfA: (200/300) × Gebäudewert × 2%\n';
+    doc += '    → Gewerbe-AfA: (100/300) × Gebäudewert × 3%\n';
+    doc += '\n';
+    doc += 'DENKMAL:\n';
+    doc += '  - Sonder-AfA: 9% über 8 Jahre (statt 2% über 50 Jahre)\n';
+    doc += '  - NUR für Modernisierungskosten (nicht Kaufpreis)\n';
+    doc += '  - Bescheinigung der Denkmalbehörde erforderlich\n';
+    doc += '  - Nach 8 Jahren: Restbuchwert mit 2% weiter abschreiben\n';
+    doc += '\n';
+    doc += 'FERIENIMMOBILIE:\n';
+    doc += '  - Liebhaberei-Prüfung bei Eigennutzung > 25% (nicht steuerlich anerkannt!)\n';
+    doc += '  - Nur absetzbar wenn Gewinnerzielungsabsicht\n';
+    doc += '  - Kosten nur anteilig (Fremdvermietungs-Quote)\n';
+    doc += '```\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '# 3. EIGENTÜMERSTRUKTUREN & RECHTSFORMEN\n\n';
+    
+    doc += '## 3.1 RECHTSFORMEN (Owner.type & applicable_for_legal_form)\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| RECHTSFORM | Privatperson (Alleineigentum) | PRIVATPERSON | Natürliche Person | Owner.type, BuildingTaxLibrary | ✅ Anlage V + EÜR | N/A | - | ✅ Ja | Einkommensteuer | Max Mustermann besitzt MFH alleine, Anlage V zur ESt |\n';
+    doc += '| RECHTSFORM | Privatpersonen (Bruchteilsgemeinschaft) | PRIVATPERSON | Natürliche Person (mehrere) | OwnerRelationship.share_percentage | ✅ Jeder seine Anlage V (anteilig) | N/A | Min. 2 Eigentümer | Nein | Keine Gesellschaft! | Max 50% + Erika 50%, jeder reicht eigene Anlage V ein |\n';
+    doc += '| RECHTSFORM | GbR (Gesellschaft bürgerlichen Rechts) | GBR | Personengesellschaft | Owner.type, Shareholder | ✅ Transparenzprinzip (Gesellschafter versteuern anteilig) | N/A | Min. 2 Gesellschafter | Nein | Gesellschaftsvertrag, Feststellungserklärung | Max & Erika GbR, je 50%, gemeinsame Anlage V dann anteilig |\n';
+    doc += '| RECHTSFORM | GmbH | GMBH | Kapitalgesellschaft | Owner.type | ✅✅ Körperschaftsteuer + Gewerbesteuer | N/A | Handelsregister | Nein | Bilanzpflicht, keine Anlage V! | Mustermann Immobilien GmbH, Bilanz statt EÜR |\n';
+    doc += '| RECHTSFORM | GmbH & Co. KG | GMBH_CO_KG | Mischform | Owner.type | ✅✅ Komplex (transparent + Körperschaft) | N/A | GmbH als Komplementär | Nein | Steuerberater empfohlen | Immobilien GmbH & Co. KG (steueroptimiert) |\n';
+    doc += '| RECHTSFORM | KG (Kommanditgesellschaft) | KG | Personengesellschaft | Owner.type | ✅ Wie GbR (transparent) | N/A | Min. 1 Komplementär + 1 Kommanditist | Nein | Handelsregister | Selten bei Immobilien |\n';
+    doc += '| RECHTSFORM | AG (Aktiengesellschaft) | AG | Kapitalgesellschaft | Owner.type | ✅✅ Körperschaftsteuer | N/A | Handelsregister, Vorstand | Nein | Sehr selten bei Wohnimmobilien | Große Immobilien-AG (ab 10+ Objekte) |\n';
+    doc += '| RECHTSFORM | ALLE (Filter: für alle gültig) | ALLE | Filter-Option | CostCategory.applicable_for_legal_form | N/A | N/A | - | ✅ Ja | Meiste Kosten gelten für alle | Grundsteuer gilt für alle Rechtsformen |\n\n';
+    
+    doc += '**Steuerliche Implikationen**:\n';
+    doc += '```\n';
+    doc += 'PRIVATPERSON:\n';
+    doc += '  - Einkommensteuer (ESt) auf Mieteinnahmen\n';
+    doc += '  - Anlage V (Vermietung & Verpachtung)\n';
+    doc += '  - EÜR (Einnahmen-Überschuss-Rechnung)\n';
+    doc += '  - Progressiver Steuersatz (14%-45%)\n';
+    doc += '  - Beispiel: 20.000€ Überschuss → ~6.000€ Steuer (bei 30% Grenzsteuersatz)\n';
+    doc += '\n';
+    doc += 'GBR:\n';
+    doc += '  - Transparenzprinzip (Gesellschaft selbst zahlt KEINE Steuer)\n';
+    doc += '  - Gesellschafter versteuern ihren Anteil privat\n';
+    doc += '  - Feststellungserklärung erforderlich (§180 AO)\n';
+    doc += '  - Jeder Gesellschafter: Anlage V (anteilig)\n';
+    doc += '  - Beispiel: GbR 40.000€ Gewinn, 2 Gesellschafter je 50%\n';
+    doc += '    → Jeder versteuert 20.000€ in seiner privaten ESt\n';
+    doc += '\n';
+    doc += 'GMBH:\n';
+    doc += '  - Körperschaftsteuer (KSt) 15% + Soli 5,5% = 15,825%\n';
+    doc += '  - Gewerbesteuer (GewSt) ~14% (abhängig von Hebesatz)\n';
+    doc += '  - Gesamt: ~30% Steuerlast\n';
+    doc += '  - KEINE Anlage V (sondern Bilanz + GuV)\n';
+    doc += '  - Erweiterte Kürzung §9 Nr. 1 GewStG bei reiner Vermietung\n';
+    doc += '  - Beispiel: 100.000€ Gewinn\n';
+    doc += '    → KSt: 15.825€\n';
+    doc += '    → GewSt: ~14.000€ (mit Kürzung oft 0€!)\n';
+    doc += '    → Bei Ausschüttung: Kapitalertragsteuer 25% (Gesellschafter)\n';
+    doc += '\n';
+    doc += 'BRUCHTEILSGEMEINSCHAFT:\n';
+    doc += '  - KEINE Gesellschaft (nur gemeinschaftliches Eigentum)\n';
+    doc += '  - Jeder Eigentümer versteuert seinen Anteil separat\n';
+    doc += '  - Keine gemeinsame Steuererklärung\n';
+    doc += '  - Jeder: Eigene Anlage V (anteilig)\n';
+    doc += '  - Beispiel: Max 60% + Erika 40%\n';
+    doc += '    → Max reicht Anlage V für 60% der Einnahmen/Kosten ein\n';
+    doc += '    → Erika reicht Anlage V für 40% ein\n';
+    doc += '```\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '# 4. NUTZUNGSARTEN (Usage Types)\n\n';
+    
+    doc += '## 4.1 NUTZUNGSARTEN (applicable_for_usage in CostCategory)\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| NUTZUNG | Wohnung | WOHNUNG | Wohnzwecke | CostCategory.applicable_for_usage | ✅ AfA 2% | ✅ BetrKV gilt | building_type=Wohnimmobilie | ✅ Ja | BetrKV, Mietpreisbremse | Normale Mietwohnung für Wohnzwecke |\n';
+    doc += '| NUTZUNG | Gewerbe | GEWERBE | Gewerbliche Nutzung | CostCategory.applicable_for_usage | ✅ AfA 3% | ❌ BetrKV gilt nicht | building_type=Gewerbe | Nein | Gewerbemiete, andere Regeln | Büro, Laden, Praxis |\n';
+    doc += '| NUTZUNG | Gemischt | GEMISCHT | Wohnen + Gewerbe | CostCategory.applicable_for_usage | ✅ Anteilig | ⚠️ Anteilig | Flächenaufteilung bekannt | Nein | Komplexe Berechnung | EG Laden, OG Wohnungen |\n';
+    doc += '| NUTZUNG | Alle (Filter) | ALLE | Filter-Option | CostCategory.applicable_for_usage | N/A | N/A | - | ✅ Ja | Meiste Kosten für alle | Grundsteuer gilt für Wohnung + Gewerbe |\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '# 5. DOKUMENTTYPEN & STATUS\n\n';
+    
+    doc += '## 5.1 DOKUMENT-STATUS (Document.status)\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| DOKUMENT-STATUS | Zu erledigen | zu_erledigen | Offen | Document.status, Task-Trigger | N/A | N/A | - | ✅ Ja (Initial) | Task kann erstellt werden | Mieterhöhung geplant, aber noch nicht geschrieben |\n';
+    doc += '| DOKUMENT-STATUS | Erinnern | erinnern | Reminder | Document.status | N/A | N/A | reminder_date gesetzt | Nein | Notification bei Fälligke it | Dokument für später vorgemerkt (z.B. Kündigung in 3 Monaten) |\n';
+    doc += '| DOKUMENT-STATUS | Erstellt | erstellt | Fertig | Document.status | N/A | N/A | pdf_url vorhanden | Nein | Kann versendet werden | PDF generiert, bereit zum Versand |\n';
+    doc += '| DOKUMENT-STATUS | Geändert | geaendert | Modifiziert | Document.status | N/A | N/A | change_history.length > 0 | Nein | Versions-Tracking | Mietvertrag nach Erstellung angepasst (Tippfehler) |\n';
+    doc += '| DOKUMENT-STATUS | Versendet | versendet | Unterwegs | Document.status | N/A | N/A | versandt_am gesetzt | Nein | LetterShipment verknüpft | Per Post versendet, noch nicht zugestellt |\n';
+    doc += '| DOKUMENT-STATUS | Unterschrieben | unterschrieben | Rechtskräftig | Document.status | ✅ Ja (rechtlich bindend) | N/A | signed_date gesetzt | Nein | Rechtlich wirksam | Mietvertrag von beiden Parteien unterschrieben |\n';
+    doc += '| DOKUMENT-STATUS | Gescannt | gescannt | Archiviert | Document.status | ✅ Aufbewahrungspflicht erfüllt | N/A | DocumentOriginal verknüpft | Nein | Original-Dokument hochgeladen | Original-Rechnung gescannt und digital archiviert |\n\n';
+    
+    doc += '**Status-Übergänge (Workflow)**:\n';
+    doc += '```\n';
+    doc += 'TYPISCHER WORKFLOW (Mieterhöhung):\n';
+    doc += '  zu_erledigen → erstellt → versendet → unterschrieben → gescannt\n';
+    doc += '     (geplant)   (PDF fertig) (Post)    (Mieter hat    (Original\n';
+    doc += '                                         zugestimmt)     archiviert)\n';
+    doc += '\n';
+    doc += 'ABKÜRZUNG (wenn nur intern):\n';
+    doc += '  zu_erledigen → erstellt → gescannt\n';
+    doc += '     (Planung)   (generiert) (fertig archiviert)\n';
+    doc += '\n';
+    doc += 'REMINDER-WORKFLOW:\n';
+    doc += '  zu_erledigen → erinnern → (nach Frist) → zu_erledigen → erstellt ...\n';
+    doc += '```\n\n';
+    
+    doc += '## 5.2 DOKUMENTKATEGORIEN (Document.category, Template.category)\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| DOK-KATEGORIE | Mietrecht | Mietrecht | Rechtsdokumente | Document, Template | ⚠️ Teils (Anwaltskosten absetzbar) | N/A | - | Nein | Templates: Mietvertrag, Kündigung, Erhöhung | Mietvertrag, Mieterhöhung, Kündigung, Abmahnung |\n';
+    doc += '| DOK-KATEGORIE | Verwaltung | Verwaltung | Verwaltungsdokumente | Document, Template | ✅ Verwaltungskosten absetzbar | N/A | - | ✅ Ja | Templates: NK-Abrechnung, Protokolle | Betriebskostenabrechnung, Eigentümerversammlung-Protokoll |\n';
+    doc += '| DOK-KATEGORIE | Finanzen | Finanzen | Finanzielle Dokumente | Document, Template | ✅ Ja (Belege, Rechnungen) | N/A | - | Nein | Aufbewahrung 10 Jahre! | Rechnungen, Zahlungsbestätigungen, Kontoauszüge |\n';
+    doc += '| DOK-KATEGORIE | Übergabeprotokolle | Übergabeprotokolle | Beweisdokumente | Document, Template | ⚠️ Beweismittel bei Streit | N/A | - | Nein | Bei Ein-/Auszug | Wohnungsübergabe-Protokoll mit Fotos, Zählerständen |\n';
+    doc += '| DOK-KATEGORIE | Sonstiges | Sonstiges | Diverses | Document, Template | N/A | N/A | - | Nein | Catch-all | Korrespondenz, Notizen, sonstige Schreiben |\n\n';
+    
+    doc += '**Aufbewahrungsfristen (rechtlich)**:\n';
+    doc += '```\n';
+    doc += 'MIETRECHT-DOKUMENTE:\n';
+    doc += '  - Mietverträge: Bis 3 Jahre nach Mietende (§195 BGB Verjährung)\n';
+    doc += '  - Kündigungen: Bis 3 Jahre nach Auszug\n';
+    doc += '  - Nebenkostenabrechnungen: Bis 3 Jahre nach Abrechnungsjahr (Widerspruchsfrist)\n';
+    doc += '  - Kaution-Dokumente: Bis Rückzahlung + 3 Jahre\n';
+    doc += '\n';
+    doc += 'FINANZ-DOKUMENTE:\n';
+    doc += '  - Rechnungen: 10 Jahre (§147 AO - Steuerrecht)\n';
+    doc += '  - Kontoauszüge: 10 Jahre\n';
+    doc += '  - Kaufverträge: PERMANENT (Grundbuch-Relevanz)\n';
+    doc += '  - Grundsteuerbescheide: Bis neue Bescheide kommen + 10 Jahre\n';
+    doc += '\n';
+    doc += 'VERWALTUNG:\n';
+    doc += '  - Eigentümerversammlungs-Protokolle: 30 Jahre (WEG)\n';
+    doc += '  - Betriebskostenabrechnungen: 3 Jahre (Widerspruch) + 10 Jahre (Steuer)\n';
+    doc += '```\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '# 6. VERTRAGSTYPEN & STATUS\n\n';
+    
+    doc += '## 6.1 MIETVERTRAG-STATUS (LeaseContract.status)\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| VERTRAG-STATUS | Aktiv | active | Laufend | LeaseContract.status | ✅ Mieteinnahmen in Anlage V | N/A | - | ✅ Ja (bei CREATE) | Payment-Generierung aktiv | Vertrag läuft regulär, Mieter wohnt, Miete wird gezahlt |\n';
+    doc += '| VERTRAG-STATUS | Gekündigt | terminated | Auslaufend | LeaseContract.status | ✅ Weiter Einnahmen bis end_date | N/A | termination_date gesetzt | Nein | Payment-Generierung bis end_date | Kündigung eingegangen, läuft noch 3 Monate (Kündigungsfrist) |\n';
+    doc += '| VERTRAG-STATUS | Abgelaufen | expired | Beendet | LeaseContract.status | ⚠️ Nur wenn Kaution noch nicht zurück | N/A | end_date in Vergangenheit | Nein | Keine neuen Payments | Mieter ausgezogen, Vertrag beendet, ggf. Kaution offen |\n\n';
+    doc += '**Status-Übergänge**:\n';
+    doc += '```\n';
+    doc += 'active → terminated (Kündigung)\n';
+    doc += 'terminated → expired (Kündigungsfrist abgelaufen)\n';
+    doc += '\n';
+    doc += 'NICHT möglich:\n';
+    doc += '  expired → active (Ein beendeter Vertrag kann nicht reaktiviert werden)\n';
+    doc += '  terminated → active (Kündigung kann nicht zurückgezogen werden)\n';
+    doc += '```\n\n';
+    
+    doc += '## 6.2 ZAHLUNGSRHYTHMEN (Supplier.payment_rhythm, Insurance.payment_rhythm)\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| ZAHLUNGS-RHYTHMUS | Monatlich | Monatlich | 12x/Jahr | Supplier, Insurance | N/A | N/A | - | ✅ Ja | 12 Buchungen/Jahr | Strom-Abschlag 80€/Monat = 960€/Jahr |\n';
+    doc += '| ZAHLUNGS-RHYTHMUS | Vierteljährlich | Vierteljährlich | 4x/Jahr | Supplier, Insurance | N/A | N/A | - | Nein | 4 Buchungen (Q1-Q4) | Grundsteuer 1.200€ → 4× 300€ (Feb, Mai, Aug, Nov) |\n';
+    doc += '| ZAHLUNGS-RHYTHMUS | Halbjährlich | Halbjährlich | 2x/Jahr | Supplier, Insurance | N/A | N/A | - | Nein | 2 Buchungen | Versicherung 600€ → 2× 300€ (Jan, Jul) |\n';
+    doc += '| ZAHLUNGS-RHYTHMUS | Jährlich | Jährlich | 1x/Jahr | Supplier, Insurance | N/A | N/A | - | Nein | 1 Buchung | Versicherung 850€, einmal jährlich (März) |\n\n';
+    
+    doc += '## 6.3 VERSANDARTEN (Document.versandart, LetterShipment.shipping_type)\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| VERSANDART | Normal | normal | Standard-Brief | Document, LetterShipment | N/A | N/A | - | ✅ Ja | Kosten: ~1,00€ | Betriebskosten-Abrechnung (kein Zustellnachweis nötig) |\n';
+    doc += '| VERSANDART | Einschreiben Einwurf (R1) | r1 | Zustellnachweis | Document, LetterShipment | N/A | N/A | - | Nein | Kosten: +3,69€, Tracking-Code | Mieterhöhung (Nachweis wichtig, aber Unterschrift nicht) |\n';
+    doc += '| VERSANDART | Einschreiben (R2) | r2 | Persönliche Zustellung | Document, LetterShipment | N/A | N/A | Rechtlich bindende Dokumente | Nein | Kosten: +4,05€, Unterschrift | Kündigung (persönliche Zustellung + Unterschrift erforderlich) |\n\n';
+    
+    doc += '**Wann welche Versandart?**\n';
+    doc += '```\n';
+    doc += 'NORMAL (Standard):\n';
+    doc += '  - Betriebskostenabrechnungen\n';
+    doc += '  - Informationsschreiben\n';
+    doc += '  - Zahlungsbestätigungen\n';
+    doc += '  - Einladungen\n';
+    doc += '\n';
+    doc += 'R1 (Einschreiben Einwurf):\n';
+    doc += '  - Mieterhöhungen (Zugang-Nachweis wichtig)\n';
+    doc += '  - Mängelanzeigen\n';
+    doc += '  - Zahlungserinnerungen (bei Verzug)\n';
+    doc += '  - Eigenbedarfskündigung (weniger streng)\n';
+    doc += '\n';
+    doc += 'R2 (Einschreiben mit Unterschrift):\n';
+    doc += '  - Kündigungen (persönliche Zustellung §568 Abs. 1 BGB)\n';
+    doc += '  - Außerordentliche Kündigungen\n';
+    doc += '  - Fristlose Kündigungen\n';
+    doc += '  - Mietaufhebungsvereinbarungen\n';
+    doc += '  - Wichtig: NICHT für Mieterhöhung erforderlich (R1 reicht)\n';
+    doc += '```\n\n';
+    
+    doc += '## 5.4 BUCHUNGS-STATUS (GeneratedFinancialBooking.booking_status)\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| BUCHUNGS-STATUS | Geplant | Geplant | Offen | GeneratedFinancialBooking | N/A | N/A | - | ✅ Ja (bei CREATE) | outstanding_amount = amount | Grundsteuer Q1 fällig 15.02., noch nicht bezahlt |\n';
+    doc += '| BUCHUNGS-STATUS | Gebucht | Gebucht | Bestätigt | GeneratedFinancialBooking | N/A | N/A | User-bestätigt | Nein | - | Buchung wurde geprüft und bestätigt (noch nicht bezahlt) |\n';
+    doc += '| BUCHUNGS-STATUS | Teilweise bezahlt | TeilweiseBezahlt | In Zahlung | GeneratedFinancialBooking | N/A | N/A | paid_amount > 0 AND < amount | Nein | outstanding_amount > 0 | 300€ fällig, 150€ bereits bezahlt, 150€ noch offen |\n';
+    doc += '| BUCHUNGS-STATUS | Bezahlt | Bezahlt | Erledigt | GeneratedFinancialBooking | ✅ Für Steuerjahr relevant | N/A | paid_amount = amount | Nein | outstanding_amount = 0, linked_transaction_ids | 300€ voll bezahlt, mit BankTransaction verknüpft |\n\n';
+    
+    doc += '**Status-Übergänge**:\n';
+    doc += '```\n';
+    doc += 'NUR VORWÄRTS (keine Rückwärts-Übergänge!):\n';
+    doc += 'Geplant → Gebucht → TeilweiseBezahlt → Bezahlt\n';
+    doc += '   ↓         ↓            ↓                ↓\n';
+    doc += ' (neu)   (bestätigt)  (1. Zahlung)    (voll bezahlt)\n';
+    doc += '\n';
+    doc += 'NICHT möglich:\n';
+    doc += '  Bezahlt → Geplant (würde paid_amount zurücksetzen)\n';
+    doc += '  TeilweiseBezahlt → Geplant (Zahlung kann nicht rückgängig gemacht werden)\n';
+    doc += '\n';
+    doc += 'ABKÜRZUNG möglich:\n';
+    doc += '  Geplant → Bezahlt (wenn sofort voll bezahlt)\n';
+    doc += '```\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '# 7. TASK & WORKFLOW STATUS\n\n';
+    
+    doc += '## 7.1 TASK-STATUS (Task.status)\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| TASK-STATUS | Offen | offen | Neu | Task.status | N/A | N/A | - | ✅ Ja | Wird in Listen angezeigt | Task "Mieterhöhung vorbereiten" erstellt, noch nicht begonnen |\n';
+    doc += '| TASK-STATUS | In Bearbeitung | in_bearbeitung | Aktiv | Task.status | N/A | N/A | - | Nein | Filter "Meine Tasks" | Task wird gerade bearbeitet (User hat begonnen) |\n';
+    doc += '| TASK-STATUS | Wartend | wartend | Blockiert | Task.status | N/A | N/A | - | Nein | Abhängig von externem Event | Task "Mieterreaktion abwarten" - wartet auf Rückmeldung |\n';
+    doc += '| TASK-STATUS | Erledigt | erledigt | Abgeschlossen | Task.status | N/A | N/A | completed_at gesetzt | Nein | Wird aus Listen ausgeblendet | Task "Dokument versenden" abgeschlossen am 07.01.2024 |\n';
+    doc += '| TASK-STATUS | Abgebrochen | abgebrochen | Storniert | Task.status | N/A | N/A | - | Nein | Soft-Delete | Task war nicht relevant/doppelt/falsch erstellt |\n\n';
+    
+    doc += '**Status-Übergänge**:\n';
+    doc += '```\n';
+    doc += 'STANDARD-WORKFLOW:\n';
+    doc += 'offen → in_bearbeitung → erledigt\n';
+    doc += '  ↓                           ↑\n';
+    doc += 'abgebrochen ←───────────────┘ (jederzeit möglich)\n';
+    doc += '\n';
+    doc += 'MIT WARTEZEIT:\n';
+    doc += 'offen → in_bearbeitung → wartend → in_bearbeitung → erledigt\n';
+    doc += '                            ↓\n';
+    doc += '                        (wartet auf Mieter-Antwort)\n';
+    doc += '\n';
+    doc += 'ALLE ÜBERGÄNGE MÖGLICH (außer erledigt → offen)\n';
+    doc += '```\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '# 8. BUCHUNGSQUELLEN (Source Types)\n\n';
+    
+    doc += '## 8.1 QUELLEN FÜR GENERIERTE BUCHUNGEN (GeneratedFinancialBooking.source_type)\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| BUCHUNGS-QUELLE | Versorger | Versorger | Laufende Kosten | GeneratedFinancialBooking | ✅ Betriebskosten | ✅ Ja | Supplier Entity | Nein | Supplier.id in source_id | Strom 960€/Jahr (12× 80€) aus Supplier-Vertrag |\n';
+    doc += '| BUCHUNGS-QUELLE | Grundsteuer | Grundsteuer | Öffentliche Abgabe | GeneratedFinancialBooking | ✅ Anlage V Zeile 33 | ✅ Ja | PropertyTax Entity | Nein | PropertyTax.id in source_id | 1.200€/Jahr (4× 300€) aus Grundsteuerbescheid |\n';
+    doc += '| BUCHUNGS-QUELLE | Versicherung | Versicherung | Schutz | GeneratedFinancialBooking | ⚠️ Wenn umgelegt: nein | ✅ Ja | Insurance Entity | Nein | Insurance.id in source_id | 850€/Jahr (1× 850€) Gebäudeversicherung |\n';
+    doc += '| BUCHUNGS-QUELLE | Kredit | Kredit | Finanzierung | GeneratedFinancialBooking | ✅ Zinsen absetzbar, Tilgung nicht | ❌ Nein | Financing Entity | Nein | Financing.id in source_id | 1.200€/Monat (davon 800€ Zinsen, 400€ Tilgung) |\n';
+    doc += '| BUCHUNGS-QUELLE | AfA | AfA | Abschreibung | GeneratedFinancialBooking | ✅✅ Anlage V Zeile 16 | ❌ Nein | AfASchedule Entity | Nein | AfASchedule.id in source_id | 6.000€/Jahr AfA für Gebäude (300.000€ / 50 Jahre) |\n';
+    doc += '| BUCHUNGS-QUELLE | Kaufvertrag | Kaufvertrag | Anschaffung | GeneratedFinancialBooking | ✅ Anschaffungskosten (AfA) | ❌ Nein | PurchaseContract Entity | Nein | PurchaseContract.id in source_id | Kaufpreis 450.000€ (einmalig, dann AfA daraus) |\n';
+    doc += '| BUCHUNGS-QUELLE | Mietvertrag | Mietvertrag | Einnahmen | GeneratedFinancialBooking | ✅✅ Anlage V Zeile 9 | N/A | LeaseContract Entity | Nein | LeaseContract.id in source_id | Miete 1.030€/Monat (12× 1.030€ = 12.360€/Jahr) |\n\n';
+    
+    doc += '**Buchungs-Generierung pro Quelle**:\n';
+    doc += '```javascript\n';
+    doc += '// VERSORGER (z.B. Strom):\n';
+    doc += 'if (supplier.payment_rhythm === "Monatlich") {\n';
+    doc += '  anzahl_buchungen = 12;\n';
+    doc += '  betrag_pro_buchung = supplier.monthly_amount;\n';
+    doc += '} else if (supplier.payment_rhythm === "Vierteljährlich") {\n';
+    doc += '  anzahl_buchungen = 4;\n';
+    doc += '  betrag_pro_buchung = supplier.monthly_amount * 3;\n';
+    doc += '}\n';
+    doc += '// Beispiel: 80€/Monat, vierteljährlich → 4 Buchungen à 240€\n';
+    doc += '\n';
+    doc += '// GRUNDSTEUER:\n';
+    doc += 'anzahl_buchungen = 4; // Immer quartalsweise\n';
+    doc += 'betrag_pro_buchung = propertyTax.grundsteuer_quartalsrate;\n';
+    doc += 'faelligkeiten = [propertyTax.faelligkeit_q1, ...q2, ...q3, ...q4];\n';
+    doc += '// Beispiel: 1.200€/Jahr → 4× 300€ (15.02., 15.05., 15.08., 15.11.)\n';
+    doc += '\n';
+    doc += '// VERSICHERUNG:\n';
+    doc += 'if (insurance.payment_rhythm === "Jährlich") {\n';
+    doc += '  anzahl_buchungen = 1;\n';
+    doc += '  betrag_pro_buchung = insurance.premium_amount;\n';
+    doc += '  faelligkeit = insurance.start_date; // Jährlich am gleichen Tag\n';
+    doc += '}\n';
+    doc += '\n';
+    doc += '// KREDIT (monatlich):\n';
+    doc += 'anzahl_buchungen = months_between(start_date, end_date);\n';
+    doc += 'betrag_pro_buchung = financing.monthly_rate;\n';
+    doc += '// WICHTIG: Nur Zinsen sind steuerlich absetzbar, nicht Tilgung!\n';
+    doc += '// → Separate Buchungen: Zinsen (absetzbar) + Tilgung (nicht absetzbar)\n';
+    doc += '\n';
+    doc += '// MIETVERTRAG:\n';
+    doc += 'anzahl_buchungen = 12; // oder bis end_date\n';
+    doc += 'betrag_pro_buchung = +contract.total_rent; // POSITIV = Einnahme\n';
+    doc += 'faelligkeit = rent_due_day jeden Monats;\n';
+    doc += '// Beispiel: 1.030€, fällig jeden 3. des Monats\n';
+    doc += '```\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '# 9. STEUER-KATEGORIEN (DETAILLIERT)\n\n';
+    
+    doc += '## 9.1 ANLAGE V ZEILEN-ZUORDNUNG (Tax Form Fields)\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| ANLAGE-V-ZEILE | Einnahmen aus Vermietung | zeile_9 | Einnahmen | TaxFormField, AnlageVSubmission | ✅✅ Haupteinnahmen | N/A | LeaseContract | - | sum(Mieteinnahmen) | 12.360€ (12× 1.030€ Miete) → Zeile 9 |\n';
+    doc += '| ANLAGE-V-ZEILE | Umlagen (Nachzahlung NK) | zeile_10 | Einnahmen | TaxFormField | ✅ Sonstige Einnahmen | N/A | OperatingCostStatement | - | Nachzahlungen Vorjahr | 450€ Nachzahlung NK 2022 (in 2023 erhalten) → Zeile 10 |\n';
+    doc += '| ANLAGE-V-ZEILE | AfA Gebäude | zeile_16 | Werbungskosten | TaxFormField, AfASchedule | ✅✅ Hauptabschreibung | ❌ Nie | PurchaseContract, AfASchedule | - | 2% von Gebäudewert | 6.000€ AfA (300.000€ Gebäude / 50 Jahre) → Zeile 16 |\n';
+    doc += '| ANLAGE-V-ZEILE | AfA Außenanlagen | zeile_17 | Werbungskosten | TaxFormField | ✅ Separate AfA | ❌ Nein | PurchaseContract | - | 10% über 10 Jahre | 500€ AfA für Garage (5.000€ / 10 Jahre) → Zeile 17 |\n';
+    doc += '| ANLAGE-V-ZEILE | Grundsteuer | zeile_33 | Werbungskosten | TaxFormField, PropertyTax | ✅✅ Immer absetzbar | ✅ Umlagefähig | PropertyTax | - | Direkt aus Bescheid | 1.200€ Grundsteuer → Zeile 33 |\n';
+    doc += '| ANLAGE-V-ZEILE | Versicherungen | zeile_34 | Werbungskosten | TaxFormField, Insurance | ✅ Wenn NICHT umgelegt | ⚠️ Wenn umgelegt: nicht absetzbar | Insurance, allocatable=false | - | Nur nicht-umgelegte | 850€ Gebäudevers. (umgelegt) → NICHT Zeile 34 |\n';
+    doc += '| ANLAGE-V-ZEILE | Geldbeschaffungskosten | zeile_35 | Werbungskosten | TaxFormField | ✅ Bankgebühren, Disagio | ❌ Nein | - | - | Finanzierungsnebenkosten | 120€ Bankgebühren → Zeile 35 |\n';
+    doc += '| ANLAGE-V-ZEILE | Erhaltungsaufwendungen | zeile_36 | Werbungskosten | TaxFormField, Invoice | ✅✅ Sofort absetzbar | ❌ Meist nicht | category_type=ERHALTUNG | - | 15%-Regel beachten! | 4.500€ Reparaturen → Zeile 36 (wenn < 15%) |\n';
+    doc += '| ANLAGE-V-ZEILE | Schuldzinsen | zeile_37 | Werbungskosten | TaxFormField, Financing | ✅✅ Voll absetzbar | ❌ Nein | Financing | - | Nur Zinsen, nicht Tilgung! | 12.000€ Kreditzinsen → Zeile 37 |\n';
+    doc += '| ANLAGE-V-ZEILE | Sonstige Werbungskosten | zeile_38_48 | Werbungskosten | TaxFormField | ✅ Diverses | Variabel | - | - | Zeilen 38-48 | Verwaltung 480€, Rechtsberatung 650€, etc. |\n';
+    doc += '| ANLAGE-V-ZEILE | Summe Werbungskosten | zeile_49 | Summe | TaxFormField | ✅ Berechnet | N/A | - | - | sum(Zeilen 16-48) | 25.420€ (alle Werbungskosten zusammen) |\n';
+    doc += '| ANLAGE-V-ZEILE | Überschuss/Verlust | zeile_50 | Ergebnis | TaxFormField, AnlageVSubmission | ✅✅ Finales Ergebnis | N/A | - | - | Zeile 9-10 minus Zeile 49 | 12.360€ - 25.420€ = -13.060€ (Verlust) |\n\n';
+    
+    doc += '**Berechnung Anlage V (komplett)**:\n';
+    doc += '```javascript\n';
+    doc += '// EINNAHMEN\n';
+    doc += 'zeile_9 = sum(LeaseContract.total_rent × months_in_year WHERE building_id)\n';
+    doc += 'zeile_10 = sum(NK-Nachzahlungen Vorjahr)\n';
+    doc += 'zeile_11 = sonstige_einnahmen // selten\n';
+    doc += 'einnahmen_gesamt = zeile_9 + zeile_10 + zeile_11\n';
+    doc += '\n';
+    doc += '// WERBUNGSKOSTEN\n';
+    doc += 'zeile_16 = AfASchedule.afa_amount WHERE year AND building_id\n';
+    doc += 'zeile_17 = AfA Außenanlagen (falls vorhanden)\n';
+    doc += 'zeile_33 = sum(PropertyTax-Buchungen)\n';
+    doc += 'zeile_34 = sum(Insurance WHERE NOT allocatable)\n';
+    doc += 'zeile_35 = sum(Bankgebühren, Disagio)\n';
+    doc += 'zeile_36 = sum(Invoice WHERE category_type=ERHALTUNG AND tax_treatment=SOFORT)\n';
+    doc += 'zeile_37 = sum(Financing.monthly_rate × 12) - tilgung\n';
+    doc += '        = nur Zinsen! Tilgung nicht absetzbar\n';
+    doc += 'zeile_38_48 = div Rechtsberatung, Verwaltung, Fahrtkosten, Porto, etc.)\n';
+    doc += 'zeile_49 = sum(zeile_16 bis zeile_48)\n';
+    doc += '\n';
+    doc += '// ERGEBNIS\n';
+    doc += 'zeile_50 = einnahmen_gesamt - zeile_49\n';
+    doc += '// Positiv = Überschuss (Gewinn) → zu versteuern\n';
+    doc += '// Negativ = Verlust → Steuermindernd\n';
+    doc += '\n';
+    doc += '// Beispiel-Berechnung:\n';
+    doc += 'Einnahmen:       12.360€ (Zeile 9)\n';
+    doc += 'Werbungskosten:  25.420€ (Zeile 49)\n';
+    doc += '  davon AfA:      6.000€\n';
+    doc += '  davon Zinsen:  12.000€\n';
+    doc += '  davon Kosten:   7.420€\n';
+    doc += '────────────────────────\n';
+    doc += 'Verlust:        -13.060€ (Zeile 50)\n';
+    doc += '→ Steuerersparnis bei 30% Grenzsteuersatz: 3.918€\n';
+    doc += '```\n\n';
+    
+    doc += '## 9.2 SKR03/SKR04 KONTENRAHMEN\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| KONTENRAHMEN | SKR03 (Prozessgliederung) | SKR03 | DATEV-Standard | BuildingTaxLibrary.account_framework | ✅ Ja | N/A | - | ✅ Ja (häufiger) | Kostenarten-Konten 4000-4999 | Für Handwerker, kleinere Unternehmen üblich |\n';
+    doc += '| KONTENRAHMEN | SKR04 (Abschlussgliederung) | SKR04 | DATEV-Standard | BuildingTaxLibrary.account_framework | ✅ Ja | N/A | - | Nein | Kostenarten-Konten 6000-6999 | Für GmbH, größere Unternehmen, Bilanzierer |\n\n';
+    
+    doc += '**Konten-Beispiele (SKR03 vs. SKR04)**:\n';
+    doc += '```\n';
+    doc += 'GRUNDSTEUER:\n';
+    doc += '  SKR03: Konto 4520 "Grundsteuer"\n';
+    doc += '  SKR04: Konto 6815 "Grundsteuer"\n';
+    doc += '\n';
+    doc += 'VERSICHERUNGEN:\n';
+    doc += '  SKR03: Konto 4360 "Versicherungen"\n';
+    doc += '  SKR04: Konto 6520 "Versicherungen"\n';
+    doc += '\n';
+    doc += 'REPARATUREN:\n';
+    doc += '  SKR03: Konto 4210 "Instandhaltung Gebäude"\n';
+    doc += '  SKR04: Konto 6520 "Instandhaltung"\n';
+    doc += '\n';
+    doc += 'ZINSEN:\n';
+    doc += '  SKR03: Konto 2110 "Zinsen und ähnliche Aufwendungen"\n';
+    doc += '  SKR04: Konto 7310 "Zinsen und ähnliche Aufwendungen"\n';
+    doc += '\n';
+    doc += 'AfA:\n';
+    doc += '  SKR03: Konto 4855 "Abschreibungen auf Gebäude"\n';
+    doc += '  SKR04: Konto 6220 "Abschreibungen auf Gebäude"\n';
+    doc += '```\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '# 10. KOMMUNIKATION & VERSAND\n\n';
+    
+    doc += '## 10.1 LETTERXPRESS-STATUS (LetterShipment.status)\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| LXP-STATUS | In Warteschlange | queue | Ausstehend | LetterShipment.status | N/A | N/A | - | ✅ Ja (bei CREATE) | Noch nicht gedruckt | Brief wurde an LetterXpress übermittelt, wartet auf Druck |\n';
+    doc += '| LXP-STATUS | Wird gedruckt | hold | In Produktion | LetterShipment.status | N/A | N/A | - | Nein | Druck läuft | Brief wird gerade gedruckt (typischerweise <1h in diesem Status) |\n';
+    doc += '| LXP-STATUS | Gedruckt | done | Bereit | LetterShipment.status | N/A | N/A | - | Nein | Übergabe an DHL | Druck fertig, wird an Deutsche Post übergeben |\n';
+    doc += '| LXP-STATUS | Versendet | sent | Zugestellt | LetterShipment.status | N/A | N/A | tracking_code vorhanden | Nein | Document.versandt_am setzen | Brief wurde zugestellt (DHL-Tracking bestätigt) |\n';
+    doc += '| LXP-STATUS | Storniert | canceled | Abgebrochen | LetterShipment.status | N/A | N/A | - | Nein | Guthaben wird gutgeschrieben | Versand wurde vor Druck storniert (selten) |\n\n';
+    
+    doc += '**Status-Übergänge (LetterXpress-seitig)**:\n';
+    doc += '```\n';
+    doc += 'queue → hold → done → sent\n';
+    doc += '  ↓\n';
+    doc += 'canceled (nur aus queue möglich, nicht aus hold/done/sent)\n';
+    doc += '\n';
+    doc += 'ZEITDAUER:\n';
+    doc += '  queue → hold:  < 1 Stunde (typischerweise nachts)\n';
+    doc += '  hold → done:   ~5 Minuten (Druck)\n';
+    doc += '  done → sent:   1-3 Werktage (Postlaufzeit)\n';
+    doc += '\n';
+    doc += 'TRACKING-UPDATE:\n';
+    doc += '  - Status wird täglich via Scheduled Task "updateLetterTrackingCodes" abgerufen\n';
+    doc += '  - Läuft um 12:00 Uhr (Admin-only)\n';
+    doc += '  - Aktualisiert: status, tracking_code, dispatch_date, sent_at\n';
+    doc += '```\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '# 11. HIERARCHIEN & ABHÄNGIGKEITEN\n\n';
+    
+    doc += '## 11.1 KOSTENKATEGORIEN-HIERARCHIE\n\n';
+    doc += '```\n';
+    doc += 'EBENE 1: KOSTENARTEN-TYP (category_type)\n';
+    doc += '├── ERHALTUNG (Erhaltungsaufwendungen)\n';
+    doc += '│   ├── EBENE 2: Reparaturen\n';
+    doc += '│   │   ├── Heizung\n';
+    doc += '│   │   ├── Sanitär\n';
+    doc += '│   │   └── Elektrik\n';
+    doc += '│   ├── EBENE 2: Schönheitsreparaturen\n';
+    doc += '│   └── EBENE 2: Wartung\n';
+    doc += '│\n';
+    doc += '├── HERSTELLUNG (Herstellungskosten)\n';
+    doc += '│   ├── EBENE 2: Sanierung\n';
+    doc += '│   ├── EBENE 2: Anbau/Ausbau\n';
+    doc += '│   ├── EBENE 2: Modernisierung\n';
+    doc += '│   └── EBENE 2: Anschaffungsnebenkosten\n';
+    doc += '│       ├── Grunderwerbsteuer\n';
+    doc += '│       ├── Notar\n';
+    doc += '│       ├── Makler\n';
+    doc += '│       └── Grundbucheintrag\n';
+    doc += '│\n';
+    doc += '├── BETRIEB (Betriebskosten)\n';
+    doc += '│   ├── EBENE 2: Umlagefähig (nach BetrKV)\n';
+    doc += '│   │   ├── Grundsteuer (§2 Nr. 1)\n';
+    doc += '│   │   ├── Wasser (§2 Nr. 2)\n';
+    doc += '│   │   ├── Heizung (§2 Nr. 4)\n';
+    doc += '│   │   ├── Aufzug (§2 Nr. 5)\n';
+    doc += '│   │   ├── Müllabfuhr (§2 Nr. 7)\n';
+    doc += '│   │   └── ... (weitere §2 BetrKV)\n';
+    doc += '│   └── EBENE 2: Nicht umlagefähig\n';
+    doc += '│       ├── Hausverwaltung (§1 Abs. 2 Nr. 1 BetrKV)\n';
+    doc += '│       ├── Instandhaltungsrücklage (WEG)\n';
+    doc += '│       └── Verwaltungsbeirat\n';
+    doc += '│\n';
+    doc += '└── FINANZIERUNG (Finanzierungskosten)\n';
+    doc += '    ├── EBENE 2: Zinsen (absetzbar)\n';
+    doc += '    │   ├── Sollzinsen\n';
+    doc += '    │   └── Bereitstellungszinsen\n';
+    doc += '    ├── EBENE 2: Nebenkosten\n';
+    doc += '    │   ├── Disagio\n';
+    doc += '    │   └── Bearbeitungsgebühren\n';
+    doc += '    └── EBENE 2: Tilgung (NICHT absetzbar!)\n';
+    doc += '\n';
+    doc += 'EBENE 3: STEUERLICHE BEHANDLUNG (tax_treatment)\n';
+    doc += 'Jede Kategorie hat zusätzlich:\n';
+    doc += '  - SOFORT (sofort als Werbungskosten)\n';
+    doc += '  - AFA (über 50 Jahre verteilt)\n';
+    doc += '  - VERTEILT (über 3-5 Jahre)\n';
+    doc += '  - NICHT_ABSETZBAR (z.B. umgelegte Kosten)\n';
+    doc += '```\n\n';
+    
+    doc += '## 11.2 KONSTANTEN-VERKNÜPFUNGEN (If-Then-Logik)\n\n';
+    doc += '| Wenn Feld X | Wert | Dann Feld Y | Nur Optionen | Grund | Beispiel |\n';
+    doc += '|-------------|------|-------------|--------------|-------|----------|\n';
+    doc += '| Owner.type | PRIVATPERSON | Shareholder | Nicht verfügbar | Privatperson hat keine Gesellschafter | Max Mustermann (Einzelperson) |\n';
+    doc += '| Owner.type | GBR oder GMBH | Shareholder | ≥ 2 erforderlich | Gesellschaft braucht Gesellschafter | Mustermann GbR → min. 2 Shareholders |\n';
+    doc += '| Building.building_type | Einfamilienhaus | Unit.count | = 1 | EFH hat nur 1 Wohneinheit | EFH → kann nur 1 Unit haben |\n';
+    doc += '| Building.building_type | Grundstück | AfASchedule | Nicht erstellen | Boden ist nicht abschreibbar | Baugrundstück → keine AfA |\n';
+    doc += '| CostCategory.category_type | BETRIEB | allocatable | Meist true | Betriebskosten sind oft umlagefähig | Müll (BETRIEB) → allocatable=true |\n';
+    doc += '| CostCategory.category_type | HERSTELLUNG | tax_treatment | Muss AFA sein | Herstellung nur über AfA absetzbar | Sanierung → tax_treatment=AFA |\n';
+    doc += '| CostCategory.allocatable | true | tax_treatment | Meist NICHT_ABSETZBAR | Umgelegte Kosten nicht absetzbar | Müll umgelegt → nicht absetzbar |\n';
+    doc += '| LeaseContract.is_unlimited | false | end_date | Muss gesetzt sein | Befristeter Vertrag braucht Enddatum | Befristet → end_date="2025-12-31" |\n';
+    doc += '| GeneratedFinancialBooking.source_type | Kredit | amount | Negativ | Kredit-Raten sind Ausgaben | Kredit → amount=-1200 |\n';
+    doc += '| GeneratedFinancialBooking.source_type | Mietvertrag | amount | Positiv | Miete ist Einnahme | Mietvertrag → amount=+1030 |\n';
+    doc += '| Document.category | Mietrecht | Template | Nur Mietrecht-Templates | Template-Filter | Mieterhöhung → nur Templates mit category=Mietrecht |\n';
+    doc += '| PropertyTax.grundsteuermessbetrag | > 0 | grundsteuer_quartalsrate | Berechnet | Quartalsrate = Jahresbetrag / 4 | 1.200€ → 300€/Quartal |\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '# 12. HISTORISCHE ÄNDERUNGEN & VERSIONIERUNG\n\n';
+    
+    doc += '## 12.1 GEÄNDERTE/ENTFERNTE KONSTANTEN (Change-Log)\n\n';
+    doc += '| Datum | Konstante | Änderung | Alt | Neu | Grund | Migration erforderlich? |\n';
+    doc += '|-------|-----------|----------|-----|-----|-------|------------------------|\n';
+    doc += '| 2024-03 | Document.status | Hinzugefügt | - | "gescannt" | Original-Dokumente-Feature | Nein (optional) |\n';
+    doc += '| 2024-05 | GeneratedFinancialBooking.source_type | Hinzugefügt | - | "AfA" | AfA-Modul implementiert | Nein |\n';
+    doc += '| 2024-06 | Owner.type | Hinzugefügt | - | "GMBH" | GmbH-Support | Nein (neue Option) |\n';
+    doc += '| 2024-08 | CostCategory.category_type | Umbenannt | "MAINTENANCE" | "ERHALTUNG" | Deutsche Terminologie | Ja (Daten migrieren) |\n';
+    doc += '| 2025-01 | LeaseContract.status | Entfernt | "pending" | - | Status war nicht sinnvoll | Ja (auf "active" setzen) |\n\n';
+    
+    doc += '## 12.2 GEPLANTE NEUE KONSTANTEN (Roadmap)\n\n';
+    doc += '| Konstante | Geplant für | Neue Werte | Zweck | Status |\n';
+    doc += '|-----------|-------------|------------|-------|--------|\n';
+    doc += '| Building.energy_certificate | Q2 2024 | "A+", "A", "B", ..., "H" | Energieausweis (EnEV) | 🚧 Geplant |\n';
+    doc += '| LeaseContract.contract_type | Q3 2024 | "unbefristet", "befristet", "zeitmietvertrag" | Differenzierung | 🚧 Geplant |\n';
+    doc += '| Task.priority | Q1 2024 | "niedrig", "normal", "hoch", "kritisch" | Priorisierung | 🚧 Geplant |\n';
+    doc += '| Invoice.payment_method | Q2 2024 | "Überweisung", "Lastschrift", "Bar", "Karte" | Zahlungsart-Tracking | 🚧 Geplant |\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '# 13. VERWENDUNG IM CODE\n\n';
+    
+    doc += '## 13.1 Frontend (React)\n\n';
+    doc += '**Dropdown-Komponente**:\n';
+    doc += '```jsx\n';
+    doc += 'import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";\n';
+    doc += '\n';
+    doc += '<Select value={status} onValueChange={setStatus}>\n';
+    doc += '  <SelectTrigger>\n';
+    doc += '    <SelectValue placeholder="Status wählen" />\n';
+    doc += '  </SelectTrigger>\n';
+    doc += '  <SelectContent>\n';
+    doc += '    <SelectItem value="zu_erledigen">Zu erledigen</SelectItem>\n';
+    doc += '    <SelectItem value="erstellt">Erstellt</SelectItem>\n';
+    doc += '    <SelectItem value="versendet">Versendet</SelectItem>\n';
+    doc += '    <SelectItem value="unterschrieben">Unterschrieben</SelectItem>\n';
+    doc += '  </SelectContent>\n';
+    doc += '</Select>\n';
+    doc += '```\n\n';
+    
+    doc += '**Badge-Farben pro Status**:\n';
+    doc += '```jsx\n';
+    doc += 'const STATUS_COLORS = {\n';
+    doc += '  "zu_erledigen": "bg-slate-100 text-slate-700",\n';
+    doc += '  "erstellt": "bg-blue-100 text-blue-700",\n';
+    doc += '  "versendet": "bg-indigo-100 text-indigo-700",\n';
+    doc += '  "unterschrieben": "bg-green-100 text-green-700"\n';
+    doc += '};\n';
+    doc += '\n';
+    doc += '<Badge className={STATUS_COLORS[document.status]}>\n';
+    doc += '  {STATUS_LABELS[document.status]}\n';
+    doc += '</Badge>\n';
+    doc += '```\n\n';
+    
+    doc += '## 13.2 Backend (Validierung)\n\n';
+    doc += '**JSON-Schema Enum-Validierung**:\n';
+    doc += '```javascript\n';
+    doc += '// Automatisch durch Base44 SDK\n';
+    doc += 'await base44.entities.Document.create({\n';
+    doc += '  status: "versendet" // ✅ Valide\n';
+    doc += '});\n';
+    doc += '\n';
+    doc += 'await base44.entities.Document.create({\n';
+    doc += '  status: "ungültig" // ❌ Fehler: "Status muss einer der folgenden sein: ..."\n';
+    doc += '});\n';
+    doc += '```\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '# 14. ZUSAMMENFASSUNG: KONSTANTEN-ÜBERSICHT\n\n';
+    doc += '| Konstanten-Gruppe | Anzahl Werte | Verwendung | Änderbar? | Mehrsprachig? |\n';
+    doc += '|-------------------|--------------|------------|-----------|---------------|\n';
+    doc += '| Kostenarten-Typen | 4 | CostCategory.category_type | ❌ Nein (hart codiert) | Nein (nur DE) |\n';
+    doc += '| Steuerliche Behandlung | 4 | CostCategory.tax_treatment | ❌ Nein | Nein |\n';
+    doc += '| Detaillierte Kostenkategorien | ~52 | BuildingTaxLibrary (dynamisch) | ✅ Ja (Custom Categories) | Nein |\n';
+    doc += '| Verteilerschlüssel | 7 | OperatingCostStatement | ❌ Nein | Nein |\n';
+    doc += '| Objekttypen | 12 | Building.building_type | ✅ Ja (erweiterbar) | Nein |\n';
+    doc += '| Rechtsformen | 7 | Owner.type | ❌ Nein | Nein |\n';
+    doc += '| Nutzungsarten | 4 | applicable_for_usage | ❌ Nein | Nein |\n';
+    doc += '| Dokument-Status | 7 | Document.status | ❌ Nein | Nein |\n';
+    doc += '| Dokumentkategorien | 5 | Document.category | ✅ Ja (erweiterbar) | Nein |\n';
+    doc += '| Buchungs-Status | 4 | GeneratedFinancialBooking.booking_status | ❌ Nein | Nein |\n';
+    doc += '| Buchungsquellen | 7 | GeneratedFinancialBooking.source_type | ❌ Nein | Nein |\n';
+    doc += '| Zahlungsrhythmen | 4 | Supplier.payment_rhythm | ❌ Nein | Nein |\n';
+    doc += '| Versandarten | 3 | LetterShipment.shipping_type | ❌ Nein | Nein |\n';
+    doc += '| LetterXpress-Status | 5 | LetterShipment.status | ❌ Nein (von LXP gesetzt) | Nein |\n';
+    doc += '| Task-Status | 5 | Task.status | ❌ Nein | Nein |\n';
+    doc += '| Mietvertrag-Status | 3 | LeaseContract.status | ❌ Nein | Nein |\n\n';
+    
+    doc += '**Legende "Änderbar?"**:\n';
+    doc += '- ✅ Ja: User kann eigene Werte hinzufügen (z.B. Custom Cost Categories)\n';
+    doc += '- ❌ Nein: Fest codiert in Entity-Schema (nur durch Code-Änderung)\n\n';
+    
+    doc += '---\n\n';
                             case 'status':
                                 if (entityName === 'Document') {
                                     const statusMap = {
