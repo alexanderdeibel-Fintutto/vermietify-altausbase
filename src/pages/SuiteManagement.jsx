@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, CheckCircle, Lock, Settings, Users, Play } from 'lucide-react';
 import { toast } from 'sonner';
+import AdminSuiteAssignment from '../components/suite/AdminSuiteAssignment';
 
 export default function SuiteManagement() {
     const queryClient = useQueryClient();
@@ -200,19 +201,37 @@ export default function SuiteManagement() {
 
                 {isAdmin && (
                     <TabsContent value="admin" className="mt-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Users className="w-5 h-5" />
-                                    Admin-Verwaltung
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-slate-600">
-                                    Admin-Funktionen für Modul-Zugriff und Suite-Verwaltung.
-                                </p>
-                            </CardContent>
-                        </Card>
+                        <div className="space-y-6">
+                            <AdminSuiteAssignment />
+                            
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>System-Status</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid gap-4 md:grid-cols-3">
+                                        <div className="text-center p-4 bg-slate-50 rounded-lg">
+                                            <p className="text-3xl font-bold text-slate-900">
+                                                {allSuites?.length || 0}
+                                            </p>
+                                            <p className="text-sm text-slate-600 mt-1">Suites</p>
+                                        </div>
+                                        <div className="text-center p-4 bg-slate-50 rounded-lg">
+                                            <p className="text-3xl font-bold text-slate-900">
+                                                {allModules?.length || 0}
+                                            </p>
+                                            <p className="text-sm text-slate-600 mt-1">Module</p>
+                                        </div>
+                                        <div className="text-center p-4 bg-slate-50 rounded-lg">
+                                            <p className="text-3xl font-bold text-slate-900">
+                                                {users?.length || 0}
+                                            </p>
+                                            <p className="text-sm text-slate-600 mt-1">User</p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
                     </TabsContent>
                 )}
             </Tabs>
