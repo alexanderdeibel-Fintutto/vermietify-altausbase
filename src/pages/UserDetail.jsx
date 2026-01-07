@@ -347,6 +347,12 @@ export default function UserDetail() {
           </CardContent>
         </Card>
       )}
+
+      {/* Feld-Berechtigungen */}
+      <FieldPermissionEditor userId={userId} />
+
+      {/* Activity Log */}
+      <ActivityLogViewer userId={userId} limit={50} />
     </div>
   );
 }

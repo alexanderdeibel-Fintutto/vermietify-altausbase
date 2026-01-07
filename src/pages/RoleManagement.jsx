@@ -7,9 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Settings, Trash2, Shield } from 'lucide-react';
 import { toast } from 'sonner';
+import RoleEditor from '../components/roles/RoleEditor';
 
 export default function RoleManagement() {
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editingRoleId, setEditingRoleId] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: roles = [] } = useQuery({
@@ -78,7 +81,13 @@ export default function RoleManagement() {
           <h1 className="text-2xl font-bold text-slate-900">Rollen-Verwaltung</h1>
           <p className="text-slate-600">Verwalten Sie Rollen und deren Berechtigungen</p>
         </div>
-        <Button className="bg-emerald-600 hover:bg-emerald-700">
+        <Button 
+          className="bg-emerald-600 hover:bg-emerald-700"
+          onClick={() => {
+            setEditingRoleId(null);
+            setEditorOpen(true);
+          }}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Custom Rolle erstellen
         </Button>
@@ -142,7 +151,14 @@ export default function RoleManagement() {
                         ) : (
                           <Badge variant="outline">Custom</Badge>
                         )}
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            setEditingRoleId(role.id);
+                            setEditorOpen(true);
+                          }}
+                        >
                           <Settings className="w-4 h-4" />
                         </Button>
                       </div>
@@ -183,6 +199,12 @@ export default function RoleManagement() {
           </CardContent>
         </Card>
       </div>
+
+      <RoleEditor 
+        open={editorOpen} 
+        onOpenChange={setEditorOpen} 
+        roleId={editingRoleId}
+      />
     </div>
   );
 }
