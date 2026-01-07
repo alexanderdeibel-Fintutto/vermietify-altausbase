@@ -47,14 +47,49 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import ReactMarkdown from 'react-markdown';
 
-const DOCUMENTATION_TYPES = [
+const PRIORITY_TYPES = [
+    {
+        type: 'sample_data',
+        title: 'Beispiel-Daten & Szenarien',
+        description: 'Anonymisierte Beispiel-Daten typischer Objekte mit vollständigen User-Journeys und realistischen Nutzungsszenarien',
+        icon: User,
+        estimatedSize: '600 KB',
+        estimatedDuration: 40,
+        priority: true,
+        group: 'priority'
+    },
+    {
+        type: 'user_issues',
+        title: 'Häufige Probleme & FAQ',
+        description: 'Top 20 User-Fragen, typische Fehler, bekannte Bugs, Limitierungen, Edge-Cases und deren Lösungen',
+        icon: Bug,
+        estimatedSize: '300 KB',
+        estimatedDuration: 25,
+        priority: true,
+        group: 'priority'
+    },
+    {
+        type: 'support_fehler',
+        title: 'User-Fehler & Support-Statistik',
+        description: 'Live-Aggregation aller gemeldeten Probleme mit Statistiken, Trends und Lösungsdatenbank',
+        icon: MessageSquare,
+        estimatedSize: '400 KB',
+        estimatedDuration: 20,
+        priority: true,
+        group: 'priority',
+        badge: 'Live-Daten'
+    }
+];
+
+const CORE_TYPES = [
     {
         type: 'database_structure',
         title: 'Datenbankstruktur',
         description: 'Vollständige Datenbank-Dokumentation aller Tabellen, Felder, Beziehungen und Constraints',
         icon: Database,
         estimatedSize: '500 KB',
-        estimatedDuration: 30
+        estimatedDuration: 30,
+        group: 'core'
     },
     {
         type: 'module_architecture',
@@ -62,7 +97,8 @@ const DOCUMENTATION_TYPES = [
         description: 'Übersicht aller Module, deren Abhängigkeiten und Datenflüsse',
         icon: Network,
         estimatedSize: '200 KB',
-        estimatedDuration: 20
+        estimatedDuration: 20,
+        group: 'core'
     },
     {
         type: 'master_data',
@@ -70,7 +106,8 @@ const DOCUMENTATION_TYPES = [
         description: 'Alle Auswahloptionen, Kategorien und festen Werte des Systems',
         icon: FileSpreadsheet,
         estimatedSize: '300 KB',
-        estimatedDuration: 15
+        estimatedDuration: 15,
+        group: 'core'
     },
     {
         type: 'business_logic',
@@ -78,7 +115,8 @@ const DOCUMENTATION_TYPES = [
         description: 'Alle Geschäftsregeln, Validierungen, Berechnungen und Automatismen',
         icon: Settings,
         estimatedSize: '400 KB',
-        estimatedDuration: 25
+        estimatedDuration: 25,
+        group: 'core'
     },
     {
         type: 'external_integrations',
@@ -86,7 +124,8 @@ const DOCUMENTATION_TYPES = [
         description: 'Dokumentation aller API-Verbindungen und externen Services',
         icon: Code,
         estimatedSize: '150 KB',
-        estimatedDuration: 10
+        estimatedDuration: 10,
+        group: 'core'
     },
     {
         type: 'document_generation',
@@ -94,7 +133,8 @@ const DOCUMENTATION_TYPES = [
         description: 'Vollständige Beschreibung aller automatischen Dokumenten-Templates',
         icon: FileText,
         estimatedSize: '350 KB',
-        estimatedDuration: 20
+        estimatedDuration: 20,
+        group: 'core'
     },
     {
         type: 'user_workflows',
@@ -102,7 +142,8 @@ const DOCUMENTATION_TYPES = [
         description: 'Schritt-für-Schritt Dokumentation aller wichtigen Benutzer-Prozesse',
         icon: Workflow,
         estimatedSize: '400 KB',
-        estimatedDuration: 25
+        estimatedDuration: 25,
+        group: 'core'
     },
     {
         type: 'permissions_roles',
@@ -110,7 +151,8 @@ const DOCUMENTATION_TYPES = [
         description: 'Dokumentation des Rollen- und Berechtigungssystems',
         icon: Shield,
         estimatedSize: '100 KB',
-        estimatedDuration: 10
+        estimatedDuration: 10,
+        group: 'core'
     },
     {
         type: 'error_handling',
@@ -118,7 +160,8 @@ const DOCUMENTATION_TYPES = [
         description: 'Übersicht über Fehlerbehandlung, Logging und Monitoring',
         icon: AlertTriangle,
         estimatedSize: '150 KB',
-        estimatedDuration: 10
+        estimatedDuration: 10,
+        group: 'core'
     },
     {
         type: 'data_migration',
@@ -126,7 +169,8 @@ const DOCUMENTATION_TYPES = [
         description: 'Dokumentation der Historisierung und Daten-Migration',
         icon: Archive,
         estimatedSize: '100 KB',
-        estimatedDuration: 10
+        estimatedDuration: 10,
+        group: 'core'
     },
     {
         type: 'executive_summary',
@@ -134,75 +178,63 @@ const DOCUMENTATION_TYPES = [
         description: 'Kompakte Gesamtübersicht der App-Architektur (1-2 Seiten)',
         icon: BookOpen,
         estimatedSize: '50 KB',
-        estimatedDuration: 5
-    },
-    {
-        type: 'user_issues',
-        title: 'User-Issues & Edge-Cases',
-        description: 'Häufige User-Fragen, typische Fehler, bekannte Bugs und Edge-Cases',
-        icon: Bug,
-        estimatedSize: '400 KB',
-        estimatedDuration: 20
-    },
+        estimatedDuration: 5,
+        group: 'core'
+    }
+];
+
+const CONTEXT_TYPES = [
     {
         type: 'timeline_calendar',
-        title: 'Jahreskalender & Fristen',
-        description: 'Monatlicher Ablauf, kritische Fristen, typischer Tagesablauf und saisonale Besonderheiten',
+        title: 'Geschäftsprozesse & Zeitplanung',
+        description: 'Jahreskalender, kritische Fristen, typische Tagesabläufe und saisonale Besonderheiten',
         icon: CalendarDays,
-        estimatedSize: '300 KB',
-        estimatedDuration: 15
-    },
-    {
-        type: 'performance_data',
-        title: 'Performance & Datenmengen',
-        description: 'Typische Datenmengen, Performance-kritische Operationen, Bottlenecks und Optimierungen',
-        icon: Zap,
         estimatedSize: '200 KB',
-        estimatedDuration: 10
-    },
-    {
-        type: 'sample_data',
-        title: 'Sample-Data & Szenarien',
-        description: 'Anonymisierte Beispieldaten für verschiedene Immobilientypen und User-Journeys',
-        icon: User,
-        estimatedSize: '500 KB',
-        estimatedDuration: 25
+        estimatedDuration: 15,
+        group: 'context'
     },
     {
         type: 'roadmap_techdebt',
-        title: 'Roadmap & Tech-Debt',
+        title: 'Roadmap & Zukunftspläne',
         description: 'Features in Entwicklung, geplante Features, langfristige Vision und bekannte Tech-Debt',
         icon: BarChart3,
-        estimatedSize: '250 KB',
-        estimatedDuration: 5
+        estimatedSize: '100 KB',
+        estimatedDuration: 10,
+        group: 'context'
+    }
+];
+
+const TECHNICAL_TYPES = [
+    {
+        type: 'performance_data',
+        title: 'Performance-Metriken & Limits',
+        description: 'Typische Datenmengen, Performance-kritische Operationen, System-Limits und Optimierungs-Strategien',
+        icon: Zap,
+        estimatedSize: '150 KB',
+        estimatedDuration: 10,
+        group: 'technical'
     },
     {
         type: 'coding_conventions',
-        title: 'Coding Conventions',
-        description: 'Naming Conventions, Code-Organisation, Kommentar-Stil und Best Practices',
+        title: 'Code-Standards & Konventionen',
+        description: 'Naming Conventions, Code-Organisation, Kommentar-Stil und Entwicklungs-Standards',
         icon: Code,
-        estimatedSize: '200 KB',
-        estimatedDuration: 5
+        estimatedSize: '100 KB',
+        estimatedDuration: 10,
+        group: 'technical'
     },
     {
         type: 'testing_qa',
-        title: 'Testing & QA-Prozess',
-        description: 'Test-Strategie, Test-Daten, QA-Prozess, Checklisten und Automation-Roadmap',
+        title: 'Testing & Qualitätssicherung',
+        description: 'Test-Strategie, Test-Daten, QA-Prozess und Freigabe-Workflows',
         icon: CheckCircle,
-        estimatedSize: '200 KB',
-        estimatedDuration: 5
-    },
-    {
-        type: 'support_fehler',
-        title: 'User-Fehler & Support',
-        description: 'Live-Dokumentation aller gemeldeten Probleme, Fehler und Support-Anfragen mit Lösungen',
-        icon: MessageSquare,
-        estimatedSize: '400 KB',
-        estimatedDuration: 20,
-        color: 'bg-red-50 border-red-200',
-        badge: 'Live-Daten'
+        estimatedSize: '150 KB',
+        estimatedDuration: 10,
+        group: 'technical'
     }
 ];
+
+const DOCUMENTATION_TYPES = [...PRIORITY_TYPES, ...CORE_TYPES, ...CONTEXT_TYPES, ...TECHNICAL_TYPES];
 
 export default function DeveloperDocumentation() {
     const [previewDoc, setPreviewDoc] = useState(null);
