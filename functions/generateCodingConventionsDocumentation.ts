@@ -1059,10 +1059,10 @@ if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 **3. Secrets nur im Backend:**
 \`\`\`javascript
 // ✅ RICHTIG (Backend)
-const apiKey = Deno.env.get('SOME_API_KEY');
+const apiKey = Deno.env.get('MY_API_KEY');
 
 // ❌ FALSCH (Frontend)
-const apiKey = 'sk_live_...'; // NIEMALS!
+const apiKey = 'hardcoded_key_123'; // NIEMALS!
 \`\`\`
 
 **4. SQL-Injection-Safe (Base44 SDK macht das automatisch):**
