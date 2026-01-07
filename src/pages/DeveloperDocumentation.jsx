@@ -262,6 +262,22 @@ export default function DeveloperDocumentation() {
 
     const generateMutation = useMutation({
         mutationFn: async (docType) => {
+            // Erstmal Status auf "generating" setzen
+            const existing = documentations.find(d => d.documentation_type === docType);
+            if (existing) {
+                await base44.entities.GeneratedDocumentation.update(existing.id, {
+                    status: 'generating'
+                });
+            } else {
+                await base44.entities.GeneratedDocumentation.create({
+                    documentation_type: docType,
+                    title: DOCUMENTATION_TYPES.find(t => t.type === docType)?.title || docType,
+                    description: DOCUMENTATION_TYPES.find(t => t.type === docType)?.description || '',
+                    status: 'generating'
+                });
+            }
+            queryClient.invalidateQueries({ queryKey: ['generated-documentations'] });
+
             let response;
             // Spezielle Funktionen für Prioritäts-Bereiche
             if (docType === 'sample_data') {
@@ -291,7 +307,17 @@ export default function DeveloperDocumentation() {
             queryClient.invalidateQueries({ queryKey: ['generated-documentations'] });
             toast.success('Dokumentation erfolgreich generiert');
         },
-        onError: (error) => {
+        onError: async (error, docType) => {
+            console.error('Generation error:', error);
+            // Status auf error setzen
+            const existing = documentations.find(d => d.documentation_type === docType);
+            if (existing) {
+                await base44.entities.GeneratedDocumentation.update(existing.id, {
+                    status: 'error',
+                    error_message: error.message
+                });
+            }
+            queryClient.invalidateQueries({ queryKey: ['generated-documentations'] });
             toast.error('Fehler beim Generieren: ' + error.message);
         }
     });
