@@ -46,6 +46,7 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import ReactMarkdown from 'react-markdown';
+import { cn } from "@/lib/utils";
 
 const PRIORITY_TYPES = [
     {
@@ -1612,13 +1613,11 @@ export default function DeveloperDocumentation() {
                                 </Card>
                             );
                         })}
-                    </div>
-                </div>
+                        </div>
+                        </div>
+                        </div>
 
-                {/* Alte ungefilterte Liste für Suche */}
-                {searchQuery && (
-                    <div>
-                        <h2 className="text-2xl font-bold text-slate-900 mb-4">🔍 Suchergebnisse</h2>
+                        {/* Preview Dialog */}
                         <div className="grid gap-4">
                             {DOCUMENTATION_TYPES.filter(docType => {
                                 const query = searchQuery.toLowerCase();
