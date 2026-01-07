@@ -30,7 +30,9 @@ import { de } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import { toast } from 'sonner';
 import FeatureDialog from '../components/project/FeatureDialog';
+import RefreshSettings from '../components/support/RefreshSettings';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Settings as SettingsIcon } from 'lucide-react';
 
 export default function ProjectManagement() {
     const [activeTab, setActiveTab] = useState('roadmap');
@@ -38,6 +40,7 @@ export default function ProjectManagement() {
     const [showFeatureDialog, setShowFeatureDialog] = useState(false);
     const [editingFeature, setEditingFeature] = useState(null);
     const [autoRefresh, setAutoRefresh] = useState(true);
+    const [showSettings, setShowSettings] = useState(false);
     const queryClient = useQueryClient();
 
     // Auto-Refresh alle 5 Minuten
@@ -620,6 +623,11 @@ export default function ProjectManagement() {
                 open={showFeatureDialog}
                 onOpenChange={setShowFeatureDialog}
                 feature={editingFeature}
+            />
+
+            <RefreshSettings
+                open={showSettings}
+                onOpenChange={setShowSettings}
             />
         </div>
     );

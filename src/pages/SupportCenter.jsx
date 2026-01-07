@@ -25,9 +25,11 @@ import BugLinkingDialog from '../components/support/BugLinkingDialog';
 import SolutionEditor from '../components/support/SolutionEditor';
 import AutomationRules from '../components/support/AutomationRules';
 import TrendAnalysis from '../components/support/TrendAnalysis';
+import RefreshSettings from '../components/support/RefreshSettings';
 import { LineChart, Line, BarChart, Bar, PieChart as RechartsPie, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, subDays } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { Settings as SettingsIcon } from 'lucide-react';
 
 export default function SupportCenter() {
     const [filters, setFilters] = useState({
@@ -43,6 +45,12 @@ export default function SupportCenter() {
     const [activeTab, setActiveTab] = useState('tickets');
     const [autoRefresh, setAutoRefresh] = useState(true);
     const [lastUpdate, setLastUpdate] = useState(new Date());
+    const [showSettings, setShowSettings] = useState(false);
+    const [refreshSettings, setRefreshSettings] = useState(() => {
+        const saved = localStorage.getItem('support-refresh-settings');
+        return saved ? JSON.parse(saved) : { autoRefresh: true, frequency: '30', soundEnabled: false };
+    });
+    const [lastCriticalCount, setLastCriticalCount] = useState(0);
 
     const queryClient = useQueryClient();
 
@@ -158,15 +166,74 @@ export default function SupportCenter() {
         return `${diffDays}d`;
     };
 
-    // Auto-Update Timer
+    // Settings Listener
     React.useEffect(() => {
-        if (autoRefresh) {
+        const handleSettingsChange = (e) => {
+            setRefreshSettings(e.detail);
+            setAutoRefresh(e.detail.autoRefresh);
+        };
+        window.addEventListener('refresh-settings-changed', handleSettingsChange);
+        return () => window.removeEventListener('refresh-settings-changed', handleSettingsChange);
+    }, []);
+
+    // Auto-Update Timer mit Einstellungen
+    React.useEffect(() => {
+        if (autoRefresh && refreshSettings.autoRefresh) {
+            const frequency = parseInt(refreshSettings.frequency) * 1000;
             const interval = setInterval(() => {
+                // Arbeitszeiten prüfen
+                if (refreshSettings.workHoursOnly) {
+                    const now = new Date();
+                    const currentTime = now.getHours() * 60 + now.getMinutes();
+                    const [startH, startM] = refreshSettings.startHour.split(':').map(Number);
+                    const [endH, endM] = refreshSettings.endHour.split(':').map(Number);
+                    const startTime = startH * 60 + startM;
+                    const endTime = endH * 60 + endM;
+                    
+                    if (currentTime < startTime || currentTime > endTime) {
+                        return; // Außerhalb der Arbeitszeiten
+                    }
+                }
                 setLastUpdate(new Date());
-            }, 10000);
+            }, frequency);
             return () => clearInterval(interval);
         }
-    }, [autoRefresh]);
+    }, [autoRefresh, refreshSettings]);
+
+    // Kritische Tickets Benachrichtigung
+    React.useEffect(() => {
+        const newCriticalCount = kritisch.length;
+        if (newCriticalCount > lastCriticalCount && lastCriticalCount > 0) {
+            // Sound
+            if (refreshSettings.soundEnabled) {
+                const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTUIGWi77OXQTwgNVKzn77BdGAg5jufw0IMwBSJ+zfLeizsKFGS36+ypWhYKSKXh775tJAQng8rx2Ik2Bxtrt+vm0VMIDVSp5+6wXhoIOo7j8NCDLwYge8vy3og7CRZmu+rq');
+                audio.volume = 0.3;
+                audio.play().catch(() => {});
+            }
+            
+            // Desktop-Benachrichtigung
+            if (refreshSettings.desktopNotifications && 'Notification' in window && Notification.permission === 'granted') {
+                new Notification('🔴 Neues kritisches Ticket!', {
+                    body: `${newCriticalCount - lastCriticalCount} neue kritische Tickets im Support-Center`,
+                    icon: '/icon.png',
+                    badge: '/icon.png'
+                });
+            }
+        }
+        setLastCriticalCount(newCriticalCount);
+    }, [kritisch.length, refreshSettings, lastCriticalCount]);
+
+    // Pause bei inaktivem Tab
+    React.useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (!document.hidden) {
+                setLastUpdate(new Date());
+                queryClient.invalidateQueries({ queryKey: ['user-problems'] });
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [queryClient]);
 
     const timeSinceUpdate = Math.floor((new Date() - lastUpdate) / 1000);
 
@@ -181,6 +248,14 @@ export default function SupportCenter() {
                     <span className="text-sm text-slate-600">
                         Letzte Aktualisierung: vor {timeSinceUpdate}s
                     </span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowSettings(true)}
+                    >
+                        <SettingsIcon className="w-4 h-4 mr-2" />
+                        Einstellungen
+                    </Button>
                     <Button
                         variant="outline"
                         size="sm"
@@ -595,6 +670,11 @@ export default function SupportCenter() {
                 open={showSolutionEditor}
                 onOpenChange={setShowSolutionEditor}
                 problemId={selectedProblem?.id}
+            />
+
+            <RefreshSettings
+                open={showSettings}
+                onOpenChange={setShowSettings}
             />
         </div>
     );
