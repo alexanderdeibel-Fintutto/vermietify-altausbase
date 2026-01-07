@@ -661,8 +661,8 @@ ${buildings.filter(b => !b.purchase_price).length > 0 ? `⚠️ ${buildings.filt
         const duration = (Date.now() - startTime) / 1000;
 
         // Speichere Dokumentation
-        const doc = await base44.entities.GeneratedDocumentation.create({
-            documentation_type: 'user_issues',
+        const doc = await base44.asServiceRole.entities.GeneratedDocumentation.create({
+            documentation_type: 'user_workflows',
             title: 'User-Issues, Bugs & Edge-Cases',
             description: 'Häufige User-Fragen, typische Fehler, bekannte Bugs und Edge-Cases',
             content_markdown: content,
