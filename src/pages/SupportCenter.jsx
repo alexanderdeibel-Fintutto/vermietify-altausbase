@@ -299,7 +299,7 @@ export default function SupportCenter() {
                 </CardContent>
             </Card>
 
-            {/* Detail-Dialog */}
+            {/* Dialoge */}
             {selectedProblem && (
                 <ProblemDetailDialog
                     problem={selectedProblem}
@@ -307,6 +307,18 @@ export default function SupportCenter() {
                     onOpenChange={(open) => !open && setSelectedProblem(null)}
                 />
             )}
+
+            <BugLinkingDialog
+                open={showBugLinking}
+                onOpenChange={setShowBugLinking}
+                problem={linkingProblem}
+            />
+
+            <SolutionEditor
+                open={showSolutionEditor}
+                onOpenChange={setShowSolutionEditor}
+                problemId={selectedProblem?.id}
+            />
         </div>
     );
 }

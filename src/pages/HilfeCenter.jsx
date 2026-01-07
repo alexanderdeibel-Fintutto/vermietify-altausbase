@@ -16,16 +16,20 @@ import {
     ThumbsDown,
     Eye,
     Clock,
-    MessageSquare
+    MessageSquare,
+    Plus
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import ReportProblemDialog from '../components/support/ReportProblemDialog';
+import SolutionEditor from '../components/support/SolutionEditor';
 
 export default function HilfeCenter() {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('Alle');
     const [selectedSolution, setSelectedSolution] = useState(null);
     const [reportDialogOpen, setReportDialogOpen] = useState(false);
+    const [showSolutionEditor, setShowSolutionEditor] = useState(false);
+    const [editingSolution, setEditingSolution] = useState(null);
 
     const { data: solutions = [], isLoading } = useQuery({
         queryKey: ['problem-solutions'],
@@ -36,6 +40,19 @@ export default function HilfeCenter() {
         queryKey: ['user-problems-public'],
         queryFn: () => base44.entities.UserProblem.filter({ status: 'Gelöst' })
     });
+
+    const { data: currentUser } = useQuery({
+        queryKey: ['current-user'],
+        queryFn: async () => {
+            try {
+                return await base44.auth.me();
+            } catch {
+                return null;
+            }
+        }
+    });
+    
+    const isAdmin = currentUser?.role === 'admin';
 
     // Kategorien aus Lösungen extrahieren
     const categories = [...new Set(solutions.flatMap(s => s.gilt_fuer_kategorien || []))];
@@ -207,9 +224,23 @@ export default function HilfeCenter() {
 
     return (
         <div className="max-w-6xl mx-auto space-y-6">
-            <div className="text-center py-8">
-                <h1 className="text-4xl font-bold text-slate-900 mb-3">📚 Hilfe-Center</h1>
-                <p className="text-lg text-slate-600">Finden Sie schnell Antworten auf Ihre Fragen</p>
+            <div className="flex items-center justify-between py-8">
+                <div>
+                    <h1 className="text-4xl font-bold text-slate-900 mb-3">📚 Hilfe-Center</h1>
+                    <p className="text-lg text-slate-600">Finden Sie schnell Antworten auf Ihre Fragen</p>
+                </div>
+                {isAdmin && (
+                    <Button 
+                        onClick={() => {
+                            setEditingSolution(null);
+                            setShowSolutionEditor(true);
+                        }}
+                        variant="outline"
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Neue Lösung
+                    </Button>
+                )}
             </div>
 
             {/* Suche */}
@@ -389,11 +420,19 @@ export default function HilfeCenter() {
                 </CardContent>
             </Card>
 
-            {/* Problem-Meldung Dialog */}
+            {/* Dialoge */}
             <ReportProblemDialog
                 open={reportDialogOpen}
                 onOpenChange={setReportDialogOpen}
             />
+
+            {isAdmin && (
+                <SolutionEditor
+                    open={showSolutionEditor}
+                    onOpenChange={setShowSolutionEditor}
+                    solution={editingSolution}
+                />
+            )}
         </div>
     );
 }
