@@ -2824,93 +2824,1371 @@ async function generateDocumentGenerationDoc(base44) {
 }
 
 async function generateUserWorkflowsDoc() {
-    let doc = '# User-Workflows\n\n';
+    let doc = '# User-Workflows - Immobilienverwaltung (Vollständig)\n\n';
     doc += '**Metadaten:**\n';
-    doc += `- Generiert am: ${new Date().toLocaleString('de-DE')}\n\n`;
+    doc += `- Generiert am: ${new Date().toLocaleString('de-DE')}\n`;
+    doc += '- Verwendungszweck: Detaillierte Schritt-für-Schritt Anleitung aller Workflows\n';
+    doc += '- Anzahl dokumentierter Workflows: 18\n\n';
     doc += '---\n\n';
-    doc += '## 1. Neues Gebäude anlegen\n\n';
-    doc += '**Ziel**: Erfassung eines neuen Immobilienobjekts\n\n';
-    doc += '**Schritte**:\n';
-    doc += '1. Navigation zu "Objekte"\n';
-    doc += '2. Klick auf "Gebäude hinzufügen"\n';
-    doc += '3. Eingabe der Stammdaten (Name, Adresse, PLZ, Stadt)\n';
-    doc += '4. Optional: Kaufdaten erfassen\n';
-    doc += '5. Optional: Eigentümer zuordnen\n';
-    doc += '6. Speichern\n';
-    doc += '7. System erstellt automatisch Gebäude-ID\n\n';
-
-    doc += '## 2. Mietvertrag erstellen\n\n';
-    doc += '**Ziel**: Erfassung eines neuen Mietverhältnisses\n\n';
-    doc += '**Voraussetzung**: Gebäude und Wohneinheit existieren\n\n';
-    doc += '**Schritte**:\n';
-    doc += '1. Navigation zu "Mieter"\n';
-    doc += '2. Klick auf "Neuer Vertrag"\n';
-    doc += '3. Wohneinheit auswählen\n';
-    doc += '4. Mieter auswählen oder neu anlegen\n';
-    doc += '5. Vertragsdaten eingeben:\n';
-    doc += '   - Mietbeginn\n';
-    doc += '   - Befristet oder unbefristet\n';
-    doc += '   - Kaltmiete, Nebenkosten, Heizkosten\n';
-    doc += '   - Kaution\n';
-    doc += '   - Fälligkeitstag\n';
-    doc += '6. Speichern\n';
-    doc += '7. System generiert automatisch monatliche Mietbuchungen\n\n';
-
-    doc += '## 3. Dokument erstellen und versenden\n\n';
-    doc += '**Ziel**: Schriftliche Kommunikation mit Mieter\n\n';
-    doc += '**Schritte**:\n';
-    doc += '1. Navigation zu "Dokumente"\n';
-    doc += '2. Klick auf "Neues Dokument"\n';
-    doc += '3. Template auswählen (z.B. Mieterhöhung, Nebenkostenabrechnung)\n';
-    doc += '4. Datenquellen verknüpfen (Gebäude, Mieter, Vertrag)\n';
-    doc += '5. Textbausteine hinzufügen\n';
-    doc += '6. Vorschau prüfen\n';
-    doc += '7. Dokument erstellen\n';
-    doc += '8. PDF wird automatisch generiert\n';
-    doc += '9. Optional: Per Post versenden via LetterXpress\n';
-    doc += '10. System tracked Versandstatus und Zustellinformationen\n\n';
-
-    doc += '## 4. Buchungen generieren\n\n';
-    doc += '**Ziel**: Automatische Finanzplanung erstellen\n\n';
-    doc += '**Schritte**:\n';
-    doc += '1. Stammdaten erfassen (Grundsteuer, Versicherung, Kredit, etc.)\n';
-    doc += '2. Klick auf "Buchungen generieren"\n';
-    doc += '3. System analysiert Daten und erstellt Buchungsvorschläge\n';
-    doc += '4. Vorschau prüfen\n';
-    doc += '5. Buchungen bestätigen\n';
-    doc += '6. System erstellt alle Buchungen für das Jahr\n';
-    doc += '7. Buchungen erscheinen in "Generierte Buchungen"\n\n';
-
-    doc += '## 5. Bankkonten synchronisieren\n\n';
-    doc += '**Ziel**: Automatischer Import von Kontobewegungen\n\n';
-    doc += '**Schritte**:\n';
-    doc += '1. Navigation zu "Bank/Kasse"\n';
-    doc += '2. Klick auf "Konto verbinden"\n';
-    doc += '3. FinAPI-Autorisierung durchführen\n';
-    doc += '4. Bank auswählen und anmelden\n';
-    doc += '5. Konten importieren\n';
-    doc += '6. Automatische Synchronisierung startet\n';
-    doc += '7. Transaktionen werden kategorisiert\n';
-    doc += '8. Matching mit generierten Buchungen\n\n';
-
-    doc += '## 6. Betriebskostenabrechnung erstellen\n\n';
-    doc += '**Ziel**: Jahresabrechnung für Mieter\n\n';
-    doc += '**Schritte**:\n';
-    doc += '1. Navigation zu "Betriebskosten"\n';
-    doc += '2. Klick auf "Neue Abrechnung"\n';
-    doc += '3. Abrechnungsjahr und Gebäude wählen\n';
-    doc += '4. Mietverträge auswählen\n';
-    doc += '5. Kosten erfassen oder aus Buchungen importieren\n';
-    doc += '6. Verteilerschlüssel festlegen\n';
-    doc += '7. System berechnet automatisch:\n';
-    doc += '   - Gesamtkosten\n';
-    doc += '   - Anteil pro Mieter\n';
-    doc += '   - Geleistete Vorauszahlungen\n';
-    doc += '   - Nach-/Rückzahlung\n';
-    doc += '8. Vorschau und Plausibilitätsprüfung\n';
-    doc += '9. Abrechnung finalisieren\n';
-    doc += '10. Optional: Dokumente automatisch generieren\n\n';
-
+    
+    doc += '## WORKFLOW 1: NEUES OBJEKT ANLEGEN\n\n';
+    
+    doc += '### 1.1 Workflow-Identifikation\n\n';
+    doc += '- **Workflow-Name**: Gebäude anlegen (komplett)\n';
+    doc += '- **Hauptziel**: Ein neues Immobilienobjekt vollständig im System erfassen\n';
+    doc += '- **User-Typ**: Verwalter, Admin\n';
+    doc += '- **Häufigkeit**: Bei Neuakquise (einmalig pro Objekt)\n';
+    doc += '- **Komplexität**: ⭐⭐⭐ Mittel bis Komplex\n';
+    doc += '- **Geschätzte Dauer**: 10-20 Minuten (je nach Datenverfügbarkeit)\n\n';
+    
+    doc += '### 1.2 Voraussetzungen\n\n';
+    doc += '- Berechtigung: User oder Admin\n';
+    doc += '- Optional sinnvoll: Eigentümer-Daten verfügbar\n';
+    doc += '- Optional sinnvoll: Kaufvertrag/Grundbuch zur Hand\n\n';
+    
+    doc += '### 1.3 Schritt-für-Schritt Prozess\n\n';
+    doc += '**SCHRITT 1: Navigation**\n';
+    doc += '- User klickt in Sidebar auf "Objekte"\n';
+    doc += '- Seite: `pages/Buildings`\n';
+    doc += '- Anzeige: Liste bestehender Gebäude oder Empty State\n\n';
+    
+    doc += '**SCHRITT 2: Neues Gebäude starten**\n';
+    doc += '- User klickt Button "Gebäude hinzufügen" (rechts oben)\n';
+    doc += '- UI: BuildingForm-Dialog öffnet sich\n';
+    doc += '- Hintergrund: Keine DB-Operation\n\n';
+    
+    doc += '**SCHRITT 3: Stammdaten eingeben**\n';
+    doc += '- Angezeigt werden folgende Felder:\n\n';
+    doc += '| Feld | Typ | Pflicht | Beispiel |\n';
+    doc += '|------|-----|---------|----------|\n';
+    doc += '| Name | Text | ✅ Ja | "Hauptstraße 1" |\n';
+    doc += '| Straße | Text | ✅ Ja | "Hauptstraße" |\n';
+    doc += '| Hausnummer | Text | ✅ Ja | "1" |\n';
+    doc += '| PLZ | Text | ✅ Ja | "12345" |\n';
+    doc += '| Stadt | Text | ✅ Ja | "Berlin" |\n';
+    doc += '| Baujahr | Zahl | ❌ Nein | "1985" |\n';
+    doc += '| Wohnfläche gesamt | Zahl | ❌ Nein | "350" |\n';
+    doc += '| Anzahl Einheiten | Zahl | ❌ Nein | "5" |\n\n';
+    doc += '- Validierung: Echtzeitprüfung bei Eingabe (rote Rahmen bei ungültigen Werten)\n';
+    doc += '- Fehlermeldung: "PLZ muss 5 Ziffern haben"\n';
+    doc += '- Zurück: Ja, über "Abbrechen"-Button\n\n';
+    
+    doc += '**SCHRITT 4: Eigentümer zuordnen (Optional)**\n';
+    doc += '- Dropdown: Bestehende Eigentümer\n';
+    doc += '- Oder: Button "Neuer Eigentümer" → Öffnet OwnerForm\n';
+    doc += '- Hintergrund: Owner.list() API-Call\n';
+    doc += '- Kann übersprungen werden (später zuordnen)\n\n';
+    
+    doc += '**SCHRITT 5: Speichern**\n';
+    doc += '- User klickt "Gebäude anlegen"\n';
+    doc += '- Validierung: Alle Pflichtfelder ausgefüllt?\n';
+    doc += '- Hintergrund:\n';
+    doc += '  ```javascript\n';
+    doc += '  await base44.entities.Building.create({\n';
+    doc += '    name: "Hauptstraße 1",\n';
+    doc += '    street: "Hauptstraße",\n';
+    doc += '    house_number: "1",\n';
+    doc += '    postal_code: "12345",\n';
+    doc += '    city: "Berlin",\n';
+    doc += '    owner_id: selectedOwnerId || null\n';
+    doc += '  });\n';
+    doc += '  ```\n';
+    doc += '- Success: Toast "Gebäude erfolgreich angelegt"\n';
+    doc += '- Redirect: Zu BuildingDetail-Seite\n\n';
+    
+    doc += '**SCHRITT 6: Wohneinheiten anlegen**\n';
+    doc += '- Auf BuildingDetail-Seite: Tab "Einheiten"\n';
+    doc += '- Button "Einheit hinzufügen"\n';
+    doc += '- UnitForm öffnet sich\n';
+    doc += '- Felder:\n';
+    doc += '  - Wohnungsnummer (Pflicht): "Whg. 3"\n';
+    doc += '  - Fläche in m² (Pflicht): 75.5\n';
+    doc += '  - Zimmeranzahl: 3\n';
+    doc += '  - Stockwerk: 2\n';
+    doc += '- Hintergrund:\n';
+    doc += '  ```javascript\n';
+    doc += '  await base44.entities.Unit.create({\n';
+    doc += '    building_id: building.id, // Automatisch gesetzt\n';
+    doc += '    unit_number: "Whg. 3",\n';
+    doc += '    flaeche: 75.5,\n';
+    doc += '    rooms: 3\n';
+    doc += '  });\n';
+    doc += '  ```\n';
+    doc += '- Wiederholbar für alle Wohnungen\n\n';
+    
+    doc += '**SCHRITT 7: Kaufvertrag erfassen (Optional)**\n';
+    doc += '- Tab "Finanzen" auf BuildingDetail\n';
+    doc += '- Button "Kaufvertrag hinzufügen"\n';
+    doc += '- Felder:\n';
+    doc += '  - Kaufpreis (Pflicht)\n';
+    doc += '  - Kaufdatum (Pflicht)\n';
+    doc += '  - Grundstückswert (für AfA-Berechnung)\n';
+    doc += '  - Notarkosten, Maklergebühren, Grunderwerbsteuer\n';
+    doc += '- Automatismus: System bietet an "AfA-Plan generieren"\n';
+    doc += '- Hintergrund: PurchaseContract erstellen + AfASchedule generieren\n\n';
+    
+    doc += '**SCHRITT 8: Steuerliche Bibliothek initialisieren**\n';
+    doc += '- Dialog erscheint: "Steuerliche Bibliothek installieren?"\n';
+    doc += '- User wählt:\n';
+    doc += '  - Rechtsform (Privatperson, GbR, GmbH)\n';
+    doc += '  - Kontenrahmen (SKR03 oder SKR04)\n';
+    doc += '- System erstellt BuildingTaxLibrary mit allen Kostenkategorien\n';
+    doc += '- Dauer: ~2 Sekunden\n\n';
+    
+    doc += '### 1.4 Ausgabe/Ergebnis\n\n';
+    doc += '**Erstellte Datensätze**:\n';
+    doc += '- 1x Building\n';
+    doc += '- Nx Unit (je nach Anzahl Wohnungen)\n';
+    doc += '- 1x PurchaseContract (optional)\n';
+    doc += '- 1x AfASchedule (optional, wenn Kaufvertrag)\n';
+    doc += '- 1x BuildingTaxLibrary (optional)\n\n';
+    
+    doc += '### 1.5 Fehlerszenarien\n\n';
+    doc += '- ❌ "PLZ muss 5 Ziffern haben" → Formular korrigieren\n';
+    doc += '- ❌ "Gebäude mit dieser Adresse existiert bereits" → Duplikat-Warnung\n';
+    doc += '- ⚠️ "Baujahr liegt in der Zukunft" → Warnung, aber speicherbar\n\n';
+    
+    doc += '### 1.6 Tipps & Best Practices\n\n';
+    doc += '- ✅ Kaufvertrag IMMER erfassen (für korrekte AfA-Berechnung)\n';
+    doc += '- ✅ Steuerliche Bibliothek sofort initialisieren (sonst später kompliziert)\n';
+    doc += '- ✅ Alle Wohnungen auf einmal anlegen (nicht nach und nach)\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## WORKFLOW 2: NEUEN EIGENTÜMER ANLEGEN\n\n';
+    
+    doc += '### 2.1 Workflow-Identifikation\n\n';
+    doc += '- **Workflow-Name**: Eigentümer-Struktur definieren\n';
+    doc += '- **Hauptziel**: Eigentümerverhältnisse korrekt abbilden (Einzelperson, GbR, GmbH)\n';
+    doc += '- **User-Typ**: Verwalter, Admin\n';
+    doc += '- **Häufigkeit**: Einmalig (bei Neuanlage oder Eigentümerwechsel)\n';
+    doc += '- **Komplexität**: ⭐⭐ Einfach bis Mittel (je nach Rechtsform)\n';
+    doc += '- **Dauer**: 2-15 Minuten\n\n';
+    
+    doc += '### 2.2 Voraussetzungen\n\n';
+    doc += '- Berechtigung: User oder Admin\n';
+    doc += '- Building sollte existieren (kann aber auch direkt bei Building-Erstellung erfolgen)\n\n';
+    
+    doc += '### 2.3 Varianten\n\n';
+    
+    doc += '#### VARIANTE A: Einzelperson (Privatperson)\n\n';
+    doc += '**SCHRITT 1**: Navigation zu Building → Tab "Eigentümer"\n';
+    doc += '**SCHRITT 2**: Klick "Eigentümer hinzufügen"\n';
+    doc += '**SCHRITT 3**: SimpleOwnerForm öffnet sich\n';
+    doc += '**Felder**:\n';
+    doc += '- Name (Pflicht): "Max Mustermann"\n';
+    doc += '- Rechtsform (Auto): "PRIVATPERSON"\n';
+    doc += '- Adresse (Optional)\n';
+    doc += '- Steuer-ID (Optional)\n';
+    doc += '**SCHRITT 4**: Speichern\n';
+    doc += '- Hintergrund: Owner.create() + OwnerRelationship.create(building_id, owner_id)\n';
+    doc += '**Ergebnis**: 1x Owner, 1x OwnerRelationship\n\n';
+    
+    doc += '#### VARIANTE B: GbR (Gesellschaft bürgerlichen Rechts)\n\n';
+    doc += '**SCHRITT 1-2**: Wie Variante A\n';
+    doc += '**SCHRITT 3**: Rechtsform "GbR" wählen\n';
+    doc += '**SCHRITT 4**: System zeigt zusätzlich GesellschafterManager\n';
+    doc += '**SCHRITT 5**: Gesellschafter hinzufügen (Button "Gesellschafter hinzufügen")\n';
+    doc += '**Felder pro Gesellschafter**:\n';
+    doc += '- Name (Pflicht): "Peter Schmidt"\n';
+    doc += '- Anteil in % (Pflicht): 50\n';
+    doc += '- Adresse\n';
+    doc += '- Steuer-ID\n';
+    doc += '**SCHRITT 6**: Weitere Gesellschafter hinzufügen (z.B. "Anna Müller", 50%)\n';
+    doc += '**Validierung**: Summe aller Anteile muss 100% ergeben\n';
+    doc += '- ❌ BLOCKER: "Anteile ergeben nur 80% - bitte auf 100% korrigieren"\n';
+    doc += '**SCHRITT 7**: Speichern\n';
+    doc += '**Hintergrund**:\n';
+    doc += '```javascript\n';
+    doc += 'const owner = await Owner.create({\n';
+    doc += '  name: "Mustermann & Schmidt GbR",\n';
+    doc += '  legal_form: "GBR"\n';
+    doc += '});\n';
+    doc += '\n';
+    doc += 'await Shareholder.create({\n';
+    doc += '  owner_id: owner.id,\n';
+    doc += '  name: "Peter Schmidt",\n';
+    doc += '  share_percentage: 50\n';
+    doc += '});\n';
+    doc += '\n';
+    doc += 'await Shareholder.create({\n';
+    doc += '  owner_id: owner.id,\n';
+    doc += '  name: "Anna Müller",\n';
+    doc += '  share_percentage: 50\n';
+    doc += '});\n';
+    doc += '```\n';
+    doc += '**Ergebnis**: 1x Owner + 2x Shareholder + 1x OwnerRelationship\n\n';
+    
+    doc += '#### VARIANTE C: GmbH\n\n';
+    doc += '**Unterschied zu GbR**:\n';
+    doc += '- Rechtsform "GMBH"\n';
+    doc += '- Zusätzliche Felder: Handelsregisternummer, Geschäftsführer\n';
+    doc += '- Gesellschafter können juristische Personen sein\n\n';
+    
+    doc += '### 1.4 Entscheidungs-Punkte\n\n';
+    doc += '**IF Rechtsform = "PRIVATPERSON"**:\n';
+    doc += '- THEN: Einfaches Formular, keine Gesellschafter\n';
+    doc += '**ELSE IF Rechtsform = "GBR" oder "GMBH"**:\n';
+    doc += '- THEN: Gesellschafter-Manager anzeigen, Anteile müssen 100% ergeben\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## WORKFLOW 3: EIGENTÜMERWECHSEL DURCHFÜHREN\n\n';
+    
+    doc += '### 3.1 Workflow-Identifikation\n\n';
+    doc += '- **Workflow-Name**: Eigentümerwechsel (Verkauf)\n';
+    doc += '- **Hauptziel**: Neuen Eigentümer zuordnen, alte Beziehung archivieren\n';
+    doc += '- **User-Typ**: Verwalter, Admin\n';
+    doc += '- **Häufigkeit**: Selten (bei Verkauf/Übertragung)\n';
+    doc += '- **Komplexität**: ⭐⭐ Mittel\n';
+    doc += '- **Dauer**: 5-10 Minuten\n\n';
+    
+    doc += '### 3.2 Schritt-für-Schritt\n\n';
+    doc += '**SCHRITT 1**: Building Detail → Tab "Eigentümer"\n';
+    doc += '**SCHRITT 2**: Bei bestehendem Owner: Button "Eigentümer wechseln"\n';
+    doc += '**SCHRITT 3**: Dialog öffnet sich\n';
+    doc += '- Anzeige: Aktueller Eigentümer (schreibgeschützt)\n';
+    doc += '- Feld: Neuer Eigentümer (Dropdown oder "Neu anlegen")\n';
+    doc += '- Feld: Wechseldatum (Pflicht)\n';
+    doc += '- Feld: Notizen (Optional)\n';
+    doc += '**SCHRITT 4**: Neuen Eigentümer auswählen oder anlegen\n';
+    doc += '**SCHRITT 5**: Bestätigen\n';
+    doc += '**Hintergrund**:\n';
+    doc += '```javascript\n';
+    doc += '// Alte Beziehung archivieren\n';
+    doc += 'await OwnerRelationship.update(old_relation_id, {\n';
+    doc += '  is_active: false,\n';
+    doc += '  end_date: wechseldatum\n';
+    doc += '});\n';
+    doc += '\n';
+    doc += '// Neue Beziehung erstellen\n';
+    doc += 'await OwnerRelationship.create({\n';
+    doc += '  building_id: building.id,\n';
+    doc += '  owner_id: new_owner_id,\n';
+    doc += '  start_date: wechseldatum,\n';
+    doc += '  is_active: true\n';
+    doc += '});\n';
+    doc += '```\n';
+    doc += '**Ergebnis**: Historisierung erhalten, neuer Eigentümer aktiv\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## WORKFLOW 4: MIETVERTRAG ERSTELLEN\n\n';
+    
+    doc += '### 4.1 Workflow-Identifikation\n\n';
+    doc += '- **Workflow-Name**: Mietvertrag erfassen\n';
+    doc += '- **Hauptziel**: Neues Mietverhältnis dokumentieren\n';
+    doc += '- **User-Typ**: Verwalter\n';
+    doc += '- **Häufigkeit**: Bei jeder Neuvermietung\n';
+    doc += '- **Komplexität**: ⭐⭐⭐ Mittel\n';
+    doc += '- **Dauer**: 5-10 Minuten\n\n';
+    
+    doc += '### 4.2 Voraussetzungen\n\n';
+    doc += '- ✅ Building existiert\n';
+    doc += '- ✅ Unit existiert und ist verfügbar\n';
+    doc += '- ✅ Tenant existiert (oder wird neu angelegt)\n\n';
+    
+    doc += '### 4.3 Schritt-für-Schritt\n\n';
+    doc += '**SCHRITT 1**: Navigation zu "Mieter" (Sidebar)\n';
+    doc += '**SCHRITT 2**: Klick "Neuer Vertrag" (rechts oben)\n';
+    doc += '**SCHRITT 3**: ContractForm öffnet sich\n\n';
+    doc += '**Formular-Felder (Seite 1/3)**:\n';
+    doc += '| Feld | Pflicht | Typ | Beispiel |\n';
+    doc += '|------|---------|-----|----------|\n';
+    doc += '| Gebäude | ✅ | Dropdown | "Hauptstraße 1" |\n';
+    doc += '| Wohneinheit | ✅ | Dropdown (gefiltert) | "Whg. 3" |\n';
+    doc += '| Mieter | ✅ | Dropdown + "Neu" | "Klaus Schmidt" |\n\n';
+    doc += '- Validierung: Unit muss verfügbar sein (kein aktiver Vertrag)\n';
+    doc += '- Bei Konflikt: ❌ "Wohnung ist bereits vermietet bis DD.MM.YYYY"\n\n';
+    doc += '**SCHRITT 4**: Falls Mieter neu → TenantForm inline\n';
+    doc += '- Vorname, Nachname (Pflicht)\n';
+    doc += '- Anrede (Herr/Frau)\n';
+    doc += '- Geburtsdatum\n';
+    doc += '- Vollständige Adresse (wichtig für Dokumente!)\n';
+    doc += '- E-Mail, Telefon\n';
+    doc += '- Speichern → Tenant wird erstellt und automatisch ausgewählt\n\n';
+    doc += '**SCHRITT 5**: Weiter zu Vertragsdaten (Seite 2/3)\n';
+    doc += '| Feld | Pflicht | Typ | Beispiel | Validierung |\n';
+    doc += '|------|---------|-----|----------|-------------|\n';
+    doc += '| Mietbeginn | ✅ | Datum | 01.02.2024 | - |\n';
+    doc += '| Befristet? | ✅ | Radio | Nein | - |\n';
+    doc += '| Mietende | ❌ | Datum | - | Nur wenn befristet |\n';
+    doc += '| Kaltmiete | ✅ | Währung | 650,00 € | > 0 |\n';
+    doc += '| Nebenkosten | ✅ | Währung | 150,00 € | ≥ 0 |\n';
+    doc += '| Heizkosten | ✅ | Währung | 80,00 € | ≥ 0 |\n';
+    doc += '| Warmmiete | - | Auto | 880,00 € | = Summe |\n\n';
+    doc += '- Automatismus: Warmmiete wird live berechnet\n';
+    doc += '- Validierung: Warmmiete muss Summe entsprechen\n\n';
+    doc += '**SCHRITT 6**: Weiter zu Kaution & Sonstiges (Seite 3/3)\n';
+    doc += '| Feld | Pflicht | Typ | Beispiel |\n';
+    doc += '|------|---------|-----|----------|\n';
+    doc += '| Kaution | ❌ | Währung | 1.950,00 € |\n';
+    doc += '| Kaution in Raten | ❌ | Dropdown | 3 Raten |\n';
+    doc += '| Fälligkeitstag | ✅ | Zahl (1-31) | 3 |\n';
+    doc += '| Kündigungsfrist | ✅ | Dropdown | 3 Monate |\n';
+    doc += '| Anzahl Personen | ❌ | Zahl | 2 |\n\n';
+    doc += '- Validierung: Kaution ≤ 3x Kaltmiete (sonst Warning)\n';
+    doc += '- Tooltip bei Kaution: "Gesetzlich max. 3 Monatsmieten"\n\n';
+    doc += '**SCHRITT 7**: Speichern\n';
+    doc += '**Hintergrund**:\n';
+    doc += '```javascript\n';
+    doc += '// 1. Contract erstellen\n';
+    doc += 'const contract = await base44.entities.LeaseContract.create({\n';
+    doc += '  unit_id: selectedUnit.id,\n';
+    doc += '  tenant_id: selectedTenant.id,\n';
+    doc += '  start_date: "2024-02-01",\n';
+    doc += '  is_unlimited: true,\n';
+    doc += '  base_rent: 650,\n';
+    doc += '  utilities: 150,\n';
+    doc += '  heating: 80,\n';
+    doc += '  total_rent: 880,\n';
+    doc += '  deposit: 1950,\n';
+    doc += '  deposit_installments: 3,\n';
+    doc += '  rent_due_day: 3,\n';
+    doc += '  notice_period_months: 3,\n';
+    doc += '  status: "active"\n';
+    doc += '});\n';
+    doc += '\n';
+    doc += '// 2. Automatisch: Buchungen generieren\n';
+    doc += 'await generateBookingsFromSource({\n';
+    doc += '  sourceType: "Mietvertrag",\n';
+    doc += '  sourceId: contract.id\n';
+    doc += '});\n';
+    doc += '// → Erstellt monatliche Mietbuchungen ab start_date\n';
+    doc += '```\n';
+    doc += '**Ergebnis**: \n';
+    doc += '- 1x LeaseContract\n';
+    doc += '- 12x GeneratedFinancialBooking (Mieteinnahmen für 1 Jahr)\n';
+    doc += '- Optional: 3x GeneratedFinancialBooking (Kaution in 3 Raten)\n\n';
+    
+    doc += '### 4.4 Automatismen\n\n';
+    doc += '- ✅ Warmmiete = Auto-Summe aus Kalt + NK + Heizung\n';
+    doc += '- ✅ Mietbuchungen werden automatisch ab start_date erstellt\n';
+    doc += '- ✅ Unit.status wird auf "vermietet" gesetzt\n';
+    doc += '- ✅ Falls Kaution > 0: Separate Buchungen für Raten\n\n';
+    
+    doc += '### 4.5 Fehlerszenarien\n\n';
+    doc += '- ❌ "Wohnung bereits vermietet" → User muss anderen Unit wählen\n';
+    doc += '- ❌ "Warmmiete stimmt nicht überein" → System-Fehler, sollte nicht auftreten\n';
+    doc += '- ⚠️ "Kaution > 3x Kaltmiete" → Warning, aber speicherbar\n';
+    doc += '- ⚠️ "Mietbeginn liegt in Vergangenheit" → Warning, aber OK bei rückwirkender Erfassung\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## WORKFLOW 5: MIETER EIN-/AUSZUG\n\n';
+    
+    doc += '### 5.1 EINZUG (Vertrag starten)\n\n';
+    doc += '**SCHRITT 1**: Mietvertrag erstellen (siehe Workflow 4)\n';
+    doc += '**SCHRITT 2**: Optional: Übergabeprotokoll generieren\n';
+    doc += '- Navigation: Dokumente → "Neues Dokument"\n';
+    doc += '- Template: "Übergabeprotokoll Einzug"\n';
+    doc += '- Datenquellen: Building, Unit, Tenant, Contract\n';
+    doc += '- Zusätzlich: Zählerstände erfassen\n';
+    doc += '**SCHRITT 3**: Übergabe vor Ort\n';
+    doc += '- Protokoll ausdrucken\n';
+    doc += '- Wohnung begehen\n';
+    doc += '- Mängel notieren\n';
+    doc += '- Unterschriften (Vermieter + Mieter)\n';
+    doc += '**SCHRITT 4**: Protokoll einscannen und hochladen\n';
+    doc += '- DocumentOriginal erstellen\n';
+    doc += '- Mit Document verlinken\n\n';
+    
+    doc += '### 5.2 AUSZUG (Vertrag beenden)\n\n';
+    doc += '**SCHRITT 1**: Contract Detail → Button "Kündigung"\n';
+    doc += '**SCHRITT 2**: Kündigungs-Dialog\n';
+    doc += '- Kündigungsdatum (Pflicht)\n';
+    doc += '- Kündigungsgrund (Optional)\n';
+    doc += '- Auszugsdatum wird automatisch berechnet:\n';
+    doc += '  ```javascript\n';
+    doc += '  auszugsdatum = add_months(kuendigungsdatum, notice_period_months)\n';
+    doc += '  // Auf Monatsende gerundet\n';
+    doc += '  ```\n';
+    doc += '**SCHRITT 3**: Bestätigen\n';
+    doc += '**Hintergrund**:\n';
+    doc += '```javascript\n';
+    doc += 'await LeaseContract.update(contract.id, {\n';
+    doc += '  status: "terminated",\n';
+    doc += '  termination_date: "2024-03-15",\n';
+    doc += '  end_date: "2024-06-30" // Nach 3 Monaten Frist\n';
+    doc += '});\n';
+    doc += '\n';
+    doc += '// Mietbuchungen ab end_date stoppen\n';
+    doc += 'await updateFutureBookings(contract.id, end_date);\n';
+    doc += '```\n';
+    doc += '**SCHRITT 4**: Übergabeprotokoll Auszug generieren\n';
+    doc += '**SCHRITT 5**: Kaution abrechnen\n';
+    doc += '- Offene Forderungen prüfen\n';
+    doc += '- Schäden vom Protokoll abziehen\n';
+    doc += '- Rest-Kaution auszahlen\n';
+    doc += '**SCHRITT 6**: Unit freigeben\n';
+    doc += '- Unit.status = "verfügbar"\n';
+    doc += '- Bereit für Neuvermietung\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## WORKFLOW 6: RECHNUNG/BELEG ERFASSEN\n\n';
+    
+    doc += '### 6.1 VARIANTE A: Manuelle Eingabe\n\n';
+    doc += '**SCHRITT 1**: Navigation zu "Rechnungen & Belege"\n';
+    doc += '**SCHRITT 2**: Klick "Neue Rechnung"\n';
+    doc += '**SCHRITT 3**: InvoiceForm\n';
+    doc += '| Feld | Pflicht | Beispiel |\n';
+    doc += '|------|---------|----------|\n';
+    doc += '| Gebäude | ✅ | "Hauptstraße 1" |\n';
+    doc += '| Rechnungsnummer | ✅ | "RE-2024-001" |\n';
+    doc += '| Rechnungsdatum | ✅ | 15.01.2024 |\n';
+    doc += '| Lieferant | ✅ | "Elektro Müller GmbH" |\n';
+    doc += '| Betrag netto | ✅ | 450,00 € |\n';
+    doc += '| MwSt. % | ✅ | 19% |\n';
+    doc += '| Betrag brutto | Auto | 535,50 € |\n';
+    doc += '| Kostenkategorie | ✅ | Dropdown aus Tax Library |\n';
+    doc += '| Beschreibung | ❌ | "Elektroarbeiten Treppenhaus" |\n\n';
+    doc += '**Automatismus**: Brutto = Netto * (1 + MwSt.)\n';
+    doc += '**SCHRITT 4**: PDF hochladen (Optional)\n';
+    doc += '- Drag & Drop oder File-Picker\n';
+    doc += '- PDF wird zu Storage hochgeladen\n';
+    doc += '- URL wird in Invoice.pdf_url gespeichert\n';
+    doc += '**SCHRITT 5**: Speichern\n';
+    doc += '**Hintergrund**: Invoice.create()\n\n';
+    
+    doc += '### 6.2 VARIANTE B: Intelligenter Wizard (PDF-Upload)\n\n';
+    doc += '**SCHRITT 1**: "Rechnungen & Belege" → "Intelligenter Upload"\n';
+    doc += '**SCHRITT 2**: PDF hochladen (Drag & Drop)\n';
+    doc += '**SCHRITT 3**: System analysiert PDF mit InvokeLLM\n';
+    doc += '```javascript\n';
+    doc += 'const extracted = await base44.integrations.Core.InvokeLLM({\n';
+    doc += '  prompt: "Extrahiere: Rechnungsnummer, Datum, Lieferant, Netto, Brutto, MwSt",\n';
+    doc += '  file_urls: [pdf_url],\n';
+    doc += '  response_json_schema: invoiceSchema\n';
+    doc += '});\n';
+    doc += '```\n';
+    doc += '**SCHRITT 4**: Vorausgefülltes Formular anzeigen\n';
+    doc += '- Alle extrahierten Felder sind befüllt\n';
+    doc += '- User prüft und korrigiert falls nötig\n';
+    doc += '- Kostenkategorie muss User manuell wählen (KI schlägt vor)\n';
+    doc += '**SCHRITT 5**: Speichern\n';
+    doc += '**Dauer**: ~30 Sekunden (inkl. KI-Analyse)\n';
+    doc += '**Vorteil**: 80% weniger Tipparbeit\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## WORKFLOW 7: BELEG KATEGORISIEREN & ZUORDNEN\n\n';
+    
+    doc += '### 7.1 Workflow-Identifikation\n\n';
+    doc += '- **Workflow-Name**: Rechnungskategorisierung für Steuern\n';
+    doc += '- **Hauptziel**: Korrekte steuerliche Behandlung sicherstellen\n';
+    doc += '- **Komplexität**: ⭐⭐ Mittel (erfordert Steuerkenntnis)\n';
+    doc += '- **Dauer**: 1-2 Minuten pro Rechnung\n\n';
+    
+    doc += '### 7.2 Schritt-für-Schritt\n\n';
+    doc += '**SCHRITT 1**: Invoice in Liste anklicken\n';
+    doc += '**SCHRITT 2**: Kostenkategorie wählen (CostCategorySelector)\n';
+    doc += '- UI zeigt: Kategorien aus BuildingTaxLibrary\n';
+    doc += '- Gefiltert nach:\n';
+    doc += '  - Rechtsform des Gebäudes\n';
+    doc += '  - Nutzungsart (Wohnung/Gewerbe)\n';
+    doc += '- Jede Kategorie zeigt:\n';
+    doc += '  - Name (z.B. "Grundsteuer")\n';
+    doc += '  - Steuerliche Behandlung (Sofort / AfA / Nicht absetzbar)\n';
+    doc += '  - SKR-Konto (z.B. "4110")\n';
+    doc += '  - Umlagefähig? (Ja/Nein)\n';
+    doc += '**SCHRITT 3**: Kategorie auswählen\n';
+    doc += '**SCHRITT 4**: System prüft 15%-Regel\n';
+    doc += '```javascript\n';
+    doc += 'if (category.tax_treatment === "SOFORT" && category.type === "ERHALTUNG") {\n';
+    doc += '  const summe_3_jahre = await check15PercentRule(building_id);\n';
+    doc += '  if (summe_3_jahre.exceeded) {\n';
+    doc += '    toast.warning("⚠️ 15%-Grenze überschritten - prüfen Sie Herstellungskosten!");\n';
+    doc += '  }\n';
+    doc += '}\n';
+    doc += '```\n';
+    doc += '**SCHRITT 5**: Speichern\n';
+    doc += '- Invoice.cost_category_id wird gesetzt\n';
+    doc += '- Invoice.tax_treatment wird übernommen\n';
+    doc += '- Optional: GeneratedFinancialBooking aus Invoice erstellen\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## WORKFLOW 8: BETRIEBSKOSTENABRECHNUNG ERSTELLEN (KOMPLETT)\n\n';
+    
+    doc += '### 8.1 Workflow-Identifikation\n\n';
+    doc += '- **Workflow-Name**: Betriebskosten-Wizard (5-Schritt-Prozess)\n';
+    doc += '- **Hauptziel**: Rechtskonforme NK-Abrechnung für alle Mieter\n';
+    doc += '- **User-Typ**: Verwalter\n';
+    doc += '- **Häufigkeit**: Jährlich (pro Gebäude)\n';
+    doc += '- **Komplexität**: ⭐⭐⭐⭐ Komplex\n';
+    doc += '- **Dauer**: 30-60 Minuten (bei 10 Wohnungen)\n\n';
+    
+    doc += '### 8.2 Voraussetzungen\n\n';
+    doc += '- ✅ Building mit Units\n';
+    doc += '- ✅ Mindestens 1 aktiver LeaseContract im Abrechnungsjahr\n';
+    doc += '- ✅ Kosten erfasst (GeneratedFinancialBooking oder manuell)\n';
+    doc += '- ✅ Vorauszahlungen in Contracts hinterlegt\n\n';
+    
+    doc += '### 8.3 Schritt-für-Schritt (Wizard)\n\n';
+    
+    doc += '**SCHRITT 1: Gebäude & Zeitraum**\n';
+    doc += '- Seite: "Betriebskosten" → "Neue Abrechnung"\n';
+    doc += '- Component: Step1BuildingSelection\n';
+    doc += '- Felder:\n';
+    doc += '  - Gebäude (Dropdown, Pflicht)\n';
+    doc += '  - Abrechnungsjahr (Dropdown 2020-2026, Pflicht)\n';
+    doc += '- Automatismus: System prüft ob Building vollständig\n';
+    doc += '- Validierung: Gebäude muss Units haben\n';
+    doc += '- Button "Weiter" → Schritt 2\n';
+    doc += '- Hintergrund:\n';
+    doc += '  ```javascript\n';
+    doc += '  const units = await base44.entities.Unit.filter({ building_id });\n';
+    doc += '  const contracts = await base44.entities.LeaseContract.filter({\n';
+    doc += '    unit_id: { $in: units.map(u => u.id) },\n';
+    doc += '    // Verträge die im Jahr aktiv waren\n';
+    doc += '  });\n';
+    doc += '  ```\n\n';
+    
+    doc += '**SCHRITT 2: Mietverträge auswählen**\n';
+    doc += '- Component: Step2ContractSelection\n';
+    doc += '- UI: Tabelle aller Verträge im gewählten Jahr\n';
+    doc += '- Spalten: Wohnung, Mieter, Zeitraum, Vorauszahlungen\n';
+    doc += '- Checkboxen: User wählt abzurechnende Verträge\n';
+    doc += '- Automatisch vorselektiert: Alle Verträge die ≥ 1 Monat im Jahr aktiv\n';
+    doc += '- Info-Text: "5 Verträge gefunden, 5 ausgewählt"\n';
+    doc += '- Button "Weiter" (disabled wenn keine Auswahl)\n\n';
+    
+    doc += '**SCHRITT 3: Kosten erfassen**\n';
+    doc += '- Component: Step3CostSelection\n';
+    doc += '- UI: Zwei Optionen (Radio-Buttons):\n\n';
+    doc += '  **OPTION A: Aus Buchungen importieren**\n';
+    doc += '  - System lädt GeneratedFinancialBooking im Zeitraum\n';
+    doc += '  - Filtert nur umlagefähige Kategorien\n';
+    doc += '  - Zeigt Preview-Tabelle\n';
+    doc += '  - User kann Positionen an/abwählen\n\n';
+    doc += '  **OPTION B: Manuell erfassen**\n';
+    doc += '  - Tabelle mit Eingabezeilen\n';
+    doc += '  - Felder: Kostenart, Betrag, Verteilerschlüssel\n';
+    doc += '  - Button "Position hinzufügen" für weitere Zeilen\n\n';
+    doc += '- Verteilerschlüssel-Dropdown pro Position:\n';
+    doc += '  - Fläche (Standard)\n';
+    doc += '  - Personen\n';
+    doc += '  - Gleichmäßig\n';
+    doc += '  - Verbrauch (nur bei Zählern)\n';
+    doc += '- Button "Weiter"\n\n';
+    
+    doc += '**SCHRITT 4: Direkte Kosten (Zähler)**\n';
+    doc += '- Component: Step4DirectCosts\n';
+    doc += '- UI: Nur bei Kosten mit Verteilerschlüssel "Verbrauch"\n';
+    doc += '- Pro Wohnung:\n';
+    doc += '  - Zählerstand Anfang\n';
+    doc += '  - Zählerstand Ende\n';
+    doc += '  - Verbrauch (auto berechnet)\n';
+    doc += '- Kann übersprungen werden falls keine Verbrauchskosten\n\n';
+    doc += '**SCHRITT 5: Zusammenfassung & Berechnung**\n';
+    doc += '- Component: Step5Summary\n';
+    doc += '- UI: Detaillierte Übersicht\n\n';
+    doc += '**Anzeige**:\n';
+    doc += '```\n';
+    doc += '┌─────────────────────────────────────────────┐\n';
+    doc += '│ GESAMTÜBERSICHT                             │\n';
+    doc += '├─────────────────────────────────────────────┤\n';
+    doc += '│ Gesamtkosten:              4.523,80 €       │\n';
+    doc += '│ Umlagefähig:               4.200,00 €       │\n';
+    doc += '│ Nicht umlagefähig:           323,80 €       │\n';
+    doc += '│                                             │\n';
+    doc += '│ PRO MIETER:                                 │\n';
+    doc += '│ ┌─────────────┬──────┬────────┬─────────┐  │\n';
+    doc += '│ │ Mieter      │ Kost.│  VZ    │  Saldo  │  │\n';
+    doc += '│ ├─────────────┼──────┼────────┼─────────┤  │\n';
+    doc += '│ │ Mustermann  │ 836€ │ 1800€  │ -964€ G │  │\n';
+    doc += '│ │ Schmidt     │ 920€ │ 1800€  │ -880€ G │  │\n';
+    doc += '│ │ Müller      │ 715€ │ 1500€  │ -785€ G │  │\n';
+    doc += '│ └─────────────┴──────┴────────┴─────────┘  │\n';
+    doc += '└─────────────────────────────────────────────┘\n';
+    doc += '```\n';
+    doc += '- Legende: G = Guthaben, N = Nachzahlung\n';
+    doc += '- Button "Abrechnung finalisieren"\n\n';
+    
+    doc += '**SCHRITT 6: Finalisierung**\n';
+    doc += '**Hintergrund**:\n';
+    doc += '```javascript\n';
+    doc += '// 1. OperatingCostStatement erstellen\n';
+    doc += 'const statement = await OperatingCostStatement.create({\n';
+    doc += '  building_id,\n';
+    doc += '  abrechnungsjahr: 2023,\n';
+    doc += '  status: "finalized",\n';
+    doc += '  gesamtkosten: 4523.80\n';
+    doc += '});\n';
+    doc += '\n';
+    doc += '// 2. Alle Items speichern\n';
+    doc += 'for (const item of items) {\n';
+    doc += '  await OperatingCostStatementItem.create({\n';
+    doc += '    statement_id: statement.id,\n';
+    doc += '    kostenart: item.name,\n';
+    doc += '    betrag: item.amount,\n';
+    doc += '    verteilerschluessel: item.key,\n';
+    doc += '    umlegbar: item.allocatable\n';
+    doc += '  });\n';
+    doc += '}\n';
+    doc += '```\n\n';
+    
+    doc += '**SCHRITT 7: Dokumente generieren (Optional)**\n';
+    doc += '- Dialog: "Dokumente für alle Mieter erstellen?"\n';
+    doc += '- Optionen:\n';
+    doc += '  - Ja, jetzt erstellen\n';
+    doc += '  - Nein, später manuell\n';
+    doc += '- Bei JA: Bulk-PDF-Generierung startet\n';
+    doc += '  - Pro Mieter: ~3 Sekunden\n';
+    doc += '  - 10 Mieter = ~30 Sekunden\n';
+    doc += '  - Progress-Bar anzeigen\n\n';
+    
+    doc += '**SCHRITT 8: Versand (Optional)**\n';
+    doc += '- Dialog: "Alle Abrechnungen per Post versenden?"\n';
+    doc += '- Versandart wählen (Normal / R1)\n';
+    doc += '- Kosten-Übersicht anzeigen\n';
+    doc += '- Bei Bestätigung: Bulk-Versand via LetterXpress\n\n';
+    
+    doc += '### 8.4 Ausgabe/Ergebnis\n\n';
+    doc += '**Erstellte Datensätze**:\n';
+    doc += '- 1x OperatingCostStatement\n';
+    doc += '- Nx OperatingCostStatementItem (je nach Kostenpositionen)\n';
+    doc += '- Mx Document (1 pro Mieter)\n';
+    doc += '- Optional: Mx LetterShipment (bei Versand)\n\n';
+    
+    doc += '### 8.5 Fehlerszenarien\n\n';
+    doc += '- ❌ "Zeitraum muss 12 Monate sein" → Year-Picker korrigieren\n';
+    doc += '- ❌ "Keine Verträge im Zeitraum" → Gebäude/Jahr ändern\n';
+    doc += '- ⚠️ "Vorauszahlungen fehlen bei 2 Verträgen" → Hinweis, aber fortsetzbar\n';
+    doc += '- ⚠️ "Kosten 40% höher als Vorjahr" → Plausibilitätsprüfung\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## WORKFLOW 9: ANLAGE V GENERIEREN & PRÜFEN\n\n';
+    
+    doc += '### 9.1 Workflow-Identifikation\n\n';
+    doc += '- **Workflow-Name**: Steuerformular Anlage V erstellen\n';
+    doc += '- **Hauptziel**: Einkünfte aus Vermietung für Steuererklärung\n';
+    doc += '- **User-Typ**: Verwalter, Eigentümer, Steuerberater\n';
+    doc += '- **Häufigkeit**: Jährlich (pro Gebäude)\n';
+    doc += '- **Komplexität**: ⭐⭐⭐⭐ Komplex\n';
+    doc += '- **Dauer**: 10-20 Minuten\n\n';
+    
+    doc += '### 9.2 Schritt-für-Schritt\n\n';
+    
+    doc += '**SCHRITT 1**: Navigation zu "Steuerformulare"\n';
+    doc += '**SCHRITT 2**: Klick "Neue Anlage V"\n';
+    doc += '**SCHRITT 3**: AnlageVWizard öffnet sich\n\n';
+    
+    doc += '**STEP 1: Objekt & Jahr wählen**\n';
+    doc += '- Gebäude-Dropdown (nur Gebäude mit Tax Library)\n';
+    doc += '- Steuerjahr-Dropdown (2020-2025)\n';
+    doc += '- Validierung:\n';
+    doc += '  ```javascript\n';
+    doc += '  const validation = await validateAnlageV(building_id, year);\n';
+    doc += '  // Prüft: Adresse vollständig? Kaufdatum vorhanden? Mietverträge?\n';
+    doc += '  ```\n';
+    doc += '- Bei Fehler: Liste der fehlenden Daten anzeigen\n\n';
+    
+    doc += '**STEP 2: Einnahmen berechnen**\n';
+    doc += '- System lädt automatisch alle LeaseContracts des Jahres\n';
+    doc += '- Berechnung:\n';
+    doc += '  ```javascript\n';
+    doc += '  const result = await calculateAnlageVEinnahmen(building_id, year);\n';
+    doc += '  // result = {\n';
+    doc += '  //   zeile_9: 10800, // Mieteinnahmen\n';
+    doc += '  //   zeile_10: 0,    // Sonstige Einnahmen\n';
+    doc += '  //   details: [...]  // Pro Vertrag aufgeschlüsselt\n';
+    doc += '  // }\n';
+    doc += '  ```\n';
+    doc += '- UI zeigt:\n';
+    doc += '  - Tabellarische Übersicht pro Vertrag\n';
+    doc += '  - Zeile 9 (Gesamteinnahmen): 10.800,00 €\n';
+    doc += '- User kann Werte manuell korrigieren (z.B. Mietrückstände abziehen)\n\n';
+    
+    doc += '**STEP 3: Werbungskosten berechnen**\n';
+    doc += '- System ruft calculateAnlageVWerbungskosten auf\n';
+    doc += '- Lädt:\n';
+    doc += '  - PropertyTax → Zeile 40\n';
+    doc += '  - Insurance → Zeile 41\n';
+    doc += '  - Invoices (SOFORT) → Zeile 42\n';
+    doc += '  - Financing (nur Zinsen) → Zeile 43\n';
+    doc += '  - AfASchedule → Zeile 33\n';
+    doc += '- UI: Formular mit allen Anlage V Zeilen\n';
+    doc += '- Pro Zeile:\n';
+    doc += '  - Bezeichnung (z.B. "Zeile 40: Grundsteuer")\n';
+    doc += '  - Vorausgefüllter Betrag\n';
+    doc += '  - Editierbar (falls Korrekturen nötig)\n';
+    doc += '  - Tooltip: Erklärung der Zeile\n\n';
+    
+    doc += '**STEP 4: Validierung & Plausibilität**\n';
+    doc += '- System prüft:\n';
+    doc += '  - ✅ Einnahmen > 0?\n';
+    doc += '  - ⚠️ Verlust > Einnahmen? (Liebhaberei-Hinweis)\n';
+    doc += '  - ⚠️ AfA fehlt trotz Kaufvertrag?\n';
+    doc += '  - ⚠️ 15%-Regel überschritten?\n';
+    doc += '- Component: AnlageVValidationResults\n';
+    doc += '- UI: Liste aller Prüfungen mit ✅/⚠️/❌\n';
+    doc += '- Bei Blockern: "Weiter" disabled\n';
+    doc += '- Bei Warnings: "Trotzdem fortfahren" möglich\n\n';
+    
+    doc += '**STEP 5: Zusammenfassung & Export**\n';
+    doc += '- UI: Finale Übersicht\n';
+    doc += '```\n';
+    doc += 'Anlage V 2023 - Hauptstraße 1\n';
+    doc += '\n';
+    doc += 'Einnahmen (Zeile 9):           10.800,00 €\n';
+    doc += 'AfA (Zeile 33):                 1.200,00 €\n';
+    doc += 'Grundsteuer (Zeile 40):           480,00 €\n';
+    doc += 'Versicherungen (Zeile 41):        650,00 €\n';
+    doc += 'Erhaltung (Zeile 42):           2.100,00 €\n';
+    doc += 'Schuldzinsen (Zeile 43):        1.800,00 €\n';
+    doc += 'Sonstige (Zeile 48):              320,00 €\n';
+    doc += '─────────────────────────────────────────────\n';
+    doc += 'Summe Werbungskosten:           6.550,00 €\n';
+    doc += '\n';
+    doc += 'Überschuss/Verlust:            +4.250,00 €\n';
+    doc += '```\n';
+    doc += '- Buttons:\n';
+    doc += '  - "Als PDF exportieren" → downloadAnlageVPDF\n';
+    doc += '  - "Speichern" → AnlageVSubmission erstellen\n';
+    doc += '  - "Zurück" → Zu Step 4\n\n';
+    
+    doc += '### 9.3 Ausgabe/Ergebnis\n\n';
+    doc += '**Erstellte Datensätze**:\n';
+    doc += '- 1x AnlageVSubmission mit allen berechneten Werten\n';
+    doc += '- 1x PDF-Datei (optional, zum Download)\n\n';
+    doc += '**Verwendung**:\n';
+    doc += '- PDF an Steuerberater senden\n';
+    doc += '- Daten in ELSTER übernehmen (manuell oder später automatisch)\n';
+    doc += '- Als Anlage zur Steuererklärung\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## WORKFLOW 10: EIGENTÜMERABRECHNUNG ERSTELLEN\n\n';
+    
+    doc += '### 10.1 Workflow-Identifikation\n\n';
+    doc += '- **Workflow-Name**: Jahresabrechnung für Eigentümer\n';
+    doc += '- **Hauptziel**: Einnahmen/Ausgaben pro Eigentümer aufschlüsseln\n';
+    doc += '- **Komplexität**: ⭐⭐⭐ Mittel bis Komplex (bei Gesellschaften)\n';
+    doc += '- **Dauer**: 15-30 Minuten\n\n';
+    
+    doc += '### 10.2 Besonderheit bei Miteigentum (GbR, GmbH)\n\n';
+    doc += '**SCHRITT 1**: Analytics/Reporting-Modul\n';
+    doc += '**SCHRITT 2**: "Eigentümerabrechnung" auswählen\n';
+    doc += '**SCHRITT 3**: Gebäude + Jahr wählen\n';
+    doc += '**SCHRITT 4**: System berechnet:\n';
+    doc += '```javascript\n';
+    doc += '// Alle Einnahmen und Ausgaben des Jahres\n';
+    doc += 'const einnahmen = sum(Mieteinnahmen)\n';
+    doc += 'const ausgaben = sum(Alle Kosten)\n';
+    doc += 'const ergebnis = einnahmen - ausgaben\n';
+    doc += '\n';
+    doc += '// Bei Gesellschaft: Pro Gesellschafter\n';
+    doc += 'for (const shareholder of shareholders) {\n';
+    doc += '  const anteil = shareholder.share_percentage / 100\n';
+    doc += '  shareholder_einnahmen = einnahmen * anteil\n';
+    doc += '  shareholder_ausgaben = ausgaben * anteil\n';
+    doc += '  shareholder_ergebnis = ergebnis * anteil\n';
+    doc += '}\n';
+    doc += '```\n';
+    doc += '**SCHRITT 5**: PDF generieren mit Aufteilung pro Gesellschafter\n';
+    doc += '**Verwendung**: Für Anlage V der einzelnen Gesellschafter\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## WORKFLOW 11: DOKUMENT MIT TEMPLATE ERSTELLEN\n\n';
+    
+    doc += '### 11.1 Workflow-Identifikation\n\n';
+    doc += '- **Workflow-Name**: Document-Wizard (Standard)\n';
+    doc += '- **Hauptziel**: Beliebiges Dokument aus Template generieren\n';
+    doc += '- **Häufigkeit**: Häufig (mehrmals pro Woche)\n';
+    doc += '- **Komplexität**: ⭐⭐ Mittel\n';
+    doc += '- **Dauer**: 3-5 Minuten\n\n';
+    
+    doc += '### 11.2 Schritt-für-Schritt\n\n';
+    
+    doc += '**SCHRITT 1: Start**\n';
+    doc += '- Seite: "Dokumente"\n';
+    doc += '- Klick: "Neues Dokument"\n';
+    doc += '- Component: DocumentCreateWizard\n';
+    doc += '- 4 Steps mit Progress-Bar\n\n';
+    
+    doc += '**SCHRITT 2: Template wählen**\n';
+    doc += '- UI: Grid-Layout mit Template-Karten\n';
+    doc += '- Kategorien als Tabs:\n';
+    doc += '  - Mietrecht (Mieterhöhung, Kündigung, Abmahnung)\n';
+    doc += '  - Verwaltung (NK-Abrechnung, Zahlungserinnerung)\n';
+    doc += '  - Finanzen (Eigentümerabrechnung)\n';
+    doc += '  - Übergabeprotokolle\n';
+    doc += '  - Sonstiges\n';
+    doc += '- Jede Karte zeigt:\n';
+    doc += '  - Template-Name\n';
+    doc += '  - Icon\n';
+    doc += '  - Kurzbeschreibung\n';
+    doc += '  - Benötigte Datenquellen (Icons)\n';
+    doc += '- User klickt Template → "Weiter"\n\n';
+    
+    doc += '**SCHRITT 3: Datenquellen verknüpfen**\n';
+    doc += '- System zeigt nur erforderliche Dropdowns (aus required_data_sources)\n';
+    doc += '- Beispiel für "Mieterhöhung":\n';
+    doc += '  - Gebäude (Dropdown, lädt alle Buildings)\n';
+    doc += '  - Wohneinheit (Dropdown, gefiltert nach building_id)\n';
+    doc += '  - Mietvertrag (Dropdown, gefiltert nach unit_id)\n';
+    doc += '  - Mieter (Auto-geladen aus contract.tenant_id)\n';
+    doc += '- Empfängeradresse wird automatisch befüllt:\n';
+    doc += '  ```javascript\n';
+    doc += '  recipient_name = `${tenant.first_name} ${tenant.last_name}`\n';
+    doc += '  recipient_address = `${unit.name}\\n${building.street} ${building.house_number}\\n${building.postal_code} ${building.city}`\n';
+    doc += '  ```\n';
+    doc += '- Editierbar falls Korrektur nötig\n';
+    doc += '- "Weiter"\n\n';
+    
+    doc += '**SCHRITT 4: Textbausteine**\n';
+    doc += '- UI: Liste verfügbarer TextBlocks für diese Kategorie\n';
+    doc += '- Checkbox-Liste:\n';
+    doc += '  □ Begrüßung (formal)\n';
+    doc += '  □ Kündigungsfristen-Hinweis\n';
+    doc += '  □ Zahlungshinweis mit IBAN\n';
+    doc += '  □ Grußformel\n';
+    doc += '- User wählt relevante Bausteine (Multi-Select)\n';
+    doc += '- Live-Preview zeigt kombinierten Text\n';
+    doc += '- "Weiter"\n\n';
+    
+    doc += '**SCHRITT 5: Preview & Erstellen**\n';
+    doc += '- UI: HTML-Vorschau des Dokuments (wie PDF aussehen wird)\n';
+    doc += '- Alle Platzhalter bereits ersetzt\n';
+    doc += '- Buttons:\n';
+    doc += '  - "Zurück" → Änderungen möglich\n';
+    doc += '  - "Dokument erstellen" → Finale Generierung\n';
+    doc += '- Bei Klick auf "Erstellen":\n';
+    doc += '  1. Document Entity erstellen (status="erstellt")\n';
+    doc += '  2. Backend-Call: generatePDF({ html })\n';
+    doc += '  3. Progress-Spinner anzeigen (~3 Sekunden)\n';
+    doc += '  4. Success: "Dokument erfolgreich erstellt"\n';
+    doc += '  5. Redirect zu Document-Detailansicht\n\n';
+    
+    doc += '### 11.3 Nach Generierung\n\n';
+    doc += '**Aktionen auf Document-Detail**:\n';
+    doc += '- 👁️ Vorschau (PDF im Browser öffnen)\n';
+    doc += '- ⬇️ Download (PDF herunterladen)\n';
+    doc += '- ✉️ Per E-Mail senden (Dialog mit Empfänger-Auswahl)\n';
+    doc += '- 📮 Per Post versenden (zu Workflow 15)\n';
+    doc += '- ✏️ Status ändern (zu_erledigen → erstellt → versendet → unterschrieben)\n';
+    doc += '- 🗑️ Löschen (nur wenn nicht versendet)\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## WORKFLOW 12: E-MAIL EMPFANGEN & AUTOMATISCH VERARBEITEN\n\n';
+    
+    doc += '### 12.1 Workflow-Identifikation\n\n';
+    doc += '- **Workflow-Name**: Intelligente E-Mail-Verarbeitung\n';
+    doc += '- **Hauptziel**: E-Mails automatisch in Tasks umwandeln\n';
+    doc += '- **Häufigkeit**: Automatisch (Scheduled Task)\n';
+    doc += '- **Komplexität**: ⭐⭐⭐ Komplex (KI-gestützt)\n';
+    doc += '- **Dauer**: Automatisch im Hintergrund\n\n';
+    
+    doc += '### 12.2 Setup (einmalig)\n\n';
+    doc += '**SCHRITT 1**: Navigation zu "Kommunikation" → Tab "Emails"\n';
+    doc += '**SCHRITT 2**: Sub-Tab "Einstellungen"\n';
+    doc += '**SCHRITT 3**: Klick "E-Mail-Konto hinzufügen"\n';
+    doc += '**SCHRITT 4**: IMAPAccountForm\n';
+    doc += '| Feld | Beispiel |\n';
+    doc += '|------|----------|\n';
+    doc += '| Name | "Verwaltung Hauptkonto" |\n';
+    doc += '| E-Mail | "verwaltung@example.com" |\n';
+    doc += '| IMAP-Server | "imap.gmail.com" |\n';
+    doc += '| IMAP-Port | 993 |\n';
+    doc += '| Benutzername | "verwaltung@example.com" |\n';
+    doc += '| Passwort | "***" (verschlüsselt gespeichert) |\n';
+    doc += '| SSL | ✅ Ja (Checkbox) |\n';
+    doc += '| KI-Analyse aktivieren | ✅ Ja (Opt-in!) |\n\n';
+    doc += '**SCHRITT 5**: "Verbindung testen"\n';
+    doc += '- System versucht IMAP-Login\n';
+    doc += '- Bei Erfolg: ✅ "Verbindung erfolgreich"\n';
+    doc += '- Bei Fehler: ❌ "Login fehlgeschlagen - Zugangsdaten prüfen"\n';
+    doc += '**SCHRITT 6**: Speichern\n\n';
+    
+    doc += '### 12.3 Automatischer Ablauf (Scheduled Task)\n\n';
+    doc += '**Funktion**: syncEmails (läuft alle 15 Minuten)\n\n';
+    doc += '```javascript\n';
+    doc += '// 1. Alle aktiven IMAP-Konten abrufen\n';
+    doc += 'const accounts = await IMAPAccount.filter({ is_active: true });\n';
+    doc += '\n';
+    doc += 'for (const account of accounts) {\n';
+    doc += '  // 2. IMAP-Verbindung herstellen\n';
+    doc += '  const connection = await imap.connect(account);\n';
+    doc += '  \n';
+    doc += '  // 3. Neue E-Mails abrufen (seit last_sync)\n';
+    doc += '  const emails = await connection.search(["UNSEEN"]);\n';
+    doc += '  \n';
+    doc += '  for (const email of emails) {\n';
+    doc += '    // 4. E-Mail speichern\n';
+    doc += '    const savedEmail = await Email.create({\n';
+    doc += '      subject: email.subject,\n';
+    doc += '      sender_email: email.from,\n';
+    doc += '      sender_name: email.fromName,\n';
+    doc += '      received_date: email.date,\n';
+    doc += '      body_text: email.text,\n';
+    doc += '      body_html: email.html,\n';
+    doc += '      attachments: email.attachments,\n';
+    doc += '      imap_account_id: account.id,\n';
+    doc += '      is_processed: false\n';
+    doc += '    });\n';
+    doc += '    \n';
+    doc += '    // 5. KI-Analyse (falls aktiviert)\n';
+    doc += '    if (account.ai_analysis_enabled) {\n';
+    doc += '      const analysis = await analyzeEmailForTask({\n';
+    doc += '        email_id: savedEmail.id\n';
+    doc += '      });\n';
+    doc += '      \n';
+    doc += '      // 6. Task-Vorschlag speichern\n';
+    doc += '      await Email.update(savedEmail.id, {\n';
+    doc += '        ai_suggested_task: analysis.suggested_task\n';
+    doc += '      });\n';
+    doc += '    }\n';
+    doc += '  }\n';
+    doc += '}\n';
+    doc += '```\n\n';
+    
+    doc += '### 12.4 User-Interaktion mit analysierten E-Mails\n\n';
+    doc += '**SCHRITT 1**: User öffnet "Kommunikation" → "Emails"\n';
+    doc += '**SCHRITT 2**: Liste zeigt neue E-Mails mit KI-Vorschlag\n';
+    doc += '- UI: E-Mail-Karte mit Badge "✨ Task-Vorschlag"\n';
+    doc += '- Klick öffnet Detail-View\n';
+    doc += '**SCHRITT 3**: KI-Vorschlag anzeigen\n';
+    doc += '```\n';
+    doc += 'Von: mieter@example.com\n';
+    doc += 'Betreff: Heizung defekt in Whg. 3\n';
+    doc += '\n';
+    doc += '✨ VORGESCHLAGENER TASK:\n';
+    doc += '├ Titel: "Heizungsreparatur Whg. 3 beauftragen"\n';
+    doc += '├ Priorität: Hoch\n';
+    doc += '├ Fällig: 3 Tage\n';
+    doc += '├ Zugeordnet: Whg. 3, Mieter: Klaus Schmidt\n';
+    doc += '└ Nächste Aktion: "Handwerker kontaktieren"\n';
+    doc += '```\n';
+    doc += '**SCHRITT 4**: Buttons\n';
+    doc += '- "Task erstellen" → Task wird mit Vorschlag erstellt, Email.has_task = true\n';
+    doc += '- "Bearbeiten & erstellen" → Task-Formular öffnet sich (vorausgefüllt)\n';
+    doc += '- "Ignorieren" → Email bleibt ohne Task\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## WORKFLOW 13: AUFGABE ERSTELLEN & WORKFLOW TRIGGERN\n\n';
+    
+    doc += '### 13.1 Manuelle Task-Erstellung\n\n';
+    doc += '**SCHRITT 1**: Navigation zu "Aufgaben"\n';
+    doc += '**SCHRITT 2**: Klick "Neue Aufgabe"\n';
+    doc += '**SCHRITT 3**: TaskForm\n';
+    doc += '| Feld | Pflicht | Typ | Beispiel |\n';
+    doc += '|------|---------|-----|----------|\n';
+    doc += '| Titel | ✅ | Text | "Heizung reparieren" |\n';
+    doc += '| Beschreibung | ❌ | Textarea | "Mieter meldet defekte Heizung..." |\n';
+    doc += '| Priorität | ✅ | Dropdown | "Hoch" |\n';
+    doc += '| Fälligkeitsdatum | ❌ | Datum | 10.01.2024 |\n';
+    doc += '| Status | Auto | - | "offen" |\n';
+    doc += '| Zugeordnetes Objekt | ❌ | Dropdown | "Hauptstraße 1" |\n';
+    doc += '| Zugeordnete Wohnung | ❌ | Dropdown | "Whg. 3" |\n';
+    doc += '| Zugeordneter Mieter | ❌ | Dropdown | "Klaus Schmidt" |\n';
+    doc += '| Verknüpftes Dokument | ❌ | Dropdown | - |\n\n';
+    
+    doc += '### 13.2 Workflow-Trigger\n\n';
+    doc += '**Wenn Task gespeichert wird**:\n';
+    doc += '```javascript\n';
+    doc += '// System prüft: Gibt es passenden Workflow?\n';
+    doc += 'const workflows = await Workflow.filter({\n';
+    doc += '  document_type: task.document_type,\n';
+    doc += '  is_active: true\n';
+    doc += '});\n';
+    doc += '\n';
+    doc += 'if (workflows.length > 0) {\n';
+    doc += '  const workflow = workflows[0];\n';
+    doc += '  task.workflow_id = workflow.id;\n';
+    doc += '  \n';
+    doc += '  // Ersten Workflow-Schritt starten\n';
+    doc += '  const firstStep = await WorkflowStep.filter({\n';
+    doc += '    workflow_id: workflow.id,\n';
+    doc += '    step_order: 1\n';
+    doc += '  });\n';
+    doc += '  \n';
+    doc += '  // Aktion ausführen (z.B. Dokument erstellen)\n';
+    doc += '  await executeWorkflowStep(firstStep, task);\n';
+    doc += '}\n';
+    doc += '```\n\n';
+    
+    doc += '### 13.3 Workflow-Fortschritt\n\n';
+    doc += '- Task-Detail zeigt: "📋 Workflow: Mieterhöhungsprozess (Schritt 2/5)"\n';
+    doc += '- Buttons:\n';
+    doc += '  - "Schritt abschließen" → Nächster Step\n';
+    doc += '  - "Workflow abbrechen" → Task wird normaler Task\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## WORKFLOW 14: BANKKONTO VERBINDEN (FinAPI)\n\n';
+    
+    doc += '### 14.1 Workflow-Identifikation\n\n';
+    doc += '- **Workflow-Name**: Multi-Banking Setup\n';
+    doc += '- **Hauptziel**: Automatischer Transaktionsimport einrichten\n';
+    doc += '- **Komplexität**: ⭐⭐ Mittel\n';
+    doc += '- **Dauer**: 5-10 Minuten (erstmalig), 2 Min (weitere Konten)\n\n';
+    
+    doc += '### 14.2 Schritt-für-Schritt\n\n';
+    
+    doc += '**SCHRITT 1**: Navigation zu "Bank/Kasse"\n';
+    doc += '**SCHRITT 2**: Klick "Bankkonto verbinden"\n';
+    doc += '**SCHRITT 3**: FinAPI-Dialog öffnet sich\n';
+    doc += '- Info-Text: "Über FinAPI können Sie Ihre Bankkonten sicher verbinden"\n';
+    doc += '- Button "Mit FinAPI verbinden"\n\n';
+    doc += '**SCHRITT 4**: FinAPI Web Form (externe Seite)\n';
+    doc += '- User wird zu FinAPI weitergeleitet\n';
+    doc += '- Bank auswählen aus Liste (>4000 deutsche Banken)\n';
+    doc += '- Online-Banking Zugangsdaten eingeben\n';
+    doc += '- Optional: TAN-Verfahren (SMS, App, etc.)\n';
+    doc += '- FinAPI holt Kontoliste\n';
+    doc += '- User wählt Konten aus (Multi-Select)\n';
+    doc += '- "Verbindung herstellen"\n\n';
+    
+    doc += '**SCHRITT 5**: Rücksprung zur App\n';
+    doc += '**SCHRITT 6**: System importiert Konten\n';
+    doc += '```javascript\n';
+    doc += 'const response = await base44.functions.invoke("finapiImportAccounts", {\n';
+    doc += '  connection_id: finapi_connection_id\n';
+    doc += '});\n';
+    doc += '\n';
+    doc += '// Pro Konto\n';
+    doc += 'for (const account of response.data.accounts) {\n';
+    doc += '  await BankAccount.create({\n';
+    doc += '    name: account.accountName,\n';
+    doc += '    iban: account.iban,\n';
+    doc += '    current_balance: account.balance,\n';
+    doc += '    finapi_connection_id: connection_id,\n';
+    doc += '    finapi_user_id: user_id\n';
+    doc += '  });\n';
+    doc += '}\n';
+    doc += '```\n\n';
+    
+    doc += '**SCHRITT 7**: Erste Synchronisation\n';
+    doc += '- Dialog: "Transaktionen der letzten 90 Tage importieren?"\n';
+    doc += '- Bei JA:\n';
+    doc += '  ```javascript\n';
+    doc += '  await base44.functions.invoke("finapiSync", {\n';
+    doc += '    account_id: account.id\n';
+    doc += '  });\n';
+    doc += '  ```\n';
+    doc += '- Import läuft (~10-30 Sekunden)\n';
+    doc += '- Success: "142 Transaktionen importiert"\n\n';
+    
+    doc += '### 14.3 Automatische Synchronisation\n\n';
+    doc += '- Scheduled Task: Täglich um 6:00 Uhr\n';
+    doc += '- Funktion: finapiSync (für alle verbundenen Konten)\n';
+    doc += '- PSD2-Limit: Max. 4x pro Tag\n';
+    doc += '- Bei Fehler (z.B. Session abgelaufen):\n';
+    doc += '  - Notification erstellen: "Bankkonto neu verbinden"\n';
+    doc += '  - User muss TAN erneut eingeben (90-Tage-Regel)\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## WORKFLOW 15: BRIEF PER POST VERSENDEN (LetterXpress)\n\n';
+    
+    doc += '### 15.1 Workflow-Identifikation\n\n';
+    doc += '- **Workflow-Name**: Postversand mit Tracking\n';
+    doc += '- **Hauptziel**: Dokument rechtssicher per Post zustellen\n';
+    doc += '- **Häufigkeit**: Mehrmals pro Woche\n';
+    doc += '- **Komplexität**: ⭐ Einfach\n';
+    doc += '- **Dauer**: 2 Minuten\n\n';
+    
+    doc += '### 15.2 Schritt-für-Schritt\n\n';
+    
+    doc += '**SCHRITT 1**: Dokument in Liste → Klick 📮-Icon "Per Post versenden"\n';
+    doc += '**SCHRITT 2**: SendLetterDialog öffnet sich\n';
+    doc += '**UI-Anzeige**:\n';
+    doc += '```\n';
+    doc += '┌──────────────────────────────────────────┐\n';
+    doc += '│ Brief per Post versenden                 │\n';
+    doc += '├──────────────────────────────────────────┤\n';
+    doc += '│ Dokument: Mieterhöhung 2024 - Whg. 3     │\n';
+    doc += '│ Empfänger: Klaus Schmidt                 │\n';
+    doc += '│ Adresse: Beispielweg 5, 54321 Hamburg    │\n';
+    doc += '│ Seiten: 2                                │\n';
+    doc += '│                                          │\n';
+    doc += '│ Versandoptionen:                         │\n';
+    doc += '│ ○ Normal (Standard-Brief)                │\n';
+    doc += '│ ● Einschreiben Einwurf (R1) +3,69€      │\n';
+    doc += '│ ○ Einschreiben (R2) +4,05€              │\n';
+    doc += '│                                          │\n';
+    doc += '│ ☐ Farbdruck (+0,10€/Seite)              │\n';
+    doc += '│ ☐ Duplex (beidseitig)                   │\n';
+    doc += '│                                          │\n';
+    doc += '│ Kosten: 4,49€ (netto: 3,77€)            │\n';
+    doc += '│ Guthaben: 142,50€                        │\n';
+    doc += '│                                          │\n';
+    doc += '│ [Abbrechen]  [Jetzt versenden]          │\n';
+    doc += '└──────────────────────────────────────────┘\n';
+    doc += '```\n\n';
+    
+    doc += '**SCHRITT 3**: User wählt Versandart (Radio-Buttons)\n';
+    doc += '- Bei Änderung: Live-Berechnung der Kosten\n';
+    doc += '- calculatePrice API-Call im Hintergrund\n\n';
+    
+    doc += '**SCHRITT 4**: "Jetzt versenden" klicken\n';
+    doc += '**Validierung**:\n';
+    doc += '- Guthaben ausreichend?\n';
+    doc += '  - ❌ Falls NEIN: "Guthaben aufladen unter Einstellungen"\n';
+    doc += '- Empfängeradresse vollständig?\n';
+    doc += '  - ❌ Falls NEIN: "Adresse vervollständigen"\n\n';
+    
+    doc += '**SCHRITT 5**: Versand-Prozess (Backend)\n';
+    doc += '```javascript\n';
+    doc += '// 1. PDF von Storage laden\n';
+    doc += 'const pdfResponse = await fetch(document.pdf_url);\n';
+    doc += 'const pdfBuffer = await pdfResponse.arrayBuffer();\n';
+    doc += '\n';
+    doc += '// 2. Base64 encoden\n';
+    doc += 'const base64 = btoa(String.fromCharCode(...new Uint8Array(pdfBuffer)));\n';
+    doc += '\n';
+    doc += '// 3. Checksum berechnen (SHA-256, 32 Zeichen)\n';
+    doc += 'const checksum = await crypto.subtle.digest("SHA-256", pdfBuffer);\n';
+    doc += 'const checksumHex = Array.from(new Uint8Array(checksum))\n';
+    doc += '  .map(b => b.toString(16).padStart(2, "0"))\n';
+    doc += '  .join("")\n';
+    doc += '  .substring(0, 32);\n';
+    doc += '\n';
+    doc += '// 4. LetterXpress API-Call\n';
+    doc += 'const lxResponse = await axios.post("https://api.letterxpress.de/v1/send", {\n';
+    doc += '  auth: { username, apikey },\n';
+    doc += '  letter: {\n';
+    doc += '    base64_file: base64,\n';
+    doc += '    base64_checksum: checksumHex,\n';
+    doc += '    specification: { color: "1", mode: "simplex", ship: "national" },\n';
+    doc += '    attaching: { send: "r1" }\n';
+    doc += '  }\n';
+    doc += '});\n';
+    doc += '\n';
+    doc += '// 5. LetterShipment speichern\n';
+    doc += 'await LetterShipment.create({\n';
+    doc += '  lxp_job_id: lxResponse.data.job.id,\n';
+    doc += '  document_id: document.id,\n';
+    doc += '  status: "queue",\n';
+    doc += '  cost_net: lxResponse.data.job.price.net,\n';
+    doc += '  cost_gross: lxResponse.data.job.price.gross,\n';
+    doc += '  pages: document.seitenanzahl,\n';
+    doc += '  shipping_type: "r1",\n';
+    doc += '  recipient_name: document.recipient_name,\n';
+    doc += '  recipient_address: document.recipient_address\n';
+    doc += '});\n';
+    doc += '\n';
+    doc += '// 6. Document aktualisieren\n';
+    doc += 'await Document.update(document.id, {\n';
+    doc += '  versandstatus: "in_versand",\n';
+    doc += '  lxp_job_id: lxResponse.data.job.id\n';
+    doc += '});\n';
+    doc += '```\n\n';
+    
+    doc += '**SCHRITT 6**: Success-Meldung\n';
+    doc += '- Toast: "✅ Brief erfolgreich versendet (Job-ID: 12345678)"\n';
+    doc += '- Dokument-Status: "versendet"\n';
+    doc += '- Tracking: Wird täglich automatisch aktualisiert\n\n';
+    
+    doc += '### 15.3 Tracking-Updates (Automatisch)\n\n';
+    doc += '**Scheduled Task**: updateLetterTrackingCodes (täglich 8:00 Uhr, Admin-only)\n\n';
+    doc += '```javascript\n';
+    doc += '// Alle Sendungen mit status != "sent"\n';
+    doc += 'const shipments = await LetterShipment.filter({\n';
+    doc += '  status: { $in: ["queue", "hold", "done"] }\n';
+    doc += '});\n';
+    doc += '\n';
+    doc += 'for (const shipment of shipments) {\n';
+    doc += '  const jobStatus = await letterxpress.getJob(shipment.lxp_job_id);\n';
+    doc += '  \n';
+    doc += '  await LetterShipment.update(shipment.id, {\n';
+    doc += '    status: jobStatus.status,\n';
+    doc += '    tracking_code: jobStatus.tracking_code,\n';
+    doc += '    dispatch_date: jobStatus.dispatch_date\n';
+    doc += '  });\n';
+    doc += '  \n';
+    doc += '  if (jobStatus.status === "sent") {\n';
+    doc += '    await Document.update(shipment.document_id, {\n';
+    doc += '      versandstatus: "versendet",\n';
+    doc += '      versandt_am: new Date()\n';
+    doc += '    });\n';
+    doc += '  }\n';
+    doc += '}\n';
+    doc += '```\n\n';
+    
+    doc += '**User-Benachrichtigung**:\n';
+    doc += '- Notification: "📬 Brief wurde zugestellt (Tracking: 1234567890DE)"\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## WORKFLOW 16: MASSENÄNDERUNG DURCHFÜHREN\n\n';
+    
+    doc += '### 16.1 Beispiel: Alle Vorauszahlungen anpassen\n\n';
+    doc += '**SCHRITT 1**: Mieter-Liste → Bulk-Select (Checkboxen)\n';
+    doc += '**SCHRITT 2**: Mehrere Verträge auswählen\n';
+    doc += '**SCHRITT 3**: Bulk-Actions Dropdown: "Vorauszahlungen anpassen"\n';
+    doc += '**SCHRITT 4**: Dialog mit Optionen:\n';
+    doc += '- ○ Prozentual erhöhen (+X%)\n';
+    doc += '- ○ Absoluten Betrag hinzufügen (+X€)\n';
+    doc += '- ● Neue Werte setzen\n';
+    doc += '**SCHRITT 5**: Werte eingeben\n';
+    doc += '- Nebenkosten neu: 165,00 € (statt 150,00 €)\n';
+    doc += '**SCHRITT 6**: Vorschau anzeigen (Tabelle)\n';
+    doc += '| Vertrag | Alt | Neu | Differenz |\n';
+    doc += '|---------|-----|-----|----------|\n';
+    doc += '| Whg. 1  | 150€| 165€| +15€     |\n';
+    doc += '| Whg. 2  | 150€| 165€| +15€     |\n';
+    doc += '| Whg. 3  | 150€| 165€| +15€     |\n';
+    doc += '**SCHRITT 7**: "Alle aktualisieren" → Backend-Call\n';
+    doc += '```javascript\n';
+    doc += 'await base44.functions.invoke("bulkUpdateFinancialItems", {\n';
+    doc += '  contract_ids: [id1, id2, id3],\n';
+    doc += '  updates: { utilities: 165 }\n';
+    doc += '});\n';
+    doc += '```\n';
+    doc += '**Ergebnis**: 3x LeaseContract aktualisiert (mit Versionierung!)\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## WORKFLOW 17: DATEN EXPORTIEREN\n\n';
+    
+    doc += '### 17.1 Varianten\n\n';
+    
+    doc += '#### VARIANTE A: CSV-Export (Transaktionen)\n\n';
+    doc += '**SCHRITT 1**: Bank/Kasse → Transaktions-Liste\n';
+    doc += '**SCHRITT 2**: Filter setzen (Zeitraum, Konto, Kategorie)\n';
+    doc += '**SCHRITT 3**: Button "Exportieren" → Dropdown\n';
+    doc += '- CSV (Excel-kompatibel)\n';
+    doc += '- PDF (Übersicht)\n';
+    doc += '- JSON (für Entwickler)\n';
+    doc += '**SCHRITT 4**: CSV wählen\n';
+    doc += '**Download**: transactions_2024.csv\n';
+    doc += '**Inhalt**: Datum, Betrag, Verwendungszweck, Kategorie, Status\n\n';
+    
+    doc += '#### VARIANTE B: Anlage V Export\n\n';
+    doc += '**SCHRITT 1**: Steuerformulare → Anlage V Detail\n';
+    doc += '**SCHRITT 2**: Button "Als PDF exportieren"\n';
+    doc += '**SCHRITT 3**: Backend generiert PDF (exportAnlageVPDF)\n';
+    doc += '**SCHRITT 4**: Download startet automatisch\n\n';
+    
+    doc += '#### VARIANTE C: Komplett-Export (alle Entwickler-Dokus)\n\n';
+    doc += '**SCHRITT 1**: Entwickler-Doku → "Alle als ZIP"\n';
+    doc += '**SCHRITT 2**: System erstellt ZIP-Archiv mit allen MD + JSON\n';
+    doc += '**SCHRITT 3**: Download: app-dokumentation-2024-01-07.zip\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## WORKFLOW 18: REPORTING / AUSWERTUNG ERSTELLEN\n\n';
+    
+    doc += '### 18.1 Dashboard-Auswertungen (Automatisch)\n\n';
+    doc += '**Seite**: Dashboard (Startseite)\n';
+    doc += '**Anzeige**:\n';
+    doc += '- Statistik-Karten:\n';
+    doc += '  - Anzahl Gebäude\n';
+    doc += '  - Anzahl Einheiten (vermietet / frei)\n';
+    doc += '  - Mieteinnahmen (Monat / Jahr)\n';
+    doc += '  - Offene Buchungen (Betrag)\n';
+    doc += '- Charts:\n';
+    doc += '  - Einnahmen vs. Ausgaben (12 Monate)\n';
+    doc += '  - Vermietungsquote\n';
+    doc += '  - Offene Zahlungen Timeline\n';
+    doc += '- Recent Activity Feed\n';
+    doc += '**Datenquelle**: Echtzeit-Aggregationen aus DB\n\n';
+    
+    doc += '### 18.2 Custom Reports\n\n';
+    doc += '**SCHRITT 1**: Navigation zu "Analytics" (falls implementiert)\n';
+    doc += '**SCHRITT 2**: Report-Typ wählen:\n';
+    doc += '- Mieteinnahmen-Report\n';
+    doc += '- Kosten-Report (nach Kategorie)\n';
+    doc += '- Cashflow-Analyse\n';
+    doc += '- Steuer-Report (Anlage V Vorschau)\n';
+    doc += '**SCHRITT 3**: Filter setzen (Zeitraum, Gebäude, etc.)\n';
+    doc += '**SCHRITT 4**: "Report erstellen"\n';
+    doc += '**SCHRITT 5**: Interactive Charts anzeigen (Recharts)\n';
+    doc += '**SCHRITT 6**: Export-Optionen:\n';
+    doc += '- Als PDF (mit Charts als Bilder)\n';
+    doc += '- Als Excel (Rohdaten)\n';
+    doc += '- Per E-Mail versenden\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## ZUSAMMENFASSUNG: WORKFLOW-KOMPLEXITÄT\n\n';
+    doc += '| Workflow | Komplexität | Dauer | Häufigkeit | Automation |\n';
+    doc += '|----------|-------------|-------|------------|------------|\n';
+    doc += '| Objekt anlegen | ⭐⭐⭐ | 15 Min | Selten | Teilweise |\n';
+    doc += '| Eigentümer anlegen | ⭐⭐ | 5 Min | Selten | Nein |\n';
+    doc += '| Eigentümerwechsel | ⭐⭐ | 5 Min | Sehr selten | Teilweise |\n';
+    doc += '| Mietvertrag | ⭐⭐⭐ | 8 Min | Häufig | Ja (Buchungen) |\n';
+    doc += '| Mieter Ein-/Auszug | ⭐⭐ | 10 Min | Häufig | Teilweise |\n';
+    doc += '| Rechnung erfassen (manuell) | ⭐ | 2 Min | Häufig | Nein |\n';
+    doc += '| Rechnung erfassen (KI) | ⭐ | 30 Sek | Häufig | Ja (KI) |\n';
+    doc += '| Beleg kategorisieren | ⭐⭐ | 1 Min | Häufig | Teilweise |\n';
+    doc += '| Betriebskosten | ⭐⭐⭐⭐ | 45 Min | Jährlich | Ja (Berechnung) |\n';
+    doc += '| Anlage V | ⭐⭐⭐⭐ | 15 Min | Jährlich | Ja (Berechnung) |\n';
+    doc += '| Eigentümerabrechnung | ⭐⭐⭐ | 20 Min | Jährlich | Ja |\n';
+    doc += '| Dokument erstellen | ⭐⭐ | 4 Min | Häufig | Ja (PDF) |\n';
+    doc += '| E-Mail verarbeiten | - | Auto | Laufend | Voll auto |\n';
+    doc += '| Task erstellen | ⭐ | 1 Min | Täglich | Optional (KI) |\n';
+    doc += '| Bank verbinden | ⭐⭐ | 8 Min | Einmalig | Ja (Sync) |\n';
+    doc += '| Post versenden | ⭐ | 2 Min | Häufig | Ja (Tracking) |\n';
+    doc += '| Massenänderung | ⭐⭐ | 3 Min | Selten | Nein |\n';
+    doc += '| Daten exportieren | ⭐ | 1 Min | Monatlich | Nein |\n';
+    doc += '| Reporting | ⭐ | 2 Min | Wöchentlich | Ja (Auto) |\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## HÄUFIGE USER-FEHLER & LÖSUNGEN\n\n';
+    
+    doc += '### ❌ "Kann Vertrag nicht speichern"\n';
+    doc += '**Ursache**: Wohnung bereits vermietet\n';
+    doc += '**Lösung**: Alten Vertrag beenden oder andere Wohnung wählen\n\n';
+    
+    doc += '### ❌ "Buchungen werden nicht generiert"\n';
+    doc += '**Ursache**: BuildingTaxLibrary fehlt\n';
+    doc += '**Lösung**: Steuerliche Bibliothek initialisieren (Building Detail → Finanzen)\n\n';
+    
+    doc += '### ❌ "PDF-Generierung schlägt fehl"\n';
+    doc += '**Ursache 1**: Empfängeradresse fehlt\n';
+    doc += '**Lösung**: Tenant-Daten vervollständigen\n';
+    doc += '**Ursache 2**: Template ungültig (Platzhalter-Fehler)\n';
+    doc += '**Lösung**: Template prüfen oder anderes Template wählen\n\n';
+    
+    doc += '### ❌ "LetterXpress Versand fehlgeschlagen"\n';
+    doc += '**Ursache 1**: Kein Guthaben\n';
+    doc += '**Lösung**: Guthaben aufladen (Link in Fehlermeldung)\n';
+    doc += '**Ursache 2**: Empfängeradresse unvollständig\n';
+    doc += '**Lösung**: Adresse muss PLZ + Ort enthalten\n\n';
+    
+    doc += '### ⚠️ "Anlage V zeigt Verlust > Einnahmen"\n';
+    doc += '**Ursache**: Hohe Werbungskosten (z.B. Sanierung)\n';
+    doc += '**Hinweis**: Steuerlich OK, aber ggf. Liebhaberei-Prüfung durch Finanzamt\n';
+    doc += '**Tipp**: Herstellungskosten auf AfA umbuchen (15%-Regel prüfen)\n\n';
+    
+    doc += '### ⚠️ "FinAPI fordert erneute TAN-Eingabe"\n';
+    doc += '**Ursache**: PSD2 90-Tage-Regel\n';
+    doc += '**Lösung**: Bankkonto neu verbinden (TAN eingeben) → Automatisch alle 90 Tage\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## BEST PRACTICES\n\n';
+    
+    doc += '### ✅ Datenqualität\n';
+    doc += '1. **Sofort vollständig erfassen**: Alle Pflichtfelder bei Ersterfassung ausfüllen\n';
+    doc += '2. **Adressen komplett**: Immer Straße + Hausnummer + PLZ + Ort (wichtig für Post!)\n';
+    doc += '3. **Vorauszahlungen hinterlegen**: Essentiell für korrekte NK-Abrechnung\n\n';
+    
+    doc += '### ✅ Steuerliche Korrektheit\n';
+    doc += '1. **Tax Library initialisieren**: IMMER bei neuem Gebäude\n';
+    doc += '2. **Rechnungen sofort kategorisieren**: Nicht auf Jahresende warten\n';
+    doc += '3. **15%-Regel beachten**: Große Reparaturen als Herstellung behandeln\n';
+    doc += '4. **AfA-Plan erstellen**: Bei Kauf sofort, nicht erst bei Steuererklärung\n\n';
+    
+    doc += '### ✅ Dokumenten-Versand\n';
+    doc += '1. **Rechtssicherheit**: Mieterhöhungen, Kündigungen IMMER per Einschreiben (R1/R2)\n';
+    doc += '2. **Kosten sparen**: Normale Abrechnungen können per Standard-Post\n';
+    doc += '3. **Tracking nutzen**: Postausgangsbuch regelmäßig prüfen\n\n';
+    
+    doc += '### ✅ Workflows\n';
+    doc += '1. **Reihenfolge beachten**: Erst Gebäude, dann Units, dann Verträge\n';
+    doc += '2. **Historisierung nutzen**: Alte Versionen werden automatisch bewahrt\n';
+    doc += '3. **Snapshots vertrauen**: Dokumente ändern sich nicht bei Datenänderung\n\n';
+    
     return doc;
 }
 
