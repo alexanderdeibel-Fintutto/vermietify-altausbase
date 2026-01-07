@@ -4137,7 +4137,8 @@ async function generateExternalIntegrationsDocComplete() {
     
     doc += '---\n\n';
     
-    doc += '## 3. Base44 Core Services\n\n';
+    // ===== BASE44 CORE =====
+    doc += '# 3. BASE44 CORE INTEGRATIONS\n\n';
     
     doc += '### 3.1 InvokeLLM (KI-Assistent)\n\n';
     doc += '**Zweck**: LLM-basierte Datenanalyse, Extraktion, Kategorisierung\n\n';
