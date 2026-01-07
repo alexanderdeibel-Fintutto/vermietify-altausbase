@@ -13,17 +13,18 @@ import FinAPICallback from './pages/FinAPICallback';
 import FinancialItems from './pages/FinancialItems';
 import Finanzen from './pages/Finanzen';
 import GeneratedBookings from './pages/GeneratedBookings';
+import HilfeCenter from './pages/HilfeCenter';
 import Invoices from './pages/Invoices';
 import Kommunikation from './pages/Kommunikation';
 import OperatingCosts from './pages/OperatingCosts';
+import SupportCenter from './pages/SupportCenter';
 import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
 import TaxForms from './pages/TaxForms';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import UnitDetail from './pages/UnitDetail';
-import SupportCenter from './pages/SupportCenter';
-import HilfeCenter from './pages/HilfeCenter';
 import UserFehler from './pages/UserFehler';
+import ProjectManagement from './pages/ProjectManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -43,17 +44,18 @@ export const PAGES = {
     "FinancialItems": FinancialItems,
     "Finanzen": Finanzen,
     "GeneratedBookings": GeneratedBookings,
+    "HilfeCenter": HilfeCenter,
     "Invoices": Invoices,
     "Kommunikation": Kommunikation,
     "OperatingCosts": OperatingCosts,
+    "SupportCenter": SupportCenter,
     "Tasks": Tasks,
     "Tax": Tax,
     "TaxForms": TaxForms,
     "TaxLibraryManagement": TaxLibraryManagement,
     "UnitDetail": UnitDetail,
-    "SupportCenter": SupportCenter,
-    "HilfeCenter": HilfeCenter,
     "UserFehler": UserFehler,
+    "ProjectManagement": ProjectManagement,
 }
 
 export const pagesConfig = {

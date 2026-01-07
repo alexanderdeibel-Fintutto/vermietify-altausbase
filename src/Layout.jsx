@@ -15,7 +15,8 @@ import {
     BookOpen,
     MessageSquare,
     HelpCircle,
-    AlertCircle
+    AlertCircle,
+    Target
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/notifications/NotificationCenter';
@@ -37,6 +38,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Betriebskosten', href: createPageUrl('OperatingCosts'), icon: FileText, page: 'OperatingCosts' },
     { name: 'Bank/Kasse', href: createPageUrl('BankAccounts'), icon: Landmark, page: 'BankAccounts' },
     { name: 'Entwickler-Doku', href: createPageUrl('DeveloperDocumentation'), icon: BookOpen, page: 'DeveloperDocumentation' },
+    { name: 'Projekt-Management', href: createPageUrl('ProjectManagement'), icon: Target, page: 'ProjectManagement' },
     { name: 'User-Fehler (Live)', href: createPageUrl('UserFehler'), icon: AlertCircle, page: 'UserFehler' },
     { name: 'Support-Center', href: createPageUrl('SupportCenter'), icon: MessageSquare, page: 'SupportCenter' },
     { name: 'Hilfe-Center', href: createPageUrl('HilfeCenter'), icon: HelpCircle, page: 'HilfeCenter' },
