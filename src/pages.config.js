@@ -26,6 +26,7 @@ import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import UnitDetail from './pages/UnitDetail';
 import WhatsAppSetup from './pages/WhatsAppSetup';
 import WhatsAppCommunication from './pages/WhatsAppCommunication';
+import WhatsAppSettings from './pages/WhatsAppSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -58,6 +59,7 @@ export const PAGES = {
     "UnitDetail": UnitDetail,
     "WhatsAppSetup": WhatsAppSetup,
     "WhatsAppCommunication": WhatsAppCommunication,
+    "WhatsAppSettings": WhatsAppSettings,
 }
 
 export const pagesConfig = {

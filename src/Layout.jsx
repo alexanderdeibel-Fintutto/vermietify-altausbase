@@ -30,6 +30,7 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Mieter', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts' },
         { name: 'Kommunikation', href: createPageUrl('Kommunikation'), icon: MessageSquare, page: 'Kommunikation' },
         { name: '💬 WhatsApp', href: createPageUrl('WhatsAppCommunication'), icon: MessageSquare, page: 'WhatsAppCommunication' },
+        { name: '⚙️ WhatsApp Settings', href: createPageUrl('WhatsAppSettings'), icon: Settings, page: 'WhatsAppSettings' },
         { name: 'Aufgaben', href: createPageUrl('Tasks'), icon: FileText, page: 'Tasks' },
         { name: 'Dokumente', href: createPageUrl('Documents'), icon: FileText, page: 'Documents' },
         { name: 'Finanzen', href: createPageUrl('Finanzen'), icon: CreditCard, page: 'Finanzen' },
