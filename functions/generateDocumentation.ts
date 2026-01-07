@@ -681,16 +681,14 @@ function getEnumMeaning(entityName, fieldName, value) {
 }
 
 async function generateModuleArchitectureDoc(entities, changes = [], versionNumber = 1) {
-    const moduleCount = 10;
-    let doc = '# Modul-Architektur - Immobilienverwaltung\n\n';
+    const moduleCount = 11;
+    let doc = '# Modul-Architektur - VOLLSTÄNDIGE DOKUMENTATION\n\n';
     doc += '**Metadaten:**\n';
     doc += `- Generiert am: ${new Date().toLocaleString('de-DE')}\n`;
     doc += `- Dokumentations-Version: ${versionNumber}\n`;
     doc += `- Anzahl Module: ${moduleCount}\n`;
-    doc += `- Anzahl Änderungen seit letzter Version: ${changes.length}\n\n`;
-    doc += '**Verwendungszweck:**\n';
-    doc += 'Diese Dokumentation kann an KI-Assistenten wie Claude (Anthropic) übergeben werden,\n';
-    doc += 'um vollständiges Verständnis der App-Struktur zu ermöglichen.\n\n';
+    doc += `- Anzahl Änderungen seit letzter Version: ${changes.length}\n`;
+    doc += '- Verwendungszweck: KI-Assistent Kontextinformation\n\n';
     
     if (changes.length > 0) {
         doc += '**Änderungen seit letzter Version:**\n';
@@ -704,39 +702,283 @@ async function generateModuleArchitectureDoc(entities, changes = [], versionNumb
         doc += '\n';
     }
     
-    doc += '**Wichtiger Hinweis:**\n';
-    doc += 'Diese Dokumentation wurde automatisch generiert. Manuelle Änderungen werden\n';
-    doc += 'bei erneuter Generierung überschrieben.\n\n';
     doc += '---\n\n';
     
-    doc += '## Übersicht\n\n';
-    doc += 'Die Immobilienverwaltungs-App ist modular aufgebaut und besteht aus 10 Hauptmodulen,\n';
-    doc += 'die jeweils spezifische Aufgabenbereiche abdecken und eng miteinander verzahnt sind.\n\n';
+    doc += '## MODUL-ÜBERSICHT\n\n';
+    doc += 'Die Immobilienverwaltungs-App besteht aus 11 Hauptmodulen, sortiert nach Abhängigkeiten (Basis-Module zuerst):\n\n';
+    doc += '1. **Eigentümerverwaltung** (Basis - keine Abhängigkeiten)\n';
+    doc += '2. **Objektverwaltung** (Basis - hängt nur von Eigentümer ab)\n';
+    doc += '3. **Mieterverwaltung** (Basis - hängt nur von Objektverwaltung ab)\n';
+    doc += '4. **Verträge & Kosten** (benötigt Objektverwaltung)\n';
+    doc += '5. **Steuer-Modul** (benötigt Objekt- und Vertragsdaten)\n';
+    doc += '6. **Finanzverwaltung** (zentral - verknüpft viele Module)\n';
+    doc += '7. **Banking** (spezial - finAPI Integration)\n';
+    doc += '8. **Betriebskosten** (benötigt Finanzen, Objekte, Mieter)\n';
+    doc += '9. **Dokumentenverwaltung** (nutzt Daten aus allen Modulen)\n';
+    doc += '10. **Kommunikation** (nutzt Dokumentenverwaltung)\n';
+    doc += '11. **Aufgaben & Workflows** (übergreifend - nutzt alle Module)\n\n';
     
-    doc += '## Hauptmodule\n\n';
+    doc += '---\n\n';
     
-    doc += '### 1. Objektverwaltung\n\n';
-    doc += '**Hauptfunktion:** Verwaltung von Immobilien, Wohneinheiten und Zählern\n\n';
-    doc += '**Datenbank-Tabellen:**\n';
-    doc += '- Building (Gebäude-Stammdaten)\n';
-    doc += '- Unit (Wohneinheiten)\n';
-    doc += '- Meter (Zähler für Strom, Gas, Wasser)\n';
-    doc += '- Gebaeude (Erweiterte Gebäudestruktur)\n';
-    doc += '- PurchaseContract (Kaufverträge)\n\n';
-    doc += '**Abhängigkeiten von:**\n';
-    doc += '- Eigentümer-Modul (Owner, Shareholder)\n';
-    doc += '- Steuer-Modul (BuildingTaxLibrary)\n\n';
-    doc += '**Liefert Daten an:**\n';
-    doc += '- Mieterverwaltung (Unit → LeaseContract)\n';
-    doc += '- Finanzverwaltung (Building → GeneratedFinancialBooking)\n';
-    doc += '- Steuern (Building → PropertyTax, AnlageV)\n';
-    doc += '- Betriebskosten (Building → OperatingCostStatement)\n\n';
-    doc += '**Nutzergruppen:** Verwalter, Eigentümer\n\n';
-    doc += '**Haupt-Workflows:**\n';
-    doc += '- Neues Gebäude anlegen mit Stammdaten, Adresse und Eigentümerstruktur\n';
-    doc += '- Wohneinheiten erstellen und Gebäude zuordnen\n';
-    doc += '- Zähler erfassen und Wohneinheiten zuweisen\n';
-    doc += '- Kaufverträge dokumentieren und AfA-Berechnung starten\n\n';
+    // MODUL 1: EIGENTÜMERVERWALTUNG
+    doc += '# MODUL 1: EIGENTÜMERVERWALTUNG\n\n';
+    
+    doc += '## 1. GRUNDINFORMATIONEN\n\n';
+    doc += '**Modulname**: Eigentümerverwaltung / Owner Management\n\n';
+    doc += '**Hauptzweck**: \n';
+    doc += 'Verwaltung von Eigentümern und Gesellschafterstrukturen. Das Modul bildet alle Eigentumsformen ab – von Einzeleigentümern über GbR und GmbH bis zu komplexen Gesellschafterstrukturen. Es ist die Basis für steuerliche Zuordnungen und Eigentümerabrechnungen. Ohne korrekte Eigentümerdaten können keine Anlage V Formulare oder Eigentümerabrechnungen erstellt werden.\n\n';
+    doc += '**Status**: ✅ Live (vollständig implementiert)\n\n';
+    doc += '**Priorität**: ⭐ Kritisch (Basis-Modul ohne das steuerliche Funktionen nicht arbeiten)\n\n';
+    
+    doc += '## 2. DATENBANK-NUTZUNG\n\n';
+    doc += '**Tabellen LESEND**:\n';
+    doc += '- Owner (eigene Tabelle)\n';
+    doc += '- Shareholder (eigene Tabelle)\n';
+    doc += '- OwnerRelationship (eigene Tabelle)\n';
+    doc += '- Building (zum Anzeigen zugeordneter Objekte)\n\n';
+    doc += '**Tabellen SCHREIBEND**:\n';
+    doc += '- Owner (CREATE, UPDATE, DELETE)\n';
+    doc += '- Shareholder (CREATE, UPDATE, DELETE)\n';
+    doc += '- OwnerRelationship (CREATE, UPDATE bei Eigentümerwechsel)\n';
+    doc += '- ActivityLog (bei allen Änderungen)\n\n';
+    doc += '**Häufigste Queries**:\n';
+    doc += '```sql\n';
+    doc += '-- Alle Eigentümer auflisten\n';
+    doc += 'SELECT * FROM Owner ORDER BY company_name, last_name\n';
+    doc += '\n';
+    doc += '-- Eigentümer eines Gebäudes finden\n';
+    doc += 'SELECT o.* FROM Owner o\n';
+    doc += 'JOIN OwnerRelationship r ON o.id = r.owner_id\n';
+    doc += 'WHERE r.building_id = ? AND (r.valid_until IS NULL OR r.valid_until >= NOW())\n';
+    doc += '\n';
+    doc += '-- Gesellschafter einer GbR\n';
+    doc += 'SELECT * FROM Shareholder WHERE owner_id = ?\n';
+    doc += '```\n\n';
+    
+    doc += '## 3. ABHÄNGIGKEITEN\n\n';
+    doc += '**Abhängig von**: Keine (Basis-Modul)\n\n';
+    doc += '**Abhängig von ihm**:\n';
+    doc += '- Objektverwaltung (Building.owner_id optional)\n';
+    doc += '- Steuer-Modul (AnlageV benötigt Eigentümerdaten)\n';
+    doc += '- Finanzverwaltung (Eigentümerabrechnungen)\n\n';
+    doc += '**Empfängt Daten von**: Keine\n\n';
+    doc += '**Liefert Daten an**:\n';
+    doc += '- Objektverwaltung: Owner-ID für Building-Zuordnung\n';
+    doc += '- Steuer-Modul: Steuer-ID, Anteile für Anlage V\n';
+    doc += '- Dokumentenverwaltung: Namen, Adressen für Briefköpfe\n\n';
+    
+    doc += '## 4. NUTZER & BERECHTIGUNGEN\n\n';
+    doc += '| Nutzergruppe | Lesen | Erstellen | Bearbeiten | Löschen | Einschränkungen |\n';
+    doc += '|--------------|-------|-----------|------------|---------|----------------|\n';
+    doc += '| Admin | ✅ Alle | ✅ | ✅ | ✅ | Keine |\n';
+    doc += '| Verwalter (User) | ✅ Alle | ✅ | ✅ | ✅ | Keine |\n';
+    doc += '| Eigentümer | ✅ Nur eigene Daten | ❌ | ❌ | ❌ | Kann nur eigene Stammdaten sehen |\n';
+    doc += '| Mieter | ❌ | ❌ | ❌ | ❌ | Kein Zugriff |\n\n';
+    
+    doc += '## 5. HAUPT-WORKFLOWS\n\n';
+    doc += '**Workflow 1: Einzeleigentümer (Privatperson) anlegen**\n';
+    doc += '1. Navigation: Objekt-Detail → Tab "Eigentümer" → "+ Eigentümer hinzufügen"\n';
+    doc += '2. Rechtsform wählen: ⚪ Privatperson\n';
+    doc += '3. Stammdaten eingeben: Vorname, Nachname, Adresse, PLZ, Ort, (optional) Telefon, E-Mail, Geburtsdatum, Steuer-ID\n';
+    doc += '4. Validierung: Alle Pflichtfelder ausgefüllt\n';
+    doc += '5. Speichern → Owner Entity CREATE\n';
+    doc += '6. OwnerRelationship erstellen (Zuordnung zu Building mit Anteil)\n';
+    doc += '7. ActivityLog "owner_created"\n';
+    doc += '**Automatisiert**: Nein (manuelle Eingabe)\n';
+    doc += '**Dauer**: ~2 Minuten\n\n';
+    
+    doc += '**Workflow 2: GbR (Gesellschaft) anlegen**\n';
+    doc += '1. Rechtsform wählen: ⚪ GbR\n';
+    doc += '2. GbR-Stammdaten: Firmenname, Adresse, Steuernummer, Finanzamt\n';
+    doc += '3. Gesellschafter hinzufügen (min. 2):\n';
+    doc += '   - Pro Gesellschafter: Vorname, Nachname, Anteil (%), Steuer-ID\n';
+    doc += '   - Validierung: Summe Anteile = 100%\n';
+    doc += '4. Speichern → Owner (type="gbr") + Nx Shareholder Entities\n';
+    doc += '5. OwnerRelationship zu Building erstellen\n';
+    doc += '**Automatisiert**: Anteilsberechnung (wenn nur 2 Gesellschafter: je 50%)\n';
+    doc += '**Dauer**: ~5 Minuten\n\n';
+    
+    doc += '**Workflow 3: Eigentümerwechsel durchführen**\n';
+    doc += '1. Bestehende OwnerRelationship öffnen\n';
+    doc += '2. "valid_until" setzen auf Verkaufsdatum\n';
+    doc += '3. Neue OwnerRelationship erstellen mit neuem Owner\n';
+    doc += '4. Validation: Keine zeitlichen Lücken, Anteile ergeben 100%\n';
+    doc += '5. ActivityLog "owner_relationship_changed"\n';
+    doc += '**Automatisiert**: Nein\n';
+    doc += '**Freigabe erforderlich**: Nein (aber wichtig für Steuern!)\n\n';
+    
+    doc += '## 6. GESCHÄFTSLOGIK\n\n';
+    doc += '**Berechnungen**:\n';
+    doc += '- Anteilsberechnung: Summe aller Shareholder.share_percentage = 100%\n';
+    doc += '- Zeitraum-Validierung: valid_from < valid_until\n';
+    doc += '- Überschneidungs-Check: Keine overlapping OwnerRelationships für gleiches Building\n\n';
+    doc += '**Automatismen**:\n';
+    doc += '- Auto-Fill Gesellschafter-Adresse = GbR-Adresse (überschreibbar)\n';
+    doc += '- Bei 2 Gesellschaftern ohne Anteile: je 50% vorschlagen\n\n';
+    doc += '**Validierungen**:\n';
+    doc += '- ✅ BLOCKER: GbR muss min. 2 Gesellschafter haben\n';
+    doc += '- ✅ BLOCKER: Summe Anteile = 100%\n';
+    doc += '- ✅ BLOCKER: Steuer-ID muss 11 Ziffern haben (wenn gesetzt)\n';
+    doc += '- ⚠️ WARNING: Eigentümerwechsel ohne Verkaufsdatum\n\n';
+    
+    doc += '## 7. INTEGRATIONEN\n\n';
+    doc += '**Externe APIs**: Keine\n\n';
+    doc += '**Generierte Dokumente**: \n';
+    doc += '- Eigentümerabrechnung (über Dokumenten-Modul)\n';
+    doc += '- Gesellschafterversammlungs-Protokoll (optional)\n\n';
+    doc += '**Benachrichtigungen**:\n';
+    doc += '- Bei Eigentümerwechsel: Notification an Admin\n';
+    doc += '- ActivityLog-Eintrag bei allen Änderungen\n\n';
+    
+    doc += '## 8. BESONDERHEITEN\n\n';
+    doc += '**Deutsche Rechtsanforderungen**:\n';
+    doc += '- GbR muss mind. 2 Gesellschafter haben (§705 BGB)\n';
+    doc += '- Steuer-ID erforderlich für Anlage V (EStG)\n';
+    doc += '- Gesellschafteranteile müssen dokumentiert sein\n\n';
+    doc += '**Komplexe Sonderfälle**:\n';
+    doc += '- Zeitliche Eigentümerwechsel (valid_from / valid_until)\n';
+    doc += '- Mehrere Eigentümer mit unterschiedlichen Anteilen (z.B. 60/40)\n';
+    doc += '- Gesellschafter-Wechsel bei GbR (neue Shareholder-Version)\n\n';
+    doc += '**Performance-kritisch**:\n';
+    doc += '- OwnerRelationship-Abfrage bei Building-Liste (JOIN erforderlich)\n';
+    doc += '- Gesellschafter-Anzahl bei GbR/GmbH (Nested Queries)\n\n';
+    
+    doc += '---\n\n';
+    
+    // MODUL 2: OBJEKTVERWALTUNG
+    doc += '# MODUL 2: OBJEKTVERWALTUNG\n\n';
+    
+    doc += '## 1. GRUNDINFORMATIONEN\n\n';
+    doc += '**Modulname**: Objektverwaltung / Property Management\n\n';
+    doc += '**Hauptzweck**: \n';
+    doc += 'Verwaltung von Immobilien, Wohneinheiten und Zählern. Das Modul ist die zentrale Datenbasis der App. Hier werden alle Gebäude mit vollständigen Stammdaten, Adressen, Baujahr, Flächen und Kaufinformationen erfasst. Wohneinheiten werden detailliert mit Wohnflächen, Raumanzahl und Ausstattung dokumentiert. Zähler für Strom, Gas und Wasser werden den Einheiten zugeordnet für spätere Verbrauchsabrechnung.\n\n';
+    doc += '**Status**: ✅ Live (vollständig implementiert)\n\n';
+    doc += '**Priorität**: ⭐⭐⭐ Kritisch (Zentrale Datenbasis ohne die nichts funktioniert)\n\n';
+    
+    doc += '## 2. DATENBANK-NUTZUNG\n\n';
+    doc += '**Tabellen LESEND**:\n';
+    doc += '- Building (eigene Tabelle - für Listen, Detail-Ansichten)\n';
+    doc += '- Unit (eigene Tabelle - gefiltert nach building_id)\n';
+    doc += '- Meter (eigene Tabelle - gefiltert nach unit_id oder building_id)\n';
+    doc += '- Gebaeude (erweiterte Struktur - alternative/zukünftige Struktur)\n';
+    doc += '- PurchaseContract (eigene Tabelle - für Kaufdaten)\n';
+    doc += '- Owner (via OwnerRelationship - für Eigentümer-Anzeige)\n';
+    doc += '- OwnerRelationship (für aktuelle Eigentümer)\n';
+    doc += '- LeaseContract (zum Zählen aktiver Verträge)\n';
+    doc += '- BuildingTaxLibrary (prüfen ob Steuer-System initialisiert)\n\n';
+    doc += '**Tabellen SCHREIBEND**:\n';
+    doc += '- Building (CREATE bei Neuanlage, UPDATE bei Stammdaten-Änderung, DELETE selten)\n';
+    doc += '- Unit (CREATE bei Wohnungserfassung, UPDATE bei Datenänderung, DELETE bei Fehleingabe)\n';
+    doc += '- Meter (CREATE bei Zählererfassung, UPDATE bei Zählerstandseingabe)\n';
+    doc += '- PurchaseContract (CREATE einmalig, UPDATE selten)\n';
+    doc += '- OwnerRelationship (CREATE bei Zuordnung, UPDATE bei Eigentümerwechsel)\n';
+    doc += '- ActivityLog (bei allen Aktionen)\n\n';
+    doc += '**Häufigste Queries (Performance-relevant)**:\n';
+    doc += '```sql\n';
+    doc += '-- Query 1: Buildings-Liste mit Eigentümern (häufigste Abfrage)\n';
+    doc += 'SELECT b.*, COUNT(u.id) as unit_count\n';
+    doc += 'FROM Building b\n';
+    doc += 'LEFT JOIN Unit u ON b.id = u.building_id\n';
+    doc += 'GROUP BY b.id\n';
+    doc += 'ORDER BY b.name\n';
+    doc += '-- Häufigkeit: Bei jedem Seitenwechsel zu /Buildings (mehrmals täglich)\n';
+    doc += '\n';
+    doc += '-- Query 2: Building-Detail mit allen Units\n';
+    doc += 'SELECT * FROM Unit WHERE building_id = ? ORDER BY floor, name\n';
+    doc += '-- Häufigkeit: Bei jedem Building-Detail-Aufruf (mehrmals täglich)\n';
+    doc += '\n';
+    doc += '-- Query 3: Verfügbare Units (ohne aktiven Mietvertrag)\n';
+    doc += 'SELECT u.* FROM Unit u\n';
+    doc += 'WHERE u.building_id = ?\n';
+    doc += 'AND NOT EXISTS (\n';
+    doc += '  SELECT 1 FROM LeaseContract lc\n';
+    doc += '  WHERE lc.unit_id = u.id\n';
+    doc += '  AND lc.status = "active"\n';
+    doc += ')\n';
+    doc += '-- Häufigkeit: Bei Mietvertragserstellung (täglich)\n';
+    doc += '```\n\n';
+    
+    doc += '## 3. ABHÄNGIGKEITEN\n\n';
+    doc += '**Abhängig von**:\n';
+    doc += '- Eigentümerverwaltung (optional - für OwnerRelationship)\n\n';
+    doc += '**Module die davon abhängig sind**:\n';
+    doc += '- ⭐ Mieterverwaltung (benötigt Units)\n';
+    doc += '- ⭐ Finanzverwaltung (building_id in fast allen Finanz-Entities)\n';
+    doc += '- ⭐ Steuer-Modul (Building ist Basis für PropertyTax, AnlageV)\n';
+    doc += '- Betriebskosten (Building + Units)\n';
+    doc += '- Dokumentenverwaltung (Building-Daten für Dokumente)\n\n';
+    doc += '**Datenfluss EINGEHEND**: Keine (außer Owner-Daten)\n\n';
+    doc += '**Datenfluss AUSGEHEND**:\n';
+    doc += '```\n';
+    doc += 'Building → Mieterverwaltung:\n';
+    doc += '  - building_id, name, address (für Vertrags-Zuordnung)\n';
+    doc += '\n';
+    doc += 'Unit → Mieterverwaltung:\n';
+    doc += '  - unit_id, name, flaeche (für Mietvertrag)\n';
+    doc += '\n';
+    doc += 'Building → Finanzverwaltung:\n';
+    doc += '  - building_id (für alle Buchungen)\n';
+    doc += '  - purchase_price, land_value (für AfA-Berechnung)\n';
+    doc += '\n';
+    doc += 'Building → Steuer-Modul:\n';
+    doc += '  - Komplette Gebäudedaten (für Anlage V)\n';
+    doc += '  - Kaufvertrag-Daten (für AfA)\n';
+    doc += '```\n\n';
+    
+    doc += '## 6. GESCHÄFTSLOGIK\n\n';
+    doc += '**Berechnungen**:\n';
+    doc += '```javascript\n';
+    doc += '// 1. Gesamt-Wohnfläche (Building)\n';
+    doc += 'total_area = sum(Unit.flaeche WHERE building_id = ?)\n';
+    doc += '\n';
+    doc += '// 2. Anzahl Wohneinheiten (Building)\n';
+    doc += 'number_of_units = count(Unit WHERE building_id = ?)\n';
+    doc += '\n';
+    doc += '// 3. Gebäudewert (für AfA)\n';
+    doc += 'gebaeude_wert = purchase_price - land_value\n';
+    doc += '// Nur Gebäude ist abschreibbar, Grundstück nicht!\n';
+    doc += '\n';
+    doc += '// 4. Verfügbarkeit (Unit)\n';
+    doc += 'is_available = NOT EXISTS(LeaseContract WHERE unit_id = ? AND status = "active")\n';
+    doc += '```\n\n';
+    doc += '**Automatismen**:\n';
+    doc += '- Nach Building-Erstellung: Dialog "Steuer-System jetzt einrichten?"\n';
+    doc += '- Nach Unit-Erstellung: Gesamt-Wohnfläche in Building aktualisieren (optional)\n';
+    doc += '- Nach PurchaseContract-Erstellung: AfA-Plan generieren (Dialog)\n\n';
+    doc += '**Validierungen**:\n';
+    doc += '- ✅ BLOCKER: Objektname min. 3 Zeichen\n';
+    doc += '- ✅ BLOCKER: PLZ exakt 5 Ziffern\n';
+    doc += '- ✅ BLOCKER: Wohnfläche (Unit) > 0 und < 1000 m²\n';
+    doc += '- ⚠️ WARNING: Wohnfläche > Gesamt-Objektfläche\n';
+    doc += '- ⚠️ WARNING: Duplikat-Check bei gleicher Adresse\n';
+    doc += '- ⚠️ WARNING: Eigentümer-Anteile ergeben nicht 100%\n\n';
+    
+    doc += '## 7. INTEGRATIONEN\n\n';
+    doc += '**Externe APIs**: Keine direkten API-Calls\n\n';
+    doc += '**Generierte Dokumente**:\n';
+    doc += '- Objektdatenblatt (optional, über Dokumenten-Modul)\n';
+    doc += '- Kaufvertrag-Dokument (Template vorhanden)\n\n';
+    doc += '**Benachrichtigungen**:\n';
+    doc += '- Toast "Objekt erfolgreich erstellt"\n';
+    doc += '- Notification an Admin bei neuem Objekt (optional)\n';
+    doc += '- ActivityLog bei CREATE/UPDATE/DELETE\n\n';
+    
+    doc += '## 8. BESONDERHEITEN\n\n';
+    doc += '**Deutsche Anforderungen**:\n';
+    doc += '- Wohnfläche nach WoFlV (Wohnflächenverordnung)\n';
+    doc += '- Grundbuch-Adresse muss exakt sein (für Grundsteuer)\n';
+    doc += '- Kaufvertrag-Daten für steuerliche AfA (§7 EStG)\n\n';
+    doc += '**Komplexe Sonderfälle**:\n';
+    doc += '- Gemischt-genutzte Gebäude (Wohnen + Gewerbe) → unterschiedliche AfA-Sätze\n';
+    doc += '- Units ohne Flächen-Angabe → Betriebskosten-Abrechnung unmöglich\n';
+    doc += '- Mehrere Gebäude an gleicher Adresse (Hinterhaus, etc.)\n';
+    doc += '- Zähler-Kaskadierung (Haupt-Zähler → Unter-Zähler)\n\n';
+    doc += '**Performance-kritisch**:\n';
+    doc += '- Building-Liste mit JOIN zu Units (bei vielen Objekten > 100ms)\n';
+    doc += '- Unit.flaeche wird häufig summiert (Betriebskosten-Berechnung)\n';
+    doc += '- Building-Detail lädt viele verknüpfte Daten (Units, Contracts, Owners, etc.)\n\n';
+    
+    doc += '---\n\n';
     
     doc += '### 2. Mieterverwaltung\n\n';
     doc += '**Hauptfunktion:** Verwaltung von Mietern, Mietverträgen und Mietforderungen\n\n';
