@@ -9,6 +9,7 @@ import TemplateManager from '../components/whatsapp/TemplateManager';
 import OptInManager from '../components/whatsapp/OptInManager';
 import WhatsAppDashboard from '../components/whatsapp/WhatsAppDashboard';
 import BulkMessaging from '../components/whatsapp/BulkMessaging';
+import WebhookSetup from '../components/whatsapp/WebhookSetup';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 
@@ -91,7 +92,7 @@ export default function WhatsAppSettings() {
             </Card>
 
             <Tabs defaultValue="dashboard">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="dashboard">
                         <BarChart3 className="w-4 h-4 mr-2" />
                         Dashboard
@@ -108,6 +109,10 @@ export default function WhatsAppSettings() {
                         <Mail className="w-4 h-4 mr-2" />
                         Einwilligungen
                     </TabsTrigger>
+                    <TabsTrigger value="webhook">
+                        <Settings className="w-4 h-4 mr-2" />
+                        Webhook
+                    </TabsTrigger>
                 </TabsList>
                 <TabsContent value="dashboard" className="mt-6">
                     <WhatsAppDashboard accountId={account.id} />
@@ -120,6 +125,9 @@ export default function WhatsAppSettings() {
                 </TabsContent>
                 <TabsContent value="opt-in" className="mt-6">
                     <OptInManager accountId={account.id} />
+                </TabsContent>
+                <TabsContent value="webhook" className="mt-6">
+                    <WebhookSetup accountId={account.id} />
                 </TabsContent>
             </Tabs>
         </div>

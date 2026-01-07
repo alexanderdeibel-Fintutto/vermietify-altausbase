@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
     Search, RefreshCw, Send, Paperclip, CheckCheck, 
-    Clock, AlertCircle, Info, Loader2
+    Clock, AlertCircle, Info, Loader2, Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -82,6 +82,30 @@ export default function WhatsAppCommunication() {
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['whatsapp-contacts'] });
             toast.success(`${data.neu_angelegt} neue Kontakte synchronisiert`);
+        }
+    });
+
+    const exportMutation = useMutation({
+        mutationFn: async ({ contactId, format }) => {
+            const response = await base44.functions.invoke('whatsapp_exportConversation', {
+                whatsapp_contact_id: contactId,
+                format: format
+            });
+            return response.data;
+        },
+        onSuccess: (data) => {
+            const blob = new Blob([data.content], { 
+                type: data.format === 'json' ? 'application/json' : 'text/plain' 
+            });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = data.filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            toast.success(`Konversation exportiert (${data.message_count} Nachrichten)`);
         }
     });
 
@@ -232,6 +256,15 @@ export default function WhatsAppCommunication() {
                                         </Badge>
                                     </div>
                                 </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => exportMutation.mutate({ contactId: selectedContact.id, format: 'txt' })}
+                                    disabled={exportMutation.isPending}
+                                >
+                                    <Download className="w-4 h-4 mr-2" />
+                                    Export
+                                </Button>
                             </div>
                         </div>
 
