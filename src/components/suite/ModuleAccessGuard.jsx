@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Lock, AlertCircle } from 'lucide-react';
+import ModuleUpsellButton from './ModuleUpsellButton';
 
 export default function ModuleAccessGuard({ moduleName, children, fallback }) {
     const { data: access, isLoading } = useQuery({
@@ -35,9 +36,11 @@ export default function ModuleAccessGuard({ moduleName, children, fallback }) {
                     <p className="text-amber-800 mb-4">
                         Dieses Modul ist in Ihrer aktuellen Suite nicht enthalten.
                     </p>
-                    <Button className="bg-amber-600 hover:bg-amber-700">
-                        Modul hinzubuchen
-                    </Button>
+                    <ModuleUpsellButton 
+                        moduleName={moduleName}
+                        moduleDisplayName={moduleName}
+                        variant="default"
+                    />
                 </CardContent>
             </Card>
         );
