@@ -3984,7 +3984,8 @@ async function generateExternalIntegrationsDocComplete() {
     
     doc += '---\n\n';
     
-    doc += '## 2. FinAPI (Multi-Banking)\n\n';
+    // ===== FINAPI =====
+    doc += '# 2. FINAPI ACCESS B2C (MULTI-BANKING)\n\n';
     
     doc += '### 2.1 Service-Identifikation\n\n';
     doc += '- **Offizieller Name**: finAPI Access B2C (finleap connect GmbH)\n';
