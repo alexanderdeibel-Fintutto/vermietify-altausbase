@@ -3808,6 +3808,11 @@ async function generateBusinessLogicDoc(entities) {
 }
 
 async function generateExternalIntegrationsDoc() {
+    // Diese Funktion wurde komplett überschrieben - siehe unten
+    return await generateExternalIntegrationsDocComplete();
+}
+
+async function generateExternalIntegrationsDocComplete() {
     let doc = '# Externe Service-Integrationen - VOLLSTÄNDIGE DOKUMENTATION\n\n';
     doc += '**Metadaten:**\n';
     doc += `- Generiert am: ${new Date().toLocaleString('de-DE')}\n`;
