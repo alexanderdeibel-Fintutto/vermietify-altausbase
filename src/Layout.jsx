@@ -13,7 +13,8 @@ import {
     X,
     ChevronRight,
     BookOpen,
-    MessageSquare
+    MessageSquare,
+    HelpCircle
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/notifications/NotificationCenter';
@@ -35,6 +36,8 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Betriebskosten', href: createPageUrl('OperatingCosts'), icon: FileText, page: 'OperatingCosts' },
     { name: 'Bank/Kasse', href: createPageUrl('BankAccounts'), icon: Landmark, page: 'BankAccounts' },
     { name: 'Entwickler-Doku', href: createPageUrl('DeveloperDocumentation'), icon: BookOpen, page: 'DeveloperDocumentation' },
+    { name: 'Support-Center', href: createPageUrl('SupportCenter'), icon: MessageSquare, page: 'SupportCenter' },
+    { name: 'Hilfe-Center', href: createPageUrl('HilfeCenter'), icon: HelpCircle, page: 'HilfeCenter' },
     ];
 
     return (

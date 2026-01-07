@@ -33,7 +33,12 @@ import {
     BarChart3,
     FileCheck,
     Package,
-    Star
+    Star,
+    MessageSquare,
+    Zap,
+    User,
+    CalendarDays,
+    Bug
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -130,6 +135,72 @@ const DOCUMENTATION_TYPES = [
         icon: BookOpen,
         estimatedSize: '50 KB',
         estimatedDuration: 5
+    },
+    {
+        type: 'user_issues',
+        title: 'User-Issues & Edge-Cases',
+        description: 'Häufige User-Fragen, typische Fehler, bekannte Bugs und Edge-Cases',
+        icon: Bug,
+        estimatedSize: '400 KB',
+        estimatedDuration: 20
+    },
+    {
+        type: 'timeline_calendar',
+        title: 'Jahreskalender & Fristen',
+        description: 'Monatlicher Ablauf, kritische Fristen, typischer Tagesablauf und saisonale Besonderheiten',
+        icon: CalendarDays,
+        estimatedSize: '300 KB',
+        estimatedDuration: 15
+    },
+    {
+        type: 'performance_data',
+        title: 'Performance & Datenmengen',
+        description: 'Typische Datenmengen, Performance-kritische Operationen, Bottlenecks und Optimierungen',
+        icon: Zap,
+        estimatedSize: '200 KB',
+        estimatedDuration: 10
+    },
+    {
+        type: 'sample_data',
+        title: 'Sample-Data & Szenarien',
+        description: 'Anonymisierte Beispieldaten für verschiedene Immobilientypen und User-Journeys',
+        icon: User,
+        estimatedSize: '500 KB',
+        estimatedDuration: 25
+    },
+    {
+        type: 'roadmap_techdebt',
+        title: 'Roadmap & Tech-Debt',
+        description: 'Features in Entwicklung, geplante Features, langfristige Vision und bekannte Tech-Debt',
+        icon: BarChart3,
+        estimatedSize: '250 KB',
+        estimatedDuration: 5
+    },
+    {
+        type: 'coding_conventions',
+        title: 'Coding Conventions',
+        description: 'Naming Conventions, Code-Organisation, Kommentar-Stil und Best Practices',
+        icon: Code,
+        estimatedSize: '200 KB',
+        estimatedDuration: 5
+    },
+    {
+        type: 'testing_qa',
+        title: 'Testing & QA-Prozess',
+        description: 'Test-Strategie, Test-Daten, QA-Prozess, Checklisten und Automation-Roadmap',
+        icon: CheckCircle,
+        estimatedSize: '200 KB',
+        estimatedDuration: 5
+    },
+    {
+        type: 'support_fehler',
+        title: 'User-Fehler & Support',
+        description: 'Live-Dokumentation aller gemeldeten Probleme, Fehler und Support-Anfragen mit Lösungen',
+        icon: MessageSquare,
+        estimatedSize: '400 KB',
+        estimatedDuration: 20,
+        color: 'bg-red-50 border-red-200',
+        badge: 'Live-Daten'
     }
 ];
 
@@ -770,7 +841,10 @@ export default function DeveloperDocumentation() {
                     const isGenerating = doc?.status === 'generating';
 
                     return (
-                        <Card key={docType.type} className={selectedTypes.includes(docType.type) ? 'border-2 border-emerald-500' : ''}>
+                        <Card key={docType.type} className={cn(
+                            selectedTypes.includes(docType.type) ? 'border-2 border-emerald-500' : '',
+                            docType.color
+                        )}>
                             <CardHeader>
                                 <div className="flex items-start justify-between">
                                     <div className="flex items-start gap-3 flex-1">
@@ -788,7 +862,12 @@ export default function DeveloperDocumentation() {
                                         />
                                         <Icon className="w-6 h-6 text-emerald-600 mt-1" />
                                         <div className="flex-1">
-                                            <CardTitle className="text-lg">{docType.title}</CardTitle>
+                                            <CardTitle className="text-lg flex items-center gap-2">
+                                                {docType.title}
+                                                {docType.badge && (
+                                                    <Badge variant="outline" className="text-xs">{docType.badge}</Badge>
+                                                )}
+                                            </CardTitle>
                                             <CardDescription className="mt-1">
                                                 {docType.description}
                                             </CardDescription>
