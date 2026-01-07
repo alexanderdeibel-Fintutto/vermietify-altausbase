@@ -20,6 +20,7 @@ async function calculateMD5(str) {
 }
 
 export default function SendLetterDialog({ open, onOpenChange, document }) {
+    const [versandweg, setVersandweg] = useState('letterxpress');
     const [options, setOptions] = useState({
         color: '1',
         mode: 'simplex',
@@ -27,6 +28,7 @@ export default function SendLetterDialog({ open, onOpenChange, document }) {
         dispatch_date: '',
         notice: ''
     });
+    const [whatsappMessage, setWhatsappMessage] = useState('');
     const [calculatedPrice, setCalculatedPrice] = useState(null);
     const queryClient = useQueryClient();
 
@@ -34,6 +36,32 @@ export default function SendLetterDialog({ open, onOpenChange, document }) {
         queryKey: ['letterxpress-credentials'],
         queryFn: () => base44.entities.LetterXpressCredential.filter({ is_active: true }),
         initialData: []
+    });
+
+    const { data: whatsappAccount } = useQuery({
+        queryKey: ['whatsapp-account'],
+        queryFn: async () => {
+            const accounts = await base44.entities.WhatsAppAccount.list();
+            return accounts[0];
+        }
+    });
+
+    const { data: whatsappContact } = useQuery({
+        queryKey: ['whatsapp-contact-for-doc', document?.id],
+        queryFn: async () => {
+            if (!document) return null;
+            let tenant_id = null;
+            if (document.tenant_id) {
+                tenant_id = document.tenant_id;
+            } else if (document.contract_id) {
+                const contracts = await base44.entities.LeaseContract.filter({ id: document.contract_id });
+                if (contracts.length > 0) tenant_id = contracts[0].tenant_id;
+            }
+            if (!tenant_id) return null;
+            const contacts = await base44.entities.WhatsAppContact.filter({ tenant_id });
+            return contacts[0];
+        },
+        enabled: !!document && !!whatsappAccount
     });
 
     const currentCred = credentials[0];
@@ -217,14 +245,74 @@ export default function SendLetterDialog({ open, onOpenChange, document }) {
     const remainingBalance = currentCred.balance - (calculatedPrice || 0);
     const insufficientBalance = remainingBalance < 0;
 
+    const sendWhatsAppMutation = useMutation({
+        mutationFn: async () => {
+            const response = await base44.functions.invoke('whatsapp_sendDocument', {
+                document_id: document.id,
+                whatsapp_contact_id: whatsappContact.id,
+                begleitnachricht: whatsappMessage || 'Anbei das gewünschte Dokument',
+                kategorie: 'utility'
+            });
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['documents'] });
+            toast.success('Dokument per WhatsApp versendet!');
+            onOpenChange(false);
+        },
+        onError: (error) => {
+            toast.error(error.message || 'WhatsApp-Versand fehlgeschlagen');
+        }
+    });
+
+    const whatsappVerfuegbar = !!whatsappAccount && 
+                               whatsappAccount.status === 'aktiv' && 
+                               !!whatsappContact && 
+                               whatsappContact.opt_in_status === 'erteilt';
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>Brief mit LetterXpress versenden</DialogTitle>
+                    <DialogTitle>Dokument versenden</DialogTitle>
                 </DialogHeader>
 
                 <div className="space-y-6 py-4">
+                    {/* Versandweg-Auswahl */}
+                    <div>
+                        <Label>Versandweg wählen</Label>
+                        <div className="grid grid-cols-2 gap-3 mt-2">
+                            <Button
+                                variant={versandweg === 'letterxpress' ? 'default' : 'outline'}
+                                onClick={() => setVersandweg('letterxpress')}
+                                className="h-auto py-4 flex-col"
+                            >
+                                <Package className="w-6 h-6 mb-2" />
+                                <span className="font-medium">Post (LetterXpress)</span>
+                                <span className="text-xs opacity-70">ab 0,74€</span>
+                            </Button>
+                            <Button
+                                variant={versandweg === 'whatsapp' ? 'default' : 'outline'}
+                                onClick={() => setVersandweg('whatsapp')}
+                                disabled={!whatsappVerfuegbar}
+                                className="h-auto py-4 flex-col relative"
+                            >
+                                <Send className="w-6 h-6 mb-2" />
+                                <span className="font-medium">WhatsApp</span>
+                                <span className="text-xs opacity-70">
+                                    {whatsappVerfuegbar ? 'ab 0,00€' : 'Nicht verfügbar'}
+                                </span>
+                                {!whatsappVerfuegbar && (
+                                    <Badge variant="secondary" className="absolute top-2 right-2 text-xs">
+                                        {!whatsappAccount ? 'Nicht eingerichtet' : 
+                                         !whatsappContact ? 'Kein Kontakt' : 
+                                         'Keine Einwilligung'}
+                                    </Badge>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+
                     {/* Dokument-Info */}
                     <div className="p-4 bg-slate-50 rounded-lg">
                         <h3 className="font-medium text-slate-900 mb-2">Dokument</h3>
@@ -244,7 +332,40 @@ export default function SendLetterDialog({ open, onOpenChange, document }) {
                         </div>
                     </div>
 
+                    {/* WhatsApp-Optionen */}
+                    {versandweg === 'whatsapp' && whatsappVerfuegbar && (
+                        <div className="space-y-4">
+                            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Badge className="bg-green-600">{whatsappContact.name}</Badge>
+                                    <span className="text-sm text-green-800">{whatsappContact.telefonnummer}</span>
+                                </div>
+                                <p className="text-xs text-green-700">✓ Einwilligung erteilt</p>
+                            </div>
+                            
+                            <div>
+                                <Label>Begleitnachricht (optional)</Label>
+                                <Textarea
+                                    placeholder="Optionale Nachricht zum Dokument..."
+                                    value={whatsappMessage}
+                                    onChange={(e) => setWhatsappMessage(e.target.value)}
+                                    rows={3}
+                                />
+                            </div>
+
+                            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                <p className="text-sm text-blue-900">
+                                    <strong>Geschätzte Kosten:</strong> ~0,05€
+                                </p>
+                                <p className="text-xs text-blue-700 mt-1">
+                                    Falls der Empfänger in den letzten 24h geschrieben hat: kostenlos!
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Versandoptionen */}
+                    {versandweg === 'letterxpress' && (
                     <div className="space-y-4">
                         <h3 className="font-medium text-slate-900">Versandoptionen</h3>
                         
@@ -346,6 +467,7 @@ export default function SendLetterDialog({ open, onOpenChange, document }) {
                     </div>
 
                     {/* Kostenberechnung */}
+                    {versandweg === 'letterxpress' && (
                     <div className="p-4 border rounded-lg space-y-3">
                         <h3 className="font-medium text-slate-900">Kosten</h3>
                         <div className="flex justify-between text-sm">
@@ -374,21 +496,34 @@ export default function SendLetterDialog({ open, onOpenChange, document }) {
                             </div>
                         )}
                     </div>
+                    )}
                 </div>
 
                 <div className="flex justify-end gap-3">
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
                         Abbrechen
                     </Button>
-                    <Button
-                        onClick={() => sendMutation.mutate()}
-                        disabled={sendMutation.isPending || insufficientBalance || calculatedPrice === null}
-                        className="bg-emerald-600 hover:bg-emerald-700"
-                    >
-                        {sendMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                        <Package className="w-4 h-4 mr-2" />
-                        Jetzt versenden
-                    </Button>
+                    {versandweg === 'whatsapp' ? (
+                        <Button
+                            onClick={() => sendWhatsAppMutation.mutate()}
+                            disabled={sendWhatsAppMutation.isPending || !whatsappVerfuegbar}
+                            className="bg-green-600 hover:bg-green-700"
+                        >
+                            {sendWhatsAppMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                            <Send className="w-4 h-4 mr-2" />
+                            Per WhatsApp versenden
+                        </Button>
+                    ) : (
+                        <Button
+                            onClick={() => sendMutation.mutate()}
+                            disabled={sendMutation.isPending || insufficientBalance || calculatedPrice === null}
+                            className="bg-emerald-600 hover:bg-emerald-700"
+                        >
+                            {sendMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                            <Package className="w-4 h-4 mr-2" />
+                            Jetzt versenden
+                        </Button>
+                    )}
                 </div>
             </DialogContent>
         </Dialog>

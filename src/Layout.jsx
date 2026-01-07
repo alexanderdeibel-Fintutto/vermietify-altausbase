@@ -29,6 +29,7 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Objekte', href: createPageUrl('Buildings'), icon: Building2, page: 'Buildings' },
         { name: 'Mieter', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts' },
         { name: 'Kommunikation', href: createPageUrl('Kommunikation'), icon: MessageSquare, page: 'Kommunikation' },
+        { name: '💬 WhatsApp', href: createPageUrl('WhatsAppCommunication'), icon: MessageSquare, page: 'WhatsAppCommunication' },
         { name: 'Aufgaben', href: createPageUrl('Tasks'), icon: FileText, page: 'Tasks' },
         { name: 'Dokumente', href: createPageUrl('Documents'), icon: FileText, page: 'Documents' },
         { name: 'Finanzen', href: createPageUrl('Finanzen'), icon: CreditCard, page: 'Finanzen' },
