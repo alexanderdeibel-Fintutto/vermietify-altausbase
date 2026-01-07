@@ -1524,15 +1524,13 @@ async function generateMasterDataDoc(entities, changes = [], versionNumber = 1) 
         }
     }
 
-    let doc = '# Master Data & Konstanten - Immobilienverwaltung\n\n';
+    let doc = '# Master Data & Konstanten - VOLLSTÄNDIGE DOKUMENTATION\n\n';
     doc += '**Metadaten:**\n';
     doc += `- Generiert am: ${new Date().toLocaleString('de-DE')}\n`;
     doc += `- Dokumentations-Version: ${versionNumber}\n`;
     doc += `- Anzahl Konstanten-Gruppen: ${totalEnums}\n`;
-    doc += `- Anzahl Änderungen seit letzter Version: ${changes.length}\n\n`;
-    doc += '**Verwendungszweck:**\n';
-    doc += 'Diese Dokumentation kann an KI-Assistenten wie Claude (Anthropic) übergeben werden,\n';
-    doc += 'um vollständiges Verständnis der App-Struktur zu ermöglichen.\n\n';
+    doc += `- Anzahl Änderungen seit letzter Version: ${changes.length}\n`;
+    doc += '- Verwendungszweck: KI-Assistent + Excel-Export\n\n';
     
     if (changes.length > 0) {
         doc += '**Änderungen seit letzter Version:**\n';
@@ -1546,15 +1544,175 @@ async function generateMasterDataDoc(entities, changes = [], versionNumber = 1) 
         doc += '\n';
     }
     
-    doc += '**Wichtiger Hinweis:**\n';
-    doc += 'Diese Dokumentation wurde automatisch generiert. Manuelle Änderungen werden\n';
-    doc += 'bei erneuter Generierung überschrieben.\n\n';
     doc += '---\n\n';
     
-    doc += '## Übersicht\n\n';
-    doc += 'Diese Dokumentation enthält alle Master Data und Konstanten der Immobilienverwaltungs-App.\n';
-    doc += 'Master Data sind vordefinierte Auswahloptionen und Kategorien, die in Dropdown-Feldern,\n';
-    doc += 'Validierungen und Geschäftslogik verwendet werden.\n\n';
+    doc += '## ÜBERSICHT\n\n';
+    doc += `Diese Dokumentation enthält ALLE Master Data und Konstanten (${totalEnums} Konstanten-Gruppen).\n\n`;
+    doc += '**Definition**: Master Data sind vordefinierte Auswahloptionen und Kategorien in Dropdown-Feldern, die in der Datenbank als Enum-Werte gespeichert sind.\n\n';
+    doc += '**Format**: Jede Konstanten-Gruppe ist als 11-Spalten-Tabelle dokumentiert (Excel-kompatibel).\n\n';
+    
+    doc += '---\n\n';
+    
+    // 1. KOSTENARTEN - SEHR DETAILLIERT
+    doc += '# 1. KOSTENARTEN (Tax Categories & Cost Types)\n\n';
+    
+    doc += '## 1.1 KOSTENKATEGORIEN-TYPEN (CostCategory.category_type)\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| KOSTENARTEN-TYP | Erhaltungsaufwendungen | ERHALTUNG | Laufende Kosten | Invoice, GeneratedFinancialBooking | ✅ Ja - Sofort als Werbungskosten absetzbar (§9 Abs. 1 Nr. 7 EStG) | ✅ Ja (oft) | Nur bei bestehenden Gebäuden | Nein | tax_treatment=SOFORT | Reparatur Heizung (500€) - sofort absetzbar + umlagefähig |\n';
+    doc += '| KOSTENARTEN-TYP | Herstellungskosten | HERSTELLUNG | Investitionen | Invoice, PurchaseContract | ✅ Ja - NUR über AfA absetzbar (§255 HGB) | ❌ Nein | Nur bei Sanierung/Anbau | Nein | tax_treatment=AFA | Dachsanierung (50.000€) - nur über 50 Jahre AfA |\n';
+    doc += '| KOSTENARTEN-TYP | Betriebskosten | BETRIEB | Laufende NK | Supplier, GeneratedFinancialBooking | ⚠️ Teils - Umlegbare sind nicht absetzbar | ✅ Ja | Nur laufende Kosten | Ja | allocatable=true | Müllabfuhr (420€/Jahr) - umlagefähig, nicht absetzbar |\n';
+    doc += '| KOSTENARTEN-TYP | Finanzierungskosten | FINANZIERUNG | Zinsen & Gebühren | Financing, GeneratedFinancialBooking | ✅ Ja - Schuldzinsen als Werbungskosten (Anlage V Zeile 37) | ❌ Nein | Nur bei Krediten | Nein | Nur Zinsen, nicht Tilgung | Kreditzinsen (12.000€/Jahr) - voll absetzbar |\n\n';
+    
+    doc += '## 1.2 STEUERLICHE BEHANDLUNG (CostCategory.tax_treatment)\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| STEUER-BEHANDLUNG | Sofort absetzbar | SOFORT | Werbungskosten | Alle Kostenarten | ✅ Im selben Jahr voll absetzbar | Variabel | category_type=ERHALTUNG oder BETRIEB | Ja (häufigster Fall) | Anlage V Zeilen 16-48 | Grundsteuer 1.200€ → Anlage V Zeile 33, sofort absetzbar |\n';
+    doc += '| STEUER-BEHANDLUNG | AfA (Abschreibung) | AFA | Herstellungskosten | Nur bei Investitionen | ✅ Über 50 Jahre verteilt (2% p.a.) | ❌ Nie | category_type=HERSTELLUNG | Nein | AfASchedule Tabelle | Gebäudekauf 300.000€ → 6.000€/Jahr AfA über 50 Jahre |\n';
+    doc += '| STEUER-BEHANDLUNG | Verteilt absetzbar | VERTEILT | Große Erhaltung | Selten (z.B. GWG) | ✅ Über 3-5 Jahre verteilt | ❌ Nein | Nur bei Beträgen > Grenzwert | Nein | - | Geringwertige Wirtschaftsgüter (Pool-Abschreibung) |\n';
+    doc += '| STEUER-BEHANDLUNG | Nicht absetzbar | NICHT_ABSETZBAR | Private Kosten | Betriebskosten (umgelegt) | ❌ Nein - da auf Mieter umgelegt | ✅ Ja | allocatable=true | Nein | - | Müll 420€ - umgelegt, daher nicht absetzbar |\n\n';
+    
+    doc += '## 1.3 DETAILLIERTE KOSTENKATEGORIEN (aus BuildingTaxLibrary)\n\n';
+    doc += '**Hinweis**: Diese werden beim Initialisieren der Steuer-Bibliothek als CostCategory-Entities erstellt.\n\n';
+    
+    doc += '### Gruppe A: SOFORT ABSETZBARE ERHALTUNGSKOSTEN\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| ERHALTUNG | Reparaturen & Instandhaltung | reparaturen_erhaltung | ERHALTUNG | Invoice | ✅ Anlage V Zeile 36 (Erhaltungsaufwand) | ❌ Nein | - | Nein | tax_treatment=SOFORT | Heizung repariert (850€), sofort absetzbar |\n';
+    doc += '| ERHALTUNG | Schönheitsreparaturen | schoenheitsreparaturen | ERHALTUNG | Invoice | ✅ Anlage V Zeile 36 | ⚠️ Teils (wenn Mieter) | Wenn nicht auf Mieter übertragen | Nein | - | Wohnung streichen (1.200€), wenn Vermieter-Pflicht |\n';
+    doc += '| ERHALTUNG | Wartung & Inspektion | wartung_inspektion | ERHALTUNG | Supplier, Invoice | ✅ Anlage V Zeile 36 | ✅ Ja | Regelmäßig | Nein | allocatable=true | Heizungswartung (180€/Jahr), umlagefähig + absetzbar |\n';
+    doc += '| ERHALTUNG | Kleinreparaturen | kleinreparaturen | ERHALTUNG | Invoice | ✅ Anlage V Zeile 36 | ⚠️ Teils | Nur wenn nicht Mieter-Pflicht | Nein | Bis 100€ oft Mieter | Wasserhahn-Dichtung (45€), Vermieter zahlt |\n\n';
+    
+    doc += '### Gruppe B: BETRIEBSKOSTEN (UMLAGEFÄHIG nach BetrKV)\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| BETRIEBSKOSTEN | Grundsteuer | grundsteuer | BETRIEB | PropertyTax → GeneratedFinancialBooking | ✅ Anlage V Zeile 33 | ✅ Ja (§2 Nr. 1 BetrKV) | - | Nein | Verteilerschlüssel: qm | Grundsteuer 1.200€/Jahr, nach Fläche auf Mieter umlegen |\n';
+    doc += '| BETRIEBSKOSTEN | Wasserversorgung | wasser | BETRIEB | Supplier | ❌ Wenn umgelegt nicht absetzbar | ✅ Ja (§2 Nr. 2 BetrKV) | - | Nein | Verteilerschlüssel: Verbrauch | Wasserkosten 800€, nach Zähler auf Mieter |\n';
+    doc += '| BETRIEBSKOSTEN | Abwasserentsorgung | abwasser | BETRIEB | Supplier | ❌ Wenn umgelegt | ✅ Ja (§2 Nr. 3 BetrKV) | - | Nein | Verteilerschlüssel: Verbrauch oder qm | Abwasser 650€/Jahr |\n';
+    doc += '| BETRIEBSKOSTEN | Heizung (Brennstoff) | heizung_brennstoff | BETRIEB | Supplier | ❌ Wenn umgelegt | ✅ Ja (§2 Nr. 4a BetrKV) | - | Nein | Verteilerschlüssel: Verbrauch (HeizkostenV) | Gas 4.500€, nach Heizkostenverordnung verteilen |\n';
+    doc += '| BETRIEBSKOSTEN | Heizung (Wartung) | heizung_wartung | BETRIEB | Supplier, Invoice | ❌ Wenn umgelegt | ✅ Ja (§2 Nr. 4b BetrKV) | - | Nein | Verteilerschlüssel: Verbrauch | Heizungswartung 350€/Jahr |\n';
+    doc += '| BETRIEBSKOSTEN | Aufzug (Strom) | aufzug_strom | BETRIEB | Supplier | ❌ Wenn umgelegt | ✅ Ja (§2 Nr. 5a BetrKV) | Nur wenn Aufzug vorhanden | Nein | Verteilerschlüssel: qm oder pauschal | Aufzugstrom 180€/Jahr |\n';
+    doc += '| BETRIEBSKOSTEN | Aufzug (Wartung) | aufzug_wartung | BETRIEB | Supplier, Invoice | ❌ Wenn umgelegt | ✅ Ja (§2 Nr. 5b BetrKV) | Nur wenn Aufzug vorhanden | Nein | Verteilerschlüssel: qm oder pauschal | Aufzugwartung 800€/Jahr (Vollwartungsvertrag) |\n';
+    doc += '| BETRIEBSKOSTEN | Straßenreinigung | strassenreinigung | BETRIEB | Supplier (Gemeinde) | ❌ Wenn umgelegt | ✅ Ja (§2 Nr. 6 BetrKV) | - | Nein | Verteilerschlüssel: qm | Straßenreinigung 240€/Jahr |\n';
+    doc += '| BETRIEBSKOSTEN | Müllabfuhr | muellabfuhr | BETRIEB | Supplier | ❌ Wenn umgelegt | ✅ Ja (§2 Nr. 7 BetrKV) | - | Nein | Verteilerschlüssel: Personen oder Pauschal | Müll 420€/Jahr, nach Personenanzahl |\n';
+    doc += '| BETRIEBSKOSTEN | Gebäudereinigung | gebaeudereinigung | BETRIEB | Supplier, Invoice | ❌ Wenn umgelegt | ✅ Ja (§2 Nr. 8 BetrKV) | Nur Gemeinschaftsflächen | Nein | Verteilerschlüssel: qm | Treppenhausreinigung 1.200€/Jahr |\n';
+    doc += '| BETRIEBSKOSTEN | Gartenpflege | gartenpflege | BETRIEB | Supplier, Invoice | ❌ Wenn umgelegt | ✅ Ja (§2 Nr. 9 BetrKV) | Nur wenn Garten vorhanden | Nein | Verteilerschlüssel: qm | Gartenpflege 600€/Jahr |\n';
+    doc += '| BETRIEBSKOSTEN | Beleuchtung (Gemeinschaft) | beleuchtung | BETRIEB | Supplier | ❌ Wenn umgelegt | ✅ Ja (§2 Nr. 10 BetrKV) | Nur Allgemeinflächen | Nein | Verteilerschlüssel: qm | Allgemeinstrom 280€/Jahr (Treppenhaus, Keller) |\n';
+    doc += '| BETRIEBSKOSTEN | Schornsteinfeger | schornsteinfeger | BETRIEB | Invoice | ❌ Wenn umgelegt | ✅ Ja (§2 Nr. 11 BetrKV) | Nur bei Einzelöfen | Nein | Verteilerschlüssel: Pauschal pro Ofen | Kaminkehrer 120€/Jahr (Feuerstättenschau) |\n';
+    doc += '| BETRIEBSKOSTEN | Versicherungen (Gebäude) | versicherung_gebaeude | BETRIEB | Insurance | ❌ Wenn umgelegt | ✅ Ja (§2 Nr. 12 BetrKV) | - | Nein | Verteilerschlüssel: qm | Wohngebäude-Versicherung 850€/Jahr |\n';
+    doc += '| BETRIEBSKOSTEN | Hausmeister | hausmeister | BETRIEB | Supplier, Invoice | ❌ Wenn umgelegt | ✅ Ja (§2 Nr. 13 BetrKV) | - | Nein | Verteilerschlüssel: qm | Hausmeister-Pauschale 1.200€/Jahr |\n';
+    doc += '| BETRIEBSKOSTEN | Hausverwaltung | hausverwaltung | BETRIEB | Invoice | ✅ Anlage V Zeile 39 | ❌ NEIN (§1 Abs. 2 Nr. 1 BetrKV) | - | Nein | Nicht umlegbar! | Verwaltungsgebühr 480€/Jahr - absetzbar, nicht umlegbar |\n';
+    doc += '| BETRIEBSKOSTEN | Gemeinschafts-Antenne/Kabel | antenne_kabel | BETRIEB | Supplier | ❌ Wenn umgelegt | ✅ Ja (§2 Nr. 14 BetrKV) | Nur wenn vorhanden | Nein | Verteilerschlüssel: Pauschal pro Wohnung | Kabel-TV 180€/Jahr (15€/Monat) |\n';
+    doc += '| BETRIEBSKOSTEN | Waschküche | waschkueche | BETRIEB | Supplier, Invoice | ❌ Wenn umgelegt | ✅ Ja (§2 Nr. 15 BetrKV) | Nur wenn vorhanden | Nein | Verteilerschlüssel: Pauschal oder Nutzung | Waschmaschinen-Wartung 200€/Jahr |\n';
+    doc += '| BETRIEBSKOSTEN | Sonstige Betriebskosten | sonstige_betriebskosten | BETRIEB | Invoice | ⚠️ Prüfung erforderlich | ⚠️ Nur wenn in §2 BetrKV gelistet | - | Nein | - | Winterdienst 300€ (§2 Nr. 16 BetrKV: umlagefähig) |\n\n';
+    
+    doc += '### Gruppe C: NICHT UMLAGEFÄHIGE KOSTEN\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| VERWALTUNGSKOSTEN | Hausverwaltung | verwaltung | BETRIEB | Invoice | ✅ Anlage V Zeile 39 | ❌ NEIN (§1 BetrKV explizit ausgeschlossen) | - | Nein | Voll absetzbar | Verwaltungskosten 480€ (20€/Wohnung/Monat) - steuerlich absetzbar |\n';
+    doc += '| VERWALTUNGSKOSTEN | Bankgebühren | bankgebuehren | FINANZIERUNG | Invoice | ✅ Anlage V Zeile 40 | ❌ Nein | - | Nein | - | Kontoführungsgebühren 120€/Jahr - absetzbar |\n';
+    doc += '| VERWALTUNGSKOSTEN | Porto & Telefon | porto_telefon | BETRIEB | Invoice | ✅ Anlage V Zeile 41 | ❌ Nein | - | Nein | - | Briefporto 80€/Jahr - absetzbar |\n';
+    doc += '| VERWALTUNGSKOSTEN | Rechtsberatung | rechtsberatung | BETRIEB | Invoice | ✅ Anlage V Zeile 42 | ❌ Nein | - | Nein | - | Anwalt Mietrecht 650€ - absetzbar |\n';
+    doc += '| VERWALTUNGSKOSTEN | Fahrtkosten | fahrtkosten | BETRIEB | Invoice | ✅ Anlage V Zeile 43 (0,30€/km) | ❌ Nein | - | Nein | - | Fahrten zum Objekt 200km × 0,30€ = 60€ |\n';
+    doc += '| VERWALTUNGSKOSTEN | Büromaterial | bueromaterial | BETRIEB | Invoice | ✅ Anlage V Zeile 44 | ❌ Nein | - | Nein | - | Ordner, Formulare 45€/Jahr |\n\n';
+    
+    doc += '### Gruppe D: VERSICHERUNGEN (DETAILLIERT)\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| VERSICHERUNG | Wohngebäudeversicherung | versicherung_wohngebaeude | BETRIEB | Insurance | ❌ Wenn umgelegt (sonst Anlage V Zeile 34) | ✅ Ja (§2 Nr. 12 BetrKV) | building_type=Wohnung | Nein | allocatable=true | Gebäudeversicherung 850€/Jahr, umlagefähig |\n';
+    doc += '| VERSICHERUNG | Haftpflichtversicherung (Haus & Grund) | versicherung_haftpflicht | BETRIEB | Insurance | ❌ Wenn umgelegt | ✅ Ja (§2 Nr. 12 BetrKV) | - | Nein | allocatable=true | Haftpflicht 320€/Jahr |\n';
+    doc += '| VERSICHERUNG | Glasversicherung | versicherung_glas | BETRIEB | Insurance | ❌ Wenn umgelegt | ✅ Ja (§2 Nr. 12 BetrKV) | Nur wenn abgeschlossen | Nein | allocatable=true | Glasbruch-Versicherung 180€/Jahr |\n';
+    doc += '| VERSICHERUNG | Elementarversicherung | versicherung_elementar | BETRIEB | Insurance | ❌ Wenn umgelegt | ✅ Ja (§2 Nr. 12 BetrKV) | Nur wenn abgeschlossen | Nein | allocatable=true | Hochwasser/Sturm 420€/Jahr |\n';
+    doc += '| VERSICHERUNG | Mietausfallversicherung | versicherung_mietausfall | BETRIEB | Insurance | ✅ Anlage V Zeile 34 (wenn NICHT umgelegt) | ❌ Nein (nicht in BetrKV) | - | Nein | Nicht umlagefähig! | Mietausfallschutz 250€ - nur Vermieter absetzbar |\n';
+    doc += '| VERSICHERUNG | Rechtsschutzversicherung | versicherung_rechtsschutz | BETRIEB | Insurance | ✅ Anlage V Zeile 34 | ❌ Nein (nicht in BetrKV) | - | Nein | Nicht umlagefähig! | Rechtsschutz 180€/Jahr - nur Vermieter |\n\n';
+    
+    doc += '### Gruppe E: FINANZIERUNGSKOSTEN\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| FINANZIERUNG | Kreditzinsen | kreditzinsen | FINANZIERUNG | Financing | ✅ Anlage V Zeile 37 (Schuldzinsen) | ❌ Nein | - | Nein | Nur Zinsen, nicht Tilgung! | Darlehenszinsen 12.000€/Jahr, voll absetzbar |\n';
+    doc += '| FINANZIERUNG | Disagio | disagio | FINANZIERUNG | Financing | ✅ Verteilt über Laufzeit | ❌ Nein | Nur bei Kredit mit Disagio | Nein | tax_treatment=VERTEILT | 5% Disagio bei 200.000€ = 10.000€ → verteilt über 10 Jahre |\n';
+    doc += '| FINANZIERUNG | Bereitstellungszinsen | bereitstellungszinsen | FINANZIERUNG | Financing, Invoice | ✅ Anlage V Zeile 37 | ❌ Nein | Nur während Bauphase | Nein | - | Zinsen während Bau 2.400€ - absetzbar |\n';
+    doc += '| FINANZIERUNG | Damnum | damnum | FINANZIERUNG | Financing | ✅ Verteilt | ❌ Nein | Bei Kredit mit Damnum | Nein | - | Ähnlich Disagio |\n\n';
+    
+    doc += '### Gruppe F: HERSTELLUNGSKOSTEN (NUR AfA)\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| HERSTELLUNG | Sanierung (komplett) | sanierung | HERSTELLUNG | Invoice | ✅ NUR AfA (50 Jahre) | ❌ Nein | - | Nein | tax_treatment=AFA, 15%-Regel! | Vollsanierung 80.000€ → 1.600€/Jahr AfA |\n';
+    doc += '| HERSTELLUNG | Anbau/Ausbau | anbau_ausbau | HERSTELLUNG | Invoice | ✅ NUR AfA | ❌ Nein | - | Nein | tax_treatment=AFA | Dachausbau 60.000€ → 1.200€/Jahr AfA |\n';
+    doc += '| HERSTELLUNG | Modernisierung (wesentlich) | modernisierung | HERSTELLUNG | Invoice | ✅ NUR AfA | ❌ Nein | Nur bei > 15% Gebäudewert in 3 Jahren | Nein | 15%-Regel-Prüfung! | Neues Bad + Heizung 25.000€, wenn > 15% → AfA |\n';
+    doc += '| HERSTELLUNG | Anschaffungsnebenkosten | anschaffungsnebenkosten | HERSTELLUNG | PurchaseContract | ✅ AfA über 50 Jahre | ❌ Nein | Nur beim Kauf | Nein | Separate AfA-Position | Notar 8.000€ + Makler 15.000€ → 460€/Jahr AfA |\n';
+    doc += '| HERSTELLUNG | Grunderwerbsteuer | grunderwerbsteuer | HERSTELLUNG | PurchaseContract | ✅ AfA über 50 Jahre | ❌ Nein | Nur beim Kauf | Nein | Teil der Anschaffungskosten | 6% von 450.000€ = 27.000€ → 540€/Jahr AfA |\n\n';
+    
+    doc += '**WICHTIG: 15%-Regel**\n';
+    doc += '```javascript\n';
+    doc += '// Automatische Prüfung bei Rechnungserfassung\n';
+    doc += 'function check15PercentRule(building, last_3_years_invoices) {\n';
+    doc += '  const erhaltung_sum = sum(last_3_years_invoices WHERE tax_treatment="SOFORT");\n';
+    doc += '  const gebaeude_wert = building.purchase_price - building.land_value;\n';
+    doc += '  const threshold = gebaeude_wert * 0.15;\n';
+    doc += '  \n';
+    doc += '  if (erhaltung_sum > threshold) {\n';
+    doc += '    return {\n';
+    doc += '      warning: true,\n';
+    doc += '      message: `⚠️ 15%-Grenze überschritten!\n';
+    doc += '        Erhaltung letzte 3 Jahre: ${erhaltung_sum}€\n';
+    doc += '        Grenzwert (15% von ${gebaeude_wert}€): ${threshold}€\n';
+    doc += '        Überschreitung: ${erhaltung_sum - threshold}€\n';
+    doc += '        \n';
+    doc += '        → Diese Kosten müssen als HERSTELLUNG (AfA) behandelt werden!`,\n';
+    doc += '      suggested_action: "Rechnungen umbuchen von ERHALTUNG zu HERSTELLUNG"\n';
+    doc += '    };\n';
+    doc += '  }\n';
+    doc += '  return { warning: false };\n';
+    doc += '}\n';
+    doc += '```\n\n';
+    
+    doc += '---\n\n';
+    
+    doc += '## 1.4 VERTEILERSCHLÜSSEL (für Betriebskosten-Umlage)\n\n';
+    doc += '| Gruppenname | Anzeige-Text | Interner Wert | Kategorie | Verwendung | Steuerlich relevant | Umlagefähig | Abhängigkeiten | Standard | Verknüpfungen | Beispiel-Anwendungsfall |\n';
+    doc += '|-------------|--------------|---------------|-----------|------------|---------------------|-------------|----------------|----------|---------------|------------------------|\n';
+    doc += '| VERTEILERSCHLÜSSEL | Nach Wohnfläche | flaeche | Flächenschlüssel | OperatingCostStatementItem | N/A | - | Unit.flaeche muss gesetzt sein | ✅ Ja (Standard) | WoFlV (Wohnflächenverordnung) | Grundsteuer 1.200€: Whg. 65m² / 354m² = 18,5% = 222€ |\n';
+    doc += '| VERTEILERSCHLÜSSEL | Nach Personenanzahl | personen | Personenschlüssel | OperatingCostStatementItem | N/A | - | LeaseContract.number_of_persons gesetzt | Nein | Für Müll, Wasser | Müll 420€: 2 Personen / 11 gesamt = 18,2% = 76,44€ |\n';
+    doc += '| VERTEILERSCHLÜSSEL | Nach Verbrauch (Zähler) | verbrauch | Verbrauchsschlüssel | OperatingCostStatementItem, Meter | N/A | - | Meter müssen vorhanden sein | Nein | HeizkostenV §6-10 | Wasser: Verbrauch 45m³ / 250m³ gesamt = 18% |\n';
+    doc += '| VERTEILERSCHLÜSSEL | Pauschal (gleich) | pauschal | Pauschalschlüssel | OperatingCostStatementItem | N/A | - | - | Nein | Bei gleichen Wohnungen | Hausmeister 1.200€ / 6 Wohnungen = 200€ pro Wohnung |\n';
+    doc += '| VERTEILERSCHLÜSSEL | Nach Einheiten | einheiten | Einheiten-Schlüssel | OperatingCostStatementItem | N/A | - | - | Nein | Wie Pauschal | Mülltonnen: 1 pro Wohnung → pauschal |\n';
+    doc += '| VERTEILERSCHLÜSSEL | Nach Wohneinheiten (gewichtet) | wohneinheiten_gewichtet | Gewichteter Schlüssel | OperatingCostStatementItem | N/A | - | Gewichtungsfaktoren definieren | Nein | Bei unterschiedlichen Wohnungsgrößen | 1-Zimmer=0,5 / 2-Zimmer=0,75 / 3-Zimmer=1,0 |\n';
+    doc += '| VERTEILERSCHLÜSSEL | Gemischt (70% Fläche + 30% Personen) | gemischt | Kombinations-Schlüssel | OperatingCostStatementItem | N/A | - | Beide Daten vorhanden | Nein | Für Wasser oft verwendet | Wasser: 70% nach qm, 30% nach Personen |\n';
+    doc += '| VERTEILERSCHLÜSSEL | Nicht umlegbar | nicht_umlegbar | - | - | ✅ Voll absetzbar | ❌ Nein | - | Nein | Hausverwaltung, Bankgebühren | Verwaltung 480€ - nicht umlegen, sondern voll absetzen |\n\n';
+    
+    doc += '**Berechnungslogik Verteilerschlüssel**:\n';
+    doc += '```javascript\n';
+    doc += '// 1. FLÄCHE\n';
+    doc += 'anteil_unit = unit.flaeche / sum(all_units.flaeche)\n';
+    doc += 'kosten_unit = gesamtkosten * anteil_unit\n';
+    doc += '// Beispiel: 65,5m² / 354m² = 0,185 → 18,5%\n';
+    doc += '\n';
+    doc += '// 2. PERSONEN\n';
+    doc += 'anteil_unit = contract.number_of_persons / sum(all_contracts.number_of_persons)\n';
+    doc += 'kosten_unit = gesamtkosten * anteil_unit\n';
+    doc += '// Beispiel: 2 Personen / 11 gesamt = 0,182 → 18,2%\n';
+    doc += '\n';
+    doc += '// 3. VERBRAUCH (Zähler)\n';
+    doc += 'verbrauch_unit = zaehlerstand_ende - zaehlerstand_anfang\n';
+    doc += 'anteil_unit = verbrauch_unit / sum(all_units.verbrauch)\n';
+    doc += 'kosten_unit = gesamtkosten * anteil_unit\n';
+    doc += '// Beispiel Wasser: 45m³ / 250m³ = 0,18 → 18%\n';
+    doc += '// Beispiel Heizung: 850 kWh / 4.200 kWh = 0,202 → 20,2%\n';
+    doc += '\n';
+    doc += '// 4. PAUSCHAL\n';
+    doc += 'kosten_unit = gesamtkosten / anzahl_wohnungen\n';
+    doc += '// Beispiel: 1.200€ / 6 Wohnungen = 200€\n';
+    doc += '\n';
+    doc += '// 5. GEMISCHT (Kombination)\n';
+    doc += 'anteil_flaeche = unit.flaeche / gesamt_flaeche\n';
+    doc += 'anteil_personen = contract.persons / gesamt_personen\n';
+    doc += 'anteil_unit = (anteil_flaeche * 0.7) + (anteil_personen * 0.3)\n';
+    doc += 'kosten_unit = gesamtkosten * anteil_unit\n';
+    doc += '// Beispiel Wasser-Abwasser (üblich: 70/30)\n';
+    doc += '```\n\n';
+    
+    doc += '---\n\n';
     
     // Gruppierung nach Verwendungsbereich
     const groups = {
