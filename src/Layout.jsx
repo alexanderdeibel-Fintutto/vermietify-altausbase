@@ -37,10 +37,11 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Steuerformulare', href: createPageUrl('TaxForms'), icon: BookOpen, page: 'TaxForms' },
         { name: 'Betriebskosten', href: createPageUrl('OperatingCosts'), icon: FileText, page: 'OperatingCosts' },
         { name: 'Bank/Kasse', href: createPageUrl('BankAccounts'), icon: Landmark, page: 'BankAccounts' },
+        { name: '───────────', disabled: true },
         { name: '📖 Entwickler-Doku', href: createPageUrl('DeveloperDocumentation'), icon: BookOpen, page: 'DeveloperDocumentation' },
         { name: '🆘 Support-Center', href: createPageUrl('SupportCenter'), icon: AlertCircle, page: 'SupportCenter' },
         { name: '🚀 Projekt-Management', href: createPageUrl('ProjectManagement'), icon: Target, page: 'ProjectManagement' },
-        { name: 'Hilfe-Center', href: createPageUrl('HilfeCenter'), icon: HelpCircle, page: 'HilfeCenter' },
+        { name: '❓ Hilfe-Center', href: createPageUrl('HilfeCenter'), icon: HelpCircle, page: 'HilfeCenter' },
     ];
 
     return (
@@ -75,6 +76,11 @@ export default function Layout({ children, currentPageName }) {
 
                 <nav className="p-4 space-y-1">
                     {navigation.map((item) => {
+                        if (item.disabled) {
+                            return (
+                                <div key={item.name} className="my-2 border-t border-slate-200" />
+                            );
+                        }
                         const isActive = currentPageName === item.page;
                         return (
                             <Link
