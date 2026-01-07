@@ -25,11 +25,12 @@ import {
     Zap,
     Package
 } from 'lucide-react';
-import { format, parseISO, differenceInDays } from 'date-fns';
+import { format, parseISO, differenceInDays, startOfWeek, endOfWeek } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import { toast } from 'sonner';
 import FeatureDialog from '../components/project/FeatureDialog';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function ProjectManagement() {
     const [activeTab, setActiveTab] = useState('roadmap');
@@ -81,6 +82,25 @@ export default function ProjectManagement() {
     const sprintProgress = currentSprint.length > 0
         ? Math.round(currentSprint.reduce((sum, f) => sum + (f.fortschritt_prozent || 0), 0) / currentSprint.length)
         : 0;
+    
+    const sprintStoryPoints = currentSprint.reduce((sum, f) => sum + (f.story_points || 0), 0);
+    const completedStoryPoints = currentSprint
+        .filter(f => f.status === 'Testing' || f.status === 'Fertig')
+        .reduce((sum, f) => sum + (f.story_points || 0), 0);
+
+    // Burndown Chart Daten (14 Tage Sprint)
+    const sprintStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+    const burndownData = Array.from({ length: 14 }, (_, i) => {
+        const day = i + 1;
+        const idealRemaining = sprintStoryPoints - (sprintStoryPoints / 14) * day;
+        const actualCompleted = completedStoryPoints * (day / 14); // Simplified
+        const actualRemaining = sprintStoryPoints - actualCompleted;
+        return {
+            tag: `Tag ${day}`,
+            ideal: Math.max(0, idealRemaining),
+            aktuell: Math.max(0, actualRemaining)
+        };
+    });
 
     // Nächste 3 Monate
     const threeMonthsLater = new Date();
@@ -416,6 +436,21 @@ export default function ProjectManagement() {
 
                 {/* TAB: BUGS */}
                 <TabsContent value="bugs" className="space-y-4">
+                    <Card className="border-2 border-blue-300 bg-blue-50">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-blue-900">
+                                <AlertCircle className="w-5 h-5" />
+                                📎 Sync mit Support-Center
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-sm text-blue-800">
+                                Bugs werden automatisch aus Support-Tickets importiert, wenn sie als "Bug" markiert werden.
+                                Benutzen Sie den Edit-Button im Support-Center, um Tickets mit Features zu verknüpfen.
+                            </p>
+                        </CardContent>
+                    </Card>
+
                     {kritischeBugs.length > 0 && (
                         <Card className="border-2 border-red-300 bg-red-50">
                             <CardHeader>
@@ -482,32 +517,83 @@ export default function ProjectManagement() {
 
                 {/* TAB: SPRINT */}
                 <TabsContent value="sprint" className="space-y-4">
+                    <div className="grid grid-cols-3 gap-4">
+                        <Card>
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-sm">Story Points</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-3xl font-bold">{completedStoryPoints}/{sprintStoryPoints}</div>
+                                <p className="text-sm text-slate-600">Abgeschlossen</p>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-sm">Features</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-3xl font-bold">{currentSprint.length}</div>
+                                <p className="text-sm text-slate-600">Im Sprint</p>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-sm">Fortschritt</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-3xl font-bold text-blue-600">{sprintProgress}%</div>
+                                <p className="text-sm text-slate-600">Fertig</p>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Burndown Chart */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <BarChart3 className="w-5 h-5" />
+                                Sprint Burndown (14 Tage)
+                                {autoRefresh && <span className="text-xs text-emerald-600">● Auto-Update</span>}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <LineChart data={burndownData}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="tag" />
+                                    <YAxis label={{ value: 'Story Points', angle: -90, position: 'insideLeft' }} />
+                                    <Tooltip />
+                                    <Legend />
+                                    <Line type="monotone" dataKey="ideal" stroke="#94a3b8" strokeDasharray="5 5" name="Ideal" />
+                                    <Line type="monotone" dataKey="aktuell" stroke="#3b82f6" strokeWidth={2} name="Aktuell" />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+
+                    {/* Sprint Features */}
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Target className="w-5 h-5" />
-                                Aktueller Sprint
+                                Sprint Features
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-lg font-semibold text-slate-900">Sprint Progress</p>
-                                        <p className="text-sm text-slate-600">{currentSprint.length} Features im Sprint</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-3xl font-bold text-blue-600">{sprintProgress}%</p>
-                                        <p className="text-sm text-slate-600">Fertiggestellt</p>
-                                    </div>
+                            {currentSprint.length === 0 ? (
+                                <div className="text-center py-8 text-slate-600">
+                                    Kein Sprint geplant
                                 </div>
-                                <Progress value={sprintProgress} className="h-3" />
-
-                                <div className="space-y-2 mt-6">
+                            ) : (
+                                <div className="space-y-2">
                                     {currentSprint.map(feature => (
                                         <div
                                             key={feature.id}
-                                            className="flex items-center gap-4 p-3 border rounded-lg"
+                                            className="flex items-center gap-4 p-3 border rounded-lg cursor-pointer hover:bg-slate-50"
+                                            onClick={() => {
+                                                setEditingFeature(feature);
+                                                setShowFeatureDialog(true);
+                                            }}
                                         >
                                             <div className="flex-1">
                                                 <p className="font-medium text-slate-900">{feature.titel}</p>
@@ -516,18 +602,14 @@ export default function ProjectManagement() {
                                                     <span className="text-sm text-slate-600">{feature.fortschritt_prozent || 0}%</span>
                                                 </div>
                                             </div>
+                                            <Badge className={statusColors[feature.status]}>{feature.status}</Badge>
                                             {feature.story_points && (
                                                 <Badge variant="outline">{feature.story_points} SP</Badge>
                                             )}
                                         </div>
                                     ))}
-                                    {currentSprint.length === 0 && (
-                                        <div className="text-center py-8 text-slate-600">
-                                            Kein Sprint geplant
-                                        </div>
-                                    )}
                                 </div>
-                            </div>
+                            )}
                         </CardContent>
                     </Card>
                 </TabsContent>
