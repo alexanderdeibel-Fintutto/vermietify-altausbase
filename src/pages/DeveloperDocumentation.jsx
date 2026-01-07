@@ -263,11 +263,24 @@ export default function DeveloperDocumentation() {
     const generateMutation = useMutation({
         mutationFn: async (docType) => {
             let response;
+            // Spezielle Funktionen für Prioritäts-Bereiche
             if (docType === 'sample_data') {
                 response = await base44.functions.invoke('generateSampleData', { preset: 'komplett' });
             } else if (docType === 'user_issues') {
                 response = await base44.functions.invoke('generateUserIssuesDocumentation', {});
-            } else {
+            } 
+            // Spezielle Funktionen für Kontext & Technische Bereiche
+            else if (docType === 'timeline_calendar') {
+                response = await base44.functions.invoke('generateTimelineDocumentation', {});
+            } else if (docType === 'performance_data') {
+                response = await base44.functions.invoke('generatePerformanceDocumentation', {});
+            } else if (docType === 'coding_conventions') {
+                response = await base44.functions.invoke('generateCodingConventionsDocumentation', {});
+            } else if (docType === 'testing_qa') {
+                response = await base44.functions.invoke('generateTestingDocumentation', {});
+            } 
+            // Fallback: Standard-Generierung
+            else {
                 response = await base44.functions.invoke('generateDocumentation', {
                     documentation_type: docType
                 });
