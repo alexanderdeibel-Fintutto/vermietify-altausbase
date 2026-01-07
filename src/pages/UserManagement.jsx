@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import InviteUserDialog from '../components/users/InviteUserDialog';
 import UserSystemSetup from '../components/users/UserSystemSetup';
+import BulkUserOperations from '../components/users/BulkUserOperations';
 
 export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState('');
