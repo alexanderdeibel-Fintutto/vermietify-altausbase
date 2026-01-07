@@ -218,11 +218,23 @@ Deno.serve(async (req) => {
 // Helper Functions
 
 async function getAllEntitySchemas(base44) {
+    // Erweiterte Liste aller Entities
     const entityNames = [
         'Building', 'Unit', 'Tenant', 'LeaseContract', 'Document', 'Template',
         'PropertyTax', 'Insurance', 'Financing', 'Supplier', 'BankAccount',
         'BankTransaction', 'GeneratedFinancialBooking', 'Invoice', 'CostCategory',
-        'Task', 'Email', 'LetterXpressCredential', 'LetterShipment'
+        'Task', 'Email', 'LetterXpressCredential', 'LetterShipment',
+        'Owner', 'Shareholder', 'OwnerRelationship', 'Payment', 'RentChange',
+        'PurchaseContract', 'IMAPAccount', 'Workflow', 'WorkflowStep', 'Automation',
+        'ActivityLog', 'Notification', 'TextBlock', 'TaskStatus', 'TaskPriority',
+        'TaxForm', 'TaxFormField', 'AnlageVSubmission', 'BuildingTaxLibrary',
+        'AfASchedule', 'BookingGenerationRule', 'OperatingCostStatement',
+        'OperatingCostStatementItem', 'Recipient', 'FinancialItem',
+        'CategorizationRule', 'PaymentTransactionLink', 'FinancialItemTransactionLink',
+        'EuerCategory', 'TaxCategory', 'CostTaxLink', 'CustomCostCategory', 'CostType',
+        'Gebaeude', 'Meter', 'DocumentOriginal', 'GeneratedDocumentation',
+        'DocumentationChange', 'UserProblem', 'ProblemCategory', 'ProblemSolution',
+        'ProblemStatistics', 'ProjectFeature'
     ];
 
     const schemas = {};
@@ -233,6 +245,7 @@ async function getAllEntitySchemas(base44) {
             console.log(`Could not fetch schema for ${name}:`, error.message);
         }
     }
+    console.log(`✅ Loaded ${Object.keys(schemas).length} entity schemas`);
     return schemas;
 }
 
