@@ -86,7 +86,8 @@ Deno.serve(async (req) => {
                 content_json = userIssuesDoc.content_json || {};
             } else {
                 // Alle Entities abrufen für die Dokumentation
-                const allEntities = await getAllEntitySchemas(base44);
+                const schemasResult = await base44.asServiceRole.functions.invoke('getAllEntitySchemas', {});
+                const allEntities = schemasResult.data?.schemas || {};
                 
                 switch (documentation_type) {
                     case 'sample_data':
