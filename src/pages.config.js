@@ -16,22 +16,23 @@ import GeneratedBookings from './pages/GeneratedBookings';
 import HilfeCenter from './pages/HilfeCenter';
 import Invoices from './pages/Invoices';
 import Kommunikation from './pages/Kommunikation';
+import ModuleManagement from './pages/ModuleManagement';
 import OperatingCosts from './pages/OperatingCosts';
 import ProjectManagement from './pages/ProjectManagement';
+import RoleManagement from './pages/RoleManagement';
+import SuiteManagement from './pages/SuiteManagement';
 import SupportCenter from './pages/SupportCenter';
 import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
 import TaxForms from './pages/TaxForms';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
+import TestingDashboard from './pages/TestingDashboard';
 import UnitDetail from './pages/UnitDetail';
+import UserManagement from './pages/UserManagement';
 import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
-import SuiteManagement from './pages/SuiteManagement';
-import UserManagement from './pages/UserManagement';
-import RoleManagement from './pages/RoleManagement';
-import TestingDashboard from './pages/TestingDashboard';
-import ModuleManagement from './pages/ModuleManagement';
+import UserDetail from './pages/UserDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -54,22 +55,23 @@ export const PAGES = {
     "HilfeCenter": HilfeCenter,
     "Invoices": Invoices,
     "Kommunikation": Kommunikation,
+    "ModuleManagement": ModuleManagement,
     "OperatingCosts": OperatingCosts,
     "ProjectManagement": ProjectManagement,
+    "RoleManagement": RoleManagement,
+    "SuiteManagement": SuiteManagement,
     "SupportCenter": SupportCenter,
     "Tasks": Tasks,
     "Tax": Tax,
     "TaxForms": TaxForms,
     "TaxLibraryManagement": TaxLibraryManagement,
+    "TestingDashboard": TestingDashboard,
     "UnitDetail": UnitDetail,
+    "UserManagement": UserManagement,
     "WhatsAppCommunication": WhatsAppCommunication,
     "WhatsAppSettings": WhatsAppSettings,
     "WhatsAppSetup": WhatsAppSetup,
-    "SuiteManagement": SuiteManagement,
-    "UserManagement": UserManagement,
-    "RoleManagement": RoleManagement,
-    "TestingDashboard": TestingDashboard,
-    "ModuleManagement": ModuleManagement,
+    "UserDetail": UserDetail,
 }
 
 export const pagesConfig = {

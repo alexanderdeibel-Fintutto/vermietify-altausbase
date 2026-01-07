@@ -12,11 +12,17 @@ import {
   UserCheck, TestTube, Package 
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '../utils';
+import InviteUserDialog from '../components/users/InviteUserDialog';
+import UserSystemSetup from '../components/users/UserSystemSetup';
 
 export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const { data: users = [] } = useQuery({
@@ -88,19 +94,7 @@ export default function UserManagement() {
     activeModules: moduleAccess.filter(ma => ma.is_active).length
   };
 
-  const initializeSystem = useMutation({
-    mutationFn: async () => {
-      const response = await base44.functions.invoke('initializeRolesAndPermissions');
-      return response.data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries();
-      toast.success(data.message);
-    },
-    onError: (error) => {
-      toast.error(error.message || 'Fehler bei Initialisierung');
-    }
-  });
+  const [setupDialogOpen, setSetupDialogOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -111,14 +105,16 @@ export default function UserManagement() {
         </div>
         <div className="flex gap-2">
           <Button 
-            onClick={() => initializeSystem.mutate()} 
+            onClick={() => setSetupDialogOpen(true)} 
             variant="outline"
-            disabled={initializeSystem.isPending}
           >
             <Settings className="w-4 h-4 mr-2" />
-            System initialisieren
+            System Setup
           </Button>
-          <Button className="bg-emerald-600 hover:bg-emerald-700">
+          <Button 
+            className="bg-emerald-600 hover:bg-emerald-700"
+            onClick={() => setInviteDialogOpen(true)}
+          >
             <UserPlus className="w-4 h-4 mr-2" />
             Benutzer einladen
           </Button>
@@ -246,14 +242,26 @@ export default function UserManagement() {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => navigate(createPageUrl('UserDetail') + '?userId=' + user.id)}
+                  >
                     <Eye className="w-4 h-4" />
                   </Button>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => navigate(createPageUrl('UserDetail') + '?userId=' + user.id)}
+                  >
                     <Settings className="w-4 h-4" />
                   </Button>
                   {user.is_tester && (
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => navigate(createPageUrl('UserDetail') + '?userId=' + user.id)}
+                    >
                       <BarChart3 className="w-4 h-4" />
                     </Button>
                   )}
@@ -263,6 +271,26 @@ export default function UserManagement() {
           </div>
         </CardContent>
       </Card>
+
+      <InviteUserDialog 
+        open={inviteDialogOpen} 
+        onOpenChange={setInviteDialogOpen} 
+      />
+
+      {setupDialogOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-6">
+          <div className="max-w-2xl w-full">
+            <UserSystemSetup />
+            <Button 
+              variant="outline" 
+              className="mt-4 w-full"
+              onClick={() => setSetupDialogOpen(false)}
+            >
+              Schließen
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
