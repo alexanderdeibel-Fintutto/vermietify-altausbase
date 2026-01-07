@@ -142,20 +142,27 @@ export default function ProjectManagement() {
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900">🚀 Projekt-Management</h1>
                     <p className="text-sm text-slate-600 mt-1">
-                        Auto-Refresh: 5 Minuten • Letztes Update: {format(lastUpdate, 'HH:mm:ss', { locale: de })}
+                        Live Feature Roadmap & Bug Tracking
                     </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-3">
+                    <span className="text-sm text-slate-600">
+                        Letzte Aktualisierung: vor {timeSinceUpdate}s
+                    </span>
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                            refetchFeatures();
-                            setLastUpdate(new Date());
-                        }}
+                        onClick={() => setShowSettings(true)}
                     >
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Aktualisieren
+                        <SettingsIcon className="w-4 h-4 mr-2" />
+                        Einstellungen
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setAutoRefresh(!autoRefresh)}
+                    >
+                        {autoRefresh ? '⏸️ Pausieren' : '▶️ Fortsetzen'}
                     </Button>
                     <Button 
                         size="sm" 
@@ -170,6 +177,16 @@ export default function ProjectManagement() {
                     </Button>
                 </div>
             </div>
+
+            {/* Live-Übersicht */}
+            <Card className="border-2 border-purple-300 bg-purple-50">
+                <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2">
+                        📊 LIVE-ÜBERSICHT
+                        {autoRefresh && <span className="animate-pulse text-xs text-purple-600">● Live</span>}
+                    </CardTitle>
+                </CardHeader>
+            </Card>
 
             {/* Live-Statistik Dashboard */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

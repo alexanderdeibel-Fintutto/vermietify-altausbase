@@ -554,8 +554,8 @@ Diese Roadmap wird quartalsweise aktualisiert und ist nicht in Stein gemeißelt.
         // Speichere Dokumentation
         const doc = await base44.entities.GeneratedDocumentation.create({
             documentation_type: 'roadmap_techdebt',
-            title: 'Roadmap & Tech-Debt Dokumentation',
-            description: 'In Entwicklung, Geplante Features, Langfristige Vision und bekannte Tech-Debt',
+            title: 'Roadmap & Tech-Debt Dokumentation (STATISCH)',
+            description: 'Snapshot: In Entwicklung, Geplante Features, Langfristige Vision und bekannte Tech-Debt. Für Live-Daten siehe 🚀 Projekt-Management.',
             content_markdown: content,
             content_json: {
                 in_development: [

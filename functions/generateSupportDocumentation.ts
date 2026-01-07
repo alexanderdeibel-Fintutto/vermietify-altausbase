@@ -255,8 +255,8 @@ Für detaillierte Statistiken siehe Support-Dashboard.
         // Speichere Dokumentation
         const doc = await base44.entities.GeneratedDocumentation.create({
             documentation_type: 'support_fehler',
-            title: 'User-Fehler & Support-Dokumentation',
-            description: 'Dokumentation aller von Endnutzern gemeldeten Probleme, Fehler und Support-Anfragen',
+            title: 'User-Fehler & Support-Dokumentation (STATISCH)',
+            description: 'Snapshot der häufigsten Probleme und Lösungen. Für Live-Daten siehe 🆘 Support-Center.',
             content_markdown: content,
             content_json: {
                 statistics: {
