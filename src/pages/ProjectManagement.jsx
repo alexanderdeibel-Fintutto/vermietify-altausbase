@@ -53,18 +53,21 @@ export default function ProjectManagement() {
     const { data: bugs = [] } = useQuery({
         queryKey: ['user-problems-bugs'],
         queryFn: () => base44.entities.UserProblem.filter({ ist_bug: true }, '-created_date', 200),
-        refetchInterval: 300000
+        refetchInterval: autoRefresh ? 300000 : false,
+        refetchIntervalInBackground: false
     });
 
-    // Auto-Refresh Interval
+    // Auto-Update Timer
     useEffect(() => {
-        const interval = setInterval(() => {
-            refetchFeatures();
-            setLastUpdate(new Date());
-        }, 300000); // 5 Minuten
+        if (autoRefresh) {
+            const interval = setInterval(() => {
+                setLastUpdate(new Date());
+            }, 10000);
+            return () => clearInterval(interval);
+        }
+    }, [autoRefresh]);
 
-        return () => clearInterval(interval);
-    }, [refetchFeatures]);
+    const timeSinceUpdate = Math.floor((new Date() - lastUpdate) / 1000);
 
     // Statistiken berechnen
     const inEntwicklung = features.filter(f => f.status === 'In Entwicklung');
