@@ -262,9 +262,16 @@ export default function DeveloperDocumentation() {
 
     const generateMutation = useMutation({
         mutationFn: async (docType) => {
-            const response = await base44.functions.invoke('generateDocumentation', {
-                documentation_type: docType
-            });
+            let response;
+            if (docType === 'sample_data') {
+                response = await base44.functions.invoke('generateSampleData', { preset: 'komplett' });
+            } else if (docType === 'user_issues') {
+                response = await base44.functions.invoke('generateUserIssuesDocumentation', {});
+            } else {
+                response = await base44.functions.invoke('generateDocumentation', {
+                    documentation_type: docType
+                });
+            }
             return response.data;
         },
         onSuccess: (data) => {
