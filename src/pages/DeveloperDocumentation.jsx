@@ -724,26 +724,41 @@ export default function DeveloperDocumentation() {
                 <Button 
                     variant="outline" 
                     size="lg"
-                    onClick={() => {
-                        const allDocs = documentations.filter(d => d.content_markdown);
-                        if (allDocs.length === 0) {
-                            toast.error('Keine Dokumentationen zum Download vorhanden');
+                    onClick={async () => {
+                        if (selectedTypes.length === 0) {
+                            toast.error('Bitte wähle mindestens eine Dokumentation aus');
                             return;
                         }
-                        const combined = allDocs.map(d => `# ${d.title}\n\n${d.content_markdown}`).join('\n\n---\n\n');
-                        const blob = new Blob([combined], { type: 'text/markdown' });
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `complete_documentation_${Date.now()}.md`;
-                        document.body.appendChild(a);
-                        a.click();
-                        window.URL.revokeObjectURL(url);
-                        a.remove();
+
+                        try {
+                            const response = await base44.functions.invoke('downloadDocumentationZip', {
+                                documentationTypes: selectedTypes
+                            });
+
+                            if (response.data instanceof Blob || response.data instanceof ArrayBuffer) {
+                                const blob = response.data instanceof Blob 
+                                    ? response.data 
+                                    : new Blob([response.data]);
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                const datum = new Date().toISOString().split('T')[0].replace(/-/g, '');
+                                a.download = `entwickler_doku_${selectedTypes.length}_bereiche_${datum}.zip`;
+                                document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                                a.remove();
+                                toast.success(`${selectedTypes.length} Bereiche heruntergeladen`);
+                            }
+                        } catch (error) {
+                            console.error('Download error:', error);
+                            toast.error('Download fehlgeschlagen: ' + error.message);
+                        }
                     }}
+                    disabled={selectedTypes.length === 0}
                 >
                     <Download className="w-5 h-5 mr-2" />
-                    Alle als Markdown
+                    Ausgewählte als ZIP ({selectedTypes.length})
                 </Button>
                 <Button 
                     variant="outline" 
@@ -754,28 +769,32 @@ export default function DeveloperDocumentation() {
                             toast.error('Keine Dokumentationen zum Download vorhanden');
                             return;
                         }
-                        
-                        const JSZip = (await import('https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm')).default;
-                        const zip = new JSZip();
-                        
-                        allDocs.forEach(doc => {
-                            zip.file(`${doc.documentation_type}.md`, doc.content_markdown);
-                            if (doc.content_json) {
-                                zip.file(`${doc.documentation_type}.json`, JSON.stringify(doc.content_json, null, 2));
+
+                        try {
+                            const allTypes = allDocs.map(d => d.documentation_type);
+                            const response = await base44.functions.invoke('downloadDocumentationZip', {
+                                documentationTypes: allTypes
+                            });
+
+                            if (response.data instanceof Blob || response.data instanceof ArrayBuffer) {
+                                const blob = response.data instanceof Blob 
+                                    ? response.data 
+                                    : new Blob([response.data]);
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                const datum = new Date().toISOString().split('T')[0].replace(/-/g, '');
+                                a.download = `entwickler_doku_alle_${allTypes.length}_bereiche_${datum}.zip`;
+                                document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                                a.remove();
+                                toast.success('ZIP-Archiv mit allen Dokumentationen erstellt');
                             }
-                        });
-                        
-                        const content = await zip.generateAsync({ type: 'blob' });
-                        const url = window.URL.createObjectURL(content);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-                        a.download = `app-dokumentation-${timestamp}.zip`;
-                        document.body.appendChild(a);
-                        a.click();
-                        window.URL.revokeObjectURL(url);
-                        a.remove();
-                        toast.success('ZIP-Archiv erstellt');
+                        } catch (error) {
+                            console.error('ZIP creation error:', error);
+                            toast.error('ZIP-Erstellung fehlgeschlagen: ' + error.message);
+                        }
                     }}
                 >
                     <Archive className="w-5 h-5 mr-2" />
