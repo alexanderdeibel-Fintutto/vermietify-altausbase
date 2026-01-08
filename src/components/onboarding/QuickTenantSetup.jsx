@@ -137,5 +137,6 @@ export default function QuickTenantSetup({ onComplete }) {
         </form>
       </CardContent>
     </Card>
+    </motion.div>
   );
 }

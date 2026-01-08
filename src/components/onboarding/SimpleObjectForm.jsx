@@ -143,5 +143,6 @@ export default function SimpleObjectForm({ onComplete }) {
         </form>
       </CardContent>
     </Card>
+    </motion.div>
   );
 }
