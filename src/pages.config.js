@@ -44,6 +44,7 @@ import AdvancedAnalytics from './pages/AdvancedAnalytics';
 import EmailTemplates from './pages/EmailTemplates';
 import Payments from './pages/Payments';
 import UserSettings from './pages/UserSettings';
+import NotificationManagement from './pages/NotificationManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -94,6 +95,7 @@ export const PAGES = {
     "EmailTemplates": EmailTemplates,
     "Payments": Payments,
     "UserSettings": UserSettings,
+    "NotificationManagement": NotificationManagement,
 }
 
 export const pagesConfig = {

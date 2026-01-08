@@ -82,6 +82,7 @@ export default function Layout({ children, currentPageName }) {
         { name: '───────────', disabled: true },
         { name: '📖 Entwickler-Doku', href: createPageUrl('DeveloperDocumentation'), icon: BookOpen, page: 'DeveloperDocumentation' },
         { name: '🆘 Support-Center', href: createPageUrl('SupportCenter'), icon: AlertCircle, page: 'SupportCenter' },
+        { name: '🔔 Benachrichtigungen', href: createPageUrl('NotificationManagement'), icon: Bell, page: 'NotificationManagement' },
         { name: '🚀 Projekt-Management', href: createPageUrl('ProjectManagement'), icon: Target, page: 'ProjectManagement' },
         { name: '❓ Hilfe-Center', href: createPageUrl('HilfeCenter'), icon: HelpCircle, page: 'HilfeCenter' },
     ];
