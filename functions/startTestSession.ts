@@ -6,28 +6,39 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     
     if (!user) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
+
+    const { test_account_id, assignment_id } = await req.json();
+
+    // Session erstellen
     const session = await base44.asServiceRole.entities.TestSession.create({
       user_id: user.id,
+      test_account_id: test_account_id,
+      assignment_id: assignment_id,
       session_start: new Date().toISOString(),
-      session_end: null,
-      total_duration: 0,
       pages_visited: [],
       actions_performed: [],
       features_tested: [],
-      browser_info: req.headers.get('user-agent') || 'unknown',
-      ip_address: req.headers.get('x-forwarded-for') || 'unknown'
+      browser_info: ''
     });
-    
+
+    // Assignment-Status aktualisieren falls vorhanden
+    if (assignment_id) {
+      await base44.asServiceRole.entities.TestAssignment.update(assignment_id, {
+        status: 'in_progress',
+        started_at: new Date().toISOString()
+      });
+    }
+
     return Response.json({
       success: true,
-      sessionId: session.id
+      session_id: session.id,
+      message: 'Test-Session gestartet'
     });
-    
+
   } catch (error) {
-    console.error("Start test session error:", error);
+    console.error('Error starting test session:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

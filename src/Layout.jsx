@@ -37,6 +37,7 @@ import NotificationCenter from '@/components/notifications/NotificationCenter';
 import SuiteSwitcher from '@/components/suite/SuiteSwitcher';
 import { useUserSuites } from '@/components/suite/useModuleAccess';
 import TesterTracker from '@/components/testing/TesterTracker';
+import SmartProblemReportButton from '@/components/testing/SmartProblemReportButton';
 import { Button } from "@/components/ui/button";
 import OnboardingRedirect from '@/components/onboarding/OnboardingRedirect';
 
@@ -209,6 +210,9 @@ export default function Layout({ children, currentPageName }) {
                 <main className="p-4 lg:p-8">
                     {children}
                 </main>
+
+                {/* Smart Problem Report Button */}
+                <SmartProblemReportButton />
             </div>
             </div>
             </TesterTracker>
