@@ -1,8 +1,10 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Users, Shield, Package, Activity, Key, Database, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -54,62 +56,66 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
         <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
         <p className="text-slate-600">Zentrale Verwaltung und Übersicht</p>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard
-          title="Benutzer"
-          value={users.length}
-          icon={Users}
-          color="blue"
-        />
-        <StatCard
-          title="Rollen"
-          value={roles.length}
-          icon={Shield}
-          color="purple"
-        />
-        <StatCard
-          title="Permissions"
-          value={permissions.length}
-          icon={Shield}
-          color="green"
-        />
-        <StatCard
-          title="Module"
-          value={moduleAccess.filter(ma => ma.is_active).length}
-          icon={Package}
-          color="orange"
-        />
+        {[
+          { title: "Benutzer", value: users.length, icon: Users, color: "blue" },
+          { title: "Rollen", value: roles.length, icon: Shield, color: "purple" },
+          { title: "Permissions", value: permissions.length, icon: Shield, color: "green" },
+          { title: "Module", value: moduleAccess.filter(ma => ma.is_active).length, icon: Package, color: "orange" }
+        ].map((stat, idx) => (
+          <motion.div
+            key={stat.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + idx * 0.05 }}
+          >
+        <StatCard {...stat} />
+          </motion.div>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard
-          title="API Keys"
-          value={apiKeys.length}
-          icon={Key}
-          color="red"
-        />
-        <StatCard
-          title="Test Sessions"
-          value={testSessions.length}
-          icon={Activity}
-          color="emerald"
-        />
-        <StatCard
-          title="Aktive Tester"
-          value={users.filter(u => u.is_tester).length}
-          icon={Users}
-          color="blue"
-        />
+        {[
+          { title: "API Keys", value: apiKeys.length, icon: Key, color: "red" },
+          { title: "Test Sessions", value: testSessions.length, icon: Activity, color: "emerald" },
+          { title: "Aktive Tester", value: users.filter(u => u.is_tester).length, icon: Users, color: "blue" }
+        ].map((stat, idx) => (
+          <motion.div
+            key={stat.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 + idx * 0.05 }}
+          >
+            <StatCard {...stat} />
+          </motion.div>
+        ))}
       </div>
 
-      <QuickActions />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
+        <QuickActions />
+      </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {[0, 1].map(idx => (
+          <motion.div
+            key={idx}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 + idx * 0.1 }}
+          >
+            {idx === 0 ? (
         <Card>
           <CardHeader>
             <CardTitle>System-Status</CardTitle>
@@ -131,7 +137,7 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-
+            ) : (
         <Card>
           <CardHeader>
             <CardTitle>Scheduled Tasks</CardTitle>
@@ -149,9 +155,18 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
+            )}
+          </motion.div>
+        ))}
       </div>
 
-      <AuditTrailVisualization />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.8 }}
+      >
+        <AuditTrailVisualization />
+      </motion.div>
     </div>
   );
 }

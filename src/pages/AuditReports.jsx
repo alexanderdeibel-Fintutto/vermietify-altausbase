@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,11 +59,19 @@ export default function AuditReports() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
         <h1 className="text-2xl font-bold text-slate-900">Audit Reports</h1>
         <p className="text-slate-600">Aktivitäts- und Sicherheitsberichte</p>
-      </div>
+      </motion.div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+      >
       <Card>
         <CardHeader>
           <CardTitle>Report erstellen</CardTitle>
@@ -100,37 +109,43 @@ export default function AuditReports() {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
 
+      <AnimatePresence>
       {report && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {[
+              { value: report.stats.totalActivities, label: "Gesamt-Aktivitäten", color: "blue" },
+              { value: report.stats.uniqueUsers, label: "Aktive Benutzer", color: "green" },
+              { value: report.stats.totalSessions, label: "Test-Sessions", color: "purple" },
+              { value: `${report.stats.averageSessionDuration}m`, label: "Ø Session-Dauer", color: "orange" }
+            ].map((stat, idx) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 + idx * 0.05 }}
+              >
             <Card>
               <CardContent className="p-6">
-                <div className="text-2xl font-bold text-blue-600">{report.stats.totalActivities}</div>
-                <div className="text-sm text-slate-600">Gesamt-Aktivitäten</div>
+                <div className={`text-2xl font-bold text-${stat.color}-600`}>{stat.value}</div>
+                <div className="text-sm text-slate-600">{stat.label}</div>
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-2xl font-bold text-green-600">{report.stats.uniqueUsers}</div>
-                <div className="text-sm text-slate-600">Aktive Benutzer</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-2xl font-bold text-purple-600">{report.stats.totalSessions}</div>
-                <div className="text-sm text-slate-600">Test-Sessions</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-2xl font-bold text-orange-600">{report.stats.averageSessionDuration}m</div>
-                <div className="text-sm text-slate-600">Ø Session-Dauer</div>
-              </CardContent>
-            </Card>
+              </motion.div>
+            ))}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {[0, 1].map(idx => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 + idx * 0.1 }}
+              >
+                {idx === 0 ? (
             <Card>
               <CardHeader>
                 <CardTitle>Aktivitäten nach Typ</CardTitle>
@@ -147,7 +162,7 @@ export default function AuditReports() {
                 </ResponsiveContainer>
               </CardContent>
             </Card>
-
+                ) : (
             <Card>
               <CardHeader>
                 <CardTitle>Top 10 Ressourcen</CardTitle>
@@ -164,8 +179,16 @@ export default function AuditReports() {
                 </ResponsiveContainer>
               </CardContent>
             </Card>
+                )}
+              </motion.div>
+            ))}
           </div>
 
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -196,8 +219,10 @@ export default function AuditReports() {
               </div>
             </CardContent>
           </Card>
+          </motion.div>
         </>
       )}
+      </AnimatePresence>
     </div>
   );
 }

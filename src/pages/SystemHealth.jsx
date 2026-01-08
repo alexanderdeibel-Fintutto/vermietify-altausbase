@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,7 +50,11 @@ export default function SystemHealth() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
+      >
         <div>
           <h1 className="text-2xl font-bold text-slate-900">System Health</h1>
           <p className="text-slate-600">Überwachung der Systemgesundheit</p>
@@ -66,65 +71,55 @@ export default function SystemHealth() {
             Aktualisieren
           </Button>
         </div>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[
+          { label: "Gesamt-Status", badge: healthData.overallStatus, icon: getStatusIcon(healthData.overallStatus) },
+          { label: "Benutzer", value: healthData.metrics?.totalUsers || 0, icon: Users, color: "blue" },
+          { label: "Entities", value: healthData.metrics?.totalEntities || 0, icon: Database, color: "purple" },
+          { label: "API-Keys", value: healthData.metrics?.totalApiKeys || 0, icon: Key, color: "orange" }
+        ].map((stat, idx) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + idx * 0.05 }}
+          >
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-600">Gesamt-Status</p>
-                <Badge className={
-                  healthData.overallStatus === 'healthy' ? 'bg-green-100 text-green-800' :
-                  healthData.overallStatus === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-red-100 text-red-800'
-                }>
-                  {healthData.overallStatus}
-                </Badge>
+                <p className="text-sm text-slate-600">{stat.label}</p>
+                {stat.badge ? (
+                  <Badge className={
+                    healthData.overallStatus === 'healthy' ? 'bg-green-100 text-green-800' :
+                    healthData.overallStatus === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }>
+                    {stat.badge}
+                  </Badge>
+                ) : (
+                  <p className={`text-2xl font-bold ${stat.color ? `text-${stat.color}-600` : ''}`}>{stat.value}</p>
+                )}
               </div>
-              {getStatusIcon(healthData.overallStatus)}
+              {typeof stat.icon === 'function' ? <stat.icon className={`w-8 h-8 text-${stat.color}-600`} /> : stat.icon}
             </div>
           </CardContent>
         </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Benutzer</p>
-                <p className="text-2xl font-bold">{healthData.metrics?.totalUsers || 0}</p>
-              </div>
-              <Users className="w-8 h-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Entities</p>
-                <p className="text-2xl font-bold">{healthData.metrics?.totalEntities || 0}</p>
-              </div>
-              <Database className="w-8 h-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">API-Keys</p>
-                <p className="text-2xl font-bold">{healthData.metrics?.totalApiKeys || 0}</p>
-              </div>
-              <Key className="w-8 h-8 text-orange-600" />
-            </div>
-          </CardContent>
-        </Card>
+          </motion.div>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {[0, 1].map(idx => (
+          <motion.div
+            key={idx}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 + idx * 0.1 }}
+          >
+            {idx === 0 ? (
         <Card>
           <CardHeader>
             <CardTitle>Service-Status</CardTitle>
@@ -150,7 +145,7 @@ export default function SystemHealth() {
             </div>
           </CardContent>
         </Card>
-
+            ) : (
         <Card>
           <CardHeader>
             <CardTitle>Systemmetriken</CardTitle>
@@ -180,8 +175,16 @@ export default function SystemHealth() {
             </div>
           </CardContent>
         </Card>
+            )}
+          </motion.div>
+        ))}
       </div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
       <Card>
         <CardHeader>
           <CardTitle>Letzte Prüfung</CardTitle>
@@ -192,6 +195,7 @@ export default function SystemHealth() {
           </p>
         </CardContent>
       </Card>
+      </motion.div>
     </div>
   );
 }
