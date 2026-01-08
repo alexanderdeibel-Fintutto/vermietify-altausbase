@@ -237,9 +237,7 @@ export default function Analytics() {
             </div>
           </CardContent>
         </Card>
-        )}
-          </motion.div>
-        ))}
+        </motion.div>
       </div>
 
       <motion.div
