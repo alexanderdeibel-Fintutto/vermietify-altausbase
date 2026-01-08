@@ -61,6 +61,9 @@ import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
+import Tenants from './pages/Tenants';
+import LeaseContracts from './pages/LeaseContracts';
+import InvoiceManagement from './pages/InvoiceManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -128,6 +131,9 @@ export const PAGES = {
     "WhatsAppSettings": WhatsAppSettings,
     "WhatsAppSetup": WhatsAppSetup,
     "WorkflowAutomation": WorkflowAutomation,
+    "Tenants": Tenants,
+    "LeaseContracts": LeaseContracts,
+    "InvoiceManagement": InvoiceManagement,
 }
 
 export const pagesConfig = {
