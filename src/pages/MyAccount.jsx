@@ -72,6 +72,7 @@ export default function MyAccount() {
       <Tabs defaultValue="package">
         <TabsList>
           <TabsTrigger value="package">Paket</TabsTrigger>
+          <TabsTrigger value="switchPackage">Paket wechseln</TabsTrigger>
           <TabsTrigger value="addons">Add-ons</TabsTrigger>
           <TabsTrigger value="billing">Abrechnung</TabsTrigger>
         </TabsList>
