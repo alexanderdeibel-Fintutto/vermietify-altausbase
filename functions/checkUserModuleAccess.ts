@@ -1,80 +1,61 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-    try {
-        const base44 = createClientFromRequest(req);
-        const user = await base44.auth.me();
-
-        if (!user) {
-            return Response.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const { module_name } = await req.json();
-
-        if (!module_name) {
-            return Response.json({ error: 'module_name is required' }, { status: 400 });
-        }
-
-        // Finde das Modul
-        const modules = await base44.entities.ModuleDefinition.filter({ name: module_name });
-        if (modules.length === 0) {
-            return Response.json({ has_access: false, reason: 'module_not_found' });
-        }
-        const module = modules[0];
-
-        // Prüfe direkten Zugriff
-        const access = await base44.entities.UserModuleAccess.filter({
-            user_id: user.id,
-            module_id: module.id
-        });
-
-        if (access.length > 0) {
-            const userAccess = access[0];
-            
-            // Prüfe Ablaufdatum
-            if (userAccess.expires_at && new Date(userAccess.expires_at) < new Date()) {
-                return Response.json({ 
-                    has_access: false, 
-                    reason: 'access_expired',
-                    expired_at: userAccess.expires_at
-                });
-            }
-
-            return Response.json({ 
-                has_access: userAccess.access_level !== 'none',
-                access_level: userAccess.access_level,
-                granted_via: userAccess.granted_via
-            });
-        }
-
-        // Prüfe über Suite-Subscriptions
-        const subscriptions = await base44.entities.UserSuiteSubscription.filter({
-            user_id: user.id,
-            status: 'active'
-        });
-
-        for (const sub of subscriptions) {
-            const suites = await base44.entities.AppSuite.filter({ id: sub.suite_id });
-            if (suites.length > 0) {
-                const suite = suites[0];
-                if (suite.included_modules && suite.included_modules.includes(module_name)) {
-                    return Response.json({ 
-                        has_access: true,
-                        access_level: 'full',
-                        granted_via: 'suite_inclusion',
-                        suite_name: suite.display_name
-                    });
-                }
-            }
-        }
-
-        return Response.json({ 
-            has_access: false,
-            reason: 'no_access_granted'
-        });
-
-    } catch (error) {
-        console.error('Error checking module access:', error);
-        return Response.json({ error: error.message }, { status: 500 });
+  try {
+    const base44 = createClientFromRequest(req);
+    const { userId, moduleCode } = await req.json();
+    
+    if (!userId || !moduleCode) {
+      return Response.json({ error: "userId and moduleCode required" }, { status: 400 });
     }
+    
+    // Direkte Modul-Zugriffe
+    const directAccess = await base44.asServiceRole.entities.UserModuleAccess.filter({
+      user_id: userId,
+      module_id: moduleCode,
+      access_level: { $ne: 'none' },
+      $or: [
+        { expires_at: null },
+        { expires_at: { $gte: new Date().toISOString() } }
+      ]
+    });
+    
+    if (directAccess.length > 0) {
+      return Response.json({
+        hasAccess: true,
+        accessLevel: directAccess[0].access_level,
+        grantedVia: directAccess[0].granted_via
+      });
+    }
+    
+    // Suite-basierte Zugriffe
+    const userSuites = await base44.asServiceRole.entities.UserSuiteSubscription.filter({
+      user_id: userId,
+      status: 'active'
+    });
+    
+    for (const subscription of userSuites) {
+      const suite = await base44.asServiceRole.entities.AppSuite.filter({
+        id: subscription.suite_id
+      });
+      
+      if (suite.length > 0 && suite[0].included_modules?.includes(moduleCode)) {
+        return Response.json({
+          hasAccess: true,
+          accessLevel: 'full',
+          grantedVia: 'suite_inclusion',
+          suiteName: suite[0].name
+        });
+      }
+    }
+    
+    return Response.json({
+      hasAccess: false,
+      accessLevel: 'none'
+    });
+    
+  } catch (error) {
+    console.error("Check module access error:", error);
+    return Response.json({ error: error.message }, { status: 500 });
+  }
 });

@@ -1,7 +1,7 @@
 import { useEffect, useRef, createContext, useContext } from "react";
+import { usePermissions } from "../permissions/usePermissions";
 import { base44 } from "@/api/base44Client";
 import { useLocation } from "react-router-dom";
-import { usePermissions } from "../permissions/usePermissions";
 
 const TesterContext = createContext(null);
 
@@ -21,7 +21,6 @@ export default function TesterTracker({ children }) {
       startTestSession();
     }
     
-    // Session beenden beim Verlassen
     return () => {
       if (sessionIdRef.current) {
         endTestSession();
@@ -38,8 +37,8 @@ export default function TesterTracker({ children }) {
   
   const startTestSession = async () => {
     try {
-      const response = await base44.functions.invoke('startTestSession', {});
-      sessionIdRef.current = response.data.sessionId;
+      const result = await base44.functions.invoke('startTestSession', {});
+      sessionIdRef.current = result.data.sessionId;
       startTimeRef.current = Date.now();
     } catch (error) {
       console.error("Failed to start test session:", error);
@@ -58,7 +57,7 @@ export default function TesterTracker({ children }) {
         activityType: 'page_visit',
         activityData: {
           page: location.pathname,
-          duration: Math.round(duration / 1000) // Sekunden
+          duration: Math.round(duration / 1000)
         }
       });
     } catch (error) {

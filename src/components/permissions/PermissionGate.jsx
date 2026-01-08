@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 export default function PermissionGate({ 
   action, 
   resource, 
-  resourceId = null, 
-  fieldName = null, 
+  resourceId, 
+  fieldName, 
   fallback = null, 
   children 
 }) {

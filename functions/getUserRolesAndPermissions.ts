@@ -5,56 +5,77 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const { userId } = await req.json();
     
-    const user = await base44.auth.me();
-    if (!user || user.role !== 'admin') {
-      return Response.json({ error: "Only admin can view user permissions" }, { status: 403 });
+    if (!userId) {
+      return Response.json({ error: "userId required" }, { status: 400 });
     }
     
-    // Rollen-Zuweisungen laden
-    const today = new Date().toISOString().split('T')[0];
+    // User-Rollen laden
     const roleAssignments = await base44.asServiceRole.entities.UserRoleAssignment.filter({
       user_id: userId,
-      is_active: true
-    });
-    
-    const activeAssignments = roleAssignments.filter(ra => {
-      if (ra.valid_from > today) return false;
-      if (ra.valid_until && ra.valid_until < today) return false;
-      return true;
+      is_active: true,
+      valid_from: { $lte: new Date().toISOString().split('T')[0] },
+      $or: [
+        { valid_until: null },
+        { valid_until: { $gte: new Date().toISOString().split('T')[0] } }
+      ]
     });
     
     // Rollen laden
-    const roleIds = activeAssignments.map(ra => ra.role_id);
+    const roleIds = roleAssignments.map(ra => ra.role_id);
     const roles = await base44.asServiceRole.entities.Role.filter({
-      id: { $in: roleIds }
+      id: { $in: roleIds },
+      is_active: true
     });
     
-    // Permissions laden
-    const allPermissionIds = [];
+    // Permissions sammeln
+    let allPermissionIds = [];
     roles.forEach(role => {
-      if (role.permissions && role.permissions.length > 0) {
-        allPermissionIds.push(...role.permissions);
+      if (role.permissions) {
+        allPermissionIds = [...allPermissionIds, ...role.permissions];
       }
     });
     
     const permissions = await base44.asServiceRole.entities.Permission.filter({
-      id: { $in: allPermissionIds }
-    });
-    
-    // Module Access laden
-    const moduleAccess = await base44.asServiceRole.entities.ModuleAccess.filter({
+      id: { $in: allPermissionIds },
       is_active: true
     });
     
-    return Response.json({ 
+    // Field Permissions laden
+    const fieldPermissions = await base44.asServiceRole.entities.FieldPermission.filter({
+      permission_id: { $in: allPermissionIds }
+    });
+    
+    // Building restrictions sammeln
+    const buildingRestrictions = [];
+    roleAssignments.forEach(ra => {
+      if (ra.building_restrictions) {
+        buildingRestrictions.push(...ra.building_restrictions);
+      }
+    });
+    
+    return Response.json({
       success: true,
-      roleAssignments: activeAssignments.map(ra => ({
-        ...ra,
-        role: roles.find(r => r.id === ra.role_id)
+      roles: roles.map(r => ({
+        id: r.id,
+        name: r.name,
+        category: r.category,
+        description: r.description
       })),
-      roles,
-      permissions,
-      moduleAccess
+      permissions: permissions.map(p => ({
+        id: p.id,
+        code: p.code,
+        name: p.name,
+        module: p.module,
+        resource: p.resource,
+        action: p.action
+      })),
+      fieldPermissions: fieldPermissions.map(fp => ({
+        entity_name: fp.entity_name,
+        field_name: fp.field_name,
+        access_level: fp.access_level
+      })),
+      buildingRestrictions: buildingRestrictions.length > 0 ? buildingRestrictions : null,
+      hasWildcard: permissions.some(p => p.code === '*')
     });
     
   } catch (error) {
