@@ -65,19 +65,21 @@ export default function Layout({ children, currentPageName }) {
     };
 
     // Admin-Navigation (immer sichtbar für Admins)
-    const adminNavigation = [
-            { name: '🚀 Setup-Assistent', href: createPageUrl('Onboarding'), icon: Sparkles, page: 'Onboarding' },
-            { name: '🎨 Mein Dashboard', href: createPageUrl('CustomDashboard'), icon: Settings, page: 'CustomDashboard' },
-            { name: '⚙️ Admin', href: createPageUrl('AdminDashboard'), icon: Settings, page: 'AdminDashboard' },
-            { name: '🎯 Suite Management', href: createPageUrl('SuiteManagement'), icon: Settings, page: 'SuiteManagement' },
-            { name: '📦 Paketverwalter', href: createPageUrl('PackageManager'), icon: Package, page: 'PackageManager' },
-            { name: '👥 Benutzerverwaltung', href: createPageUrl('UserManagement'), icon: Users, page: 'UserManagement' },
-            { name: '🔐 Rollen', href: createPageUrl('RoleManagement'), icon: Shield, page: 'RoleManagement' },
-            { name: '📦 Module', href: createPageUrl('ModuleManagement'), icon: Package, page: 'ModuleManagement' },
-            { name: '───────────', disabled: true },
-            { name: '📖 Entwickler-Doku', href: createPageUrl('DeveloperDocumentation'), icon: BookOpen, page: 'DeveloperDocumentation' },
-            { name: '🆘 Support-Center', href: createPageUrl('SupportCenter'), icon: AlertCircle, page: 'SupportCenter' },
-    ];
+            const adminNavigation = [
+                    { name: '🚀 Setup-Assistent', href: createPageUrl('Onboarding'), icon: Sparkles, page: 'Onboarding' },
+                    { name: '🎨 Mein Dashboard', href: createPageUrl('CustomDashboard'), icon: Settings, page: 'CustomDashboard' },
+                    { name: '⚙️ Admin', href: createPageUrl('AdminDashboard'), icon: Settings, page: 'AdminDashboard' },
+                    { name: '🎯 Suite Management', href: createPageUrl('SuiteManagement'), icon: Settings, page: 'SuiteManagement' },
+                    { name: '📦 Paketverwalter', href: createPageUrl('PackageManager'), icon: Package, page: 'PackageManager' },
+                    { name: '👥 Benutzerverwaltung', href: createPageUrl('UserManagement'), icon: Users, page: 'UserManagement' },
+                    { name: '🔐 Rollen', href: createPageUrl('RoleManagement'), icon: Shield, page: 'RoleManagement' },
+                    { name: '📦 Module', href: createPageUrl('ModuleManagement'), icon: Package, page: 'ModuleManagement' },
+                    { name: '───────────', disabled: true },
+                    { name: '📖 Entwickler-Doku', href: createPageUrl('DeveloperDocumentation'), icon: BookOpen, page: 'DeveloperDocumentation' },
+                    { name: '🆘 Support-Center', href: createPageUrl('SupportCenter'), icon: AlertCircle, page: 'SupportCenter' },
+            ];
+
+            const visibleNavigation = adminNavigation;
 
     return (
             <OnboardingRedirect>
