@@ -41,6 +41,9 @@ import PDFPreviewDialog from '@/components/elster/PDFPreviewDialog';
 import SubmissionComparisonDialog from '@/components/elster/SubmissionComparisonDialog';
 import DeadlineTracker from '@/components/elster/DeadlineTracker';
 import QuickDuplicateButton from '@/components/elster/QuickDuplicateButton';
+import BulkActionsPanel from '@/components/elster/BulkActionsPanel';
+import TemplateEditor from '@/components/elster/TemplateEditor';
+import ComplianceDashboard from '@/components/elster/ComplianceDashboard';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from 'lucide-react';
 
@@ -56,6 +59,7 @@ export default function ElsterIntegration() {
   const [showExcelImport, setShowExcelImport] = useState(false);
   const [previewSubmission, setPreviewSubmission] = useState(null);
   const [comparisonSubmissions, setComparisonSubmissions] = useState({ sub1: null, sub2: null });
+  const [selectedForBulk, setSelectedForBulk] = useState([]);
   const queryClient = useQueryClient();
 
   const { data: submissions = [] } = useQuery({
@@ -189,7 +193,7 @@ export default function ElsterIntegration() {
           </TabsContent>
 
           <TabsContent value="templates" className="mt-6">
-            <FormTemplateManager />
+            <TemplateEditor />
           </TabsContent>
 
           <TabsContent value="certificates" className="mt-6">
@@ -235,6 +239,10 @@ export default function ElsterIntegration() {
                 </div>
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="compliance" className="mt-6">
+            <ComplianceDashboard year={new Date().getFullYear()} />
           </TabsContent>
         </Tabs>
       </motion.div>

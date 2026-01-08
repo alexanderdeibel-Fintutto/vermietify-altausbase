@@ -19,6 +19,7 @@ import Dashboard from './pages/Dashboard';
 import DataImportExport from './pages/DataImportExport';
 import DeveloperDocumentation from './pages/DeveloperDocumentation';
 import Documents from './pages/Documents';
+import ElsterIntegration from './pages/ElsterIntegration';
 import EmailTemplates from './pages/EmailTemplates';
 import FinAPICallback from './pages/FinAPICallback';
 import FinancialItems from './pages/FinancialItems';
@@ -54,7 +55,6 @@ import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
-import ElsterIntegration from './pages/ElsterIntegration';
 import __Layout from './Layout.jsx';
 
 
@@ -80,6 +80,7 @@ export const PAGES = {
     "DataImportExport": DataImportExport,
     "DeveloperDocumentation": DeveloperDocumentation,
     "Documents": Documents,
+    "ElsterIntegration": ElsterIntegration,
     "EmailTemplates": EmailTemplates,
     "FinAPICallback": FinAPICallback,
     "FinancialItems": FinancialItems,
@@ -115,7 +116,6 @@ export const PAGES = {
     "WhatsAppSettings": WhatsAppSettings,
     "WhatsAppSetup": WhatsAppSetup,
     "WorkflowAutomation": WorkflowAutomation,
-    "ElsterIntegration": ElsterIntegration,
 }
 
 export const pagesConfig = {
