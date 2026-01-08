@@ -47,6 +47,7 @@ export default function SupportCenter() {
         search: ''
     });
     const [selectedProblem, setSelectedProblem] = useState(null);
+    const [showProblemDialog, setShowProblemDialog] = useState(false);
     const [showBugLinking, setShowBugLinking] = useState(false);
     const [showSolutionEditor, setShowSolutionEditor] = useState(false);
     const [linkingProblem, setLinkingProblem] = useState(null);
@@ -256,6 +257,13 @@ export default function SupportCenter() {
                     <h1 className="text-3xl font-bold text-slate-900">🆘 Support-Center</h1>
                     <p className="text-slate-600 mt-1">Live-Überwachung aller Support-Anfragen</p>
                 </div>
+                <Button
+                    onClick={() => setShowProblemDialog(true)}
+                    className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+                >
+                    <Plus className="w-4 h-4" />
+                    Problem melden
+                </Button>
                 <div className="flex items-center gap-3">
                     <span className="text-sm text-slate-600">
                         Letzte Aktualisierung: vor {timeSinceUpdate}s
@@ -651,6 +659,11 @@ export default function SupportCenter() {
             <RefreshSettings
                 open={showSettings}
                 onOpenChange={setShowSettings}
+            />
+
+            <IntelligentProblemDialog 
+                open={showProblemDialog} 
+                onOpenChange={setShowProblemDialog}
             />
         </div>
     );
