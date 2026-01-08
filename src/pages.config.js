@@ -64,6 +64,10 @@ import WorkflowAutomation from './pages/WorkflowAutomation';
 import Tenants from './pages/Tenants';
 import LeaseContracts from './pages/LeaseContracts';
 import InvoiceManagement from './pages/InvoiceManagement';
+import TaskManagement from './pages/TaskManagement';
+import DocumentManagement from './pages/DocumentManagement';
+import BankingManagement from './pages/BankingManagement';
+import OperatingCostsManagement from './pages/OperatingCostsManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -134,6 +138,10 @@ export const PAGES = {
     "Tenants": Tenants,
     "LeaseContracts": LeaseContracts,
     "InvoiceManagement": InvoiceManagement,
+    "TaskManagement": TaskManagement,
+    "DocumentManagement": DocumentManagement,
+    "BankingManagement": BankingManagement,
+    "OperatingCostsManagement": OperatingCostsManagement,
 }
 
 export const pagesConfig = {
