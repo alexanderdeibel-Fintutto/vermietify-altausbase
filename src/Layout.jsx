@@ -25,7 +25,8 @@ import {
     Search,
     Upload,
     Zap,
-    Database
+    Database,
+    Sparkles
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/notifications/NotificationCenter';
@@ -57,6 +58,7 @@ export default function Layout({ children, currentPageName }) {
 
     const navigation = [
         { name: 'Dashboard', href: createPageUrl('Dashboard'), icon: Home, page: 'Dashboard' },
+        { name: '🚀 Setup-Assistent', href: createPageUrl('Onboarding'), icon: Sparkles, page: 'Onboarding' },
         { name: '🎨 Mein Dashboard', href: createPageUrl('CustomDashboard'), icon: Settings, page: 'CustomDashboard' },
         { name: '⚙️ Admin', href: createPageUrl('AdminDashboard'), icon: Settings, page: 'AdminDashboard' },
         { name: '🎯 Suite Management', href: createPageUrl('SuiteManagement'), icon: Settings, page: 'SuiteManagement' },

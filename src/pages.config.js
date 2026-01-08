@@ -51,6 +51,7 @@ import AdvancedSearch from './pages/AdvancedSearch';
 import DataImportExport from './pages/DataImportExport';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import BulkOperations from './pages/BulkOperations';
+import Onboarding from './pages/Onboarding';
 import __Layout from './Layout.jsx';
 
 
@@ -108,6 +109,7 @@ export const PAGES = {
     "DataImportExport": DataImportExport,
     "WorkflowAutomation": WorkflowAutomation,
     "BulkOperations": BulkOperations,
+    "Onboarding": Onboarding,
 }
 
 export const pagesConfig = {
