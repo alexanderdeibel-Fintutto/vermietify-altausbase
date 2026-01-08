@@ -131,6 +131,8 @@ import ExecutiveDashboard from '@/components/elster/ExecutiveDashboard';
 import TaxStrategyAdvisor from '@/components/elster/TaxStrategyAdvisor';
 import MultiBuildingOperations from '@/components/elster/MultiBuildingOperations';
 import AIErrorCorrectionPanel from '@/components/elster/AIErrorCorrectionPanel';
+import ComplianceScoreCard from '@/components/elster/ComplianceScoreCard';
+import SubmissionQueueManager from '@/components/elster/SubmissionQueueManager';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -272,6 +274,7 @@ export default function ElsterIntegration() {
                 <div className="space-y-6">
                   <SystemHealthCard />
                   <QualityMonitorWidget />
+                  <SubmissionQueueManager />
                   <TaxStrategyAdvisor buildingId={submissions[0]?.building_id} />
                   <SmartNotificationCenter />
                   <SmartInsightsDashboard />
