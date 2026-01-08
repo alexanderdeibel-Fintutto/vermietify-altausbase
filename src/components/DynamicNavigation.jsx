@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from './utils';
+import { createPageUrl } from '@/utils';
 import { usePackageAccess } from '@/components/hooks/usePackageAccess';
 import { ChevronRight } from 'lucide-react';
 import { cn } from "@/lib/utils";
