@@ -2,17 +2,21 @@ import APIKeyManagement from './pages/APIKeyManagement';
 import ActivityLogs from './pages/ActivityLogs';
 import AdminDashboard from './pages/AdminDashboard';
 import AdvancedAnalytics from './pages/AdvancedAnalytics';
+import AdvancedSearch from './pages/AdvancedSearch';
 import Analytics from './pages/Analytics';
 import AuditReports from './pages/AuditReports';
 import BankAccounts from './pages/BankAccounts';
 import BankReconciliation from './pages/BankReconciliation';
 import BuildingDetail from './pages/BuildingDetail';
 import Buildings from './pages/Buildings';
+import BulkOperations from './pages/BulkOperations';
 import ComplianceCenter from './pages/ComplianceCenter';
 import ContractDetail from './pages/ContractDetail';
 import Contracts from './pages/Contracts';
 import CostTypes from './pages/CostTypes';
+import CustomDashboard from './pages/CustomDashboard';
 import Dashboard from './pages/Dashboard';
+import DataImportExport from './pages/DataImportExport';
 import DeveloperDocumentation from './pages/DeveloperDocumentation';
 import Documents from './pages/Documents';
 import EmailTemplates from './pages/EmailTemplates';
@@ -25,6 +29,7 @@ import Invoices from './pages/Invoices';
 import Kommunikation from './pages/Kommunikation';
 import ModuleManagement from './pages/ModuleManagement';
 import NotificationManagement from './pages/NotificationManagement';
+import Onboarding from './pages/Onboarding';
 import OperatingCosts from './pages/OperatingCosts';
 import Payments from './pages/Payments';
 import PermissionDashboard from './pages/PermissionDashboard';
@@ -46,12 +51,7 @@ import UserSettings from './pages/UserSettings';
 import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
-import CustomDashboard from './pages/CustomDashboard';
-import AdvancedSearch from './pages/AdvancedSearch';
-import DataImportExport from './pages/DataImportExport';
 import WorkflowAutomation from './pages/WorkflowAutomation';
-import BulkOperations from './pages/BulkOperations';
-import Onboarding from './pages/Onboarding';
 import __Layout from './Layout.jsx';
 
 
@@ -60,17 +60,21 @@ export const PAGES = {
     "ActivityLogs": ActivityLogs,
     "AdminDashboard": AdminDashboard,
     "AdvancedAnalytics": AdvancedAnalytics,
+    "AdvancedSearch": AdvancedSearch,
     "Analytics": Analytics,
     "AuditReports": AuditReports,
     "BankAccounts": BankAccounts,
     "BankReconciliation": BankReconciliation,
     "BuildingDetail": BuildingDetail,
     "Buildings": Buildings,
+    "BulkOperations": BulkOperations,
     "ComplianceCenter": ComplianceCenter,
     "ContractDetail": ContractDetail,
     "Contracts": Contracts,
     "CostTypes": CostTypes,
+    "CustomDashboard": CustomDashboard,
     "Dashboard": Dashboard,
+    "DataImportExport": DataImportExport,
     "DeveloperDocumentation": DeveloperDocumentation,
     "Documents": Documents,
     "EmailTemplates": EmailTemplates,
@@ -83,6 +87,7 @@ export const PAGES = {
     "Kommunikation": Kommunikation,
     "ModuleManagement": ModuleManagement,
     "NotificationManagement": NotificationManagement,
+    "Onboarding": Onboarding,
     "OperatingCosts": OperatingCosts,
     "Payments": Payments,
     "PermissionDashboard": PermissionDashboard,
@@ -104,12 +109,7 @@ export const PAGES = {
     "WhatsAppCommunication": WhatsAppCommunication,
     "WhatsAppSettings": WhatsAppSettings,
     "WhatsAppSetup": WhatsAppSetup,
-    "CustomDashboard": CustomDashboard,
-    "AdvancedSearch": AdvancedSearch,
-    "DataImportExport": DataImportExport,
     "WorkflowAutomation": WorkflowAutomation,
-    "BulkOperations": BulkOperations,
-    "Onboarding": Onboarding,
 }
 
 export const pagesConfig = {

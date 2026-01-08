@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Send, Loader2, Sparkles } from 'lucide-react';
+import { Send, Loader2, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -312,19 +313,32 @@ Antworte kurz und freundlich. Stelle Fragen um den User-Typ zu erkennen (${packa
   if (loadingPackage) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+        >
+          <Loader2 className="w-8 h-8 text-emerald-600" />
+        </motion.div>
       </div>
     );
-  }
+    }
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-emerald-50 to-white">
       {/* Header */}
-      <div className="bg-white border-b px-6 py-4 flex items-center justify-between">
+      <motion.div 
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="bg-white border-b px-6 py-4 flex items-center justify-between"
+      >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
+          <motion.div 
+            animate={{ rotate: [0, 10, -10, 0] }}
+            transition={{ repeat: Infinity, duration: 3 }}
+            className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center"
+          >
             <Sparkles className="w-5 h-5 text-white" />
-          </div>
+          </motion.div>
           <div>
             <h1 className="text-lg font-semibold text-slate-900">EasyStart</h1>
             <p className="text-sm text-slate-600">{packageInfo?.package_display_name}</p>
@@ -344,32 +358,48 @@ Antworte kurz und freundlich. Stelle Fragen um den User-Typ zu erkennen (${packa
           >
             <X className="w-4 h-4 mr-2" />
             Überspringen
-          </Button>
-        </div>
-      </div>
+            </Button>
+            </div>
+            </motion.div>
 
       {/* Progress Indicator */}
-      {!currentComponent && progress && (
-        <div className="bg-white border-b">
-          <ProgressIndicator 
-            currentStep={progress.current_step || 'welcome'} 
-            completedSteps={progress.completed_steps || []} 
-          />
-        </div>
-      )}
+      <AnimatePresence>
+        {!currentComponent && progress && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="bg-white border-b overflow-hidden"
+          >
+            <ProgressIndicator 
+              currentStep={progress.current_step || 'welcome'} 
+              completedSteps={progress.completed_steps || []} 
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {messages.map((msg, idx) => (
-          <ChatMessage
-            key={idx}
-            message={msg}
-            onSuggestionClick={handleSuggestionClick}
-          />
-        ))}
-        
-        {currentComponent && (
-          <div className="max-w-2xl mx-auto">
+        <AnimatePresence mode="popLayout">
+          {messages.map((msg, idx) => (
+            <ChatMessage
+              key={idx}
+              message={msg}
+              onSuggestionClick={handleSuggestionClick}
+            />
+          ))}
+        </AnimatePresence>
+
+        <AnimatePresence mode="wait">
+          {currentComponent && (
+            <motion.div 
+              key={currentComponent}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="max-w-2xl mx-auto"
+            >
             {currentComponent === 'object' && (
               <SimpleObjectForm onComplete={handleComponentComplete} />
             )}
@@ -386,22 +416,35 @@ Antworte kurz und freundlich. Stelle Fragen um den User-Typ zu erkennen (${packa
               <CompletionScreen 
                 userType={progress?.user_type}
                 packageName={packageInfo?.package}
-              />
-            )}
-          </div>
-        )}
-        
-        {isProcessing && (
-          <div className="flex items-center gap-3 text-slate-600">
-            <Loader2 className="w-5 h-5 animate-spin" />
-            <span>EasyStart tippt...</span>
-          </div>
-        )}
+                />
+                )}
+                </motion.div>
+                )}
+                </AnimatePresence>
+
+        <AnimatePresence>
+          {isProcessing && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex items-center gap-3 text-slate-600"
+            >
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>EasyStart tippt...</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
-      <div className="bg-white border-t p-4">
+      <motion.div 
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="bg-white border-t p-4"
+      >
         <div className="max-w-4xl mx-auto flex gap-3">
           <Input
             value={inputValue}
@@ -415,11 +458,11 @@ Antworte kurz und freundlich. Stelle Fragen um den User-Typ zu erkennen (${packa
             onClick={() => handleSendMessage(inputValue)}
             disabled={isProcessing || !inputValue.trim()}
             className="bg-emerald-600 hover:bg-emerald-700"
-          >
+            >
             <Send className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
+            </Button>
+            </div>
+            </motion.div>
     </div>
   );
 }
