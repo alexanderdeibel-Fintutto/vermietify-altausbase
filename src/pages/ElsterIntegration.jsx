@@ -93,6 +93,11 @@ import AuditReportGenerator from '@/components/elster/AuditReportGenerator';
 import TaxScenarioSimulator from '@/components/elster/TaxScenarioSimulator';
 import AutomatedBackupSystem from '@/components/elster/AutomatedBackupSystem';
 import IntegrationHealthMonitor from '@/components/elster/IntegrationHealthMonitor';
+import WorkflowAutomationEngine from '@/components/elster/WorkflowAutomationEngine';
+import AITaxAdvisorChat from '@/components/elster/AITaxAdvisorChat';
+import AdvancedReportingDashboard from '@/components/elster/AdvancedReportingDashboard';
+import MultiYearTaxStrategy from '@/components/elster/MultiYearTaxStrategy';
+import RiskManagementSystem from '@/components/elster/RiskManagementSystem';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -205,6 +210,8 @@ export default function ElsterIntegration() {
 
           <TabsContent value="dashboard" className="mt-6">
             <div className="space-y-6">
+              <AdvancedReportingDashboard submissions={submissions} />
+
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -223,9 +230,9 @@ export default function ElsterIntegration() {
                   />
                 </div>
                 <div className="space-y-6">
+                  <RiskManagementSystem submissions={submissions} />
                   <ComplianceMonitoring submissions={submissions} />
                   <SmartAlertSystem />
-                  <MultiMandateManager />
                 </div>
               </div>
 
@@ -356,13 +363,14 @@ export default function ElsterIntegration() {
           </TabsContent>
 
           <TabsContent value="planning" className="mt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <TaxPlanningAssistant />
-              <div className="lg:hidden">
-                <MobileOptimizedView 
-                  submissions={submissions}
-                  onSelectSubmission={setSelectedSubmission}
-                />
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <MultiYearTaxStrategy />
+                <AITaxAdvisorChat />
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <TaxPlanningAssistant />
+                <WorkflowAutomationEngine />
               </div>
             </div>
           </TabsContent>
