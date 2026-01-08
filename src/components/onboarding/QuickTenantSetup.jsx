@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,7 +64,12 @@ export default function QuickTenantSetup({ onComplete }) {
   };
 
   return (
-    <Card className="shadow-lg">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Card className="shadow-lg">
       <CardHeader>
         <CardTitle>Ersten Mieter hinzufügen</CardTitle>
       </CardHeader>
