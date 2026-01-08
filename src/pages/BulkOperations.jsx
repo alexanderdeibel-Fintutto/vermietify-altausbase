@@ -1,100 +1,87 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AlertCircle, Zap } from 'lucide-react';
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Zap, Play, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function BulkOperationsPage() {
-  const [selectedItems, setSelectedItems] = useState([]);
+  const [selectedOps, setSelectedOps] = useState([]);
 
-  const mockItems = [
-    { id: 1, name: 'Gebäude A', type: 'Building', status: 'active' },
-    { id: 2, name: 'Mieter - Meyer', type: 'Tenant', status: 'active' },
-    { id: 3, name: 'Vertrag 2026-001', type: 'Contract', status: 'pending' },
-    { id: 4, name: 'Zahlung - Januar', type: 'Payment', status: 'pending' },
+  const operations = [
+    { id: 1, name: 'Mietanpassung Q1 2026', type: 'update', items: 24, status: 'pending', impact: 'high' },
+    { id: 2, name: 'Massenhaft Mieterbenachrichtigungen', type: 'email', items: 45, status: 'pending', impact: 'medium' },
+    { id: 3, name: 'Nebenkosten abrechnen', type: 'calculation', items: 8, status: 'in_progress', impact: 'critical' },
+    { id: 4, name: 'Dokumente archivieren', type: 'archive', items: 156, status: 'completed', impact: 'low' },
   ];
 
-  const toggleSelect = (id) => {
-    setSelectedItems(prev => 
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
-  };
-
-  const toggleSelectAll = () => {
-    setSelectedItems(prev => 
-      prev.length === mockItems.length ? [] : mockItems.map(i => i.id)
+  const toggleOp = (id) => {
+    setSelectedOps(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     );
   };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">⚡ Bulk-Operationen</h1>
-        <p className="text-slate-600 mt-1">Führen Sie Operationen auf mehreren Einträgen gleichzeitig aus</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">⚡ Massenvorgänge</h1>
+          <p className="text-slate-600 mt-1">Führen Sie mehrere Operationen gleichzeitig durch</p>
+        </div>
+        <Button disabled={selectedOps.length === 0} className="bg-violet-600 hover:bg-violet-700">
+          <Play className="w-4 h-4 mr-2" />Ausführen ({selectedOps.length})
+        </Button>
       </div>
 
-      <Alert className="bg-yellow-50 border-yellow-200">
-        <AlertCircle className="h-4 w-4 text-yellow-600" />
-        <AlertDescription className="text-yellow-800">
-          Bulk-Operationen können nicht rückgängig gemacht werden. Bitte mit Bedacht verwenden.
-        </AlertDescription>
-      </Alert>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span className="flex items-center gap-2"><Zap className="w-5 h-5" /> Elemente auswählen</span>
-            <span className="text-sm font-normal text-slate-600">{selectedItems.length} ausgewählt</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 pb-3 border-b">
-              <Checkbox 
-                checked={selectedItems.length === mockItems.length}
-                onCheckedChange={toggleSelectAll}
-              />
-              <label className="text-sm font-semibold text-slate-900 cursor-pointer">Alle auswählen</label>
-            </div>
-            {mockItems.map((item) => (
-              <div key={item.id} className="flex items-center gap-2 p-3 hover:bg-slate-50 rounded-lg">
-                <Checkbox 
-                  checked={selectedItems.includes(item.id)}
-                  onCheckedChange={() => toggleSelect(item.id)}
-                />
+      <div className="space-y-3">
+        {operations.map((op) => (
+          <Card key={op.id} className="border border-slate-200">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                {op.status !== 'completed' && (
+                  <Checkbox 
+                    checked={selectedOps.includes(op.id)}
+                    onCheckedChange={() => toggleOp(op.id)}
+                  />
+                )}
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-slate-900">{item.name}</p>
-                  <p className="text-xs text-slate-500">{item.type}</p>
+                  <div className="flex items-center gap-3 mb-1">
+                    <Zap className="w-5 h-5 text-violet-600" />
+                    <h3 className="font-semibold text-slate-900">{op.name}</h3>
+                    <Badge className={
+                      op.impact === 'critical' ? 'bg-red-600' :
+                      op.impact === 'high' ? 'bg-orange-600' :
+                      op.impact === 'medium' ? 'bg-yellow-600' :
+                      'bg-blue-600'
+                    }>
+                      {op.impact.toUpperCase()}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-slate-600">
+                    {op.type.toUpperCase()} • {op.items} Einträge
+                  </p>
                 </div>
-                <span className="text-xs px-2 py-1 bg-slate-100 rounded-full text-slate-700">{item.status}</span>
+                <div>
+                  {op.status === 'completed' ? (
+                    <CheckCircle className="w-6 h-6 text-green-600" />
+                  ) : op.status === 'in_progress' ? (
+                    <div className="animate-spin"><Zap className="w-6 h-6 text-violet-600" /></div>
+                  ) : (
+                    <Badge variant="outline">Ausstehend</Badge>
+                  )}
+                </div>
               </div>
-            ))}
-          </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Card className="border border-amber-200 bg-amber-50">
+        <CardContent className="pt-6 flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+          <p className="text-sm text-amber-800">Massenvorgänge können nicht rückgängig gemacht werden. Stellen Sie sicher, dass Sie alle Einstellungen überprüft haben.</p>
         </CardContent>
       </Card>
-
-      {selectedItems.length > 0 && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardHeader>
-            <CardTitle className="text-blue-900">Verfügbare Operationen</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Button className="w-full justify-start bg-blue-600 hover:bg-blue-700">
-              ✓ Status aktualisieren
-            </Button>
-            <Button className="w-full justify-start bg-blue-600 hover:bg-blue-700">
-              📧 Email versenden
-            </Button>
-            <Button className="w-full justify-start bg-blue-600 hover:bg-blue-700">
-              🏷️ Tags hinzufügen
-            </Button>
-            <Button variant="destructive" className="w-full justify-start">
-              🗑️ Löschen ({selectedItems.length})
-            </Button>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

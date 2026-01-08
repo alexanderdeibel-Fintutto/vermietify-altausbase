@@ -75,6 +75,9 @@ import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import UnitsManagement from './pages/UnitsManagement';
 import SuppliersManagement from './pages/SuppliersManagement';
 import SettingsPage from './pages/SettingsPage';
+import SystemConfiguration from './pages/SystemConfiguration';
+import IntegrationHub from './pages/IntegrationHub';
+import UserAudit from './pages/UserAudit';
 import __Layout from './Layout.jsx';
 
 
@@ -156,6 +159,9 @@ export const PAGES = {
     "UnitsManagement": UnitsManagement,
     "SuppliersManagement": SuppliersManagement,
     "SettingsPage": SettingsPage,
+    "SystemConfiguration": SystemConfiguration,
+    "IntegrationHub": IntegrationHub,
+    "UserAudit": UserAudit,
 }
 
 export const pagesConfig = {
