@@ -65,6 +65,7 @@ export default function Layout({ children, currentPageName }) {
         { name: '🔑 API Keys', href: createPageUrl('APIKeyManagement'), icon: Settings, page: 'APIKeyManagement' },
         { name: '💚 System Health', href: createPageUrl('SystemHealth'), icon: Activity, page: 'SystemHealth' },
         { name: '📋 Activity Logs', href: createPageUrl('ActivityLogs'), icon: Activity, page: 'ActivityLogs' },
+        { name: '📊 Analytics', href: createPageUrl('Analytics'), icon: BarChart3, page: 'Analytics' },
         { name: 'Objekte', href: createPageUrl('Buildings'), icon: Building2, page: 'Buildings', requiresModule: 'property' },
         { name: 'Mieter', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts', requiresModule: 'tenants' },
         { name: 'Kommunikation', href: createPageUrl('Kommunikation'), icon: MessageSquare, page: 'Kommunikation', requiresModule: 'communication' },
