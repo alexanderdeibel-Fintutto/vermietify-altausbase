@@ -20,6 +20,7 @@ import TrendAnalysisChart from './TrendAnalysisChart';
 import PreSubmissionCheck from './PreSubmissionCheck';
 import CollaborationCenter from './CollaborationCenter';
 import AdvancedDiagnostics from './AdvancedDiagnostics';
+import IntelligentCleaningTool from './IntelligentCleaningTool';
 
 export default function SubmissionDetailDialog({ submission, open, onOpenChange }) {
   const [showShareDialog, setShowShareDialog] = React.useState(false);
@@ -156,7 +157,13 @@ export default function SubmissionDetailDialog({ submission, open, onOpenChange 
             </TabsContent>
 
             <TabsContent value="diagnostics" className="mt-4">
-              <AdvancedDiagnostics submission={submission} />
+              <div className="space-y-4">
+                <AdvancedDiagnostics submission={submission} />
+                <IntelligentCleaningTool 
+                  submissionId={submission.id} 
+                  onCleanComplete={() => onOpenChange(false)}
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="collaboration" className="mt-4">

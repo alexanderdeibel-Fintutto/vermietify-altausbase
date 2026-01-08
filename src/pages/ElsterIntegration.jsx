@@ -106,6 +106,8 @@ import AutomatedWorkflowBuilder from '@/components/elster/AutomatedWorkflowBuild
 import TaxPredictionCard from '@/components/elster/TaxPredictionCard';
 import AdvancedReportGenerator from '@/components/elster/AdvancedReportGenerator';
 import ComplianceAuditReport from '@/components/elster/ComplianceAuditReport';
+import TrendAnalysisDashboard from '@/components/elster/TrendAnalysisDashboard';
+import SmartNotificationCenter from '@/components/elster/SmartNotificationCenter';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -236,11 +238,12 @@ export default function ElsterIntegration() {
                       toast.info('Wizard wird geöffnet mit vorausgefüllten Daten');
                     }}
                   />
+                  <TrendAnalysisDashboard />
                 </div>
                 <div className="space-y-6">
+                  <SmartNotificationCenter />
                   <RiskManagementSystem submissions={submissions} />
                   <ComplianceMonitoring submissions={submissions} />
-                  <SmartAlertSystem />
                 </div>
               </div>
 
