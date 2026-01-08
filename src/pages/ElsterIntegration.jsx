@@ -87,6 +87,12 @@ import SmartDocumentExtraction from '@/components/elster/SmartDocumentExtraction
 import CrossFormValidation from '@/components/elster/CrossFormValidation';
 import DataQualityDashboard from '@/components/elster/DataQualityDashboard';
 import AutomatedTestingSuite from '@/components/elster/AutomatedTestingSuite';
+import RealTimeStatusMonitor from '@/components/elster/RealTimeStatusMonitor';
+import SmartAlertSystem from '@/components/elster/SmartAlertSystem';
+import AuditReportGenerator from '@/components/elster/AuditReportGenerator';
+import TaxScenarioSimulator from '@/components/elster/TaxScenarioSimulator';
+import AutomatedBackupSystem from '@/components/elster/AutomatedBackupSystem';
+import IntegrationHealthMonitor from '@/components/elster/IntegrationHealthMonitor';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -201,8 +207,9 @@ export default function ElsterIntegration() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <SystemHealthCheck />
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <RealTimeStatusMonitor />
+                    <IntegrationHealthMonitor />
                     <CertificateRenewalReminder 
                       certificates={certificates} 
                       onUploadClick={() => setShowCertUpload(true)} 
@@ -217,6 +224,7 @@ export default function ElsterIntegration() {
                 </div>
                 <div className="space-y-6">
                   <ComplianceMonitoring submissions={submissions} />
+                  <SmartAlertSystem />
                   <MultiMandateManager />
                 </div>
               </div>
@@ -428,15 +436,24 @@ export default function ElsterIntegration() {
 
           <TabsContent value="reports" className="mt-6">
             <div className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <TaxReportingHub />
-                <AdvancedExportImport />
-              </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <TaxAdvisorReport />
-                <FinancialDataSync />
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <TaxReportingHub />
+                    <AdvancedExportImport />
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <TaxAdvisorReport />
+                    <FinancialDataSync />
+                  </div>
+                </div>
+                <div className="space-y-6">
+                  <AuditReportGenerator />
+                  <AutomatedBackupSystem />
+                </div>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <TaxScenarioSimulator />
                 <OptimizationAssistant />
                 <TaxCalendar />
                 <YearEndSummary />
