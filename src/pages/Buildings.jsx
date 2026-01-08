@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Building2 } from 'lucide-react';
@@ -56,13 +57,23 @@ export default function Buildings() {
     if (loadingBuildings) {
         return (
             <div className="space-y-8">
-                <div>
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                >
                     <Skeleton className="h-8 w-48 mb-2" />
                     <Skeleton className="h-4 w-64" />
-                </div>
+                </motion.div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[...Array(3)].map((_, i) => (
-                        <Skeleton key={i} className="h-72 rounded-2xl" />
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.1 }}
+                        >
+                            <Skeleton className="h-72 rounded-2xl" />
+                        </motion.div>
                     ))}
                 </div>
             </div>
@@ -71,32 +82,58 @@ export default function Buildings() {
 
     return (
         <div className="space-y-8">
-            <PageHeader 
-                title="Objekte"
-                subtitle={`${buildings.length} Immobilien verwalten`}
-                action={handleAddNew}
-                actionLabel="Objekt hinzufügen"
-            />
-
-            {buildings.length === 0 ? (
-                <EmptyState
-                    icon={Building2}
-                    title="Noch keine Objekte"
-                    description="Fügen Sie Ihr erstes Mehrfamilienhaus hinzu, um mit der Verwaltung zu beginnen."
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+            >
+                <PageHeader 
+                    title="Objekte"
+                    subtitle={`${buildings.length} Immobilien verwalten`}
                     action={handleAddNew}
-                    actionLabel="Erstes Objekt anlegen"
+                    actionLabel="Objekt hinzufügen"
                 />
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {buildings.map((building) => (
-                        <BuildingCard 
-                            key={building.id} 
-                            building={building}
-                            units={units}
+            </motion.div>
+
+            <AnimatePresence mode="wait">
+                {buildings.length === 0 ? (
+                    <motion.div
+                        key="empty"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                    >
+                        <EmptyState
+                            icon={Building2}
+                            title="Noch keine Objekte"
+                            description="Fügen Sie Ihr erstes Mehrfamilienhaus hinzu, um mit der Verwaltung zu beginnen."
+                            action={handleAddNew}
+                            actionLabel="Erstes Objekt anlegen"
                         />
-                    ))}
-                </div>
-            )}
+                    </motion.div>
+                ) : (
+                    <motion.div
+                        key="grid"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                    >
+                        {buildings.map((building, idx) => (
+                            <motion.div
+                                key={building.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.1 }}
+                            >
+                                <BuildingCard 
+                                    building={building}
+                                    units={units}
+                                />
+                            </motion.div>
+                        ))}
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <BuildingForm
                 open={formOpen}
