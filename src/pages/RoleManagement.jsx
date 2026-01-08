@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -76,7 +77,11 @@ export default function RoleManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
+      >
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Rollen-Verwaltung</h1>
           <p className="text-slate-600">Verwalten Sie Rollen und deren Berechtigungen</p>
@@ -91,10 +96,15 @@ export default function RoleManagement() {
           <Plus className="w-4 h-4 mr-2" />
           Custom Rolle erstellen
         </Button>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Kategorien */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1 }}
+        >
         <Card>
           <CardHeader>
             <CardTitle>Kategorien</CardTitle>
@@ -123,9 +133,16 @@ export default function RoleManagement() {
             </div>
           </CardContent>
         </Card>
+        </motion.div>
 
         {/* Rollen-Liste */}
-        <Card className="lg:col-span-3">
+        <motion.div
+          className="lg:col-span-3"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+        <Card>
           <CardHeader>
             <CardTitle>
               Rollen - {roleCategories.find(c => c.id === selectedCategory)?.name}
@@ -198,6 +215,7 @@ export default function RoleManagement() {
             </div>
           </CardContent>
         </Card>
+        </motion.div>
       </div>
 
       <RoleEditor 

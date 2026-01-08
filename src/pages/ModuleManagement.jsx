@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,62 +45,52 @@ export default function ModuleManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
+      >
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Modul-Verwaltung</h1>
           <p className="text-slate-600">Verwalten Sie gebuchte Module und Preise</p>
         </div>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[
+          { icon: Package, label: "Verfügbare Module", value: modulePricing.length, color: "blue" },
+          { icon: Package, label: "Aktive Module", value: activeModules.length, color: "emerald" },
+          { icon: DollarSign, label: "Gesamtumsatz", value: `${totalRevenue}€`, color: "purple" },
+          { icon: Users, label: "Accounts", value: new Set(moduleAccess.map(ma => ma.account_id)).size, color: "orange" }
+        ].map((stat, idx) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + idx * 0.05 }}
+          >
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-600">Verfügbare Module</p>
-                <p className="text-2xl font-bold">{modulePricing.length}</p>
-              </div>
-              <Package className="w-8 h-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Aktive Module</p>
-                <p className="text-2xl font-bold text-emerald-600">{activeModules.length}</p>
-              </div>
-              <Package className="w-8 h-8 text-emerald-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Gesamtumsatz</p>
-                <p className="text-2xl font-bold text-purple-600">{totalRevenue}€</p>
-              </div>
-              <DollarSign className="w-8 h-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Accounts</p>
-                <p className="text-2xl font-bold text-orange-600">
-                  {new Set(moduleAccess.map(ma => ma.account_id)).size}
+                <p className="text-sm text-slate-600">{stat.label}</p>
+                <p className={`text-2xl font-bold ${stat.color === 'blue' || stat.color === 'emerald' || stat.color === 'purple' || stat.color === 'orange' ? `text-${stat.color}-600` : ''}`}>
+                  {stat.value}
                 </p>
               </div>
-              <Users className="w-8 h-8 text-orange-600" />
+              <stat.icon className={`w-8 h-8 text-${stat.color}-600`} />
             </div>
           </CardContent>
         </Card>
+          </motion.div>
+        ))}
       </div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
         <TabsList>
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
@@ -185,9 +176,10 @@ export default function ModuleManagement() {
                 </div>
               )}
             </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
+            </Card>
+            </TabsContent>
+            </Tabs>
+            </motion.div>
+            </div>
+            );
+            }

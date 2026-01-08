@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -99,7 +100,11 @@ export default function UserManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
+      >
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Benutzerverwaltung</h1>
           <p className="text-slate-600">Verwalten Sie Benutzer, Rollen und Berechtigungen</p>
@@ -120,10 +125,15 @@ export default function UserManagement() {
             Benutzer einladen
           </Button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Filter und Suche */}
-      <div className="flex gap-4 items-center">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="flex gap-4 items-center"
+      >
         <Input 
           placeholder="Benutzer suchen..." 
           value={searchTerm}
@@ -152,57 +162,45 @@ export default function UserManagement() {
             <SelectItem value="inactive">Inaktiv</SelectItem>
           </SelectContent>
         </Select>
-      </div>
+      </motion.div>
 
       {/* Statistik-Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[
+          { icon: Users, label: "Gesamt Benutzer", value: stats.totalUsers, color: "emerald" },
+          { icon: UserCheck, label: "Aktive Benutzer", value: stats.activeUsers, color: "green" },
+          { icon: TestTube, label: "Tester aktiv", value: stats.activeTesters, color: "blue" },
+          { icon: Package, label: "Module gebucht", value: stats.activeModules, color: "purple" }
+        ].map((stat, idx) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 + idx * 0.05 }}
+          >
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-600">Gesamt Benutzer</p>
-                <p className="text-2xl font-bold">{stats.totalUsers}</p>
+                <p className="text-sm text-slate-600">{stat.label}</p>
+                <p className={`text-2xl font-bold ${stat.color === 'emerald' ? '' : `text-${stat.color}-600`}`}>
+                  {stat.value}
+                </p>
               </div>
-              <Users className="w-8 h-8 text-emerald-600" />
+              <stat.icon className={`w-8 h-8 text-${stat.color}-600`} />
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Aktive Benutzer</p>
-                <p className="text-2xl font-bold text-green-600">{stats.activeUsers}</p>
-              </div>
-              <UserCheck className="w-8 h-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Tester aktiv</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.activeTesters}</p>
-              </div>
-              <TestTube className="w-8 h-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Module gebucht</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.activeModules}</p>
-              </div>
-              <Package className="w-8 h-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
+          </motion.div>
+        ))}
       </div>
 
       {/* Benutzer-Liste */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
       <Card>
         <CardHeader>
           <CardTitle>Benutzer ({filteredUsers.length})</CardTitle>
@@ -272,6 +270,7 @@ export default function UserManagement() {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
 
       <InviteUserDialog 
         open={inviteDialogOpen} 
