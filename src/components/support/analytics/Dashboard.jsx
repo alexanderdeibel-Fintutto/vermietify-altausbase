@@ -70,7 +70,9 @@ export default function Dashboard({ problems, solutions, onNavigate }) {
     const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
 
     return (
-        <div className="space-y-6">
+      <div className="space-y-6">
+        {/* Executive Dashboard Integration */}
+        <ExecutiveDashboard problems={problems} onNavigate={onNavigate} />
             {/* KPI-Karten */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <Card>
