@@ -10,6 +10,9 @@ import {
   Eye, CheckCircle, AlertCircle 
 } from 'lucide-react';
 import { toast } from 'sonner';
+import GapDetailDialog from '@/components/knowledge/KnowledgeGapDetails';
+import SearchKnowledgeBase from '@/components/knowledge/SearchKnowledgeBase';
+import AutonomyMetrics from '@/components/knowledge/AutonomyMetrics';
 
 export default function KnowledgeManagementDashboard() {
   const [selectedGap, setSelectedGap] = useState(null);
@@ -230,18 +233,14 @@ export default function KnowledgeManagementDashboard() {
 
         {/* Wissensbasis Tab */}
         <TabsContent value="knowledge" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Wissensbasis-Einträge</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-slate-600 text-center py-6">
-                Verwenden Sie die Claude-Reports um die Wissensbasis zu erweitern
-              </p>
-            </CardContent>
-          </Card>
+          <SearchKnowledgeBase />
         </TabsContent>
       </Tabs>
+
+      {/* Autonomie-Metriken */}
+      <div className="mt-8">
+        <AutonomyMetrics />
+      </div>
 
       {/* Detail Modal für Wissenslücke */}
       {selectedGap && (
