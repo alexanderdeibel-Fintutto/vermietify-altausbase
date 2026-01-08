@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -105,13 +106,26 @@ export default function HilfeCenter() {
 
     if (selectedSolution) {
         return (
-            <div className="max-w-4xl mx-auto space-y-6">
-                <div className="flex items-center gap-3">
+            <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="max-w-4xl mx-auto space-y-6"
+            >
+                <motion.div 
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    className="flex items-center gap-3"
+                >
                     <Button variant="ghost" onClick={() => setSelectedSolution(null)}>
                         ← Zurück
                     </Button>
-                </div>
+                </motion.div>
 
+                <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                >
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-2xl">{selectedSolution.titel}</CardTitle>
@@ -217,14 +231,19 @@ export default function HilfeCenter() {
                             </Button>
                         </div>
                     </CardContent>
-                </Card>
-            </div>
-        );
-    }
+                    </Card>
+                    </motion.div>
+                    </motion.div>
+                    );
+                    }
 
     return (
         <div className="max-w-6xl mx-auto space-y-6">
-            <div className="flex items-center justify-between py-8">
+            <motion.div 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-between py-8"
+            >
                 <div>
                     <h1 className="text-4xl font-bold text-slate-900 mb-3">📚 Hilfe-Center</h1>
                     <p className="text-lg text-slate-600">Finden Sie schnell Antworten auf Ihre Fragen</p>
@@ -240,11 +259,16 @@ export default function HilfeCenter() {
                         <Plus className="w-4 h-4 mr-2" />
                         Neue Lösung
                     </Button>
-                )}
-            </div>
+                    )}
+                    </motion.div>
 
-            {/* Suche */}
-            <Card>
+                    {/* Suche */}
+                    <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    >
+                    <Card>
                 <CardContent className="p-6">
                     <div className="relative">
                         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -256,17 +280,30 @@ export default function HilfeCenter() {
                             className="pl-12 h-14 text-lg"
                         />
                     </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                    </Card>
+                    </motion.div>
 
-            {/* Häufigste Fragen */}
-            {!searchQuery && (
-                <div>
+                    {/* Häufigste Fragen */}
+                    <AnimatePresence>
+                    {!searchQuery && (
+                    <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ delay: 0.2 }}
+                    >
                     <h2 className="text-2xl font-bold text-slate-900 mb-4">💡 Häufigste Fragen</h2>
                     <div className="grid gap-3">
-                        {topSolutions.map(solution => (
-                            <Card
+                        {topSolutions.map((solution, idx) => (
+                            <motion.div
                                 key={solution.id}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: idx * 0.05 }}
+                                whileHover={{ scale: 1.01 }}
+                            >
+                            <Card
                                 className="cursor-pointer hover:shadow-lg transition-shadow"
                                 onClick={() => handleViewSolution(solution)}
                             >
@@ -294,14 +331,20 @@ export default function HilfeCenter() {
                                         </div>
                                     </div>
                                 </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                </div>
-            )}
+                                </Card>
+                                </motion.div>
+                                ))}
+                                </div>
+                                </motion.div>
+                                )}
+                                </AnimatePresence>
 
             {/* Kategorien */}
-            <div>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+            >
                 <h2 className="text-2xl font-bold text-slate-900 mb-4">📂 Kategorien</h2>
                 <div className="flex flex-wrap gap-2">
                     <Button
@@ -312,20 +355,29 @@ export default function HilfeCenter() {
                         Alle
                     </Button>
                     {categories.map(cat => (
-                        <Button
+                        <motion.div
                             key={cat}
-                            variant={selectedCategory === cat ? 'default' : 'outline'}
-                            onClick={() => setSelectedCategory(cat)}
-                            className={selectedCategory === cat ? 'bg-emerald-600' : ''}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                         >
-                            {cat}
-                        </Button>
-                    ))}
-                </div>
-            </div>
+                            <Button
+                                variant={selectedCategory === cat ? 'default' : 'outline'}
+                                onClick={() => setSelectedCategory(cat)}
+                                className={selectedCategory === cat ? 'bg-emerald-600' : ''}
+                            >
+                                {cat}
+                            </Button>
+                        </motion.div>
+                        ))}
+                        </div>
+                        </motion.div>
 
             {/* Lösungen-Liste */}
-            <div>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+            >
                 <h2 className="text-2xl font-bold text-slate-900 mb-4">
                     {searchQuery ? 'Suchergebnisse' : 'Alle Artikel'} ({filteredSolutions.length})
                 </h2>
@@ -345,16 +397,25 @@ export default function HilfeCenter() {
                                 <MessageSquare className="w-4 h-4 mr-2" />
                                 Problem melden
                             </Button>
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                            </Card>
+                            </motion.div>
                 ) : (
                     <div className="grid gap-3">
-                        {filteredSolutions.map(solution => (
-                            <Card
-                                key={solution.id}
-                                className="cursor-pointer hover:shadow-md transition-shadow"
-                                onClick={() => handleViewSolution(solution)}
-                            >
+                        <AnimatePresence>
+                            {filteredSolutions.map((solution, idx) => (
+                                <motion.div
+                                    key={solution.id}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
+                                    transition={{ delay: idx * 0.03 }}
+                                    whileHover={{ scale: 1.01 }}
+                                >
+                                <Card
+                                    className="cursor-pointer hover:shadow-md transition-shadow"
+                                    onClick={() => handleViewSolution(solution)}
+                                >
                                 <CardContent className="p-4">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1">
@@ -397,13 +458,20 @@ export default function HilfeCenter() {
                                         </div>
                                     </div>
                                 </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                )}
-            </div>
+                                </Card>
+                                </motion.div>
+                                ))}
+                                </AnimatePresence>
+                                </div>
+                                )}
+                                </motion.div>
 
             {/* Problem nicht gefunden */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+            >
             <Card className="bg-blue-50 border-blue-200">
                 <CardContent className="p-6 text-center">
                     <HelpCircle className="w-12 h-12 text-blue-600 mx-auto mb-3" />
