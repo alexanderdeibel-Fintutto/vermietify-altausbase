@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   TestTube, Play, Clock, Star, Target, 
   BarChart3, TrendingUp
@@ -13,6 +14,10 @@ import {
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import TesterInvitationManager from '@/components/testing/TesterInvitationManager';
+import TestAccountManager from '@/components/testing/TestAccountManager';
+import TestAssignmentManager from '@/components/testing/TestAssignmentManager';
+import CommunicationHub from '@/components/testing/CommunicationHub';
 
 export default function TestingDashboard() {
   const [filterPeriod, setFilterPeriod] = useState('week');
@@ -145,8 +150,24 @@ export default function TestingDashboard() {
         ))}
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Management Tabs */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35 }}
+      >
+        <Tabs defaultValue="overview">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="overview">📊 Übersicht</TabsTrigger>
+            <TabsTrigger value="invitations">📧 Einladungen</TabsTrigger>
+            <TabsTrigger value="accounts">🔑 Test-Accounts</TabsTrigger>
+            <TabsTrigger value="assignments">📋 Aufträge</TabsTrigger>
+            <TabsTrigger value="communication">💬 Kommunikation</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="mt-6">
+            {/* Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {[0, 1].map(idx => (
           <motion.div
             key={idx}
