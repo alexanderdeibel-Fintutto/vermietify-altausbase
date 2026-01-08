@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { CheckCircle2, Circle } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -23,8 +24,21 @@ export default function ProgressIndicator({ currentStep, completedSteps = [] }) 
     <div className="flex items-center justify-center gap-2 py-4">
       {steps.map((step, idx) => (
         <React.Fragment key={step.id}>
-          <div className="flex flex-col items-center gap-1">
-            <div className={cn(
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: idx * 0.1 }}
+            className="flex flex-col items-center gap-1"
+          >
+            <motion.div 
+              animate={{ 
+                scale: isCurrent(step.id) ? [1, 1.1, 1] : 1 
+              }}
+              transition={{ 
+                repeat: isCurrent(step.id) ? Infinity : 0,
+                duration: 2 
+              }}
+              className={cn(
               "w-8 h-8 rounded-full flex items-center justify-center transition-all",
               isCompleted(step.id) ? "bg-emerald-600" : 
               isCurrent(step.id) ? "bg-emerald-500 ring-4 ring-emerald-100" :
@@ -38,17 +52,25 @@ export default function ProgressIndicator({ currentStep, completedSteps = [] }) 
                   isCurrent(step.id) ? "text-white" : "text-slate-400"
                 )} />
               )}
-            </div>
-            <span className={cn(
+            </motion.div>
+            <motion.span 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: idx * 0.1 + 0.2 }}
+              className={cn(
               "text-xs",
               isCompleted(step.id) || isCurrent(step.id) ? "text-slate-700 font-medium" : "text-slate-400"
             )}>
               {step.label}
-            </span>
-          </div>
+            </motion.span>
+          </motion.div>
           {idx < steps.length - 1 && (
-            <div className={cn(
-              "h-0.5 w-8 transition-all",
+            <motion.div 
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ delay: idx * 0.1 + 0.15 }}
+              className={cn(
+              "h-0.5 w-8 transition-all origin-left",
               isCompleted(step.id) ? "bg-emerald-600" : "bg-slate-200"
             )} />
           )}
