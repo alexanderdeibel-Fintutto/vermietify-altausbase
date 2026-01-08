@@ -53,6 +53,7 @@ import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import ReportGenerator from './pages/ReportGenerator';
+import TesterOnboarding from './pages/TesterOnboarding';
 import __Layout from './Layout.jsx';
 
 
@@ -112,6 +113,7 @@ export const PAGES = {
     "WhatsAppSetup": WhatsAppSetup,
     "WorkflowAutomation": WorkflowAutomation,
     "ReportGenerator": ReportGenerator,
+    "TesterOnboarding": TesterOnboarding,
 }
 
 export const pagesConfig = {
