@@ -397,9 +397,8 @@ export default function HilfeCenter() {
                                 <MessageSquare className="w-4 h-4 mr-2" />
                                 Problem melden
                             </Button>
-                            </CardContent>
-                            </Card>
-                            </motion.div>
+                        </CardContent>
+                    </Card>
                 ) : (
                     <div className="grid gap-3">
                         <AnimatePresence>
@@ -458,13 +457,13 @@ export default function HilfeCenter() {
                                         </div>
                                     </div>
                                 </CardContent>
-                                </Card>
-                                </motion.div>
-                                ))}
-                                </AnimatePresence>
-                                </div>
-                                )}
-                                </motion.div>
+                            </Card>
+                            </motion.div>
+                            ))}
+                        </AnimatePresence>
+                    </div>
+                )}
+            </motion.div>
 
             {/* Problem nicht gefunden */}
             <motion.div
@@ -472,21 +471,22 @@ export default function HilfeCenter() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
             >
-            <Card className="bg-blue-50 border-blue-200">
-                <CardContent className="p-6 text-center">
-                    <HelpCircle className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                        Problem nicht gefunden?
-                    </h3>
-                    <p className="text-slate-600 mb-4">
-                        Melden Sie Ihr Problem und wir helfen Ihnen schnellstmöglich
-                    </p>
-                    <Button onClick={() => setReportDialogOpen(true)}>
-                        <MessageSquare className="w-4 h-4 mr-2" />
-                        Problem melden
-                    </Button>
-                </CardContent>
-            </Card>
+                <Card className="bg-blue-50 border-blue-200">
+                    <CardContent className="p-6 text-center">
+                        <HelpCircle className="w-12 h-12 text-blue-600 mx-auto mb-3" />
+                        <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                            Problem nicht gefunden?
+                        </h3>
+                        <p className="text-slate-600 mb-4">
+                            Melden Sie Ihr Problem und wir helfen Ihnen schnellstmöglich
+                        </p>
+                        <Button onClick={() => setReportDialogOpen(true)}>
+                            <MessageSquare className="w-4 h-4 mr-2" />
+                            Problem melden
+                        </Button>
+                    </CardContent>
+                </Card>
+            </motion.div>
 
             {/* Dialoge */}
             <ReportProblemDialog
