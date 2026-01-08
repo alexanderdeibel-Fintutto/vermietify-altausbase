@@ -39,6 +39,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import ComplianceCenter from './pages/ComplianceCenter';
 import SystemHealth from './pages/SystemHealth';
 import APIKeyManagement from './pages/APIKeyManagement';
+import ActivityLogs from './pages/ActivityLogs';
 import __Layout from './Layout.jsx';
 
 
@@ -84,6 +85,7 @@ export const PAGES = {
     "ComplianceCenter": ComplianceCenter,
     "SystemHealth": SystemHealth,
     "APIKeyManagement": APIKeyManagement,
+    "ActivityLogs": ActivityLogs,
 }
 
 export const pagesConfig = {
