@@ -68,6 +68,10 @@ import TaskManagement from './pages/TaskManagement';
 import DocumentManagement from './pages/DocumentManagement';
 import BankingManagement from './pages/BankingManagement';
 import OperatingCostsManagement from './pages/OperatingCostsManagement';
+import TaxManagement from './pages/TaxManagement';
+import AnalyticsPage from './pages/AnalyticsPage';
+import ReportsPage from './pages/ReportsPage';
+import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import __Layout from './Layout.jsx';
 
 
@@ -142,6 +146,10 @@ export const PAGES = {
     "DocumentManagement": DocumentManagement,
     "BankingManagement": BankingManagement,
     "OperatingCostsManagement": OperatingCostsManagement,
+    "TaxManagement": TaxManagement,
+    "AnalyticsPage": AnalyticsPage,
+    "ReportsPage": ReportsPage,
+    "WorkflowAutomationPage": WorkflowAutomationPage,
 }
 
 export const pagesConfig = {
