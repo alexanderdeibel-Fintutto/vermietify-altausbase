@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,21 +69,31 @@ export default function TaxCategoryQuickSetup({ userType = 'vermieter', onComple
   };
 
   return (
-    <Card className="shadow-lg">
-      <CardHeader>
-        <CardTitle>Steuer-Kategorien einrichten</CardTitle>
-        <p className="text-sm text-slate-600">
-          Wählen Sie die wichtigsten Kategorien für Ihre Steuererklärung (Anlage V)
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-3">
-          {categories.map((category, idx) => (
-            <div
-              key={idx}
-              className="flex items-start gap-3 p-3 rounded-lg border hover:border-emerald-300 transition-colors cursor-pointer"
-              onClick={() => toggleCategory(idx)}
-            >
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle>Steuer-Kategorien einrichten</CardTitle>
+          <p className="text-sm text-slate-600">
+            Wählen Sie die wichtigsten Kategorien für Ihre Steuererklärung (Anlage V)
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            {categories.map((category, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.1 }}
+                className="flex items-start gap-3 p-3 rounded-lg border hover:border-emerald-300 transition-colors cursor-pointer"
+                onClick={() => toggleCategory(idx)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
               <Checkbox
                 checked={selectedCategories.includes(idx)}
                 onCheckedChange={() => toggleCategory(idx)}
@@ -91,7 +102,7 @@ export default function TaxCategoryQuickSetup({ userType = 'vermieter', onComple
                 <Label className="font-medium cursor-pointer">{category.name}</Label>
                 <p className="text-sm text-slate-600">{category.description}</p>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
@@ -109,5 +120,6 @@ export default function TaxCategoryQuickSetup({ userType = 'vermieter', onComple
         </div>
       </CardContent>
     </Card>
+    </motion.div>
   );
 }
