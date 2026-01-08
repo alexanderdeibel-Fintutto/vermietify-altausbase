@@ -135,6 +135,8 @@ import ComplianceScoreCard from '@/components/elster/ComplianceScoreCard';
 import SubmissionQueueManager from '@/components/elster/SubmissionQueueManager';
 import TestingDashboard from '@/components/elster/TestingDashboard';
 import ROIDashboard from '@/components/elster/ROIDashboard';
+import AdvancedFilterPanel from '@/components/elster/AdvancedFilterPanel';
+import BulkPDFExportPanel from '@/components/elster/BulkPDFExportPanel';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -341,6 +343,8 @@ export default function ElsterIntegration() {
                 <SubmissionTimeline submissions={submissions} />
               </div>
               <div className="space-y-6">
+                <AdvancedFilterPanel onResults={(filtered) => console.log('Filtered:', filtered)} />
+                <BulkPDFExportPanel selectedSubmissions={selectedForBulk} />
                 <DataQualityScore />
                 <BulkValidationTool selectedSubmissions={selectedForBulk} />
                 <ExportManager selectedSubmissions={selectedForBulk} />
