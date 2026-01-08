@@ -20,6 +20,7 @@ import CertificateUploadDialog from '@/components/elster/CertificateUploadDialog
 import ElsterAnalytics from '@/components/elster/ElsterAnalytics';
 import ElsterSetupWizard from '@/components/elster/ElsterSetupWizard';
 import BulkFormExport from '@/components/elster/BulkFormExport';
+import BulkExportButton from '@/components/elster/BulkExportButton';
 import SubmissionDetailDialog from '@/components/elster/SubmissionDetailDialog';
 import GoBDComplianceDashboard from '@/components/elster/GoBDComplianceDashboard';
 import SubmissionTimeline from '@/components/elster/SubmissionTimeline';
@@ -137,6 +138,7 @@ export default function ElsterIntegration() {
           </p>
         </div>
         <div className="flex gap-2">
+          <BulkExportButton submissions={submissions} />
           <QuickActionsMenu onAction={handleQuickAction} />
           {certificates.length === 0 && (
             <Button onClick={() => setShowSetupWizard(true)} className="bg-blue-600 hover:bg-blue-700">

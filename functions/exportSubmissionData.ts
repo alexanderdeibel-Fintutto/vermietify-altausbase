@@ -9,119 +9,71 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { submission_ids, format = 'csv' } = await req.json();
+    const { submission_ids, format = 'json' } = await req.json();
 
-    if (!submission_ids || !Array.isArray(submission_ids)) {
+    if (!submission_ids || !Array.isArray(submission_ids) || submission_ids.length === 0) {
       return Response.json({ error: 'submission_ids array required' }, { status: 400 });
     }
 
-    console.log(`[EXPORT] Exporting ${submission_ids.length} submissions as ${format}`);
+    console.log(`[EXPORT] Exporting ${submission_ids.length} submissions in ${format} format`);
 
-    const submissions = await Promise.all(
-      submission_ids.map(id => base44.entities.ElsterSubmission.filter({ id }))
-    );
+    const submissions = [];
+    for (const id of submission_ids) {
+      const subs = await base44.entities.ElsterSubmission.filter({ id });
+      if (subs.length > 0) {
+        submissions.push(subs[0]);
+      }
+    }
 
-    const flatSubmissions = submissions.flat();
+    if (submissions.length === 0) {
+      return Response.json({ error: 'No submissions found' }, { status: 404 });
+    }
+
+    let exportData;
+    let contentType;
+    let filename;
 
     if (format === 'csv') {
       // CSV Export
       const headers = [
-        'ID', 'Formular', 'Jahr', 'Rechtsform', 'Status', 
-        'Einnahmen', 'Ausgaben', 'AfA', 'Ergebnis',
-        'KI-Vertrauen', 'Erstellt', 'Übermittelt'
+        'ID', 'Formular-Typ', 'Jahr', 'Status', 'Rechtsform', 
+        'Modus', 'KI-Vertrauen', 'Erstellt', 'Eingereicht'
       ];
+      
+      const rows = submissions.map(s => [
+        s.id,
+        s.tax_form_type,
+        s.tax_year,
+        s.status,
+        s.legal_form,
+        s.submission_mode,
+        s.ai_confidence_score || '',
+        s.created_date || '',
+        s.submission_date || ''
+      ]);
 
-      const rows = flatSubmissions.map(s => {
-        const expenses = Object.entries(s.form_data || {})
-          .filter(([key]) => key.startsWith('expense_'))
-          .reduce((sum, [_, value]) => sum + value, 0);
-        
-        const result = (s.form_data?.income_rent || 0) - expenses - (s.form_data?.afa_amount || 0);
-
-        return [
-          s.id,
-          s.tax_form_type,
-          s.tax_year,
-          s.legal_form,
-          s.status,
-          s.form_data?.income_rent || 0,
-          expenses,
-          s.form_data?.afa_amount || 0,
-          result,
-          s.ai_confidence_score || 0,
-          s.created_date ? new Date(s.created_date).toLocaleDateString('de-DE') : '',
-          s.submission_date ? new Date(s.submission_date).toLocaleDateString('de-DE') : ''
-        ];
-      });
-
-      const csv = [
-        headers.join(';'),
-        ...rows.map(row => row.join(';'))
-      ].join('\n');
-
-      return Response.json({
-        success: true,
-        format: 'csv',
-        data: csv,
-        filename: `elster_export_${new Date().toISOString().split('T')[0]}.csv`
-      });
-    } else if (format === 'json') {
+      exportData = [headers, ...rows]
+        .map(row => row.join(','))
+        .join('\n');
+      
+      contentType = 'text/csv';
+      filename = `elster_export_${new Date().toISOString().split('T')[0]}.csv`;
+    } else {
       // JSON Export
-      return Response.json({
-        success: true,
-        format: 'json',
-        data: JSON.stringify(flatSubmissions, null, 2),
-        filename: `elster_export_${new Date().toISOString().split('T')[0]}.json`
-      });
-    } else if (format === 'excel') {
-      // Excel-kompatibles CSV
-      const headers = [
-        'ID', 'Formular', 'Jahr', 'Rechtsform', 'Status', 
-        'Einnahmen', 'Ausgaben', 'AfA', 'Ergebnis',
-        'KI-Vertrauen (%)', 'Erstellt am', 'Übermittelt am',
-        'Gebäude-ID', 'Transfer-Ticket', 'Fehleranzahl'
-      ];
-
-      const rows = flatSubmissions.map(s => {
-        const expenses = Object.entries(s.form_data || {})
-          .filter(([key]) => key.startsWith('expense_'))
-          .reduce((sum, [_, value]) => sum + value, 0);
-        
-        const result = (s.form_data?.income_rent || 0) - expenses - (s.form_data?.afa_amount || 0);
-
-        return [
-          s.id,
-          s.tax_form_type,
-          s.tax_year,
-          s.legal_form,
-          s.status,
-          s.form_data?.income_rent || 0,
-          expenses,
-          s.form_data?.afa_amount || 0,
-          result,
-          s.ai_confidence_score || 0,
-          s.created_date ? new Date(s.created_date).toLocaleString('de-DE') : '',
-          s.submission_date ? new Date(s.submission_date).toLocaleString('de-DE') : '',
-          s.building_id || '',
-          s.transfer_ticket || '',
-          s.validation_errors?.length || 0
-        ];
-      });
-
-      const csv = [
-        headers.join('\t'),
-        ...rows.map(row => row.join('\t'))
-      ].join('\n');
-
-      return Response.json({
-        success: true,
-        format: 'excel',
-        data: csv,
-        filename: `elster_export_${new Date().toISOString().split('T')[0]}.xlsx`
-      });
+      exportData = JSON.stringify(submissions, null, 2);
+      contentType = 'application/json';
+      filename = `elster_export_${new Date().toISOString().split('T')[0]}.json`;
     }
 
-    return Response.json({ error: 'Invalid format' }, { status: 400 });
+    console.log(`[EXPORT] Complete: ${submissions.length} submissions exported`);
+
+    return new Response(exportData, {
+      status: 200,
+      headers: {
+        'Content-Type': contentType,
+        'Content-Disposition': `attachment; filename="${filename}"`
+      }
+    });
 
   } catch (error) {
     console.error('[ERROR]', error);
