@@ -29,9 +29,14 @@ export default function OnboardingRedirect({ children }) {
   });
 
   useEffect(() => {
-    if (!loadingBuildings && user && buildings && !progress?.is_completed) {
+    if (!loadingBuildings && user && buildings !== undefined && progress !== undefined) {
       // Redirect to onboarding if no buildings and onboarding not completed
-      if (buildings.length === 0 && window.location.pathname !== createPageUrl('Onboarding')) {
+      const shouldRedirect = buildings.length === 0 && 
+                            !progress?.is_completed && 
+                            !window.location.pathname.includes('Onboarding') &&
+                            !window.location.pathname.includes('UserSettings');
+      
+      if (shouldRedirect) {
         navigate(createPageUrl('Onboarding'));
       }
     }
