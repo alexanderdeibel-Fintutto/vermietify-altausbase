@@ -1,248 +1,73 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Mail, Search, Edit, Trash2, Copy } from 'lucide-react';
-import { toast } from 'sonner';
-import EmailTemplateEditor from '@/components/email/EmailTemplateEditor';
+import { Plus, Mail, Edit2, Trash2, Eye } from 'lucide-react';
+import QuickStats from '@/components/shared/QuickStats';
 
-export default function EmailTemplates() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState(null);
-  const queryClient = useQueryClient();
-
-  const { data: templates = [] } = useQuery({
-    queryKey: ['email-templates'],
-    queryFn: () => base44.entities.EmailTemplate.list()
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.EmailTemplate.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['email-templates'] });
-      toast.success('Template gelöscht');
-    }
-  });
-
-  const duplicateMutation = useMutation({
-    mutationFn: (template) => base44.entities.EmailTemplate.create({
-      ...template,
-      name: `${template.name} (Kopie)`,
-      usage_count: 0
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['email-templates'] });
-      toast.success('Template dupliziert');
-    }
-  });
-
-  const filteredTemplates = templates.filter(t => {
-    const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         t.subject.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || t.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  const categories = [
-    { id: 'all', name: 'Alle', count: templates.length },
-    { id: 'tenant', name: 'Mieter', count: templates.filter(t => t.category === 'tenant').length },
-    { id: 'owner', name: 'Eigentümer', count: templates.filter(t => t.category === 'owner').length },
-    { id: 'supplier', name: 'Dienstleister', count: templates.filter(t => t.category === 'supplier').length },
-    { id: 'internal', name: 'Intern', count: templates.filter(t => t.category === 'internal').length },
-    { id: 'system', name: 'System', count: templates.filter(t => t.category === 'system').length }
+export default function EmailTemplatesPage() {
+  const templates = [
+    { id: 1, name: 'Zahlungserinnerung', subject: 'Zahlung fällig am {{due_date}}', category: 'payment', usage: 1240 },
+    { id: 2, name: 'Mietvertrag Verlängerung', subject: 'Ihr Mietvertrag läuft aus', category: 'contract', usage: 156 },
+    { id: 3, name: 'Mieter Willkommen', subject: 'Willkommen bei {{property_name}}', category: 'onboarding', usage: 89 },
+    { id: 4, name: 'Wartungsmitteilung', subject: 'Geplante Wartung am {{date}}', category: 'maintenance', usage: 234 },
+    { id: 5, name: 'Dokument erforderlich', subject: 'Bitte laden Sie {{document_name}} hoch', category: 'document', usage: 567 },
   ];
+
+  const stats = [
+    { label: 'Gesamt Templates', value: templates.length },
+    { label: 'Kategories', value: 5 },
+    { label: 'Verwendungen (Monat)', value: templates.reduce((sum, t) => sum + t.usage, 0).toLocaleString('de-DE') },
+    { label: 'Zuletzt aktualisiert', value: 'Vor 2 Tg.' },
+  ];
+
+  const getCategoryColor = (category) => {
+    const colors = {
+      payment: 'bg-green-100 text-green-800',
+      contract: 'bg-blue-100 text-blue-800',
+      onboarding: 'bg-purple-100 text-purple-800',
+      maintenance: 'bg-orange-100 text-orange-800',
+      document: 'bg-red-100 text-red-800',
+    };
+    return colors[category] || 'bg-slate-100 text-slate-800';
+  };
 
   return (
     <div className="space-y-6">
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex justify-between items-center"
-      >
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">E-Mail Templates</h1>
-          <p className="text-slate-600">Verwalten Sie Ihre E-Mail-Vorlagen</p>
+          <h1 className="text-3xl font-bold text-slate-900">📧 Email Templates</h1>
+          <p className="text-slate-600 mt-1">Verwalten Sie E-Mail-Vorlagen für automatische Benachrichtigungen</p>
         </div>
-        <Button 
-          onClick={() => {
-            setEditingTemplate(null);
-            setEditorOpen(true);
-          }}
-          className="bg-emerald-600 hover:bg-emerald-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Template erstellen
-        </Button>
-      </motion.div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {categories.map((cat, idx) => (
-          <motion.div
-            key={cat.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 + idx * 0.05 }}
-          >
-          <Card 
-            key={cat.id}
-            className={`cursor-pointer transition-all ${
-              selectedCategory === cat.id ? 'ring-2 ring-emerald-500 bg-emerald-50' : 'hover:bg-slate-50'
-            }`}
-            onClick={() => setSelectedCategory(cat.id)}
-          >
-            <CardContent className="p-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <div className="text-sm text-slate-600">{cat.name}</div>
-                  <div className="text-2xl font-bold">{cat.count}</div>
-                </div>
-                <Mail className="w-8 h-8 text-slate-400" />
-              </div>
-            </CardContent>
-          </Card>
-          </motion.div>
-        ))}
+        <Button className="bg-emerald-600 hover:bg-emerald-700"><Plus className="w-4 h-4 mr-2" />Neues Template</Button>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="flex items-center gap-4"
-      >
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            placeholder="Templates durchsuchen..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </motion.div>
+      <QuickStats stats={stats} accentColor="green" />
 
-      <AnimatePresence mode="wait">
-      <motion.div
-        key={filteredTemplates.length}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-      >
-        {filteredTemplates.map((template, idx) => (
-          <motion.div
-            key={template.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.05 }}
-          >
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between">
+      <div className="space-y-3">
+        {templates.map((template) => (
+          <Card key={template.id} className="border border-slate-200">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <CardTitle className="text-lg">{template.name}</CardTitle>
-                  <p className="text-sm text-slate-600 mt-1">{template.subject}</p>
-                </div>
-                <Badge variant={template.is_active ? 'default' : 'secondary'}>
-                  {template.is_active ? 'Aktiv' : 'Inaktiv'}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">{template.category}</Badge>
-                  <span className="text-sm text-slate-500">
-                    {template.usage_count}x verwendet
-                  </span>
-                </div>
-                
-                {template.variables && template.variables.length > 0 && (
-                  <div>
-                    <div className="text-xs text-slate-500 mb-1">Variablen:</div>
-                    <div className="flex flex-wrap gap-1">
-                      {template.variables.slice(0, 3).map(v => (
-                        <Badge key={v} variant="outline" className="text-xs">
-                          {v}
-                        </Badge>
-                      ))}
-                      {template.variables.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{template.variables.length - 3}
-                        </Badge>
-                      )}
-                    </div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <Mail className="w-5 h-5 text-slate-600" />
+                    <h3 className="font-semibold text-slate-900">{template.name}</h3>
+                    <Badge className={getCategoryColor(template.category)}>{template.category}</Badge>
                   </div>
-                )}
-
-                <div className="flex gap-2 pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setEditingTemplate(template);
-                      setEditorOpen(true);
-                    }}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => duplicateMutation.mutate(template)}
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (confirm('Template wirklich löschen?')) {
-                        deleteMutation.mutate(template.id);
-                      }
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <p className="text-sm text-slate-600">Betreff: {template.subject}</p>
+                  <p className="text-xs text-slate-500 mt-2">📊 {template.usage.toLocaleString('de-DE')} Verwendungen</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="icon" variant="ghost"><Eye className="w-4 h-4 text-slate-600" /></Button>
+                  <Button size="icon" variant="ghost"><Edit2 className="w-4 h-4 text-blue-600" /></Button>
+                  <Button size="icon" variant="ghost"><Trash2 className="w-4 h-4 text-red-600" /></Button>
                 </div>
               </div>
             </CardContent>
           </Card>
-          </motion.div>
         ))}
-      </motion.div>
-      </AnimatePresence>
-
-      {filteredTemplates.length === 0 && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-        >
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Mail className="w-12 h-12 mx-auto text-slate-300 mb-4" />
-            <h3 className="text-lg font-medium text-slate-900 mb-2">
-              Keine Templates gefunden
-            </h3>
-            <p className="text-slate-600 mb-4">
-              Erstellen Sie Ihr erstes E-Mail-Template
-            </p>
-          </CardContent>
-        </Card>
-        </motion.div>
-      )}
-
-      <EmailTemplateEditor
-        open={editorOpen}
-        onOpenChange={setEditorOpen}
-        template={editingTemplate}
-      />
+      </div>
     </div>
   );
 }

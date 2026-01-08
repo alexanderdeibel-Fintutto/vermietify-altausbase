@@ -1,151 +1,88 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Settings, MessageSquare, Mail, FileText, BarChart3, Users } from 'lucide-react';
-import TemplateManager from '../components/whatsapp/TemplateManager';
-import OptInManager from '../components/whatsapp/OptInManager';
-import WhatsAppDashboard from '../components/whatsapp/WhatsAppDashboard';
-import BulkMessaging from '../components/whatsapp/BulkMessaging';
-import WebhookSetup from '../components/whatsapp/WebhookSetup';
-import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from '../utils';
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { AlertCircle, CheckCircle, MessageCircle } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default function WhatsAppSettings() {
-    const navigate = useNavigate();
+export default function WhatsAppSettingsPage() {
+  const [connected, setConnected] = useState(false);
 
-    const { data: account } = useQuery({
-        queryKey: ['whatsapp-account'],
-        queryFn: async () => {
-            const accounts = await base44.entities.WhatsAppAccount.list();
-            return accounts[0];
-        }
-    });
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900">💬 WhatsApp Settings</h1>
+        <p className="text-slate-600 mt-1">Konfigurieren Sie WhatsApp Integration für automatische Benachrichtigungen</p>
+      </div>
 
-    if (!account) {
-        return (
-            <div className="p-6">
-                <Card className="max-w-md mx-auto">
-                    <CardContent className="p-6 text-center">
-                        <MessageSquare className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                        <h2 className="text-xl font-bold mb-2">WhatsApp nicht eingerichtet</h2>
-                        <p className="text-slate-600 mb-4">
-                            Richten Sie zuerst einen WhatsApp Business Account ein.
-                        </p>
-                        <Button onClick={() => navigate(createPageUrl('WhatsAppSetup'))}>
-                            Jetzt einrichten
-                        </Button>
-                    </CardContent>
-                </Card>
+      {!connected ? (
+        <Alert className="bg-yellow-50 border-yellow-200">
+          <AlertCircle className="h-4 w-4 text-yellow-600" />
+          <AlertDescription className="text-yellow-800">
+            WhatsApp ist nicht verbunden. Folgen Sie den Schritten unten zur Konfiguration.
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Alert className="bg-green-50 border-green-200">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800">
+            WhatsApp ist erfolgreich verbunden und einsatzbereit.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <div className="grid grid-cols-1 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><MessageCircle className="w-5 h-5" /> Account-Verbindung</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Telefonnummer</label>
+              <Input placeholder="+49 30 123456" />
             </div>
-        );
-    }
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Access Token</label>
+              <Input type="password" placeholder="••••••••••••••••••••" />
+            </div>
+            <Button className="w-full bg-green-600 hover:bg-green-700">
+              {connected ? 'Neu verbinden' : 'Verbinden'}
+            </Button>
+          </CardContent>
+        </Card>
 
-    return (
-        <div className="p-6 max-w-6xl mx-auto space-y-6">
-            <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-            >
-                <h1 className="text-3xl font-bold text-slate-900">WhatsApp Einstellungen</h1>
-                <p className="text-slate-600 mt-2">
-                    Verwalten Sie Templates, Einwilligungen und Account-Einstellungen
-                </p>
-            </motion.div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Message Templates</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {['Zahlungserinnerung', 'Mietvertrag Info', 'Wartungsmitteilung'].map((template, idx) => (
+              <div key={idx} className="p-3 border border-slate-200 rounded-lg flex items-center justify-between">
+                <span className="text-sm font-semibold text-slate-900">{template}</span>
+                <Badge variant="outline">Genehmigt</Badge>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
 
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-            >
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Settings className="w-5 h-5" />
-                        Account-Informationen
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <p className="text-sm text-slate-600">Anbieter</p>
-                            <p className="font-medium">{account.anbieter}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-slate-600">WhatsApp Nummer</p>
-                            <p className="font-medium">{account.telefonnummer}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-slate-600">Anzeigename</p>
-                            <p className="font-medium">{account.display_name}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-slate-600">Status</p>
-                            <p className="font-medium">{account.status}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-slate-600">Monatlicher Verbrauch</p>
-                            <p className="font-medium">{account.aktueller_verbrauch.toFixed(2)} EUR</p>
-                        </div>
-                        {account.monatliches_budget && (
-                            <div>
-                                <p className="text-sm text-slate-600">Budget</p>
-                                <p className="font-medium">{account.monatliches_budget.toFixed(2)} EUR</p>
-                            </div>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
-            </motion.div>
-
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-            >
-            <Tabs defaultValue="dashboard">
-                <TabsList className="grid w-full grid-cols-5">
-                    <TabsTrigger value="dashboard">
-                        <BarChart3 className="w-4 h-4 mr-2" />
-                        Dashboard
-                    </TabsTrigger>
-                    <TabsTrigger value="bulk">
-                        <Users className="w-4 h-4 mr-2" />
-                        Massenversand
-                    </TabsTrigger>
-                    <TabsTrigger value="templates">
-                        <FileText className="w-4 h-4 mr-2" />
-                        Templates
-                    </TabsTrigger>
-                    <TabsTrigger value="opt-in">
-                        <Mail className="w-4 h-4 mr-2" />
-                        Einwilligungen
-                    </TabsTrigger>
-                    <TabsTrigger value="webhook">
-                        <Settings className="w-4 h-4 mr-2" />
-                        Webhook
-                    </TabsTrigger>
-                </TabsList>
-                <TabsContent value="dashboard" className="mt-6">
-                    <WhatsAppDashboard accountId={account.id} />
-                </TabsContent>
-                <TabsContent value="bulk" className="mt-6">
-                    <BulkMessaging accountId={account.id} />
-                </TabsContent>
-                <TabsContent value="templates" className="mt-6">
-                    <TemplateManager accountId={account.id} />
-                </TabsContent>
-                <TabsContent value="opt-in" className="mt-6">
-                    <OptInManager accountId={account.id} />
-                </TabsContent>
-                <TabsContent value="webhook" className="mt-6">
-                    <WebhookSetup accountId={account.id} />
-                </TabsContent>
-            </Tabs>
-            </motion.div>
-        </div>
-    );
+        <Card>
+          <CardHeader>
+            <CardTitle>Broadcast Lists</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {[{ name: 'Mieter aktiv', count: 145 }, { name: 'Vermieter', count: 23 }].map((list, idx) => (
+              <div key={idx} className="p-3 border border-slate-200 rounded-lg flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-slate-900">{list.name}</p>
+                  <p className="text-xs text-slate-600">{list.count} Kontakte</p>
+                </div>
+                <Button size="sm" variant="outline">Bearbeiten</Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 }

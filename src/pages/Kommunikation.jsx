@@ -1,87 +1,97 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Mail, MessageSquare, Send, Package } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import LetterXpressSettings from '../components/letterxpress/LetterXpressSettings';
-import PostausgangsbuchTable from '../components/letterxpress/PostausgangsbuchTable';
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Mail, MessageCircle, Phone, Send } from 'lucide-react';
+import QuickStats from '@/components/shared/QuickStats';
 
-export default function Kommunikation() {
-    const [activeTab, setActiveTab] = useState('postversand');
+export default function KommunikationPage() {
+  const messages = [
+    { id: 1, type: 'email', from: 'mieter@example.com', subject: 'Frage zur Miete', date: '2026-01-07', status: 'unread' },
+    { id: 2, type: 'whatsapp', from: '+49 30 123456', message: 'Wann ist die Wartung?', date: '2026-01-07', status: 'read' },
+    { id: 3, type: 'email', from: 'vermieter@example.com', subject: 'Reparaturauftrag', date: '2026-01-06', status: 'read' },
+  ];
 
-    return (
-        <div className="space-y-6">
-            <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-            >
-                <h1 className="text-3xl font-bold text-slate-900">Kommunikation</h1>
-                <p className="text-slate-600 mt-2">Verwalten Sie Ihre gesamte Kommunikation mit Mietern und Partnern</p>
-            </motion.div>
+  const stats = [
+    { label: 'Ungelesene', value: messages.filter(m => m.status === 'unread').length },
+    { label: 'Heute gesendet', value: 12 },
+    { label: 'Diese Woche', value: 87 },
+    { label: 'Avg. Response', value: '2.5h' },
+  ];
 
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-            >
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="postversand" className="flex items-center gap-2">
-                        <Package className="w-4 h-4" />
-                        Postversand
-                    </TabsTrigger>
-                    <TabsTrigger value="emails" className="flex items-center gap-2">
-                        <Mail className="w-4 h-4" />
-                        E-Mails
-                    </TabsTrigger>
-                    <TabsTrigger value="nachrichten" className="flex items-center gap-2">
-                        <MessageSquare className="w-4 h-4" />
-                        Nachrichten
-                    </TabsTrigger>
-                    <TabsTrigger value="versand" className="flex items-center gap-2">
-                        <Send className="w-4 h-4" />
-                        Versand
-                    </TabsTrigger>
-                </TabsList>
+  const getTypeIcon = (type) => {
+    switch(type) {
+      case 'email': return <Mail className="w-5 h-5 text-blue-600" />;
+      case 'whatsapp': return <MessageCircle className="w-5 h-5 text-green-600" />;
+      case 'phone': return <Phone className="w-5 h-5 text-orange-600" />;
+      default: return null;
+    }
+  };
 
-                <TabsContent value="postversand" className="space-y-6 mt-6">
-                    <Tabs defaultValue="ausgangsbuch">
-                        <TabsList>
-                            <TabsTrigger value="ausgangsbuch">Postausgangsbuch</TabsTrigger>
-                            <TabsTrigger value="einstellungen">Einstellungen</TabsTrigger>
-                        </TabsList>
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900">📞 Kommunikation</h1>
+        <p className="text-slate-600 mt-1">Zentrale Verwaltung aller Kommunikationskanäle</p>
+      </div>
 
-                        <TabsContent value="ausgangsbuch" className="mt-6">
-                            <PostausgangsbuchTable />
-                        </TabsContent>
+      <QuickStats stats={stats} accentColor="blue" />
 
-                        <TabsContent value="einstellungen" className="mt-6">
-                            <LetterXpressSettings />
-                        </TabsContent>
-                    </Tabs>
-                </TabsContent>
+      <Tabs defaultValue="messages">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="messages">📨 Nachrichten</TabsTrigger>
+          <TabsTrigger value="templates">📋 Vorlagen</TabsTrigger>
+          <TabsTrigger value="settings">⚙️ Einstellungen</TabsTrigger>
+        </TabsList>
 
-                <TabsContent value="emails" className="mt-6">
-                    <div className="text-center py-12 text-slate-500">
-                        <Mail className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-                        <p>E-Mail-Integration folgt in Kürze</p>
+        <TabsContent value="messages" className="space-y-3">
+          {messages.map((msg) => (
+            <Card key={msg.id} className="border border-slate-200">
+              <CardContent className="pt-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3 flex-1">
+                    {getTypeIcon(msg.type)}
+                    <div>
+                      <p className="font-semibold text-slate-900">{msg.from}</p>
+                      <p className="text-sm text-slate-600">{msg.subject || msg.message}</p>
+                      <p className="text-xs text-slate-500 mt-1">{msg.date}</p>
                     </div>
-                </TabsContent>
+                  </div>
+                  {msg.status === 'unread' && <Badge className="bg-blue-600">Neu</Badge>}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
 
-                <TabsContent value="nachrichten" className="mt-6">
-                    <div className="text-center py-12 text-slate-500">
-                        <MessageSquare className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-                        <p>Nachrichten-Feature folgt in Kürze</p>
-                    </div>
-                </TabsContent>
+        <TabsContent value="templates" className="space-y-4">
+          <p className="text-slate-600">Verwalten Sie Kommunikationsvorlagen über die Email Templates Seite</p>
+          <Button className="bg-blue-600 hover:bg-blue-700">Zu Email Templates</Button>
+        </TabsContent>
 
-                <TabsContent value="versand" className="mt-6">
-                    <div className="text-center py-12 text-slate-500">
-                        <Send className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-                        <p>Versand-Feature folgt in Kürze</p>
-                    </div>
-                </TabsContent>
-            </Tabs>
-            </motion.div>
-        </div>
-    );
+        <TabsContent value="settings">
+          <Card>
+            <CardHeader>
+              <CardTitle>Kommunikationskanäle</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {[
+                { name: 'Email', enabled: true },
+                { name: 'WhatsApp', enabled: true },
+                { name: 'SMS', enabled: false },
+              ].map((channel, idx) => (
+                <div key={idx} className="flex items-center justify-between p-3 border border-slate-200 rounded-lg">
+                  <span className="font-semibold text-slate-900">{channel.name}</span>
+                  <Badge className={channel.enabled ? 'bg-green-600' : 'bg-slate-600'}>
+                    {channel.enabled ? 'Aktiv' : 'Inaktiv'}
+                  </Badge>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
 }

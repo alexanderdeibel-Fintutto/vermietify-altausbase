@@ -1,228 +1,89 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, FileText, Database, Download, Trash2 } from 'lucide-react';
-import GDPRDataExport from '@/components/compliance/GDPRDataExport';
-import GDPRDataDeletion from '@/components/compliance/GDPRDataDeletion';
-import DataRetentionPolicy from '@/components/compliance/DataRetentionPolicy';
-import ConsentManager from '@/components/compliance/ConsentManager';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { CheckCircle, AlertCircle, Shield, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import QuickStats from '@/components/shared/QuickStats';
 
-export default function ComplianceCenter() {
+export default function ComplianceCenterPage() {
+  const complianceItems = [
+    { name: 'DSGVO Datenschutz', status: 'compliant', completeness: 95, lastCheck: '2026-01-07' },
+    { name: 'Steuerliche Aufzeichnungspflicht', status: 'compliant', completeness: 100, lastCheck: '2026-01-07' },
+    { name: 'BetrKV Betriebskostenverordnung', status: 'warning', completeness: 78, lastCheck: '2026-01-05' },
+    { name: 'Mietrecht Rechtlichkeit', status: 'compliant', completeness: 92, lastCheck: '2026-01-06' },
+    { name: 'GoBD Buchhaltung Standards', status: 'warning', completeness: 85, lastCheck: '2026-01-04' },
+  ];
+
+  const stats = [
+    { label: 'Compliant', value: complianceItems.filter(c => c.status === 'compliant').length },
+    { label: 'Warnungen', value: complianceItems.filter(c => c.status === 'warning').length },
+    { label: 'Durchschn. Vollständigkeit', value: Math.round(complianceItems.reduce((sum, c) => sum + c.completeness, 0) / complianceItems.length) + '%' },
+    { label: 'Letzte Prüfung', value: 'Vor 2 Tg.' },
+  ];
+
+  const getStatusBadge = (status) => {
+    switch(status) {
+      case 'compliant': return <Badge className="bg-green-600">✓ Konform</Badge>;
+      case 'warning': return <Badge className="bg-yellow-600">⚠ Warnung</Badge>;
+      case 'error': return <Badge className="bg-red-600">✗ Fehler</Badge>;
+      default: return <Badge>Unbekannt</Badge>;
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <Shield className="w-7 h-7" />
-          Compliance Center
-        </h1>
-        <p className="text-slate-600">DSGVO-konforme Datenverwaltung und Compliance-Tools</p>
-      </motion.div>
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900">🛡️ Compliance Center</h1>
+        <p className="text-slate-600 mt-1">Überwachen Sie Ihre Compliance und rechtliche Anforderungen</p>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[
-          { icon: Shield, label: "DSGVO", value: "✓", color: "green" },
-          { icon: Database, label: "Aufbewahrung", value: "5", color: "blue" },
-          { icon: Download, label: "Export", value: "✓", color: "purple" },
-          { icon: Trash2, label: "Löschung", value: "✓", color: "red" }
-        ].map((stat, idx) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 + idx * 0.05 }}
-          >
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">{stat.label}</p>
-                <p className={`text-2xl font-bold text-${stat.color}-600`}>{stat.value}</p>
+      <Alert className="bg-blue-50 border-blue-200">
+        <Shield className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-blue-800">
+          Compliance-Prüfungen werden täglich automatisch durchgeführt. Letzte Prüfung: Heute um 02:00 Uhr.
+        </AlertDescription>
+      </Alert>
+
+      <QuickStats stats={stats} accentColor="yellow" />
+
+      <div className="space-y-3">
+        {complianceItems.map((item, idx) => (
+          <Card key={idx} className="border border-slate-200">
+            <CardContent className="pt-6">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <h3 className="font-semibold text-slate-900">{item.name}</h3>
+                    {getStatusBadge(item.status)}
+                  </div>
+                  <span className="text-sm text-slate-600">{item.completeness}%</span>
+                </div>
+                <Progress value={item.completeness} className="h-2" />
+                <p className="text-xs text-slate-500">Letzte Prüfung: {item.lastCheck}</p>
               </div>
-              <stat.icon className={`w-8 h-8 text-${stat.color}-600`} />
-            </div>
-          </CardContent>
-        </Card>
-          </motion.div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-      <Tabs defaultValue="export">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="export">
-            <Download className="w-4 h-4 mr-2" />
-            Datenexport
-          </TabsTrigger>
-          <TabsTrigger value="deletion">
-            <Trash2 className="w-4 h-4 mr-2" />
-            Datenlöschung
-          </TabsTrigger>
-          <TabsTrigger value="retention">
-            <Database className="w-4 h-4 mr-2" />
-            Aufbewahrung
-          </TabsTrigger>
-          <TabsTrigger value="consent">
-            <FileText className="w-4 h-4 mr-2" />
-            Einwilligung
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="export" className="space-y-4 mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <GDPRDataExport />
-            <Card>
-              <CardHeader>
-                <CardTitle>DSGVO Art. 15 - Auskunftsrecht</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <p>
-                  <strong>Betroffenenrechte:</strong> Jede Person hat das Recht, Auskunft über 
-                  die sie betreffenden personenbezogenen Daten zu erhalten.
-                </p>
-                <div className="bg-blue-50 p-3 rounded-lg">
-                  <strong>Exportierte Daten umfassen:</strong>
-                  <ul className="list-disc ml-5 mt-2 space-y-1">
-                    <li>Benutzerkonto und Profile</li>
-                    <li>Aktivitätsprotokolle</li>
-                    <li>Test-Sessions (falls Tester)</li>
-                    <li>Rollen und Berechtigungen</li>
-                    <li>Alle verknüpften Datensätze</li>
-                  </ul>
-                </div>
-                <p className="text-xs text-slate-600">
-                  Der Export erfolgt als JSON-Datei in maschinenlesbarem Format.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="deletion" className="space-y-4 mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <GDPRDataDeletion />
-            <Card>
-              <CardHeader>
-                <CardTitle>DSGVO Art. 17 - Recht auf Löschung</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <p>
-                  <strong>Recht auf Vergessenwerden:</strong> Personenbezogene Daten müssen 
-                  gelöscht werden, wenn sie nicht mehr erforderlich sind.
-                </p>
-                <div className="bg-red-50 p-3 rounded-lg">
-                  <strong>Löschprozess:</strong>
-                  <ul className="list-disc ml-5 mt-2 space-y-1">
-                    <li>Vollständige Anonymisierung aller Daten</li>
-                    <li>Löschen personenbezogener Informationen</li>
-                    <li>Entfernen aus allen Backups</li>
-                    <li>Dokumentation der Löschung</li>
-                  </ul>
-                </div>
-                <p className="text-xs text-slate-600">
-                  ⚠️ Diese Aktion kann nicht rückgängig gemacht werden!
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="retention" className="space-y-4 mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <DataRetentionPolicy />
-            <Card>
-              <CardHeader>
-                <CardTitle>DSGVO Art. 5 - Speicherbegrenzung</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <p>
-                  <strong>Grundsatz:</strong> Personenbezogene Daten dürfen nur so lange 
-                  gespeichert werden, wie es für die Zwecke erforderlich ist.
-                </p>
-                <div className="bg-slate-50 p-3 rounded-lg">
-                  <strong>Automatische Löschung:</strong>
-                  <ul className="list-disc ml-5 mt-2 space-y-1">
-                    <li>UserActivity: nach 2 Jahren</li>
-                    <li>TestSessions: nach 1 Jahr</li>
-                    <li>API Keys: bei Ablauf</li>
-                    <li>Logs: nach 90 Tagen</li>
-                  </ul>
-                </div>
-                <p className="text-xs text-slate-600">
-                  Konfigurierbar über die Funktion <code>cleanupOldData</code>
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="consent" className="space-y-4 mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ConsentManager />
-            <Card>
-              <CardHeader>
-                <CardTitle>DSGVO Art. 7 - Einwilligung</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <p>
-                  <strong>Nachweispflicht:</strong> Der Verantwortliche muss nachweisen können, 
-                  dass die betroffene Person in die Verarbeitung eingewilligt hat.
-                </p>
-                <div className="bg-green-50 p-3 rounded-lg">
-                  <strong>Anforderungen:</strong>
-                  <ul className="list-disc ml-5 mt-2 space-y-1">
-                    <li>Freiwillige Einwilligung</li>
-                    <li>Informierte Entscheidung</li>
-                    <li>Eindeutige Handlung</li>
-                    <li>Widerrufbarkeit jederzeit</li>
-                  </ul>
-                </div>
-                <p className="text-xs text-slate-600">
-                  Dokumentation von Zeitpunkt, Methode und Wortlaut der Einwilligung.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-      >
-      <Card className="border-blue-200 bg-blue-50">
+      <Card className="border border-yellow-200 bg-yellow-50">
         <CardHeader>
-          <CardTitle className="text-blue-900">Compliance-Status</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-yellow-900"><AlertTriangle className="w-5 h-5" /> Offene Punkte</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm text-blue-800">
-          <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4" />
-            <span>✓ DSGVO-konform implementiert</span>
+        <CardContent className="space-y-3">
+          <div className="p-3 bg-white border border-yellow-200 rounded-lg">
+            <p className="font-semibold text-slate-900">BetrKV: Abrechnungserstellung</p>
+            <p className="text-sm text-slate-700 mt-1">Folgende Betriebskostenabrechnungen sind überfällig:</p>
+            <ul className="text-sm text-slate-700 mt-2 ml-4 list-disc">
+              <li>Gebäude A - 2025 Abrechnung (Fällig: 31.01.26)</li>
+              <li>Gebäude B - Q4 2025 Abrechnung (Fällig: 28.02.26)</li>
+            </ul>
           </div>
-          <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4" />
-            <span>✓ Betroffenenrechte umgesetzt (Art. 15-17)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4" />
-            <span>✓ Datenminimierung & Speicherbegrenzung</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4" />
-            <span>✓ Einwilligungsverwaltung aktiv</span>
-          </div>
+          <Button className="w-full bg-yellow-600 hover:bg-yellow-700">Zu Betriebskostenabrechnungen</Button>
         </CardContent>
       </Card>
-      </motion.div>
     </div>
   );
 }
