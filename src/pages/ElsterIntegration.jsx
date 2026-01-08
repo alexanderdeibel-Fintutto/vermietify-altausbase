@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   FileText, Upload, CheckCircle, AlertCircle, 
-  Sparkles, Settings, TrendingUp, Download, Archive 
+  Sparkles, Settings, TrendingUp, Download, Archive, TestTube, Loader2 
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -23,6 +23,8 @@ import BulkFormExport from '@/components/elster/BulkFormExport';
 import SubmissionDetailDialog from '@/components/elster/SubmissionDetailDialog';
 import GoBDComplianceDashboard from '@/components/elster/GoBDComplianceDashboard';
 import SubmissionTimeline from '@/components/elster/SubmissionTimeline';
+import FormTemplateManager from '@/components/elster/FormTemplateManager';
+import BatchOperationsPanel from '@/components/elster/BatchOperationsPanel';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from 'lucide-react';
 
@@ -110,11 +112,12 @@ export default function ElsterIntegration() {
         transition={{ delay: 0.3 }}
       >
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="create">Erstellen</TabsTrigger>
             <TabsTrigger value="submissions">Übermittlungen</TabsTrigger>
             <TabsTrigger value="certificates">Zertifikate</TabsTrigger>
+            <TabsTrigger value="templates">Templates</TabsTrigger>
             <TabsTrigger value="categories">Kategorien</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
@@ -150,10 +153,15 @@ export default function ElsterIntegration() {
                 <SubmissionTimeline submissions={submissions} />
               </div>
               <div className="space-y-6">
+                <BatchOperationsPanel submissions={submissions} />
                 <BulkFormExport submissions={submissions} />
                 <GoBDComplianceDashboard />
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="templates" className="mt-6">
+            <FormTemplateManager />
           </TabsContent>
 
           <TabsContent value="certificates" className="mt-6">
@@ -391,6 +399,24 @@ function SubmissionsView({ submissions, onSelectSubmission }) {
 }
 
 function CertificatesView({ certificates, onUploadClick }) {
+  const [testing, setTesting] = useState(null);
+
+  const handleTest = async (certId) => {
+    setTesting(certId);
+    try {
+      const response = await base44.functions.invoke('testElsterConnection', {
+        certificate_id: certId
+      });
+      if (response.data.success) {
+        toast.success('Verbindungstest erfolgreich!');
+      }
+    } catch (error) {
+      toast.error('Verbindungstest fehlgeschlagen');
+    } finally {
+      setTesting(null);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
