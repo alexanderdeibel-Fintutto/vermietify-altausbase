@@ -1,19 +1,18 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Key, Plus, Copy, Trash2, AlertCircle } from 'lucide-react';
+import { Key, Plus, Copy, Trash2, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function APIKeyManagement() {
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [newKeyData, setNewKeyData] = useState({ name: '', scopes: [] });
-  const [generatedKey, setGeneratedKey] = useState(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [newKeyName, setNewKeyName] = useState('');
+  const [newKeyScopes, setNewKeyScopes] = useState('read');
+  const [createdKey, setCreatedKey] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: apiKeys = [] } = useQuery({
@@ -22,54 +21,44 @@ export default function APIKeyManagement() {
   });
 
   const createKeyMutation = useMutation({
-    mutationFn: async (data) => {
-      const response = await base44.functions.invoke('createAPIKey', data);
+    mutationFn: async () => {
+      const response = await base44.functions.invoke('createAPIKey', {
+        name: newKeyName,
+        scopes: newKeyScopes.split(',').map(s => s.trim())
+      });
       return response.data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['api-keys'] });
-      setGeneratedKey(data.key);
+      setCreatedKey(data.key);
+      setNewKeyName('');
       toast.success('API-Key erstellt');
     }
   });
 
-  const revokeKeyMutation = useMutation({
+  const deleteKeyMutation = useMutation({
     mutationFn: async (keyId) => {
-      await base44.asServiceRole.entities.APIKey.update(keyId, { is_active: false });
+      await base44.asServiceRole.entities.APIKey.delete(keyId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['api-keys'] });
-      toast.success('API-Key widerrufen');
+      toast.success('API-Key gelöscht');
     }
   });
-
-  const handleCreate = () => {
-    if (!newKeyData.name) return;
-    createKeyMutation.mutate(newKeyData);
-  };
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
     toast.success('In Zwischenablage kopiert');
   };
 
-  const availableScopes = [
-    { id: 'read:users', label: 'Benutzer lesen' },
-    { id: 'write:users', label: 'Benutzer schreiben' },
-    { id: 'read:roles', label: 'Rollen lesen' },
-    { id: 'write:roles', label: 'Rollen schreiben' },
-    { id: 'read:activities', label: 'Aktivitäten lesen' },
-    { id: 'admin:all', label: 'Vollzugriff' }
-  ];
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">API-Key Verwaltung</h1>
           <p className="text-slate-600">Verwalten Sie API-Zugriffsschlüssel</p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
+        <Button onClick={() => setShowCreateDialog(true)}>
           <Plus className="w-4 h-4 mr-2" />
           Neuer API-Key
         </Button>
@@ -77,171 +66,151 @@ export default function APIKeyManagement() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-slate-600">Gesamt Keys</div>
-                <div className="text-3xl font-bold text-blue-600">{apiKeys.length}</div>
+                <p className="text-sm text-slate-600">Gesamt Keys</p>
+                <p className="text-2xl font-bold">{apiKeys.length}</p>
               </div>
-              <Key className="w-8 h-8 text-blue-600 opacity-20" />
+              <Key className="w-8 h-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
-            <div>
-              <div className="text-sm text-slate-600">Aktive Keys</div>
-              <div className="text-3xl font-bold text-green-600">
-                {apiKeys.filter(k => k.is_active).length}
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-600">Aktive Keys</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {apiKeys.filter(k => k.is_active).length}
+                </p>
               </div>
+              <Key className="w-8 h-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
-            <div>
-              <div className="text-sm text-slate-600">Verwendungen</div>
-              <div className="text-3xl font-bold text-purple-600">
-                {apiKeys.reduce((sum, k) => sum + (k.usage_count || 0), 0)}
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-600">Verwendungen</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {apiKeys.reduce((sum, k) => sum + (k.usage_count || 0), 0)}
+                </p>
               </div>
+              <Key className="w-8 h-8 text-purple-600" />
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {createdKey && (
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="text-green-900">API-Key erstellt</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-green-800 mb-3">
+              Kopieren Sie diesen Key jetzt. Er wird nur einmal angezeigt!
+            </p>
+            <div className="flex items-center gap-2">
+              <Input value={createdKey} readOnly className="font-mono" />
+              <Button onClick={() => copyToClipboard(createdKey)}>
+                <Copy className="w-4 h-4" />
+              </Button>
+            </div>
+            <Button variant="outline" className="mt-3" onClick={() => setCreatedKey(null)}>
+              Verstanden
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {showCreateDialog && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Neuen API-Key erstellen</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Name</label>
+              <Input
+                placeholder="z.B. Mobile App"
+                value={newKeyName}
+                onChange={(e) => setNewKeyName(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Berechtigungen</label>
+              <Input
+                placeholder="z.B. read, write"
+                value={newKeyScopes}
+                onChange={(e) => setNewKeyScopes(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={() => createKeyMutation.mutate()} disabled={!newKeyName || createKeyMutation.isPending}>
+                Erstellen
+              </Button>
+              <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                Abbrechen
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
-          <CardTitle>API-Keys</CardTitle>
+          <CardTitle>API-Keys ({apiKeys.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {apiKeys.map(key => (
               <div key={key.id} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Key className="w-4 h-4 text-slate-400" />
-                    <span className="font-medium">{key.name}</span>
-                    {key.is_active ? (
-                      <Badge className="bg-green-100 text-green-800">Aktiv</Badge>
-                    ) : (
-                      <Badge variant="secondary">Widerrufen</Badge>
-                    )}
-                  </div>
-                  <div className="text-sm text-slate-600 ml-7">
-                    <code className="bg-slate-100 px-2 py-1 rounded">{key.prefix}...</code>
-                  </div>
-                  <div className="text-xs text-slate-500 ml-7 mt-1">
-                    Verwendet: {key.usage_count || 0}x
-                    {key.last_used_at && ` • Zuletzt: ${new Date(key.last_used_at).toLocaleDateString('de-DE')}`}
-                  </div>
-                  <div className="flex flex-wrap gap-1 mt-2 ml-7">
-                    {key.scopes?.map(scope => (
-                      <Badge key={scope} variant="outline" className="text-xs">
-                        {scope}
-                      </Badge>
+                  <div className="font-medium">{key.name}</div>
+                  <div className="text-sm text-slate-600 font-mono">{key.prefix}...</div>
+                  <div className="flex gap-2 mt-2">
+                    {key.scopes?.map((scope, idx) => (
+                      <Badge key={idx} variant="secondary">{scope}</Badge>
                     ))}
                   </div>
                 </div>
-                {key.is_active && (
+                <div className="flex items-center gap-4">
+                  <div className="text-sm text-right">
+                    <div className="text-slate-600">Verwendet: {key.usage_count || 0}x</div>
+                    {key.last_used_at && (
+                      <div className="text-xs text-slate-500">
+                        Zuletzt: {new Date(key.last_used_at).toLocaleDateString('de-DE')}
+                      </div>
+                    )}
+                  </div>
+                  {key.is_active ? (
+                    <Badge className="bg-green-100 text-green-800">Aktiv</Badge>
+                  ) : (
+                    <Badge variant="secondary">Inaktiv</Badge>
+                  )}
                   <Button
-                    variant="destructive"
+                    variant="ghost"
                     size="sm"
-                    onClick={() => revokeKeyMutation.mutate(key.id)}
+                    onClick={() => {
+                      if (confirm('API-Key wirklich löschen?')) {
+                        deleteKeyMutation.mutate(key.id);
+                      }
+                    }}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4 text-red-600" />
                   </Button>
-                )}
+                </div>
               </div>
             ))}
+            {apiKeys.length === 0 && (
+              <p className="text-center text-slate-600 py-8">Noch keine API-Keys erstellt</p>
+            )}
           </div>
         </CardContent>
       </Card>
-
-      {/* Create Dialog */}
-      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Neuen API-Key erstellen</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="keyName">Name</Label>
-              <Input
-                id="keyName"
-                value={newKeyData.name}
-                onChange={(e) => setNewKeyData({ ...newKeyData, name: e.target.value })}
-                placeholder="Produktions-API-Key"
-              />
-            </div>
-            <div>
-              <Label>Berechtigungen</Label>
-              <div className="space-y-2 mt-2">
-                {availableScopes.map(scope => (
-                  <label key={scope.id} className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={newKeyData.scopes.includes(scope.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setNewKeyData({
-                            ...newKeyData,
-                            scopes: [...newKeyData.scopes, scope.id]
-                          });
-                        } else {
-                          setNewKeyData({
-                            ...newKeyData,
-                            scopes: newKeyData.scopes.filter(s => s !== scope.id)
-                          });
-                        }
-                      }}
-                      className="rounded"
-                    />
-                    <span className="text-sm">{scope.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            <Button
-              onClick={handleCreate}
-              disabled={!newKeyData.name || newKeyData.scopes.length === 0}
-              className="w-full"
-            >
-              Key erstellen
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Generated Key Dialog */}
-      {generatedKey && (
-        <Dialog open={!!generatedKey} onOpenChange={() => setGeneratedKey(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>API-Key erstellt</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
-                  <div className="text-sm text-amber-900">
-                    Kopieren Sie diesen Key jetzt. Er wird nicht erneut angezeigt!
-                  </div>
-                </div>
-              </div>
-              <div className="bg-slate-100 p-4 rounded-lg">
-                <code className="text-sm break-all">{generatedKey}</code>
-              </div>
-              <Button
-                onClick={() => copyToClipboard(generatedKey)}
-                className="w-full"
-              >
-                <Copy className="w-4 h-4 mr-2" />
-                In Zwischenablage kopieren
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   );
 }

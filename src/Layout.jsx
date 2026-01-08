@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import SuiteSwitcher from '@/components/suite/SuiteSwitcher';
 import { useUserSuites } from '@/components/suite/useModuleAccess';
+import TesterTracker from '@/components/testing/TesterTracker';
 
 export default function Layout({ children, currentPageName }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -89,6 +90,7 @@ export default function Layout({ children, currentPageName }) {
     });
 
     return (
+        <TesterTracker>
         <div className="min-h-screen bg-slate-50">
             {/* Mobile sidebar backdrop */}
             {sidebarOpen && (
@@ -176,6 +178,7 @@ export default function Layout({ children, currentPageName }) {
                     {children}
                 </main>
             </div>
-        </div>
-    );
-}
+            </div>
+            </TesterTracker>
+            );
+            }
