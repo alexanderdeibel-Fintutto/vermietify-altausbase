@@ -88,6 +88,12 @@ import CommunicationCenter from './pages/CommunicationCenter';
 import ComplianceAudit from './pages/ComplianceAudit';
 import ROIDashboard from './pages/ROIDashboard';
 import MarketAnalytics from './pages/MarketAnalytics';
+import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
+import FinancialForecasting from './pages/FinancialForecasting';
+import TenantCommunication from './pages/TenantCommunication';
+import DocumentGeneration from './pages/DocumentGeneration';
+import InsuranceManagement from './pages/InsuranceManagement';
+import PropertyValuation from './pages/PropertyValuation';
 import __Layout from './Layout.jsx';
 
 
@@ -182,6 +188,12 @@ export const PAGES = {
     "ComplianceAudit": ComplianceAudit,
     "ROIDashboard": ROIDashboard,
     "MarketAnalytics": MarketAnalytics,
+    "WorkflowAutomationHub": WorkflowAutomationHub,
+    "FinancialForecasting": FinancialForecasting,
+    "TenantCommunication": TenantCommunication,
+    "DocumentGeneration": DocumentGeneration,
+    "InsuranceManagement": InsuranceManagement,
+    "PropertyValuation": PropertyValuation,
 }
 
 export const pagesConfig = {
