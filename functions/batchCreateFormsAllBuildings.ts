@@ -9,89 +9,100 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { form_type, tax_year } = await req.json();
-
-    if (!form_type || !tax_year) {
-      return Response.json({ error: 'form_type and tax_year required' }, { status: 400 });
+    if (user.role !== 'admin') {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
-    console.log(`[BATCH CREATE] Creating ${form_type} for all buildings, year ${tax_year}`);
+    const { tax_year, form_type = 'ANLAGE_V' } = await req.json();
 
-    // Hole alle Gebäude des Users
-    const buildings = await base44.entities.Building.list();
+    if (!tax_year) {
+      return Response.json({ error: 'tax_year required' }, { status: 400 });
+    }
 
-    const results = [];
-    let successCount = 0;
-    let skipCount = 0;
-    let failCount = 0;
+    console.log(`[BATCH-CREATE] Creating ${form_type} for all buildings, year ${tax_year}`);
 
+    // Hole alle Gebäude
+    const buildings = await base44.asServiceRole.entities.Building.list();
+    
+    if (buildings.length === 0) {
+      return Response.json({ 
+        success: false, 
+        message: 'Keine Gebäude gefunden' 
+      }, { status: 400 });
+    }
+
+    console.log(`[INFO] Found ${buildings.length} buildings`);
+
+    const results = {
+      total: buildings.length,
+      created: 0,
+      skipped: 0,
+      errors: 0,
+      details: []
+    };
+
+    // Erstelle für jedes Gebäude
     for (const building of buildings) {
       try {
-        // Prüfe ob bereits Submission existiert
-        const existing = await base44.entities.ElsterSubmission.filter({
+        // Prüfe auf Duplikate
+        const existing = await base44.asServiceRole.entities.ElsterSubmission.filter({
           building_id: building.id,
-          tax_form_type: form_type,
-          tax_year
+          tax_year,
+          tax_form_type: form_type
         });
 
         if (existing.length > 0) {
-          results.push({
+          console.log(`[SKIP] Building ${building.id} already has submission`);
+          results.skipped++;
+          results.details.push({
             building_id: building.id,
-            building_name: building.name || building.address,
+            building_name: building.address || building.name,
             status: 'skipped',
-            reason: 'Submission already exists'
+            reason: 'Submission bereits vorhanden'
           });
-          skipCount++;
           continue;
         }
 
-        // Erstelle neue Submission mit AI
-        const response = await base44.functions.invoke('generateTaxFormWithAI', {
+        // Erstelle neue Submission
+        const submission = await base44.asServiceRole.entities.ElsterSubmission.create({
           building_id: building.id,
-          form_type,
-          tax_year
+          tax_form_type: form_type,
+          legal_form: 'PRIVATPERSON',
+          tax_year,
+          submission_mode: 'TEST',
+          status: 'DRAFT',
+          form_data: {
+            address: building.address || building.name,
+            property_type: building.property_type || 'Wohngebäude'
+          }
         });
 
-        if (response.data.success) {
-          results.push({
-            building_id: building.id,
-            building_name: building.name || building.address,
-            status: 'success',
-            submission_id: response.data.submission_id,
-            confidence: response.data.ai_confidence_score
-          });
-          successCount++;
-          console.log(`[SUCCESS] Created for ${building.name || building.address}`);
-        } else {
-          results.push({
-            building_id: building.id,
-            building_name: building.name || building.address,
-            status: 'failed',
-            error: 'Generation failed'
-          });
-          failCount++;
-        }
+        console.log(`[SUCCESS] Created submission for building ${building.id}`);
+        results.created++;
+        results.details.push({
+          building_id: building.id,
+          building_name: building.address || building.name,
+          submission_id: submission.id,
+          status: 'created'
+        });
 
       } catch (error) {
-        results.push({
+        console.error(`[ERROR] Building ${building.id}:`, error);
+        results.errors++;
+        results.details.push({
           building_id: building.id,
-          building_name: building.name || building.address,
-          status: 'failed',
+          building_name: building.address || building.name,
+          status: 'error',
           error: error.message
         });
-        failCount++;
-        console.error(`[ERROR] Failed for ${building.id}:`, error.message);
       }
     }
 
-    console.log(`[BATCH COMPLETE] ${successCount} success, ${skipCount} skipped, ${failCount} failed`);
+    console.log(`[BATCH-CREATE] Complete: ${results.created} created, ${results.skipped} skipped, ${results.errors} errors`);
 
     return Response.json({
       success: true,
-      total_buildings: buildings.length,
-      success_count: successCount,
-      skip_count: skipCount,
-      fail_count: failCount,
+      message: `${results.created} Submissions erstellt, ${results.skipped} übersprungen, ${results.errors} Fehler`,
       results
     });
 

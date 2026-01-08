@@ -11,24 +11,23 @@ Deno.serve(async (req) => {
 
     const { submission_id, form_data } = await req.json();
 
-    if (!submission_id || !form_data) {
-      return Response.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!submission_id) {
+      return Response.json({ error: 'submission_id required' }, { status: 400 });
     }
 
     console.log(`[AUTO-SAVE] Saving submission ${submission_id}`);
 
-    // Aktualisiere nur form_data, nicht den Status
-    await base44.entities.ElsterSubmission.update(submission_id, {
+    // Update Submission
+    await base44.asServiceRole.entities.ElsterSubmission.update(submission_id, {
       form_data,
       updated_date: new Date().toISOString()
     });
 
-    console.log('[SUCCESS] Auto-save completed');
+    console.log('[AUTO-SAVE] Saved successfully');
 
     return Response.json({
       success: true,
-      saved_at: new Date().toISOString(),
-      message: 'Formular automatisch gespeichert'
+      saved_at: new Date().toISOString()
     });
 
   } catch (error) {

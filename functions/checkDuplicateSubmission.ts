@@ -9,51 +9,49 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { building_id, tax_form_type, tax_year } = await req.json();
+    const { building_id, tax_year, form_type } = await req.json();
 
-    console.log(`[CHECK] Duplicate check: ${tax_form_type} ${tax_year} for building ${building_id}`);
+    if (!building_id || !tax_year || !form_type) {
+      return Response.json({ error: 'building_id, tax_year, and form_type required' }, { status: 400 });
+    }
 
+    console.log(`[DUPLICATE-CHECK] Checking ${form_type} for building ${building_id}, year ${tax_year}`);
+
+    // Suche nach existierenden Submissions
     const existingSubmissions = await base44.entities.ElsterSubmission.filter({
       building_id,
-      tax_form_type,
-      tax_year
+      tax_year,
+      tax_form_type: form_type
     });
 
-    if (existingSubmissions.length === 0) {
-      return Response.json({
-        has_duplicate: false,
-        message: 'Keine Duplikate gefunden'
-      });
-    }
-
+    const hasDuplicate = existingSubmissions.length > 0;
+    const acceptedSubmission = existingSubmissions.find(s => s.status === 'ACCEPTED');
     const activeSubmissions = existingSubmissions.filter(s => 
-      s.status !== 'REJECTED' && s.status !== 'DRAFT'
+      s.status !== 'ARCHIVED' && s.status !== 'REJECTED'
     );
 
-    if (activeSubmissions.length > 0) {
-      const latest = activeSubmissions.sort((a, b) => 
-        new Date(b.created_date) - new Date(a.created_date)
-      )[0];
-
-      return Response.json({
-        has_duplicate: true,
-        duplicate_count: activeSubmissions.length,
-        latest_submission: {
-          id: latest.id,
-          status: latest.status,
-          created_date: latest.created_date,
-          submission_date: latest.submission_date
-        },
-        warning_level: latest.status === 'ACCEPTED' ? 'critical' : 'warning',
-        message: latest.status === 'ACCEPTED' 
-          ? `Es existiert bereits eine akzeptierte ${tax_form_type} für ${tax_year}. Eine erneute Übermittlung kann zu Problemen führen.`
-          : `Es existiert bereits eine ${tax_form_type} für ${tax_year} mit Status ${latest.status}.`
-      });
-    }
+    console.log(`[DUPLICATE-CHECK] Found ${existingSubmissions.length} existing, ${activeSubmissions.length} active`);
 
     return Response.json({
-      has_duplicate: false,
-      message: 'Nur Entwürfe gefunden, fortfahren möglich'
+      success: true,
+      has_duplicate: hasDuplicate,
+      duplicates: existingSubmissions.map(s => ({
+        id: s.id,
+        status: s.status,
+        created_date: s.created_date,
+        submission_date: s.submission_date,
+        ai_confidence_score: s.ai_confidence_score
+      })),
+      has_accepted: !!acceptedSubmission,
+      accepted_submission_id: acceptedSubmission?.id,
+      warning: hasDuplicate ? 
+        `Es existieren bereits ${existingSubmissions.length} Submission(s) für dieses Gebäude und Jahr` : 
+        null,
+      recommendation: acceptedSubmission ?
+        'Eine Submission wurde bereits akzeptiert. Erstellen Sie nur eine neue, wenn nötig (z.B. Korrektur).' :
+        activeSubmissions.length > 0 ?
+        'Es existiert bereits eine aktive Submission. Möchten Sie diese bearbeiten oder eine neue erstellen?' :
+        null
     });
 
   } catch (error) {

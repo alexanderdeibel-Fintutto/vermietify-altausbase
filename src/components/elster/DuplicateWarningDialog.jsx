@@ -1,74 +1,93 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, FileText } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { AlertTriangle, CheckCircle, FileText, Plus } from 'lucide-react';
 
-export default function DuplicateWarningDialog({ 
-  open, 
-  onOpenChange, 
-  duplicateInfo, 
-  onContinue 
-}) {
-  if (!duplicateInfo || !duplicateInfo.has_duplicate) return null;
+export default function DuplicateWarningDialog({ open, onOpenChange, duplicates, onContinue, onEditExisting }) {
+  if (!duplicates || duplicates.length === 0) return null;
 
-  const isCritical = duplicateInfo.warning_level === 'critical';
+  const acceptedSubmission = duplicates.find(d => d.status === 'ACCEPTED');
+  const activeSubmissions = duplicates.filter(d => 
+    d.status !== 'ARCHIVED' && d.status !== 'REJECTED'
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <AlertTriangle className={isCritical ? 'text-red-600' : 'text-yellow-600'} />
-            {isCritical ? 'Kritische Warnung' : 'Duplikat gefunden'}
+            <AlertTriangle className="w-5 h-5 text-yellow-600" />
+            Existierende Submissions gefunden
           </DialogTitle>
         </DialogHeader>
 
-        <Alert className={isCritical ? 'border-red-200 bg-red-50' : 'border-yellow-200 bg-yellow-50'}>
-          <FileText className={`h-4 w-4 ${isCritical ? 'text-red-600' : 'text-yellow-600'}`} />
-          <AlertDescription className={isCritical ? 'text-red-900' : 'text-yellow-900'}>
-            <p className="font-medium mb-2">{duplicateInfo.message}</p>
-            
-            {duplicateInfo.latest_submission && (
-              <div className="mt-3 p-3 bg-white rounded border">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">Existierende Submission</span>
-                  <Badge variant={isCritical ? 'destructive' : 'default'}>
-                    {duplicateInfo.latest_submission.status}
-                  </Badge>
-                </div>
-                <div className="text-xs space-y-1">
-                  <div>Erstellt: {format(new Date(duplicateInfo.latest_submission.created_date), 'dd.MM.yyyy HH:mm', { locale: de })}</div>
-                  {duplicateInfo.latest_submission.submission_date && (
-                    <div>Übermittelt: {format(new Date(duplicateInfo.latest_submission.submission_date), 'dd.MM.yyyy HH:mm', { locale: de })}</div>
+        <div className="space-y-4">
+          <Alert className="bg-yellow-50 border-yellow-200">
+            <AlertTriangle className="h-4 w-4 text-yellow-600" />
+            <AlertDescription>
+              Für dieses Gebäude und Jahr existieren bereits {duplicates.length} Submission(s).
+            </AlertDescription>
+          </Alert>
+
+          {acceptedSubmission && (
+            <Alert className="bg-green-50 border-green-200">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription>
+                Eine Submission wurde bereits von ELSTER akzeptiert.
+                Eine neue Submission sollte nur für Korrekturen erstellt werden.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <div className="space-y-2">
+            <div className="text-sm font-medium">Gefundene Submissions:</div>
+            {duplicates.map((dup) => (
+              <div key={dup.id} className="p-3 border rounded hover:bg-slate-50 transition-colors">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <FileText className="w-4 h-4 text-slate-400" />
+                      <span className="text-sm font-medium">
+                        Submission {dup.id.slice(0, 8)}
+                      </span>
+                      <Badge variant={dup.status === 'ACCEPTED' ? 'default' : 'secondary'}>
+                        {dup.status}
+                      </Badge>
+                    </div>
+                    <div className="text-xs text-slate-600 space-y-1">
+                      <div>Erstellt: {new Date(dup.created_date).toLocaleDateString('de-DE')}</div>
+                      {dup.submission_date && (
+                        <div>Eingereicht: {new Date(dup.submission_date).toLocaleDateString('de-DE')}</div>
+                      )}
+                      {dup.ai_confidence_score && (
+                        <div>KI-Vertrauen: {dup.ai_confidence_score}%</div>
+                      )}
+                    </div>
+                  </div>
+                  {activeSubmissions.includes(dup) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onEditExisting?.(dup.id)}
+                    >
+                      Bearbeiten
+                    </Button>
                   )}
                 </div>
               </div>
-            )}
+            ))}
+          </div>
+        </div>
 
-            {isCritical && (
-              <p className="text-xs mt-3 text-red-700 font-medium">
-                ⚠️ Eine erneute Übermittlung kann zu Doppelmeldungen beim Finanzamt führen!
-              </p>
-            )}
-          </AlertDescription>
-        </Alert>
-
-        <DialogFooter>
+        <DialogFooter className="flex gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Abbrechen
           </Button>
-          <Button 
-            onClick={() => {
-              onContinue();
-              onOpenChange(false);
-            }}
-            className={isCritical ? 'bg-red-600 hover:bg-red-700' : ''}
-          >
-            Trotzdem fortfahren
+          <Button onClick={onContinue} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="w-4 h-4 mr-2" />
+            Trotzdem neue erstellen
           </Button>
         </DialogFooter>
       </DialogContent>
