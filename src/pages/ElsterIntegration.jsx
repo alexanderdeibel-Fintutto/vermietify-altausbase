@@ -48,6 +48,8 @@ import StatusChangeDialog from '@/components/elster/StatusChangeDialog';
 import XMLPreview from '@/components/elster/XMLPreview';
 import CertificateRenewalReminder from '@/components/elster/CertificateRenewalReminder';
 import SystemHealthCheck from '@/components/elster/SystemHealthCheck';
+import TaxAdvisorReport from '@/components/elster/TaxAdvisorReport';
+import FinancialDataSync from '@/components/elster/FinancialDataSync';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from 'lucide-react';
 
@@ -148,7 +150,7 @@ export default function ElsterIntegration() {
         transition={{ delay: 0.3 }}
       >
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="create">Erstellen</TabsTrigger>
             <TabsTrigger value="submissions">Übermittlungen</TabsTrigger>
@@ -156,6 +158,7 @@ export default function ElsterIntegration() {
             <TabsTrigger value="templates">Templates</TabsTrigger>
             <TabsTrigger value="categories">Kategorien</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="reports">Berichte</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="mt-6">
@@ -257,7 +260,14 @@ export default function ElsterIntegration() {
           <TabsContent value="compliance" className="mt-6">
             <ComplianceDashboard year={new Date().getFullYear()} />
           </TabsContent>
-        </Tabs>
+
+          <TabsContent value="reports" className="mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <TaxAdvisorReport />
+              <FinancialDataSync />
+            </div>
+          </TabsContent>
+          </Tabs>
       </motion.div>
 
       {showWizard && (
