@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BarChart3, TrendingUp, Users, Package } from 'lucide-react';
 import UserActivityChart from '@/components/analytics/UserActivityChart';
 import ModuleUsageChart from '@/components/analytics/ModuleUsageChart';
-import ExportButton from '@/components/reports/ExportButton';
+import ExportButton from '@/components/reports/ExportButton.jsx';
 
 export default function AdvancedAnalytics() {
   const [timeRange, setTimeRange] = useState('7');

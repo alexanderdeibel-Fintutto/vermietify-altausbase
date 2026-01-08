@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { FileText, Download, Calendar } from 'lucide-react';
-import ExportButton from '@/components/reports/ExportButton';
+import ExportButton from '@/components/reports/ExportButton.jsx';
 
 export default function AuditReports() {
   const [startDate, setStartDate] = useState('');
