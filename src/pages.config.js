@@ -94,6 +94,10 @@ import TenantCommunication from './pages/TenantCommunication';
 import DocumentGeneration from './pages/DocumentGeneration';
 import InsuranceManagement from './pages/InsuranceManagement';
 import PropertyValuation from './pages/PropertyValuation';
+import MaintenanceManager from './pages/MaintenanceManager';
+import MieterSelfServicePortal from './pages/MieterSelfServicePortal';
+import GlobalSettings from './pages/GlobalSettings';
+import HelpCenter from './pages/HelpCenter';
 import __Layout from './Layout.jsx';
 
 
@@ -194,6 +198,10 @@ export const PAGES = {
     "DocumentGeneration": DocumentGeneration,
     "InsuranceManagement": InsuranceManagement,
     "PropertyValuation": PropertyValuation,
+    "MaintenanceManager": MaintenanceManager,
+    "MieterSelfServicePortal": MieterSelfServicePortal,
+    "GlobalSettings": GlobalSettings,
+    "HelpCenter": HelpCenter,
 }
 
 export const pagesConfig = {
