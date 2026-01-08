@@ -35,6 +35,7 @@ import SuiteSwitcher from '@/components/suite/SuiteSwitcher';
 import { useUserSuites } from '@/components/suite/useModuleAccess';
 import TesterTracker from '@/components/testing/TesterTracker';
 import { Button } from "@/components/ui/button";
+import OnboardingRedirect from '@/components/onboarding/OnboardingRedirect';
 
 export default function Layout({ children, currentPageName }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -110,8 +111,9 @@ export default function Layout({ children, currentPageName }) {
     });
 
     return (
-        <TesterTracker>
-        <div className="min-h-screen bg-slate-50">
+            <OnboardingRedirect>
+            <TesterTracker>
+            <div className="min-h-screen bg-slate-50">
             {/* Mobile sidebar backdrop */}
             {sidebarOpen && (
                 <div 
@@ -205,5 +207,6 @@ export default function Layout({ children, currentPageName }) {
             </div>
             </div>
             </TesterTracker>
+            </OnboardingRedirect>
             );
             }
