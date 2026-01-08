@@ -52,6 +52,8 @@ import TaxAdvisorReport from '@/components/elster/TaxAdvisorReport';
 import FinancialDataSync from '@/components/elster/FinancialDataSync';
 import VersionHistory from '@/components/elster/VersionHistory';
 import ExportOptionsDialog from '@/components/elster/ExportOptionsDialog';
+import TaxCalendar from '@/components/elster/TaxCalendar';
+import OptimizationAssistant from '@/components/elster/OptimizationAssistant';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from 'lucide-react';
 
@@ -265,9 +267,15 @@ export default function ElsterIntegration() {
           </TabsContent>
 
           <TabsContent value="reports" className="mt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <TaxAdvisorReport />
-              <FinancialDataSync />
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <TaxAdvisorReport />
+                <FinancialDataSync />
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <OptimizationAssistant />
+                <TaxCalendar />
+              </div>
             </div>
           </TabsContent>
           </Tabs>
