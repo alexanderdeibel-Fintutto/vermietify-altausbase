@@ -1,128 +1,98 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Users, Key, Lock } from 'lucide-react';
-import PermissionTester from '@/components/permissions/PermissionTester';
+import { Button } from "@/components/ui/button";
+import { Shield, User, Lock, Eye } from 'lucide-react';
 
-export default function PermissionDashboard() {
+export default function PermissionDashboardPage() {
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => base44.entities.User?.list?.() || []
+  });
+
   const { data: permissions = [] } = useQuery({
     queryKey: ['permissions'],
-    queryFn: () => base44.asServiceRole.entities.Permission.list()
+    queryFn: () => base44.entities.Permission?.list?.() || []
   });
 
-  const { data: roles = [] } = useQuery({
-    queryKey: ['roles'],
-    queryFn: () => base44.asServiceRole.entities.Role.list()
-  });
-
-  const { data: roleAssignments = [] } = useQuery({
-    queryKey: ['role-assignments'],
-    queryFn: () => base44.asServiceRole.entities.UserRoleAssignment.list()
-  });
-
-  const { data: fieldPermissions = [] } = useQuery({
-    queryKey: ['field-permissions'],
-    queryFn: () => base44.asServiceRole.entities.FieldPermission.list()
-  });
-
-  const permissionsByModule = permissions.reduce((acc, perm) => {
-    const module = perm.module || 'other';
-    if (!acc[module]) acc[module] = [];
-    acc[module].push(perm);
-    return acc;
-  }, {});
+  const permissionGroups = {
+    'Gebäude': ['create', 'read', 'update', 'delete'],
+    'Mieter': ['create', 'read', 'update', 'delete'],
+    'Verträge': ['create', 'read', 'update', 'delete'],
+    'Finanzen': ['read', 'export'],
+    'Berichte': ['read', 'export'],
+  };
 
   return (
     <div className="space-y-6">
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex justify-between items-center"
-      >
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Permission Dashboard</h1>
-          <p className="text-slate-600">Berechtigungssystem überwachen und testen</p>
-        </div>
-      </motion.div>
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900">🔐 Berechtigungen</h1>
+        <p className="text-slate-600 mt-1">Überwachen und verwalten Sie Benutzerberechtigungen</p>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[
-          { icon: Shield, label: "Permissions", value: permissions.length, color: "blue" },
-          { icon: Users, label: "Rollen", value: roles.length, color: "purple" },
-          { icon: Key, label: "Zuweisungen", value: roleAssignments.length, color: "green" },
-          { icon: Lock, label: "Feld-Permissions", value: fieldPermissions.length, color: "orange" }
-        ].map((stat, idx) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 + idx * 0.05 }}
-          >
+      <div className="grid grid-cols-2 gap-6">
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">{stat.label}</p>
-                <p className={`text-2xl font-bold ${stat.color !== 'blue' ? `text-${stat.color}-600` : ''}`}>
-                  {stat.value}
-                </p>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><User className="w-5 h-5" /> Benutzer</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {users.map((user, idx) => (
+              <div key={idx} className="p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer" onClick={() => setSelectedUser(user)}>
+                <p className="font-semibold text-slate-900">{user.full_name || '—'}</p>
+                <p className="text-sm text-slate-600">{user.email}</p>
+                <Badge className="mt-2 bg-blue-600">{user.role === 'admin' ? 'Admin' : 'User'}</Badge>
               </div>
-              <stat.icon className={`w-8 h-8 text-${stat.color}-600`} />
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Shield className="w-5 h-5" /> Berechtigungsgruppen</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {Object.entries(permissionGroups).map(([group, perms], idx) => (
+              <div key={idx} className="p-3 border border-slate-200 rounded-lg">
+                <p className="font-semibold text-slate-900 mb-2">{group}</p>
+                <div className="flex gap-2 flex-wrap">
+                  {perms.map((perm, pidx) => (
+                    <Badge key={pidx} variant="outline">{perm}</Badge>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+
+      {selectedUser && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Lock className="w-5 h-5" /> Berechtigungen für {selectedUser.full_name}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {Object.entries(permissionGroups).map(([group, perms], idx) => (
+                <div key={idx}>
+                  <p className="font-semibold text-slate-900 mb-2">{group}</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {perms.map((perm, pidx) => (
+                      <div key={pidx} className="flex items-center gap-2">
+                        <input type="checkbox" id={`${group}-${perm}`} defaultChecked={selectedUser.role === 'admin'} disabled={selectedUser.role === 'admin'} className="w-4 h-4" />
+                        <label htmlFor={`${group}-${perm}`} className="text-sm text-slate-700">{perm}</label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
-          </motion.div>
-        ))}
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-      <Tabs defaultValue="modules">
-        <TabsList>
-          <TabsTrigger value="modules">Nach Modul</TabsTrigger>
-          <TabsTrigger value="tester">Permission Tester</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="modules" className="space-y-4 mt-6">
-          {Object.entries(permissionsByModule).map(([module, perms]) => (
-            <Card key={module}>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>{module}</span>
-                  <Badge>{perms.length} Permissions</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {perms.map(perm => (
-                    <div key={perm.id} className="p-3 border rounded-lg">
-                      <div className="font-medium text-sm">{perm.name}</div>
-                      <div className="text-xs text-slate-600 mt-1">
-                        {perm.resource} • {perm.action}
-                      </div>
-                      <Badge variant="outline" className="text-xs mt-2">
-                        {perm.code}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="tester" className="mt-6">
-          <PermissionTester />
-        </TabsContent>
-      </Tabs>
-      </motion.div>
+      )}
     </div>
   );
 }
