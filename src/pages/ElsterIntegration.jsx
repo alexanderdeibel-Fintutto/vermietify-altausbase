@@ -25,6 +25,9 @@ import GoBDComplianceDashboard from '@/components/elster/GoBDComplianceDashboard
 import SubmissionTimeline from '@/components/elster/SubmissionTimeline';
 import FormTemplateManager from '@/components/elster/FormTemplateManager';
 import BatchOperationsPanel from '@/components/elster/BatchOperationsPanel';
+import CategoryImportDialog from '@/components/elster/CategoryImportDialog';
+import QuickActionsCard from '@/components/elster/QuickActionsCard';
+import SubmissionStatsCard from '@/components/elster/SubmissionStatsCard';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from 'lucide-react';
 
@@ -33,6 +36,7 @@ export default function ElsterIntegration() {
   const [showWizard, setShowWizard] = useState(false);
   const [showCertUpload, setShowCertUpload] = useState(false);
   const [showSetupWizard, setShowSetupWizard] = useState(false);
+  const [showCategoryImport, setShowCategoryImport] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const queryClient = useQueryClient();
 
@@ -169,7 +173,20 @@ export default function ElsterIntegration() {
           </TabsContent>
 
           <TabsContent value="categories" className="mt-6">
-            <CategoriesView />
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <CardTitle>Kostenkategorien</CardTitle>
+                    <Button onClick={() => setShowCategoryImport(true)}>
+                      <Upload className="w-4 h-4 mr-2" />
+                      CSV importieren
+                    </Button>
+                  </div>
+                </CardHeader>
+              </Card>
+              <CategoriesView />
+            </div>
           </TabsContent>
 
           <TabsContent value="analytics" className="mt-6">
@@ -210,6 +227,12 @@ export default function ElsterIntegration() {
         submission={selectedSubmission}
         open={!!selectedSubmission}
         onOpenChange={(open) => !open && setSelectedSubmission(null)}
+      />
+
+      <CategoryImportDialog
+        open={showCategoryImport}
+        onOpenChange={setShowCategoryImport}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['tax-categories'] })}
       />
     </div>
   );
