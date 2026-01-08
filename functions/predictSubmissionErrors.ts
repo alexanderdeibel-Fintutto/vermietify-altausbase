@@ -11,77 +11,78 @@ Deno.serve(async (req) => {
 
     const { submission_id } = await req.json();
 
-    console.log('[PREDICT] Analyzing potential errors for submission:', submission_id);
+    console.log('[ERROR-PREDICTION] Predicting potential errors for submission:', submission_id);
 
-    const submission = await base44.entities.ElsterSubmission.filter({ id: submission_id });
-    if (!submission || submission.length === 0) {
+    const submissions = await base44.entities.ElsterSubmission.filter({ id: submission_id });
+    if (!submissions || submissions.length === 0) {
       return Response.json({ error: 'Submission not found' }, { status: 404 });
     }
 
-    const sub = submission[0];
-    const predictions = { risk_score: 0, potential_issues: [], recommendations: [] };
+    const submission = submissions[0];
 
     // Historische Fehler analysieren
-    const historical = await base44.entities.ElsterSubmission.filter({ 
-      tax_form_type: sub.tax_form_type,
-      tax_year: sub.tax_year 
+    const historicalSubmissions = await base44.entities.ElsterSubmission.filter({
+      building_id: submission.building_id,
+      tax_form_type: submission.tax_form_type
     });
 
     const commonErrors = {};
-    historical.forEach(h => {
-      if (h.validation_errors?.length > 0) {
-        h.validation_errors.forEach(err => {
-          const key = err.field || 'unknown';
+    for (const hist of historicalSubmissions) {
+      if (hist.validation_errors && hist.validation_errors.length > 0) {
+        for (const error of hist.validation_errors) {
+          const key = error.field || error.type;
           commonErrors[key] = (commonErrors[key] || 0) + 1;
-        });
+        }
+      }
+    }
+
+    // KI-basierte Fehlervorhersage
+    const prompt = `
+Analysiere diese ELSTER-Formulardaten und prognostiziere wahrscheinliche Fehler basierend auf:
+- Häufige Fehler in diesem Formulartyp: ${JSON.stringify(commonErrors)}
+- Aktuelle Daten: ${JSON.stringify(submission.form_data)}
+- Steuerjahr: ${submission.tax_year}
+- Rechtsform: ${submission.legal_form}
+
+Gib folgende Prognose ab:
+1. Wahrscheinliche Fehler (mit Eintrittswahrscheinlichkeit %)
+2. Risikobereiche
+3. Empfohlene Kontrollen
+
+Antworte NUR mit JSON.
+    `;
+
+    const prediction = await base44.integrations.Core.InvokeLLM({
+      prompt,
+      response_json_schema: {
+        type: "object",
+        properties: {
+          risk_score: { type: "number" },
+          predicted_errors: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                field: { type: "string" },
+                error_type: { type: "string" },
+                probability: { type: "number" },
+                mitigation: { type: "string" }
+              }
+            }
+          },
+          risk_areas: { type: "array", items: { type: "string" } },
+          recommended_checks: { type: "array", items: { type: "string" } }
+        }
       }
     });
 
-    // Risiko-Score berechnen
-    let riskFactors = 0;
-
-    if (!sub.form_data || Object.keys(sub.form_data).length < 5) {
-      riskFactors += 30;
-      predictions.potential_issues.push({
-        severity: 'high',
-        issue: 'Unvollständige Formulardaten',
-        description: 'Weniger als 5 Felder ausgefüllt'
-      });
-    }
-
-    if (sub.ai_confidence_score && sub.ai_confidence_score < 75) {
-      riskFactors += 25;
-      predictions.potential_issues.push({
-        severity: 'medium',
-        issue: 'Niedriges KI-Vertrauen',
-        description: `Nur ${sub.ai_confidence_score}% Vertrauen`
-      });
-    }
-
-    if (!sub.building_id) {
-      riskFactors += 20;
-      predictions.potential_issues.push({
-        severity: 'medium',
-        issue: 'Kein Gebäude zugeordnet',
-        description: 'Fehlende Gebäude-Referenz'
-      });
-    }
-
-    predictions.risk_score = Math.min(riskFactors, 100);
-
-    // Empfehlungen
-    if (predictions.risk_score > 50) {
-      predictions.recommendations.push('Manuelle Überprüfung vor Übermittlung empfohlen');
-    }
-    if (Object.keys(commonErrors).length > 0) {
-      const topError = Object.entries(commonErrors).sort((a, b) => b[1] - a[1])[0];
-      predictions.recommendations.push(`Achten Sie besonders auf Feld: ${topError[0]}`);
-    }
-    if (sub.ai_confidence_score < 85) {
-      predictions.recommendations.push('KI-basierte Vorschläge nutzen');
-    }
-
-    return Response.json({ success: true, predictions });
+    return Response.json({ 
+      success: true, 
+      risk_score: prediction.risk_score,
+      predicted_errors: prediction.predicted_errors,
+      risk_areas: prediction.risk_areas,
+      recommended_checks: prediction.recommended_checks
+    });
 
   } catch (error) {
     console.error('[ERROR]', error);

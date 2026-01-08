@@ -9,71 +9,54 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { submission_id } = await req.json();
+    console.log('[DUPLICATE-DETECTION] Scanning for duplicate submissions');
 
-    console.log(`[DUPLICATE] Checking ${submission_id}`);
-
-    const submission = await base44.entities.ElsterSubmission.filter({ id: submission_id });
-    if (submission.length === 0) {
-      return Response.json({ error: 'Submission not found' }, { status: 404 });
-    }
-
-    const sub = submission[0];
-
-    // Suche nach ähnlichen Submissions
-    const candidates = await base44.entities.ElsterSubmission.filter({
-      tax_form_type: sub.tax_form_type,
-      tax_year: sub.tax_year,
-      building_id: sub.building_id
-    });
-
+    const submissions = await base44.entities.ElsterSubmission.list();
+    
     const duplicates = [];
+    const processed = new Set();
 
-    for (const candidate of candidates) {
-      if (candidate.id === sub.id) continue;
+    for (let i = 0; i < submissions.length; i++) {
+      const sub1 = submissions[i];
+      if (processed.has(sub1.id)) continue;
 
-      let similarity = 0;
-      let matches = 0;
-      let total = 0;
+      for (let j = i + 1; j < submissions.length; j++) {
+        const sub2 = submissions[j];
+        if (processed.has(sub2.id)) continue;
 
-      if (sub.form_data && candidate.form_data) {
-        const fields = new Set([...Object.keys(sub.form_data), ...Object.keys(candidate.form_data)]);
-        
-        fields.forEach(field => {
-          total++;
-          const val1 = sub.form_data[field];
-          const val2 = candidate.form_data[field];
+        // Prüfe auf Duplikate: gleiche Form, Jahr, Gebäude
+        if (sub1.tax_form_type === sub2.tax_form_type &&
+            sub1.tax_year === sub2.tax_year &&
+            sub1.building_id === sub2.building_id &&
+            sub1.legal_form === sub2.legal_form) {
+          
+          duplicates.push({
+            submission_1: {
+              id: sub1.id,
+              status: sub1.status,
+              created_date: sub1.created_date,
+              ai_confidence_score: sub1.ai_confidence_score
+            },
+            submission_2: {
+              id: sub2.id,
+              status: sub2.status,
+              created_date: sub2.created_date,
+              ai_confidence_score: sub2.ai_confidence_score
+            },
+            recommendation: sub1.ai_confidence_score > sub2.ai_confidence_score 
+              ? `Keep ${sub1.id}, delete ${sub2.id}` 
+              : `Keep ${sub2.id}, delete ${sub1.id}`
+          });
 
-          if (val1 === val2) {
-            matches++;
-          } else if (typeof val1 === 'number' && typeof val2 === 'number') {
-            const diff = Math.abs(val1 - val2);
-            const avg = (val1 + val2) / 2;
-            if (avg > 0 && diff / avg < 0.05) { // 5% Toleranz
-              matches += 0.8;
-            }
-          }
-        });
-
-        similarity = total > 0 ? (matches / total) * 100 : 0;
-      }
-
-      if (similarity > 85) {
-        duplicates.push({
-          id: candidate.id,
-          similarity: Math.round(similarity),
-          created_date: candidate.created_date,
-          status: candidate.status
-        });
+          processed.add(sub2.id);
+        }
       }
     }
 
-    console.log(`[DUPLICATE] Found ${duplicates.length} potential duplicates`);
-
-    return Response.json({
-      success: true,
-      is_duplicate: duplicates.length > 0,
-      duplicates: duplicates.sort((a, b) => b.similarity - a.similarity)
+    return Response.json({ 
+      success: true, 
+      duplicates_found: duplicates.length,
+      duplicates
     });
 
   } catch (error) {

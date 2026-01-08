@@ -11,84 +11,52 @@ Deno.serve(async (req) => {
 
     const { submission_ids } = await req.json();
 
-    if (!submission_ids || !Array.isArray(submission_ids) || submission_ids.length === 0) {
-      return Response.json({ error: 'submission_ids array required' }, { status: 400 });
-    }
+    console.log('[BATCH-VALIDATE] Validating', submission_ids?.length, 'submissions');
 
-    console.log(`[BATCH-VALIDATE] Starting validation of ${submission_ids.length} submissions`);
+    const toValidate = submission_ids && submission_ids.length > 0
+      ? await Promise.all(submission_ids.map(id => 
+          base44.entities.ElsterSubmission.filter({ id }).then(subs => subs[0])
+        ))
+      : await base44.entities.ElsterSubmission.list('-created_date', 100);
 
-    const results = {
-      total: submission_ids.length,
-      passed: 0,
-      failed: 0,
-      warnings: 0,
-      details: []
-    };
+    const results = [];
 
-    for (const id of submission_ids) {
+    for (const submission of toValidate) {
+      if (!submission) continue;
+
       try {
-        const submissions = await base44.entities.ElsterSubmission.filter({ id });
-        if (submissions.length === 0) {
-          results.details.push({ id, status: 'not_found', errors: ['Submission not found'] });
-          results.failed++;
-          continue;
-        }
-
-        const submission = submissions[0];
-
-        // Validiere Formular
-        const validationResponse = await base44.functions.invoke('validateFormPlausibility', {
+        // Invoke validation function
+        const validation = await base44.functions.invoke('validateFormPlausibility', {
+          submission_id: submission.id,
           form_data: submission.form_data,
-          form_type: submission.tax_form_type,
-          legal_form: submission.legal_form
+          tax_year: submission.tax_year
         });
 
-        const validation = validationResponse.data.validation;
-
-        // Update Submission mit Validierungsergebnis
-        await base44.asServiceRole.entities.ElsterSubmission.update(id, {
-          validation_errors: validation.errors || [],
-          validation_warnings: validation.warnings || [],
-          ai_confidence_score: validation.plausibility_score || submission.ai_confidence_score,
-          status: validation.errors?.length > 0 ? 'DRAFT' : 'VALIDATED'
-        });
-
-        const hasErrors = validation.errors && validation.errors.length > 0;
-        const hasWarnings = validation.warnings && validation.warnings.length > 0;
-
-        if (hasErrors) {
-          results.failed++;
-        } else {
-          results.passed++;
-        }
-
-        if (hasWarnings) {
-          results.warnings++;
-        }
-
-        results.details.push({
-          id,
-          status: hasErrors ? 'failed' : 'passed',
-          errors: validation.errors || [],
-          warnings: validation.warnings || [],
-          plausibility_score: validation.plausibility_score
+        results.push({
+          submission_id: submission.id,
+          valid: validation.data.valid !== false,
+          issues: validation.data.issues || [],
+          confidence: validation.data.confidence_score || 0
         });
 
       } catch (error) {
-        console.error(`[ERROR] Validation failed for ${id}:`, error);
-        results.failed++;
-        results.details.push({
-          id,
-          status: 'error',
-          errors: [error.message]
+        results.push({
+          submission_id: submission.id,
+          valid: false,
+          issues: [{ message: error.message }]
         });
       }
     }
 
-    console.log(`[BATCH-VALIDATE] Complete: ${results.passed} passed, ${results.failed} failed`);
+    const validCount = results.filter(r => r.valid).length;
+    const issuesCount = results.reduce((sum, r) => sum + r.issues.length, 0);
 
-    return Response.json({
-      success: true,
+    return Response.json({ 
+      success: true, 
+      total_validated: results.length,
+      valid: validCount,
+      invalid: results.length - validCount,
+      total_issues: issuesCount,
       results
     });
 

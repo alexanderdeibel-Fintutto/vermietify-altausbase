@@ -5,82 +5,102 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
-    if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Admin access required' }, { status: 403 });
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { submission_id, clean_type = 'auto' } = await req.json();
+    const { building_id, tax_year } = await req.json();
 
-    console.log(`[DATA-CLEAN] Cleaning submission ${submission_id}`);
+    console.log('[DATA-CLEANING] Intelligent cleaning for building', building_id, 'year', tax_year);
 
-    const submissions = await base44.asServiceRole.entities.ElsterSubmission.filter({
-      id: submission_id
+    // Lade alle FinancialItems für das Jahr
+    const items = await base44.entities.FinancialItem.filter();
+    const yearItems = items.filter(item => {
+      const itemYear = new Date(item.date).getFullYear();
+      return building_id ? (item.building_id === building_id && itemYear === tax_year) 
+                         : (itemYear === tax_year);
     });
 
-    if (submissions.length === 0) {
-      return Response.json({ error: 'Submission not found' }, { status: 404 });
-    }
+    const issues = [];
+    const fixes = [];
 
-    const submission = submissions[0];
-    const formData = submission.form_data || {};
-    const cleaned = { ...formData };
-    const changes = [];
-
-    // Bereinige leere Strings
-    Object.keys(cleaned).forEach(key => {
-      if (cleaned[key] === '' || cleaned[key] === null) {
-        delete cleaned[key];
-        changes.push(`Removed empty field: ${key}`);
+    // 1. Duplikate finden
+    const itemsByKey = {};
+    for (const item of yearItems) {
+      const key = `${item.date}_${item.amount}_${item.description}`;
+      if (itemsByKey[key]) {
+        issues.push({
+          type: 'DUPLICATE',
+          item1_id: itemsByKey[key].id,
+          item2_id: item.id,
+          reason: 'Identischer Eintrag'
+        });
+      } else {
+        itemsByKey[key] = item;
       }
+    }
+
+    // 2. Ungültige Daten
+    const invalidItems = yearItems.filter(item => {
+      if (!item.date || !item.amount || !item.description) {
+        return true;
+      }
+      if (item.amount < 0 && item.type === 'INCOME') return true;
+      if (item.amount > 0 && item.type === 'EXPENSE' && item.amount > 1000000) return true;
+      return false;
     });
 
-    // Normalisiere Zahlen
-    ['einnahmen_gesamt', 'werbungskosten_gesamt', 'afa_betrag'].forEach(field => {
-      if (cleaned[field]) {
-        const original = cleaned[field];
-        cleaned[field] = parseFloat(String(cleaned[field]).replace(/[^\d.-]/g, ''));
-        if (original !== cleaned[field]) {
-          changes.push(`Normalized ${field}: ${original} → ${cleaned[field]}`);
+    issues.push(...invalidItems.map(item => ({
+      type: 'INVALID_DATA',
+      item_id: item.id,
+      item
+    })));
+
+    // 3. Kategorisierungslücken
+    const uncategorized = yearItems.filter(item => !item.cost_category);
+    if (uncategorized.length > 0) {
+      issues.push({
+        type: 'UNCATEGORIZED',
+        count: uncategorized.length,
+        items: uncategorized.slice(0, 5).map(i => ({ id: i.id, description: i.description }))
+      });
+
+      // Auto-kategorisieren
+      for (const item of uncategorized) {
+        try {
+          const categorization = await base44.functions.invoke('categorizeExpenseWithAI', {
+            invoice_data: {
+              description: item.description,
+              amount: item.amount,
+              date: item.date
+            },
+            building_ownership: 'VERMIETUNG',
+            legal_form: 'PRIVATPERSON',
+            historical_bookings: []
+          });
+
+          await base44.entities.FinancialItem.update(item.id, {
+            cost_category: categorization.data.categorization.suggested_category
+          });
+
+          fixes.push({
+            type: 'AUTO_CATEGORIZED',
+            item_id: item.id,
+            category: categorization.data.categorization.suggested_category
+          });
+        } catch (error) {
+          console.log('Auto-categorization failed for item:', item.id);
         }
       }
-    });
-
-    // Entferne Duplikat-Felder
-    const fieldCounts = {};
-    Object.keys(cleaned).forEach(key => {
-      const baseKey = key.replace(/\d+$/, '');
-      fieldCounts[baseKey] = (fieldCounts[baseKey] || 0) + 1;
-    });
-
-    // Validiere Konsistenz
-    if (cleaned.einnahmen_gesamt && cleaned.werbungskosten_gesamt) {
-      const einkuenfte = cleaned.einnahmen_gesamt - cleaned.werbungskosten_gesamt;
-      if (cleaned.einkuenfte && Math.abs(cleaned.einkuenfte - einkuenfte) > 1) {
-        cleaned.einkuenfte = einkuenfte;
-        changes.push(`Recalculated einkuenfte: ${einkuenfte}`);
-      }
     }
 
-    // Update Submission
-    await base44.asServiceRole.entities.ElsterSubmission.update(submission_id, {
-      form_data: cleaned
-    });
-
-    // Log
-    await base44.asServiceRole.entities.ActivityLog.create({
-      entity_type: 'ElsterSubmission',
-      entity_id: submission_id,
-      action: 'data_cleaned',
-      details: { changes },
-      performed_by: user.email
-    });
-
-    console.log(`[DATA-CLEAN] Applied ${changes.length} changes`);
-
-    return Response.json({
-      success: true,
-      changes_applied: changes.length,
-      changes
+    return Response.json({ 
+      success: true, 
+      total_items: yearItems.length,
+      issues_found: issues.length,
+      issues,
+      fixes_applied: fixes.length,
+      fixes
     });
 
   } catch (error) {
