@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -130,7 +131,11 @@ export default function Analytics() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
+      >
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Analytics Dashboard</h1>
           <p className="text-slate-600">Umfassende Business Intelligence und KPIs</p>
@@ -152,10 +157,18 @@ export default function Analytics() {
             Export
           </Button>
         </div>
-      </div>
+      </motion.div>
 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[0, 1, 2, 3].map(idx => (
+          <motion.div
+            key={idx}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + idx * 0.05 }}
+          >
+        {idx === 0 ? (
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -224,8 +237,16 @@ export default function Analytics() {
             </div>
           </CardContent>
         </Card>
+        )}
+          </motion.div>
+        ))}
       </div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
       <Tabs defaultValue="revenue">
         <TabsList>
           <TabsTrigger value="revenue">Umsatz & Gewinn</TabsTrigger>
@@ -380,6 +401,7 @@ export default function Analytics() {
           </Card>
         </TabsContent>
       </Tabs>
+      </motion.div>
     </div>
   );
 }
