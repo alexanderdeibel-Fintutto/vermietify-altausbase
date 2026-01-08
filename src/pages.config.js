@@ -83,6 +83,11 @@ import AutomationRules from './pages/AutomationRules';
 import ScheduledTasks from './pages/ScheduledTasks';
 import APILogs from './pages/APILogs';
 import AlertManagement from './pages/AlertManagement';
+import DocumentLibrary from './pages/DocumentLibrary';
+import CommunicationCenter from './pages/CommunicationCenter';
+import ComplianceAudit from './pages/ComplianceAudit';
+import ROIDashboard from './pages/ROIDashboard';
+import MarketAnalytics from './pages/MarketAnalytics';
 import __Layout from './Layout.jsx';
 
 
@@ -172,6 +177,11 @@ export const PAGES = {
     "ScheduledTasks": ScheduledTasks,
     "APILogs": APILogs,
     "AlertManagement": AlertManagement,
+    "DocumentLibrary": DocumentLibrary,
+    "CommunicationCenter": CommunicationCenter,
+    "ComplianceAudit": ComplianceAudit,
+    "ROIDashboard": ROIDashboard,
+    "MarketAnalytics": MarketAnalytics,
 }
 
 export const pagesConfig = {
