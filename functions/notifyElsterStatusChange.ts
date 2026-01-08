@@ -3,72 +3,42 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { submission_id, old_status, new_status } = await req.json();
+    const { submission_id, new_status } = await req.json();
 
-    console.log(`[NOTIFY] Status change: ${old_status} -> ${new_status} for ${submission_id}`);
+    console.log('[NOTIFY] Status changed to:', new_status);
 
-    const submission = await base44.entities.ElsterSubmission.filter({ id: submission_id });
-    if (!submission || submission.length === 0) {
-      return Response.json({ error: 'Submission not found' }, { status: 404 });
-    }
+    const submissions = await base44.asServiceRole.entities.ElsterSubmission.filter({ id: submission_id });
+    if (!submissions?.length) return Response.json({ success: false });
 
-    const sub = submission[0];
+    const submission = submissions[0];
 
-    const messages = {
-      'VALIDATED': {
-        title: '✅ ELSTER-Formular validiert',
-        message: `${sub.tax_form_type} für ${sub.tax_year} ist validiert und bereit zur Übermittlung.`,
-        type: 'success'
-      },
-      'SUBMITTED': {
-        title: '📤 ELSTER-Übermittlung gestartet',
-        message: `${sub.tax_form_type} für ${sub.tax_year} wurde an ELSTER übermittelt.`,
-        type: 'info'
-      },
-      'ACCEPTED': {
-        title: '🎉 ELSTER-Übermittlung akzeptiert',
-        message: `${sub.tax_form_type} für ${sub.tax_year} wurde von ELSTER akzeptiert!`,
-        type: 'success'
-      },
-      'REJECTED': {
-        title: '❌ ELSTER-Übermittlung abgelehnt',
-        message: `${sub.tax_form_type} für ${sub.tax_year} wurde abgelehnt. Bitte prüfen.`,
-        type: 'error'
-      },
-      'ARCHIVED': {
-        title: '📦 ELSTER-Formular archiviert',
-        message: `${sub.tax_form_type} für ${sub.tax_year} wurde GoBD-konform archiviert.`,
-        type: 'info'
-      }
-    };
-
-    const notification = messages[new_status];
-    if (!notification) {
-      console.log('[SKIP] No notification for status:', new_status);
-      return Response.json({ success: true, notified: false });
-    }
-
-    await base44.asServiceRole.entities.Notification.create({
-      user_id: sub.created_by,
-      title: notification.title,
-      message: notification.message,
-      type: notification.type,
-      action_url: '/ElsterIntegration',
-      is_read: false,
-      metadata: {
-        submission_id: sub.id,
-        form_type: sub.tax_form_type,
-        tax_year: sub.tax_year
-      }
+    // Finde User der Submission erstellt hat
+    const users = await base44.asServiceRole.entities.User.filter({
+      id: submission.created_by
     });
 
-    console.log('[SUCCESS] Notification created');
+    if (users?.length > 0) {
+      const user = users[0];
+      const statusMessages = {
+        'ACCEPTED': '✅ Ihre Einreichung wurde von ELSTER akzeptiert!',
+        'REJECTED': '❌ Ihre Einreichung wurde abgelehnt. Bitte überprüfen Sie die Fehler.',
+        'SUBMITTED': '📤 Ihre Einreichung wurde übermittelt.'
+      };
 
-    return Response.json({
-      success: true,
-      notified: true,
-      notification_type: notification.type
-    });
+      await base44.integrations.Core.SendEmail({
+        to: user.email,
+        subject: `ELSTER Status-Update: ${submission.tax_form_type}`,
+        body: `
+          <h2>Statusänderung</h2>
+          <p>Hallo ${user.full_name || user.email},</p>
+          <p>${statusMessages[new_status] || `Status: ${new_status}`}</p>
+          <p><strong>Formular:</strong> ${submission.tax_form_type} ${submission.tax_year}</p>
+          <p>Bitte melden Sie sich an um Details zu sehen.</p>
+        `
+      });
+    }
+
+    return Response.json({ success: true });
 
   } catch (error) {
     console.error('[ERROR]', error);
