@@ -108,6 +108,7 @@ import AdvancedReportGenerator from '@/components/elster/AdvancedReportGenerator
 import ComplianceAuditReport from '@/components/elster/ComplianceAuditReport';
 import TrendAnalysisDashboard from '@/components/elster/TrendAnalysisDashboard';
 import SmartNotificationCenter from '@/components/elster/SmartNotificationCenter';
+import SmartInsightsDashboard from '@/components/elster/SmartInsightsDashboard';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -242,8 +243,8 @@ export default function ElsterIntegration() {
                 </div>
                 <div className="space-y-6">
                   <SmartNotificationCenter />
+                  <SmartInsightsDashboard />
                   <RiskManagementSystem submissions={submissions} />
-                  <ComplianceMonitoring submissions={submissions} />
                 </div>
               </div>
 

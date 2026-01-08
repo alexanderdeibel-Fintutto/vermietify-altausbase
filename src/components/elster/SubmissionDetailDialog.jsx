@@ -21,6 +21,8 @@ import PreSubmissionCheck from './PreSubmissionCheck';
 import CollaborationCenter from './CollaborationCenter';
 import AdvancedDiagnostics from './AdvancedDiagnostics';
 import IntelligentCleaningTool from './IntelligentCleaningTool';
+import AIFormAssistant from './AIFormAssistant';
+import AutoCorrectButton from './AutoCorrectButton';
 
 export default function SubmissionDetailDialog({ submission, open, onOpenChange }) {
   const [showShareDialog, setShowShareDialog] = React.useState(false);
@@ -123,10 +125,11 @@ export default function SubmissionDetailDialog({ submission, open, onOpenChange 
           </Card>
 
           <Tabs defaultValue="data">
-            <TabsList className="grid w-full grid-cols-11 text-xs overflow-x-auto">
+            <TabsList className="grid w-full grid-cols-12 text-xs overflow-x-auto">
               <TabsTrigger value="data">Daten</TabsTrigger>
               <TabsTrigger value="validation">Validierung</TabsTrigger>
               <TabsTrigger value="diagnostics">Diagnose</TabsTrigger>
+              <TabsTrigger value="assistant">KI-Assistent</TabsTrigger>
               <TabsTrigger value="collaboration">Team</TabsTrigger>
               <TabsTrigger value="report">Report</TabsTrigger>
               <TabsTrigger value="compliance">Compliance</TabsTrigger>
@@ -164,6 +167,10 @@ export default function SubmissionDetailDialog({ submission, open, onOpenChange 
                   onCleanComplete={() => onOpenChange(false)}
                 />
               </div>
+            </TabsContent>
+
+            <TabsContent value="assistant" className="mt-4">
+              <AIFormAssistant submissionId={submission.id} />
             </TabsContent>
 
             <TabsContent value="collaboration" className="mt-4">
@@ -287,6 +294,10 @@ export default function SubmissionDetailDialog({ submission, open, onOpenChange 
 
           {/* Actions */}
           <div className="flex gap-3 flex-wrap">
+            <AutoCorrectButton 
+              submissionId={submission.id}
+              onSuccess={() => onOpenChange(false)}
+            />
             <Button onClick={handleExport} variant="outline" className="flex-1">
               <Download className="w-4 h-4 mr-2" />
               PDF exportieren
