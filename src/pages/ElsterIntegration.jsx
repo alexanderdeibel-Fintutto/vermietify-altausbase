@@ -10,13 +10,21 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   FileText, Upload, CheckCircle, AlertCircle, 
-  Sparkles, Settings, TrendingUp 
+  Sparkles, Settings, TrendingUp, Download, Archive 
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import TaxFormWizard from '@/components/elster/TaxFormWizard';
+import CertificateUploadDialog from '@/components/elster/CertificateUploadDialog';
+import ElsterAnalytics from '@/components/elster/ElsterAnalytics';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from 'lucide-react';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [showWizard, setShowWizard] = useState(false);
+  const [showCertUpload, setShowCertUpload] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: submissions = [] } = useQuery({
@@ -86,12 +94,13 @@ export default function ElsterIntegration() {
         transition={{ delay: 0.3 }}
       >
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="create">Formular erstellen</TabsTrigger>
+            <TabsTrigger value="create">Erstellen</TabsTrigger>
             <TabsTrigger value="submissions">Übermittlungen</TabsTrigger>
             <TabsTrigger value="certificates">Zertifikate</TabsTrigger>
             <TabsTrigger value="categories">Kategorien</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="mt-6">
@@ -99,7 +108,20 @@ export default function ElsterIntegration() {
           </TabsContent>
 
           <TabsContent value="create" className="mt-6">
-            <CreateFormView />
+            <Card>
+              <CardHeader>
+                <CardTitle>Neues Steuerformular erstellen</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={() => setShowWizard(true)}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Wizard starten
+                </Button>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="submissions" className="mt-6">
@@ -107,14 +129,35 @@ export default function ElsterIntegration() {
           </TabsContent>
 
           <TabsContent value="certificates" className="mt-6">
-            <CertificatesView certificates={certificates} />
+            <CertificatesView certificates={certificates} onUploadClick={() => setShowCertUpload(true)} />
           </TabsContent>
 
           <TabsContent value="categories" className="mt-6">
             <CategoriesView />
           </TabsContent>
+
+          <TabsContent value="analytics" className="mt-6">
+            <ElsterAnalytics submissions={submissions} />
+          </TabsContent>
         </Tabs>
       </motion.div>
+
+      {showWizard && (
+        <Dialog open={showWizard} onOpenChange={setShowWizard}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <TaxFormWizard onComplete={() => {
+              setShowWizard(false);
+              queryClient.invalidateQueries({ queryKey: ['elster-submissions'] });
+            }} />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      <CertificateUploadDialog
+        open={showCertUpload}
+        onOpenChange={setShowCertUpload}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['elster-certificates'] })}
+      />
     </div>
   );
 }
@@ -265,6 +308,30 @@ function CreateFormView() {
 }
 
 function SubmissionsView({ submissions }) {
+  const handleExportPDF = async (submissionId) => {
+    try {
+      const response = await base44.functions.invoke('exportTaxFormPDF', { submission_id: submissionId });
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'elster_formular.pdf';
+      a.click();
+      toast.success('PDF exportiert');
+    } catch (error) {
+      toast.error('Export fehlgeschlagen');
+    }
+  };
+
+  const handleArchive = async (submissionId) => {
+    try {
+      await base44.functions.invoke('archiveElsterSubmission', { submission_id: submissionId });
+      toast.success('Erfolgreich archiviert');
+    } catch (error) {
+      toast.error('Archivierung fehlgeschlagen');
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -275,7 +342,7 @@ function SubmissionsView({ submissions }) {
           {submissions.map(sub => (
             <div key={sub.id} className="p-4 border rounded-lg hover:bg-slate-50">
               <div className="flex items-start justify-between">
-                <div>
+                <div className="flex-1">
                   <div className="font-medium">{sub.tax_form_type}</div>
                   <div className="text-sm text-slate-600">
                     Jahr: {sub.tax_year} | {sub.legal_form}
@@ -286,9 +353,28 @@ function SubmissionsView({ submissions }) {
                     </div>
                   )}
                 </div>
-                <Badge variant={sub.status === 'ACCEPTED' ? 'default' : 'secondary'}>
-                  {sub.status}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant={sub.status === 'ACCEPTED' ? 'default' : 'secondary'}>
+                    {sub.status}
+                  </Badge>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => handleExportPDF(sub.id)}>
+                        <Download className="w-4 h-4 mr-2" />
+                        PDF exportieren
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleArchive(sub.id)}>
+                        <Archive className="w-4 h-4 mr-2" />
+                        Archivieren
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             </div>
           ))}
@@ -298,18 +384,23 @@ function SubmissionsView({ submissions }) {
   );
 }
 
-function CertificatesView({ certificates }) {
+function CertificatesView({ certificates, onUploadClick }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>ELSTER-Zertifikate</CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle>ELSTER-Zertifikate</CardTitle>
+          <Button onClick={onUploadClick}>
+            <Upload className="w-4 h-4 mr-2" />
+            Zertifikat hochladen
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {certificates.length === 0 ? (
           <div className="text-center py-12 text-slate-600">
             <AlertCircle className="w-12 h-12 mx-auto mb-3 text-slate-400" />
             <p>Keine Zertifikate vorhanden</p>
-            <Button className="mt-4">Zertifikat hochladen</Button>
           </div>
         ) : (
           <div className="space-y-3">
