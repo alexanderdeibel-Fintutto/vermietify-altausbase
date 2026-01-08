@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,35 +44,63 @@ export default function WhatsAppWidget() {
             <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <MessageSquare className="w-5 h-5 text-emerald-600" />
+                        <motion.div
+                            animate={{ rotate: totalUnread > 0 ? [0, -10, 10, 0] : 0 }}
+                            transition={{ repeat: totalUnread > 0 ? Infinity : 0, duration: 2 }}
+                        >
+                            <MessageSquare className="w-5 h-5 text-emerald-600" />
+                        </motion.div>
                         WhatsApp
                     </div>
-                    {totalUnread > 0 && (
-                        <Badge className="bg-emerald-600">{totalUnread}</Badge>
-                    )}
+                    <AnimatePresence mode="wait">
+                        {totalUnread > 0 && (
+                            <motion.div
+                                key={totalUnread}
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                exit={{ scale: 0 }}
+                            >
+                                <Badge className="bg-emerald-600">{totalUnread}</Badge>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </CardTitle>
             </CardHeader>
             <CardContent>
                 {unreadContacts.length > 0 ? (
                     <div className="space-y-2">
-                        {unreadContacts.slice(0, 3).map((kontakt) => (
-                            <div key={kontakt.id} className="flex items-center justify-between p-2 bg-slate-50 rounded">
-                                <div>
-                                    <p className="font-medium text-sm">{kontakt.name}</p>
-                                    <p className="text-xs text-slate-600">
-                                        {kontakt.ungelesene_nachrichten} neue Nachricht{kontakt.ungelesene_nachrichten > 1 ? 'en' : ''}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
-                        <Button 
-                            onClick={() => navigate(createPageUrl('WhatsAppCommunication'))}
-                            className="w-full mt-2"
-                            size="sm"
+                        <AnimatePresence>
+                            {unreadContacts.slice(0, 3).map((kontakt, idx) => (
+                                <motion.div 
+                                    key={kontakt.id}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 20 }}
+                                    transition={{ delay: idx * 0.1 }}
+                                    className="flex items-center justify-between p-2 bg-slate-50 rounded"
+                                >
+                                    <div>
+                                        <p className="font-medium text-sm">{kontakt.name}</p>
+                                        <p className="text-xs text-slate-600">
+                                            {kontakt.ungelesene_nachrichten} neue Nachricht{kontakt.ungelesene_nachrichten > 1 ? 'en' : ''}
+                                        </p>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
+                        <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
                         >
-                            Alle anzeigen
-                            <ArrowRight className="w-4 h-4 ml-2" />
-                        </Button>
+                            <Button 
+                                onClick={() => navigate(createPageUrl('WhatsAppCommunication'))}
+                                className="w-full mt-2"
+                                size="sm"
+                            >
+                                Alle anzeigen
+                                <ArrowRight className="w-4 h-4 ml-2" />
+                            </Button>
+                        </motion.div>
                     </div>
                 ) : (
                     <div className="text-center py-4">
