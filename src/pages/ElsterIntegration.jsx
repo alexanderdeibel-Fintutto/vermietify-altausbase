@@ -64,6 +64,13 @@ import YearEndSummary from '@/components/elster/YearEndSummary';
 import BatchCreateDialog from '@/components/elster/BatchCreateDialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from 'lucide-react';
+import AdvancedBatchValidation from '@/components/elster/AdvancedBatchValidation';
+import EnhancedSmartCorrection from '@/components/elster/EnhancedSmartCorrection';
+import AutomatedFinancialSync from '@/components/elster/AutomatedFinancialSync';
+import ComprehensiveTaxCalendar from '@/components/elster/ComprehensiveTaxCalendar';
+import TaxReportingHub from '@/components/elster/TaxReportingHub';
+import AutomatedFormGeneration from '@/components/elster/AutomatedFormGeneration';
+import ElsterNotificationCenter from '@/components/elster/ElsterNotificationCenter';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -82,6 +89,8 @@ export default function ElsterIntegration() {
   const [showSearchDialog, setShowSearchDialog] = useState(false);
   const [showBatchStatusDialog, setShowBatchStatusDialog] = useState(false);
   const [showBatchCreateDialog, setShowBatchCreateDialog] = useState(false);
+  const [showSmartCorrection, setShowSmartCorrection] = useState(false);
+  const [correctionSubmission, setCorrectionSubmission] = useState(null);
   const queryClient = useQueryClient();
 
   const handleQuickAction = (action) => {
@@ -183,10 +192,12 @@ export default function ElsterIntegration() {
         transition={{ delay: 0.3 }}
       >
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-10 text-xs">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="create">Erstellen</TabsTrigger>
             <TabsTrigger value="submissions">Übermittlungen</TabsTrigger>
+            <TabsTrigger value="validation">Validierung</TabsTrigger>
+            <TabsTrigger value="sync">Sync</TabsTrigger>
             <TabsTrigger value="certificates">Zertifikate</TabsTrigger>
             <TabsTrigger value="templates">Templates</TabsTrigger>
             <TabsTrigger value="categories">Kategorien</TabsTrigger>
@@ -230,6 +241,10 @@ export default function ElsterIntegration() {
                 <SubmissionsView 
                   submissions={submissions} 
                   onSelectSubmission={setSelectedSubmission}
+                  onCorrectSubmission={(sub) => {
+                    setCorrectionSubmission(sub);
+                    setShowSmartCorrection(true);
+                  }}
                 />
                 <SubmissionTimeline submissions={submissions} />
               </div>
@@ -237,6 +252,63 @@ export default function ElsterIntegration() {
                 <BatchOperationsPanel submissions={submissions} />
                 <BulkFormExport submissions={submissions} />
                 <GoBDComplianceDashboard />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="validation" className="mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <AdvancedBatchValidation 
+                submissions={submissions}
+                onOpenDetail={(submissionId) => {
+                  const sub = submissions.find(s => s.id === submissionId);
+                  if (sub) setSelectedSubmission(sub);
+                }}
+              />
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Intelligente Fehlerkorrektur</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-slate-600 mb-4">
+                      Wählen Sie eine Einreichung mit Fehlern aus, um KI-basierte Korrekturvorschläge zu erhalten.
+                    </p>
+                    <div className="space-y-2">
+                      {submissions
+                        .filter(s => s.validation_errors?.length > 0 || s.validation_warnings?.length > 0)
+                        .slice(0, 5)
+                        .map(sub => (
+                          <Button
+                            key={sub.id}
+                            variant="outline"
+                            className="w-full justify-start"
+                            onClick={() => {
+                              setCorrectionSubmission(sub);
+                              setShowSmartCorrection(true);
+                            }}
+                          >
+                            <AlertCircle className="w-4 h-4 mr-2 text-red-600" />
+                            {sub.tax_form_type} - {sub.tax_year}
+                          </Button>
+                        ))}
+                    </div>
+                  </CardContent>
+                </Card>
+                <ValidationPreview />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="sync" className="mt-6">
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <AutomatedFinancialSync />
+                <ComprehensiveTaxCalendar />
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <AutomatedFormGeneration />
+                <ElsterNotificationCenter />
               </div>
             </div>
           </TabsContent>
@@ -296,6 +368,7 @@ export default function ElsterIntegration() {
 
           <TabsContent value="reports" className="mt-6">
             <div className="space-y-6">
+              <TaxReportingHub />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <TaxAdvisorReport />
                 <FinancialDataSync />
@@ -409,9 +482,19 @@ export default function ElsterIntegration() {
         onOpenChange={setShowBatchCreateDialog}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ['elster-submissions'] })}
       />
-    </div>
-  );
-}
+
+      <EnhancedSmartCorrection
+        submission={correctionSubmission}
+        open={showSmartCorrection}
+        onOpenChange={setShowSmartCorrection}
+        onCorrectionApplied={() => {
+          queryClient.invalidateQueries({ queryKey: ['elster-submissions'] });
+          setShowSmartCorrection(false);
+        }}
+      />
+      </div>
+      );
+      }
 
 function DashboardView({ submissions }) {
   const recentSubmissions = submissions.slice(0, 5);
@@ -558,7 +641,7 @@ function CreateFormView() {
   );
 }
 
-function SubmissionsView({ submissions, onSelectSubmission }) {
+function SubmissionsView({ submissions, onSelectSubmission, onCorrectSubmission }) {
   return (
     <Card>
       <CardHeader>
@@ -569,11 +652,13 @@ function SubmissionsView({ submissions, onSelectSubmission }) {
           {submissions.map(sub => (
             <div 
               key={sub.id} 
-              className="p-4 border rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
-              onClick={() => onSelectSubmission(sub)}
+              className="p-4 border rounded-lg hover:bg-slate-50 transition-colors group"
             >
               <div className="flex items-start justify-between">
-                <div className="flex-1">
+                <div 
+                  className="flex-1 cursor-pointer"
+                  onClick={() => onSelectSubmission(sub)}
+                >
                   <div className="font-medium">{sub.tax_form_type}</div>
                   <div className="text-sm text-slate-600">
                     Jahr: {sub.tax_year} | {sub.legal_form}
@@ -584,9 +669,22 @@ function SubmissionsView({ submissions, onSelectSubmission }) {
                     </div>
                   )}
                 </div>
-                <Badge variant={sub.status === 'ACCEPTED' ? 'default' : 'secondary'}>
-                  {sub.status}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  {(sub.validation_errors?.length > 0 || sub.validation_warnings?.length > 0) && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onCorrectSubmission(sub)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Sparkles className="w-3 h-3 mr-1" />
+                      Korrigieren
+                    </Button>
+                  )}
+                  <Badge variant={sub.status === 'ACCEPTED' ? 'default' : 'secondary'}>
+                    {sub.status}
+                  </Badge>
+                </div>
               </div>
             </div>
           ))}
