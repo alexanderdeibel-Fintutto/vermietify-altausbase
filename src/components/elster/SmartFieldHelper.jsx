@@ -1,128 +1,138 @@
-import React, { useState } from 'react';
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { HelpCircle, Lightbulb, Calculator, BookOpen } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Sparkles, TrendingUp, TrendingDown, Minus, AlertTriangle, CheckCircle } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 
-const FIELD_HELP = {
-  income_rent: {
-    title: 'Mieteinnahmen',
-    description: 'Alle erhaltenen Mietzahlungen des Jahres',
-    tips: [
-      'Kaltmiete + Nebenkosten-Vorauszahlungen',
-      'Auch Nachzahlungen aus Vorjahren',
-      'Kaution zählt NICHT als Einnahme'
-    ],
-    calculation: 'Monatliche Miete × 12 Monate',
-    legal: '§ 21 EStG - Einkünfte aus Vermietung und Verpachtung'
-  },
-  expense_maintenance: {
-    title: 'Instandhaltungskosten',
-    description: 'Reparaturen und Erhaltungsaufwendungen',
-    tips: [
-      'Nur laufende Reparaturen',
-      'Modernisierung = AfA (nicht hier)',
-      'Mit Rechnung nachweisbar'
-    ],
-    examples: ['Heizungsreparatur', 'Dachreparatur', 'Malerarbeiten'],
-    legal: '§ 9 Abs. 1 EStG - Werbungskosten'
-  },
-  expense_management: {
-    title: 'Verwaltungskosten',
-    description: 'Kosten für Hausverwaltung und Verwaltung',
-    tips: [
-      'Hausverwaltungsgebühren',
-      'Kontoführungsgebühren',
-      'Porto, Telefon für Vermietung'
-    ],
-    legal: '§ 9 Abs. 1 EStG - Werbungskosten'
-  },
-  afa_amount: {
-    title: 'Absetzung für Abnutzung (AfA)',
-    description: 'Jährliche Gebäudeabschreibung',
-    tips: [
-      'Gebäude vor 1925: 2,5% p.a.',
-      'Gebäude nach 1925: 2% p.a.',
-      'Nur auf Gebäude, nicht Grundstück'
-    ],
-    calculation: 'Gebäudewert × AfA-Satz',
-    legal: '§ 7 Abs. 4 EStG - AfA bei Gebäuden'
+export default function SmartFieldHelper({ fieldName, currentValue, formType, buildingId, taxYear, onApplySuggestion }) {
+  const [suggestions, setSuggestions] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (fieldName && formType) {
+      fetchSuggestions();
+    }
+  }, [fieldName, currentValue, formType]);
+
+  const fetchSuggestions = async () => {
+    setLoading(true);
+    try {
+      const response = await base44.functions.invoke('suggestFormFields', {
+        field_name: fieldName,
+        current_value: currentValue,
+        form_type: formType,
+        building_id: buildingId,
+        tax_year: taxYear
+      });
+
+      if (response.data.success) {
+        setSuggestions(response.data.suggestions);
+      }
+    } catch (error) {
+      console.error('Failed to fetch suggestions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card className="bg-blue-50 border-blue-200">
+        <CardContent className="p-3">
+          <div className="flex items-center gap-2 text-sm text-blue-700">
+            <Sparkles className="w-4 h-4 animate-pulse" />
+            Lade Vorschläge...
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
-};
 
-export default function SmartFieldHelper({ fieldName, children }) {
-  const help = FIELD_HELP[fieldName];
+  if (!suggestions || suggestions.historical_values?.length === 0) {
+    return null;
+  }
 
-  if (!help) return children;
+  const getTrendIcon = () => {
+    switch (suggestions.trend) {
+      case 'steigend': return <TrendingUp className="w-4 h-4 text-green-600" />;
+      case 'fallend': return <TrendingDown className="w-4 h-4 text-red-600" />;
+      case 'stabil': return <Minus className="w-4 h-4 text-slate-600" />;
+      default: return null;
+    }
+  };
 
   return (
-    <div className="flex items-center gap-2">
-      {children}
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-6 w-6">
-            <HelpCircle className="h-4 w-4 text-slate-400" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-80" align="start">
-          <div className="space-y-3">
-            <div>
-              <h4 className="font-semibold text-sm mb-1">{help.title}</h4>
-              <p className="text-xs text-slate-600">{help.description}</p>
-            </div>
-
-            {help.tips && (
-              <div>
-                <div className="flex items-center gap-1 mb-2">
-                  <Lightbulb className="w-3 h-3 text-yellow-600" />
-                  <span className="text-xs font-medium">Wichtig:</span>
-                </div>
-                <ul className="space-y-1">
-                  {help.tips.map((tip, idx) => (
-                    <li key={idx} className="text-xs text-slate-600 flex items-start gap-1">
-                      <span className="text-slate-400">•</span>
-                      <span>{tip}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {help.examples && (
-              <div>
-                <div className="text-xs font-medium mb-1">Beispiele:</div>
-                <div className="flex flex-wrap gap-1">
-                  {help.examples.map((ex, idx) => (
-                    <Badge key={idx} variant="outline" className="text-xs">
-                      {ex}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {help.calculation && (
-              <div className="p-2 bg-blue-50 rounded border border-blue-200">
-                <div className="flex items-center gap-1 mb-1">
-                  <Calculator className="w-3 h-3 text-blue-600" />
-                  <span className="text-xs font-medium text-blue-900">Berechnung:</span>
-                </div>
-                <p className="text-xs text-blue-800">{help.calculation}</p>
-              </div>
-            )}
-
-            {help.legal && (
-              <div className="p-2 bg-slate-50 rounded border text-xs">
-                <div className="flex items-center gap-1 mb-1">
-                  <BookOpen className="w-3 h-3 text-slate-600" />
-                  <span className="font-medium">Rechtsgrundlage:</span>
-                </div>
-                <p className="text-slate-600">{help.legal}</p>
-              </div>
-            )}
+    <Card className={`border-2 ${suggestions.warning ? 'bg-yellow-50 border-yellow-200' : 'bg-blue-50 border-blue-200'}`}>
+      <CardContent className="p-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-blue-600" />
+            <span className="text-sm font-medium text-slate-700">KI-Vorschläge</span>
           </div>
-        </PopoverContent>
-      </Popover>
-    </div>
+          <Badge variant="outline" className="text-xs">
+            {suggestions.confidence}% Vertrauen
+          </Badge>
+        </div>
+
+        {suggestions.warning && (
+          <div className="flex items-start gap-2 p-2 bg-yellow-100 rounded text-xs">
+            <AlertTriangle className="w-4 h-4 text-yellow-700 flex-shrink-0 mt-0.5" />
+            <span className="text-yellow-800">{suggestions.warning}</span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          {suggestions.avg_value !== null && (
+            <div className="p-2 bg-white rounded">
+              <div className="text-slate-600">Durchschnitt</div>
+              <div className="font-semibold text-slate-900">{suggestions.avg_value}</div>
+            </div>
+          )}
+          
+          {suggestions.median_value !== null && (
+            <div className="p-2 bg-white rounded">
+              <div className="text-slate-600">Median</div>
+              <div className="font-semibold text-slate-900">{suggestions.median_value}</div>
+            </div>
+          )}
+
+          {suggestions.range && (
+            <div className="p-2 bg-white rounded col-span-2">
+              <div className="text-slate-600">Bereich</div>
+              <div className="font-semibold text-slate-900">
+                {suggestions.range.min} - {suggestions.range.max}
+              </div>
+            </div>
+          )}
+
+          {suggestions.trend && (
+            <div className="p-2 bg-white rounded flex items-center gap-2 col-span-2">
+              {getTrendIcon()}
+              <div>
+                <div className="text-slate-600">Trend</div>
+                <div className="font-semibold text-slate-900 capitalize">{suggestions.trend}</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {suggestions.avg_value !== null && onApplySuggestion && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full"
+            onClick={() => onApplySuggestion(suggestions.avg_value)}
+          >
+            <CheckCircle className="w-4 h-4 mr-2" />
+            Durchschnittswert übernehmen
+          </Button>
+        )}
+
+        <div className="text-xs text-slate-600 pt-1 border-t">
+          Basierend auf {suggestions.historical_values.length} früheren Einreichungen
+        </div>
+      </CardContent>
+    </Card>
   );
 }

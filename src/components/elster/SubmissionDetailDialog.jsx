@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import QuickDuplicateButton from './QuickDuplicateButton';
 import AuditLogViewer from './AuditLogViewer';
 import ShareWithAdvisorDialog from './ShareWithAdvisorDialog';
+import VersionHistory from './VersionHistory';
 import ValidationReport from './ValidationReport';
 import ComplianceChecklist from './ComplianceChecklist';
 import TaxOptimizationSuggestions from './TaxOptimizationSuggestions';
@@ -255,8 +256,11 @@ export default function SubmissionDetailDialog({ submission, open, onOpenChange 
             </TabsContent>
             </Tabs>
 
-            {/* Audit Log */}
-            <AuditLogViewer submissionId={submission.id} />
+            {/* Audit Log & Versionen */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <AuditLogViewer submissionId={submission.id} />
+              <VersionHistory submissionId={submission.id} />
+            </div>
 
           {/* Actions */}
           <div className="flex gap-3 flex-wrap">
