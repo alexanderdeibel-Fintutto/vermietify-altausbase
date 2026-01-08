@@ -55,6 +55,7 @@ import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
+import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -116,6 +117,7 @@ export const PAGES = {
     "WhatsAppSettings": WhatsAppSettings,
     "WhatsAppSetup": WhatsAppSetup,
     "WorkflowAutomation": WorkflowAutomation,
+    "KnowledgeManagementDashboard": KnowledgeManagementDashboard,
 }
 
 export const pagesConfig = {
