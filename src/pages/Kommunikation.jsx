@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Mail, MessageSquare, Send, Package } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LetterXpressSettings from '../components/letterxpress/LetterXpressSettings';
@@ -9,11 +10,19 @@ export default function Kommunikation() {
 
     return (
         <div className="space-y-6">
-            <div>
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+            >
                 <h1 className="text-3xl font-bold text-slate-900">Kommunikation</h1>
                 <p className="text-slate-600 mt-2">Verwalten Sie Ihre gesamte Kommunikation mit Mietern und Partnern</p>
-            </div>
+            </motion.div>
 
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+            >
             <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="postversand" className="flex items-center gap-2">
@@ -72,6 +81,7 @@ export default function Kommunikation() {
                     </div>
                 </TabsContent>
             </Tabs>
+            </motion.div>
         </div>
     );
 }

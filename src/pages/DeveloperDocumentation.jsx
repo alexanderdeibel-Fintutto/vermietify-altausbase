@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -504,7 +505,10 @@ export default function DeveloperDocumentation() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div>
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+            >
                 <h1 className="text-3xl font-bold text-slate-900">Entwickler-Dokumentation</h1>
                 <p className="text-slate-600 mt-2">
                     Automatische App-Dokumentation für KI-Assistenten
@@ -514,81 +518,37 @@ export default function DeveloperDocumentation() {
                         Letzte Aktualisierung: {format(lastUpdate, 'dd.MM.yyyy HH:mm:ss', { locale: de })} Uhr
                     </p>
                 )}
-            </div>
+            </motion.div>
 
             {/* Statistik-Dashboard */}
             <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+                {[
+                    { icon: FileCheck, label: `${stats.completed}/${stats.total}`, title: "Erstellt", color: "emerald" },
+                    { icon: Star, label: `${stats.priorityCompleted}/${stats.priority}`, title: "Priorität", color: "yellow" },
+                    { icon: AlertTriangle, label: stats.outdated, title: "Veraltet", color: "yellow" },
+                    { icon: Archive, label: formatBytes(stats.totalSize), title: "Gesamt", color: "blue" },
+                    { icon: Clock, label: `${stats.avgDuration.toFixed(1)}s`, title: "Ø Dauer", color: "purple" },
+                    { icon: Loader2, label: stats.generating, title: "In Arbeit", color: "slate", spin: stats.generating > 0 }
+                ].map((stat, idx) => (
+                    <motion.div
+                        key={stat.title}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 + idx * 0.05 }}
+                    >
                 <Card>
                     <CardContent className="p-4">
                         <div className="flex items-center gap-3">
-                            <FileCheck className="w-8 h-8 text-emerald-600" />
+                            <stat.icon className={`w-8 h-8 text-${stat.color}-600 ${stat.spin ? 'animate-spin' : ''}`} />
                             <div>
-                                <p className="text-2xl font-bold text-slate-900">{stats.completed}/{stats.total}</p>
-                                <p className="text-xs text-slate-600">Erstellt</p>
+                                <p className="text-2xl font-bold text-slate-900">{stat.label}</p>
+                                <p className="text-xs text-slate-600">{stat.title}</p>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
-                
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                            <Star className="w-8 h-8 text-yellow-600" />
-                            <div>
-                                <p className="text-2xl font-bold text-slate-900">{stats.priorityCompleted}/{stats.priority}</p>
-                                <p className="text-xs text-slate-600">Priorität</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-                
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                            <AlertTriangle className="w-8 h-8 text-yellow-600" />
-                            <div>
-                                <p className="text-2xl font-bold text-slate-900">{stats.outdated}</p>
-                                <p className="text-xs text-slate-600">Veraltet</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-                
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                            <Archive className="w-8 h-8 text-blue-600" />
-                            <div>
-                                <p className="text-2xl font-bold text-slate-900">{formatBytes(stats.totalSize)}</p>
-                                <p className="text-xs text-slate-600">Gesamt</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-                
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                            <Clock className="w-8 h-8 text-purple-600" />
-                            <div>
-                                <p className="text-2xl font-bold text-slate-900">{stats.avgDuration.toFixed(1)}s</p>
-                                <p className="text-xs text-slate-600">Ø Dauer</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-                
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                            <Loader2 className={`w-8 h-8 text-slate-600 ${stats.generating > 0 ? 'animate-spin' : ''}`} />
-                            <div>
-                                <p className="text-2xl font-bold text-slate-900">{stats.generating}</p>
-                                <p className="text-xs text-slate-600">In Arbeit</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                    </motion.div>
+                ))}
             </div>
 
             {/* Info Box */}

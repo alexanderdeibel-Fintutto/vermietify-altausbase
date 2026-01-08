@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -246,7 +247,11 @@ export default function SupportCenter() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <motion.div 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-between"
+            >
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900">🆘 Support-Center</h1>
                     <p className="text-slate-600 mt-1">Live-Überwachung aller Support-Anfragen</p>
@@ -271,9 +276,14 @@ export default function SupportCenter() {
                         {autoRefresh ? '⏸️ Pausieren' : '▶️ Fortsetzen'}
                     </Button>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Live-Übersicht */}
+            <motion.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 }}
+            >
             <Card className="border-2 border-emerald-300 bg-emerald-50">
                 <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2">
@@ -282,65 +292,46 @@ export default function SupportCenter() {
                     </CardTitle>
                 </CardHeader>
             </Card>
+            </motion.div>
 
             {/* Statistik-Karten */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                    { title: "Offen", value: openProblems.length, extra: `+${todayProblems.length} heute` },
+                    { title: "Heute Neu", value: todayProblems.length, extra: "Normal" },
+                    { title: "Ø Lösungszeit", value: `${avgSolutionTime}h`, extra: "Durchschnitt" },
+                    { title: "Zufriedenheit", value: avgRating, extra: `${withRating.length} Bewertungen`, star: true }
+                ].map((stat, idx) => (
+                    <motion.div
+                        key={stat.title}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 + idx * 0.05 }}
+                    >
                 <Card>
                     <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-slate-600">Offen</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-3xl font-bold">{openProblems.length}</div>
-                        <div className="flex items-center gap-1 text-sm text-slate-600 mt-1">
-                            <TrendingUp className="w-4 h-4 text-orange-500" />
-                            <span>+{todayProblems.length} heute</span>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-slate-600">Heute Neu</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-3xl font-bold">{todayProblems.length}</div>
-                        <div className="flex items-center gap-1 text-sm text-green-600 mt-1">
-                            <TrendingDown className="w-4 h-4" />
-                            <span>Normal</span>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-slate-600">Ø Lösungszeit</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-3xl font-bold">{avgSolutionTime}h</div>
-                        <div className="flex items-center gap-1 text-sm text-slate-600 mt-1">
-                            <Clock className="w-4 h-4" />
-                            <span>Durchschnitt</span>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-slate-600">Zufriedenheit</CardTitle>
+                        <CardTitle className="text-sm font-medium text-slate-600">{stat.title}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-bold flex items-center gap-1">
-                            {avgRating}
-                            <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
+                            {stat.value}
+                            {stat.star && <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />}
                         </div>
                         <div className="text-sm text-slate-600 mt-1">
-                            {withRating.length} Bewertungen
+                            {stat.extra}
                         </div>
                     </CardContent>
                 </Card>
+                    </motion.div>
+                ))}
             </div>
 
             {/* Tabs */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+            >
             <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-6">
                     <TabsTrigger value="dashboard">
@@ -634,6 +625,7 @@ export default function SupportCenter() {
                     <AutomationRules />
                 </TabsContent>
             </Tabs>
+            </motion.div>
 
             {/* Dialoge */}
             {selectedProblem && (
