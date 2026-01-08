@@ -23,6 +23,7 @@ import AdvancedDiagnostics from './AdvancedDiagnostics';
 import IntelligentCleaningTool from './IntelligentCleaningTool';
 import AIFormAssistant from './AIFormAssistant';
 import AutoCorrectButton from './AutoCorrectButton';
+import DuplicateDetector from './DuplicateDetector';
 
 export default function SubmissionDetailDialog({ submission, open, onOpenChange }) {
   const [showShareDialog, setShowShareDialog] = React.useState(false);
@@ -166,6 +167,7 @@ export default function SubmissionDetailDialog({ submission, open, onOpenChange 
                   submissionId={submission.id} 
                   onCleanComplete={() => onOpenChange(false)}
                 />
+                <DuplicateDetector submissionId={submission.id} />
               </div>
             </TabsContent>
 

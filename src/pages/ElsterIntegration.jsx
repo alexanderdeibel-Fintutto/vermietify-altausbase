@@ -115,6 +115,9 @@ import TemplateLibrary from '@/components/elster/TemplateLibrary';
 import AutomationScheduler from '@/components/elster/AutomationScheduler';
 import ComplianceTimeline from '@/components/elster/ComplianceTimeline';
 import FieldUsageAnalyzer from '@/components/elster/FieldUsageAnalyzer';
+import ErrorClusterAnalysis from '@/components/elster/ErrorClusterAnalysis';
+import CostStructureAnalyzer from '@/components/elster/CostStructureAnalyzer';
+import TaxForecastWidget from '@/components/elster/TaxForecastWidget';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -454,8 +457,8 @@ export default function ElsterIntegration() {
                   <MultiYearComparison submissions={submissions} formType="ANLAGE_V" />
                 </div>
                 <div className="space-y-6">
-                  <DeadlineTracker submissions={submissions} taxYear={new Date().getFullYear()} />
-                  <FieldUsageAnalyzer />
+                  <ErrorClusterAnalysis />
+                  <TaxForecastWidget />
                 </div>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -463,8 +466,8 @@ export default function ElsterIntegration() {
                   <ElsterAnalytics submissions={submissions} />
                 </div>
                 <div className="space-y-6">
-                  <FormComparisonView submissions={submissions} formType="ANLAGE_V" />
-                  <PerformanceOptimizer />
+                  <CostStructureAnalyzer />
+                  <FieldUsageAnalyzer />
                 </div>
               </div>
             </div>
