@@ -9,36 +9,41 @@ Deno.serve(async (req) => {
       return Response.json({ error: "Admin access required" }, { status: 403 });
     }
     
-    // Alle relevanten Daten für Backup sammeln
     const roles = await base44.asServiceRole.entities.Role.list();
     const permissions = await base44.asServiceRole.entities.Permission.list();
     const fieldPermissions = await base44.asServiceRole.entities.FieldPermission.list();
-    const roleAssignments = await base44.asServiceRole.entities.UserRoleAssignment.list();
-    const moduleAccess = await base44.asServiceRole.entities.ModuleAccess.list();
+    const assignments = await base44.asServiceRole.entities.UserRoleAssignment.list();
     
     const backup = {
-      version: '1.0',
-      timestamp: new Date().toISOString(),
-      createdBy: user.email,
-      data: {
+      backupDate: new Date().toISOString(),
+      backupBy: user.email,
+      version: "1.0",
+      entities: {
         roles,
         permissions,
         fieldPermissions,
-        roleAssignments,
-        moduleAccess
+        assignments
       },
       statistics: {
-        totalRoles: roles.length,
-        totalPermissions: permissions.length,
-        totalAssignments: roleAssignments.length,
-        activeRoles: roles.filter(r => r.is_active).length
+        rolesCount: roles.length,
+        permissionsCount: permissions.length,
+        fieldPermissionsCount: fieldPermissions.length,
+        assignmentsCount: assignments.length
       }
     };
     
+    // Upload backup to storage
+    const backupJson = JSON.stringify(backup, null, 2);
+    const blob = new Blob([backupJson], { type: 'application/json' });
+    const file = new File([blob], `backup_roles_${new Date().toISOString()}.json`);
+    
+    const uploadResult = await base44.asServiceRole.integrations.Core.UploadFile({ file });
+    
     return Response.json({
       success: true,
-      backup,
-      message: 'Backup erfolgreich erstellt'
+      backupUrl: uploadResult.file_url,
+      statistics: backup.statistics,
+      message: "Backup successfully created"
     });
     
   } catch (error) {

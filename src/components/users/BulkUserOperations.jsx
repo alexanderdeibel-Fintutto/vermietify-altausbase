@@ -1,157 +1,120 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Users, UserPlus, UserX, Shield } from 'lucide-react';
+import { Users, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function BulkUserOperations() {
   const [selectedUsers, setSelectedUsers] = useState([]);
-  const [bulkAction, setBulkAction] = useState('');
-  const [targetRole, setTargetRole] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
   const queryClient = useQueryClient();
 
   const { data: users = [] } = useQuery({
     queryKey: ['all-users'],
-    queryFn: async () => {
-      const allUsers = await base44.asServiceRole.entities.User.list();
-      return allUsers;
-    }
+    queryFn: () => base44.asServiceRole.entities.User.list()
   });
 
   const { data: roles = [] } = useQuery({
-    queryKey: ['all-roles'],
-    queryFn: () => base44.asServiceRole.entities.Role.list()
+    queryKey: ['roles'],
+    queryFn: () => base44.asServiceRole.entities.Role.filter({ is_active: true })
   });
 
-  const bulkAssignMutation = useMutation({
-    mutationFn: async ({ userIds, roleId }) => {
-      const promises = userIds.map(userId => 
+  const assignRoleMutation = useMutation({
+    mutationFn: async () => {
+      const promises = selectedUsers.map(userId =>
         base44.functions.invoke('assignRoleToUser', {
           userId,
-          roleId,
+          roleId: selectedRole,
           validFrom: new Date().toISOString().split('T')[0]
         })
       );
-      return await Promise.all(promises);
+      await Promise.all(promises);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['all-users'] });
-      toast.success(`Rolle ${selectedUsers.length} Benutzern zugewiesen`);
+      queryClient.invalidateQueries({ queryKey: ['role-assignments'] });
+      toast.success(`Rolle zu ${selectedUsers.length} Benutzern zugewiesen`);
       setSelectedUsers([]);
     }
   });
 
-  const bulkActivateMutation = useMutation({
-    mutationFn: async (userIds) => {
-      const promises = userIds.map(userId =>
-        base44.asServiceRole.entities.User.update(userId, { is_tester: true })
-      );
-      return await Promise.all(promises);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['all-users'] });
-      toast.success(`${selectedUsers.length} Benutzer als Tester aktiviert`);
-      setSelectedUsers([]);
-    }
-  });
-
-  const handleToggleUser = (userId) => {
+  const toggleUser = (userId) => {
     setSelectedUsers(prev =>
-      prev.includes(userId)
-        ? prev.filter(id => id !== userId)
-        : [...prev, userId]
+      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
     );
   };
 
-  const handleBulkAction = () => {
-    if (selectedUsers.length === 0) return;
-    
-    switch(bulkAction) {
-      case 'assign_role':
-        if (!targetRole) {
-          toast.error('Bitte Rolle auswählen');
-          return;
-        }
-        bulkAssignMutation.mutate({ userIds: selectedUsers, roleId: targetRole });
-        break;
-      case 'activate_tester':
-        bulkActivateMutation.mutate(selectedUsers);
-        break;
-      default:
-        toast.error('Bitte Aktion auswählen');
-    }
+  const toggleAll = () => {
+    setSelectedUsers(prev => prev.length === users.length ? [] : users.map(u => u.id));
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Bulk-Operationen</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="w-5 h-5" />
+          Bulk-Operationen
+        </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <Select value={bulkAction} onValueChange={setBulkAction}>
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder="Aktion wählen..." />
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-2 pb-3 border-b">
+          <Checkbox
+            checked={selectedUsers.length === users.length}
+            onCheckedChange={toggleAll}
+          />
+          <span className="text-sm font-medium">
+            Alle auswählen ({selectedUsers.length} ausgewählt)
+          </span>
+        </div>
+
+        <div className="space-y-2 max-h-64 overflow-y-auto">
+          {users.map(user => (
+            <div key={user.id} className="flex items-center gap-3 p-2 border rounded-lg">
+              <Checkbox
+                checked={selectedUsers.includes(user.id)}
+                onCheckedChange={() => toggleUser(user.id)}
+              />
+              <div className="flex-1">
+                <div className="text-sm font-medium">{user.full_name || user.email}</div>
+                <div className="text-xs text-slate-500">{user.email}</div>
+              </div>
+              <Badge variant="outline">{user.role}</Badge>
+            </div>
+          ))}
+        </div>
+
+        <div className="space-y-3 pt-3 border-t">
+          <div>
+            <label className="text-sm font-medium">Rolle zuweisen</label>
+            <Select value={selectedRole} onValueChange={setSelectedRole}>
+              <SelectTrigger>
+                <SelectValue placeholder="Rolle wählen" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="assign_role">Rolle zuweisen</SelectItem>
-                <SelectItem value="activate_tester">Als Tester aktivieren</SelectItem>
+                {roles.map(role => (
+                  <SelectItem key={role.id} value={role.id}>
+                    {role.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
+          </div>
 
-            {bulkAction === 'assign_role' && (
-              <Select value={targetRole} onValueChange={setTargetRole}>
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Rolle wählen..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {roles.map(role => (
-                    <SelectItem key={role.id} value={role.id}>
-                      {role.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <Button
+            onClick={() => assignRoleMutation.mutate()}
+            disabled={selectedUsers.length === 0 || !selectedRole || assignRoleMutation.isPending}
+            className="w-full"
+          >
+            {assignRoleMutation.isPending ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Verarbeite...</>
+            ) : (
+              `Rolle zu ${selectedUsers.length} Benutzern zuweisen`
             )}
-
-            <Button 
-              onClick={handleBulkAction}
-              disabled={selectedUsers.length === 0 || !bulkAction}
-            >
-              Ausführen ({selectedUsers.length})
-            </Button>
-          </div>
-
-          <div className="border rounded-lg p-4 max-h-96 overflow-y-auto">
-            <div className="space-y-2">
-              {users.map(user => (
-                <div 
-                  key={user.id}
-                  className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer ${
-                    selectedUsers.includes(user.id) ? 'bg-emerald-50' : 'hover:bg-slate-50'
-                  }`}
-                  onClick={() => handleToggleUser(user.id)}
-                >
-                  <Checkbox 
-                    checked={selectedUsers.includes(user.id)}
-                    onCheckedChange={() => handleToggleUser(user.id)}
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium">{user.full_name || user.email}</div>
-                    <div className="text-sm text-slate-600">{user.email}</div>
-                  </div>
-                  <Badge variant="outline">{user.role}</Badge>
-                  {user.is_tester && <Badge variant="secondary">Tester</Badge>}
-                </div>
-              ))}
-            </div>
-          </div>
+          </Button>
         </div>
       </CardContent>
     </Card>

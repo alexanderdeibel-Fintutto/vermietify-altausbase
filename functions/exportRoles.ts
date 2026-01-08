@@ -9,58 +9,30 @@ Deno.serve(async (req) => {
       return Response.json({ error: "Admin access required" }, { status: 403 });
     }
     
-    const { format = 'json' } = await req.json();
-    
-    // Alle Rollen und Permissions laden
     const roles = await base44.asServiceRole.entities.Role.list();
     const permissions = await base44.asServiceRole.entities.Permission.list();
-    const fieldPermissions = await base44.asServiceRole.entities.FieldPermission.list();
+    const assignments = await base44.asServiceRole.entities.UserRoleAssignment.list();
     
     const exportData = {
       exportDate: new Date().toISOString(),
-      version: '1.0',
-      roles: roles.map(role => ({
-        name: role.name,
-        description: role.description,
-        category: role.category,
-        is_predefined: role.is_predefined,
-        is_active: role.is_active,
-        permissions: role.permissions || []
-      })),
-      permissions: permissions.map(perm => ({
-        code: perm.code,
-        name: perm.name,
-        description: perm.description,
-        module: perm.module,
-        resource: perm.resource,
-        action: perm.action,
-        is_active: perm.is_active
-      })),
-      fieldPermissions: fieldPermissions.map(fp => ({
-        entity_name: fp.entity_name,
-        field_name: fp.field_name,
-        access_level: fp.access_level
-      }))
+      exportedBy: user.email,
+      version: "1.0",
+      data: {
+        roles,
+        permissions,
+        assignments
+      },
+      summary: {
+        rolesCount: roles.length,
+        permissionsCount: permissions.length,
+        assignmentsCount: assignments.length
+      }
     };
     
-    if (format === 'json') {
-      return Response.json(exportData);
-    } else if (format === 'csv') {
-      // CSV-Export für Rollen
-      let csv = 'Name,Beschreibung,Kategorie,Predefined,Aktiv,Permissions\n';
-      roles.forEach(role => {
-        csv += `"${role.name}","${role.description || ''}","${role.category}",${role.is_predefined},${role.is_active},"${(role.permissions || []).length}"\n`;
-      });
-      
-      return new Response(csv, {
-        headers: {
-          'Content-Type': 'text/csv',
-          'Content-Disposition': 'attachment; filename=roles-export.csv'
-        }
-      });
-    }
-    
-    return Response.json({ error: 'Invalid format' }, { status: 400 });
+    return Response.json({
+      success: true,
+      data: exportData
+    });
     
   } catch (error) {
     console.error("Export roles error:", error);
