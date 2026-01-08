@@ -4,77 +4,96 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    
+
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { submission_ids } = await req.json();
 
-    if (!submission_ids || submission_ids.length === 0) {
-      return Response.json({ error: 'No submission IDs provided' }, { status: 400 });
+    if (!submission_ids || !Array.isArray(submission_ids) || submission_ids.length === 0) {
+      return Response.json({ error: 'submission_ids array required' }, { status: 400 });
     }
 
-    const results = [];
+    console.log(`[BATCH-VALIDATE] Starting validation of ${submission_ids.length} submissions`);
+
+    const results = {
+      total: submission_ids.length,
+      passed: 0,
+      failed: 0,
+      warnings: 0,
+      details: []
+    };
 
     for (const id of submission_ids) {
       try {
-        const submission = await base44.asServiceRole.entities.ElsterSubmission.get(id);
-        
-        if (!submission) {
-          results.push({ id, success: false, error: 'Not found' });
+        const submissions = await base44.entities.ElsterSubmission.filter({ id });
+        if (submissions.length === 0) {
+          results.details.push({ id, status: 'not_found', errors: ['Submission not found'] });
+          results.failed++;
           continue;
         }
 
-        // Plausibilitätsprüfung
-        const validation = await base44.asServiceRole.functions.invoke('validateFormPlausibility', {
+        const submission = submissions[0];
+
+        // Validiere Formular
+        const validationResponse = await base44.functions.invoke('validateFormPlausibility', {
           form_data: submission.form_data,
           form_type: submission.tax_form_type,
-          building_id: submission.building_id
+          legal_form: submission.legal_form
         });
 
-        if (validation.data.is_valid) {
-          await base44.asServiceRole.entities.ElsterSubmission.update(id, {
-            status: 'VALIDATED',
-            validation_errors: [],
-            validation_warnings: validation.data.warnings || []
-          });
+        const validation = validationResponse.data.validation;
 
-          results.push({ 
-            id, 
-            success: true, 
-            status: 'VALIDATED',
-            warnings: validation.data.warnings?.length || 0
-          });
+        // Update Submission mit Validierungsergebnis
+        await base44.asServiceRole.entities.ElsterSubmission.update(id, {
+          validation_errors: validation.errors || [],
+          validation_warnings: validation.warnings || [],
+          ai_confidence_score: validation.plausibility_score || submission.ai_confidence_score,
+          status: validation.errors?.length > 0 ? 'DRAFT' : 'VALIDATED'
+        });
+
+        const hasErrors = validation.errors && validation.errors.length > 0;
+        const hasWarnings = validation.warnings && validation.warnings.length > 0;
+
+        if (hasErrors) {
+          results.failed++;
         } else {
-          await base44.asServiceRole.entities.ElsterSubmission.update(id, {
-            validation_errors: validation.data.errors,
-            validation_warnings: validation.data.warnings || []
-          });
-
-          results.push({ 
-            id, 
-            success: false, 
-            errors: validation.data.errors.length,
-            warnings: validation.data.warnings?.length || 0
-          });
+          results.passed++;
         }
+
+        if (hasWarnings) {
+          results.warnings++;
+        }
+
+        results.details.push({
+          id,
+          status: hasErrors ? 'failed' : 'passed',
+          errors: validation.errors || [],
+          warnings: validation.warnings || [],
+          plausibility_score: validation.plausibility_score
+        });
+
       } catch (error) {
-        results.push({ id, success: false, error: error.message });
+        console.error(`[ERROR] Validation failed for ${id}:`, error);
+        results.failed++;
+        results.details.push({
+          id,
+          status: 'error',
+          errors: [error.message]
+        });
       }
     }
 
-    const successCount = results.filter(r => r.success).length;
+    console.log(`[BATCH-VALIDATE] Complete: ${results.passed} passed, ${results.failed} failed`);
 
     return Response.json({
       success: true,
-      validated: successCount,
-      total: results.length,
       results
     });
 
   } catch (error) {
-    console.error('Batch validation error:', error);
+    console.error('[ERROR]', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

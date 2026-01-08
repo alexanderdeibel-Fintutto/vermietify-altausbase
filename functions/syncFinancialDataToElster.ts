@@ -9,136 +9,89 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { building_id, tax_year } = await req.json();
+    console.log('[SYNC] Starting financial data synchronization to ELSTER');
 
-    if (!building_id || !tax_year) {
-      return Response.json({ error: 'building_id and tax_year required' }, { status: 400 });
-    }
-
-    console.log(`[SYNC] Syncing financial data for building ${building_id}, year ${tax_year}`);
-
-    // Zeitraum für das Steuerjahr
-    const yearStart = new Date(tax_year, 0, 1);
-    const yearEnd = new Date(tax_year, 11, 31);
-
-    // Hole alle FinancialItems für das Gebäude
-    const financialItems = await base44.entities.FinancialItem.filter({
-      building_id,
-      date: { $gte: yearStart.toISOString(), $lte: yearEnd.toISOString() }
-    });
-
-    console.log(`[INFO] Found ${financialItems.length} financial items`);
-
-    // Kategorisiere nach ELSTER-Feldern
-    const categorized = {
-      income_rent: 0,
-      expense_property_tax: 0,
-      expense_insurance: 0,
-      expense_maintenance: 0,
-      expense_administration: 0,
-      expense_interest: 0,
-      expense_utilities: 0,
-      expense_other: 0
+    const syncResult = {
+      synced_items: 0,
+      skipped_items: 0,
+      errors: [],
+      categories_mapped: {}
     };
 
-    const itemDetails = [];
+    // Hole alle DRAFT/AI_PROCESSED Submissions
+    const submissions = await base44.entities.ElsterSubmission.filter({
+      status: { $in: ['DRAFT', 'AI_PROCESSED'] }
+    });
 
-    for (const item of financialItems) {
-      const amount = Math.abs(item.amount || 0);
-      const isIncome = item.type === 'income';
-      const isExpense = item.type === 'expense';
+    for (const submission of submissions) {
+      try {
+        if (!submission.building_id) {
+          syncResult.skipped_items++;
+          continue;
+        }
 
-      let mapped = false;
+        // Hole Finanzdaten für das Gebäude und Jahr
+        const financialItems = await base44.asServiceRole.entities.FinancialItem.filter({
+          building_id: submission.building_id,
+          year: submission.tax_year
+        });
 
-      if (isIncome) {
-        // Mieteinnahmen
-        if (item.category?.includes('Miete') || item.category?.includes('Rent')) {
-          categorized.income_rent += amount;
-          mapped = true;
+        if (financialItems.length === 0) {
+          syncResult.skipped_items++;
+          continue;
         }
-      } else if (isExpense) {
-        // Grundsteuer
-        if (item.category?.includes('Grundsteuer') || item.category?.includes('Property Tax')) {
-          categorized.expense_property_tax += amount;
-          mapped = true;
-        }
-        // Versicherung
-        else if (item.category?.includes('Versicherung') || item.category?.includes('Insurance')) {
-          categorized.expense_insurance += amount;
-          mapped = true;
-        }
-        // Instandhaltung
-        else if (item.category?.includes('Instandhaltung') || item.category?.includes('Maintenance') || 
-                 item.category?.includes('Reparatur')) {
-          categorized.expense_maintenance += amount;
-          mapped = true;
-        }
-        // Verwaltung
-        else if (item.category?.includes('Verwaltung') || item.category?.includes('Administration')) {
-          categorized.expense_administration += amount;
-          mapped = true;
-        }
-        // Zinsen
-        else if (item.category?.includes('Zins') || item.category?.includes('Interest')) {
-          categorized.expense_interest += amount;
-          mapped = true;
-        }
-        // Nebenkosten
-        else if (item.category?.includes('Nebenkosten') || item.category?.includes('Utilities')) {
-          categorized.expense_utilities += amount;
-          mapped = true;
-        }
+
+        // Aggregiere nach Kategorien
+        const einnahmen = financialItems
+          .filter(item => item.category === 'Einnahme')
+          .reduce((sum, item) => sum + (item.amount || 0), 0);
+
+        const ausgaben = financialItems
+          .filter(item => item.category === 'Ausgabe')
+          .reduce((sum, item) => sum + Math.abs(item.amount || 0), 0);
+
+        // Update Submission mit synced data
+        const updatedFormData = {
+          ...submission.form_data,
+          einnahmen_gesamt: Math.round(einnahmen * 100) / 100,
+          ausgaben_gesamt: Math.round(ausgaben * 100) / 100,
+          ueberschuss: Math.round((einnahmen - ausgaben) * 100) / 100,
+          _synced_at: new Date().toISOString()
+        };
+
+        await base44.asServiceRole.entities.ElsterSubmission.update(submission.id, {
+          form_data: updatedFormData
+        });
+
+        syncResult.synced_items++;
+
+      } catch (error) {
+        console.error(`[ERROR] Sync failed for ${submission.id}:`, error);
+        syncResult.errors.push({
+          submission_id: submission.id,
+          error: error.message
+        });
       }
-
-      if (!mapped && isExpense) {
-        categorized.expense_other += amount;
-      }
-
-      itemDetails.push({
-        id: item.id,
-        date: item.date,
-        description: item.description,
-        amount: item.amount,
-        category: item.category,
-        type: item.type,
-        mapped_to: mapped ? Object.keys(categorized).find(key => 
-          categorized[key] === amount || Math.abs(categorized[key] - amount) < 0.01
-        ) : 'expense_other'
-      });
     }
 
-    // Hole Gebäude-Details für AfA
-    const buildings = await base44.entities.Building.filter({ id: building_id });
-    const building = buildings[0];
+    // Log Sync
+    await base44.asServiceRole.entities.ActivityLog.create({
+      entity_type: 'ElsterSubmission',
+      entity_id: 'batch',
+      action: 'financial_data_synced',
+      user_id: user.id,
+      changes: syncResult,
+      metadata: {
+        items_synced: syncResult.synced_items,
+        sync_timestamp: new Date().toISOString()
+      }
+    });
 
-    // AfA berechnen (2% für Wohngebäude nach 1925)
-    let afa_amount = 0;
-    if (building?.purchase_price) {
-      const landValue = building.land_value || (building.purchase_price * 0.2);
-      const buildingValue = building.purchase_price - landValue;
-      afa_amount = buildingValue * 0.02; // 2% linear
-    }
-
-    console.log(`[SUCCESS] Categorized data: Income ${categorized.income_rent}, Expenses ${Object.values(categorized).reduce((a, b) => a + b, 0)}`);
+    console.log(`[SYNC] Complete: ${syncResult.synced_items} synced, ${syncResult.skipped_items} skipped`);
 
     return Response.json({
       success: true,
-      form_data: {
-        ...categorized,
-        afa_amount,
-        building_cost: building?.purchase_price || 0
-      },
-      item_count: financialItems.length,
-      details: itemDetails,
-      summary: {
-        total_income: categorized.income_rent,
-        total_expenses: Object.entries(categorized)
-          .filter(([key]) => key.startsWith('expense_'))
-          .reduce((sum, [_, value]) => sum + value, 0),
-        net_result: categorized.income_rent - Object.entries(categorized)
-          .filter(([key]) => key.startsWith('expense_'))
-          .reduce((sum, [_, value]) => sum + value, 0) - afa_amount
-      }
+      sync_result: syncResult
     });
 
   } catch (error) {

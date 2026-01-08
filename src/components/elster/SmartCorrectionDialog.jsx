@@ -1,60 +1,94 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Lightbulb, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Sparkles, Loader2, CheckCircle, ArrowRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-export default function SmartCorrectionDialog({ plausibilityResult, submission, open, onOpenChange, onSuccess }) {
-  const [corrections, setCorrections] = useState({});
-  const [saving, setSaving] = useState(false);
+export default function SmartCorrectionDialog({ submission, open, onOpenChange, onCorrectionApplied }) {
+  const [processing, setProcessing] = useState(false);
+  const [corrections, setCorrections] = useState(null);
 
-  if (!plausibilityResult || !submission) return null;
+  const handleAnalyze = async () => {
+    setProcessing(true);
+    try {
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analysiere folgende Steuerformular-Fehler und schlage Korrekturen vor:
 
-  const issues = [
-    ...(plausibilityResult.errors || []),
-    ...(plausibilityResult.warnings || [])
-  ];
+Formular: ${submission.tax_form_type}
+Jahr: ${submission.tax_year}
+Rechtsform: ${submission.legal_form}
 
-  const handleCorrect = (issue) => {
-    if (issue.suggested_value !== undefined) {
-      setCorrections({
-        ...corrections,
-        [issue.field]: issue.suggested_value
+Fehler:
+${submission.validation_errors?.map(e => `- ${e.field}: ${e.message}`).join('\n') || 'Keine'}
+
+Warnungen:
+${submission.validation_warnings?.map(w => `- ${w.field}: ${w.message}`).join('\n') || 'Keine'}
+
+Aktuelle Formulardaten:
+${JSON.stringify(submission.form_data, null, 2)}
+
+Bitte gib für jeden Fehler/Warnung eine konkrete Korrektur-Empfehlung mit:
+1. Feld-Name
+2. Aktueller Wert
+3. Empfohlener Wert
+4. Begründung`,
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            corrections: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  field: { type: 'string' },
+                  current_value: { type: 'string' },
+                  suggested_value: { type: 'string' },
+                  reason: { type: 'string' },
+                  confidence: { type: 'number' }
+                }
+              }
+            }
+          }
+        }
       });
+
+      setCorrections(response.corrections || []);
+    } catch (error) {
+      toast.error('Analyse fehlgeschlagen');
+      console.error(error);
+    } finally {
+      setProcessing(false);
     }
   };
 
-  const handleSave = async () => {
-    if (Object.keys(corrections).length === 0) {
-      toast.error('Keine Korrekturen ausgewählt');
-      return;
-    }
+  const handleApplyCorrections = async () => {
+    if (!corrections || corrections.length === 0) return;
 
-    setSaving(true);
+    setProcessing(true);
     try {
-      const updatedFormData = {
-        ...submission.form_data,
-        ...corrections
-      };
-
-      await base44.entities.ElsterSubmission.update(submission.id, {
-        form_data: updatedFormData,
-        status: 'DRAFT'
+      const updatedFormData = { ...submission.form_data };
+      
+      corrections.forEach(corr => {
+        if (corr.confidence >= 70) {
+          updatedFormData[corr.field] = corr.suggested_value;
+        }
       });
 
-      toast.success('Korrekturen gespeichert');
-      onSuccess?.();
+      await base44.entities.ElsterSubmission.update(submission.id, {
+        form_data: updatedFormData
+      });
+
+      toast.success('Korrekturen angewendet');
+      onCorrectionApplied?.();
       onOpenChange(false);
     } catch (error) {
-      toast.error('Speichern fehlgeschlagen');
+      toast.error('Anwendung fehlgeschlagen');
       console.error(error);
     } finally {
-      setSaving(false);
+      setProcessing(false);
     }
   };
 
@@ -63,125 +97,100 @@ export default function SmartCorrectionDialog({ plausibilityResult, submission, 
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Lightbulb className="w-5 h-5 text-yellow-600" />
-            Intelligente Korrekturen
+            <Sparkles className="w-5 h-5 text-purple-600" />
+            KI-gestützte Fehlerkorrektur
           </DialogTitle>
         </DialogHeader>
 
-        <Alert>
-          <AlertDescription className="text-sm">
-            KI-basierte Korrekturvorschläge für erkannte Probleme
-          </AlertDescription>
-        </Alert>
+        {!corrections ? (
+          <div className="space-y-4">
+            <Alert>
+              <AlertDescription>
+                Die KI analysiert Ihre Fehler und schlägt automatische Korrekturen vor.
+              </AlertDescription>
+            </Alert>
 
-        <div className="space-y-4">
-          {issues
-            .filter(i => i.suggested_value !== undefined)
-            .map((issue, idx) => (
-              <div key={idx} className="p-4 border rounded-lg">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <AlertTriangle className={`w-4 h-4 ${issue.severity === 'error' ? 'text-red-600' : 'text-yellow-600'}`} />
-                      <span className="font-medium text-sm">{issue.field}</span>
-                      <Badge variant={issue.severity === 'error' ? 'destructive' : 'default'} className="text-xs">
-                        {issue.severity}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-slate-600">{issue.message}</p>
-                  </div>
+            <div className="p-4 bg-slate-50 rounded">
+              <div className="text-sm font-medium mb-2">Zu korrigierende Probleme:</div>
+              <div className="space-y-1">
+                <div className="text-sm">
+                  • {submission.validation_errors?.length || 0} Fehler
                 </div>
-
-                <div className="bg-slate-50 p-3 rounded mb-3">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <Label className="text-xs text-slate-600">Aktueller Wert</Label>
-                      <div className="font-medium text-red-700">
-                        {submission.form_data[issue.field] || '(leer)'}
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-xs text-slate-600">Vorgeschlagener Wert</Label>
-                      <div className="font-medium text-green-700">
-                        {issue.suggested_value}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {issue.reasoning && (
-                  <Alert className="mb-3 bg-blue-50 border-blue-200">
-                    <AlertDescription className="text-xs">
-                      💡 {issue.reasoning}
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                <div className="flex items-center justify-between">
-                  {corrections[issue.field] === issue.suggested_value ? (
-                    <div className="flex items-center gap-2 text-green-600 text-sm">
-                      <CheckCircle className="w-4 h-4" />
-                      Korrektur ausgewählt
-                    </div>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleCorrect(issue)}
-                      className="text-xs"
-                    >
-                      Korrektur übernehmen
-                    </Button>
-                  )}
-                  
-                  {corrections[issue.field] !== undefined && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const newCorrections = { ...corrections };
-                        delete newCorrections[issue.field];
-                        setCorrections(newCorrections);
-                      }}
-                      className="text-xs"
-                    >
-                      Zurücksetzen
-                    </Button>
-                  )}
+                <div className="text-sm">
+                  • {submission.validation_warnings?.length || 0} Warnungen
                 </div>
               </div>
-            ))}
-        </div>
+            </div>
 
-        {issues.filter(i => i.suggested_value !== undefined).length === 0 && (
-          <Alert>
-            <AlertDescription>
-              Keine automatischen Korrekturvorschläge verfügbar
-            </AlertDescription>
-          </Alert>
+            <Button 
+              onClick={handleAnalyze} 
+              disabled={processing}
+              className="w-full bg-purple-600 hover:bg-purple-700"
+            >
+              {processing ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4 mr-2" />
+              )}
+              Fehler analysieren
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="text-sm text-slate-600">
+              {corrections.length} Korrekturvorschläge gefunden
+            </div>
+
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {corrections.map((corr, idx) => (
+                <div key={idx} className="p-4 border rounded-lg space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium">{corr.field}</div>
+                    <Badge variant={corr.confidence >= 80 ? 'default' : 'secondary'}>
+                      {corr.confidence}% Vertrauen
+                    </Badge>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-slate-600">{corr.current_value || 'leer'}</span>
+                    <ArrowRight className="w-4 h-4 text-slate-400" />
+                    <span className="font-medium text-green-700">{corr.suggested_value}</span>
+                  </div>
+
+                  <div className="text-xs text-slate-600 bg-slate-50 p-2 rounded">
+                    {corr.reason}
+                  </div>
+
+                  {corr.confidence < 70 && (
+                    <div className="text-xs text-yellow-700 bg-yellow-50 p-2 rounded">
+                      ⚠️ Niedriges Vertrauen - manuelle Prüfung empfohlen
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
-        <div className="flex gap-3 pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            className="flex-1"
-          >
-            Abbrechen
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={saving || Object.keys(corrections).length === 0}
-            className="flex-1 bg-green-600 hover:bg-green-700"
-          >
-            {saving ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <CheckCircle className="w-4 h-4 mr-2" />
-            )}
-            {Object.keys(corrections).length} Korrekturen speichern
-          </Button>
-        </div>
+        {corrections && (
+          <DialogFooter>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Abbrechen
+            </Button>
+            <Button 
+              onClick={handleApplyCorrections}
+              disabled={processing || corrections.filter(c => c.confidence >= 70).length === 0}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {processing ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <CheckCircle className="w-4 h-4 mr-2" />
+              )}
+              Korrekturen anwenden ({corrections.filter(c => c.confidence >= 70).length})
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );
