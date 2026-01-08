@@ -1,110 +1,113 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tantml:react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Activity, Clock, Star, Target } from 'lucide-react';
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
-
-export default function TestSessionAnalytics() {
+export default function TestSessionAnalytics({ userId }) {
   const { data: sessions = [] } = useQuery({
-    queryKey: ['test-sessions'],
-    queryFn: () => base44.asServiceRole.entities.TestSession.list('-session_start')
+    queryKey: ['test-sessions', userId],
+    queryFn: () => userId 
+      ? base44.asServiceRole.entities.TestSession.filter({ user_id: userId })
+      : base44.asServiceRole.entities.TestSession.list(),
+    enabled: true
   });
 
-  const { data: users = [] } = useQuery({
-    queryKey: ['all-users'],
-    queryFn: async () => {
-      const allUsers = await base44.asServiceRole.entities.User.list();
-      return allUsers.filter(u => u.is_tester);
-    }
-  });
+  const totalDuration = sessions.reduce((sum, s) => sum + (s.total_duration || 0), 0);
+  const avgDuration = sessions.length > 0 ? totalDuration / sessions.length : 0;
+  const totalActions = sessions.reduce((sum, s) => sum + (s.actions_performed?.length || 0), 0);
+  const avgRating = sessions.filter(s => s.feedback_rating).reduce((sum, s) => sum + s.feedback_rating, 0) / sessions.filter(s => s.feedback_rating).length || 0;
 
-  // Statistiken
-  const completedSessions = sessions.filter(s => s.session_end);
-  const avgDuration = completedSessions.length > 0
-    ? Math.round(completedSessions.reduce((sum, s) => sum + (s.total_duration || 0), 0) / completedSessions.length)
-    : 0;
-
-  // Sessions pro Tester
-  const sessionsByUser = {};
-  sessions.forEach(s => {
-    sessionsByUser[s.user_id] = (sessionsByUser[s.user_id] || 0) + 1;
-  });
-
-  const userSessionData = Object.entries(sessionsByUser)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(([userId, count]) => {
-      const user = users.find(u => u.id === userId);
-      return {
-        name: user?.full_name || user?.email || userId,
-        sessions: count
-      };
-    });
-
-  // Features getestet
+  // Features tested frequency
   const featureCount = {};
   sessions.forEach(s => {
-    (s.features_tested || []).forEach(feature => {
+    s.features_tested?.forEach(feature => {
       featureCount[feature] = (featureCount[feature] || 0) + 1;
     });
   });
 
-  const topFeatures = Object.entries(featureCount)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 8)
-    .map(([feature, count]) => ({ name: feature, value: count }));
+  const featureData = Object.entries(featureCount)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
 
-  // Rating-Verteilung
-  const ratingDistribution = [1, 2, 3, 4, 5].map(rating => ({
-    rating: `${rating} ⭐`,
-    count: sessions.filter(s => s.feedback_rating === rating).length
-  }));
+  // Sessions per day
+  const sessionsByDay = {};
+  sessions.forEach(s => {
+    const day = new Date(s.session_start).toLocaleDateString('de-DE');
+    sessionsByDay[day] = (sessionsByDay[day] || 0) + 1;
+  });
+
+  const sessionData = Object.entries(sessionsByDay)
+    .map(([day, count]) => ({ day, count }))
+    .slice(-7);
+
+  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold text-blue-600">{sessions.length}</div>
-            <div className="text-sm text-slate-600">Gesamt-Sessions</div>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-600">Sessions</p>
+                <p className="text-2xl font-bold">{sessions.length}</p>
+              </div>
+              <Activity className="w-8 h-8 text-blue-600" />
+            </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold text-green-600">{completedSessions.length}</div>
-            <div className="text-sm text-slate-600">Abgeschlossen</div>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-600">Ø Dauer</p>
+                <p className="text-2xl font-bold">{Math.round(avgDuration)} Min</p>
+              </div>
+              <Clock className="w-8 h-8 text-green-600" />
+            </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold text-purple-600">{avgDuration}m</div>
-            <div className="text-sm text-slate-600">Ø Dauer</div>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-600">Aktionen</p>
+                <p className="text-2xl font-bold">{totalActions}</p>
+              </div>
+              <Target className="w-8 h-8 text-orange-600" />
+            </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold text-orange-600">{users.length}</div>
-            <div className="text-sm text-slate-600">Aktive Tester</div>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-600">Ø Rating</p>
+                <p className="text-2xl font-bold">{avgRating.toFixed(1)}</p>
+              </div>
+              <Star className="w-8 h-8 text-yellow-600" />
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Sessions pro Tester</CardTitle>
+            <CardTitle>Sessions pro Tag (letzte 7 Tage)</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={userSessionData}>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={sessionData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
+                <XAxis dataKey="day" tick={{ fontSize: 12 }} />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="sessions" fill="#3b82f6" />
+                <Bar dataKey="count" fill="#3b82f6" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -112,74 +115,51 @@ export default function TestSessionAnalytics() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Meistgetestete Features</CardTitle>
+            <CardTitle>Top 10 Features getestet</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={topFeatures}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {topFeatures.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Feedback-Bewertungen</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={ratingDistribution}>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={featureData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="rating" />
-                <YAxis />
+                <XAxis type="number" />
+                <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 11 }} />
                 <Tooltip />
                 <Bar dataKey="count" fill="#10b981" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Letzte Sessions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 max-h-72 overflow-y-auto">
-              {sessions.slice(0, 10).map(session => {
-                const user = users.find(u => u.id === session.user_id);
-                return (
-                  <div key={session.id} className="p-3 border rounded-lg">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-sm">
-                        {user?.full_name || user?.email || 'Unbekannt'}
-                      </span>
-                      <Badge variant="outline">{session.total_duration || 0}m</Badge>
-                    </div>
-                    <div className="text-xs text-slate-600">
-                      {new Date(session.session_start).toLocaleString('de-DE')}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Letzte Sessions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {sessions.slice(0, 5).map(session => (
+              <div key={session.id} className="p-3 border rounded-lg">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="text-sm font-medium">
+                    {new Date(session.session_start).toLocaleString('de-DE')}
+                  </div>
+                  <Badge>{session.total_duration || 0} Min</Badge>
+                </div>
+                <div className="text-xs text-slate-600 space-y-1">
+                  <div>Aktionen: {session.actions_performed?.length || 0}</div>
+                  <div>Features: {session.features_tested?.length || 0}</div>
+                  {session.feedback_rating && (
+                    <div className="flex items-center gap-1">
+                      Rating: <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                      {session.feedback_rating}/5
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
