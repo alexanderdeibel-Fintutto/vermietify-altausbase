@@ -129,6 +129,8 @@ import AdvancedValidationPanel from '@/components/elster/AdvancedValidationPanel
 import QualityMonitorWidget from '@/components/elster/QualityMonitorWidget';
 import ExecutiveDashboard from '@/components/elster/ExecutiveDashboard';
 import TaxStrategyAdvisor from '@/components/elster/TaxStrategyAdvisor';
+import MultiBuildingOperations from '@/components/elster/MultiBuildingOperations';
+import AIErrorCorrectionPanel from '@/components/elster/AIErrorCorrectionPanel';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -301,20 +303,23 @@ export default function ElsterIntegration() {
           </TabsContent>
 
           <TabsContent value="create" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Neues Steuerformular erstellen</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  onClick={() => setShowWizard(true)}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700"
-                >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Wizard starten
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Neues Steuerformular erstellen</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    onClick={() => setShowWizard(true)}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Wizard starten
+                  </Button>
+                </CardContent>
+              </Card>
+              <MultiBuildingOperations />
+            </div>
           </TabsContent>
 
           <TabsContent value="submissions" className="mt-6">
