@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
@@ -229,11 +230,21 @@ export default function Contracts() {
 
     return (
         <div className="space-y-8">
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+            >
             <PageHeader 
                 title="Mietverträge"
                 subtitle={`${contracts.length} Verträge · ${tenants.length} Mieter`}
             />
+            </motion.div>
 
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+            >
             <Tabs defaultValue="contracts" className="space-y-6">
                 <TabsList className="bg-white border border-slate-200">
                     <TabsTrigger value="contracts">
@@ -259,7 +270,14 @@ export default function Contracts() {
                             Vertrag hinzufügen
                         </Button>
                     </div>
+                    <AnimatePresence mode="wait">
                     {contracts.length === 0 ? (
+                        <motion.div
+                            key="empty"
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                        >
                         <EmptyState
                             icon={FileText}
                             title="Noch keine Mietverträge"
@@ -267,9 +285,16 @@ export default function Contracts() {
                             action={() => setFormOpen(true)}
                             actionLabel="Ersten Vertrag anlegen"
                         />
+                        </motion.div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {contracts.map((contract) => {
+                        <motion.div
+                            key="grid"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                        >
+                            {contracts.map((contract, idx) => {
                                 const contractId = contract.id;
                                 const unit = getUnit(contract.unit_id);
                                 const tenant = getTenant(contract.tenant_id);
@@ -280,6 +305,12 @@ export default function Contracts() {
                                 const currentRent = getCurrentRent(contract);
 
                                 return (
+                                    <motion.div
+                                        key={contractId}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: idx * 0.1 }}
+                                    >
                                     <Link 
                                         key={contractId}
                                         to={createPageUrl(`ContractDetail?contractId=${contractId}`)}
@@ -397,10 +428,12 @@ export default function Contracts() {
                                         </CardContent>
                                     </Card>
                                 </Link>
+                                </motion.div>
                                 );
                             })}
-                        </div>
+                        </motion.div>
                     )}
+                    </AnimatePresence>
                 </TabsContent>
 
                 <TabsContent value="tenants">
@@ -419,6 +452,7 @@ export default function Contracts() {
                     <FinancialItemsList />
                 </TabsContent>
             </Tabs>
+            </motion.div>
 
             <ContractForm
                 open={formOpen}

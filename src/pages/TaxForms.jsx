@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +14,8 @@ import {
     AlertTriangle,
     Info,
     Download,
-    Layers
+    Layers,
+    Loader2
 } from 'lucide-react';
 import AnlageVWizard from '@/components/tax/AnlageVWizard';
 import InitializeTaxSystem from '@/components/tax/InitializeTaxSystem';
@@ -87,13 +89,22 @@ export default function TaxForms() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <motion.div 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-between"
+            >
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800">Steuerformulare</h1>
                     <p className="text-slate-500">Automatische Erstellung von Anlage V und weiteren Formularen</p>
                 </div>
-            </div>
+            </motion.div>
 
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+            >
             <Tabs defaultValue="overview" className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="overview">Übersicht</TabsTrigger>
@@ -105,7 +116,12 @@ export default function TaxForms() {
                 <TabsContent value="overview" className="mt-6 space-y-6">
                     {/* Initialisierung */}
                     <InitializeTaxSystem />
-                    <div className="grid gap-4 md:grid-cols-3 mb-6">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="grid gap-4 md:grid-cols-3 mb-6"
+                    >
                         <Card>
                             <CardContent className="p-6">
                                 <div className="flex items-center justify-between">
@@ -141,9 +157,14 @@ export default function TaxForms() {
                                 </div>
                             </CardContent>
                         </Card>
-                    </div>
+                    </motion.div>
 
                     {/* Info-Box */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                    >
                     <Card className="mb-6 border-blue-200 bg-blue-50">
                         <CardContent className="p-6">
                             <div className="flex gap-4">
@@ -161,9 +182,17 @@ export default function TaxForms() {
                             </div>
                         </CardContent>
                     </Card>
+                    </motion.div>
 
                     {/* Letzte Submissions */}
+                    <AnimatePresence>
                     {submissions.length > 0 && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ delay: 0.4 }}
+                        >
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-lg">Zuletzt bearbeitet</CardTitle>
@@ -201,7 +230,9 @@ export default function TaxForms() {
                                 </div>
                             </CardContent>
                         </Card>
+                        </motion.div>
                     )}
+                    </AnimatePresence>
                 </TabsContent>
 
                 {/* Neu erstellen */}
@@ -369,6 +400,7 @@ export default function TaxForms() {
                     </Card>
                 </TabsContent>
             </Tabs>
+            </motion.div>
 
             {/* Wizard */}
             <AnlageVWizard
