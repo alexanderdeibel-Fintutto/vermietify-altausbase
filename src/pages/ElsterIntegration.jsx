@@ -59,6 +59,8 @@ import SmartPreFillDialog from '@/components/elster/SmartPreFillDialog';
 import SubmissionSearchDialog from '@/components/elster/SubmissionSearchDialog';
 import BatchStatusUpdateDialog from '@/components/elster/BatchStatusUpdateDialog';
 import QuickActionsMenu from '@/components/elster/QuickActionsMenu';
+import YearEndSummary from '@/components/elster/YearEndSummary';
+import BatchCreateDialog from '@/components/elster/BatchCreateDialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from 'lucide-react';
 
@@ -78,6 +80,7 @@ export default function ElsterIntegration() {
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [showSearchDialog, setShowSearchDialog] = useState(false);
   const [showBatchStatusDialog, setShowBatchStatusDialog] = useState(false);
+  const [showBatchCreateDialog, setShowBatchCreateDialog] = useState(false);
   const queryClient = useQueryClient();
 
   const handleQuickAction = (action) => {
@@ -295,9 +298,10 @@ export default function ElsterIntegration() {
                 <TaxAdvisorReport />
                 <FinancialDataSync />
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <OptimizationAssistant />
                 <TaxCalendar />
+                <YearEndSummary />
               </div>
             </div>
           </TabsContent>
@@ -395,6 +399,12 @@ export default function ElsterIntegration() {
         submissionIds={selectedForBulk}
         open={showBatchStatusDialog}
         onOpenChange={setShowBatchStatusDialog}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['elster-submissions'] })}
+      />
+
+      <BatchCreateDialog
+        open={showBatchCreateDialog}
+        onOpenChange={setShowBatchCreateDialog}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ['elster-submissions'] })}
       />
     </div>
