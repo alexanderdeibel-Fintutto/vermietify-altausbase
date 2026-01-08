@@ -1,118 +1,173 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, XCircle, AlertTriangle, Info } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle, AlertTriangle, XCircle, Info } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-export default function ValidationPreview({ formData, validationResult }) {
+export default function ValidationPreview({ validationResult }) {
   if (!validationResult) return null;
 
-  const { is_valid, errors = [], warnings = [], plausibility_checks = [] } = validationResult;
+  const { errors = [], warnings = [], infos = [], summary } = validationResult;
 
-  const passed = plausibility_checks.filter(c => c.passed).length;
-  const total = plausibility_checks.length;
+  const errorCount = errors.length;
+  const warningCount = warnings.length;
+  const infoCount = infos.length;
+
+  const getSeverityIcon = (severity) => {
+    switch (severity) {
+      case 'error': return XCircle;
+      case 'warning': return AlertTriangle;
+      case 'info': return Info;
+      default: return Info;
+    }
+  };
+
+  const getSeverityColor = (severity) => {
+    switch (severity) {
+      case 'error': return 'text-red-600';
+      case 'warning': return 'text-yellow-600';
+      case 'info': return 'text-blue-600';
+      default: return 'text-slate-600';
+    }
+  };
+
+  const getSeverityBg = (severity) => {
+    switch (severity) {
+      case 'error': return 'bg-red-50 border-red-200';
+      case 'warning': return 'bg-yellow-50 border-yellow-200';
+      case 'info': return 'bg-blue-50 border-blue-200';
+      default: return 'bg-slate-50 border-slate-200';
+    }
+  };
+
+  const isValid = errorCount === 0;
 
   return (
     <div className="space-y-4">
-      {/* Gesamtstatus */}
-      <Card className={`border-2 ${is_valid ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {is_valid ? (
-              <CheckCircle className="w-5 h-5 text-green-600" />
+      <Card className={isValid ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}>
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-3">
+            {isValid ? (
+              <CheckCircle className="w-8 h-8 text-green-600" />
             ) : (
-              <XCircle className="w-5 h-5 text-red-600" />
+              <XCircle className="w-8 h-8 text-red-600" />
             )}
-            Validierungsergebnis
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <span className="text-lg">
-              {is_valid ? 'Formular ist gültig ✓' : 'Formular hat Fehler'}
-            </span>
-            <Badge variant={is_valid ? 'default' : 'destructive'}>
-              {passed} / {total} Prüfungen bestanden
-            </Badge>
+            <div>
+              <div className={`font-medium ${isValid ? 'text-green-900' : 'text-red-900'}`}>
+                {isValid ? 'Validierung erfolgreich' : 'Validierung fehlgeschlagen'}
+              </div>
+              <div className={`text-sm ${isValid ? 'text-green-700' : 'text-red-700'}`}>
+                {errorCount > 0 && `${errorCount} Fehler`}
+                {warningCount > 0 && ` · ${warningCount} Warnungen`}
+                {infoCount > 0 && ` · ${infoCount} Hinweise`}
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Fehler */}
-      {errors.length > 0 && (
-        <Card className="border-2 border-red-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-900">
-              <XCircle className="w-5 h-5" />
-              Fehler ({errors.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {errors.map((error, idx) => (
-              <Alert key={idx} className="bg-red-50 border-red-200">
-                <XCircle className="h-4 w-4 text-red-600" />
-                <AlertDescription className="text-red-900">
-                  <strong>{error.field}:</strong> {error.message}
-                </AlertDescription>
-              </Alert>
-            ))}
-          </CardContent>
-        </Card>
+      {summary && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            {summary}
+          </AlertDescription>
+        </Alert>
       )}
 
-      {/* Warnungen */}
-      {warnings.length > 0 && (
-        <Card className="border-2 border-yellow-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-yellow-900">
-              <AlertTriangle className="w-5 h-5" />
-              Warnungen ({warnings.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {warnings.map((warning, idx) => (
-              <Alert key={idx} className="bg-yellow-50 border-yellow-200">
-                <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                <AlertDescription className="text-yellow-900">
-                  <strong>{warning.field}:</strong> {warning.message}
-                </AlertDescription>
-              </Alert>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Plausibilitätsprüfungen */}
-      {plausibility_checks.length > 0 && (
+      {(errors.length > 0 || warnings.length > 0 || infos.length > 0) && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Info className="w-5 h-5" />
-              Plausibilitätsprüfungen
-            </CardTitle>
+            <CardTitle className="text-base">Validierungsdetails</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            {plausibility_checks.map((check, idx) => (
-              <div 
-                key={idx} 
-                className={`flex items-start gap-3 p-3 rounded-lg ${
-                  check.passed ? 'bg-green-50' : 'bg-red-50'
-                }`}
-              >
-                {check.passed ? (
-                  <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
-                ) : (
-                  <XCircle className="w-5 h-5 text-red-600 mt-0.5" />
-                )}
-                <div className="flex-1">
-                  <div className="font-medium">{check.name}</div>
-                  <div className="text-sm text-slate-600">{check.message}</div>
-                  {check.details && (
-                    <div className="text-xs text-slate-500 mt-1">{check.details}</div>
-                  )}
-                </div>
-              </div>
-            ))}
+          <CardContent>
+            <Accordion type="single" collapsible className="space-y-2">
+              {errors.length > 0 && (
+                <AccordionItem value="errors" className="border rounded-lg">
+                  <AccordionTrigger className="px-4 hover:no-underline">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="destructive">{errors.length}</Badge>
+                      <span>Fehler</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="space-y-2">
+                      {errors.map((error, idx) => {
+                        const Icon = getSeverityIcon('error');
+                        return (
+                          <Alert key={idx} className={getSeverityBg('error')}>
+                            <Icon className={`h-4 w-4 ${getSeverityColor('error')}`} />
+                            <AlertDescription>
+                              <div className="font-medium">{error.field || error.code}</div>
+                              <div className="text-sm mt-1">{error.message}</div>
+                              {error.suggestion && (
+                                <div className="text-xs mt-2 p-2 bg-white rounded border">
+                                  💡 {error.suggestion}
+                                </div>
+                              )}
+                            </AlertDescription>
+                          </Alert>
+                        );
+                      })}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+
+              {warnings.length > 0 && (
+                <AccordionItem value="warnings" className="border rounded-lg">
+                  <AccordionTrigger className="px-4 hover:no-underline">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-yellow-600">{warnings.length}</Badge>
+                      <span>Warnungen</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="space-y-2">
+                      {warnings.map((warning, idx) => {
+                        const Icon = getSeverityIcon('warning');
+                        return (
+                          <Alert key={idx} className={getSeverityBg('warning')}>
+                            <Icon className={`h-4 w-4 ${getSeverityColor('warning')}`} />
+                            <AlertDescription>
+                              <div className="font-medium">{warning.field || warning.code}</div>
+                              <div className="text-sm mt-1">{warning.message}</div>
+                            </AlertDescription>
+                          </Alert>
+                        );
+                      })}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+
+              {infos.length > 0 && (
+                <AccordionItem value="infos" className="border rounded-lg">
+                  <AccordionTrigger className="px-4 hover:no-underline">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{infos.length}</Badge>
+                      <span>Hinweise</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="space-y-2">
+                      {infos.map((info, idx) => {
+                        const Icon = getSeverityIcon('info');
+                        return (
+                          <Alert key={idx} className={getSeverityBg('info')}>
+                            <Icon className={`h-4 w-4 ${getSeverityColor('info')}`} />
+                            <AlertDescription className="text-sm">
+                              {info.message}
+                            </AlertDescription>
+                          </Alert>
+                        );
+                      })}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+            </Accordion>
           </CardContent>
         </Card>
       )}

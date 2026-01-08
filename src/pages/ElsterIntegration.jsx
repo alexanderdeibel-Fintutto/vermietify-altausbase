@@ -36,6 +36,9 @@ import AuditTrailCard from '@/components/elster/AuditTrailCard';
 import BulkExportDialog from '@/components/elster/BulkExportDialog';
 import ExcelImportDialog from '@/components/elster/ExcelImportDialog';
 import MultiYearComparison from '@/components/elster/MultiYearComparison';
+import ValidationPreview from '@/components/elster/ValidationPreview';
+import PDFPreviewDialog from '@/components/elster/PDFPreviewDialog';
+import SubmissionComparisonDialog from '@/components/elster/SubmissionComparisonDialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from 'lucide-react';
 
@@ -49,6 +52,8 @@ export default function ElsterIntegration() {
   const [testingCertificate, setTestingCertificate] = useState(null);
   const [showBulkExport, setShowBulkExport] = useState(false);
   const [showExcelImport, setShowExcelImport] = useState(false);
+  const [previewSubmission, setPreviewSubmission] = useState(null);
+  const [comparisonSubmissions, setComparisonSubmissions] = useState({ sub1: null, sub2: null });
   const queryClient = useQueryClient();
 
   const { data: submissions = [] } = useQuery({
@@ -287,6 +292,19 @@ export default function ElsterIntegration() {
           toast.success('Daten erfolgreich importiert');
           setShowExcelImport(false);
         }}
+      />
+
+      <PDFPreviewDialog
+        submission={previewSubmission}
+        open={!!previewSubmission}
+        onOpenChange={(open) => !open && setPreviewSubmission(null)}
+      />
+
+      <SubmissionComparisonDialog
+        submission1={comparisonSubmissions.sub1}
+        submission2={comparisonSubmissions.sub2}
+        open={!!(comparisonSubmissions.sub1 && comparisonSubmissions.sub2)}
+        onOpenChange={(open) => !open && setComparisonSubmissions({ sub1: null, sub2: null })}
       />
     </div>
   );
