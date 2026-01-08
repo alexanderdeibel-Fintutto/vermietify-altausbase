@@ -102,6 +102,10 @@ import TaxLawUpdatesMonitor from '@/components/elster/TaxLawUpdatesMonitor';
 import WhiteLabelBranding from '@/components/elster/WhiteLabelBranding';
 import CostBenefitCalculator from '@/components/elster/CostBenefitCalculator';
 import APIDocumentationGenerator from '@/components/elster/APIDocumentationGenerator';
+import AutomatedWorkflowBuilder from '@/components/elster/AutomatedWorkflowBuilder';
+import TaxPredictionCard from '@/components/elster/TaxPredictionCard';
+import AdvancedReportGenerator from '@/components/elster/AdvancedReportGenerator';
+import ComplianceAuditReport from '@/components/elster/ComplianceAuditReport';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -372,9 +376,14 @@ export default function ElsterIntegration() {
                 <MultiYearTaxStrategy />
                 <AITaxAdvisorChat />
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <TaxPlanningAssistant />
+                <TaxPredictionCard />
+                <ComplianceAuditReport />
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <WorkflowAutomationEngine />
+                <AutomatedWorkflowBuilder />
               </div>
             </div>
           </TabsContent>
@@ -427,7 +436,7 @@ export default function ElsterIntegration() {
                 </div>
                 <div className="space-y-6">
                   <DeadlineTracker submissions={submissions} taxYear={new Date().getFullYear()} />
-                  <PerformanceOptimizer />
+                  <AdvancedReportGenerator />
                 </div>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -436,7 +445,7 @@ export default function ElsterIntegration() {
                 </div>
                 <div className="space-y-6">
                   <FormComparisonView submissions={submissions} formType="ANLAGE_V" />
-                  <SubmissionHistory submissions={submissions} />
+                  <PerformanceOptimizer />
                 </div>
               </div>
             </div>
@@ -458,9 +467,11 @@ export default function ElsterIntegration() {
                     <APIDocumentationGenerator />
                     <AutomatedBackupSystem />
                   </div>
+                  <SystemHealthCheck />
                 </div>
                 <div className="space-y-6">
                   <TaxLawUpdatesMonitor />
+                  <IntegrationHealthMonitor />
                 </div>
               </div>
             </div>
