@@ -10,6 +10,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sparkles, ChevronRight, ChevronLeft, CheckCircle, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import FinancialDataImporter from './FinancialDataImporter';
+import CommonErrorsAssistant from './CommonErrorsAssistant';
 
 export default function TaxFormWizard({ onComplete }) {
   const [step, setStep] = useState(1);
@@ -75,52 +77,66 @@ export default function TaxFormWizard({ onComplete }) {
       <AnimatePresence mode="wait">
         {step === 1 && (
           <StepCard key="step1" title="Formular auswählen">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Formular-Typ</label>
-                <Select value={formType} onValueChange={setFormType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Typ wählen..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ANLAGE_V">Anlage V - Vermietung & Verpachtung</SelectItem>
-                    <SelectItem value="EUER">EÜR - Einnahmen-Überschuss</SelectItem>
-                    <SelectItem value="EST1B">ESt 1B - Personengesellschaften</SelectItem>
-                    <SelectItem value="GEWERBESTEUER">Gewerbesteuererklärung</SelectItem>
-                    <SelectItem value="UMSATZSTEUER">Umsatzsteuererklärung</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Formular-Typ</label>
+                  <Select value={formType} onValueChange={setFormType}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Typ wählen..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ANLAGE_V">Anlage V - Vermietung & Verpachtung</SelectItem>
+                      <SelectItem value="EUER">EÜR - Einnahmen-Überschuss</SelectItem>
+                      <SelectItem value="EST1B">ESt 1B - Personengesellschaften</SelectItem>
+                      <SelectItem value="GEWERBESTEUER">Gewerbesteuererklärung</SelectItem>
+                      <SelectItem value="UMSATZSTEUER">Umsatzsteuererklärung</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Objekt</label>
+                  <Select value={buildingId} onValueChange={setBuildingId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Objekt wählen..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {buildings.map(b => (
+                        <SelectItem key={b.id} value={b.id}>
+                          {b.address || b.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Steuerjahr</label>
+                  <Select value={String(taxYear)} onValueChange={(v) => setTaxYear(parseInt(v))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[0, 1, 2, 3, 4].map(i => {
+                        const year = new Date().getFullYear() - 1 - i;
+                        return <SelectItem key={year} value={String(year)}>{year}</SelectItem>;
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Objekt</label>
-                <Select value={buildingId} onValueChange={setBuildingId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Objekt wählen..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {buildings.map(b => (
-                      <SelectItem key={b.id} value={b.id}>
-                        {b.address || b.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Steuerjahr</label>
-                <Select value={String(taxYear)} onValueChange={(v) => setTaxYear(parseInt(v))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[0, 1, 2, 3, 4].map(i => {
-                      const year = new Date().getFullYear() - 1 - i;
-                      return <SelectItem key={year} value={String(year)}>{year}</SelectItem>;
-                    })}
-                  </SelectContent>
-                </Select>
+              <div className="space-y-4">
+                <FinancialDataImporter
+                  buildingId={buildingId}
+                  taxYear={taxYear}
+                  onImportComplete={(data) => {
+                    setFormData(data);
+                    toast.success('Finanzdaten importiert');
+                  }}
+                />
+                <CommonErrorsAssistant />
               </div>
             </div>
           </StepCard>
