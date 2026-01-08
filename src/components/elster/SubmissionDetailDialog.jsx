@@ -13,6 +13,9 @@ import ShareWithAdvisorDialog from './ShareWithAdvisorDialog';
 import ValidationReport from './ValidationReport';
 import ComplianceChecklist from './ComplianceChecklist';
 import TaxOptimizationSuggestions from './TaxOptimizationSuggestions';
+import RiskAssessment from './RiskAssessment';
+import TrendAnalysisChart from './TrendAnalysisChart';
+import PreSubmissionCheck from './PreSubmissionCheck';
 
 export default function SubmissionDetailDialog({ submission, open, onOpenChange }) {
   const [showShareDialog, setShowShareDialog] = React.useState(false);
@@ -115,14 +118,16 @@ export default function SubmissionDetailDialog({ submission, open, onOpenChange 
           </Card>
 
           <Tabs defaultValue="data">
-            <TabsList className="grid w-full grid-cols-7">
+            <TabsList className="grid w-full grid-cols-9 text-xs">
               <TabsTrigger value="data">Daten</TabsTrigger>
               <TabsTrigger value="validation">Validierung</TabsTrigger>
               <TabsTrigger value="report">Report</TabsTrigger>
               <TabsTrigger value="compliance">Compliance</TabsTrigger>
+              <TabsTrigger value="risk">Risiko</TabsTrigger>
+              <TabsTrigger value="trend">Trend</TabsTrigger>
               <TabsTrigger value="optimization">Optimierung</TabsTrigger>
+              <TabsTrigger value="precheck">Check</TabsTrigger>
               <TabsTrigger value="xml">XML</TabsTrigger>
-              <TabsTrigger value="response">Antwort</TabsTrigger>
             </TabsList>
 
             <TabsContent value="data" className="mt-4">
@@ -205,8 +210,20 @@ export default function SubmissionDetailDialog({ submission, open, onOpenChange 
               <ComplianceChecklist submission={submission} />
             </TabsContent>
 
+            <TabsContent value="risk" className="mt-4">
+              <RiskAssessment submission={submission} />
+            </TabsContent>
+
+            <TabsContent value="trend" className="mt-4">
+              <TrendAnalysisChart buildingId={submission.building_id} formType={submission.tax_form_type} />
+            </TabsContent>
+
             <TabsContent value="optimization" className="mt-4">
               <TaxOptimizationSuggestions submission={submission} />
+            </TabsContent>
+
+            <TabsContent value="precheck" className="mt-4">
+              <PreSubmissionCheck submission={submission} />
             </TabsContent>
 
             <TabsContent value="xml" className="mt-4">
