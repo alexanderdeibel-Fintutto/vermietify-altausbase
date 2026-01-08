@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2, Home, FileText, CreditCard, HelpCircle } from 'lucide-react';
+import { CheckCircle2, Home, FileText, CreditCard, HelpCircle, Sparkles, Building2, Users, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import confetti from 'canvas-confetti';
@@ -10,13 +10,20 @@ export default function CompletionScreen({ userType, packageName }) {
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    // Feuerwerk-Effekt
     confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 }
+      particleCount: 150,
+      spread: 100,
+      origin: { y: 0.6 },
+      colors: ['#10b981', '#3b82f6', '#8b5cf6']
     });
   }, []);
+
+  const quickActions = [
+    { icon: Building2, label: 'Weiteres Objekt', page: 'Buildings', color: 'bg-emerald-50 hover:bg-emerald-100' },
+    { icon: Users, label: 'Mieter verwalten', page: 'Contracts', color: 'bg-blue-50 hover:bg-blue-100' },
+    { icon: FileText, label: 'Dokumente', page: 'Documents', color: 'bg-purple-50 hover:bg-purple-100' },
+    { icon: Calendar, label: 'Aufgaben', page: 'Tasks', color: 'bg-orange-50 hover:bg-orange-100' }
+  ];
 
   const quickLinks = {
     immobilienverwaltung: [
@@ -79,6 +86,27 @@ export default function CompletionScreen({ userType, packageName }) {
           </Card>
         ))}
       </div>
+
+      <Card className="bg-slate-50 border-slate-200">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="w-5 h-5 text-emerald-600" />
+            <h3 className="font-semibold text-slate-900">Nächste Schritte</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {quickActions.map((action) => (
+              <button
+                key={action.page}
+                onClick={() => navigate(createPageUrl(action.page))}
+                className={`p-4 rounded-xl border border-slate-200 text-left transition-all ${action.color}`}
+              >
+                <action.icon className="w-6 h-6 mb-2 text-slate-700" />
+                <div className="text-sm font-medium text-slate-900">{action.label}</div>
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent className="p-4 text-center">

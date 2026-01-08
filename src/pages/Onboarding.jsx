@@ -297,6 +297,18 @@ Antworte kurz und freundlich. Stelle Fragen um den User-Typ zu erkennen (${packa
     }
   };
 
+  const handleSkipOnboarding = async () => {
+    if (!confirm('Möchten Sie das Setup überspringen? Sie können es später jederzeit wiederholen.')) return;
+    
+    await saveProgressMutation.mutateAsync({
+      ...progress,
+      user_id: user.id,
+      user_package: packageInfo.package,
+      is_completed: true
+    });
+    navigate(createPageUrl('Dashboard'));
+  };
+
   if (loadingPackage) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -318,12 +330,33 @@ Antworte kurz und freundlich. Stelle Fragen um den User-Typ zu erkennen (${packa
             <p className="text-sm text-slate-600">{packageInfo?.package_display_name}</p>
           </div>
         </div>
-        {progress && (
-          <Badge variant="outline">
-            {progress.completed_steps?.length || 0} Schritte abgeschlossen
-          </Badge>
-        )}
+        <div className="flex items-center gap-3">
+          {progress && (
+            <Badge variant="outline">
+              {progress.completed_steps?.length || 0} Schritte
+            </Badge>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSkipOnboarding}
+            className="text-slate-600 hover:text-slate-900"
+          >
+            <X className="w-4 h-4 mr-2" />
+            Überspringen
+          </Button>
+        </div>
       </div>
+
+      {/* Progress Indicator */}
+      {!currentComponent && progress && (
+        <div className="bg-white border-b">
+          <ProgressIndicator 
+            currentStep={progress.current_step || 'welcome'} 
+            completedSteps={progress.completed_steps || []} 
+          />
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
