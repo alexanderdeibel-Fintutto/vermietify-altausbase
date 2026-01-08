@@ -36,6 +36,7 @@ import UserDetail from './pages/UserDetail';
 import AuditReports from './pages/AuditReports';
 import PermissionDashboard from './pages/PermissionDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import ComplianceCenter from './pages/ComplianceCenter';
 import __Layout from './Layout.jsx';
 
 
@@ -78,6 +79,7 @@ export const PAGES = {
     "AuditReports": AuditReports,
     "PermissionDashboard": PermissionDashboard,
     "AdminDashboard": AdminDashboard,
+    "ComplianceCenter": ComplianceCenter,
 }
 
 export const pagesConfig = {
