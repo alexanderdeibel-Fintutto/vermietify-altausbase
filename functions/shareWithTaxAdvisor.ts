@@ -9,82 +9,78 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { submission_id, advisor_email, advisor_name, message } = await req.json();
+    const { submission_id, advisor_email, message } = await req.json();
 
     if (!submission_id || !advisor_email) {
-      return Response.json({ error: 'submission_id and advisor_email required' }, { status: 400 });
+      return Response.json({ 
+        error: 'submission_id and advisor_email required' 
+      }, { status: 400 });
     }
 
-    console.log(`[SHARE] Sharing submission ${submission_id} with ${advisor_email}`);
+    console.log(`[SHARE] Sharing ${submission_id} with ${advisor_email}`);
 
     const submission = await base44.entities.ElsterSubmission.filter({ id: submission_id });
-    if (!submission || submission.length === 0) {
+    
+    if (submission.length === 0) {
       return Response.json({ error: 'Submission not found' }, { status: 404 });
     }
 
     const sub = submission[0];
 
-    // Generiere PDF
-    const pdfResponse = await base44.functions.invoke('exportTaxFormPDF', { 
-      submission_id 
-    });
-
-    let pdfUrl = null;
-    if (pdfResponse.data.success) {
-      // Upload PDF
-      const uploadResponse = await base44.integrations.Core.UploadFile({
-        file: new Blob([pdfResponse.data.pdf_data], { type: 'application/pdf' })
+    // Generiere PDF wenn noch nicht vorhanden
+    let pdfUrl = sub.pdf_url;
+    if (!pdfUrl) {
+      const pdfResponse = await base44.functions.invoke('generateSubmissionPDF', {
+        submission_id: sub.id
       });
-      pdfUrl = uploadResponse.file_url;
+      pdfUrl = pdfResponse.data?.pdf_url;
     }
+
+    // Erstelle Share-Link mit Token
+    const shareToken = crypto.randomUUID();
+    
+    await base44.asServiceRole.entities.ActivityLog.create({
+      entity_type: 'ElsterSubmission',
+      entity_id: submission_id,
+      action: 'shared_with_advisor',
+      user_id: user.id,
+      metadata: {
+        advisor_email,
+        share_token: shareToken,
+        shared_at: new Date().toISOString()
+      }
+    });
 
     // Sende E-Mail an Steuerberater
     const emailBody = `
-Hallo${advisor_name ? ` ${advisor_name}` : ''},
+Hallo,
 
-${user.full_name || user.email} hat ein ELSTER-Steuerformular mit Ihnen geteilt:
+${user.full_name} (${user.email}) hat eine ELSTER-Einreichung mit Ihnen geteilt:
 
-📋 Formular: ${sub.tax_form_type}
-📅 Steuerjahr: ${sub.tax_year}
-⚖️ Rechtsform: ${sub.legal_form}
-✅ Status: ${sub.status}
+Formular: ${sub.tax_form_type}
+Steuerjahr: ${sub.tax_year}
+Status: ${sub.status}
 
-${message ? `\nNachricht:\n${message}\n` : ''}
+${message ? `Nachricht: ${message}` : ''}
 
-${pdfUrl ? `\nSie können das Formular hier herunterladen:\n${pdfUrl}\n` : ''}
+${pdfUrl ? `PDF: ${pdfUrl}` : ''}
 
-📊 Zusammenfassung der Daten:
-${Object.entries(sub.form_data || {})
-  .slice(0, 5)
-  .map(([key, value]) => `- ${key}: ${typeof value === 'number' ? value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : value}`)
-  .join('\n')}
+Mit freundlichen Grüßen,
+Ihr ELSTER-Integrations-Team
+    `;
 
-Bei Fragen können Sie sich direkt an ${user.email} wenden.
-
-Mit freundlichen Grüßen
-Ihr ImmoVerwalter-Team
-    `.trim();
-
-    await base44.integrations.Core.SendEmail({
+    await base44.asServiceRole.integrations.Core.SendEmail({
       to: advisor_email,
-      from_name: 'ImmoVerwalter ELSTER',
-      subject: `Steuerformular ${sub.tax_form_type} ${sub.tax_year} - Freigabe von ${user.full_name || user.email}`,
+      subject: `ELSTER-Einreichung von ${user.full_name}`,
       body: emailBody
     });
 
-    // Log Audit Event
-    await base44.functions.invoke('logElsterAuditEvent', {
-      submission_id,
-      event_type: 'SHARED_WITH_ADVISOR',
-      details: `Mit Steuerberater geteilt: ${advisor_email}`,
-      metadata: { advisor_email, advisor_name }
-    });
-
-    console.log('[SUCCESS] Submission shared with tax advisor');
+    console.log(`[SHARE] Sent to ${advisor_email}`);
 
     return Response.json({
       success: true,
-      message: `Formular erfolgreich mit ${advisor_email} geteilt`
+      share_token: shareToken,
+      shared_with: advisor_email
     });
 
   } catch (error) {
