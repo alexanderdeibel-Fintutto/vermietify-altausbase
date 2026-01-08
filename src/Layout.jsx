@@ -26,7 +26,8 @@ import {
     Upload,
     Zap,
     Database,
-    Sparkles
+    Sparkles,
+    Package
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/notifications/NotificationCenter';
