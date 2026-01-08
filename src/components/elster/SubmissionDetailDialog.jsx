@@ -4,12 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Archive, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { Download, Archive, CheckCircle, AlertTriangle, XCircle, Share2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import QuickDuplicateButton from './QuickDuplicateButton';
+import AuditLogViewer from './AuditLogViewer';
+import ShareWithAdvisorDialog from './ShareWithAdvisorDialog';
 
 export default function SubmissionDetailDialog({ submission, open, onOpenChange }) {
+  const [showShareDialog, setShowShareDialog] = React.useState(false);
+  
   if (!submission) return null;
 
   const handleExport = async () => {
@@ -214,7 +218,10 @@ export default function SubmissionDetailDialog({ submission, open, onOpenChange 
                 </CardContent>
               </Card>
             </TabsContent>
-          </Tabs>
+            </Tabs>
+
+            {/* Audit Log */}
+            <AuditLogViewer submissionId={submission.id} />
 
           {/* Actions */}
           <div className="flex gap-3 flex-wrap">
@@ -228,13 +235,23 @@ export default function SubmissionDetailDialog({ submission, open, onOpenChange 
                 GoBD-Archivierung
               </Button>
             )}
+            <Button onClick={() => setShowShareDialog(true)} variant="outline" className="flex-1">
+              <Share2 className="w-4 h-4 mr-2" />
+              Mit Berater teilen
+            </Button>
             <QuickDuplicateButton 
               submission={submission} 
               onSuccess={() => onOpenChange(false)} 
             />
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
+
+        <ShareWithAdvisorDialog
+        submission={submission}
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+        />
+        </DialogContent>
+        </Dialog>
+        );
+        }
