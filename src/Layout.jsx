@@ -27,6 +27,7 @@ import NotificationCenter from '@/components/notifications/NotificationCenter';
 import SuiteSwitcher from '@/components/suite/SuiteSwitcher';
 import { useUserSuites } from '@/components/suite/useModuleAccess';
 import TesterTracker from '@/components/testing/TesterTracker';
+import { Button } from "@/components/ui/button";
 
 export default function Layout({ children, currentPageName }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -172,6 +173,11 @@ export default function Layout({ children, currentPageName }) {
                         <div className="flex items-center gap-3">
                             <SuiteSwitcher />
                             <NotificationCenter />
+                            <Link to={createPageUrl('UserSettings')}>
+                                <Button variant="ghost" size="icon">
+                                    <Settings className="w-5 h-5 text-slate-600" />
+                                </Button>
+                            </Link>
                         </div>
                     </div>
                 </header>

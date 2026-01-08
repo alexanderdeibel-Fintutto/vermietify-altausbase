@@ -43,6 +43,7 @@ import WhatsAppSetup from './pages/WhatsAppSetup';
 import AdvancedAnalytics from './pages/AdvancedAnalytics';
 import EmailTemplates from './pages/EmailTemplates';
 import Payments from './pages/Payments';
+import UserSettings from './pages/UserSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -92,6 +93,7 @@ export const PAGES = {
     "AdvancedAnalytics": AdvancedAnalytics,
     "EmailTemplates": EmailTemplates,
     "Payments": Payments,
+    "UserSettings": UserSettings,
 }
 
 export const pagesConfig = {
