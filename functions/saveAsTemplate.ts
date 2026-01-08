@@ -11,53 +11,46 @@ Deno.serve(async (req) => {
 
     const { submission_id, template_name, description } = await req.json();
 
-    if (!submission_id || !template_name) {
-      return Response.json({ 
-        error: 'submission_id and template_name required' 
-      }, { status: 400 });
-    }
+    console.log(`[TEMPLATE] Creating from submission ${submission_id}`);
 
-    console.log(`[SAVE-TEMPLATE] Creating template "${template_name}" from ${submission_id}`);
+    const submissions = await base44.entities.ElsterSubmission.filter({
+      id: submission_id
+    });
 
-    const submission = await base44.entities.ElsterSubmission.filter({ id: submission_id });
-    
-    if (submission.length === 0) {
+    if (submissions.length === 0) {
       return Response.json({ error: 'Submission not found' }, { status: 404 });
     }
 
-    const sub = submission[0];
+    const sub = submissions[0];
 
-    // Erstelle Template-Entity (verwenden wir ElsterFormTemplate)
-    const template = await base44.entities.ElsterFormTemplate.create({
-      form_type: sub.tax_form_type,
-      legal_form: sub.legal_form,
-      year: sub.tax_year,
-      description: description || `Template erstellt aus Submission ${sub.tax_year}`,
-      version: '1.0',
-      is_active: true,
-      xml_template: sub.xml_data || '',
-      field_mappings: sub.form_data || {},
-      validation_rules: []
-    });
-
-    // Log
-    await base44.asServiceRole.entities.ActivityLog.create({
-      entity_type: 'ElsterFormTemplate',
-      entity_id: template.id,
-      action: 'template_created',
-      user_id: user.id,
-      metadata: {
-        source_submission_id: submission_id,
-        template_name,
-        form_type: sub.tax_form_type
+    // Entferne spezifische Werte, behalte Struktur
+    const templateData = { ...sub.form_data };
+    
+    // Setze Werte auf Platzhalter
+    Object.keys(templateData).forEach(key => {
+      if (key.includes('betrag') || key.includes('summe')) {
+        templateData[key] = 0;
+      } else if (key.includes('datum')) {
+        templateData[key] = '{{current_year}}';
       }
     });
 
-    console.log(`[SAVE-TEMPLATE] Created template ${template.id}`);
+    const template = await base44.asServiceRole.entities.ElsterFormTemplate.create({
+      form_type: sub.tax_form_type,
+      legal_form: sub.legal_form,
+      year: new Date().getFullYear(),
+      xml_template: sub.xml_data || '',
+      field_mappings: templateData,
+      description: description || `Template erstellt aus ${sub.tax_form_type} ${sub.tax_year}`,
+      version: '1.0',
+      is_active: true
+    });
+
+    console.log(`[TEMPLATE] Created ${template.id}`);
 
     return Response.json({
       success: true,
-      template
+      template_id: template.id
     });
 
   } catch (error) {

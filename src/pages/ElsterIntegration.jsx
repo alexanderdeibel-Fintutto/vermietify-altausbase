@@ -109,6 +109,9 @@ import ComplianceAuditReport from '@/components/elster/ComplianceAuditReport';
 import TrendAnalysisDashboard from '@/components/elster/TrendAnalysisDashboard';
 import SmartNotificationCenter from '@/components/elster/SmartNotificationCenter';
 import SmartInsightsDashboard from '@/components/elster/SmartInsightsDashboard';
+import ExportManager from '@/components/elster/ExportManager';
+import BulkOperationsManager from '@/components/elster/BulkOperationsManager';
+import TemplateLibrary from '@/components/elster/TemplateLibrary';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -301,8 +304,11 @@ export default function ElsterIntegration() {
                 <SubmissionTimeline submissions={submissions} />
               </div>
               <div className="space-y-6">
-                <BatchOperationsPanel submissions={submissions} />
-                <BulkFormExport submissions={submissions} />
+                <ExportManager selectedSubmissions={selectedForBulk} />
+                <BulkOperationsManager 
+                  selectedSubmissions={selectedForBulk}
+                  onComplete={() => queryClient.invalidateQueries({ queryKey: ['elster-submissions'] })}
+                />
                 <GoBDComplianceDashboard />
               </div>
             </div>
@@ -403,7 +409,12 @@ export default function ElsterIntegration() {
           </TabsContent>
 
           <TabsContent value="templates" className="mt-6">
-            <TemplateEditor />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <TemplateEditor />
+              </div>
+              <TemplateLibrary onSelectTemplate={setSelectedSubmission} />
+            </div>
           </TabsContent>
 
           <TabsContent value="certificates" className="mt-6">
