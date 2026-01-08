@@ -127,6 +127,8 @@ import BulkValidationTool from '@/components/elster/BulkValidationTool';
 import DataCleanupTool from '@/components/elster/DataCleanupTool';
 import AdvancedValidationPanel from '@/components/elster/AdvancedValidationPanel';
 import QualityMonitorWidget from '@/components/elster/QualityMonitorWidget';
+import ExecutiveDashboard from '@/components/elster/ExecutiveDashboard';
+import TaxStrategyAdvisor from '@/components/elster/TaxStrategyAdvisor';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -248,6 +250,7 @@ export default function ElsterIntegration() {
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
+                  <ExecutiveDashboard />
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <RealTimeStatusMonitor />
                     <IntegrationHealthMonitor />
@@ -267,6 +270,7 @@ export default function ElsterIntegration() {
                 <div className="space-y-6">
                   <SystemHealthCard />
                   <QualityMonitorWidget />
+                  <TaxStrategyAdvisor buildingId={submissions[0]?.building_id} />
                   <SmartNotificationCenter />
                   <SmartInsightsDashboard />
                   <ComplianceTimeline />
