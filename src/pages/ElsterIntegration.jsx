@@ -126,6 +126,7 @@ import SystemHealthCard from '@/components/elster/SystemHealthCard';
 import BulkValidationTool from '@/components/elster/BulkValidationTool';
 import DataCleanupTool from '@/components/elster/DataCleanupTool';
 import AdvancedValidationPanel from '@/components/elster/AdvancedValidationPanel';
+import QualityMonitorWidget from '@/components/elster/QualityMonitorWidget';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -265,6 +266,7 @@ export default function ElsterIntegration() {
                 </div>
                 <div className="space-y-6">
                   <SystemHealthCard />
+                  <QualityMonitorWidget />
                   <SmartNotificationCenter />
                   <SmartInsightsDashboard />
                   <ComplianceTimeline />
