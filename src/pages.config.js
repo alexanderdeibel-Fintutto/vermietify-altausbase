@@ -49,6 +49,8 @@ import WhatsAppSetup from './pages/WhatsAppSetup';
 import CustomDashboard from './pages/CustomDashboard';
 import AdvancedSearch from './pages/AdvancedSearch';
 import DataImportExport from './pages/DataImportExport';
+import WorkflowAutomation from './pages/WorkflowAutomation';
+import BulkOperations from './pages/BulkOperations';
 import __Layout from './Layout.jsx';
 
 
@@ -104,6 +106,8 @@ export const PAGES = {
     "CustomDashboard": CustomDashboard,
     "AdvancedSearch": AdvancedSearch,
     "DataImportExport": DataImportExport,
+    "WorkflowAutomation": WorkflowAutomation,
+    "BulkOperations": BulkOperations,
 }
 
 export const pagesConfig = {

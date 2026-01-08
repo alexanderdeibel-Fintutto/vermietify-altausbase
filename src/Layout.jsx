@@ -23,7 +23,9 @@ import {
     Mail,
     Calendar,
     Search,
-    Upload
+    Upload,
+    Zap,
+    Database
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/notifications/NotificationCenter';
@@ -73,6 +75,8 @@ export default function Layout({ children, currentPageName }) {
         { name: '📅 Report-Scheduling', href: createPageUrl('ReportScheduling'), icon: Calendar, page: 'ReportScheduling' },
         { name: '🔍 Erweiterte Suche', href: createPageUrl('AdvancedSearch'), icon: Search, page: 'AdvancedSearch' },
         { name: '📥 Import/Export', href: createPageUrl('DataImportExport'), icon: Upload, page: 'DataImportExport' },
+        { name: '⚡ Workflow Automation', href: createPageUrl('WorkflowAutomation'), icon: Zap, page: 'WorkflowAutomation' },
+        { name: '🔄 Bulk-Operationen', href: createPageUrl('BulkOperations'), icon: Database, page: 'BulkOperations' },
         { name: 'Objekte', href: createPageUrl('Buildings'), icon: Building2, page: 'Buildings', requiresModule: 'property' },
         { name: 'Mieter', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts', requiresModule: 'tenants' },
         { name: 'Kommunikation', href: createPageUrl('Kommunikation'), icon: MessageSquare, page: 'Kommunikation', requiresModule: 'communication' },
