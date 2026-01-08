@@ -2,36 +2,37 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { 
-    Building2, 
-    Home, 
-    Users, 
-    FileText, 
-    CreditCard, 
-    BarChart3, 
-    Landmark,
-    Menu,
-    X,
-    ChevronRight,
-    BookOpen,
-    MessageSquare,
-    HelpCircle,
-    AlertCircle,
-    Target,
-    Settings,
-    Shield,
-    TestTube,
-    Mail,
-    Calendar,
-    Search,
-    Upload,
-    Zap,
-    Database,
-    Sparkles,
-    Package,
-    TrendingUp,
-    Activity,
-    Bell
-} from 'lucide-react';
+          Building2, 
+          Home, 
+          Users, 
+          FileText, 
+          CreditCard, 
+          BarChart3, 
+          Landmark,
+          Menu,
+          X,
+          ChevronRight,
+          BookOpen,
+          MessageSquare,
+          HelpCircle,
+          AlertCircle,
+          Target,
+          Settings,
+          Shield,
+          TestTube,
+          Mail,
+          Calendar,
+          Search,
+          Upload,
+          Zap,
+          Database,
+          Sparkles,
+          Package,
+          TrendingUp,
+          Activity,
+          Bell,
+          Gift
+      } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import SuiteSwitcher from '@/components/suite/SuiteSwitcher';
@@ -68,6 +69,7 @@ export default function Layout({ children, currentPageName }) {
         { name: '🎨 Mein Dashboard', href: createPageUrl('CustomDashboard'), icon: Settings, page: 'CustomDashboard' },
         { name: '⚙️ Admin', href: createPageUrl('AdminDashboard'), icon: Settings, page: 'AdminDashboard' },
         { name: '🎯 Suite Management', href: createPageUrl('SuiteManagement'), icon: Settings, page: 'SuiteManagement' },
+        { name: '📦 Paketverwalter', href: createPageUrl('PackageManager'), icon: Package, page: 'PackageManager' },
         { name: '👥 Benutzerverwaltung', href: createPageUrl('UserManagement'), icon: Users, page: 'UserManagement' },
         { name: '🔐 Rollen', href: createPageUrl('RoleManagement'), icon: Shield, page: 'RoleManagement' },
         { name: '📦 Module', href: createPageUrl('ModuleManagement'), icon: Package, page: 'ModuleManagement' },
@@ -202,12 +204,17 @@ export default function Layout({ children, currentPageName }) {
                         <div className="flex items-center gap-3">
                             <SuiteSwitcher />
                             <NotificationCenter />
-                            <Link to={createPageUrl('UserSettings')}>
-                                <Button variant="ghost" size="icon">
-                                    <Settings className="w-5 h-5 text-slate-600" />
-                                </Button>
+                            <Link to={createPageUrl('MyAccount')}>
+                            <Button variant="ghost" size="icon" title="Mein Account">
+                            <Users className="w-5 h-5 text-slate-600" />
+                            </Button>
                             </Link>
-                        </div>
+                            <Link to={createPageUrl('UserSettings')}>
+                            <Button variant="ghost" size="icon" title="Einstellungen">
+                            <Settings className="w-5 h-5 text-slate-600" />
+                            </Button>
+                            </Link>
+                                </div>
                     </div>
                 </header>
 

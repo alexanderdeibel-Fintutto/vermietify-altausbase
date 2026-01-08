@@ -59,6 +59,8 @@ import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
 import AdvancedReportBuilder from './pages/AdvancedReportBuilder';
 import PropertyPortfolio from './pages/PropertyPortfolio';
 import TenantPortal from './pages/TenantPortal';
+import MyAccount from './pages/MyAccount';
+import PackageManager from './pages/PackageManager';
 import __Layout from './Layout.jsx';
 
 
@@ -124,6 +126,8 @@ export const PAGES = {
     "AdvancedReportBuilder": AdvancedReportBuilder,
     "PropertyPortfolio": PropertyPortfolio,
     "TenantPortal": TenantPortal,
+    "MyAccount": MyAccount,
+    "PackageManager": PackageManager,
 }
 
 export const pagesConfig = {
