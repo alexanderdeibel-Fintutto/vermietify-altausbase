@@ -4,151 +4,178 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    
+
     if (user?.role !== 'admin') {
-      return Response.json({ error: 'Admin access required' }, { status: 403 });
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
-    const { year = 2024 } = await req.json();
+    console.log('[SEED] Creating ELSTER form templates for all 5 forms');
 
     const templates = [
-      // ANLAGE V - Alle Rechtsformen
+      // ANLAGE V
       {
-        form_type: 'ANLAGE_V',
-        legal_form: 'PRIVATPERSON',
-        year,
-        namespace: 'http://finkonsens.de/elster/elstererklarung/anlagev/v2024',
+        form_type: "ANLAGE_V",
+        legal_form: "PRIVATPERSON",
+        year: 2024,
         xml_template: `<?xml version="1.0" encoding="UTF-8"?>
-<Elster xmlns="http://finkonsens.de/elster/elstererklarung/anlagev/v2024">
-  <AnlageV>
-    <Adresse>{{address}}</Adresse>
-    <Einnahmen>
-      <Kaltmiete>{{income_rent}}</Kaltmiete>
-      <Umlagen>{{income_ancillary}}</Umlagen>
-      <Sonstiges>{{income_other}}</Sonstiges>
-    </Einnahmen>
-    <Werbungskosten>
-      <Grundsteuer>{{expense_property_tax}}</Grundsteuer>
-      <Schuldzinsen>{{expense_interest}}</Schuldzinsen>
-      <Versicherungen>{{expense_insurance}}</Versicherungen>
-      <Instandhaltung>{{expense_maintenance}}</Instandhaltung>
-      <Hausverwaltung>{{expense_management}}</Hausverwaltung>
-      <Sonstige>{{expense_other}}</Sonstige>
-    </Werbungskosten>
-    <AfA>
-      <Bemessungsgrundlage>{{afa_base}}</AfA_Bemessungsgrundlage>
-      <Prozentsatz>{{afa_rate}}</AfA_Prozentsatz>
-      <Betrag>{{afa_amount}}</AfA_Betrag>
-    </AfA>
-  </AnlageV>
-</Elster>`,
+<AnlageV xmlns="http://finkonsens.de/elster/elstererklarung/anlagev/v2024">
+  <Grundangaben>
+    <Steuernummer>{{steuernummer}}</Steuernummer>
+    <Jahr>{{tax_year}}</Jahr>
+  </Grundangaben>
+  <Angaben>
+    <Grundsteuer>{{grundsteuer}}</Grundsteuer>
+    <Abschreibungen>{{afa}}</Abschreibungen>
+    <Schuldzinsen>{{schuldzinsen}}</Schuldzinsen>
+    <Sonstige_Werbungskosten>{{sonstige_werbungskosten}}</Sonstige_Werbungskosten>
+    <Mieteinnahmen>{{mieteinnahmen}}</Mieteinnahmen>
+  </Angaben>
+</AnlageV>`,
         field_mappings: {
-          address: "building.address",
-          income_rent: "SUM(contracts.grundmiete)",
-          income_ancillary: "SUM(contracts.nebenkosten)",
-          expense_property_tax: "SUM(financialItems[kategorie=Grundsteuer])",
-          afa_rate: "2.0"
+          grundsteuer: "sum:PRIV_GRUNDSTEUER",
+          afa: "sum:PRIV_ABSCHREIBUNG_GEBAEUDE",
+          schuldzinsen: "sum:PRIV_SCHULDZINSEN"
         }
       },
       
-      // EÜR - GbR, GmbH, UG, AG
+      // EUER
       {
-        form_type: 'EUER',
-        legal_form: 'GBR',
-        year,
-        namespace: 'http://finkonsens.de/elster/elstererklarung/euer/v2024',
+        form_type: "EUER",
+        legal_form: "GBR",
+        year: 2024,
         xml_template: `<?xml version="1.0" encoding="UTF-8"?>
-<Elster xmlns="http://finkonsens.de/elster/elstererklarung/euer/v2024">
-  <EUeR>
-    <Betriebseinnahmen>{{revenue}}</Betriebseinnahmen>
-    <Wareneinkauf>{{cogs}}</Wareneinkauf>
-    <Personalkosten>{{personnel}}</Personalkosten>
-    <Abschreibungen>{{depreciation}}</Abschreibungen>
-    <SonstigeBetriebsausgaben>{{other_expenses}}</SonstigeBetriebsausgaben>
-    <Gewinn>{{profit}}</Gewinn>
-  </EUeR>
-</Elster>`
+<EUeR xmlns="http://finkonsens.de/elster/elstererklarung/euer/v2024">
+  <Grundangaben>
+    <Steuernummer>{{steuernummer}}</Steuernummer>
+    <Jahr>{{tax_year}}</Jahr>
+    <Rechtsform>GBR</Rechtsform>
+  </Grundangaben>
+  <Betriebseinnahmen>
+    <Umsatzerloese>{{umsatzerloese}}</Umsatzerloese>
+  </Betriebseinnahmen>
+  <Betriebsausgaben>
+    <Raumkosten>{{raumkosten}}</Raumkosten>
+    <Zinsen>{{zinsen}}</Zinsen>
+    <Abschreibungen>{{abschreibungen}}</Abschreibungen>
+    <Sonstige>{{sonstige_betriebsausgaben}}</Sonstige>
+  </Betriebsausgaben>
+  <Gewinn>{{gewinn}}</Gewinn>
+</EUeR>`,
+        field_mappings: {
+          umsatzerloese: "sum:RENTAL_INCOME",
+          zinsen: "sum:GBR_KREDITZINSEN",
+          abschreibungen: "sum:GBR_ABSCHREIBUNG_GEBAEUDE"
+        }
       },
-
-      // ESt 1B - nur GbR
+      
+      // EST 1B (Personengesellschaften)
       {
-        form_type: 'EST1B',
-        legal_form: 'GBR',
-        year,
-        namespace: 'http://finkonsens.de/elster/elstererklarung/est1b/v2024',
+        form_type: "EST1B",
+        legal_form: "GBR",
+        year: 2024,
         xml_template: `<?xml version="1.0" encoding="UTF-8"?>
-<Elster xmlns="http://finkonsens.de/elster/elstererklarung/est1b/v2024">
-  <ESt1B>
-    <Gesellschafter>
-      <Name>{{partner_name}}</Name>
-      <Anteil>{{partner_share}}</Anteil>
-    </Gesellschafter>
-    <Gewinnverteilung>{{profit_distribution}}</Gewinnverteilung>
-    <Sonderbetriebseinnahmen>{{special_income}}</Sonderbetriebseinnahmen>
-    <Sonderbetriebsausgaben>{{special_expenses}}</Sonderbetriebsausgaben>
-  </ESt1B>
-</Elster>`
+<ESt1B xmlns="http://finkonsens.de/elster/elstererklarung/est1b/v2024">
+  <Grundangaben>
+    <Steuernummer>{{steuernummer}}</Steuernummer>
+    <Jahr>{{tax_year}}</Jahr>
+    <Gesellschaftsname>{{gesellschaft_name}}</Gesellschaftsname>
+  </Grundangaben>
+  <Einkuenfte>
+    <Gewinn_aus_Gewerbebetrieb>{{gewinn}}</Gewinn_aus_Gewerbebetrieb>
+    <Sonderbetriebsausgaben>{{sonderbetriebsausgaben}}</Sonderbetriebsausgaben>
+  </Einkuenfte>
+  <Gesellschafter>
+    <Gesellschafter_1>
+      <Name>{{gesellschafter_1_name}}</Name>
+      <Anteil>{{gesellschafter_1_anteil}}</Anteil>
+      <Gewinnanteil>{{gesellschafter_1_gewinn}}</Gewinnanteil>
+    </Gesellschafter_1>
+  </Gesellschafter>
+</ESt1B>`,
+        field_mappings: {
+          gewinn: "calculated:einkuenfte_minus_ausgaben",
+          sonderbetriebsausgaben: "sum:GBR_SONDERBETRIEBSAUSGABEN"
+        }
       },
-
-      // Gewerbesteuer - GbR, GmbH, UG, AG
+      
+      // GEWERBESTEUER
       {
-        form_type: 'GEWERBESTEUER',
-        legal_form: 'GMBH',
-        year,
-        namespace: 'http://finkonsens.de/elster/elstererklarung/gewst/v2024',
+        form_type: "GEWERBESTEUER",
+        legal_form: "GMBH",
+        year: 2024,
         xml_template: `<?xml version="1.0" encoding="UTF-8"?>
-<Elster xmlns="http://finkonsens.de/elster/elstererklarung/gewst/v2024">
-  <GewSt>
-    <Gewinn>{{profit}}</Gewinn>
-    <Hinzurechnungen>
-      <Schuldzinsen>{{add_interest}}</Schuldzinsen>
-      <Mieten>{{add_rent}}</Mieten>
-      <Lizenzen>{{add_licenses}}</Lizenzen>
-    </Hinzurechnungen>
-    <Kuerzungen>{{deductions}}</Kuerzungen>
-    <Gewerbeertrag>{{trade_earnings}}</Gewerbeertrag>
-  </GewSt>
-</Elster>`
+<Gewerbesteuer xmlns="http://finkonsens.de/elster/elstererklarung/gewst/v2024">
+  <Grundangaben>
+    <Steuernummer>{{steuernummer}}</Steuernummer>
+    <Jahr>{{tax_year}}</Jahr>
+    <Firma>{{firma}}</Firma>
+  </Grundangaben>
+  <Gewinn>
+    <Gewinn_vor_Hinzurechnungen>{{gewinn_vor_hinzurechnungen}}</Gewinn_vor_Hinzurechnungen>
+  </Gewinn>
+  <Hinzurechnungen>
+    <Schuldzinsen>{{hinzurechnung_zinsen}}</Schuldzinsen>
+    <Mieten>{{hinzurechnung_mieten}}</Mieten>
+  </Hinzurechnungen>
+  <Kuerzungen>
+    <Grundstuecke>{{kuerzung_grundstuecke}}</Kuerzungen>
+  </Kuerzungen>
+  <Gewerbeertrag>{{gewerbeertrag}}</Gewerbeertrag>
+</Gewerbesteuer>`,
+        field_mappings: {
+          gewinn_vor_hinzurechnungen: "calculated:jahresueberschuss",
+          hinzurechnung_zinsen: "sum:GMBH_ZINSEN"
+        }
       },
-
-      // Umsatzsteuer - Alle außer Privatperson
+      
+      // UMSATZSTEUER
       {
-        form_type: 'UMSATZSTEUER',
-        legal_form: 'GMBH',
-        year,
-        namespace: 'http://finkonsens.de/elster/elsteranmeldung/ustva/v2024',
+        form_type: "UMSATZSTEUER",
+        legal_form: "GMBH",
+        year: 2024,
         xml_template: `<?xml version="1.0" encoding="UTF-8"?>
-<Elster xmlns="http://finkonsens.de/elster/elsteranmeldung/ustva/v2024">
-  <UStVA>
-    <Umsaetze19>{{sales_19}}</Umsaetze19>
-    <Umsaetze7>{{sales_7}}</Umsaetze7>
-    <SteuerfreieUmsaetze>{{sales_exempt}}</SteuerfreieUmsaetze>
-    <Vorsteuer>{{input_tax}}</Vorsteuer>
-    <Zahllast>{{tax_due}}</Zahllast>
-  </UStVA>
-</Elster>`
+<UStVA xmlns="http://finkonsens.de/elster/elsteranmeldung/ustva/v2024">
+  <Grundangaben>
+    <Steuernummer>{{steuernummer}}</Steuernummer>
+    <Jahr>{{tax_year}}</Jahr>
+    <Quartal>{{quartal}}</Quartal>
+  </Grundangaben>
+  <Lieferungen>
+    <Steuerpflichtige_Umsaetze_19>{{umsaetze_19}}</Steuerpflichtige_Umsaetze_19>
+    <Steuer_19>{{steuer_19}}</Steuer_19>
+  </Lieferungen>
+  <Vorsteuer>
+    <Vorsteuerbetraege>{{vorsteuer}}</Vorsteuerbetraege>
+  </Vorsteuer>
+  <Zahllast>{{zahllast}}</Zahllast>
+</UStVA>`,
+        field_mappings: {
+          umsaetze_19: "sum:RENTAL_INCOME_TAXABLE",
+          vorsteuer: "sum:INPUT_TAX"
+        }
       }
     ];
 
     let created = 0;
     for (const template of templates) {
-      try {
-        await base44.asServiceRole.entities.ElsterFormTemplate.create(template);
-        created++;
-      } catch (error) {
-        console.error(`Error creating template ${template.form_type}:`, error);
-      }
+      await base44.asServiceRole.entities.ElsterFormTemplate.create({
+        ...template,
+        validation_rules: [],
+        is_active: true,
+        version: "1.0",
+        description: `${template.form_type} Template für ${template.legal_form} ${template.year}`
+      });
+      created++;
     }
 
-    return Response.json({
-      success: true,
-      created,
-      total: templates.length,
-      message: `${created} Form-Templates für ${year} erstellt`
+    return Response.json({ 
+      success: true, 
+      message: `${created} Form-Templates erfolgreich erstellt`,
+      templates_created: created
     });
 
   } catch (error) {
-    console.error('Error seeding templates:', error);
+    console.error('[ERROR]', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
