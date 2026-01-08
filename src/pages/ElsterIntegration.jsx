@@ -71,6 +71,9 @@ import ComprehensiveTaxCalendar from '@/components/elster/ComprehensiveTaxCalend
 import TaxReportingHub from '@/components/elster/TaxReportingHub';
 import AutomatedFormGeneration from '@/components/elster/AutomatedFormGeneration';
 import ElsterNotificationCenter from '@/components/elster/ElsterNotificationCenter';
+import PredictiveTaxAnalytics from '@/components/elster/PredictiveTaxAnalytics';
+import CollaborationCenter from '@/components/elster/CollaborationCenter';
+import AdvancedExportImport from '@/components/elster/AdvancedExportImport';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -344,6 +347,7 @@ export default function ElsterIntegration() {
 
           <TabsContent value="analytics" className="mt-6">
             <div className="space-y-6">
+              <PredictiveTaxAnalytics />
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
                   <MultiYearComparison submissions={submissions} formType="ANLAGE_V" />
@@ -368,7 +372,10 @@ export default function ElsterIntegration() {
 
           <TabsContent value="reports" className="mt-6">
             <div className="space-y-6">
-              <TaxReportingHub />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <TaxReportingHub />
+                <AdvancedExportImport />
+              </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <TaxAdvisorReport />
                 <FinancialDataSync />
