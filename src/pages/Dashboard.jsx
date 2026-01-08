@@ -12,8 +12,23 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import WhatsAppWidget from '@/components/whatsapp/WhatsAppWidget';
+import OnboardingResumeCard from '@/components/dashboard/OnboardingResumeCard';
 
 export default function Dashboard() {
+    const { data: user } = useQuery({
+        queryKey: ['current-user'],
+        queryFn: () => base44.auth.me()
+    });
+
+    const { data: onboardingProgress } = useQuery({
+        queryKey: ['onboarding-progress', user?.id],
+        queryFn: async () => {
+            const results = await base44.entities.OnboardingProgress.filter({ user_id: user.id });
+            return results[0];
+        },
+        enabled: !!user
+    });
+
     const { data: buildings = [], isLoading: loadingBuildings } = useQuery({
         queryKey: ['buildings'],
         queryFn: () => base44.entities.Building.list()
@@ -109,6 +124,11 @@ export default function Dashboard() {
 
     return (
         <div className="space-y-8">
+            {/* Onboarding Resume Card */}
+            {onboardingProgress && !onboardingProgress.is_completed && (
+                <OnboardingResumeCard progress={onboardingProgress} />
+            )}
+
             {/* Header */}
             <div>
                 <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">Dashboard</h1>
