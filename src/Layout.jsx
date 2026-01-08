@@ -27,7 +27,10 @@ import {
     Zap,
     Database,
     Sparkles,
-    Package
+    Package,
+    TrendingUp,
+    Activity,
+    Bell
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/notifications/NotificationCenter';
