@@ -41,6 +41,7 @@ import TesterTracker from '@/components/testing/TesterTracker';
 import SmartProblemReportButton from '@/components/testing/SmartProblemReportButton';
 import { Button } from "@/components/ui/button";
 import OnboardingRedirect from '@/components/onboarding/OnboardingRedirect';
+import { DynamicNavigation } from '@/components/DynamicNavigation';
 
 export default function Layout({ children, currentPageName }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -63,65 +64,20 @@ export default function Layout({ children, currentPageName }) {
         return hasViaSuite || hasDirectAccess;
     };
 
-    const navigation = [
-        { name: 'Dashboard', href: createPageUrl('Dashboard'), icon: Home, page: 'Dashboard' },
-        { name: '🚀 Setup-Assistent', href: createPageUrl('Onboarding'), icon: Sparkles, page: 'Onboarding' },
-        { name: '🎨 Mein Dashboard', href: createPageUrl('CustomDashboard'), icon: Settings, page: 'CustomDashboard' },
-        { name: '⚙️ Admin', href: createPageUrl('AdminDashboard'), icon: Settings, page: 'AdminDashboard' },
-        { name: '🎯 Suite Management', href: createPageUrl('SuiteManagement'), icon: Settings, page: 'SuiteManagement' },
-        { name: '📦 Paketverwalter', href: createPageUrl('PackageManager'), icon: Package, page: 'PackageManager' },
-        { name: '👥 Benutzerverwaltung', href: createPageUrl('UserManagement'), icon: Users, page: 'UserManagement' },
-        { name: '🔐 Rollen', href: createPageUrl('RoleManagement'), icon: Shield, page: 'RoleManagement' },
-        { name: '📦 Module', href: createPageUrl('ModuleManagement'), icon: Package, page: 'ModuleManagement' },
-        { name: '🧪 Testing', href: createPageUrl('TestingDashboard'), icon: TestTube, page: 'TestingDashboard' },
-        { name: '📊 Report Generator', href: createPageUrl('ReportGenerator'), icon: BarChart3, page: 'ReportGenerator' },
-        { name: '📊 Report Generator', href: createPageUrl('ReportGenerator'), icon: BarChart3, page: 'ReportGenerator' },
-        { name: '📊 Audit Reports', href: createPageUrl('AuditReports'), icon: BarChart3, page: 'AuditReports' },
-        { name: '📈 Analytics', href: createPageUrl('AdvancedAnalytics'), icon: TrendingUp, page: 'AdvancedAnalytics' },
-        { name: '🔐 Permissions', href: createPageUrl('PermissionDashboard'), icon: Shield, page: 'PermissionDashboard' },
-        { name: '🛡️ Compliance', href: createPageUrl('ComplianceCenter'), icon: Shield, page: 'ComplianceCenter' },
-        { name: '🔑 API Keys', href: createPageUrl('APIKeyManagement'), icon: Settings, page: 'APIKeyManagement' },
-        { name: '💚 System Health', href: createPageUrl('SystemHealth'), icon: Activity, page: 'SystemHealth' },
-        { name: '📋 Activity Logs', href: createPageUrl('ActivityLogs'), icon: Activity, page: 'ActivityLogs' },
-        { name: '📊 Analytics', href: createPageUrl('Analytics'), icon: BarChart3, page: 'Analytics' },
-        { name: '📅 Report-Scheduling', href: createPageUrl('ReportScheduling'), icon: Calendar, page: 'ReportScheduling' },
-        { name: '🔍 Erweiterte Suche', href: createPageUrl('AdvancedSearch'), icon: Search, page: 'AdvancedSearch' },
-        { name: '🏛️ ELSTER-Integration', href: createPageUrl('ElsterIntegration'), icon: FileText, page: 'ElsterIntegration' },
-        { name: '📥 Import/Export', href: createPageUrl('DataImportExport'), icon: Upload, page: 'DataImportExport' },
-        { name: '⚡ Workflow Automation', href: createPageUrl('WorkflowAutomation'), icon: Zap, page: 'WorkflowAutomation' },
-        { name: '🔄 Bulk-Operationen', href: createPageUrl('BulkOperations'), icon: Database, page: 'BulkOperations' },
-        { name: 'Objekte', href: createPageUrl('Buildings'), icon: Building2, page: 'Buildings', requiresModule: 'property' },
-        { name: 'Mieter', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts', requiresModule: 'tenants' },
-        { name: 'Kommunikation', href: createPageUrl('Kommunikation'), icon: MessageSquare, page: 'Kommunikation', requiresModule: 'communication' },
-        { name: '📧 E-Mail Templates', href: createPageUrl('EmailTemplates'), icon: Mail, page: 'EmailTemplates', requiresModule: 'communication' },
-        { name: '💬 WhatsApp', href: createPageUrl('WhatsAppCommunication'), icon: MessageSquare, page: 'WhatsAppCommunication', requiresModule: 'communication' },
-        { name: '⚙️ WhatsApp Settings', href: createPageUrl('WhatsAppSettings'), icon: Settings, page: 'WhatsAppSettings', requiresModule: 'communication' },
-        { name: 'Aufgaben', href: createPageUrl('Tasks'), icon: FileText, page: 'Tasks', requiresModule: 'tasks' },
-        { name: 'Dokumente', href: createPageUrl('Documents'), icon: FileText, page: 'Documents', requiresModule: 'documents' },
-        { name: 'Finanzen', href: createPageUrl('Finanzen'), icon: CreditCard, page: 'Finanzen', requiresModule: 'finance' },
-        { name: 'Generierte Buchungen', href: createPageUrl('GeneratedBookings'), icon: FileText, page: 'GeneratedBookings', requiresModule: 'finance' },
-        { name: 'Rechnungen & Belege', href: createPageUrl('Invoices'), icon: FileText, page: 'Invoices', requiresModule: 'finance' },
-        { name: 'Steuerformulare', href: createPageUrl('TaxForms'), icon: BookOpen, page: 'TaxForms', requiresModule: 'tax_rental' },
-        { name: 'Betriebskosten', href: createPageUrl('OperatingCosts'), icon: FileText, page: 'OperatingCosts', requiresModule: 'property' },
-        { name: 'Bank/Kasse', href: createPageUrl('BankAccounts'), icon: Landmark, page: 'BankAccounts', requiresModule: 'accounts' },
-        { name: '───────────', disabled: true },
-        { name: '📖 Entwickler-Doku', href: createPageUrl('DeveloperDocumentation'), icon: BookOpen, page: 'DeveloperDocumentation' },
-        { name: '🆘 Support-Center', href: createPageUrl('SupportCenter'), icon: AlertCircle, page: 'SupportCenter' },
-        { name: '🔔 Benachrichtigungen', href: createPageUrl('NotificationManagement'), icon: Bell, page: 'NotificationManagement' },
-        { name: '🚀 Projekt-Management', href: createPageUrl('ProjectManagement'), icon: Target, page: 'ProjectManagement' },
-        { name: '❓ Hilfe-Center', href: createPageUrl('HilfeCenter'), icon: HelpCircle, page: 'HilfeCenter' },
-        { name: '───────────', disabled: true },
-        { name: '📊 Advanced Reports', href: createPageUrl('AdvancedReportBuilder'), icon: BarChart3, page: 'AdvancedReportBuilder' },
-        { name: '🏢 Property Portfolio', href: createPageUrl('PropertyPortfolio'), icon: Building2, page: 'PropertyPortfolio' },
-        { name: '🏠 Tenant Portal', href: createPageUrl('TenantPortal'), icon: Home, page: 'TenantPortal' },
-        ];
-
-    // Filtere Navigation basierend auf Modul-Zugriff
-    const visibleNavigation = navigation.filter(item => {
-        if (item.disabled) return true;
-        if (!item.requiresModule) return true;
-        return hasModuleAccess(item.requiresModule);
-    });
+    // Admin-Navigation (immer sichtbar für Admins)
+    const adminNavigation = [
+            { name: '🚀 Setup-Assistent', href: createPageUrl('Onboarding'), icon: Sparkles, page: 'Onboarding' },
+            { name: '🎨 Mein Dashboard', href: createPageUrl('CustomDashboard'), icon: Settings, page: 'CustomDashboard' },
+            { name: '⚙️ Admin', href: createPageUrl('AdminDashboard'), icon: Settings, page: 'AdminDashboard' },
+            { name: '🎯 Suite Management', href: createPageUrl('SuiteManagement'), icon: Settings, page: 'SuiteManagement' },
+            { name: '📦 Paketverwalter', href: createPageUrl('PackageManager'), icon: Package, page: 'PackageManager' },
+            { name: '👥 Benutzerverwaltung', href: createPageUrl('UserManagement'), icon: Users, page: 'UserManagement' },
+            { name: '🔐 Rollen', href: createPageUrl('RoleManagement'), icon: Shield, page: 'RoleManagement' },
+            { name: '📦 Module', href: createPageUrl('ModuleManagement'), icon: Package, page: 'ModuleManagement' },
+            { name: '───────────', disabled: true },
+            { name: '📖 Entwickler-Doku', href: createPageUrl('DeveloperDocumentation'), icon: BookOpen, page: 'DeveloperDocumentation' },
+            { name: '🆘 Support-Center', href: createPageUrl('SupportCenter'), icon: AlertCircle, page: 'SupportCenter' },
+    ];
 
     return (
             <OnboardingRedirect>
