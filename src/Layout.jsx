@@ -108,7 +108,11 @@ export default function Layout({ children, currentPageName }) {
         { name: '🔔 Benachrichtigungen', href: createPageUrl('NotificationManagement'), icon: Bell, page: 'NotificationManagement' },
         { name: '🚀 Projekt-Management', href: createPageUrl('ProjectManagement'), icon: Target, page: 'ProjectManagement' },
         { name: '❓ Hilfe-Center', href: createPageUrl('HilfeCenter'), icon: HelpCircle, page: 'HilfeCenter' },
-    ];
+        { name: '───────────', disabled: true },
+        { name: '📊 Advanced Reports', href: createPageUrl('AdvancedReportBuilder'), icon: BarChart3, page: 'AdvancedReportBuilder' },
+        { name: '🏢 Property Portfolio', href: createPageUrl('PropertyPortfolio'), icon: Building2, page: 'PropertyPortfolio' },
+        { name: '🏠 Tenant Portal', href: createPageUrl('TenantPortal'), icon: Home, page: 'TenantPortal' },
+        ];
 
     // Filtere Navigation basierend auf Modul-Zugriff
     const visibleNavigation = navigation.filter(item => {

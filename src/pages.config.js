@@ -56,6 +56,9 @@ import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
+import AdvancedReportBuilder from './pages/AdvancedReportBuilder';
+import PropertyPortfolio from './pages/PropertyPortfolio';
+import TenantPortal from './pages/TenantPortal';
 import __Layout from './Layout.jsx';
 
 
@@ -118,6 +121,9 @@ export const PAGES = {
     "WhatsAppSetup": WhatsAppSetup,
     "WorkflowAutomation": WorkflowAutomation,
     "KnowledgeManagementDashboard": KnowledgeManagementDashboard,
+    "AdvancedReportBuilder": AdvancedReportBuilder,
+    "PropertyPortfolio": PropertyPortfolio,
+    "TenantPortal": TenantPortal,
 }
 
 export const pagesConfig = {
