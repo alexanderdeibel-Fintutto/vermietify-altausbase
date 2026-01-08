@@ -4,86 +4,90 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    console.log('[REMINDERS] Checking for upcoming ELSTER deadlines');
+    console.log('[DEADLINE REMINDERS] Starting check');
 
-    // Steuerfristen für das aktuelle Jahr
     const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+
+    // Definiere Fristen
     const deadlines = [
-      { form: 'UMSATZSTEUER', month: 1, day: 10, description: 'Umsatzsteuer-Voranmeldung Dezember' },
-      { form: 'ANLAGE_V', month: 7, day: 31, description: 'Einkommensteuererklärung (ohne Steuerberater)' },
-      { form: 'ANLAGE_V', month: 2, day: 28, description: 'Einkommensteuererklärung (mit Steuerberater)', next_year: true },
-      { form: 'GEWERBESTEUER', month: 7, day: 31, description: 'Gewerbesteuererklärung' },
-      { form: 'EUER', month: 7, day: 31, description: 'EÜR (ohne Steuerberater)' }
+      { month: 2, day: 28, name: 'Gewerbesteuer Vorauszahlung Q1', forms: ['GEWERBESTEUER'] },
+      { month: 5, day: 10, name: 'Umsatzsteuer Voranmeldung Q1', forms: ['UMSATZSTEUER'] },
+      { month: 5, day: 31, name: 'Gewerbesteuer Vorauszahlung Q2', forms: ['GEWERBESTEUER'] },
+      { month: 7, day: 31, name: 'Einkommensteuererklärung', forms: ['ANLAGE_V', 'EUER', 'EST1B'] },
+      { month: 8, day: 10, name: 'Umsatzsteuer Voranmeldung Q2', forms: ['UMSATZSTEUER'] },
+      { month: 8, day: 31, name: 'Gewerbesteuer Vorauszahlung Q3', forms: ['GEWERBESTEUER'] },
+      { month: 11, day: 10, name: 'Umsatzsteuer Voranmeldung Q3', forms: ['UMSATZSTEUER'] },
+      { month: 11, day: 30, name: 'Gewerbesteuer Vorauszahlung Q4', forms: ['GEWERBESTEUER'] }
     ];
 
-    const now = new Date();
-    const reminderDays = [30, 14, 7, 3, 1]; // Tage vor Frist
+    // Finde anstehende Fristen (nächste 30 Tage)
+    const upcomingDeadlines = deadlines.filter(d => {
+      const deadlineDate = new Date(currentYear, d.month - 1, d.day);
+      const now = new Date();
+      const daysUntil = Math.floor((deadlineDate - now) / (1000 * 60 * 60 * 24));
+      return daysUntil > 0 && daysUntil <= 30;
+    });
 
-    const users = await base44.asServiceRole.entities.User.list();
-    let notificationsSent = 0;
+    console.log(`[INFO] Found ${upcomingDeadlines.length} upcoming deadlines`);
 
-    for (const user of users) {
-      // Hole Submissions des Users
-      const submissions = await base44.asServiceRole.entities.ElsterSubmission.filter({
-        created_by: user.email
-      });
+    const notifications = [];
 
-      for (const deadline of deadlines) {
-        const deadlineYear = deadline.next_year ? currentYear + 1 : currentYear;
-        const deadlineDate = new Date(deadlineYear, deadline.month - 1, deadline.day);
-        const daysUntil = Math.floor((deadlineDate - now) / (1000 * 60 * 60 * 24));
+    for (const deadline of upcomingDeadlines) {
+      const deadlineDate = new Date(currentYear, deadline.month - 1, deadline.day);
+      const daysUntil = Math.floor((deadlineDate - deadlineDate) / (1000 * 60 * 60 * 24));
 
-        // Prüfe ob Erinnerung fällig ist
-        if (reminderDays.includes(daysUntil)) {
-          // Prüfe ob bereits eingereicht
-          const hasSubmitted = submissions.some(s => 
-            s.tax_form_type === deadline.form &&
-            s.tax_year === currentYear - 1 &&
-            ['SUBMITTED', 'ACCEPTED'].includes(s.status)
-          );
+      // Prüfe für jede betroffene Formular-Art
+      for (const formType of deadline.forms) {
+        const submissions = await base44.asServiceRole.entities.ElsterSubmission.filter({
+          tax_form_type: formType,
+          tax_year: currentYear,
+          status: { $in: ['DRAFT', 'AI_PROCESSED', 'VALIDATED'] }
+        });
 
-          if (!hasSubmitted) {
-            // Sende Benachrichtigung
-            await base44.asServiceRole.integrations.Core.SendEmail({
-              to: user.email,
-              from_name: 'ImmoVerwalter ELSTER',
-              subject: `⏰ Erinnerung: ${deadline.description} - Noch ${daysUntil} Tage`,
-              body: `
-Hallo ${user.full_name || 'dort'},
+        if (submissions.length > 0) {
+          // Erstelle Benachrichtigung für jeden User mit offenen Submissions
+          const userIds = [...new Set(submissions.map(s => s.created_by))];
 
-dies ist eine automatische Erinnerung für folgende Steuerfrist:
+          for (const userId of userIds) {
+            try {
+              await base44.asServiceRole.functions.invoke('createNotification', {
+                user_id: userId,
+                type: 'deadline_reminder',
+                title: `Frist läuft ab: ${deadline.name}`,
+                message: `In ${daysUntil} Tagen (${deadlineDate.toLocaleDateString('de-DE')}). Sie haben noch ${submissions.filter(s => s.created_by === userId).length} offene ${formType} Submissions.`,
+                priority: daysUntil <= 7 ? 'high' : 'medium',
+                link: '/ElsterIntegration',
+                metadata: {
+                  deadline_date: deadlineDate.toISOString(),
+                  form_type: formType,
+                  days_until: daysUntil
+                }
+              });
 
-📋 ${deadline.description}
-📅 Frist: ${deadlineDate.toLocaleDateString('de-DE')}
-⏰ Verbleibend: ${daysUntil} Tage
+              notifications.push({
+                user_id: userId,
+                deadline: deadline.name,
+                days_until: daysUntil,
+                form_type: formType
+              });
 
-Status: Noch nicht eingereicht
-
-Sie können Ihre Steuererklärung direkt über ImmoVerwalter erstellen und einreichen:
-👉 Zum ELSTER-Modul: [Link zur App]
-
-${daysUntil <= 7 ? '⚠️ WICHTIG: Die Frist läuft bald ab!' : ''}
-
-Bei Fragen stehen wir Ihnen gerne zur Verfügung.
-
-Mit freundlichen Grüßen
-Ihr ImmoVerwalter-Team
-              `.trim()
-            });
-
-            notificationsSent++;
-            console.log(`[SENT] Reminder to ${user.email} for ${deadline.form} (${daysUntil} days)`);
+              console.log(`[SENT] Notification to user ${userId} for ${formType}`);
+            } catch (error) {
+              console.error(`[ERROR] Failed to notify ${userId}:`, error.message);
+            }
           }
         }
       }
     }
 
-    console.log(`[SUCCESS] Sent ${notificationsSent} deadline reminders`);
+    console.log(`[SUCCESS] Sent ${notifications.length} deadline reminders`);
 
     return Response.json({
       success: true,
-      notifications_sent: notificationsSent,
-      checked_users: users.length
+      notifications_sent: notifications.length,
+      upcoming_deadlines: upcomingDeadlines.length,
+      notifications
     });
 
   } catch (error) {
