@@ -3,75 +3,80 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
 
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    console.log('[DEADLINE-REMINDER] Checking for upcoming deadlines...');
 
-    if (user.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
+    const now = new Date();
+    const currentYear = now.getFullYear();
 
-    console.log('[DEADLINE-REMINDERS] Starting scheduled check');
-
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1;
-    const currentDay = new Date().getDate();
-
-    // Definiere Fristen
+    // Standard ELSTER-Fristen
     const deadlines = [
-      { form: 'ANLAGE_V', month: 7, day: 31, label: 'Anlage V' },
-      { form: 'EUER', month: 7, day: 31, label: 'EÜR' },
-      { form: 'GEWERBESTEUER', month: 7, day: 31, label: 'Gewerbesteuer' },
-      { form: 'UMSATZSTEUER', month: 7, day: 31, label: 'Umsatzsteuer' }
+      { type: 'ANLAGE_V', month: 7, day: 31, description: 'Einkommensteuererklärung' },
+      { type: 'UMSATZSTEUER', month: 12, day: 31, description: 'Umsatzsteuererklärung' },
+      { type: 'GEWERBESTEUER', month: 12, day: 31, description: 'Gewerbesteuererklärung' }
     ];
 
-    const results = {
-      reminders_sent: 0,
-      skipped: 0,
-      errors: 0
-    };
+    const remindersToSend = [];
 
     for (const deadline of deadlines) {
-      // Prüfe ob Frist in 30 Tagen ist
       const deadlineDate = new Date(currentYear, deadline.month - 1, deadline.day);
-      const daysUntilDeadline = Math.floor((deadlineDate - new Date()) / (1000 * 60 * 60 * 24));
+      const daysUntilDeadline = Math.ceil((deadlineDate - now) / (1000 * 60 * 60 * 24));
 
-      if (daysUntilDeadline !== 30 && daysUntilDeadline !== 14 && daysUntilDeadline !== 7) {
-        continue; // Nur bei 30, 14 und 7 Tagen erinnern
-      }
+      // Erinnere bei 60, 30, 14, 7 und 1 Tag vor Frist
+      const reminderDays = [60, 30, 14, 7, 1];
 
-      console.log(`[INFO] Deadline ${deadline.label} in ${daysUntilDeadline} Tagen`);
+      if (reminderDays.includes(daysUntilDeadline)) {
+        // Finde unvollständige Submissions für diesen Typ
+        const submissions = await base44.asServiceRole.entities.ElsterSubmission.filter({
+          tax_form_type: deadline.type,
+          tax_year: currentYear - 1,
+          status: { $in: ['DRAFT', 'AI_PROCESSED', 'VALIDATED'] }
+        });
 
-      // Hole alle unvollständigen Submissions
-      const submissions = await base44.asServiceRole.entities.ElsterSubmission.filter({
-        tax_form_type: deadline.form,
-        tax_year: currentYear - 1,
-        status: { $in: ['DRAFT', 'AI_PROCESSED', 'VALIDATED'] }
-      });
-
-      for (const submission of submissions) {
-        try {
-          await base44.asServiceRole.functions.invoke('sendElsterEmailNotification', {
-            submission_id: submission.id,
-            notification_type: 'deadline_reminder',
-            recipient_email: submission.created_by
+        if (submissions.length > 0) {
+          remindersToSend.push({
+            deadline,
+            daysUntilDeadline,
+            submissions
           });
-
-          results.reminders_sent++;
-        } catch (error) {
-          console.error(`[ERROR] Failed to send reminder for ${submission.id}:`, error);
-          results.errors++;
         }
       }
     }
 
-    console.log(`[DEADLINE-REMINDERS] Complete: ${results.reminders_sent} sent, ${results.errors} errors`);
+    console.log(`[DEADLINE-REMINDER] Found ${remindersToSend.length} reminders to send`);
+
+    // Sende Benachrichtigungen
+    for (const reminder of remindersToSend) {
+      for (const sub of reminder.submissions) {
+        try {
+          await base44.asServiceRole.integrations.Core.SendEmail({
+            from_name: 'ELSTER-System',
+            to: sub.created_by,
+            subject: `⏰ ELSTER-Frist: ${reminder.daysUntilDeadline} Tage - ${reminder.deadline.description}`,
+            body: `Die Abgabefrist für ${reminder.deadline.description} läuft in ${reminder.daysUntilDeadline} Tagen ab.\n\nIhre Submission für ${sub.tax_form_type} (Jahr ${sub.tax_year}) ist noch im Status "${sub.status}".\n\nBitte vervollständigen Sie die Submission zeitnah, um die Frist einzuhalten.`
+          });
+
+          // Log Notification
+          await base44.asServiceRole.entities.ActivityLog.create({
+            entity_type: 'ElsterSubmission',
+            entity_id: sub.id,
+            action: 'deadline_reminder_sent',
+            metadata: {
+              days_until_deadline: reminder.daysUntilDeadline,
+              deadline_type: reminder.deadline.type,
+              sent_at: new Date().toISOString()
+            }
+          });
+        } catch (error) {
+          console.error(`Failed to send reminder for ${sub.id}:`, error);
+        }
+      }
+    }
 
     return Response.json({
       success: true,
-      results
+      reminders_sent: remindersToSend.reduce((sum, r) => sum + r.submissions.length, 0),
+      deadline_checks: remindersToSend.length
     });
 
   } catch (error) {

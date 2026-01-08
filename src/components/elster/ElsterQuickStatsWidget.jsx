@@ -1,87 +1,72 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileText, CheckCircle, Clock, AlertTriangle, TrendingUp } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
+import { FileText, CheckCircle, AlertTriangle, TrendingUp } from 'lucide-react';
 
 export default function ElsterQuickStatsWidget() {
   const { data: submissions = [] } = useQuery({
-    queryKey: ['elster-submissions-widget'],
-    queryFn: () => base44.entities.ElsterSubmission.list('-created_date', 20)
+    queryKey: ['elster-submissions'],
+    queryFn: () => base44.entities.ElsterSubmission.list('-created_date', 50)
   });
 
   const stats = {
     total: submissions.length,
-    draft: submissions.filter(s => s.status === 'DRAFT' || s.status === 'AI_PROCESSED').length,
-    pending: submissions.filter(s => s.status === 'VALIDATED' || s.status === 'SUBMITTED').length,
-    accepted: submissions.filter(s => s.status === 'ACCEPTED').length,
-    avgConfidence: submissions.length > 0
-      ? Math.round(submissions.reduce((sum, s) => sum + (s.ai_confidence_score || 0), 0) / submissions.length)
-      : 0
+    draft: submissions.filter(s => s.status === 'DRAFT').length,
+    validated: submissions.filter(s => s.status === 'VALIDATED').length,
+    submitted: submissions.filter(s => s.status === 'SUBMITTED' || s.status === 'ACCEPTED').length,
+    needsAttention: submissions.filter(s => s.validation_errors?.length > 0).length,
+    thisYear: submissions.filter(s => s.tax_year === new Date().getFullYear()).length
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base">🏛️ ELSTER-Integration</CardTitle>
-          <Link to={createPageUrl('ElsterIntegration')}>
-            <Badge variant="outline" className="cursor-pointer hover:bg-slate-50">
-              Öffnen →
-            </Badge>
-          </Link>
-        </div>
+        <CardTitle className="flex items-center gap-2">
+          <FileText className="w-5 h-5" />
+          ELSTER-Übersicht
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-2">
-            <div className="p-3 bg-slate-50 rounded">
-              <div className="flex items-center gap-2 mb-1">
-                <FileText className="w-4 h-4 text-slate-600" />
-                <span className="text-xs text-slate-600">Gesamt</span>
-              </div>
-              <div className="text-2xl font-bold">{stats.total}</div>
-            </div>
-            <div className="p-3 bg-green-50 rounded">
-              <div className="flex items-center gap-2 mb-1">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <span className="text-xs text-green-600">Akzeptiert</span>
-              </div>
-              <div className="text-2xl font-bold text-green-700">{stats.accepted}</div>
-            </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-3 bg-slate-50 rounded-lg">
+            <div className="text-sm text-slate-600">Gesamt</div>
+            <div className="text-2xl font-bold">{stats.total}</div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div className="p-3 bg-yellow-50 rounded">
-              <div className="flex items-center gap-2 mb-1">
-                <Clock className="w-4 h-4 text-yellow-600" />
-                <span className="text-xs text-yellow-600">Entwürfe</span>
-              </div>
-              <div className="text-2xl font-bold text-yellow-700">{stats.draft}</div>
+          <div className="p-3 bg-green-50 rounded-lg">
+            <div className="text-sm text-green-700 flex items-center gap-1">
+              <CheckCircle className="w-4 h-4" />
+              Übermittelt
             </div>
-            <div className="p-3 bg-blue-50 rounded">
-              <div className="flex items-center gap-2 mb-1">
-                <AlertTriangle className="w-4 h-4 text-blue-600" />
-                <span className="text-xs text-blue-600">Wartend</span>
-              </div>
-              <div className="text-2xl font-bold text-blue-700">{stats.pending}</div>
-            </div>
+            <div className="text-2xl font-bold text-green-700">{stats.submitted}</div>
           </div>
 
-          {stats.avgConfidence > 0 && (
-            <div className="pt-2 border-t">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-purple-600" />
-                  <span className="text-slate-600">Ø KI-Vertrauen</span>
-                </div>
-                <span className="font-bold text-purple-700">{stats.avgConfidence}%</span>
+          <div className="p-3 bg-blue-50 rounded-lg">
+            <div className="text-sm text-blue-700">Dieses Jahr</div>
+            <div className="text-2xl font-bold text-blue-700">{stats.thisYear}</div>
+          </div>
+
+          {stats.needsAttention > 0 && (
+            <div className="p-3 bg-yellow-50 rounded-lg">
+              <div className="text-sm text-yellow-700 flex items-center gap-1">
+                <AlertTriangle className="w-4 h-4" />
+                Benötigen Aufmerksamkeit
               </div>
+              <div className="text-2xl font-bold text-yellow-700">{stats.needsAttention}</div>
             </div>
           )}
+        </div>
+
+        <div className="mt-4 pt-4 border-t">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-slate-600">Status-Verteilung:</span>
+            <div className="flex gap-2">
+              {stats.draft > 0 && <Badge variant="outline">{stats.draft} Draft</Badge>}
+              {stats.validated > 0 && <Badge variant="outline">{stats.validated} Validiert</Badge>}
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
