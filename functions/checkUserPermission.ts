@@ -5,104 +5,109 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const { userId, action, resource, resourceId, fieldName } = await req.json();
     
-    // 1. User-Rollen laden
-    const today = new Date().toISOString().split('T')[0];
-    const userRoles = await base44.entities.UserRoleAssignment.filter({
-      user_id: userId,
-      is_active: true,
-      valid_from: { $lte: today }
-    });
-    
-    // Filter valid_until
-    const activeRoles = userRoles.filter(r => !r.valid_until || r.valid_until >= today);
-    
-    if (activeRoles.length === 0) {
-      return Response.json({ hasPermission: false, reason: "No active roles" });
+    if (!userId || !action || !resource) {
+      return Response.json({ error: "userId, action, and resource required" }, { status: 400 });
     }
     
-    // 2. Berechtigungen sammeln
-    const roleIds = activeRoles.map(r => r.role_id);
-    const roles = await base44.asServiceRole.entities.Role.filter({
-      id: { $in: roleIds },
-      is_active: true
+    // User-Rollen und Permissions abrufen
+    const userPermsResponse = await base44.asServiceRole.functions.invoke('getUserRolesAndPermissions', {
+      userId
     });
-    
-    let allPermissionIds = [];
-    for (const role of roles) {
-      if (role.permissions && role.permissions.length > 0) {
-        allPermissionIds = [...allPermissionIds, ...role.permissions];
-      }
-    }
+    const userPermissions = userPermsResponse.data;
     
     // Wildcard check
-    if (allPermissionIds.includes("*")) {
-      return Response.json({ 
-        hasPermission: true, 
-        reason: "Wildcard permission",
-        roles: roles.map(r => r.name)
+    if (userPermissions.hasWildcard) {
+      return Response.json({
+        success: true,
+        hasPermission: true,
+        details: {
+          reason: 'User has wildcard permission (*)',
+          matchedPermissions: ['*']
+        }
       });
     }
     
-    // 3. Permissions laden
-    const permissions = await base44.asServiceRole.entities.Permission.filter({
-      id: { $in: allPermissionIds },
-      is_active: true
-    });
-    
-    // 4. Permission-Check
+    // Permission code check
     const permissionCode = `${resource}_${action}`;
-    const hasBasicPermission = permissions.some(p => 
-      p.code === permissionCode || p.code === `${resource}_all`
+    const matchedPerms = userPermissions.permissions.filter(p => 
+      p.code === permissionCode || 
+      p.code === `${resource}_all` ||
+      (p.resource === resource && p.action === action)
     );
     
-    if (!hasBasicPermission) {
-      return Response.json({ hasPermission: false, reason: "No basic permission" });
+    if (matchedPerms.length === 0) {
+      return Response.json({
+        success: true,
+        hasPermission: false,
+        details: {
+          reason: `No matching permission found for ${permissionCode}`,
+          matchedPermissions: []
+        }
+      });
     }
     
-    // 5. Objekt-Level Check (Building-Einschränkungen)
-    if (resourceId && resource === "buildings") {
-      const hasObjectAccess = activeRoles.some(role => {
-        if (!role.building_restrictions || role.building_restrictions.length === 0) {
-          return true; // Keine Einschränkungen = alle Gebäude
-        }
-        return role.building_restrictions.includes(resourceId);
-      });
-      
-      if (!hasObjectAccess) {
-        return Response.json({ hasPermission: false, reason: "No object access" });
+    // Building restriction check
+    if (resourceId && resource === "buildings" && userPermissions.buildingRestrictions) {
+      if (!userPermissions.buildingRestrictions.includes(resourceId)) {
+        return Response.json({
+          success: true,
+          hasPermission: false,
+          details: {
+            reason: 'Building restriction - access denied to this specific building',
+            matchedPermissions: matchedPerms.map(p => p.code)
+          }
+        });
       }
     }
     
-    // 6. Feld-Level Check
+    // Field permission check
     if (fieldName) {
-      const fieldPermissions = await base44.asServiceRole.entities.FieldPermission.filter({
-        permission_id: { $in: allPermissionIds },
-        entity_name: resource,
-        field_name: fieldName
-      });
+      const fieldPerm = userPermissions.fieldPermissions.find(fp => 
+        fp.entity_name === resource && fp.field_name === fieldName
+      );
       
-      const hasFieldAccess = fieldPermissions.some(fp => {
-        switch(action) {
-          case 'read': return ['read', 'write', 'admin'].includes(fp.access_level);
-          case 'write': return ['write', 'admin'].includes(fp.access_level);
-          case 'admin': return fp.access_level === 'admin';
-          default: return false;
+      if (!fieldPerm) {
+        return Response.json({
+          success: true,
+          hasPermission: false,
+          details: {
+            reason: `No field permission for ${fieldName}`,
+            matchedPermissions: matchedPerms.map(p => p.code)
+          }
+        });
+      }
+      
+      const levelMap = {
+        'read': ['read', 'write', 'admin'],
+        'write': ['write', 'admin'],
+        'admin': ['admin']
+      };
+      
+      const hasFieldAccess = levelMap[action]?.includes(fieldPerm.access_level);
+      
+      return Response.json({
+        success: true,
+        hasPermission: hasFieldAccess,
+        details: {
+          reason: hasFieldAccess 
+            ? `Field access granted (${fieldPerm.access_level})` 
+            : `Insufficient field access level (${fieldPerm.access_level})`,
+          matchedPermissions: matchedPerms.map(p => p.code)
         }
       });
-      
-      if (fieldPermissions.length > 0 && !hasFieldAccess) {
-        return Response.json({ hasPermission: false, reason: "No field access" });
-      }
     }
     
-    return Response.json({ 
-      hasPermission: true, 
-      permissions: permissions.map(p => p.code),
-      roles: roles.map(r => r.name)
+    return Response.json({
+      success: true,
+      hasPermission: true,
+      details: {
+        reason: 'Permission granted',
+        matchedPermissions: matchedPerms.map(p => p.code)
+      }
     });
     
   } catch (error) {
-    console.error("Permission check error:", error);
+    console.error("Check user permission error:", error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

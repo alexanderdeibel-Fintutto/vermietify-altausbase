@@ -1,8 +1,13 @@
+import APIKeyManagement from './pages/APIKeyManagement';
+import ActivityLogs from './pages/ActivityLogs';
+import AdminDashboard from './pages/AdminDashboard';
 import Analytics from './pages/Analytics';
+import AuditReports from './pages/AuditReports';
 import BankAccounts from './pages/BankAccounts';
 import BankReconciliation from './pages/BankReconciliation';
 import BuildingDetail from './pages/BuildingDetail';
 import Buildings from './pages/Buildings';
+import ComplianceCenter from './pages/ComplianceCenter';
 import ContractDetail from './pages/ContractDetail';
 import Contracts from './pages/Contracts';
 import CostTypes from './pages/CostTypes';
@@ -18,37 +23,37 @@ import Invoices from './pages/Invoices';
 import Kommunikation from './pages/Kommunikation';
 import ModuleManagement from './pages/ModuleManagement';
 import OperatingCosts from './pages/OperatingCosts';
+import PermissionDashboard from './pages/PermissionDashboard';
 import ProjectManagement from './pages/ProjectManagement';
 import RoleManagement from './pages/RoleManagement';
 import SuiteManagement from './pages/SuiteManagement';
 import SupportCenter from './pages/SupportCenter';
+import SystemHealth from './pages/SystemHealth';
 import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
 import TaxForms from './pages/TaxForms';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import TestingDashboard from './pages/TestingDashboard';
 import UnitDetail from './pages/UnitDetail';
+import UserDetail from './pages/UserDetail';
 import UserManagement from './pages/UserManagement';
 import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
-import UserDetail from './pages/UserDetail';
-import AuditReports from './pages/AuditReports';
-import PermissionDashboard from './pages/PermissionDashboard';
-import AdminDashboard from './pages/AdminDashboard';
-import ComplianceCenter from './pages/ComplianceCenter';
-import SystemHealth from './pages/SystemHealth';
-import APIKeyManagement from './pages/APIKeyManagement';
-import ActivityLogs from './pages/ActivityLogs';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "APIKeyManagement": APIKeyManagement,
+    "ActivityLogs": ActivityLogs,
+    "AdminDashboard": AdminDashboard,
     "Analytics": Analytics,
+    "AuditReports": AuditReports,
     "BankAccounts": BankAccounts,
     "BankReconciliation": BankReconciliation,
     "BuildingDetail": BuildingDetail,
     "Buildings": Buildings,
+    "ComplianceCenter": ComplianceCenter,
     "ContractDetail": ContractDetail,
     "Contracts": Contracts,
     "CostTypes": CostTypes,
@@ -64,28 +69,23 @@ export const PAGES = {
     "Kommunikation": Kommunikation,
     "ModuleManagement": ModuleManagement,
     "OperatingCosts": OperatingCosts,
+    "PermissionDashboard": PermissionDashboard,
     "ProjectManagement": ProjectManagement,
     "RoleManagement": RoleManagement,
     "SuiteManagement": SuiteManagement,
     "SupportCenter": SupportCenter,
+    "SystemHealth": SystemHealth,
     "Tasks": Tasks,
     "Tax": Tax,
     "TaxForms": TaxForms,
     "TaxLibraryManagement": TaxLibraryManagement,
     "TestingDashboard": TestingDashboard,
     "UnitDetail": UnitDetail,
+    "UserDetail": UserDetail,
     "UserManagement": UserManagement,
     "WhatsAppCommunication": WhatsAppCommunication,
     "WhatsAppSettings": WhatsAppSettings,
     "WhatsAppSetup": WhatsAppSetup,
-    "UserDetail": UserDetail,
-    "AuditReports": AuditReports,
-    "PermissionDashboard": PermissionDashboard,
-    "AdminDashboard": AdminDashboard,
-    "ComplianceCenter": ComplianceCenter,
-    "SystemHealth": SystemHealth,
-    "APIKeyManagement": APIKeyManagement,
-    "ActivityLogs": ActivityLogs,
 }
 
 export const pagesConfig = {

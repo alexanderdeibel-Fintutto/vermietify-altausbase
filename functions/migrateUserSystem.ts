@@ -5,79 +5,58 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     
-    if (user.role !== "admin") {
-      return Response.json({ error: "Only admin can run migrations" }, { status: 403 });
+    if (!user || user.role !== 'admin') {
+      return Response.json({ error: "Admin access required" }, { status: 403 });
     }
     
-    let migrated = { users: 0, modules: 0 };
+    console.log("Starting user system migration...");
     
-    // 1. Bestehende User aktualisieren
-    const existingUsers = await base44.asServiceRole.entities.User.list();
+    // 1. Alle User auf is_tester = false setzen (falls Feld nicht existiert)
+    const users = await base44.asServiceRole.entities.User.list();
+    console.log(`Found ${users.length} users`);
     
-    for (const existingUser of existingUsers) {
-      // Tester-Flag hinzufügen falls nicht vorhanden
-      if (existingUser.is_tester === undefined) {
-        await base44.asServiceRole.entities.User.update(existingUser.id, {
-          is_tester: false,
-          account_id: 'default'
-        });
-        migrated.users++;
-      }
-      
-      // Rollen-Zuweisung für bestehende User
-      const roleAssignments = await base44.asServiceRole.entities.UserRoleAssignment.filter({
-        user_id: existingUser.id
-      });
-      
-      if (roleAssignments.length === 0) {
-        // Standard-Rolle basierend auf aktuellem role-Feld zuweisen
-        const roleName = existingUser.role === "admin" ? "Account-Inhaber" : "Sachbearbeiter";
-        const systemRole = await base44.asServiceRole.entities.Role.filter({ 
-          name: roleName,
-          is_predefined: true 
+    // 2. System-Rollen initialisieren
+    console.log("Initializing roles and permissions...");
+    await base44.asServiceRole.functions.invoke('initializeRolesAndPermissions', {});
+    
+    // 3. Admin-Benutzer mit Super-Admin Rolle ausstatten
+    const adminUsers = users.filter(u => u.role === 'admin');
+    const roles = await base44.asServiceRole.entities.Role.list();
+    const superAdminRole = roles.find(r => r.name === 'Super Admin');
+    
+    if (superAdminRole) {
+      for (const admin of adminUsers) {
+        const existingAssignment = await base44.asServiceRole.entities.UserRoleAssignment.filter({
+          user_id: admin.id,
+          role_id: superAdminRole.id
         });
         
-        if (systemRole.length > 0) {
+        if (existingAssignment.length === 0) {
           await base44.asServiceRole.entities.UserRoleAssignment.create({
-            user_id: existingUser.id,
-            role_id: systemRole[0].id,
+            user_id: admin.id,
+            role_id: superAdminRole.id,
+            building_restrictions: null,
             valid_from: new Date().toISOString().split('T')[0],
+            valid_until: null,
             assigned_by: user.id,
-            notes: "Automatische Migration",
+            notes: 'Auto-assigned during migration',
             is_active: true
           });
+          console.log(`Assigned Super Admin role to ${admin.email}`);
         }
       }
     }
     
-    // 2. Standard-Module für bestehende Accounts aktivieren
-    const coreModules = ['core_finance', 'core_documents', 'easy_vermieter'];
+    console.log("Migration completed successfully");
     
-    for (const moduleCode of coreModules) {
-      const existingAccess = await base44.asServiceRole.entities.ModuleAccess.filter({
-        account_id: 'default',
-        module_code: moduleCode
-      });
-      
-      if (existingAccess.length === 0) {
-        await base44.asServiceRole.entities.ModuleAccess.create({
-          account_id: 'default',
-          module_code: moduleCode,
-          is_active: true,
-          purchased_date: new Date().toISOString().split('T')[0],
-          price_paid: 0,
-          billing_cycle: 'onetime',
-          auto_renew: false,
-          purchased_by: user.id
-        });
-        migrated.modules++;
-      }
-    }
-    
-    return Response.json({ 
+    return Response.json({
       success: true,
-      migrated,
-      message: `${migrated.users} User und ${migrated.modules} Module migriert`
+      message: "User system migration completed",
+      stats: {
+        totalUsers: users.length,
+        adminUsers: adminUsers.length,
+        rolesCreated: roles.length
+      }
     });
     
   } catch (error) {
