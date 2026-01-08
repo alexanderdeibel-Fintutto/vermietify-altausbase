@@ -66,6 +66,7 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Objekte', href: createPageUrl('Buildings'), icon: Building2, page: 'Buildings', requiresModule: 'property' },
         { name: 'Mieter', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts', requiresModule: 'tenants' },
         { name: 'Kommunikation', href: createPageUrl('Kommunikation'), icon: MessageSquare, page: 'Kommunikation', requiresModule: 'communication' },
+        { name: '📧 E-Mail Templates', href: createPageUrl('EmailTemplates'), icon: Mail, page: 'EmailTemplates', requiresModule: 'communication' },
         { name: '💬 WhatsApp', href: createPageUrl('WhatsAppCommunication'), icon: MessageSquare, page: 'WhatsAppCommunication', requiresModule: 'communication' },
         { name: '⚙️ WhatsApp Settings', href: createPageUrl('WhatsAppSettings'), icon: Settings, page: 'WhatsAppSettings', requiresModule: 'communication' },
         { name: 'Aufgaben', href: createPageUrl('Tasks'), icon: FileText, page: 'Tasks', requiresModule: 'tasks' },

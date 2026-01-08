@@ -41,6 +41,7 @@ import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
 import AdvancedAnalytics from './pages/AdvancedAnalytics';
+import EmailTemplates from './pages/EmailTemplates';
 import __Layout from './Layout.jsx';
 
 
@@ -88,6 +89,7 @@ export const PAGES = {
     "WhatsAppSettings": WhatsAppSettings,
     "WhatsAppSetup": WhatsAppSetup,
     "AdvancedAnalytics": AdvancedAnalytics,
+    "EmailTemplates": EmailTemplates,
 }
 
 export const pagesConfig = {
