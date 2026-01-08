@@ -9,74 +9,69 @@ Deno.serve(async (req) => {
       return Response.json({ error: "Admin access required" }, { status: 403 });
     }
     
-    const { period = 'week' } = await req.json();
+    const { timeRange = '30d' } = await req.json();
     
-    // Alle Test-Sessions laden
+    // Zeitbereich berechnen
+    const now = new Date();
+    const ranges = {
+      '24h': 1,
+      '7d': 7,
+      '30d': 30,
+      '90d': 90
+    };
+    const daysAgo = ranges[timeRange] || 30;
+    const startDate = new Date(now - daysAgo * 24 * 60 * 60 * 1000);
+    
+    // Test-Sessions laden
     const allSessions = await base44.asServiceRole.entities.TestSession.list('-session_start');
+    const sessions = allSessions.filter(s => new Date(s.session_start) >= startDate);
     
-    // Filter nach Periode
-    let cutoffDate = new Date();
-    switch(period) {
-      case 'today':
-        cutoffDate.setHours(0, 0, 0, 0);
-        break;
-      case 'week':
-        cutoffDate.setDate(cutoffDate.getDate() - 7);
-        break;
-      case 'month':
-        cutoffDate.setMonth(cutoffDate.getMonth() - 1);
-        break;
-      default:
-        cutoffDate = new Date(0); // Alle
-    }
-    
-    const filteredSessions = allSessions.filter(s => 
-      new Date(s.session_start) >= cutoffDate
-    );
+    // Tester laden
+    const users = await base44.asServiceRole.entities.User.list();
+    const testers = users.filter(u => u.is_tester);
     
     // Statistiken berechnen
     const stats = {
-      totalSessions: filteredSessions.length,
-      activeSessions: filteredSessions.filter(s => !s.session_end).length,
-      totalTime: filteredSessions.reduce((sum, s) => sum + (s.total_duration || 0), 0),
-      averageRating: filteredSessions.filter(s => s.feedback_rating).length > 0
-        ? (filteredSessions.reduce((sum, s) => sum + (s.feedback_rating || 0), 0) / filteredSessions.filter(s => s.feedback_rating).length).toFixed(1)
+      activeTesters: testers.length,
+      totalSessions: sessions.length,
+      sessionsToday: sessions.filter(s => {
+        const sessionDate = new Date(s.session_start);
+        return sessionDate.toDateString() === now.toDateString();
+      }).length,
+      totalTestTime: sessions.reduce((sum, s) => sum + (s.total_duration || 0), 0),
+      averageRating: sessions.filter(s => s.feedback_rating).length > 0
+        ? sessions.reduce((sum, s) => sum + (s.feedback_rating || 0), 0) / sessions.filter(s => s.feedback_rating).length
         : 0,
-      uniqueFeatures: new Set(filteredSessions.flatMap(s => s.features_tested || [])).size,
-      totalPages: filteredSessions.reduce((sum, s) => sum + (s.pages_visited?.length || 0), 0),
-      totalActions: filteredSessions.reduce((sum, s) => sum + (s.actions_performed?.length || 0), 0)
+      uniqueFeatures: new Set(sessions.flatMap(s => s.features_tested || [])).size
     };
     
     // Testzeit pro Tag
-    const dailyData = {};
-    filteredSessions.forEach(session => {
-      const date = session.session_start.split('T')[0];
-      if (!dailyData[date]) {
-        dailyData[date] = { sessions: 0, duration: 0 };
-      }
-      dailyData[date].sessions++;
-      dailyData[date].duration += session.total_duration || 0;
+    const testTimeByDay = {};
+    sessions.forEach(session => {
+      const date = new Date(session.session_start).toISOString().split('T')[0];
+      testTimeByDay[date] = (testTimeByDay[date] || 0) + (session.total_duration || 0);
     });
     
-    // Feature-Häufigkeit
-    const featureCount = {};
-    filteredSessions.forEach(session => {
+    // Features nach Häufigkeit
+    const featureCounts = {};
+    sessions.forEach(session => {
       (session.features_tested || []).forEach(feature => {
-        featureCount[feature] = (featureCount[feature] || 0) + 1;
+        featureCounts[feature] = (featureCounts[feature] || 0) + 1;
       });
     });
     
-    const topFeatures = Object.entries(featureCount)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([feature, count]) => ({ feature, count }));
-    
-    return Response.json({ 
+    return Response.json({
       success: true,
       stats,
-      dailyData,
-      topFeatures,
-      sessions: filteredSessions
+      timeRange,
+      testTimeByDay: Object.entries(testTimeByDay).map(([date, minutes]) => ({
+        date,
+        hours: Math.round(minutes / 60 * 10) / 10
+      })),
+      featureTests: Object.entries(featureCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([feature, count]) => ({ feature, tests: count }))
     });
     
   } catch (error) {

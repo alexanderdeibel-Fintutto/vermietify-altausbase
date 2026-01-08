@@ -6,26 +6,25 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     
     if (!user) {
-      return Response.json({ error: "Not authenticated" }, { status: 401 });
+      return Response.json({ error: "User not authenticated" }, { status: 401 });
     }
     
     const { actionType, resource, resourceId, details, duration } = await req.json();
     
-    await base44.entities.UserActivity.create({
+    if (!actionType || !resource) {
+      return Response.json({ error: "actionType and resource required" }, { status: 400 });
+    }
+    
+    await base44.asServiceRole.entities.UserActivity.create({
       user_id: user.id,
       action_type: actionType,
-      resource: resource || 'unknown',
+      resource,
       resource_id: resourceId || null,
       details: details || {},
       ip_address: req.headers.get('x-forwarded-for') || 'unknown',
       user_agent: req.headers.get('user-agent') || 'unknown',
-      session_id: null,
+      session_id: req.headers.get('x-session-id') || null,
       duration: duration || null
-    });
-    
-    // Last activity aktualisieren
-    await base44.asServiceRole.entities.User.update(user.id, {
-      last_activity: new Date().toISOString()
     });
     
     return Response.json({ success: true });
