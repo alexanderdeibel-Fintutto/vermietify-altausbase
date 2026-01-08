@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FileText, Loader2, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import ExportButton from '../reports/ExportButton.jsx';
 
 export default function SystemReportDialog() {
   const [open, setOpen] = useState(false);
@@ -90,10 +91,17 @@ export default function SystemReportDialog() {
                 <div><strong>Aktivitäten (24h):</strong> {report.summary.activity.last24h}</div>
               </div>
 
-              <Button onClick={downloadReport} variant="outline" className="w-full">
-                <Download className="w-4 h-4 mr-2" />
-                Report als JSON herunterladen
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={downloadReport} variant="outline" className="flex-1">
+                  <Download className="w-4 h-4 mr-2" />
+                  JSON
+                </Button>
+                <ExportButton 
+                  reportType="System Report"
+                  reportData={report}
+                  className="flex-1"
+                />
+              </div>
             </>
           )}
         </div>

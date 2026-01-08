@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Activity, CheckCircle2, AlertTriangle, XCircle, RefreshCw, Database, Users, Key } from 'lucide-react';
+import ExportButton from '@/components/reports/ExportButton.jsx';
 
 export default function SystemHealth() {
   const [refreshing, setRefreshing] = useState(false);
@@ -53,10 +54,18 @@ export default function SystemHealth() {
           <h1 className="text-2xl font-bold text-slate-900">System Health</h1>
           <p className="text-slate-600">Überwachung der Systemgesundheit</p>
         </div>
-        <Button onClick={handleRefresh} disabled={refreshing}>
-          <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-          Aktualisieren
-        </Button>
+        <div className="flex gap-2">
+          {healthData && (
+            <ExportButton 
+              reportType="System Health"
+              reportData={healthData}
+            />
+          )}
+          <Button onClick={handleRefresh} disabled={refreshing}>
+            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Aktualisieren
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
