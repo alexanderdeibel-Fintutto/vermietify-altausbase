@@ -214,25 +214,9 @@ export default function TestingDashboard() {
         ))}
       </div>
 
-      {/* Management Tabs */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.7 }}
-      >
-        <Tabs defaultValue="sessions" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="sessions">📊 Sessions</TabsTrigger>
-            <TabsTrigger value="invitations">📧 Einladungen</TabsTrigger>
-            <TabsTrigger value="accounts">👤 Test-Accounts</TabsTrigger>
-            <TabsTrigger value="assignments">📋 Aufträge</TabsTrigger>
-            <TabsTrigger value="communication">💬 Kommunikation</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="sessions">
-            {/* Aktive Test-Sessions */}
-            <AnimatePresence>
-            {activeSessions.length > 0 && (
+      {/* Aktive Test-Sessions */}
+      <AnimatePresence>
+      {activeSessions.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -279,10 +263,10 @@ export default function TestingDashboard() {
           </CardContent>
         </Card>
         </motion.div>
-        )}
-        </AnimatePresence>
+      )}
+      </AnimatePresence>
 
-        {/* Test-Sessions Historie */}
+      {/* Test-Sessions Historie */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -357,27 +341,27 @@ export default function TestingDashboard() {
             })}
           </div>
         </CardContent>
-        </Card>
-        </motion.div>
-        </TabsContent>
+      </Card>
+      </motion.div>
+          </TabsContent>
 
-        <TabsContent value="invitations">
-        <TesterInvitationManager />
-        </TabsContent>
+          <TabsContent value="invitations" className="mt-6">
+            <TesterInvitationManager />
+          </TabsContent>
 
-        <TabsContent value="accounts">
-        <TestAccountManager />
-        </TabsContent>
+          <TabsContent value="accounts" className="mt-6">
+            <TestAccountManager />
+          </TabsContent>
 
-        <TabsContent value="assignments">
-        <TestAssignmentManager />
-        </TabsContent>
+          <TabsContent value="assignments" className="mt-6">
+            <TestAssignmentManager />
+          </TabsContent>
 
-        <TabsContent value="communication">
-        <CommunicationHub />
-        </TabsContent>
+          <TabsContent value="communication" className="mt-6">
+            <CommunicationHub />
+          </TabsContent>
         </Tabs>
-        </motion.div>
-        </div>
-        );
-        }
+      </motion.div>
+    </div>
+  );
+}
