@@ -31,6 +31,9 @@ import SubmissionStatsCard from '@/components/elster/SubmissionStatsCard';
 import SubmissionHistory from '@/components/elster/SubmissionHistory';
 import DeadlineReminder from '@/components/elster/DeadlineReminder';
 import FormComparisonView from '@/components/elster/FormComparisonView';
+import CertificateTestDialog from '@/components/elster/CertificateTestDialog';
+import AuditTrailCard from '@/components/elster/AuditTrailCard';
+import BulkExportDialog from '@/components/elster/BulkExportDialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from 'lucide-react';
 
@@ -41,6 +44,8 @@ export default function ElsterIntegration() {
   const [showSetupWizard, setShowSetupWizard] = useState(false);
   const [showCategoryImport, setShowCategoryImport] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
+  const [testingCertificate, setTestingCertificate] = useState(null);
+  const [showBulkExport, setShowBulkExport] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: submissions = [] } = useQuery({
@@ -78,10 +83,16 @@ export default function ElsterIntegration() {
           </p>
         </div>
         {certificates.length === 0 && (
-          <Button onClick={() => setShowSetupWizard(true)} className="bg-blue-600 hover:bg-blue-700">
-            <Settings className="w-4 h-4 mr-2" />
-            Einrichtung starten
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setShowBulkExport(true)} variant="outline">
+              <Download className="w-4 h-4 mr-2" />
+              Bulk-Export
+            </Button>
+            <Button onClick={() => setShowSetupWizard(true)} className="bg-blue-600 hover:bg-blue-700">
+              <Settings className="w-4 h-4 mr-2" />
+              Einrichtung starten
+            </Button>
+          </div>
         )}
       </motion.div>
 
@@ -172,7 +183,11 @@ export default function ElsterIntegration() {
           </TabsContent>
 
           <TabsContent value="certificates" className="mt-6">
-            <CertificatesView certificates={certificates} onUploadClick={() => setShowCertUpload(true)} />
+            <CertificatesView 
+              certificates={certificates} 
+              onUploadClick={() => setShowCertUpload(true)}
+              onTestCertificate={setTestingCertificate}
+            />
           </TabsContent>
 
           <TabsContent value="categories" className="mt-6">
@@ -244,6 +259,19 @@ export default function ElsterIntegration() {
         open={showCategoryImport}
         onOpenChange={setShowCategoryImport}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ['tax-categories'] })}
+      />
+
+      <CertificateTestDialog
+        certificate={testingCertificate}
+        open={!!testingCertificate}
+        onOpenChange={(open) => !open && setTestingCertificate(null)}
+        onTestComplete={() => queryClient.invalidateQueries({ queryKey: ['elster-certificates'] })}
+      />
+
+      <BulkExportDialog
+        submissions={submissions}
+        open={showBulkExport}
+        onOpenChange={setShowBulkExport}
       />
     </div>
   );
@@ -432,24 +460,7 @@ function SubmissionsView({ submissions, onSelectSubmission }) {
   );
 }
 
-function CertificatesView({ certificates, onUploadClick }) {
-  const [testing, setTesting] = useState(null);
-
-  const handleTest = async (certId) => {
-    setTesting(certId);
-    try {
-      const response = await base44.functions.invoke('testElsterConnection', {
-        certificate_id: certId
-      });
-      if (response.data.success) {
-        toast.success('Verbindungstest erfolgreich!');
-      }
-    } catch (error) {
-      toast.error('Verbindungstest fehlgeschlagen');
-    } finally {
-      setTesting(null);
-    }
-  };
+function CertificatesView({ certificates, onUploadClick, onTestCertificate }) {
 
   return (
     <Card>
@@ -484,16 +495,25 @@ function CertificatesView({ certificates, onUploadClick }) {
                   </div>
                   <Badge variant={cert.is_active ? 'default' : 'secondary'}>
                     {cert.is_active ? 'Aktiv' : 'Inaktiv'}
-                  </Badge>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
+                    </Badge>
+                    </div>
+                    <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onTestCertificate(cert)}
+                    className="mt-2"
+                    >
+                    <TestTube className="w-4 h-4 mr-2" />
+                    Verbindung testen
+                    </Button>
+                    </div>
+                    ))}
+                    </div>
+                    )}
+                    </CardContent>
+                    </Card>
+                    );
+                    }
 
 function CategoriesView() {
   const { data: categories = [] } = useQuery({
