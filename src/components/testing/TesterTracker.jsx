@@ -18,7 +18,14 @@ export default function TesterTracker({ children }) {
   // Session starten
   useEffect(() => {
     if (isTester && !sessionIdRef.current) {
-      startTestSession();
+      // Wiederherstellen aus SessionStorage
+      const savedSession = sessionStorage.getItem('tester_session_id');
+      if (savedSession) {
+        sessionIdRef.current = savedSession;
+        startTimeRef.current = Date.now();
+      } else {
+        startTestSession();
+      }
     }
     
     return () => {
@@ -38,8 +45,9 @@ export default function TesterTracker({ children }) {
   const startTestSession = async () => {
     try {
       const result = await base44.functions.invoke('startTestSession', {});
-      sessionIdRef.current = result.data.sessionId;
+      sessionIdRef.current = result.data.session_id;
       startTimeRef.current = Date.now();
+      sessionStorage.setItem('tester_session_id', result.data.session_id);
     } catch (error) {
       console.error("Failed to start test session:", error);
     }
@@ -53,11 +61,11 @@ export default function TesterTracker({ children }) {
     
     try {
       await base44.functions.invoke('trackTestActivity', {
-        sessionId: sessionIdRef.current,
-        activityType: 'page_visit',
-        activityData: {
-          page: location.pathname,
-          duration: Math.round(duration / 1000)
+        session_id: sessionIdRef.current,
+        activity_type: 'page_visit',
+        data: {
+          url: window.location.href,
+          title: document.title
         }
       });
     } catch (error) {
@@ -70,9 +78,9 @@ export default function TesterTracker({ children }) {
     
     try {
       await base44.functions.invoke('trackTestActivity', {
-        sessionId: sessionIdRef.current,
-        activityType: 'action',
-        activityData: {
+        session_id: sessionIdRef.current,
+        activity_type: 'action',
+        data: {
           type: actionType,
           target,
           resource,
@@ -90,9 +98,9 @@ export default function TesterTracker({ children }) {
     
     try {
       await base44.functions.invoke('trackTestActivity', {
-        sessionId: sessionIdRef.current,
-        activityType: 'feature_test',
-        activityData: { feature }
+        session_id: sessionIdRef.current,
+        activity_type: 'feature_tested',
+        data: { feature }
       });
     } catch (error) {
       console.error("Failed to track feature test:", error);
@@ -104,9 +112,11 @@ export default function TesterTracker({ children }) {
     
     try {
       await base44.functions.invoke('endTestSession', {
-        sessionId: sessionIdRef.current,
-        feedback: null
+        session_id: sessionIdRef.current,
+        feedback_rating: null,
+        notes: null
       });
+      sessionStorage.removeItem('tester_session_id');
       sessionIdRef.current = null;
     } catch (error) {
       console.error("Failed to end test session:", error);

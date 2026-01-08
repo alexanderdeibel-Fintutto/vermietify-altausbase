@@ -15,6 +15,8 @@ import { AlertTriangle, Loader2, ChevronRight, Camera } from 'lucide-react';
 export default function IntelligentProblemDialog({ open, onOpenChange }) {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [similarReports, setSimilarReports] = useState([]);
+  const [checkingSimilar, setCheckingSimilar] = useState(false);
   const [formData, setFormData] = useState({
     problem_titel: '',
     problem_beschreibung: '',
@@ -94,6 +96,38 @@ export default function IntelligentProblemDialog({ open, onOpenChange }) {
     setFormData(prev => ({ ...prev, steps_to_reproduce: newSteps }));
   };
 
+  // Duplicate-Prüfung
+  const checkForSimilar = async () => {
+    if (!formData.problem_titel || formData.problem_titel.length < 5) return;
+    
+    setCheckingSimilar(true);
+    try {
+      const response = await base44.functions.invoke('findSimilarReportsIntelligent', {
+        problem: {
+          problem_titel: formData.problem_titel,
+          business_area: formData.business_area,
+          problem_type: formData.problem_type,
+          page_url: formData.page_url
+        }
+      });
+
+      if (response.data.similar_reports?.length > 0) {
+        setSimilarReports(response.data.similar_reports);
+      }
+    } catch (error) {
+      console.error('Error checking similar reports:', error);
+    } finally {
+      setCheckingSimilar(false);
+    }
+  };
+
+  useEffect(() => {
+    if (step === 1 && formData.problem_titel) {
+      const timer = setTimeout(() => checkForSimilar(), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [formData.problem_titel, step]);
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -117,17 +151,27 @@ export default function IntelligentProblemDialog({ open, onOpenChange }) {
 
       const createdReport = await base44.entities.UserProblem.create(reportData);
 
-      await base44.functions.invoke('calculateIntelligentPriority', {
-        report_id: createdReport.id
+      // Priorität berechnen
+      const priorityResponse = await base44.functions.invoke('calculateIntelligentPriority', {
+        problem: createdReport
       });
 
-      await base44.functions.invoke('findSimilarReportsIntelligent', {
-        report_id: createdReport.id
-      });
+      // Problem mit Priority aktualisieren
+      if (priorityResponse.data.priority_score) {
+        await base44.entities.UserProblem.update(createdReport.id, {
+          priority_score: priorityResponse.data.priority_score,
+          business_priority: priorityResponse.data.business_priority,
+          priority_breakdown: priorityResponse.data.priority_breakdown
+        });
 
-      await base44.functions.invoke('handleIntelligentNotifications', {
-        report_id: createdReport.id
-      });
+        // Auto-Notifications bei kritischen Issues
+        if (priorityResponse.data.business_priority === 'p1_critical') {
+          await base44.functions.invoke('handleIntelligentNotifications', {
+            problem_id: createdReport.id,
+            notification_type: 'critical_created'
+          });
+        }
+      }
 
       toast.success('Problem erfolgreich gemeldet und analysiert! 🎯');
       onOpenChange(false);
@@ -266,6 +310,29 @@ export default function IntelligentProblemDialog({ open, onOpenChange }) {
                 <Label>Bereich (automatisch erkannt)</Label>
                 <Badge className="mt-2">{formData.business_area}</Badge>
               </div>
+
+              {/* Ähnliche Reports Warnung */}
+              {similarReports.length > 0 && (
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                    <h4 className="font-semibold text-yellow-900">Ähnliche Reports gefunden</h4>
+                  </div>
+                  <p className="text-sm text-yellow-700 mb-3">
+                    Es gibt {similarReports.length} ähnliche Problem-Reports. Möglicherweise wurde das Problem bereits gemeldet.
+                  </p>
+                  <div className="space-y-2">
+                    {similarReports.slice(0, 2).map(({ problem, similarity_score }) => (
+                      <div key={problem.id} className="p-2 bg-white rounded border">
+                        <div className="text-sm font-medium">{problem.problem_titel}</div>
+                        <div className="text-xs text-slate-600">
+                          Ähnlichkeit: {similarity_score}% | Status: {problem.status}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
 
