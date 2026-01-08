@@ -379,8 +379,7 @@ export default function Analytics() {
             </CardContent>
           </Card>
         </TabsContent>
-        </Tabs>
-        </motion.div>
-        </div>
-        );
-        }
+      </Tabs>
+    </div>
+  );
+}
