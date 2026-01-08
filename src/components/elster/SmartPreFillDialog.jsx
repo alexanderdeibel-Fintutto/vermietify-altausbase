@@ -2,172 +2,137 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Sparkles, TrendingUp, CheckCircle, Info, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, TrendingUp } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import { ScrollArea } from "@/components/ui/scroll-area";
 
-export default function SmartPreFillDialog({ buildingId, formType, taxYear, open, onOpenChange, onApply }) {
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
+export default function SmartPreFillDialog({ submission, open, onOpenChange, onSuccess }) {
+  const [processing, setProcessing] = useState(false);
+  const [suggestions, setSuggestions] = useState(null);
 
-  React.useEffect(() => {
-    if (open && buildingId && formType && taxYear) {
-      loadSuggestions();
-    }
-  }, [open, buildingId, formType, taxYear]);
-
-  const loadSuggestions = async () => {
-    setLoading(true);
+  const handlePreFill = async () => {
+    setProcessing(true);
     try {
       const response = await base44.functions.invoke('smartPreFillForm', {
-        building_id: buildingId,
-        form_type: formType,
-        tax_year: taxYear
+        submission_id: submission.id
       });
 
       if (response.data.success) {
-        setResult(response.data);
+        setSuggestions(response.data.suggestions);
+        toast.success('Formular intelligent vorausgefüllt');
+        onSuccess?.(response.data.updated_submission);
       }
     } catch (error) {
-      toast.error('Vorausfüllen fehlgeschlagen');
+      toast.error('Pre-Fill fehlgeschlagen');
       console.error(error);
     } finally {
-      setLoading(false);
+      setProcessing(false);
     }
   };
 
-  const handleApply = () => {
-    if (result && result.prefill_data) {
-      onApply(result.prefill_data);
-      onOpenChange(false);
-      toast.success(`${Object.keys(result.prefill_data).length} Felder vorausgefüllt`);
-    }
-  };
-
-  const getConfidenceBadge = (confidence) => {
-    if (confidence >= 90) return <Badge className="bg-green-600">Sehr sicher</Badge>;
-    if (confidence >= 70) return <Badge className="bg-blue-600">Wahrscheinlich</Badge>;
-    return <Badge variant="outline">Geschätzt</Badge>;
+  const getSuggestionCount = () => {
+    if (!suggestions) return 0;
+    return Object.keys(suggestions.from_financial_data).length + 
+           Object.keys(suggestions.from_historical_avg).length;
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5" />
+            <Sparkles className="w-5 h-5 text-purple-600" />
             Intelligentes Vorausfüllen
           </DialogTitle>
         </DialogHeader>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          </div>
-        ) : result ? (
-          <div className="space-y-4">
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertDescription>
-                {result.suggestions.length} Felder können vorausgefüllt werden mit durchschnittlich{' '}
-                <strong>{result.average_confidence}%</strong> Sicherheit
-              </AlertDescription>
-            </Alert>
+        <div className="space-y-4">
+          {!suggestions ? (
+            <>
+              <div className="text-sm text-slate-600">
+                Das System analysiert:
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li>Finanzdaten für {submission.tax_year}</li>
+                  <li>Historische Submissions</li>
+                  <li>Durchschnittswerte & Trends</li>
+                </ul>
+              </div>
 
-            <div className="grid grid-cols-3 gap-2 text-sm">
-              <div className="p-2 bg-slate-50 rounded text-center">
-                <div className="font-medium text-slate-900">
-                  {result.data_sources.historical_submissions}
+              <Button 
+                onClick={handlePreFill}
+                disabled={processing}
+                className="w-full bg-purple-600 hover:bg-purple-700"
+              >
+                {processing ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4 mr-2" />
+                )}
+                Jetzt vorausfüllen
+              </Button>
+            </>
+          ) : (
+            <>
+              <div className="p-4 bg-green-50 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-green-700">Vorschläge generiert</span>
+                  <Badge className="bg-green-600">{getSuggestionCount()}</Badge>
                 </div>
-                <div className="text-xs text-slate-600">Vorjahre</div>
               </div>
-              <div className="p-2 bg-slate-50 rounded text-center">
-                <div className="font-medium text-slate-900">
-                  {result.data_sources.financial_items}
-                </div>
-                <div className="text-xs text-slate-600">Buchungen</div>
-              </div>
-              <div className="p-2 bg-slate-50 rounded text-center">
-                <div className="font-medium text-slate-900">
-                  {result.data_sources.building_data ? '✓' : '–'}
-                </div>
-                <div className="text-xs text-slate-600">Stammdaten</div>
-              </div>
-            </div>
 
-            <ScrollArea className="h-96">
-              <div className="space-y-2">
-                {result.suggestions.map((suggestion, idx) => (
-                  <div 
-                    key={idx} 
-                    className={`p-3 border rounded-lg ${
-                      suggestion.override ? 'border-green-200 bg-green-50' : ''
-                    }`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <div className="font-medium text-sm">{suggestion.field}</div>
-                        <div className="text-lg font-bold text-slate-900">
-                          {typeof suggestion.value === 'number' 
-                            ? suggestion.value.toLocaleString('de-DE', { 
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2 
-                              })
-                            : suggestion.value
-                          }
+              {Object.keys(suggestions.from_financial_data).length > 0 && (
+                <div>
+                  <div className="text-sm font-medium mb-2">
+                    Aus Finanzdaten:
+                  </div>
+                  <div className="space-y-2">
+                    {Object.entries(suggestions.from_financial_data).map(([key, value]) => (
+                      <div key={key} className="flex items-center justify-between p-2 bg-blue-50 rounded">
+                        <span className="text-sm">{key}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">
+                            {typeof value === 'number' ? value.toLocaleString('de-DE') : value}
+                          </span>
+                          <Badge variant="outline" className="text-xs">
+                            {suggestions.confidence_scores[key]}%
+                          </Badge>
                         </div>
                       </div>
-                      {getConfidenceBadge(suggestion.confidence)}
-                    </div>
-
-                    <div className="text-xs text-slate-600 flex items-center gap-1">
-                      <TrendingUp className="w-3 h-3" />
-                      {suggestion.reason}
-                    </div>
-
-                    {suggestion.historical_values && suggestion.historical_values.length > 0 && (
-                      <div className="mt-2 text-xs text-slate-500">
-                        Historie: {suggestion.historical_values.map(v => 
-                          v.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
-                        ).join(' → ')}
-                      </div>
-                    )}
-
-                    {suggestion.override && (
-                      <div className="mt-2 flex items-center gap-1 text-xs text-green-700">
-                        <CheckCircle className="w-3 h-3" />
-                        Basiert auf tatsächlichen Buchungen
-                      </div>
-                    )}
+                    ))}
                   </div>
-                ))}
-              </div>
-            </ScrollArea>
+                </div>
+              )}
 
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                className="flex-1"
-              >
-                Abbrechen
+              {Object.keys(suggestions.from_historical_avg).length > 0 && (
+                <div>
+                  <div className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4" />
+                    Historischer Durchschnitt:
+                  </div>
+                  <div className="space-y-2">
+                    {Object.entries(suggestions.from_historical_avg).map(([key, value]) => (
+                      <div key={key} className="flex items-center justify-between p-2 bg-slate-50 rounded">
+                        <span className="text-sm">{key}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">
+                            {typeof value === 'number' ? value.toLocaleString('de-DE') : value}
+                          </span>
+                          <Badge variant="outline" className="text-xs">
+                            {suggestions.confidence_scores[key]}%
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <Button onClick={() => onOpenChange(false)} className="w-full">
+                Fertig
               </Button>
-              <Button
-                onClick={handleApply}
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                Felder übernehmen
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-8 text-slate-500">
-            Keine Daten verfügbar
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

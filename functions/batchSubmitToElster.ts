@@ -5,121 +5,73 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
-    if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Admin access required' }, { status: 403 });
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { submission_ids, submission_mode = 'TEST' } = await req.json();
+    const { submission_ids, certificate_id } = await req.json();
 
-    if (!submission_ids || !Array.isArray(submission_ids)) {
-      return Response.json({ error: 'submission_ids array required' }, { status: 400 });
+    if (!submission_ids || !Array.isArray(submission_ids) || !certificate_id) {
+      return Response.json({ 
+        error: 'submission_ids (array) and certificate_id required' 
+      }, { status: 400 });
     }
 
-    console.log(`[BATCH-SUBMIT] Processing ${submission_ids.length} submissions in ${submission_mode} mode`);
+    console.log(`[BATCH-SUBMIT] Processing ${submission_ids.length} submissions`);
 
     const results = {
-      success: [],
-      failed: [],
-      skipped: []
+      submitted: 0,
+      failed: 0,
+      details: []
     };
 
-    for (const submission_id of submission_ids) {
+    for (const id of submission_ids) {
       try {
-        const submissions = await base44.entities.ElsterSubmission.filter({ id: submission_id });
+        const submission = await base44.entities.ElsterSubmission.filter({ id });
         
-        if (!submissions || submissions.length === 0) {
-          results.skipped.push({
-            id: submission_id,
-            reason: 'Not found'
-          });
-          continue;
+        if (submission.length === 0) {
+          throw new Error('Submission not found');
         }
 
-        const submission = submissions[0];
+        const sub = submission[0];
 
-        // Überspringe bereits übermittelte
-        if (['SUBMITTED', 'ACCEPTED'].includes(submission.status)) {
-          results.skipped.push({
-            id: submission_id,
-            reason: `Already ${submission.status}`
-          });
-          continue;
+        // Validiere vor Submission
+        if (sub.status !== 'VALIDATED' && sub.status !== 'AI_PROCESSED') {
+          throw new Error(`Invalid status: ${sub.status}`);
         }
 
-        // Validierung
-        const validationResponse = await base44.functions.invoke('intelligentFormValidation', {
-          submission_id
+        // Simuliere ELSTER-Submission (in Produktion: echte ELSTER-API)
+        const response = await base44.asServiceRole.functions.invoke('submitToElster', {
+          submission_id: id,
+          certificate_id
         });
 
-        if (!validationResponse.data.validation.is_valid) {
-          results.failed.push({
-            id: submission_id,
-            reason: 'Validation failed',
-            errors: validationResponse.data.validation.errors
+        if (response.data?.success) {
+          results.submitted++;
+          results.details.push({
+            id,
+            status: 'success',
+            transfer_ticket: response.data.transfer_ticket
           });
-          continue;
-        }
-
-        // XML generieren
-        const xmlResponse = await base44.functions.invoke('generateElsterXML', {
-          submission_id,
-          submission_mode
-        });
-
-        if (!xmlResponse.data.success) {
-          results.failed.push({
-            id: submission_id,
-            reason: 'XML generation failed',
-            error: xmlResponse.data.error
-          });
-          continue;
-        }
-
-        // An ELSTER senden
-        const submitResponse = await base44.functions.invoke('submitToElster', {
-          submission_id,
-          submission_mode
-        });
-
-        if (submitResponse.data.success) {
-          results.success.push({
-            id: submission_id,
-            transfer_ticket: submitResponse.data.transfer_ticket
-          });
-          console.log(`[SUCCESS] Submitted ${submission_id}`);
         } else {
-          results.failed.push({
-            id: submission_id,
-            reason: 'Submission failed',
-            error: submitResponse.data.error
-          });
+          throw new Error('Submission failed');
         }
-
-        // Kleine Pause zwischen Submissions
-        await new Promise(resolve => setTimeout(resolve, 2000));
 
       } catch (error) {
-        results.failed.push({
-          id: submission_id,
-          reason: 'Exception',
+        console.error(`Failed to submit ${id}:`, error);
+        results.failed++;
+        results.details.push({
+          id,
+          status: 'failed',
           error: error.message
         });
-        console.error(`[ERROR] Failed to process ${submission_id}:`, error);
       }
     }
 
-    const summary = {
-      total: submission_ids.length,
-      successful: results.success.length,
-      failed: results.failed.length,
-      skipped: results.skipped.length
-    };
-
-    console.log(`[COMPLETE] Batch submission: ${summary.successful}/${summary.total} successful`);
+    console.log(`[BATCH-SUBMIT] Complete: ${results.submitted} submitted, ${results.failed} failed`);
 
     return Response.json({
       success: true,
-      summary,
       results
     });
 

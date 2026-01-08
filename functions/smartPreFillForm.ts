@@ -9,194 +9,119 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { building_id, form_type, tax_year } = await req.json();
+    const { submission_id } = await req.json();
 
-    if (!building_id || !form_type || !tax_year) {
-      return Response.json({ error: 'building_id, form_type, and tax_year required' }, { status: 400 });
+    if (!submission_id) {
+      return Response.json({ error: 'submission_id required' }, { status: 400 });
     }
 
-    console.log(`[SMART PRE-FILL] Building: ${building_id}, Form: ${form_type}, Year: ${tax_year}`);
+    console.log(`[SMART-PREFILL] Processing ${submission_id}`);
 
-    // Hole historische Submissions für dieses Gebäude
+    const submission = await base44.entities.ElsterSubmission.filter({ id: submission_id });
+    
+    if (submission.length === 0) {
+      return Response.json({ error: 'Submission not found' }, { status: 404 });
+    }
+
+    const sub = submission[0];
+
+    // Hole historische Daten
     const historicalSubmissions = await base44.entities.ElsterSubmission.filter({
-      building_id,
-      tax_form_type: form_type,
-      tax_year: { $lt: tax_year }
+      building_id: sub.building_id,
+      tax_form_type: sub.tax_form_type,
+      status: { $in: ['ACCEPTED', 'SUBMITTED'] }
     });
 
-    // Sortiere nach Jahr (neueste zuerst)
-    historicalSubmissions.sort((a, b) => b.tax_year - a.tax_year);
+    // Hole Finanzdaten
+    let financialData = {};
+    if (sub.building_id) {
+      const financialItems = await base44.entities.FinancialItem.filter({
+        building_id: sub.building_id
+      });
 
-    const prefillData = {};
-    const suggestions = [];
-    const confidence = {};
+      const relevantItems = financialItems.filter(item => {
+        const itemDate = new Date(item.date);
+        return itemDate.getFullYear() === sub.tax_year;
+      });
 
+      // Aggregiere Einnahmen/Ausgaben
+      financialData = relevantItems.reduce((acc, item) => {
+        const amount = parseFloat(item.amount || 0);
+        if (item.type === 'INCOME') {
+          acc.total_income = (acc.total_income || 0) + amount;
+        } else if (item.type === 'EXPENSE') {
+          acc.total_expenses = (acc.total_expenses || 0) + amount;
+        }
+        return acc;
+      }, {});
+    }
+
+    // Berechne Durchschnittswerte aus historischen Daten
+    const avgValues = {};
     if (historicalSubmissions.length > 0) {
-      const lastSubmission = historicalSubmissions[0];
-      const lastYearData = lastSubmission.form_data || {};
-
-      // Kopiere statische Felder (ändern sich selten)
-      const staticFields = [
-        'building_address',
-        'building_type',
-        'ownership_percentage',
-        'land_value',
-        'building_value',
-        'construction_year'
-      ];
-
-      staticFields.forEach(field => {
-        if (lastYearData[field] !== undefined) {
-          prefillData[field] = lastYearData[field];
-          confidence[field] = 95;
-          suggestions.push({
-            field,
-            value: lastYearData[field],
-            reason: 'Übernommen aus Vorjahr (statische Daten)',
-            confidence: 95
-          });
-        }
-      });
-
-      // Berechne durchschnittliche Werte für dynamische Felder
-      const dynamicFields = ['income_rent', 'expense_maintenance', 'expense_interest'];
-      
-      dynamicFields.forEach(field => {
-        const values = historicalSubmissions
-          .map(s => s.form_data?.[field])
-          .filter(v => v !== undefined && v !== null);
-
-        if (values.length > 0) {
-          // Berechne Durchschnitt und Trend
-          const avg = values.reduce((sum, v) => sum + v, 0) / values.length;
-          const trend = values.length > 1 ? (values[0] - values[values.length - 1]) / values.length : 0;
-          const predicted = values[0] + trend;
-
-          prefillData[field] = Math.round(predicted * 100) / 100;
-          confidence[field] = 70;
-          
-          suggestions.push({
-            field,
-            value: prefillData[field],
-            reason: `Geschätzt basierend auf ${values.length} Vorjahren (Trend: ${trend > 0 ? '+' : ''}${Math.round(trend)} €/Jahr)`,
-            confidence: 70,
-            historical_values: values.slice(0, 3)
-          });
-        }
-      });
-
-      // AfA bleibt meist gleich
-      if (lastYearData.afa_amount) {
-        prefillData.afa_amount = lastYearData.afa_amount;
-        confidence.afa_amount = 90;
-        suggestions.push({
-          field: 'afa_amount',
-          value: lastYearData.afa_amount,
-          reason: 'AfA bleibt in der Regel konstant',
-          confidence: 90
+      historicalSubmissions.forEach(hist => {
+        Object.entries(hist.form_data || {}).forEach(([key, value]) => {
+          const num = parseFloat(value);
+          if (!isNaN(num)) {
+            if (!avgValues[key]) avgValues[key] = [];
+            avgValues[key].push(num);
+          }
         });
-      }
+      });
+
+      Object.keys(avgValues).forEach(key => {
+        const values = avgValues[key];
+        avgValues[key] = values.reduce((a, b) => a + b, 0) / values.length;
+      });
     }
 
-    // Hole aktuelle Finanz-Daten für das Jahr
-    const yearStart = new Date(tax_year, 0, 1);
-    const yearEnd = new Date(tax_year, 11, 31);
+    // Erstelle intelligente Vorschläge
+    const suggestions = {
+      from_financial_data: {},
+      from_historical_avg: {},
+      confidence_scores: {}
+    };
 
-    const financialItems = await base44.entities.FinancialItem.filter({
-      building_id,
-      date: { $gte: yearStart.toISOString(), $lte: yearEnd.toISOString() }
+    // Vorschläge aus Finanzdaten
+    if (financialData.total_income > 0) {
+      suggestions.from_financial_data.einnahmen_gesamt = financialData.total_income;
+      suggestions.confidence_scores.einnahmen_gesamt = 90;
+    }
+    if (financialData.total_expenses > 0) {
+      suggestions.from_financial_data.ausgaben_gesamt = financialData.total_expenses;
+      suggestions.confidence_scores.ausgaben_gesamt = 90;
+    }
+
+    // Vorschläge aus historischen Daten
+    Object.entries(avgValues).forEach(([key, value]) => {
+      if (!suggestions.from_financial_data[key]) {
+        suggestions.from_historical_avg[key] = Math.round(value);
+        suggestions.confidence_scores[key] = 60;
+      }
     });
 
-    if (financialItems.length > 0) {
-      // Berechne tatsächliche Einnahmen und Ausgaben
-      const actualIncome = financialItems
-        .filter(f => f.type === 'income')
-        .reduce((sum, f) => sum + (f.amount || 0), 0);
+    // Update Submission mit Vorschlägen
+    const updatedFormData = {
+      ...sub.form_data,
+      ...suggestions.from_financial_data,
+      ...Object.fromEntries(
+        Object.entries(suggestions.from_historical_avg).filter(
+          ([key]) => !sub.form_data?.[key]
+        )
+      )
+    };
 
-      const actualExpenses = financialItems
-        .filter(f => f.type === 'expense')
-        .reduce((sum, f) => sum + Math.abs(f.amount || 0), 0);
+    await base44.asServiceRole.entities.ElsterSubmission.update(submission_id, {
+      form_data: updatedFormData,
+      status: 'AI_PROCESSED'
+    });
 
-      if (actualIncome > 0) {
-        prefillData.income_rent = actualIncome;
-        confidence.income_rent = 100;
-        suggestions.push({
-          field: 'income_rent',
-          value: actualIncome,
-          reason: `Berechnet aus ${financialItems.filter(f => f.type === 'income').length} tatsächlichen Einnahmen`,
-          confidence: 100,
-          override: true // Überschreibt Schätzung
-        });
-      }
-
-      if (actualExpenses > 0) {
-        prefillData.expense_total = actualExpenses;
-        confidence.expense_total = 100;
-        suggestions.push({
-          field: 'expense_total',
-          value: actualExpenses,
-          reason: `Berechnet aus ${financialItems.filter(f => f.type === 'expense').length} tatsächlichen Ausgaben`,
-          confidence: 100,
-          override: true
-        });
-      }
-    }
-
-    // Hole Gebäude-Daten für zusätzliche Felder
-    const buildings = await base44.entities.Building.filter({ id: building_id });
-    if (buildings.length > 0) {
-      const building = buildings[0];
-
-      if (building.address && !prefillData.building_address) {
-        prefillData.building_address = building.address;
-        confidence.building_address = 100;
-        suggestions.push({
-          field: 'building_address',
-          value: building.address,
-          reason: 'Aus Gebäude-Stammdaten',
-          confidence: 100
-        });
-      }
-
-      if (building.construction_year && !prefillData.construction_year) {
-        prefillData.construction_year = building.construction_year;
-        confidence.construction_year = 100;
-      }
-
-      // Berechne AfA wenn nicht vorhanden
-      if (!prefillData.afa_amount && building.purchase_price) {
-        const landValue = building.land_value || building.purchase_price * 0.2;
-        const buildingValue = building.purchase_price - landValue;
-        const afaAmount = buildingValue * 0.02;
-
-        prefillData.afa_amount = Math.round(afaAmount);
-        confidence.afa_amount = 85;
-        suggestions.push({
-          field: 'afa_amount',
-          value: Math.round(afaAmount),
-          reason: `Berechnet: 2% von ${buildingValue.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}`,
-          confidence: 85
-        });
-      }
-    }
-
-    const avgConfidence = Object.values(confidence).length > 0
-      ? Math.round(Object.values(confidence).reduce((sum, c) => sum + c, 0) / Object.values(confidence).length)
-      : 0;
-
-    console.log(`[SUCCESS] Pre-filled ${Object.keys(prefillData).length} fields with ${avgConfidence}% avg confidence`);
+    console.log('[SMART-PREFILL] Complete');
 
     return Response.json({
       success: true,
-      prefill_data: prefillData,
-      suggestions: suggestions.sort((a, b) => b.confidence - a.confidence),
-      confidence_scores: confidence,
-      average_confidence: avgConfidence,
-      data_sources: {
-        historical_submissions: historicalSubmissions.length,
-        financial_items: financialItems.length,
-        building_data: buildings.length > 0
-      }
+      suggestions,
+      updated_submission: { ...sub, form_data: updatedFormData }
     });
 
   } catch (error) {

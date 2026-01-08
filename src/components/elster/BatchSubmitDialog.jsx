@@ -1,42 +1,50 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, XCircle, AlertTriangle, Loader2, Send } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { Loader2, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import { Progress } from "@/components/ui/progress";
 
 export default function BatchSubmitDialog({ submissionIds, open, onOpenChange, onSuccess }) {
+  const [certificateId, setCertificateId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [results, setResults] = useState(null);
-  const [progress, setProgress] = useState(0);
+
+  const { data: certificates = [] } = useQuery({
+    queryKey: ['elster-certificates'],
+    queryFn: () => base44.entities.ElsterCertificate.list()
+  });
+
+  const activeCertificates = certificates.filter(c => c.is_active);
 
   const handleSubmit = async () => {
+    if (!certificateId) {
+      toast.error('Bitte Zertifikat auswählen');
+      return;
+    }
+
     setSubmitting(true);
-    setProgress(0);
-    
     try {
       const response = await base44.functions.invoke('batchSubmitToElster', {
         submission_ids: submissionIds,
-        submission_mode: 'TEST' // Oder von User wählen lassen
+        certificate_id: certificateId
       });
 
       if (response.data.success) {
-        setResults(response.data);
-        toast.success(`${response.data.summary.successful} von ${response.data.summary.total} erfolgreich übermittelt`);
-        
-        if (response.data.summary.successful > 0) {
-          onSuccess?.();
-        }
+        setResults(response.data.results);
+        toast.success(`${response.data.results.submitted} Submissions übermittelt`);
+        onSuccess?.();
       }
     } catch (error) {
-      toast.error('Massenübermittlung fehlgeschlagen');
+      toast.error('Batch-Submission fehlgeschlagen');
       console.error(error);
     } finally {
       setSubmitting(false);
-      setProgress(100);
     }
   };
 
@@ -44,118 +52,113 @@ export default function BatchSubmitDialog({ submissionIds, open, onOpenChange, o
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Massenübermittlung an ELSTER</DialogTitle>
+          <DialogTitle>
+            Batch-Übermittlung ({submissionIds.length} Submissions)
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          <Alert>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              Es werden {submissionIds.length} Submissions validiert und an ELSTER übermittelt.
-              Dies kann einige Minuten dauern.
-            </AlertDescription>
-          </Alert>
+          {!results ? (
+            <>
+              <Alert>
+                <AlertTriangle className="w-4 h-4" />
+                <AlertDescription>
+                  Sie sind dabei, {submissionIds.length} Submissions an ELSTER zu übermitteln.
+                  Stellen Sie sicher, dass alle Daten korrekt validiert wurden.
+                </AlertDescription>
+              </Alert>
 
-          {submitting && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Verarbeitung läuft...</span>
-                <span>{progress}%</span>
-              </div>
-              <Progress value={progress} />
-            </div>
-          )}
-
-          {results && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-3 gap-3">
-                <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-center">
-                  <div className="text-2xl font-bold text-green-600">
-                    {results.summary.successful}
-                  </div>
-                  <div className="text-xs text-green-700">Erfolgreich</div>
-                </div>
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-center">
-                  <div className="text-2xl font-bold text-red-600">
-                    {results.summary.failed}
-                  </div>
-                  <div className="text-xs text-red-700">Fehlgeschlagen</div>
-                </div>
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-center">
-                  <div className="text-2xl font-bold text-slate-600">
-                    {results.summary.skipped}
-                  </div>
-                  <div className="text-xs text-slate-700">Übersprungen</div>
-                </div>
+              <div>
+                <Label>Zertifikat auswählen</Label>
+                <Select value={certificateId} onValueChange={setCertificateId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Zertifikat wählen..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeCertificates.map(cert => (
+                      <SelectItem key={cert.id} value={cert.id}>
+                        {cert.certificate_name} ({cert.certificate_type})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Erfolgreiche */}
-              {results.results.success.length > 0 && (
-                <div className="space-y-2">
-                  <div className="font-medium text-sm flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-600" />
-                    Erfolgreich übermittelt
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleSubmit} 
+                  disabled={submitting || !certificateId}
+                  className="flex-1"
+                >
+                  {submitting ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : null}
+                  Jetzt übermitteln
+                </Button>
+                <Button variant="outline" onClick={() => onOpenChange(false)}>
+                  Abbrechen
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <span className="text-sm text-green-700">Erfolgreich</span>
                   </div>
-                  {results.results.success.slice(0, 5).map((item, idx) => (
-                    <div key={idx} className="text-xs p-2 bg-green-50 border border-green-200 rounded">
-                      {item.id}
-                      {item.transfer_ticket && (
-                        <Badge variant="outline" className="ml-2 text-xs">
-                          {item.transfer_ticket}
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
-                  {results.results.success.length > 5 && (
-                    <div className="text-xs text-slate-600">
-                      ... und {results.results.success.length - 5} weitere
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Fehlgeschlagene */}
-              {results.results.failed.length > 0 && (
-                <div className="space-y-2">
-                  <div className="font-medium text-sm flex items-center gap-2">
-                    <XCircle className="w-4 h-4 text-red-600" />
-                    Fehlgeschlagen
+                  <div className="text-2xl font-bold text-green-700">
+                    {results.submitted}
                   </div>
-                  {results.results.failed.map((item, idx) => (
-                    <div key={idx} className="text-xs p-2 bg-red-50 border border-red-200 rounded">
-                      <div className="font-medium">{item.id}</div>
-                      <div className="text-red-700 mt-1">{item.reason}</div>
-                    </div>
-                  ))}
                 </div>
-              )}
-            </div>
-          )}
 
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="flex-1"
-              disabled={submitting}
-            >
-              {results ? 'Schließen' : 'Abbrechen'}
-            </Button>
-            {!results && (
-              <Button
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
-              >
-                {submitting ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4 mr-2" />
-                )}
-                Jetzt übermitteln
+                <div className="p-4 bg-red-50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-1">
+                    <XCircle className="w-5 h-5 text-red-600" />
+                    <span className="text-sm text-red-700">Fehlgeschlagen</span>
+                  </div>
+                  <div className="text-2xl font-bold text-red-700">
+                    {results.failed}
+                  </div>
+                </div>
+              </div>
+
+              <div className="max-h-64 overflow-y-auto space-y-2">
+                {results.details.map((detail, idx) => (
+                  <div 
+                    key={idx}
+                    className={`p-3 rounded border ${
+                      detail.status === 'success' 
+                        ? 'bg-green-50 border-green-200' 
+                        : 'bg-red-50 border-red-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-mono">{detail.id}</span>
+                      <Badge variant={detail.status === 'success' ? 'default' : 'destructive'}>
+                        {detail.status}
+                      </Badge>
+                    </div>
+                    {detail.transfer_ticket && (
+                      <div className="text-xs text-slate-600 mt-1">
+                        Transfer-Ticket: {detail.transfer_ticket}
+                      </div>
+                    )}
+                    {detail.error && (
+                      <div className="text-xs text-red-600 mt-1">
+                        Fehler: {detail.error}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <Button onClick={() => onOpenChange(false)} className="w-full">
+                Schließen
               </Button>
-            )}
-          </div>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

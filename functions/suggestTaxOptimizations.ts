@@ -9,165 +9,97 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { building_id, tax_year } = await req.json();
+    const { submission_id } = await req.json();
 
-    console.log('[OPTIMIZE] Generating tax optimization suggestions');
+    if (!submission_id) {
+      return Response.json({ error: 'submission_id required' }, { status: 400 });
+    }
 
-    const year = tax_year || new Date().getFullYear() - 1;
-    const suggestions = [];
+    console.log(`[TAX-OPTIMIZATION] Analyzing ${submission_id}`);
 
-    // Hole Finanz-Daten
-    const yearStart = new Date(year, 0, 1);
-    const yearEnd = new Date(year, 11, 31);
+    const submission = await base44.entities.ElsterSubmission.filter({ id: submission_id });
+    
+    if (submission.length === 0) {
+      return Response.json({ error: 'Submission not found' }, { status: 404 });
+    }
 
-    const financialItems = await base44.entities.FinancialItem.filter({
-      building_id,
-      date: { $gte: yearStart.toISOString(), $lte: yearEnd.toISOString() }
-    });
+    const sub = submission[0];
+    const formData = sub.form_data || {};
 
-    const expenses = financialItems.filter(f => f.type === 'expense');
-    const income = financialItems.filter(f => f.type === 'income');
+    const optimizations = [];
 
-    const totalExpenses = expenses.reduce((sum, e) => sum + Math.abs(e.amount || 0), 0);
-    const totalIncome = income.reduce((sum, i) => sum + (i.amount || 0), 0);
+    // Analysiere Werbungskosten
+    const werbungskosten = parseFloat(formData.werbungskosten_gesamt || 0);
+    const einnahmen = parseFloat(formData.einnahmen_gesamt || 0);
 
-    // Optimierung 1: Fehlende Ausgaben-Kategorien
-    const maintenanceExpenses = expenses.filter(e => 
-      e.category?.toLowerCase().includes('instandhaltung') || 
-      e.category?.toLowerCase().includes('reparatur')
-    );
-
-    if (maintenanceExpenses.length === 0) {
-      suggestions.push({
-        category: 'Instandhaltung',
-        priority: 'high',
-        potential_savings: 1000,
-        title: 'Keine Instandhaltungskosten erfasst',
-        description: 'Reparaturen und Instandhaltungsmaßnahmen sind sofort absetzbar und reduzieren Ihre Steuerlast erheblich.',
-        action: 'Prüfen Sie, ob im Jahr Reparaturen, Renovierungen oder Wartungen durchgeführt wurden.',
-        examples: [
-          'Heizungswartung',
-          'Dachreparaturen',
-          'Malerarbeiten',
-          'Elektriker-Einsätze',
-          'Rohrreinigung'
+    if (werbungskosten < einnahmen * 0.3) {
+      optimizations.push({
+        category: 'Werbungskosten',
+        suggestion: 'Ihre Werbungskosten erscheinen niedrig. Prüfen Sie ob alle absetzbaren Kosten erfasst wurden.',
+        potential_saving: Math.round((einnahmen * 0.3 - werbungskosten) * 0.25),
+        priority: 'HIGH',
+        details: [
+          'Reparatur- und Instandhaltungskosten',
+          'Versicherungen',
+          'Grundsteuer',
+          'Hausnebenkosten',
+          'Finanzierungszinsen'
         ]
       });
     }
 
-    // Optimierung 2: Verwaltungskosten
-    const adminExpenses = expenses.filter(e => 
-      e.category?.toLowerCase().includes('verwaltung')
-    );
-    const adminTotal = adminExpenses.reduce((sum, e) => sum + Math.abs(e.amount || 0), 0);
-
-    if (adminTotal < 500) {
-      suggestions.push({
-        category: 'Verwaltung',
-        priority: 'medium',
-        potential_savings: 500,
-        title: 'Verwaltungskosten scheinen niedrig',
-        description: 'Viele Kosten der Immobilienverwaltung können steuerlich geltend gemacht werden.',
-        action: 'Erfassen Sie alle administrativen Aufwendungen',
-        examples: [
-          'Kontoführungsgebühren (anteilig)',
-          'Software & Apps (z.B. diese Verwaltungssoftware)',
-          'Porto & Versand',
-          'Büromaterial',
-          'Steuerberatung',
-          'Fahrtkosten zu Objekten'
-        ]
-      });
-    }
-
-    // Optimierung 3: Schuldzinsen
-    const interestExpenses = expenses.filter(e => 
-      e.category?.toLowerCase().includes('zins')
-    );
-
-    if (interestExpenses.length === 0 && totalIncome > 5000) {
-      suggestions.push({
-        category: 'Finanzierung',
-        priority: 'medium',
-        potential_savings: 2000,
-        title: 'Keine Schuldzinsen erfasst',
-        description: 'Kreditzinsen für vermietete Immobilien sind vollständig absetzbar.',
-        action: 'Erfassen Sie Darlehenszinsen aus Ihren Finanzierungsverträgen',
-        examples: [
-          'Hypothekenzinsen',
-          'Bauzinsen',
-          'Modernisierungskredite'
-        ]
-      });
-    }
-
-    // Optimierung 4: Nebenkosten-Nachzahlung
-    const utilitiesExpenses = expenses.filter(e => 
-      e.category?.toLowerCase().includes('nebenkosten')
-    );
-
-    if (utilitiesExpenses.length > 0 && totalIncome > 0) {
-      const utilitiesTotal = utilitiesExpenses.reduce((sum, e) => sum + Math.abs(e.amount || 0), 0);
-      const utilitiesRatio = utilitiesTotal / totalIncome;
-
-      if (utilitiesRatio > 0.3) {
-        suggestions.push({
-          category: 'Nebenkosten',
-          priority: 'info',
-          potential_savings: 0,
-          title: 'Hohe Nebenkosten erkannt',
-          description: 'Nicht umlagefähige Nebenkosten können Sie vollständig absetzen.',
-          action: 'Prüfen Sie die Nebenkostenabrechnung auf nicht umlagefähige Positionen',
-          examples: [
-            'Verwaltungskosten',
-            'Instandhaltungsrücklage',
-            'Nicht umgelegte Betriebskosten'
-          ]
-        });
-      }
-    }
-
-    // Optimierung 5: AfA prüfen
-    const buildings = await base44.entities.Building.filter({ id: building_id });
-    const building = buildings[0];
-
-    if (building && building.purchase_price && !building.afa_start_date) {
-      const landValue = building.land_value || building.purchase_price * 0.2;
-      const buildingValue = building.purchase_price - landValue;
-      const potentialAfa = buildingValue * 0.02;
-
-      suggestions.push({
+    // AfA-Prüfung
+    if (!formData.afa_betrag || parseFloat(formData.afa_betrag) === 0) {
+      optimizations.push({
         category: 'AfA',
-        priority: 'high',
-        potential_savings: potentialAfa * 0.25, // 25% Steuersatz
-        title: 'AfA nicht aktiviert',
-        description: 'Die Abschreibung für Abnutzung (AfA) ist eine der wichtigsten Steuerersparnisse bei Immobilien.',
-        action: 'Aktivieren Sie die AfA für dieses Gebäude',
-        examples: [
-          `Gebäudewert: ${buildingValue.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}`,
-          `Jährliche AfA (2%): ${potentialAfa.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}`,
-          `Geschätzte Steuerersparnis: ${(potentialAfa * 0.25).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}`
+        suggestion: 'Keine AfA erfasst. Prüfen Sie ob Abschreibungen möglich sind.',
+        potential_saving: 2000,
+        priority: 'HIGH',
+        details: [
+          'Gebäude-AfA (2% linear)',
+          'Außenanlagen-AfA',
+          'Einbauten separat abschreibbar'
         ]
       });
     }
 
-    // Berechne Gesamtpotenzial
-    const totalSavingsPotential = suggestions.reduce((sum, s) => sum + s.potential_savings, 0);
+    // Erhaltungsaufwand
+    const erhaltungsaufwand = parseFloat(formData.erhaltungsaufwand || 0);
+    if (erhaltungsaufwand > einnahmen * 0.15) {
+      optimizations.push({
+        category: 'Erhaltungsaufwand',
+        suggestion: 'Hoher Erhaltungsaufwand. Prüfen Sie die 15%-Regelung und verteilte Abschreibung.',
+        potential_saving: 0,
+        priority: 'MEDIUM',
+        details: [
+          'Bei > 15% der Gebäude-HK über 5 Jahre verteilen',
+          'Anschaffungsnahe Herstellungskosten prüfen',
+          'Erhaltung vs. Modernisierung abgrenzen'
+        ]
+      });
+    }
 
-    console.log(`[SUCCESS] Generated ${suggestions.length} optimization suggestions`);
+    // Zinsen
+    if (!formData.schuldzinsen || parseFloat(formData.schuldzinsen) === 0) {
+      optimizations.push({
+        category: 'Finanzierungskosten',
+        suggestion: 'Keine Schuldzinsen erfasst. Bei Finanzierung sind diese absetzbar.',
+        potential_saving: 1000,
+        priority: 'MEDIUM',
+        details: [
+          'Darlehenszinsen',
+          'Finanzierungsnebenkosten',
+          'Disagio verteilt absetzbar'
+        ]
+      });
+    }
+
+    console.log(`[TAX-OPTIMIZATION] Found ${optimizations.length} optimization opportunities`);
 
     return Response.json({
       success: true,
-      suggestions: suggestions.sort((a, b) => {
-        const priorityOrder = { high: 0, medium: 1, info: 2 };
-        return priorityOrder[a.priority] - priorityOrder[b.priority];
-      }),
-      total_potential_savings: totalSavingsPotential,
-      summary: {
-        total_income: totalIncome,
-        total_expenses: totalExpenses,
-        optimization_count: suggestions.length
-      }
+      optimizations,
+      total_potential_saving: optimizations.reduce((sum, opt) => sum + opt.potential_saving, 0)
     });
 
   } catch (error) {
