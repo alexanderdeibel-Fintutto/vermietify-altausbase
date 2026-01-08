@@ -78,6 +78,11 @@ import TaxPlanningAssistant from '@/components/elster/TaxPlanningAssistant';
 import HistoricalComparison from '@/components/elster/HistoricalComparison';
 import MobileOptimizedView from '@/components/elster/MobileOptimizedView';
 import QuickInsights from '@/components/elster/QuickInsights';
+import IntelligentFormSuggestion from '@/components/elster/IntelligentFormSuggestion';
+import MultiMandateManager from '@/components/elster/MultiMandateManager';
+import AdvancedDiagnostics from '@/components/elster/AdvancedDiagnostics';
+import ComplianceMonitoring from '@/components/elster/ComplianceMonitoring';
+import PerformanceOptimizer from '@/components/elster/PerformanceOptimizer';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -190,12 +195,26 @@ export default function ElsterIntegration() {
 
           <TabsContent value="dashboard" className="mt-6">
             <div className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <SystemHealthCheck />
-                <CertificateRenewalReminder 
-                  certificates={certificates} 
-                  onUploadClick={() => setShowCertUpload(true)} 
-                />
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <SystemHealthCheck />
+                    <CertificateRenewalReminder 
+                      certificates={certificates} 
+                      onUploadClick={() => setShowCertUpload(true)} 
+                    />
+                  </div>
+                  <IntelligentFormSuggestion 
+                    onCreateForm={(params) => {
+                      setShowWizard(true);
+                      toast.info('Wizard wird geöffnet mit vorausgefüllten Daten');
+                    }}
+                  />
+                </div>
+                <div className="space-y-6">
+                  <ComplianceMonitoring submissions={submissions} />
+                  <MultiMandateManager />
+                </div>
               </div>
 
               {/* Mobile View */}
@@ -373,7 +392,10 @@ export default function ElsterIntegration() {
                 <div className="lg:col-span-2">
                   <MultiYearComparison submissions={submissions} formType="ANLAGE_V" />
                 </div>
-                <DeadlineTracker submissions={submissions} taxYear={new Date().getFullYear()} />
+                <div className="space-y-6">
+                  <DeadlineTracker submissions={submissions} taxYear={new Date().getFullYear()} />
+                  <PerformanceOptimizer />
+                </div>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">

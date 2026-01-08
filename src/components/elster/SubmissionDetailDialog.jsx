@@ -19,6 +19,7 @@ import RiskAssessment from './RiskAssessment';
 import TrendAnalysisChart from './TrendAnalysisChart';
 import PreSubmissionCheck from './PreSubmissionCheck';
 import CollaborationCenter from './CollaborationCenter';
+import AdvancedDiagnostics from './AdvancedDiagnostics';
 
 export default function SubmissionDetailDialog({ submission, open, onOpenChange }) {
   const [showShareDialog, setShowShareDialog] = React.useState(false);
@@ -121,9 +122,10 @@ export default function SubmissionDetailDialog({ submission, open, onOpenChange 
           </Card>
 
           <Tabs defaultValue="data">
-            <TabsList className="grid w-full grid-cols-10 text-xs">
+            <TabsList className="grid w-full grid-cols-11 text-xs overflow-x-auto">
               <TabsTrigger value="data">Daten</TabsTrigger>
               <TabsTrigger value="validation">Validierung</TabsTrigger>
+              <TabsTrigger value="diagnostics">Diagnose</TabsTrigger>
               <TabsTrigger value="collaboration">Team</TabsTrigger>
               <TabsTrigger value="report">Report</TabsTrigger>
               <TabsTrigger value="compliance">Compliance</TabsTrigger>
@@ -151,6 +153,10 @@ export default function SubmissionDetailDialog({ submission, open, onOpenChange 
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="diagnostics" className="mt-4">
+              <AdvancedDiagnostics submission={submission} />
             </TabsContent>
 
             <TabsContent value="collaboration" className="mt-4">
