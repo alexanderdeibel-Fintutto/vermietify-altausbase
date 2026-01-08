@@ -133,6 +133,8 @@ import MultiBuildingOperations from '@/components/elster/MultiBuildingOperations
 import AIErrorCorrectionPanel from '@/components/elster/AIErrorCorrectionPanel';
 import ComplianceScoreCard from '@/components/elster/ComplianceScoreCard';
 import SubmissionQueueManager from '@/components/elster/SubmissionQueueManager';
+import TestingDashboard from '@/components/elster/TestingDashboard';
+import ROIDashboard from '@/components/elster/ROIDashboard';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -527,6 +529,8 @@ export default function ElsterIntegration() {
                   <SystemHealthCheck />
                 </div>
                 <div className="space-y-6">
+                  <TestingDashboard />
+                  <ROIDashboard />
                   <DataCleanupTool />
                   <TaxLawUpdatesMonitor />
                   <IntegrationHealthMonitor />
