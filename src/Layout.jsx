@@ -21,7 +21,9 @@ import {
     Shield,
     TestTube,
     Mail,
-    Calendar
+    Calendar,
+    Search,
+    Upload
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/notifications/NotificationCenter';
@@ -69,6 +71,8 @@ export default function Layout({ children, currentPageName }) {
         { name: '📋 Activity Logs', href: createPageUrl('ActivityLogs'), icon: Activity, page: 'ActivityLogs' },
         { name: '📊 Analytics', href: createPageUrl('Analytics'), icon: BarChart3, page: 'Analytics' },
         { name: '📅 Report-Scheduling', href: createPageUrl('ReportScheduling'), icon: Calendar, page: 'ReportScheduling' },
+        { name: '🔍 Erweiterte Suche', href: createPageUrl('AdvancedSearch'), icon: Search, page: 'AdvancedSearch' },
+        { name: '📥 Import/Export', href: createPageUrl('DataImportExport'), icon: Upload, page: 'DataImportExport' },
         { name: 'Objekte', href: createPageUrl('Buildings'), icon: Building2, page: 'Buildings', requiresModule: 'property' },
         { name: 'Mieter', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts', requiresModule: 'tenants' },
         { name: 'Kommunikation', href: createPageUrl('Kommunikation'), icon: MessageSquare, page: 'Kommunikation', requiresModule: 'communication' },
