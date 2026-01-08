@@ -50,6 +50,8 @@ import CertificateRenewalReminder from '@/components/elster/CertificateRenewalRe
 import SystemHealthCheck from '@/components/elster/SystemHealthCheck';
 import TaxAdvisorReport from '@/components/elster/TaxAdvisorReport';
 import FinancialDataSync from '@/components/elster/FinancialDataSync';
+import VersionHistory from '@/components/elster/VersionHistory';
+import ExportOptionsDialog from '@/components/elster/ExportOptionsDialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from 'lucide-react';
 
@@ -66,6 +68,7 @@ export default function ElsterIntegration() {
   const [previewSubmission, setPreviewSubmission] = useState(null);
   const [comparisonSubmissions, setComparisonSubmissions] = useState({ sub1: null, sub2: null });
   const [selectedForBulk, setSelectedForBulk] = useState([]);
+  const [showExportDialog, setShowExportDialog] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: submissions = [] } = useQuery({
@@ -343,6 +346,12 @@ export default function ElsterIntegration() {
         submission2={comparisonSubmissions.sub2}
         open={!!(comparisonSubmissions.sub1 && comparisonSubmissions.sub2)}
         onOpenChange={(open) => !open && setComparisonSubmissions({ sub1: null, sub2: null })}
+      />
+
+      <ExportOptionsDialog
+        submissionIds={selectedForBulk}
+        open={showExportDialog}
+        onOpenChange={setShowExportDialog}
       />
     </div>
   );
