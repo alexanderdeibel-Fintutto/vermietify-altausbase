@@ -28,6 +28,9 @@ import BatchOperationsPanel from '@/components/elster/BatchOperationsPanel';
 import CategoryImportDialog from '@/components/elster/CategoryImportDialog';
 import QuickActionsCard from '@/components/elster/QuickActionsCard';
 import SubmissionStatsCard from '@/components/elster/SubmissionStatsCard';
+import SubmissionHistory from '@/components/elster/SubmissionHistory';
+import DeadlineReminder from '@/components/elster/DeadlineReminder';
+import FormComparisonView from '@/components/elster/FormComparisonView';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from 'lucide-react';
 
@@ -190,7 +193,15 @@ export default function ElsterIntegration() {
           </TabsContent>
 
           <TabsContent value="analytics" className="mt-6">
-            <ElsterAnalytics submissions={submissions} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <ElsterAnalytics submissions={submissions} />
+              </div>
+              <div className="space-y-6">
+                <FormComparisonView submissions={submissions} formType="ANLAGE_V" />
+                <SubmissionHistory submissions={submissions} />
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </motion.div>
