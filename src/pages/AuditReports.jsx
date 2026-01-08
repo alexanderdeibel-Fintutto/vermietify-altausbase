@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { FileText, Download, Calendar } from 'lucide-react';
+import ExportButton from '@/components/reports/ExportButton';
 
 export default function AuditReports() {
   const [startDate, setStartDate] = useState('');
@@ -169,10 +170,16 @@ export default function AuditReports() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Top 10 Aktivste Benutzer</CardTitle>
-                <Button variant="outline" size="sm" onClick={exportReport}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Export JSON
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={exportReport}>
+                    <Download className="w-4 h-4 mr-2" />
+                    JSON
+                  </Button>
+                  <ExportButton 
+                    reportType="Audit Report"
+                    reportData={report}
+                  />
+                </div>
               </div>
             </CardHeader>
             <CardContent>
