@@ -17,7 +17,8 @@ import {
     MessageSquare,
     Filter,
     Star,
-    Edit
+    Edit,
+    Sparkles
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { toast } from 'sonner';
@@ -28,6 +29,7 @@ import AutomationRules from '../components/support/AutomationRules';
 import TrendAnalysis from '../components/support/TrendAnalysis';
 import RefreshSettings from '../components/support/RefreshSettings';
 import Dashboard from '../components/support/analytics/Dashboard';
+import IntelligentProblemDialog from '../components/testing/IntelligentProblemDialog';
 import ModulAnalysis from '../components/support/analytics/ModulAnalysis';
 import UserSegments from '../components/support/analytics/UserSegments';
 import PerformanceMetrics from '../components/support/analytics/PerformanceMetrics';
@@ -47,7 +49,6 @@ export default function SupportCenter() {
         search: ''
     });
     const [selectedProblem, setSelectedProblem] = useState(null);
-    const [showProblemDialog, setShowProblemDialog] = useState(false);
     const [showBugLinking, setShowBugLinking] = useState(false);
     const [showSolutionEditor, setShowSolutionEditor] = useState(false);
     const [linkingProblem, setLinkingProblem] = useState(null);
@@ -55,6 +56,7 @@ export default function SupportCenter() {
     const [autoRefresh, setAutoRefresh] = useState(true);
     const [lastUpdate, setLastUpdate] = useState(new Date());
     const [showSettings, setShowSettings] = useState(false);
+    const [showIntelligentDialog, setShowIntelligentDialog] = useState(false);
     const [refreshSettings, setRefreshSettings] = useState(() => {
         const saved = localStorage.getItem('support-refresh-settings');
         return saved ? JSON.parse(saved) : { autoRefresh: true, frequency: '30', soundEnabled: false };
@@ -257,17 +259,17 @@ export default function SupportCenter() {
                     <h1 className="text-3xl font-bold text-slate-900">🆘 Support-Center</h1>
                     <p className="text-slate-600 mt-1">Live-Überwachung aller Support-Anfragen</p>
                 </div>
-                <Button
-                    onClick={() => setShowProblemDialog(true)}
-                    className="bg-emerald-600 hover:bg-emerald-700 gap-2"
-                >
-                    <Plus className="w-4 h-4" />
-                    Problem melden
-                </Button>
                 <div className="flex items-center gap-3">
                     <span className="text-sm text-slate-600">
                         Letzte Aktualisierung: vor {timeSinceUpdate}s
                     </span>
+                    <Button
+                        onClick={() => setShowIntelligentDialog(true)}
+                        className="bg-emerald-600 hover:bg-emerald-700"
+                    >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Intelligent melden
+                    </Button>
                     <Button
                         variant="outline"
                         size="sm"
@@ -661,9 +663,9 @@ export default function SupportCenter() {
                 onOpenChange={setShowSettings}
             />
 
-            <IntelligentProblemDialog 
-                open={showProblemDialog} 
-                onOpenChange={setShowProblemDialog}
+            <IntelligentProblemDialog
+                open={showIntelligentDialog}
+                onOpenChange={setShowIntelligentDialog}
             />
         </div>
     );
