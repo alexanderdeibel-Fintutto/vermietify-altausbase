@@ -39,6 +39,8 @@ import MultiYearComparison from '@/components/elster/MultiYearComparison';
 import ValidationPreview from '@/components/elster/ValidationPreview';
 import PDFPreviewDialog from '@/components/elster/PDFPreviewDialog';
 import SubmissionComparisonDialog from '@/components/elster/SubmissionComparisonDialog';
+import DeadlineTracker from '@/components/elster/DeadlineTracker';
+import QuickDuplicateButton from '@/components/elster/QuickDuplicateButton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from 'lucide-react';
 
@@ -217,7 +219,12 @@ export default function ElsterIntegration() {
 
           <TabsContent value="analytics" className="mt-6">
             <div className="space-y-6">
-              <MultiYearComparison submissions={submissions} formType="ANLAGE_V" />
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  <MultiYearComparison submissions={submissions} formType="ANLAGE_V" />
+                </div>
+                <DeadlineTracker submissions={submissions} taxYear={new Date().getFullYear()} />
+              </div>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
                   <ElsterAnalytics submissions={submissions} />

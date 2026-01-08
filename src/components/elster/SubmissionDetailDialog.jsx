@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, Archive, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import QuickDuplicateButton from './QuickDuplicateButton';
 
 export default function SubmissionDetailDialog({ submission, open, onOpenChange }) {
   if (!submission) return null;
@@ -216,7 +217,7 @@ export default function SubmissionDetailDialog({ submission, open, onOpenChange 
           </Tabs>
 
           {/* Actions */}
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             <Button onClick={handleExport} variant="outline" className="flex-1">
               <Download className="w-4 h-4 mr-2" />
               PDF exportieren
@@ -227,6 +228,10 @@ export default function SubmissionDetailDialog({ submission, open, onOpenChange 
                 GoBD-Archivierung
               </Button>
             )}
+            <QuickDuplicateButton 
+              submission={submission} 
+              onSuccess={() => onOpenChange(false)} 
+            />
           </div>
         </div>
       </DialogContent>
