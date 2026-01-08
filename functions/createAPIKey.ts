@@ -9,23 +9,24 @@ Deno.serve(async (req) => {
       return Response.json({ error: "Admin access required" }, { status: 403 });
     }
     
-    const { name, scopes, rateLimit, expiresInDays } = await req.json();
+    const { name, scopes = ['read'], rateLimit, allowedIps, expiresInDays } = await req.json();
     
-    if (!name || !scopes || scopes.length === 0) {
-      return Response.json({ error: "name and scopes required" }, { status: 400 });
+    if (!name) {
+      return Response.json({ error: "name required" }, { status: 400 });
     }
     
-    // Generiere einen sicheren API-Key
-    const key = `sk_${crypto.randomUUID().replace(/-/g, '')}`;
+    // API-Key generieren
+    const key = 'sk_' + Array.from(crypto.getRandomValues(new Uint8Array(32)))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
     
-    // Hash den Key für Speicherung
+    // Hash erstellen (in Produktion würde man bcrypt/scrypt verwenden)
     const encoder = new TextEncoder();
     const data = encoder.encode(key);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const keyHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     
-    // Speichere nur den Hash
     const prefix = key.substring(0, 12) + '...';
     
     const expiresAt = expiresInDays 
@@ -34,20 +35,23 @@ Deno.serve(async (req) => {
     
     await base44.asServiceRole.entities.APIKey.create({
       name,
-      key_hash: keyHash,
+      key_hash: hash,
       prefix,
       user_id: user.id,
       scopes,
       expires_at: expiresAt,
-      is_active: true,
+      last_used_at: null,
       usage_count: 0,
-      rate_limit: rateLimit || 1000
+      is_active: true,
+      rate_limit: rateLimit || null,
+      allowed_ips: allowedIps || null
     });
     
     return Response.json({
       success: true,
-      key, // Nur einmal zurückgeben!
-      message: 'API-Key erstellt. Speichern Sie ihn sicher!'
+      key,
+      prefix,
+      message: 'API key created - save it now, it will not be shown again!'
     });
     
   } catch (error) {

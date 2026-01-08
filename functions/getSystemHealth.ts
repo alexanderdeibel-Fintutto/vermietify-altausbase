@@ -9,84 +9,75 @@ Deno.serve(async (req) => {
       return Response.json({ error: "Admin access required" }, { status: 403 });
     }
     
-    const startTime = Date.now();
+    const now = new Date();
+    const yesterday = new Date(now - 24 * 60 * 60 * 1000);
     
-    // System-Health-Checks
-    const health = {
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      checks: {}
-    };
+    // Metriken sammeln
+    const [users, roles, permissions, moduleAccess, testSessions, apiKeys, userActivity] = await Promise.all([
+      base44.asServiceRole.entities.User.list(),
+      base44.asServiceRole.entities.Role.list(),
+      base44.asServiceRole.entities.Permission.list(),
+      base44.asServiceRole.entities.ModuleAccess.list(),
+      base44.asServiceRole.entities.TestSession.list(),
+      base44.asServiceRole.entities.APIKey.list(),
+      base44.asServiceRole.entities.UserActivity.list()
+    ]);
     
-    // Database Check
-    try {
-      await base44.asServiceRole.entities.User.list();
-      health.checks.database = { status: 'healthy', responseTime: Date.now() - startTime };
-    } catch (error) {
-      health.checks.database = { status: 'error', error: error.message };
-      health.status = 'unhealthy';
-    }
+    const testSessions24h = testSessions.filter(s => 
+      new Date(s.session_start) >= yesterday
+    );
     
-    // Activity Logging Check
-    try {
-      const activities = await base44.asServiceRole.entities.UserActivity.list();
-      health.checks.activityLogging = { 
-        status: 'healthy', 
-        totalActivities: activities.length 
-      };
-    } catch (error) {
-      health.checks.activityLogging = { status: 'error', error: error.message };
-      health.status = 'warning';
-    }
+    const userActivity24h = userActivity.filter(a => 
+      new Date(a.created_date) >= yesterday
+    );
     
-    // User System Check
-    try {
-      const users = await base44.asServiceRole.entities.User.list();
-      const activeUsers = users.filter(u => 
-        u.last_activity && (new Date() - new Date(u.last_activity)) < 24 * 60 * 60 * 1000
-      );
-      
-      health.checks.userSystem = {
+    // Service-Status prüfen
+    const services = [
+      {
+        name: 'User Management',
+        status: users.length > 0 ? 'healthy' : 'warning',
+        message: `${users.length} users`
+      },
+      {
+        name: 'Permission System',
+        status: roles.length > 0 && permissions.length > 0 ? 'healthy' : 'warning',
+        message: `${roles.length} roles, ${permissions.length} permissions`
+      },
+      {
+        name: 'Module Access',
         status: 'healthy',
+        message: `${moduleAccess.filter(ma => ma.is_active).length} active modules`
+      },
+      {
+        name: 'Testing System',
+        status: testSessions24h.length > 0 ? 'healthy' : 'warning',
+        message: `${testSessions24h.length} sessions in 24h`
+      }
+    ];
+    
+    const hasError = services.some(s => s.status === 'error');
+    const hasWarning = services.some(s => s.status === 'warning');
+    const overallStatus = hasError ? 'error' : hasWarning ? 'warning' : 'healthy';
+    
+    return Response.json({
+      success: true,
+      overallStatus,
+      timestamp: now.toISOString(),
+      services,
+      metrics: {
         totalUsers: users.length,
-        activeUsers: activeUsers.length
-      };
-    } catch (error) {
-      health.checks.userSystem = { status: 'error', error: error.message };
-      health.status = 'warning';
-    }
-    
-    // Permissions System Check
-    try {
-      const roles = await base44.asServiceRole.entities.Role.list();
-      const permissions = await base44.asServiceRole.entities.Permission.list();
-      
-      health.checks.permissions = {
-        status: 'healthy',
-        totalRoles: roles.length,
-        totalPermissions: permissions.length
-      };
-    } catch (error) {
-      health.checks.permissions = { status: 'error', error: error.message };
-      health.status = 'warning';
-    }
-    
-    // Performance Metriken
-    const responseTime = Date.now() - startTime;
-    health.performance = {
-      totalResponseTime: responseTime,
-      uptime: '99.9%', // In Produktion von echtem Monitoring-Service
-      errorRate: 0.1
-    };
-    
-    return Response.json(health);
+        totalEntities: users.length + roles.length + permissions.length,
+        totalApiKeys: apiKeys.length,
+        activeRoles: roles.filter(r => r.is_active).length,
+        totalPermissions: permissions.length,
+        activeModules: moduleAccess.filter(ma => ma.is_active).length,
+        testSessions24h: testSessions24h.length,
+        userActivity24h: userActivity24h.length
+      }
+    });
     
   } catch (error) {
-    console.error("System health check error:", error);
-    return Response.json({
-      status: 'error',
-      error: error.message,
-      timestamp: new Date().toISOString()
-    }, { status: 500 });
+    console.error("Get system health error:", error);
+    return Response.json({ error: error.message }, { status: 500 });
   }
 });
