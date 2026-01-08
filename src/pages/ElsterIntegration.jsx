@@ -54,6 +54,11 @@ import VersionHistory from '@/components/elster/VersionHistory';
 import ExportOptionsDialog from '@/components/elster/ExportOptionsDialog';
 import TaxCalendar from '@/components/elster/TaxCalendar';
 import OptimizationAssistant from '@/components/elster/OptimizationAssistant';
+import PlausibilityCheck from '@/components/elster/PlausibilityCheck';
+import SmartPreFillDialog from '@/components/elster/SmartPreFillDialog';
+import SubmissionSearchDialog from '@/components/elster/SubmissionSearchDialog';
+import BatchStatusUpdateDialog from '@/components/elster/BatchStatusUpdateDialog';
+import QuickActionsMenu from '@/components/elster/QuickActionsMenu';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from 'lucide-react';
 
@@ -71,7 +76,28 @@ export default function ElsterIntegration() {
   const [comparisonSubmissions, setComparisonSubmissions] = useState({ sub1: null, sub2: null });
   const [selectedForBulk, setSelectedForBulk] = useState([]);
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [showSearchDialog, setShowSearchDialog] = useState(false);
+  const [showBatchStatusDialog, setShowBatchStatusDialog] = useState(false);
   const queryClient = useQueryClient();
+
+  const handleQuickAction = (action) => {
+    switch (action) {
+      case 'create':
+        setShowWizard(true);
+        break;
+      case 'search':
+        setShowSearchDialog(true);
+        break;
+      case 'upload-cert':
+        setShowCertUpload(true);
+        break;
+      case 'bulk-export':
+        setShowBulkExport(true);
+        break;
+      default:
+        break;
+    }
+  };
 
   const { data: submissions = [] } = useQuery({
     queryKey: ['elster-submissions'],
@@ -107,18 +133,15 @@ export default function ElsterIntegration() {
             Automatische Steuerformular-Erstellung und Übermittlung mit KI-Unterstützung
           </p>
         </div>
-        {certificates.length === 0 && (
-          <div className="flex gap-2">
-            <Button onClick={() => setShowBulkExport(true)} variant="outline">
-              <Download className="w-4 h-4 mr-2" />
-              Bulk-Export
-            </Button>
+        <div className="flex gap-2">
+          <QuickActionsMenu onAction={handleQuickAction} />
+          {certificates.length === 0 && (
             <Button onClick={() => setShowSetupWizard(true)} className="bg-blue-600 hover:bg-blue-700">
               <Settings className="w-4 h-4 mr-2" />
               Einrichtung starten
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -360,6 +383,19 @@ export default function ElsterIntegration() {
         submissionIds={selectedForBulk}
         open={showExportDialog}
         onOpenChange={setShowExportDialog}
+      />
+
+      <SubmissionSearchDialog
+        open={showSearchDialog}
+        onOpenChange={setShowSearchDialog}
+        onSelect={setSelectedSubmission}
+      />
+
+      <BatchStatusUpdateDialog
+        submissionIds={selectedForBulk}
+        open={showBatchStatusDialog}
+        onOpenChange={setShowBatchStatusDialog}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['elster-submissions'] })}
       />
     </div>
   );
