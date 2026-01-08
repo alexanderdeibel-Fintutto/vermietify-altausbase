@@ -83,6 +83,10 @@ import MultiMandateManager from '@/components/elster/MultiMandateManager';
 import AdvancedDiagnostics from '@/components/elster/AdvancedDiagnostics';
 import ComplianceMonitoring from '@/components/elster/ComplianceMonitoring';
 import PerformanceOptimizer from '@/components/elster/PerformanceOptimizer';
+import SmartDocumentExtraction from '@/components/elster/SmartDocumentExtraction';
+import CrossFormValidation from '@/components/elster/CrossFormValidation';
+import DataQualityDashboard from '@/components/elster/DataQualityDashboard';
+import AutomatedTestingSuite from '@/components/elster/AutomatedTestingSuite';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -278,45 +282,53 @@ export default function ElsterIntegration() {
           </TabsContent>
 
           <TabsContent value="validation" className="mt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <AdvancedBatchValidation 
-                submissions={submissions}
-                onOpenDetail={(submissionId) => {
-                  const sub = submissions.find(s => s.id === submissionId);
-                  if (sub) setSelectedSubmission(sub);
-                }}
-              />
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Intelligente Fehlerkorrektur</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-slate-600 mb-4">
-                      Wählen Sie eine Einreichung mit Fehlern aus, um KI-basierte Korrekturvorschläge zu erhalten.
-                    </p>
-                    <div className="space-y-2">
-                      {submissions
-                        .filter(s => s.validation_errors?.length > 0 || s.validation_warnings?.length > 0)
-                        .slice(0, 5)
-                        .map(sub => (
-                          <Button
-                            key={sub.id}
-                            variant="outline"
-                            className="w-full justify-start"
-                            onClick={() => {
-                              setCorrectionSubmission(sub);
-                              setShowSmartCorrection(true);
-                            }}
-                          >
-                            <AlertCircle className="w-4 h-4 mr-2 text-red-600" />
-                            {sub.tax_form_type} - {sub.tax_year}
-                          </Button>
-                        ))}
-                    </div>
-                  </CardContent>
-                </Card>
-                <ValidationPreview />
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  <AdvancedBatchValidation 
+                    submissions={submissions}
+                    onOpenDetail={(submissionId) => {
+                      const sub = submissions.find(s => s.id === submissionId);
+                      if (sub) setSelectedSubmission(sub);
+                    }}
+                  />
+                </div>
+                <div className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Intelligente Fehlerkorrektur</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-slate-600 mb-4">
+                        Wählen Sie eine Einreichung mit Fehlern aus, um KI-basierte Korrekturvorschläge zu erhalten.
+                      </p>
+                      <div className="space-y-2">
+                        {submissions
+                          .filter(s => s.validation_errors?.length > 0 || s.validation_warnings?.length > 0)
+                          .slice(0, 5)
+                          .map(sub => (
+                            <Button
+                              key={sub.id}
+                              variant="outline"
+                              className="w-full justify-start"
+                              onClick={() => {
+                                setCorrectionSubmission(sub);
+                                setShowSmartCorrection(true);
+                              }}
+                            >
+                              <AlertCircle className="w-4 h-4 mr-2 text-red-600" />
+                              {sub.tax_form_type} - {sub.tax_year}
+                            </Button>
+                          ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <DataQualityDashboard submissions={submissions} />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <CrossFormValidation submissions={submissions} />
+                <AutomatedTestingSuite submission={submissions[0]} />
               </div>
             </div>
           </TabsContent>
@@ -331,6 +343,7 @@ export default function ElsterIntegration() {
                 <AutomatedFormGeneration />
                 <ElsterNotificationCenter />
               </div>
+              <SmartDocumentExtraction />
             </div>
           </TabsContent>
 
