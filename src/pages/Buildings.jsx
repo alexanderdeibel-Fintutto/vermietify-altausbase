@@ -7,15 +7,7 @@ import BuildingEditDialog from '@/components/buildings/BuildingEditDialog';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/dialog';
+import DeleteConfirmDialog from '@/components/buildings/DeleteConfirmDialog';
 
 export default function BuildingsPage() {
   const [filters, setFilters] = useState({ status: 'all', city: 'all', search: '' });
@@ -136,22 +128,13 @@ export default function BuildingsPage() {
       />
 
       {/* Delete Confirm */}
-      <AlertDialog open={!!deleteConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Gebäude löschen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {deleteConfirm?.name} wird gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex gap-2">
-            <AlertDialogCancel onClick={() => setDeleteConfirm(null)}>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600 hover:bg-red-700">
-              Löschen
-            </AlertDialogAction>
-          </div>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmDialog
+        building={deleteConfirm}
+        open={!!deleteConfirm}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteConfirm(null)}
+        loading={deleteMutation.isPending}
+      />
     </div>
   );
 }
