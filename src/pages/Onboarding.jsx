@@ -12,6 +12,8 @@ import { createPageUrl } from '../utils';
 import ChatMessage from '@/components/onboarding/ChatMessage';
 import SimpleObjectForm from '@/components/onboarding/SimpleObjectForm';
 import QuickTenantSetup from '@/components/onboarding/QuickTenantSetup';
+import TaxCategoryQuickSetup from '@/components/onboarding/TaxCategoryQuickSetup';
+import CompletionScreen from '@/components/onboarding/CompletionScreen';
 
 export default function Onboarding() {
   const [messages, setMessages] = useState([]);
@@ -103,20 +105,95 @@ Was beschreibt Ihre Situation am besten?`,
     setIsProcessing(true);
 
     try {
-      // Save conversation to progress
       const conversationHistory = [...messages, userMessage];
       
-      // Call AI to get response
+      // Check if we need to detect user type
+      if (!progress?.user_type && conversationHistory.length > 2) {
+        const typeResponse = await base44.functions.invoke('analyzeUserTypeFromConversation', {
+          conversation_history: conversationHistory,
+          user_package: packageInfo.package
+        });
+
+        if (typeResponse.data.user_type && typeResponse.data.user_type !== 'unbekannt') {
+          // User type detected - orchestrate next step
+          await saveProgressMutation.mutateAsync({
+            user_package: packageInfo.package,
+            user_type: typeResponse.data.user_type,
+            conversation_history: conversationHistory,
+            current_step: 'user_type_detected',
+            completed_steps: ['user_type_detected']
+          });
+
+          const stepResponse = await base44.functions.invoke('orchestrateOnboardingStep', {
+            user_package: packageInfo.package,
+            user_type: typeResponse.data.user_type,
+            current_step: 'user_type_detected',
+            completed_steps: ['user_type_detected']
+          });
+
+          const assistantMessage = {
+            sender: 'assistant',
+            message: stepResponse.data.message,
+            timestamp: new Date(),
+            message_type: 'text',
+            suggestions: stepResponse.data.suggestions
+          };
+
+          setMessages(prev => [...prev, assistantMessage]);
+          
+          if (stepResponse.data.component) {
+            setCurrentComponent(stepResponse.data.component);
+          }
+
+          return;
+        }
+      }
+
+      // Handle specific user actions
+      if (messageText === 'tenant_yes') {
+        setCurrentComponent('tenant');
+        const msg = {
+          sender: 'assistant',
+          message: 'Perfekt! Fügen wir Ihren ersten Mieter hinzu. 👥',
+          timestamp: new Date(),
+          message_type: 'text'
+        };
+        setMessages(prev => [...prev, msg]);
+        return;
+      }
+
+      if (messageText === 'tenant_skip' || messageText === 'bank_skip') {
+        // Continue to next step
+        const stepResponse = await base44.functions.invoke('orchestrateOnboardingStep', {
+          user_package: packageInfo.package,
+          user_type: progress?.user_type,
+          current_step: progress?.current_step,
+          completed_steps: progress?.completed_steps || []
+        });
+
+        const msg = {
+          sender: 'assistant',
+          message: stepResponse.data.message,
+          timestamp: new Date(),
+          message_type: 'text',
+          suggestions: stepResponse.data.suggestions
+        };
+        setMessages(prev => [...prev, msg]);
+        
+        if (stepResponse.data.component) {
+          setCurrentComponent(stepResponse.data.component);
+        }
+        return;
+      }
+
+      // Default AI response
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `
+        prompt: `Du bist EasyStart, der freundliche Onboarding-Assistant.
+        
 User Package: ${packageInfo.package}
-User Types: ${packageInfo.user_types.join(', ')}
-Conversation History: ${JSON.stringify(conversationHistory)}
 User Message: ${messageText}
 
-Als EasyStart Assistant, antworte freundlich und orchestriere den passenden Onboarding-Flow.
-Erkenne den User-Typ und starte entsprechende Wizards.
-`,
+Antworte kurz und freundlich. Stelle Fragen um den User-Typ zu erkennen (${packageInfo.user_types.join(', ')}).`,
         add_context_from_internet: false
       });
 
@@ -129,11 +206,10 @@ Erkenne den User-Typ und starte entsprechende Wizards.
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Save progress
       await saveProgressMutation.mutateAsync({
         user_package: packageInfo.package,
         conversation_history: [...conversationHistory, assistantMessage],
-        current_step: 'conversation'
+        current_step: progress?.current_step || 'conversation'
       });
 
     } catch (error) {
@@ -151,14 +227,50 @@ Erkenne den User-Typ und starte entsprechende Wizards.
   const handleComponentComplete = async (data) => {
     setCurrentComponent(null);
     
-    const completionMessage = {
-      sender: 'assistant',
-      message: `Super! Das haben Sie toll gemacht! 🎉\n\nIhre Daten wurden erfasst. Was möchten Sie als nächstes tun?`,
-      timestamp: new Date(),
-      message_type: 'text'
-    };
-    
-    setMessages(prev => [...prev, completionMessage]);
+    // Update completed steps
+    const newCompletedSteps = [...(progress?.completed_steps || [])];
+    if (currentComponent === 'object') newCompletedSteps.push('simple_object');
+    if (currentComponent === 'tenant') newCompletedSteps.push('quick_tenant');
+    if (currentComponent === 'tax') newCompletedSteps.push('tax_setup');
+
+    await saveProgressMutation.mutateAsync({
+      ...progress,
+      completed_steps: newCompletedSteps,
+      current_step: currentComponent
+    });
+
+    // Orchestrate next step
+    try {
+      const stepResponse = await base44.functions.invoke('orchestrateOnboardingStep', {
+        user_package: packageInfo.package,
+        user_type: progress?.user_type,
+        current_step: currentComponent,
+        completed_steps: newCompletedSteps
+      });
+
+      const completionMessage = {
+        sender: 'assistant',
+        message: stepResponse.data.message,
+        timestamp: new Date(),
+        message_type: 'text',
+        suggestions: stepResponse.data.suggestions
+      };
+      
+      setMessages(prev => [...prev, completionMessage]);
+      
+      if (stepResponse.data.component) {
+        setTimeout(() => setCurrentComponent(stepResponse.data.component), 500);
+      }
+    } catch (error) {
+      console.error('Error orchestrating next step:', error);
+      const fallbackMessage = {
+        sender: 'assistant',
+        message: `Super! Das haben Sie toll gemacht! 🎉`,
+        timestamp: new Date(),
+        message_type: 'text'
+      };
+      setMessages(prev => [...prev, fallbackMessage]);
+    }
   };
 
   if (loadingPackage) {
@@ -206,6 +318,18 @@ Erkenne den User-Typ und starte entsprechende Wizards.
             )}
             {currentComponent === 'tenant' && (
               <QuickTenantSetup onComplete={handleComponentComplete} />
+            )}
+            {currentComponent === 'tax' && (
+              <TaxCategoryQuickSetup 
+                userType={progress?.user_type} 
+                onComplete={handleComponentComplete} 
+              />
+            )}
+            {currentComponent === 'completion' && (
+              <CompletionScreen 
+                userType={progress?.user_type}
+                packageName={packageInfo?.package}
+              />
             )}
           </div>
         )}
