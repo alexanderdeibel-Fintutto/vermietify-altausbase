@@ -45,6 +45,7 @@ import EmailTemplates from './pages/EmailTemplates';
 import Payments from './pages/Payments';
 import UserSettings from './pages/UserSettings';
 import NotificationManagement from './pages/NotificationManagement';
+import ReportScheduling from './pages/ReportScheduling';
 import __Layout from './Layout.jsx';
 
 
@@ -96,6 +97,7 @@ export const PAGES = {
     "Payments": Payments,
     "UserSettings": UserSettings,
     "NotificationManagement": NotificationManagement,
+    "ReportScheduling": ReportScheduling,
 }
 
 export const pagesConfig = {
