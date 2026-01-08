@@ -58,6 +58,8 @@ export default function Layout({ children, currentPageName }) {
         { name: '📊 Audit Reports', href: createPageUrl('AuditReports'), icon: BarChart3, page: 'AuditReports' },
         { name: '🔐 Permissions', href: createPageUrl('PermissionDashboard'), icon: Shield, page: 'PermissionDashboard' },
         { name: '🛡️ Compliance', href: createPageUrl('ComplianceCenter'), icon: Shield, page: 'ComplianceCenter' },
+        { name: '🔑 API Keys', href: createPageUrl('APIKeyManagement'), icon: Settings, page: 'APIKeyManagement' },
+        { name: '💚 System Health', href: createPageUrl('SystemHealth'), icon: Activity, page: 'SystemHealth' },
         { name: 'Objekte', href: createPageUrl('Buildings'), icon: Building2, page: 'Buildings', requiresModule: 'property' },
         { name: 'Mieter', href: createPageUrl('Contracts'), icon: FileText, page: 'Contracts', requiresModule: 'tenants' },
         { name: 'Kommunikation', href: createPageUrl('Kommunikation'), icon: MessageSquare, page: 'Kommunikation', requiresModule: 'communication' },

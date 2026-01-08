@@ -37,6 +37,8 @@ import AuditReports from './pages/AuditReports';
 import PermissionDashboard from './pages/PermissionDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import ComplianceCenter from './pages/ComplianceCenter';
+import SystemHealth from './pages/SystemHealth';
+import APIKeyManagement from './pages/APIKeyManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -80,6 +82,8 @@ export const PAGES = {
     "PermissionDashboard": PermissionDashboard,
     "AdminDashboard": AdminDashboard,
     "ComplianceCenter": ComplianceCenter,
+    "SystemHealth": SystemHealth,
+    "APIKeyManagement": APIKeyManagement,
 }
 
 export const pagesConfig = {
