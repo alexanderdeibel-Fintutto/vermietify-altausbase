@@ -9,33 +9,41 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { submission_id, event_type, details, metadata } = await req.json();
+    const { submission_id, event_type, event_data, notes } = await req.json();
 
-    console.log(`[AUDIT] Logging event: ${event_type} for submission ${submission_id}`);
+    if (!submission_id || !event_type) {
+      return Response.json({ error: 'submission_id and event_type required' }, { status: 400 });
+    }
 
-    // Erstelle Audit-Log-Eintrag
-    const auditLog = await base44.entities.ActivityLog.create({
+    const auditEvent = {
+      submission_id,
+      event_type,
+      event_data: event_data || {},
       user_id: user.id,
+      user_name: user.full_name,
       user_email: user.email,
-      action: `ELSTER_${event_type}`,
+      timestamp: new Date().toISOString(),
+      notes: notes || null
+    };
+
+    // Log to ActivityLog
+    await base44.asServiceRole.entities.ActivityLog.create({
       entity_type: 'ElsterSubmission',
       entity_id: submission_id,
-      details: details || `${event_type} ausgeführt`,
+      action: event_type,
+      user_id: user.id,
+      changes: event_data,
       metadata: {
-        ...metadata,
-        submission_id,
-        event_type,
-        timestamp: new Date().toISOString()
-      },
-      ip_address: req.headers.get('x-forwarded-for') || 'unknown',
-      user_agent: req.headers.get('user-agent') || 'unknown'
+        audit_trail: true,
+        notes
+      }
     });
 
-    console.log(`[SUCCESS] Audit log created: ${auditLog.id}`);
+    console.log(`[AUDIT] ${event_type} by ${user.email} on submission ${submission_id}`);
 
     return Response.json({
       success: true,
-      audit_log_id: auditLog.id
+      audit_event: auditEvent
     });
 
   } catch (error) {

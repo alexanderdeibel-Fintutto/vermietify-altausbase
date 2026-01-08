@@ -1,91 +1,121 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { GitBranch, Clock, User } from 'lucide-react';
-import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { History, Eye, GitBranch } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 
-export default function VersionHistory({ submission, onRestore }) {
-  const versions = submission?.metadata?.versions || [];
-  const currentVersion = submission?.metadata?.current_version || 0;
+export default function VersionHistory({ submissionId }) {
+  const [selectedVersion, setSelectedVersion] = useState(null);
+
+  const { data: versions = [] } = useQuery({
+    queryKey: ['submission-versions', submissionId],
+    queryFn: async () => {
+      const logs = await base44.entities.ActivityLog.filter({
+        entity_type: 'ElsterSubmission',
+        entity_id: submissionId,
+        action: 'version_created'
+      });
+      return logs.sort((a, b) => 
+        (b.metadata?.version_number || 0) - (a.metadata?.version_number || 0)
+      );
+    },
+    enabled: !!submissionId
+  });
 
   if (versions.length === 0) {
     return (
       <Card>
-        <CardContent className="pt-6">
-          <p className="text-center text-slate-500">Keine Versionen vorhanden</p>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <History className="w-4 h-4" />
+            Versionshistorie
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-slate-600 text-center py-4">Keine Versionen gespeichert</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <GitBranch className="w-4 h-4" />
-          Versionshistorie
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-96">
-          <div className="space-y-3">
-            {versions.reverse().map((version) => (
-              <div 
-                key={version.version} 
-                className={`p-3 border rounded-lg ${
-                  version.version === currentVersion ? 'border-blue-500 bg-blue-50' : ''
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge variant={version.version === currentVersion ? 'default' : 'outline'}>
-                        v{version.version}
-                      </Badge>
-                      {version.version === currentVersion && (
-                        <Badge variant="outline" className="text-xs">Aktuell</Badge>
-                      )}
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <History className="w-4 h-4" />
+            Versionshistorie ({versions.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {versions.map((version) => (
+              <div key={version.id} className="flex items-center justify-between p-3 border rounded hover:bg-slate-50">
+                <div className="flex items-center gap-3">
+                  <GitBranch className="w-4 h-4 text-slate-400" />
+                  <div>
+                    <div className="font-medium text-sm">
+                      Version {version.metadata?.version_number || 1}
                     </div>
-                    <div className="text-sm font-medium">{version.comment}</div>
-                    <div className="flex items-center gap-3 mt-2 text-xs text-slate-600">
-                      <span className="flex items-center gap-1">
-                        <User className="w-3 h-3" />
-                        {version.user}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {format(new Date(version.timestamp), 'dd.MM.yyyy HH:mm', { locale: de })}
-                      </span>
+                    <div className="text-xs text-slate-600">
+                      {new Date(version.created_date).toLocaleString('de-DE')}
+                      {version.created_by && ` • ${version.created_by}`}
                     </div>
-                    {version.changes && Object.keys(version.changes).length > 0 && (
-                      <div className="mt-2 text-xs">
-                        <div className="font-medium mb-1">Änderungen:</div>
-                        <ul className="list-disc list-inside text-slate-600">
-                          {Object.entries(version.changes).map(([key, value]) => (
-                            <li key={key}>{key}: {String(value)}</li>
-                          ))}
-                        </ul>
-                      </div>
+                    {version.metadata?.notes && (
+                      <div className="text-xs text-slate-500 mt-1">{version.metadata.notes}</div>
                     )}
                   </div>
-                  {version.version !== currentVersion && onRestore && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onRestore(version)}
-                    >
-                      Wiederherstellen
-                    </Button>
-                  )}
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedVersion(version)}
+                >
+                  <Eye className="w-4 h-4" />
+                </Button>
               </div>
             ))}
           </div>
-        </ScrollArea>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {selectedVersion && (
+        <Dialog open={!!selectedVersion} onOpenChange={() => setSelectedVersion(null)}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                Version {selectedVersion.metadata?.version_number || 1}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Badge>{selectedVersion.changes?.status}</Badge>
+                {selectedVersion.changes?.ai_confidence_score && (
+                  <Badge variant="outline">
+                    KI: {selectedVersion.changes.ai_confidence_score}%
+                  </Badge>
+                )}
+              </div>
+              <div>
+                <div className="text-sm font-medium mb-2">Formulardaten:</div>
+                <div className="bg-slate-50 rounded p-3 text-xs space-y-1 max-h-64 overflow-y-auto">
+                  {selectedVersion.changes?.form_data && 
+                    Object.entries(selectedVersion.changes.form_data).map(([key, value]) => (
+                      <div key={key} className="flex justify-between">
+                        <span className="text-slate-600">{key}:</span>
+                        <span className="font-medium">{String(value)}</span>
+                      </div>
+                    ))
+                  }
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   );
 }
