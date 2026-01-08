@@ -72,6 +72,9 @@ import TaxManagement from './pages/TaxManagement';
 import AnalyticsPage from './pages/AnalyticsPage';
 import ReportsPage from './pages/ReportsPage';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
+import UnitsManagement from './pages/UnitsManagement';
+import SuppliersManagement from './pages/SuppliersManagement';
+import SettingsPage from './pages/SettingsPage';
 import __Layout from './Layout.jsx';
 
 
@@ -150,6 +153,9 @@ export const PAGES = {
     "AnalyticsPage": AnalyticsPage,
     "ReportsPage": ReportsPage,
     "WorkflowAutomationPage": WorkflowAutomationPage,
+    "UnitsManagement": UnitsManagement,
+    "SuppliersManagement": SuppliersManagement,
+    "SettingsPage": SettingsPage,
 }
 
 export const pagesConfig = {
