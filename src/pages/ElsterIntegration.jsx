@@ -20,6 +20,9 @@ import CertificateUploadDialog from '@/components/elster/CertificateUploadDialog
 import ElsterAnalytics from '@/components/elster/ElsterAnalytics';
 import ElsterSetupWizard from '@/components/elster/ElsterSetupWizard';
 import BulkFormExport from '@/components/elster/BulkFormExport';
+import SubmissionDetailDialog from '@/components/elster/SubmissionDetailDialog';
+import GoBDComplianceDashboard from '@/components/elster/GoBDComplianceDashboard';
+import SubmissionTimeline from '@/components/elster/SubmissionTimeline';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from 'lucide-react';
 
@@ -28,6 +31,7 @@ export default function ElsterIntegration() {
   const [showWizard, setShowWizard] = useState(false);
   const [showCertUpload, setShowCertUpload] = useState(false);
   const [showSetupWizard, setShowSetupWizard] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: submissions = [] } = useQuery({
@@ -138,11 +142,16 @@ export default function ElsterIntegration() {
 
           <TabsContent value="submissions" className="mt-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <SubmissionsView submissions={submissions} />
+              <div className="lg:col-span-2 space-y-6">
+                <SubmissionsView 
+                  submissions={submissions} 
+                  onSelectSubmission={setSelectedSubmission}
+                />
+                <SubmissionTimeline submissions={submissions} />
               </div>
-              <div>
+              <div className="space-y-6">
                 <BulkFormExport submissions={submissions} />
+                <GoBDComplianceDashboard />
               </div>
             </div>
           </TabsContent>
@@ -188,6 +197,12 @@ export default function ElsterIntegration() {
           </DialogContent>
         </Dialog>
       )}
+
+      <SubmissionDetailDialog
+        submission={selectedSubmission}
+        open={!!selectedSubmission}
+        onOpenChange={(open) => !open && setSelectedSubmission(null)}
+      />
     </div>
   );
 }
@@ -337,31 +352,7 @@ function CreateFormView() {
   );
 }
 
-function SubmissionsView({ submissions }) {
-  const handleExportPDF = async (submissionId) => {
-    try {
-      const response = await base44.functions.invoke('exportTaxFormPDF', { submission_id: submissionId });
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'elster_formular.pdf';
-      a.click();
-      toast.success('PDF exportiert');
-    } catch (error) {
-      toast.error('Export fehlgeschlagen');
-    }
-  };
-
-  const handleArchive = async (submissionId) => {
-    try {
-      await base44.functions.invoke('archiveElsterSubmission', { submission_id: submissionId });
-      toast.success('Erfolgreich archiviert');
-    } catch (error) {
-      toast.error('Archivierung fehlgeschlagen');
-    }
-  };
-
+function SubmissionsView({ submissions, onSelectSubmission }) {
   return (
     <Card>
       <CardHeader>
@@ -370,7 +361,11 @@ function SubmissionsView({ submissions }) {
       <CardContent>
         <div className="space-y-3">
           {submissions.map(sub => (
-            <div key={sub.id} className="p-4 border rounded-lg hover:bg-slate-50">
+            <div 
+              key={sub.id} 
+              className="p-4 border rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+              onClick={() => onSelectSubmission(sub)}
+            >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="font-medium">{sub.tax_form_type}</div>
@@ -383,28 +378,9 @@ function SubmissionsView({ submissions }) {
                     </div>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={sub.status === 'ACCEPTED' ? 'default' : 'secondary'}>
-                    {sub.status}
-                  </Badge>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => handleExportPDF(sub.id)}>
-                        <Download className="w-4 h-4 mr-2" />
-                        PDF exportieren
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleArchive(sub.id)}>
-                        <Archive className="w-4 h-4 mr-2" />
-                        Archivieren
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                <Badge variant={sub.status === 'ACCEPTED' ? 'default' : 'secondary'}>
+                  {sub.status}
+                </Badge>
               </div>
             </div>
           ))}
