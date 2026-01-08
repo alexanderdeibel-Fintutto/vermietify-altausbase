@@ -121,6 +121,7 @@ import TaxForecastWidget from '@/components/elster/TaxForecastWidget';
 import BatchPDFGenerator from '@/components/elster/BatchPDFGenerator';
 import YearComparisonReport from '@/components/elster/YearComparisonReport';
 import DataQualityScore from '@/components/elster/DataQualityScore';
+import SmartFormSuggestions from '@/components/elster/SmartFormSuggestions';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -209,6 +210,11 @@ export default function ElsterIntegration() {
       </motion.div>
 
       <QuickInsights />
+
+      <SmartFormSuggestions onCreateForm={(suggestion) => {
+        setShowWizard(true);
+        toast.info(`Wizard für ${suggestion.form_type} wird geöffnet`);
+      }} />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}

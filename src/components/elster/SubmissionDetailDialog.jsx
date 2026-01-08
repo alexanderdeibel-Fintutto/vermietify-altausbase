@@ -24,6 +24,8 @@ import IntelligentCleaningTool from './IntelligentCleaningTool';
 import AIFormAssistant from './AIFormAssistant';
 import AutoCorrectButton from './AutoCorrectButton';
 import DuplicateDetector from './DuplicateDetector';
+import AuditTrailExporter from './AuditTrailExporter';
+import BackupManager from './BackupManager';
 
 export default function SubmissionDetailDialog({ submission, open, onOpenChange }) {
   const [showShareDialog, setShowShareDialog] = React.useState(false);
@@ -289,6 +291,12 @@ export default function SubmissionDetailDialog({ submission, open, onOpenChange 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <AuditLogViewer submissionId={submission.id} />
               <VersionHistory submissionId={submission.id} />
+            </div>
+
+            {/* Backup & Audit Export */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <BackupManager submissionId={submission.id} />
+              <AuditTrailExporter submissionId={submission.id} />
             </div>
 
             {/* Kommentare */}
