@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -112,7 +113,11 @@ export default function GeneratedBookings() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <motion.div 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-between"
+            >
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800">Generierte Buchungen</h1>
                     <p className="text-slate-500">Automatisch generierte finanzielle Buchungen</p>
@@ -137,56 +142,37 @@ export default function GeneratedBookings() {
                         Manuelle Buchung
                     </Button>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Stats */}
             <div className="grid gap-4 md:grid-cols-4">
+                {[
+                    { label: "Gesamt", value: stats.total, icon: Calendar, color: "blue" },
+                    { label: "Geplant", value: stats.planned, icon: Clock, color: "yellow" },
+                    { label: "Überfällig", value: stats.overdue, icon: AlertCircle, color: "red" },
+                    { label: "Bezahlt", value: stats.paidAmount.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }), icon: DollarSign, color: "emerald" }
+                ].map((stat, idx) => (
+                    <motion.div
+                        key={stat.label}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 + idx * 0.05 }}
+                    >
                 <Card>
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-slate-600">Gesamt</p>
-                                <p className="text-2xl font-bold text-slate-800">{stats.total}</p>
-                            </div>
-                            <Calendar className="w-8 h-8 text-blue-600" />
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-slate-600">Geplant</p>
-                                <p className="text-2xl font-bold text-slate-800">{stats.planned}</p>
-                            </div>
-                            <Clock className="w-8 h-8 text-yellow-600" />
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-slate-600">Überfällig</p>
-                                <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
-                            </div>
-                            <AlertCircle className="w-8 h-8 text-red-600" />
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-slate-600">Bezahlt</p>
-                                <p className="text-xl font-bold text-emerald-600">
-                                    {stats.paidAmount.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                                <p className="text-sm text-slate-600">{stat.label}</p>
+                                <p className={`text-2xl font-bold text-${stat.color}-600`}>
+                                    {typeof stat.value === 'number' && stat.label !== 'Bezahlt' ? stat.value : stat.value}
                                 </p>
                             </div>
-                            <DollarSign className="w-8 h-8 text-emerald-600" />
+                            <stat.icon className={`w-8 h-8 text-${stat.color}-600`} />
                         </div>
                     </CardContent>
                 </Card>
+                    </motion.div>
+                ))}
             </div>
 
             {/* Filters */}

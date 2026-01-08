@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { format, parseISO } from 'date-fns';
@@ -300,7 +301,11 @@ export default function Finanzen() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <motion.div 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+            >
                 <div>
                     <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">
                         Finanzen
@@ -336,65 +341,37 @@ export default function Finanzen() {
                         )}
                     </Button>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Statistics */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {[
+                    { label: "Erwartete Einnahmen", value: stats.totalIncome, icon: TrendingUp, color: "emerald" },
+                    { label: "Ausgaben", value: stats.totalExpenses, icon: TrendingDown, color: "red" },
+                    { label: "Bezahlt", value: stats.totalPaid, icon: DollarSign, color: "blue" },
+                    { label: "Ausstehend", value: stats.totalPending, icon: FileText, color: "amber" }
+                ].map((stat, idx) => (
+                    <motion.div
+                        key={stat.label}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 + idx * 0.05 }}
+                    >
                 <Card>
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-slate-600">Erwartete Einnahmen</p>
-                                <p className="text-2xl font-bold text-emerald-600">
-                                    €{stats.totalIncome.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                <p className="text-sm text-slate-600">{stat.label}</p>
+                                <p className={`text-2xl font-bold text-${stat.color}-600`}>
+                                    €{stat.value.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
                                 </p>
                             </div>
-                            <TrendingUp className="w-8 h-8 text-emerald-500" />
+                            <stat.icon className={`w-8 h-8 text-${stat.color}-500`} />
                         </div>
                     </CardContent>
                 </Card>
-
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-slate-600">Ausgaben</p>
-                                <p className="text-2xl font-bold text-red-600">
-                                    €{stats.totalExpenses.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-                                </p>
-                            </div>
-                            <TrendingDown className="w-8 h-8 text-red-500" />
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-slate-600">Bezahlt</p>
-                                <p className="text-2xl font-bold text-blue-600">
-                                    €{stats.totalPaid.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-                                </p>
-                            </div>
-                            <DollarSign className="w-8 h-8 text-blue-500" />
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm text-slate-600">Ausstehend</p>
-                                <p className="text-2xl font-bold text-amber-600">
-                                    €{stats.totalPending.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-                                </p>
-                            </div>
-                            <FileText className="w-8 h-8 text-amber-500" />
-                        </div>
-                    </CardContent>
-                </Card>
+                    </motion.div>
+                ))}
             </div>
 
             {/* Filters */}

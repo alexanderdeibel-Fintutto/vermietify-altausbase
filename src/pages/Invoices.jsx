@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { format, parseISO } from 'date-fns';
@@ -467,7 +468,11 @@ export default function Invoices() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <motion.div 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+            >
                 <div>
                     <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">
                         Rechnungen & Belege
@@ -512,9 +517,14 @@ export default function Invoices() {
                         {activeTab === 'recipients' && 'Neuer Empfänger'}
                     </Button>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Tabs */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+            >
             <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="bg-white border border-slate-200">
                     <TabsTrigger value="invoices" className="gap-2">
@@ -1125,6 +1135,7 @@ export default function Invoices() {
                     </Card>
                 </TabsContent>
             </Tabs>
+            </motion.div>
 
             {/* Invoice Form Dialog */}
             <InvoiceFormWithTaxLibrary
