@@ -74,6 +74,10 @@ import ElsterNotificationCenter from '@/components/elster/ElsterNotificationCent
 import PredictiveTaxAnalytics from '@/components/elster/PredictiveTaxAnalytics';
 import CollaborationCenter from '@/components/elster/CollaborationCenter';
 import AdvancedExportImport from '@/components/elster/AdvancedExportImport';
+import TaxPlanningAssistant from '@/components/elster/TaxPlanningAssistant';
+import HistoricalComparison from '@/components/elster/HistoricalComparison';
+import MobileOptimizedView from '@/components/elster/MobileOptimizedView';
+import QuickInsights from '@/components/elster/QuickInsights';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -161,33 +165,7 @@ export default function ElsterIntegration() {
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[
-          { label: "Übermittlungen", value: stats.total, icon: FileText, color: "blue" },
-          { label: "Akzeptiert", value: stats.accepted, icon: CheckCircle, color: "green" },
-          { label: "Ø KI-Vertrauen", value: `${stats.avgConfidence}%`, icon: Sparkles, color: "purple" },
-          { label: "Zertifikate", value: stats.activeCertificates, icon: Settings, color: "orange" }
-        ].map((stat, idx) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 + idx * 0.05 }}
-          >
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-slate-600">{stat.label}</p>
-                    <p className={`text-2xl font-bold text-${stat.color}-600`}>{stat.value}</p>
-                  </div>
-                  <stat.icon className={`w-8 h-8 text-${stat.color}-600`} />
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
+      <QuickInsights />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -195,12 +173,14 @@ export default function ElsterIntegration() {
         transition={{ delay: 0.3 }}
       >
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-10 text-xs">
+          <TabsList className="grid w-full grid-cols-12 text-xs overflow-x-auto">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="create">Erstellen</TabsTrigger>
             <TabsTrigger value="submissions">Übermittlungen</TabsTrigger>
             <TabsTrigger value="validation">Validierung</TabsTrigger>
             <TabsTrigger value="sync">Sync</TabsTrigger>
+            <TabsTrigger value="planning">Planung</TabsTrigger>
+            <TabsTrigger value="history">Historie</TabsTrigger>
             <TabsTrigger value="certificates">Zertifikate</TabsTrigger>
             <TabsTrigger value="templates">Templates</TabsTrigger>
             <TabsTrigger value="categories">Kategorien</TabsTrigger>
@@ -312,6 +292,28 @@ export default function ElsterIntegration() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <AutomatedFormGeneration />
                 <ElsterNotificationCenter />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="planning" className="mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <TaxPlanningAssistant />
+              <div className="lg:hidden">
+                <MobileOptimizedView 
+                  submissions={submissions}
+                  onSelectSubmission={setSelectedSubmission}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="history" className="mt-6">
+            <div className="space-y-6">
+              <HistoricalComparison />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <SubmissionHistory submissions={submissions} />
+                <FormComparisonView submissions={submissions} formType="ANLAGE_V" />
               </div>
             </div>
           </TabsContent>
