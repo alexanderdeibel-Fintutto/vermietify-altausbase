@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -64,7 +65,11 @@ export default function CustomDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
+      >
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Mein Dashboard</h1>
           <p className="text-slate-600">Personalisierbare Widget-Ansicht</p>
@@ -73,10 +78,17 @@ export default function CustomDashboard() {
           <Plus className="w-4 h-4 mr-2" />
           Widget hinzufügen
         </Button>
-      </div>
+      </motion.div>
 
+      <AnimatePresence mode="wait">
       {widgets.length === 0 ? (
-        <div className="text-center py-12 border-2 border-dashed rounded-lg">
+        <motion.div
+          key="empty"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="text-center py-12 border-2 border-dashed rounded-lg"
+        >
           <Settings className="w-12 h-12 mx-auto text-slate-400 mb-3" />
           <h3 className="text-lg font-medium text-slate-900 mb-2">Noch keine Widgets</h3>
           <p className="text-slate-600 mb-4">Fügen Sie Widgets hinzu, um Ihr Dashboard zu personalisieren</p>
@@ -84,19 +96,32 @@ export default function CustomDashboard() {
             <Plus className="w-4 h-4 mr-2" />
             Erstes Widget hinzufügen
           </Button>
-        </div>
+        </motion.div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {widgets.map((widget) => (
-            <div key={widget.id} style={{ gridColumn: `span ${widget.position.w / 3}` }}>
+        <motion.div
+          key="grid"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+        >
+          {widgets.map((widget, idx) => (
+            <motion.div 
+              key={widget.id} 
+              style={{ gridColumn: `span ${widget.position.w / 3}` }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.1 }}
+            >
               <DashboardWidget
                 widget={widget}
                 onRemove={(id) => deleteWidgetMutation.mutate(id)}
               />
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
         <DialogContent className="max-w-2xl">

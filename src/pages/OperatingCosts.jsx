@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from "@/components/ui/button";
@@ -30,12 +31,22 @@ export default function OperatingCosts() {
 
     return (
         <div className="space-y-8">
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+            >
             <PageHeader 
                 title="Betriebskosten"
                 subtitle={`${statements.length} Abrechnungen`}
             />
+            </motion.div>
 
-            <div className="flex justify-end">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="flex justify-end"
+            >
                 <Button 
                     onClick={() => setFormOpen(true)}
                     className="bg-emerald-600 hover:bg-emerald-700 gap-2"
@@ -43,9 +54,16 @@ export default function OperatingCosts() {
                     <Plus className="w-4 h-4" />
                     Neue Betriebskostenabrechnung
                 </Button>
-            </div>
+            </motion.div>
 
+            <AnimatePresence mode="wait">
             {statements.length === 0 ? (
+                <motion.div
+                    key="empty"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                >
                 <EmptyState
                     icon={FileText}
                     title="Noch keine Betriebskostenabrechnungen"
@@ -53,13 +71,26 @@ export default function OperatingCosts() {
                     action={() => setFormOpen(true)}
                     actionLabel="Erste Abrechnung erstellen"
                 />
+                </motion.div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {statements.map((statement) => {
+                <motion.div
+                    key="grid"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                >
+                    {statements.map((statement, idx) => {
                         const building = getBuilding(statement.building_id);
                         const isDraft = statement.status === 'draft';
                         
                         return (
+                            <motion.div
+                                key={statement.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.1 }}
+                            >
                             <Card 
                                 key={statement.id} 
                                 className={`border-slate-200/50 hover:shadow-md transition-shadow cursor-pointer ${isDraft ? 'border-amber-300 bg-amber-50/30' : ''}`}
@@ -114,10 +145,12 @@ export default function OperatingCosts() {
                                     </div>
                                 </CardContent>
                             </Card>
+                            </motion.div>
                         );
                     })}
-                </div>
+                </motion.div>
             )}
+            </AnimatePresence>
 
             <OperatingCostStatementDialog
                 open={formOpen}

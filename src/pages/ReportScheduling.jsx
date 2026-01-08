@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -136,7 +137,11 @@ export default function ReportScheduling() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
+      >
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Automatische Reports</h1>
           <p className="text-slate-600">Scheduled Report Generation & Email-Versand</p>
@@ -241,49 +246,50 @@ export default function ReportScheduling() {
             </form>
           </DialogContent>
         </Dialog>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[
+          { value: schedules.length, label: "Gesamt Schedules", color: "slate" },
+          { value: schedules.filter(s => s.is_active).length, label: "Aktiv", color: "green" },
+          { value: schedules.filter(s => s.last_run).length, label: "Ausgeführt", color: "blue" },
+          { value: schedules.reduce((sum, s) => sum + (s.recipients?.length || 0), 0), label: "Empfänger", color: "purple" }
+        ].map((stat, idx) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + idx * 0.05 }}
+          >
         <Card>
           <CardContent className="p-6">
-            <div className="text-2xl font-bold text-slate-900">{schedules.length}</div>
-            <div className="text-sm text-slate-600">Gesamt Schedules</div>
+            <div className={`text-2xl font-bold text-${stat.color}-600`}>{stat.value}</div>
+            <div className="text-sm text-slate-600">{stat.label}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold text-green-600">
-              {schedules.filter(s => s.is_active).length}
-            </div>
-            <div className="text-sm text-slate-600">Aktiv</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold text-blue-600">
-              {schedules.filter(s => s.last_run).length}
-            </div>
-            <div className="text-sm text-slate-600">Ausgeführt</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold text-purple-600">
-              {schedules.reduce((sum, s) => sum + (s.recipients?.length || 0), 0)}
-            </div>
-            <div className="text-sm text-slate-600">Empfänger</div>
-          </CardContent>
-        </Card>
+          </motion.div>
+        ))}
       </div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
       <Card>
         <CardHeader>
           <CardTitle>Report-Schedules</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {schedules.map((schedule) => (
-              <div key={schedule.id} className="p-4 border rounded-lg">
+            {schedules.map((schedule, idx) => (
+              <motion.div 
+                key={schedule.id} 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 + idx * 0.05 }}
+                className="p-4 border rounded-lg"
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
@@ -341,11 +347,12 @@ export default function ReportScheduling() {
                     </Button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </CardContent>
       </Card>
+      </motion.div>
     </div>
   );
 }
