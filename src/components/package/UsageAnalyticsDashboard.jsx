@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { useBuildingLimitValidator } from '@/hooks/useBuildingLimitValidator';
+import { useBuildingLimitValidator } from '@/components/package/BuildingLimitValidator';
 import { Building2, Home, TrendingUp } from 'lucide-react';
 
 export default function UsageAnalyticsDashboard() {
