@@ -7,6 +7,8 @@ import { Users, Shield, Package, Activity, Key, Database, TrendingUp } from 'luc
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import StatCard from '@/components/shared/StatCard';
+import QuickActions from '@/components/admin/QuickActions';
+import AuditTrailVisualization from '@/components/audit/AuditTrailVisualization';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -105,48 +107,51 @@ export default function AdminDashboard() {
         />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Links</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {quickLinks.map((link) => (
-              <Button
-                key={link.page}
-                variant="outline"
-                className="h-20 flex flex-col items-center justify-center gap-2"
-                onClick={() => navigate(createPageUrl(link.page))}
-              >
-                <link.icon className="w-6 h-6" />
-                <span className="text-sm">{link.name}</span>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <QuickActions />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>System-Status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-slate-600">Aktive Rollen</span>
-              <span className="font-bold">{roles.filter(r => r.is_active).length}</span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>System-Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600">Aktive Rollen</span>
+                <span className="font-bold">{roles.filter(r => r.is_active).length}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600">Admin-Benutzer</span>
+                <span className="font-bold">{users.filter(u => u.role === 'admin').length}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600">Aktive API Keys</span>
+                <span className="font-bold">{apiKeys.filter(k => k.is_active).length}</span>
+              </div>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-slate-600">Admin-Benutzer</span>
-              <span className="font-bold">{users.filter(u => u.role === 'admin').length}</span>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Scheduled Tasks</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between p-2 bg-green-50 rounded">
+                <span>Daily Data Cleanup</span>
+                <Badge className="bg-green-600">Aktiv</Badge>
+              </div>
+              <div className="flex items-center justify-between p-2 bg-green-50 rounded">
+                <span>Weekly Roles Backup</span>
+                <Badge className="bg-green-600">Aktiv</Badge>
+              </div>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-slate-600">Aktive API Keys</span>
-              <span className="font-bold">{apiKeys.filter(k => k.is_active).length}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
+
+      <AuditTrailVisualization />
     </div>
   );
 }
