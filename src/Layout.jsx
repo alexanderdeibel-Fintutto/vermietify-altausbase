@@ -20,7 +20,8 @@ import {
     Settings,
     Shield,
     TestTube,
-    Mail
+    Mail,
+    Calendar
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/notifications/NotificationCenter';
