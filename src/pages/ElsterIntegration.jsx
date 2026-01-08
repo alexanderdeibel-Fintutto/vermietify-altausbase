@@ -34,6 +34,8 @@ import FormComparisonView from '@/components/elster/FormComparisonView';
 import CertificateTestDialog from '@/components/elster/CertificateTestDialog';
 import AuditTrailCard from '@/components/elster/AuditTrailCard';
 import BulkExportDialog from '@/components/elster/BulkExportDialog';
+import ExcelImportDialog from '@/components/elster/ExcelImportDialog';
+import MultiYearComparison from '@/components/elster/MultiYearComparison';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from 'lucide-react';
 
@@ -46,6 +48,7 @@ export default function ElsterIntegration() {
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [testingCertificate, setTestingCertificate] = useState(null);
   const [showBulkExport, setShowBulkExport] = useState(false);
+  const [showExcelImport, setShowExcelImport] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: submissions = [] } = useQuery({
@@ -208,13 +211,16 @@ export default function ElsterIntegration() {
           </TabsContent>
 
           <TabsContent value="analytics" className="mt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <ElsterAnalytics submissions={submissions} />
-              </div>
-              <div className="space-y-6">
-                <FormComparisonView submissions={submissions} formType="ANLAGE_V" />
-                <SubmissionHistory submissions={submissions} />
+            <div className="space-y-6">
+              <MultiYearComparison submissions={submissions} formType="ANLAGE_V" />
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  <ElsterAnalytics submissions={submissions} />
+                </div>
+                <div className="space-y-6">
+                  <FormComparisonView submissions={submissions} formType="ANLAGE_V" />
+                  <SubmissionHistory submissions={submissions} />
+                </div>
               </div>
             </div>
           </TabsContent>
@@ -272,6 +278,15 @@ export default function ElsterIntegration() {
         submissions={submissions}
         open={showBulkExport}
         onOpenChange={setShowBulkExport}
+      />
+
+      <ExcelImportDialog
+        open={showExcelImport}
+        onOpenChange={setShowExcelImport}
+        onImportSuccess={(data) => {
+          toast.success('Daten erfolgreich importiert');
+          setShowExcelImport(false);
+        }}
       />
     </div>
   );
