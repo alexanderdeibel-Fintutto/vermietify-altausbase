@@ -84,6 +84,7 @@ export default function Layout({ children, currentPageName }) {
         { name: '📊 Analytics', href: createPageUrl('Analytics'), icon: BarChart3, page: 'Analytics' },
         { name: '📅 Report-Scheduling', href: createPageUrl('ReportScheduling'), icon: Calendar, page: 'ReportScheduling' },
         { name: '🔍 Erweiterte Suche', href: createPageUrl('AdvancedSearch'), icon: Search, page: 'AdvancedSearch' },
+        { name: '🏛️ ELSTER-Integration', href: createPageUrl('ElsterIntegration'), icon: FileText, page: 'ElsterIntegration' },
         { name: '📥 Import/Export', href: createPageUrl('DataImportExport'), icon: Upload, page: 'DataImportExport' },
         { name: '⚡ Workflow Automation', href: createPageUrl('WorkflowAutomation'), icon: Zap, page: 'WorkflowAutomation' },
         { name: '🔄 Bulk-Operationen', href: createPageUrl('BulkOperations'), icon: Database, page: 'BulkOperations' },
