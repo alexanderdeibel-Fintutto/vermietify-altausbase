@@ -27,6 +27,7 @@ import DuplicateDetector from './DuplicateDetector';
 import AuditTrailExporter from './AuditTrailExporter';
 import BackupManager from './BackupManager';
 import ErrorPredictionCard from './ErrorPredictionCard';
+import TeamCollaborationCard from './TeamCollaborationCard';
 
 export default function SubmissionDetailDialog({ submission, open, onOpenChange }) {
   const [showShareDialog, setShowShareDialog] = React.useState(false);
@@ -294,8 +295,11 @@ export default function SubmissionDetailDialog({ submission, open, onOpenChange 
               <VersionHistory submissionId={submission.id} />
             </div>
 
-            {/* Error Prediction */}
-            <ErrorPredictionCard submissionId={submission.id} />
+            {/* Error Prediction & Team Collaboration */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <ErrorPredictionCard submissionId={submission.id} />
+              <TeamCollaborationCard submissionId={submission.id} />
+            </div>
 
             {/* Backup & Audit Export */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

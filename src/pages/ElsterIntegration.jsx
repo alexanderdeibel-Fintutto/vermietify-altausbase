@@ -143,6 +143,9 @@ import WorkflowScheduler from '@/components/elster/WorkflowScheduler';
 import ErrorPredictionCard from '@/components/elster/ErrorPredictionCard';
 import TrendsDashboard from '@/components/elster/TrendsDashboard';
 import QuickStatsWidget from '@/components/elster/QuickStatsWidget';
+import SmartAssistantPanel from '@/components/elster/SmartAssistantPanel';
+import TeamCollaborationCard from '@/components/elster/TeamCollaborationCard';
+import ArchiveManagementCard from '@/components/elster/ArchiveManagementCard';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -541,6 +544,8 @@ export default function ElsterIntegration() {
                   <SystemHealthCheck />
                 </div>
                 <div className="space-y-6">
+                  <SmartAssistantPanel />
+                  <ArchiveManagementCard />
                   <TrendsDashboard />
                   <DataQualityMonitor />
                   <AnalyticsReportCard />
