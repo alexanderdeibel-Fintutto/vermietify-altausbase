@@ -2,6 +2,7 @@ import APIKeyManagement from './pages/APIKeyManagement';
 import ActivityLogs from './pages/ActivityLogs';
 import AdminDashboard from './pages/AdminDashboard';
 import AdvancedAnalytics from './pages/AdvancedAnalytics';
+import AdvancedReportBuilder from './pages/AdvancedReportBuilder';
 import AdvancedSearch from './pages/AdvancedSearch';
 import Analytics from './pages/Analytics';
 import AuditReports from './pages/AuditReports';
@@ -27,14 +28,18 @@ import Finanzen from './pages/Finanzen';
 import GeneratedBookings from './pages/GeneratedBookings';
 import HilfeCenter from './pages/HilfeCenter';
 import Invoices from './pages/Invoices';
+import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
 import Kommunikation from './pages/Kommunikation';
 import ModuleManagement from './pages/ModuleManagement';
+import MyAccount from './pages/MyAccount';
 import NotificationManagement from './pages/NotificationManagement';
 import Onboarding from './pages/Onboarding';
 import OperatingCosts from './pages/OperatingCosts';
+import PackageManager from './pages/PackageManager';
 import Payments from './pages/Payments';
 import PermissionDashboard from './pages/PermissionDashboard';
 import ProjectManagement from './pages/ProjectManagement';
+import PropertyPortfolio from './pages/PropertyPortfolio';
 import ReportGenerator from './pages/ReportGenerator';
 import ReportScheduling from './pages/ReportScheduling';
 import RoleManagement from './pages/RoleManagement';
@@ -45,6 +50,7 @@ import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
 import TaxForms from './pages/TaxForms';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
+import TenantPortal from './pages/TenantPortal';
 import TesterOnboarding from './pages/TesterOnboarding';
 import TestingDashboard from './pages/TestingDashboard';
 import UnitDetail from './pages/UnitDetail';
@@ -55,12 +61,6 @@ import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
-import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
-import AdvancedReportBuilder from './pages/AdvancedReportBuilder';
-import PropertyPortfolio from './pages/PropertyPortfolio';
-import TenantPortal from './pages/TenantPortal';
-import MyAccount from './pages/MyAccount';
-import PackageManager from './pages/PackageManager';
 import __Layout from './Layout.jsx';
 
 
@@ -69,6 +69,7 @@ export const PAGES = {
     "ActivityLogs": ActivityLogs,
     "AdminDashboard": AdminDashboard,
     "AdvancedAnalytics": AdvancedAnalytics,
+    "AdvancedReportBuilder": AdvancedReportBuilder,
     "AdvancedSearch": AdvancedSearch,
     "Analytics": Analytics,
     "AuditReports": AuditReports,
@@ -94,14 +95,18 @@ export const PAGES = {
     "GeneratedBookings": GeneratedBookings,
     "HilfeCenter": HilfeCenter,
     "Invoices": Invoices,
+    "KnowledgeManagementDashboard": KnowledgeManagementDashboard,
     "Kommunikation": Kommunikation,
     "ModuleManagement": ModuleManagement,
+    "MyAccount": MyAccount,
     "NotificationManagement": NotificationManagement,
     "Onboarding": Onboarding,
     "OperatingCosts": OperatingCosts,
+    "PackageManager": PackageManager,
     "Payments": Payments,
     "PermissionDashboard": PermissionDashboard,
     "ProjectManagement": ProjectManagement,
+    "PropertyPortfolio": PropertyPortfolio,
     "ReportGenerator": ReportGenerator,
     "ReportScheduling": ReportScheduling,
     "RoleManagement": RoleManagement,
@@ -112,6 +117,7 @@ export const PAGES = {
     "Tax": Tax,
     "TaxForms": TaxForms,
     "TaxLibraryManagement": TaxLibraryManagement,
+    "TenantPortal": TenantPortal,
     "TesterOnboarding": TesterOnboarding,
     "TestingDashboard": TestingDashboard,
     "UnitDetail": UnitDetail,
@@ -122,12 +128,6 @@ export const PAGES = {
     "WhatsAppSettings": WhatsAppSettings,
     "WhatsAppSetup": WhatsAppSetup,
     "WorkflowAutomation": WorkflowAutomation,
-    "KnowledgeManagementDashboard": KnowledgeManagementDashboard,
-    "AdvancedReportBuilder": AdvancedReportBuilder,
-    "PropertyPortfolio": PropertyPortfolio,
-    "TenantPortal": TenantPortal,
-    "MyAccount": MyAccount,
-    "PackageManager": PackageManager,
 }
 
 export const pagesConfig = {
