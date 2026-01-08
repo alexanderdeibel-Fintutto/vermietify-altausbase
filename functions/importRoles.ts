@@ -9,60 +9,55 @@ Deno.serve(async (req) => {
       return Response.json({ error: "Admin access required" }, { status: 403 });
     }
     
-    const { importData } = await req.json();
+    const { importData, mode = 'merge' } = await req.json();
     
-    if (!importData || !importData.roles) {
-      return Response.json({ error: 'Invalid import data' }, { status: 400 });
+    if (!importData || !importData.data) {
+      return Response.json({ error: "Invalid import data" }, { status: 400 });
     }
     
-    const results = {
+    const { roles = [], permissions = [], assignments = [] } = importData.data;
+    
+    let stats = {
       rolesCreated: 0,
+      rolesUpdated: 0,
       permissionsCreated: 0,
+      assignmentsCreated: 0,
       errors: []
     };
     
-    // Import Permissions zuerst
-    if (importData.permissions) {
-      for (const perm of importData.permissions) {
-        try {
-          // Prüfen ob Permission bereits existiert
-          const existing = await base44.asServiceRole.entities.Permission.filter({
-            code: perm.code
-          });
-          
-          if (existing.length === 0) {
-            await base44.asServiceRole.entities.Permission.create(perm);
-            results.permissionsCreated++;
-          }
-        } catch (error) {
-          results.errors.push(`Permission ${perm.code}: ${error.message}`);
+    // Import Permissions
+    for (const perm of permissions) {
+      try {
+        const existing = await base44.asServiceRole.entities.Permission.filter({ code: perm.code });
+        if (existing.length === 0) {
+          await base44.asServiceRole.entities.Permission.create(perm);
+          stats.permissionsCreated++;
         }
+      } catch (error) {
+        stats.errors.push(`Permission ${perm.code}: ${error.message}`);
       }
     }
     
-    // Import Rollen
-    for (const role of importData.roles) {
+    // Import Roles
+    for (const role of roles) {
       try {
-        // Prüfen ob Rolle bereits existiert
-        const existing = await base44.asServiceRole.entities.Role.filter({
-          name: role.name
-        });
-        
+        const existing = await base44.asServiceRole.entities.Role.filter({ name: role.name });
         if (existing.length === 0) {
           await base44.asServiceRole.entities.Role.create(role);
-          results.rolesCreated++;
-        } else {
-          results.errors.push(`Rolle ${role.name} existiert bereits`);
+          stats.rolesCreated++;
+        } else if (mode === 'overwrite') {
+          await base44.asServiceRole.entities.Role.update(existing[0].id, role);
+          stats.rolesUpdated++;
         }
       } catch (error) {
-        results.errors.push(`Rolle ${role.name}: ${error.message}`);
+        stats.errors.push(`Role ${role.name}: ${error.message}`);
       }
     }
     
     return Response.json({
       success: true,
-      ...results,
-      message: `${results.rolesCreated} Rollen und ${results.permissionsCreated} Permissions importiert`
+      stats,
+      message: `Import completed: ${stats.rolesCreated} roles, ${stats.permissionsCreated} permissions created`
     });
     
   } catch (error) {
