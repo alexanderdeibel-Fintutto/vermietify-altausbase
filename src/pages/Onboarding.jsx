@@ -38,7 +38,7 @@ export default function Onboarding() {
     enabled: !!user
   });
 
-  const { data: progress } = useQuery({
+  const { data: progress, refetch: refetchProgress } = useQuery({
     queryKey: ['onboarding-progress', user?.id],
     queryFn: async () => {
       const results = await base44.entities.OnboardingProgress.filter({ user_id: user.id });
@@ -46,6 +46,26 @@ export default function Onboarding() {
     },
     enabled: !!user
   });
+
+  // Resume previous session
+  useEffect(() => {
+    if (progress && progress.conversation_history?.length > 0 && messages.length === 0) {
+      setMessages(progress.conversation_history);
+      if (progress.current_step && progress.current_step !== 'conversation') {
+        // Resume at current component
+        const componentMap = {
+          'simple_object': 'object',
+          'quick_tenant': 'tenant',
+          'tax_setup': 'tax',
+          'completion': 'completion'
+        };
+        const component = componentMap[progress.current_step];
+        if (component) {
+          setTimeout(() => setCurrentComponent(component), 500);
+        }
+      }
+    }
+  }, [progress]);
 
   const saveProgressMutation = useMutation({
     mutationFn: (data) => {
@@ -233,10 +253,14 @@ Antworte kurz und freundlich. Stelle Fragen um den User-Typ zu erkennen (${packa
     if (currentComponent === 'tenant') newCompletedSteps.push('quick_tenant');
     if (currentComponent === 'tax') newCompletedSteps.push('tax_setup');
 
+    // Mark as completed if this is the completion screen
+    const isCompleted = currentComponent === 'completion';
+
     await saveProgressMutation.mutateAsync({
       ...progress,
       completed_steps: newCompletedSteps,
-      current_step: currentComponent
+      current_step: currentComponent,
+      is_completed: isCompleted
     });
 
     // Orchestrate next step
