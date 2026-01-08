@@ -78,6 +78,11 @@ import SettingsPage from './pages/SettingsPage';
 import SystemConfiguration from './pages/SystemConfiguration';
 import IntegrationHub from './pages/IntegrationHub';
 import UserAudit from './pages/UserAudit';
+import PerformanceMonitor from './pages/PerformanceMonitor';
+import AutomationRules from './pages/AutomationRules';
+import ScheduledTasks from './pages/ScheduledTasks';
+import APILogs from './pages/APILogs';
+import AlertManagement from './pages/AlertManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -162,6 +167,11 @@ export const PAGES = {
     "SystemConfiguration": SystemConfiguration,
     "IntegrationHub": IntegrationHub,
     "UserAudit": UserAudit,
+    "PerformanceMonitor": PerformanceMonitor,
+    "AutomationRules": AutomationRules,
+    "ScheduledTasks": ScheduledTasks,
+    "APILogs": APILogs,
+    "AlertManagement": AlertManagement,
 }
 
 export const pagesConfig = {
