@@ -118,6 +118,9 @@ import FieldUsageAnalyzer from '@/components/elster/FieldUsageAnalyzer';
 import ErrorClusterAnalysis from '@/components/elster/ErrorClusterAnalysis';
 import CostStructureAnalyzer from '@/components/elster/CostStructureAnalyzer';
 import TaxForecastWidget from '@/components/elster/TaxForecastWidget';
+import BatchPDFGenerator from '@/components/elster/BatchPDFGenerator';
+import YearComparisonReport from '@/components/elster/YearComparisonReport';
+import DataQualityScore from '@/components/elster/DataQualityScore';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -311,12 +314,13 @@ export default function ElsterIntegration() {
                 <SubmissionTimeline submissions={submissions} />
               </div>
               <div className="space-y-6">
+                <DataQualityScore />
                 <ExportManager selectedSubmissions={selectedForBulk} />
+                <BatchPDFGenerator selectedSubmissions={selectedForBulk} />
                 <BulkOperationsManager 
                   selectedSubmissions={selectedForBulk}
                   onComplete={() => queryClient.invalidateQueries({ queryKey: ['elster-submissions'] })}
                 />
-                <GoBDComplianceDashboard />
               </div>
             </div>
           </TabsContent>
@@ -407,7 +411,12 @@ export default function ElsterIntegration() {
 
           <TabsContent value="history" className="mt-6">
             <div className="space-y-6">
-              <HistoricalComparison />
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  <HistoricalComparison />
+                </div>
+                <YearComparisonReport />
+              </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <SubmissionHistory submissions={submissions} />
                 <FormComparisonView submissions={submissions} formType="ANLAGE_V" />
