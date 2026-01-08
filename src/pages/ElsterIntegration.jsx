@@ -122,6 +122,8 @@ import BatchPDFGenerator from '@/components/elster/BatchPDFGenerator';
 import YearComparisonReport from '@/components/elster/YearComparisonReport';
 import DataQualityScore from '@/components/elster/DataQualityScore';
 import SmartFormSuggestions from '@/components/elster/SmartFormSuggestions';
+import SystemHealthCard from '@/components/elster/SystemHealthCard';
+import BulkValidationTool from '@/components/elster/BulkValidationTool';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -260,6 +262,7 @@ export default function ElsterIntegration() {
                   <TrendAnalysisDashboard />
                 </div>
                 <div className="space-y-6">
+                  <SystemHealthCard />
                   <SmartNotificationCenter />
                   <SmartInsightsDashboard />
                   <ComplianceTimeline />
@@ -321,6 +324,7 @@ export default function ElsterIntegration() {
               </div>
               <div className="space-y-6">
                 <DataQualityScore />
+                <BulkValidationTool selectedSubmissions={selectedForBulk} />
                 <ExportManager selectedSubmissions={selectedForBulk} />
                 <BatchPDFGenerator selectedSubmissions={selectedForBulk} />
                 <BulkOperationsManager 
