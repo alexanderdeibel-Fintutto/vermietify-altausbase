@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -114,7 +115,11 @@ export default function Tasks() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <motion.div 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-between"
+            >
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800">Aufgaben</h1>
                     <p className="text-slate-500">Verwalten Sie alle Tasks und Workflows</p>
@@ -129,15 +134,32 @@ export default function Tasks() {
                         Neuer Task
                     </Button>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Statistics */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+            >
             <TaskStats tasks={tasks} />
+            </motion.div>
 
             {/* Performance Monitor */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+            >
             <PerformanceMonitor />
+            </motion.div>
 
             {/* Tabs */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+            >
             <Tabs defaultValue="overview" className="w-full">
                 <TabsList className="grid w-full grid-cols-9">
                     <TabsTrigger value="overview">Übersicht</TabsTrigger>
@@ -209,6 +231,7 @@ export default function Tasks() {
                     <TestingPanel />
                 </TabsContent>
                 </Tabs>
+                </motion.div>
 
             {/* Task Form Dialog */}
             <TaskForm

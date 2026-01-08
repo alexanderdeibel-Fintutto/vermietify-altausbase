@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, FileCode, Type, FolderOpen, Sparkles } from 'lucide-react';
 import DocumentsList from '../components/documents/DocumentsList';
@@ -14,11 +15,19 @@ export default function DocumentsPage() {
     return (
         <ModuleAccessGuard moduleName="documents">
             <div className="space-y-6">
-                <div>
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                >
                     <h1 className="text-3xl font-bold text-slate-800">Dokumente</h1>
                     <p className="text-slate-600">Verwalten Sie Dokumente, Vorlagen und Textbausteine</p>
-                </div>
+                </motion.div>
 
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+            >
             <Tabs defaultValue="documents" className="w-full">
                 <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="documents">
@@ -65,6 +74,7 @@ export default function DocumentsPage() {
                     <OriginalsList />
                 </TabsContent>
                 </Tabs>
+                </motion.div>
                 </div>
                 </ModuleAccessGuard>
                 );
