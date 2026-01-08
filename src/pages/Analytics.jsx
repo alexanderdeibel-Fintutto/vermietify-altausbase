@@ -161,14 +161,11 @@ export default function Analytics() {
 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[0, 1, 2, 3].map(idx => (
-          <motion.div
-            key={idx}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 + idx * 0.05 }}
-          >
-        {idx === 0 ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -186,7 +183,13 @@ export default function Analytics() {
             </div>
           </CardContent>
         </Card>
+        </motion.div>
 
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -203,7 +206,13 @@ export default function Analytics() {
             </div>
           </CardContent>
         </Card>
+        </motion.div>
 
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -220,7 +229,13 @@ export default function Analytics() {
             </div>
           </CardContent>
         </Card>
+        </motion.div>
 
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+        >
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
