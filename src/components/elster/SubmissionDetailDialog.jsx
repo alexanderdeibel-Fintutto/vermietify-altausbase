@@ -10,6 +10,9 @@ import { toast } from 'sonner';
 import QuickDuplicateButton from './QuickDuplicateButton';
 import AuditLogViewer from './AuditLogViewer';
 import ShareWithAdvisorDialog from './ShareWithAdvisorDialog';
+import ValidationReport from './ValidationReport';
+import ComplianceChecklist from './ComplianceChecklist';
+import TaxOptimizationSuggestions from './TaxOptimizationSuggestions';
 
 export default function SubmissionDetailDialog({ submission, open, onOpenChange }) {
   const [showShareDialog, setShowShareDialog] = React.useState(false);
@@ -112,11 +115,14 @@ export default function SubmissionDetailDialog({ submission, open, onOpenChange 
           </Card>
 
           <Tabs defaultValue="data">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="data">Formulardaten</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-7">
+              <TabsTrigger value="data">Daten</TabsTrigger>
               <TabsTrigger value="validation">Validierung</TabsTrigger>
+              <TabsTrigger value="report">Report</TabsTrigger>
+              <TabsTrigger value="compliance">Compliance</TabsTrigger>
+              <TabsTrigger value="optimization">Optimierung</TabsTrigger>
               <TabsTrigger value="xml">XML</TabsTrigger>
-              <TabsTrigger value="response">ELSTER-Antwort</TabsTrigger>
+              <TabsTrigger value="response">Antwort</TabsTrigger>
             </TabsList>
 
             <TabsContent value="data" className="mt-4">
@@ -189,6 +195,18 @@ export default function SubmissionDetailDialog({ submission, open, onOpenChange 
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="report" className="mt-4">
+              <ValidationReport submission={submission} />
+            </TabsContent>
+
+            <TabsContent value="compliance" className="mt-4">
+              <ComplianceChecklist submission={submission} />
+            </TabsContent>
+
+            <TabsContent value="optimization" className="mt-4">
+              <TaxOptimizationSuggestions submission={submission} />
             </TabsContent>
 
             <TabsContent value="xml" className="mt-4">
