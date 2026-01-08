@@ -112,6 +112,9 @@ import SmartInsightsDashboard from '@/components/elster/SmartInsightsDashboard';
 import ExportManager from '@/components/elster/ExportManager';
 import BulkOperationsManager from '@/components/elster/BulkOperationsManager';
 import TemplateLibrary from '@/components/elster/TemplateLibrary';
+import AutomationScheduler from '@/components/elster/AutomationScheduler';
+import ComplianceTimeline from '@/components/elster/ComplianceTimeline';
+import FieldUsageAnalyzer from '@/components/elster/FieldUsageAnalyzer';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -247,7 +250,8 @@ export default function ElsterIntegration() {
                 <div className="space-y-6">
                   <SmartNotificationCenter />
                   <SmartInsightsDashboard />
-                  <RiskManagementSystem submissions={submissions} />
+                  <ComplianceTimeline />
+                  <AutomationScheduler />
                 </div>
               </div>
 
@@ -451,7 +455,7 @@ export default function ElsterIntegration() {
                 </div>
                 <div className="space-y-6">
                   <DeadlineTracker submissions={submissions} taxYear={new Date().getFullYear()} />
-                  <AdvancedReportGenerator />
+                  <FieldUsageAnalyzer />
                 </div>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
