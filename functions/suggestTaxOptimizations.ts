@@ -9,97 +9,80 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { submission_id } = await req.json();
+    const { building_id, tax_year } = await req.json();
 
-    if (!submission_id) {
-      return Response.json({ error: 'submission_id required' }, { status: 400 });
+    console.log('[OPTIMIZATION] Analyzing tax optimization opportunities');
+
+    // Lade Gebäude & Finanzdaten
+    const buildings = await base44.entities.Building.filter({ id: building_id });
+    if (!buildings?.length) {
+      return Response.json({ error: 'Building not found' }, { status: 404 });
     }
 
-    console.log(`[TAX-OPTIMIZATION] Analyzing ${submission_id}`);
+    const building = buildings[0];
 
-    const submission = await base44.entities.ElsterSubmission.filter({ id: submission_id });
-    
-    if (submission.length === 0) {
-      return Response.json({ error: 'Submission not found' }, { status: 404 });
-    }
+    // Lade FinancialItems
+    const allItems = await base44.entities.FinancialItem.filter();
+    const yearItems = allItems.filter(item => {
+      const itemYear = new Date(item.date).getFullYear();
+      return itemYear === tax_year && item.building_id === building_id;
+    });
 
-    const sub = submission[0];
-    const formData = sub.form_data || {};
+    // KI-Analyse für Optimierungen
+    const prompt = `
+Du bist ein Steuerberater. Analysiere diese Vermietungsdaten und gib konkrete Steuer-Optimierungsvorschläge:
 
-    const optimizations = [];
+GEBÄUDE: ${JSON.stringify({ address: building.address, purchase_price: building.purchase_price })}
+EINNAHMEN: ${yearItems.filter(i => i.type === 'INCOME').reduce((s, i) => s + i.amount, 0)}
+AUSGABEN: ${yearItems.filter(i => i.type === 'EXPENSE').reduce((s, i) => s + i.amount, 0)}
 
-    // Analysiere Werbungskosten
-    const werbungskosten = parseFloat(formData.werbungskosten_gesamt || 0);
-    const einnahmen = parseFloat(formData.einnahmen_gesamt || 0);
+AUSGABENKATEGORIEN:
+${Object.entries(
+  yearItems.reduce((acc, item) => {
+    const cat = item.cost_category || 'SONSTIGE';
+    acc[cat] = (acc[cat] || 0) + item.amount;
+    return acc;
+  }, {})
+).map(([cat, amount]) => `- ${cat}: €${amount}`).join('\n')}
 
-    if (werbungskosten < einnahmen * 0.3) {
-      optimizations.push({
-        category: 'Werbungskosten',
-        suggestion: 'Ihre Werbungskosten erscheinen niedrig. Prüfen Sie ob alle absetzbaren Kosten erfasst wurden.',
-        potential_saving: Math.round((einnahmen * 0.3 - werbungskosten) * 0.25),
-        priority: 'HIGH',
-        details: [
-          'Reparatur- und Instandhaltungskosten',
-          'Versicherungen',
-          'Grundsteuer',
-          'Hausnebenkosten',
-          'Finanzierungszinsen'
-        ]
-      });
-    }
+Gib maximal 5 konkrete, umsetzbare Optimierungsvorschläge mit:
+- Titel
+- Beschreibung
+- Potenzielle Steuereinsparung (%)
+- Aufwand (gering/mittel/hoch)
+- Compliance-Risiko (gering/mittel/hoch)
 
-    // AfA-Prüfung
-    if (!formData.afa_betrag || parseFloat(formData.afa_betrag) === 0) {
-      optimizations.push({
-        category: 'AfA',
-        suggestion: 'Keine AfA erfasst. Prüfen Sie ob Abschreibungen möglich sind.',
-        potential_saving: 2000,
-        priority: 'HIGH',
-        details: [
-          'Gebäude-AfA (2% linear)',
-          'Außenanlagen-AfA',
-          'Einbauten separat abschreibbar'
-        ]
-      });
-    }
+Antworte NUR mit JSON.
+    `;
 
-    // Erhaltungsaufwand
-    const erhaltungsaufwand = parseFloat(formData.erhaltungsaufwand || 0);
-    if (erhaltungsaufwand > einnahmen * 0.15) {
-      optimizations.push({
-        category: 'Erhaltungsaufwand',
-        suggestion: 'Hoher Erhaltungsaufwand. Prüfen Sie die 15%-Regelung und verteilte Abschreibung.',
-        potential_saving: 0,
-        priority: 'MEDIUM',
-        details: [
-          'Bei > 15% der Gebäude-HK über 5 Jahre verteilen',
-          'Anschaffungsnahe Herstellungskosten prüfen',
-          'Erhaltung vs. Modernisierung abgrenzen'
-        ]
-      });
-    }
+    const optimizations = await base44.integrations.Core.InvokeLLM({
+      prompt,
+      response_json_schema: {
+        type: "object",
+        properties: {
+          suggestions: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                description: { type: "string" },
+                estimated_savings_percent: { type: "number" },
+                effort: { type: "string" },
+                compliance_risk: { type: "string" },
+                implementation_steps: { type: "array", items: { type: "string" } }
+              }
+            }
+          }
+        }
+      }
+    });
 
-    // Zinsen
-    if (!formData.schuldzinsen || parseFloat(formData.schuldzinsen) === 0) {
-      optimizations.push({
-        category: 'Finanzierungskosten',
-        suggestion: 'Keine Schuldzinsen erfasst. Bei Finanzierung sind diese absetzbar.',
-        potential_saving: 1000,
-        priority: 'MEDIUM',
-        details: [
-          'Darlehenszinsen',
-          'Finanzierungsnebenkosten',
-          'Disagio verteilt absetzbar'
-        ]
-      });
-    }
-
-    console.log(`[TAX-OPTIMIZATION] Found ${optimizations.length} optimization opportunities`);
-
-    return Response.json({
-      success: true,
-      optimizations,
-      total_potential_saving: optimizations.reduce((sum, opt) => sum + opt.potential_saving, 0)
+    return Response.json({ 
+      success: true, 
+      building_id,
+      tax_year,
+      suggestions: optimizations.suggestions || []
     });
 
   } catch (error) {

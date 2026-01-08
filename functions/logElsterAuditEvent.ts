@@ -5,21 +5,30 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
-    const { submission_id, event_type, details } = await req.json();
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    console.log('[AUDIT-LOG]', event_type, 'for submission', submission_id);
+    const { submission_id, event_type, details = {} } = await req.json();
 
-    // ActivityLog verwenden für Audit-Trail
-    await base44.asServiceRole.entities.ActivityLog.create({
+    console.log('[AUDIT-LOG] Event:', event_type, 'Submission:', submission_id);
+
+    // Audit-Event erstellen
+    const auditEvent = await base44.asServiceRole.entities.ActivityLog.create({
       entity_type: 'ElsterSubmission',
       entity_id: submission_id,
       action: event_type,
-      user_email: user?.email || 'system',
-      details: details || {},
-      timestamp: new Date().toISOString()
+      user_id: user.id,
+      user_email: user.email,
+      changes: JSON.stringify(details),
+      timestamp: new Date().toISOString(),
+      ip_address: req.headers.get('x-forwarded-for') || 'unknown'
     });
 
-    return Response.json({ success: true });
+    return Response.json({ 
+      success: true, 
+      audit_id: auditEvent.id 
+    });
 
   } catch (error) {
     console.error('[ERROR]', error);
