@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,7 +54,11 @@ export default function APIKeyManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
+      >
         <div>
           <h1 className="text-2xl font-bold text-slate-900">API-Key Verwaltung</h1>
           <p className="text-slate-600">Verwalten Sie API-Zugriffsschlüssel</p>
@@ -62,49 +67,44 @@ export default function APIKeyManagement() {
           <Plus className="w-4 h-4 mr-2" />
           Neuer API-Key
         </Button>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          { label: "Gesamt Keys", value: apiKeys.length, color: "blue" },
+          { label: "Aktive Keys", value: apiKeys.filter(k => k.is_active).length, color: "green" },
+          { label: "Verwendungen", value: apiKeys.reduce((sum, k) => sum + (k.usage_count || 0), 0), color: "purple" }
+        ].map((stat, idx) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + idx * 0.05 }}
+          >
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-600">Gesamt Keys</p>
-                <p className="text-2xl font-bold">{apiKeys.length}</p>
-              </div>
-              <Key className="w-8 h-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Aktive Keys</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {apiKeys.filter(k => k.is_active).length}
+                <p className="text-sm text-slate-600">{stat.label}</p>
+                <p className={`text-2xl font-bold ${stat.color !== 'blue' ? `text-${stat.color}-600` : ''}`}>
+                  {stat.value}
                 </p>
               </div>
-              <Key className="w-8 h-8 text-green-600" />
+              <Key className={`w-8 h-8 text-${stat.color}-600`} />
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Verwendungen</p>
-                <p className="text-2xl font-bold text-purple-600">
-                  {apiKeys.reduce((sum, k) => sum + (k.usage_count || 0), 0)}
-                </p>
-              </div>
-              <Key className="w-8 h-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
+          </motion.div>
+        ))}
       </div>
 
+      <AnimatePresence>
       {createdKey && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+        >
         <Card className="border-green-200 bg-green-50">
           <CardHeader>
             <CardTitle className="text-green-900">API-Key erstellt</CardTitle>
@@ -124,9 +124,17 @@ export default function APIKeyManagement() {
             </Button>
           </CardContent>
         </Card>
+        </motion.div>
       )}
+      </AnimatePresence>
 
+      <AnimatePresence>
       {showCreateDialog && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+        >
         <Card>
           <CardHeader>
             <CardTitle>Neuen API-Key erstellen</CardTitle>
@@ -158,8 +166,15 @@ export default function APIKeyManagement() {
             </div>
           </CardContent>
         </Card>
+        </motion.div>
       )}
+      </AnimatePresence>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
       <Card>
         <CardHeader>
           <CardTitle>API-Keys ({apiKeys.length})</CardTitle>
@@ -211,6 +226,7 @@ export default function APIKeyManagement() {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
     </div>
   );
 }

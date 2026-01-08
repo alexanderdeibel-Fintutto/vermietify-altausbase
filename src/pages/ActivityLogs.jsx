@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,57 +54,55 @@ export default function ActivityLogs() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
+      >
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Activity Logs</h1>
           <p className="text-slate-600">Benutzeraktivitäten überwachen</p>
         </div>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          { icon: Activity, label: "Gesamt Aktivitäten", value: activities.length, color: "blue" },
+          { icon: User, label: "Aktive Benutzer", value: new Set(activities.map(a => a.user_id)).size, color: "green" },
+          { icon: Activity, label: "Heute", value: activities.filter(a => {
+            const activityDate = new Date(a.created_date);
+            const today = new Date();
+            return activityDate.toDateString() === today.toDateString();
+          }).length, color: "purple" }
+        ].map((stat, idx) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + idx * 0.05 }}
+          >
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-600">Gesamt Aktivitäten</p>
-                <p className="text-2xl font-bold">{activities.length}</p>
-              </div>
-              <Activity className="w-8 h-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Aktive Benutzer</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {new Set(activities.map(a => a.user_id)).size}
+                <p className="text-sm text-slate-600">{stat.label}</p>
+                <p className={`text-2xl font-bold ${stat.color !== 'blue' ? `text-${stat.color}-600` : ''}`}>
+                  {stat.value}
                 </p>
               </div>
-              <User className="w-8 h-8 text-green-600" />
+              <stat.icon className={`w-8 h-8 text-${stat.color}-600`} />
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Heute</p>
-                <p className="text-2xl font-bold text-purple-600">
-                  {activities.filter(a => {
-                    const activityDate = new Date(a.created_date);
-                    const today = new Date();
-                    return activityDate.toDateString() === today.toDateString();
-                  }).length}
-                </p>
-              </div>
-              <Activity className="w-8 h-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
+          </motion.div>
+        ))}
       </div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
       <Card>
         <CardHeader>
           <CardTitle>Filter</CardTitle>
@@ -140,7 +139,13 @@ export default function ActivityLogs() {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
       <Card>
         <CardHeader>
           <CardTitle>Aktivitäten ({filteredActivities.length})</CardTitle>
@@ -174,6 +179,7 @@ export default function ActivityLogs() {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
     </div>
   );
 }

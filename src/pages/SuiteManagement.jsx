@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +51,11 @@ export default function SuiteManagement() {
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
-            <div className="flex items-center justify-between">
+            <motion.div 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-between"
+            >
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900">Suite Management</h1>
                     <p className="text-slate-600 mt-2">Verwalten Sie Ihre Suites und Module</p>
@@ -61,8 +66,13 @@ export default function SuiteManagement() {
                         Initial Data Seeden
                     </Button>
                 )}
-            </div>
+            </motion.div>
 
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+            >
             <Tabs defaultValue="my-suites">
                 <TabsList>
                     <TabsTrigger value="my-suites">Meine Suites</TabsTrigger>
@@ -235,6 +245,7 @@ export default function SuiteManagement() {
                     </TabsContent>
                 )}
             </Tabs>
+            </motion.div>
         </div>
     );
 }
