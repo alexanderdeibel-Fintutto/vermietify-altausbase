@@ -15,6 +15,8 @@ import { createPageUrl } from '../utils';
 export default function AdvancedSearch() {
   const [searchQuery, setSearchQuery] = useState('');
   const [entityFilter, setEntityFilter] = useState('all');
+  const [dateRange, setDateRange] = useState({ from: '', to: '' });
+  const [statusFilter, setStatusFilter] = useState('all');
   const [results, setResults] = useState(null);
   const [searching, setSearching] = useState(false);
   const navigate = useNavigate();
@@ -43,9 +45,27 @@ export default function AdvancedSearch() {
       for (const entityType of entitiesToSearch) {
         try {
           const items = await base44.entities[entityType].list();
-          const filtered = items.filter(item => 
+          let filtered = items.filter(item => 
             JSON.stringify(item).toLowerCase().includes(searchQuery.toLowerCase())
           );
+          
+          // Datum-Filter
+          if (dateRange.from) {
+            filtered = filtered.filter(item => 
+              !item.created_date || new Date(item.created_date) >= new Date(dateRange.from)
+            );
+          }
+          if (dateRange.to) {
+            filtered = filtered.filter(item => 
+              !item.created_date || new Date(item.created_date) <= new Date(dateRange.to)
+            );
+          }
+          
+          // Status-Filter
+          if (statusFilter !== 'all' && filtered.some(i => i.status)) {
+            filtered = filtered.filter(item => item.status === statusFilter);
+          }
+          
           if (filtered.length > 0) {
             searchResults[entityType] = filtered;
           }
@@ -138,7 +158,7 @@ export default function AdvancedSearch() {
         <CardHeader>
           <CardTitle>Suchkriterien</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="flex gap-3">
             <div className="flex-1">
               <Input
@@ -168,6 +188,43 @@ export default function AdvancedSearch() {
               <Search className="w-4 h-4 mr-2" />
               Suchen
             </Button>
+          </div>
+
+          {/* Erweiterte Filter */}
+          <div className="flex gap-3 pt-3 border-t">
+            <div>
+              <label className="text-xs text-slate-600 mb-1 block">Von Datum</label>
+              <Input
+                type="date"
+                value={dateRange.from}
+                onChange={(e) => setDateRange({ ...dateRange, from: e.target.value })}
+                className="w-40"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-600 mb-1 block">Bis Datum</label>
+              <Input
+                type="date"
+                value={dateRange.to}
+                onChange={(e) => setDateRange({ ...dateRange, to: e.target.value })}
+                className="w-40"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-600 mb-1 block">Status</label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle Status</SelectItem>
+                  <SelectItem value="active">Aktiv</SelectItem>
+                  <SelectItem value="inactive">Inaktiv</SelectItem>
+                  <SelectItem value="pending">Ausstehend</SelectItem>
+                  <SelectItem value="completed">Abgeschlossen</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>

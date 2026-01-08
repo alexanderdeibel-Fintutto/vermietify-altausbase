@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import BulkActionsToolbar from '../components/support/BulkActionsToolbar';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +43,7 @@ import { de } from 'date-fns/locale';
 import { Settings as SettingsIcon } from 'lucide-react';
 
 export default function SupportCenter() {
+    const [selectedProblems, setSelectedProblems] = useState([]);
     const [filters, setFilters] = useState({
         status: 'Alle',
         kategorie: 'Alle',
@@ -369,6 +371,15 @@ export default function SupportCenter() {
 
                 {/* TAB: TICKETS */}
                 <TabsContent value="tickets" className="space-y-4">
+                    {/* Bulk Actions Toolbar */}
+                    <BulkActionsToolbar 
+                        selectedIds={selectedProblems}
+                        onActionComplete={() => {
+                            setSelectedProblems([]);
+                            queryClient.invalidateQueries({ queryKey: ['user-problems'] });
+                        }}
+                    />
+
                     {/* Filter */}
                     <Card>
                 <CardContent className="pt-6">
@@ -443,11 +454,28 @@ export default function SupportCenter() {
                                 <div className="space-y-2">
                                     {kritisch.map(problem => (
                                         <div
-                                            key={problem.id}
-                                            className="flex items-center gap-4 p-3 bg-white rounded-lg border border-red-200 hover:shadow-md cursor-pointer transition-all"
-                                            onClick={() => setSelectedProblem(problem)}
-                                        >
-                                            <Badge className="bg-red-600 text-white">#{problem.id.substring(0, 6)}</Badge>
+                                                    key={problem.id}
+                                                    className="flex items-center gap-4 p-3 bg-white rounded-lg border border-red-200 hover:shadow-md cursor-pointer transition-all"
+                                                    onClick={(e) => {
+                                                        if (e.target.type !== 'checkbox') {
+                                                            setSelectedProblem(problem);
+                                                        }
+                                                    }}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedProblems.includes(problem.id)}
+                                                        onChange={(e) => {
+                                                            e.stopPropagation();
+                                                            setSelectedProblems(prev => 
+                                                                prev.includes(problem.id) 
+                                                                    ? prev.filter(id => id !== problem.id)
+                                                                    : [...prev, problem.id]
+                                                            );
+                                                        }}
+                                                        className="w-4 h-4"
+                                                    />
+                                                    <Badge className="bg-red-600 text-white">#{problem.id.substring(0, 6)}</Badge>
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-semibold text-slate-900 truncate">{problem.problem_titel}</p>
                                                 <p className="text-sm text-slate-600">{problem.created_by || 'Anonym'}</p>
