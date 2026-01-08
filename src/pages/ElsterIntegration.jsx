@@ -137,6 +137,9 @@ import TestingDashboard from '@/components/elster/TestingDashboard';
 import ROIDashboard from '@/components/elster/ROIDashboard';
 import AdvancedFilterPanel from '@/components/elster/AdvancedFilterPanel';
 import BulkPDFExportPanel from '@/components/elster/BulkPDFExportPanel';
+import DataQualityMonitor from '@/components/elster/DataQualityMonitor';
+import AnalyticsReportCard from '@/components/elster/AnalyticsReportCard';
+import WorkflowScheduler from '@/components/elster/WorkflowScheduler';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -533,6 +536,9 @@ export default function ElsterIntegration() {
                   <SystemHealthCheck />
                 </div>
                 <div className="space-y-6">
+                  <DataQualityMonitor />
+                  <AnalyticsReportCard />
+                  <WorkflowScheduler />
                   <TestingDashboard />
                   <ROIDashboard />
                   <DataCleanupTool />
