@@ -11,6 +11,7 @@ import QuickDuplicateButton from './QuickDuplicateButton';
 import AuditLogViewer from './AuditLogViewer';
 import ShareWithAdvisorDialog from './ShareWithAdvisorDialog';
 import VersionHistory from './VersionHistory';
+import CommentSection from './CommentSection';
 import ValidationReport from './ValidationReport';
 import ComplianceChecklist from './ComplianceChecklist';
 import TaxOptimizationSuggestions from './TaxOptimizationSuggestions';
@@ -261,6 +262,9 @@ export default function SubmissionDetailDialog({ submission, open, onOpenChange 
               <AuditLogViewer submissionId={submission.id} />
               <VersionHistory submissionId={submission.id} />
             </div>
+
+            {/* Kommentare */}
+            <CommentSection submissionId={submission.id} />
 
           {/* Actions */}
           <div className="flex gap-3 flex-wrap">
