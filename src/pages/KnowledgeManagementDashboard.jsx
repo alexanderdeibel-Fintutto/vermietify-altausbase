@@ -274,55 +274,6 @@ function KPICard({ title, value, icon: Icon, trend, color }) {
   );
 }
 
-function GapDetailDialog({ gap, onClose }) {
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="max-w-2xl w-full">
-        <CardHeader className="flex justify-between items-start">
-          <CardTitle>{gap.description}</CardTitle>
-          <button onClick={onClose} className="text-2xl">✕</button>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-slate-600">Typ</p>
-              <Badge>{gap.gap_type}</Badge>
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Business Impact</p>
-              <Badge variant={getBadgeVariant(gap.business_impact)}>
-                {gap.business_impact}
-              </Badge>
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Häufigkeit</p>
-              <p className="font-semibold">{gap.frequency}x</p>
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Priorität</p>
-              <p className="font-semibold">{gap.assigned_priority}/10</p>
-            </div>
-          </div>
-
-          {gap.context_data && (
-            <div className="p-3 bg-slate-50 rounded">
-              <p className="text-sm font-semibold mb-2">Kontext:</p>
-              <pre className="text-xs text-slate-700 overflow-auto max-h-40">
-                {JSON.stringify(gap.context_data, null, 2)}
-              </pre>
-            </div>
-          )}
-
-          <div className="flex gap-2">
-            <Button className="flex-1">Claude-Analyse anfordern</Button>
-            <Button variant="outline" onClick={onClose}>Schließen</Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
 function getBadgeVariant(impact) {
   switch (impact) {
     case 'CRITICAL': return 'destructive';
