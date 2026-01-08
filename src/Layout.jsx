@@ -57,6 +57,7 @@ export default function Layout({ children, currentPageName }) {
         { name: '📦 Module', href: createPageUrl('ModuleManagement'), icon: Package, page: 'ModuleManagement' },
         { name: '🧪 Testing', href: createPageUrl('TestingDashboard'), icon: TestTube, page: 'TestingDashboard' },
         { name: '📊 Audit Reports', href: createPageUrl('AuditReports'), icon: BarChart3, page: 'AuditReports' },
+        { name: '📈 Analytics', href: createPageUrl('AdvancedAnalytics'), icon: TrendingUp, page: 'AdvancedAnalytics' },
         { name: '🔐 Permissions', href: createPageUrl('PermissionDashboard'), icon: Shield, page: 'PermissionDashboard' },
         { name: '🛡️ Compliance', href: createPageUrl('ComplianceCenter'), icon: Shield, page: 'ComplianceCenter' },
         { name: '🔑 API Keys', href: createPageUrl('APIKeyManagement'), icon: Settings, page: 'APIKeyManagement' },
