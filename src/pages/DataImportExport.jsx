@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -119,11 +120,19 @@ export default function DataImportExport() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
         <h1 className="text-2xl font-bold text-slate-900">Daten Import/Export</h1>
         <p className="text-slate-600">Importieren und exportieren Sie Ihre Daten</p>
-      </div>
+      </motion.div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+      >
       <Card>
         <CardHeader>
           <CardTitle>Entity-Auswahl</CardTitle>
@@ -143,7 +152,13 @@ export default function DataImportExport() {
           </Select>
         </CardContent>
       </Card>
+      </motion.div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
       <Tabs defaultValue="export" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="export">Export</TabsTrigger>
@@ -235,7 +250,13 @@ export default function DataImportExport() {
           </Card>
         </TabsContent>
       </Tabs>
+      </motion.div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
       <Card>
         <CardHeader>
           <CardTitle>Hinweise</CardTitle>
@@ -249,6 +270,7 @@ export default function DataImportExport() {
           </ul>
         </CardContent>
       </Card>
+      </motion.div>
     </div>
   );
 }

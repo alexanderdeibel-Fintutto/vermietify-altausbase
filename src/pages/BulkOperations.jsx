@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -89,32 +90,34 @@ export default function BulkOperations() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
         <h1 className="text-2xl font-bold text-slate-900">Bulk-Operationen</h1>
         <p className="text-slate-600">Mehrere Datensätze gleichzeitig bearbeiten</p>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          { value: items.length, label: "Verfügbare Items", color: "slate" },
+          { value: selectedItems.length, label: "Ausgewählt", color: "blue" },
+          { value: `${((selectedItems.length / items.length) * 100 || 0).toFixed(0)}%`, label: "Auswahlrate", color: "green" }
+        ].map((stat, idx) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + idx * 0.05 }}
+          >
         <Card>
           <CardContent className="p-6">
-            <div className="text-2xl font-bold text-slate-900">{items.length}</div>
-            <div className="text-sm text-slate-600">Verfügbare Items</div>
+            <div className={`text-2xl font-bold text-${stat.color}-600`}>{stat.value}</div>
+            <div className="text-sm text-slate-600">{stat.label}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold text-blue-600">{selectedItems.length}</div>
-            <div className="text-sm text-slate-600">Ausgewählt</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold text-green-600">
-              {((selectedItems.length / items.length) * 100 || 0).toFixed(0)}%
-            </div>
-            <div className="text-sm text-slate-600">Auswahlrate</div>
-          </CardContent>
-        </Card>
+          </motion.div>
+        ))}
       </div>
 
       <Card>

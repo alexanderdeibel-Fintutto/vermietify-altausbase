@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -120,11 +121,19 @@ export default function AdvancedSearch() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
         <h1 className="text-2xl font-bold text-slate-900">Erweiterte Suche</h1>
         <p className="text-slate-600">Durchsuchen Sie alle Daten Ihrer Immobilienverwaltung</p>
-      </div>
+      </motion.div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+      >
       <Card>
         <CardHeader>
           <CardTitle>Suchkriterien</CardTitle>
@@ -162,8 +171,15 @@ export default function AdvancedSearch() {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
 
+      <AnimatePresence>
       {results && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+        >
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -200,7 +216,9 @@ export default function AdvancedSearch() {
             )}
           </CardContent>
         </Card>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   );
 }
