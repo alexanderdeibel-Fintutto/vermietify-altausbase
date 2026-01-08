@@ -1,101 +1,84 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, Sliders } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Search, Clock, Zap } from 'lucide-react';
 
 export default function AdvancedSearchPage() {
   const [query, setQuery] = useState('');
-  const [entityType, setEntityType] = useState('all');
-  const [status, setStatus] = useState('all');
 
-  const results = [
-    { type: 'Building', name: 'Gebäude A - Hauptstr. 10', id: 'BUILD-001', relevance: 98 },
-    { type: 'Tenant', name: 'Meyer, Klaus', id: 'TENANT-045', relevance: 87 },
-    { type: 'Contract', name: 'Mietvertrag 2026-001', id: 'CONTRACT-123', relevance: 92 },
-    { type: 'Payment', name: 'Zahlung Jan 2026', id: 'PAY-456', relevance: 76 },
+  const searchResults = [
+    { type: 'Mieter', title: 'Klaus Meyer', snippet: 'Wohnung 2B • Aktiv seit 01.03.2020' },
+    { type: 'Mietvertrag', title: 'Vertrag Meyer - 2B', snippet: 'Gültig von 01.03.2020 bis 28.02.2025' },
+    { type: 'Transaktion', title: 'Mietzahlung Januar 2026', snippet: '€1.450,00 • 08.01.2026' },
+    { type: 'Dokument', title: 'Nebenkosten 2025', snippet: 'Abrechnung • Wohnung 2B' },
   ];
+
+  const recentSearches = ['Mieter Meyer', 'Nebenkosten 2025', 'Wartungsticket 456', 'Mietvertrag'];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">🔍 Advanced Search</h1>
-        <p className="text-slate-600 mt-1">Durchsuchen Sie alle Daten der Anwendung</p>
+        <h1 className="text-3xl font-bold text-slate-900">🔍 Erweiterte Suche</h1>
+        <p className="text-slate-600 mt-1">Durchsuchen Sie alle Daten und Dokumente</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Suchfilter</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Suchbegriff</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
-              <Input 
-                placeholder="Gebäude, Mieter, Verträge..." 
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="pl-10 h-10"
-              />
-            </div>
-          </div>
+      <div className="relative">
+        <Search className="absolute left-4 top-4 w-5 h-5 text-slate-400" />
+        <Input 
+          placeholder="Suchen Sie nach Mietern, Dokumenten, Transaktionen..." 
+          className="pl-12 h-12 text-base"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          autoFocus
+        />
+      </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Entity Type</label>
-              <Select value={entityType} onValueChange={setEntityType}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Alle Typen</SelectItem>
-                  <SelectItem value="building">Gebäude</SelectItem>
-                  <SelectItem value="tenant">Mieter</SelectItem>
-                  <SelectItem value="contract">Verträge</SelectItem>
-                  <SelectItem value="payment">Zahlungen</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Status</label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Alle</SelectItem>
-                  <SelectItem value="active">Aktiv</SelectItem>
-                  <SelectItem value="inactive">Inaktiv</SelectItem>
-                  <SelectItem value="archived">Archiviert</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <Button className="w-full bg-indigo-600 hover:bg-indigo-700"><Search className="w-4 h-4 mr-2" />Suchen</Button>
-        </CardContent>
-      </Card>
-
-      <div className="space-y-2">
-        <p className="text-sm font-semibold text-slate-700">{results.length} Ergebnisse gefunden</p>
-        {results.map((result, idx) => (
-          <Card key={idx} className="border border-slate-200 hover:border-indigo-300 cursor-pointer transition-colors">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-semibold px-2 py-1 bg-indigo-100 text-indigo-800 rounded">{result.type}</span>
-                    <span className="text-xs text-slate-500">{result.id}</span>
-                  </div>
-                  <p className="font-semibold text-slate-900">{result.name}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-slate-600">Relevanz</p>
-                  <p className="text-lg font-bold text-indigo-600">{result.relevance}%</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      <div className="grid grid-cols-4 gap-4">
+        {['Mieter', 'Mietverträge', 'Transaktionen', 'Dokumente'].map((filter, idx) => (
+          <Button key={idx} variant="outline" className="text-sm">{filter}</Button>
         ))}
       </div>
+
+      {query ? (
+        <div className="space-y-3">
+          <p className="text-sm text-slate-600">Ergebnisse für "{query}"</p>
+          {searchResults.map((result, idx) => (
+            <Card key={idx} className="border border-slate-200 hover:border-blue-300 cursor-pointer transition-colors">
+              <CardContent className="pt-6 flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-slate-900">{result.title}</h3>
+                    <Badge variant="outline" className="text-xs">{result.type}</Badge>
+                  </div>
+                  <p className="text-sm text-slate-600">{result.snippet}</p>
+                </div>
+                <Button size="sm" variant="ghost">→</Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div>
+            <h3 className="font-semibold text-slate-900 mb-2 flex items-center gap-2"><Clock className="w-4 h-4" /> Kürzliche Suchanfragen</h3>
+            <div className="flex flex-wrap gap-2">
+              {recentSearches.map((search, idx) => (
+                <Button key={idx} variant="outline" size="sm">{search}</Button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-900 mb-2 flex items-center gap-2"><Zap className="w-4 h-4" /> Schnelle Links</h3>
+            <div className="grid grid-cols-2 gap-2">
+              {['Alle Mieter', 'Offene Wartungen', 'Unzahlte Rechnungen', 'Aktive Mietverträge'].map((link, idx) => (
+                <Button key={idx} variant="outline" size="sm" className="justify-start">{link}</Button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

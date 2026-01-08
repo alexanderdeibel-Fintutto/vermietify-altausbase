@@ -98,6 +98,10 @@ import MaintenanceManager from './pages/MaintenanceManager';
 import MieterSelfServicePortal from './pages/MieterSelfServicePortal';
 import GlobalSettings from './pages/GlobalSettings';
 import HelpCenter from './pages/HelpCenter';
+import DataImportExportHub from './pages/DataImportExportHub';
+import BackupRecovery from './pages/BackupRecovery';
+import IntegrationMarketplace from './pages/IntegrationMarketplace';
+import AuditLog from './pages/AuditLog';
 import __Layout from './Layout.jsx';
 
 
@@ -202,6 +206,10 @@ export const PAGES = {
     "MieterSelfServicePortal": MieterSelfServicePortal,
     "GlobalSettings": GlobalSettings,
     "HelpCenter": HelpCenter,
+    "DataImportExportHub": DataImportExportHub,
+    "BackupRecovery": BackupRecovery,
+    "IntegrationMarketplace": IntegrationMarketplace,
+    "AuditLog": AuditLog,
 }
 
 export const pagesConfig = {
