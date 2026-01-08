@@ -18,6 +18,8 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import TaxFormWizard from '@/components/elster/TaxFormWizard';
 import CertificateUploadDialog from '@/components/elster/CertificateUploadDialog';
 import ElsterAnalytics from '@/components/elster/ElsterAnalytics';
+import ElsterSetupWizard from '@/components/elster/ElsterSetupWizard';
+import BulkFormExport from '@/components/elster/BulkFormExport';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from 'lucide-react';
 
@@ -25,6 +27,7 @@ export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showWizard, setShowWizard] = useState(false);
   const [showCertUpload, setShowCertUpload] = useState(false);
+  const [showSetupWizard, setShowSetupWizard] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: submissions = [] } = useQuery({
@@ -51,13 +54,22 @@ export default function ElsterIntegration() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
       >
-        <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
-          🏛️ ELSTER-Integration
-        </h1>
-        <p className="text-slate-600 mt-1">
-          Automatische Steuerformular-Erstellung und Übermittlung mit KI-Unterstützung
-        </p>
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
+            🏛️ ELSTER-Integration
+          </h1>
+          <p className="text-slate-600 mt-1">
+            Automatische Steuerformular-Erstellung und Übermittlung mit KI-Unterstützung
+          </p>
+        </div>
+        {certificates.length === 0 && (
+          <Button onClick={() => setShowSetupWizard(true)} className="bg-blue-600 hover:bg-blue-700">
+            <Settings className="w-4 h-4 mr-2" />
+            Einrichtung starten
+          </Button>
+        )}
       </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -125,7 +137,14 @@ export default function ElsterIntegration() {
           </TabsContent>
 
           <TabsContent value="submissions" className="mt-6">
-            <SubmissionsView submissions={submissions} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <SubmissionsView submissions={submissions} />
+              </div>
+              <div>
+                <BulkFormExport submissions={submissions} />
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="certificates" className="mt-6">
@@ -158,6 +177,17 @@ export default function ElsterIntegration() {
         onOpenChange={setShowCertUpload}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ['elster-certificates'] })}
       />
+
+      {showSetupWizard && (
+        <Dialog open={showSetupWizard} onOpenChange={setShowSetupWizard}>
+          <DialogContent className="max-w-3xl">
+            <ElsterSetupWizard onComplete={() => {
+              setShowSetupWizard(false);
+              queryClient.invalidateQueries();
+            }} />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
