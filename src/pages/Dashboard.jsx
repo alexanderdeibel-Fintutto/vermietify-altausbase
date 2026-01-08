@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import WhatsAppWidget from '@/components/whatsapp/WhatsAppWidget';
 import OnboardingResumeCard from '@/components/dashboard/OnboardingResumeCard';
+import ElsterDashboardWidget from '@/components/elster/ElsterDashboardWidget';
 
 export default function Dashboard() {
     const { data: user } = useQuery({
@@ -255,7 +256,7 @@ export default function Dashboard() {
                         </motion.div>
                         </div>
 
-            {/* WhatsApp Widget & Quick Links */}
+            {/* Widgets & Quick Links */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -264,13 +265,19 @@ export default function Dashboard() {
                 >
                     <WhatsAppWidget />
                 </motion.div>
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.72 }}
+                >
+                    <ElsterDashboardWidget />
+                </motion.div>
 
-                {/* Quick Links */}
                 <Link to={createPageUrl('Buildings')}>
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.75 }}
+                        transition={{ delay: 0.76 }}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                     >
@@ -293,7 +300,7 @@ export default function Dashboard() {
                         <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.8 }}
+                        transition={{ delay: 0.78 }}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         >
@@ -316,7 +323,7 @@ export default function Dashboard() {
                         <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.85 }}
+                        transition={{ delay: 0.8 }}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         >
