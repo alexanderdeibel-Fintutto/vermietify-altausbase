@@ -1,114 +1,113 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Upload, Download, FileJson, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Download, Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import QuickStats from '@/components/shared/QuickStats';
 
 export default function DataImportExportPage() {
-  const [importFile, setImportFile] = useState(null);
-  const [exporting, setExporting] = useState(false);
+  const exports = [
+    { name: 'Vollständige Datenbank Backup', date: '2026-01-08', size: '245 MB', status: 'ready' },
+    { name: 'Gebäudebestand Export', date: '2026-01-07', size: '12.5 MB', status: 'ready' },
+    { name: 'Mieterverwaltung Export', date: '2026-01-06', size: '8.3 MB', status: 'ready' },
+  ];
 
-  const handleImport = async (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Simulate import
-      console.log('Importing:', file.name);
-      setImportFile(file);
-    }
-  };
+  const imports = [
+    { name: 'Bank-Transaktionen Import', date: '2026-01-08', status: 'completed', records: 156 },
+    { name: 'Mieterdata Migration', date: '2026-01-05', status: 'completed', records: 24 },
+    { name: 'Gebäudedaten Import', date: '2025-12-20', status: 'completed', records: 3 },
+  ];
 
-  const handleExport = async (format) => {
-    setExporting(true);
-    // Simulate export
-    setTimeout(() => {
-      setExporting(false);
-      console.log('Exported as', format);
-    }, 1000);
-  };
+  const stats = [
+    { label: 'Verfügbare Exports', value: exports.length },
+    { label: 'Letzte Sicherung', value: 'Heute' },
+    { label: 'Importierte Datensätze (Monat)', value: '183' },
+    { label: 'Speicherverbrauch', value: '2.4 GB' },
+  ];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">📊 Datenimport/Export</h1>
-        <p className="text-slate-600 mt-1">Importieren und exportieren Sie Ihre Daten in verschiedenen Formaten</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">📊 Datenimport/-export</h1>
+          <p className="text-slate-600 mt-1">Verwalten Sie Datensicherungen und Importe</p>
+        </div>
+        <div className="flex gap-2">
+          <Button className="bg-green-600 hover:bg-green-700"><Download className="w-4 h-4 mr-2" />Exportieren</Button>
+          <Button className="bg-blue-600 hover:bg-blue-700"><Upload className="w-4 h-4 mr-2" />Importieren</Button>
+        </div>
       </div>
 
-      <Alert className="bg-blue-50 border-blue-200">
-        <AlertCircle className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-800">
-          Sichern Sie Ihre Daten regelmäßig. Importe können bestehende Daten überschreiben.
-        </AlertDescription>
-      </Alert>
+      <QuickStats stats={stats} accentColor="indigo" />
 
-      <div className="grid grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Upload className="w-5 h-5" /> Daten importieren</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center">
-              <Input 
-                type="file" 
-                accept=".csv,.json,.xlsx" 
-                onChange={handleImport}
-                className="hidden" 
-                id="file-input"
-              />
-              <label htmlFor="file-input" className="cursor-pointer">
-                <FileJson className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                <p className="text-sm text-slate-600">CSV, JSON oder Excel hochladen</p>
-                <p className="text-xs text-slate-500 mt-1">oder zum Hochladen klicken</p>
-              </label>
-            </div>
-            {importFile && (
-              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm text-green-800">✓ {importFile.name} ausgewählt</p>
+      <Tabs defaultValue="export">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="export">Exports</TabsTrigger>
+          <TabsTrigger value="import">Imports</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="export" className="space-y-3">
+          <Card className="border border-slate-200 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="text-base">Neue Datensicherung erstellen</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full bg-green-600 hover:bg-green-700"><Download className="w-4 h-4 mr-2" />Sicherung jetzt durchführen</Button>
+            </CardContent>
+          </Card>
+
+          {exports.map((exp, idx) => (
+            <Card key={idx} className="border border-slate-200">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <FileText className="w-5 h-5 text-slate-600" />
+                      <h3 className="font-semibold text-slate-900">{exp.name}</h3>
+                      <Badge className="bg-green-600">✓ Bereit</Badge>
+                    </div>
+                    <p className="text-xs text-slate-600">{exp.date} • {exp.size}</p>
+                  </div>
+                  <Button size="sm" variant="outline"><Download className="w-4 h-4" /></Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
+
+        <TabsContent value="import" className="space-y-3">
+          <Card className="border border-slate-200 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="text-base">Datei hochladen und importieren</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition-colors">
+                <Upload className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                <p className="text-sm font-semibold text-slate-900">CSV oder Excel Datei hierher ziehen</p>
+                <p className="text-xs text-slate-600">oder klicken zum Auswählen</p>
               </div>
-            )}
-            <Button className="w-full bg-emerald-600 hover:bg-emerald-700" disabled={!importFile}>
-              Importieren
-            </Button>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Download className="w-5 h-5" /> Daten exportieren</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Button onClick={() => handleExport('CSV')} className="w-full bg-slate-600 hover:bg-slate-700" disabled={exporting}>
-                <Download className="w-4 h-4 mr-2" />
-                {exporting ? 'Wird exportiert...' : 'Als CSV exportieren'}
-              </Button>
-              <Button onClick={() => handleExport('JSON')} className="w-full bg-slate-600 hover:bg-slate-700" disabled={exporting}>
-                <Download className="w-4 h-4 mr-2" />
-                {exporting ? 'Wird exportiert...' : 'Als JSON exportieren'}
-              </Button>
-              <Button onClick={() => handleExport('Excel')} className="w-full bg-slate-600 hover:bg-slate-700" disabled={exporting}>
-                <Download className="w-4 h-4 mr-2" />
-                {exporting ? 'Wird exportiert...' : 'Als Excel exportieren'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Unterstützte Datentypen</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            {['Gebäude', 'Wohneinheiten', 'Mieter', 'Verträge', 'Zahlungen', 'Finanzbuchungen'].map((type, idx) => (
-              <div key={idx} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                <p className="text-sm font-semibold text-slate-900">{type}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+          {imports.map((imp, idx) => (
+            <Card key={idx} className="border border-slate-200">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                      <h3 className="font-semibold text-slate-900">{imp.name}</h3>
+                      <Badge className="bg-green-600">✓ Abgeschlossen</Badge>
+                    </div>
+                    <p className="text-xs text-slate-600">{imp.date} • {imp.records} Datensätze importiert</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
