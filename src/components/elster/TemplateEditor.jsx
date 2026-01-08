@@ -6,21 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Save, Plus, Trash2, Eye } from 'lucide-react';
+import { Save, Plus, Edit, Trash2, Copy } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function TemplateEditor() {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const [formData, setFormData] = useState({
-    form_type: 'ANLAGE_V',
-    legal_form: 'PRIVATPERSON',
-    year: new Date().getFullYear(),
-    version: '1.0',
-    description: ''
-  });
-
+  const [editing, setEditing] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: templates = [] } = useQuery({
@@ -30,7 +23,7 @@ export default function TemplateEditor() {
 
   const saveMutation = useMutation({
     mutationFn: (data) => {
-      if (selectedTemplate) {
+      if (selectedTemplate?.id) {
         return base44.entities.ElsterFormTemplate.update(selectedTemplate.id, data);
       }
       return base44.entities.ElsterFormTemplate.create(data);
@@ -38,6 +31,7 @@ export default function TemplateEditor() {
     onSuccess: () => {
       toast.success('Template gespeichert');
       queryClient.invalidateQueries({ queryKey: ['elster-templates'] });
+      setEditing(false);
       setSelectedTemplate(null);
     }
   });
@@ -52,146 +46,221 @@ export default function TemplateEditor() {
   });
 
   const handleSave = () => {
-    saveMutation.mutate(formData);
+    if (!selectedTemplate?.form_type || !selectedTemplate?.legal_form || !selectedTemplate?.year) {
+      toast.error('Pflichtfelder fehlen');
+      return;
+    }
+
+    saveMutation.mutate(selectedTemplate);
+  };
+
+  const handleDuplicate = () => {
+    const duplicate = {
+      ...selectedTemplate,
+      id: undefined,
+      version: (parseFloat(selectedTemplate.version || '1.0') + 0.1).toFixed(1),
+      description: `${selectedTemplate.description} (Kopie)`
+    };
+    setSelectedTemplate(duplicate);
+    setEditing(true);
   };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <Card className="lg:col-span-1">
+      {/* Template List */}
+      <Card>
         <CardHeader>
-          <CardTitle className="text-base flex items-center justify-between">
-            Templates
-            <Button size="sm" onClick={() => setSelectedTemplate(null)}>
-              <Plus className="w-4 h-4 mr-1" />
-              Neu
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Templates</CardTitle>
+            <Button size="sm" onClick={() => {
+              setSelectedTemplate({
+                form_type: '',
+                legal_form: '',
+                year: new Date().getFullYear(),
+                xml_template: '',
+                field_mappings: {},
+                validation_rules: [],
+                is_active: true,
+                version: '1.0'
+              });
+              setEditing(true);
+            }}>
+              <Plus className="w-4 h-4" />
             </Button>
-          </CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-96 overflow-y-auto">
             {templates.map(template => (
               <div
                 key={template.id}
                 onClick={() => {
                   setSelectedTemplate(template);
-                  setFormData({
-                    form_type: template.form_type,
-                    legal_form: template.legal_form,
-                    year: template.year,
-                    version: template.version,
-                    description: template.description
-                  });
+                  setEditing(false);
                 }}
-                className={`p-3 border rounded-lg cursor-pointer hover:bg-slate-50 ${
-                  selectedTemplate?.id === template.id ? 'border-blue-500 bg-blue-50' : ''
+                className={`p-3 border rounded cursor-pointer transition-colors ${
+                  selectedTemplate?.id === template.id
+                    ? 'bg-blue-50 border-blue-200'
+                    : 'hover:bg-slate-50'
                 }`}
               >
                 <div className="font-medium text-sm">{template.form_type}</div>
                 <div className="text-xs text-slate-600">
-                  {template.legal_form} · {template.year}
+                  {template.legal_form} • {template.year}
                 </div>
-                {template.is_active && (
-                  <Badge variant="outline" className="mt-1 text-xs">Aktiv</Badge>
-                )}
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant={template.is_active ? 'default' : 'secondary'} className="text-xs">
+                    v{template.version}
+                  </Badge>
+                  {!template.is_active && (
+                    <Badge variant="outline" className="text-xs">Inaktiv</Badge>
+                  )}
+                </div>
               </div>
             ))}
           </div>
         </CardContent>
       </Card>
 
-      <Card className="lg:col-span-2">
-        <CardHeader>
-          <CardTitle className="text-base">
-            {selectedTemplate ? 'Template bearbeiten' : 'Neues Template'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Formular-Typ</Label>
-              <Select
-                value={formData.form_type}
-                onValueChange={(value) => setFormData({ ...formData, form_type: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ANLAGE_V">Anlage V</SelectItem>
-                  <SelectItem value="EUER">EÜR</SelectItem>
-                  <SelectItem value="EST1B">ESt 1B</SelectItem>
-                  <SelectItem value="GEWERBESTEUER">Gewerbesteuer</SelectItem>
-                  <SelectItem value="UMSATZSTEUER">Umsatzsteuer</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+      {/* Template Editor */}
+      <div className="lg:col-span-2">
+        {selectedTemplate ? (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">
+                  {editing ? 'Template bearbeiten' : 'Template Details'}
+                </CardTitle>
+                <div className="flex gap-2">
+                  {!editing && selectedTemplate.id && (
+                    <>
+                      <Button size="sm" variant="outline" onClick={handleDuplicate}>
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="destructive"
+                        onClick={() => deleteMutation.mutate(selectedTemplate.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Formular-Typ *</Label>
+                  <Select
+                    value={selectedTemplate.form_type}
+                    onValueChange={(v) => setSelectedTemplate({...selectedTemplate, form_type: v})}
+                    disabled={!editing}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ANLAGE_V">Anlage V</SelectItem>
+                      <SelectItem value="EUER">EÜR</SelectItem>
+                      <SelectItem value="EST1B">ESt 1B</SelectItem>
+                      <SelectItem value="GEWERBESTEUER">Gewerbesteuer</SelectItem>
+                      <SelectItem value="UMSATZSTEUER">Umsatzsteuer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div>
-              <Label>Rechtsform</Label>
-              <Select
-                value={formData.legal_form}
-                onValueChange={(value) => setFormData({ ...formData, legal_form: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PRIVATPERSON">Privatperson</SelectItem>
-                  <SelectItem value="GBR">GbR</SelectItem>
-                  <SelectItem value="GMBH">GmbH</SelectItem>
-                  <SelectItem value="UG">UG</SelectItem>
-                  <SelectItem value="AG">AG</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+                <div>
+                  <Label>Rechtsform *</Label>
+                  <Select
+                    value={selectedTemplate.legal_form}
+                    onValueChange={(v) => setSelectedTemplate({...selectedTemplate, legal_form: v})}
+                    disabled={!editing}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PRIVATPERSON">Privatperson</SelectItem>
+                      <SelectItem value="GBR">GbR</SelectItem>
+                      <SelectItem value="GMBH">GmbH</SelectItem>
+                      <SelectItem value="UG">UG</SelectItem>
+                      <SelectItem value="AG">AG</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Jahr</Label>
-              <Input
-                type="number"
-                value={formData.year}
-                onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
-              />
-            </div>
+                <div>
+                  <Label>Jahr *</Label>
+                  <Input
+                    type="number"
+                    value={selectedTemplate.year}
+                    onChange={(e) => setSelectedTemplate({...selectedTemplate, year: parseInt(e.target.value)})}
+                    disabled={!editing}
+                  />
+                </div>
 
-            <div>
-              <Label>Version</Label>
-              <Input
-                value={formData.version}
-                onChange={(e) => setFormData({ ...formData, version: e.target.value })}
-              />
-            </div>
-          </div>
+                <div>
+                  <Label>Version</Label>
+                  <Input
+                    value={selectedTemplate.version}
+                    onChange={(e) => setSelectedTemplate({...selectedTemplate, version: e.target.value})}
+                    disabled={!editing}
+                  />
+                </div>
+              </div>
 
-          <div>
-            <Label>Beschreibung</Label>
-            <Textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Template-Beschreibung..."
-              rows={3}
-            />
-          </div>
+              <div>
+                <Label>Beschreibung</Label>
+                <Textarea
+                  value={selectedTemplate.description || ''}
+                  onChange={(e) => setSelectedTemplate({...selectedTemplate, description: e.target.value})}
+                  disabled={!editing}
+                  rows={2}
+                />
+              </div>
 
-          <div className="flex gap-3">
-            <Button onClick={handleSave} className="flex-1">
-              <Save className="w-4 h-4 mr-2" />
-              Speichern
-            </Button>
-            {selectedTemplate && (
-              <Button
-                variant="destructive"
-                onClick={() => deleteMutation.mutate(selectedTemplate.id)}
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Löschen
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              <div>
+                <Label>XML Template</Label>
+                <Textarea
+                  value={selectedTemplate.xml_template}
+                  onChange={(e) => setSelectedTemplate({...selectedTemplate, xml_template: e.target.value})}
+                  disabled={!editing}
+                  rows={10}
+                  className="font-mono text-xs"
+                />
+              </div>
+
+              {editing && (
+                <div className="flex gap-2">
+                  <Button onClick={handleSave} disabled={saveMutation.isPending}>
+                    <Save className="w-4 h-4 mr-2" />
+                    Speichern
+                  </Button>
+                  <Button variant="outline" onClick={() => {
+                    setEditing(false);
+                    if (!selectedTemplate.id) {
+                      setSelectedTemplate(null);
+                    }
+                  }}>
+                    Abbrechen
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="p-12 text-center text-slate-600">
+              Wählen Sie ein Template aus oder erstellen Sie ein neues
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

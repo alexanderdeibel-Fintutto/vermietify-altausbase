@@ -3,42 +3,55 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Calendar, TrendingUp, AlertTriangle, Building2, Loader2, Download } from 'lucide-react';
+import { Calendar, Download, Loader2, TrendingUp, TrendingDown } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
 export default function YearEndSummary() {
   const [year, setYear] = useState(new Date().getFullYear() - 1);
-  const [loading, setLoading] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [summary, setSummary] = useState(null);
 
-  const generateSummary = async () => {
-    setLoading(true);
+  const handleGenerate = async () => {
+    setGenerating(true);
     try {
-      const response = await base44.functions.invoke('generateYearEndSummary', { tax_year: year });
+      const response = await base44.functions.invoke('generateYearEndSummary', { year });
       
       if (response.data.success) {
-        setSummary(response.data);
+        setSummary(response.data.summary);
         toast.success('Jahresabschluss generiert');
       }
     } catch (error) {
       toast.error('Generierung fehlgeschlagen');
       console.error(error);
     } finally {
-      setLoading(false);
+      setGenerating(false);
     }
+  };
+
+  const handleExport = () => {
+    if (!summary) return;
+
+    const blob = new Blob([JSON.stringify(summary, null, 2)], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `jahresabschluss_${year}.json`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    a.remove();
+    
+    toast.success('Jahresabschluss exportiert');
   };
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
-            Jahresabschluss
-          </CardTitle>
-        </div>
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="w-5 h-5" />
+          Jahresabschluss
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex gap-2">
@@ -47,105 +60,81 @@ export default function YearEndSummary() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[...Array(5)].map((_, i) => {
-                const y = new Date().getFullYear() - i;
+              {[0, 1, 2, 3, 4].map(i => {
+                const y = new Date().getFullYear() - 1 - i;
                 return <SelectItem key={y} value={String(y)}>{y}</SelectItem>;
               })}
             </SelectContent>
           </Select>
-          <Button onClick={generateSummary} disabled={loading}>
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Generieren'}
+          
+          <Button onClick={handleGenerate} disabled={generating}>
+            {generating ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              'Generieren'
+            )}
           </Button>
         </div>
 
         {summary && (
-          <div className="space-y-4 pt-4 border-t">
-            {/* Overall Stats */}
+          <>
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 bg-slate-50 rounded">
-                <div className="text-xs text-slate-600">Submissions</div>
-                <div className="text-2xl font-bold">{summary.summary.total_submissions}</div>
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <div className="text-xs text-blue-600 mb-1">Submissions</div>
+                <div className="text-2xl font-bold text-blue-700">{summary.total_submissions}</div>
               </div>
-              <div className="p-3 bg-slate-50 rounded">
-                <div className="text-xs text-slate-600">Ø Vertrauen</div>
-                <div className="text-2xl font-bold">{summary.summary.avg_confidence}%</div>
+              
+              <div className="p-4 bg-green-50 rounded-lg">
+                <div className="text-xs text-green-600 mb-1">Akzeptiert</div>
+                <div className="text-2xl font-bold text-green-700">{summary.accepted_count}</div>
               </div>
-            </div>
 
-            {/* Financial Summary */}
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="grid grid-cols-3 gap-3 text-sm">
-                <div>
-                  <div className="text-slate-600">Einnahmen</div>
-                  <div className="font-bold text-green-700">
-                    {summary.summary.total_income.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
-                  </div>
+              <div className="p-4 bg-purple-50 rounded-lg">
+                <div className="text-xs text-purple-600 mb-1">Gesamt-Einnahmen</div>
+                <div className="text-xl font-bold text-purple-700">
+                  {summary.total_revenue?.toLocaleString('de-DE')} €
                 </div>
-                <div>
-                  <div className="text-slate-600">Ausgaben</div>
-                  <div className="font-bold text-red-700">
-                    {summary.summary.total_expenses.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-slate-600">Ergebnis</div>
-                  <div className={`font-bold ${summary.summary.net_result >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                    {summary.summary.net_result.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
-                  </div>
+              </div>
+
+              <div className="p-4 bg-orange-50 rounded-lg">
+                <div className="text-xs text-orange-600 mb-1">Gesamt-Ausgaben</div>
+                <div className="text-xl font-bold text-orange-700">
+                  {summary.total_expenses?.toLocaleString('de-DE')} €
                 </div>
               </div>
             </div>
 
-            {/* Recommendations */}
-            {summary.recommendations?.length > 0 && (
-              <div className="space-y-2">
-                <div className="text-sm font-medium">Empfehlungen</div>
-                {summary.recommendations.map((rec, idx) => (
-                  <Alert key={idx} className={rec.priority === 'high' ? 'bg-red-50 border-red-200' : 'bg-yellow-50 border-yellow-200'}>
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      <div className="font-medium">{rec.title}</div>
-                      <div className="text-sm mt-1">{rec.description}</div>
-                      <div className="text-xs mt-1 text-slate-600">→ {rec.action}</div>
-                    </AlertDescription>
-                  </Alert>
-                ))}
+            {summary.year_over_year && (
+              <div className="p-3 border rounded">
+                <div className="text-sm font-medium mb-2">Jahresvergleich</div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600">vs. Vorjahr</span>
+                  <div className="flex items-center gap-2">
+                    {summary.year_over_year.change > 0 ? (
+                      <>
+                        <TrendingUp className="w-4 h-4 text-green-600" />
+                        <Badge className="bg-green-100 text-green-800">
+                          +{summary.year_over_year.change}%
+                        </Badge>
+                      </>
+                    ) : (
+                      <>
+                        <TrendingDown className="w-4 h-4 text-red-600" />
+                        <Badge className="bg-red-100 text-red-800">
+                          {summary.year_over_year.change}%
+                        </Badge>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* Building Breakdown */}
-            <div className="space-y-2">
-              <div className="text-sm font-medium flex items-center gap-2">
-                <Building2 className="w-4 h-4" />
-                Pro Gebäude
-              </div>
-              {summary.building_breakdown?.map((building, idx) => (
-                <div key={idx} className="p-3 border rounded text-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="font-medium">{building.building_name}</div>
-                    <Badge variant="outline">{building.submissions_count || 0} Submissions</Badge>
-                  </div>
-                  {building.status !== 'no_submission' && (
-                    <div className="grid grid-cols-3 gap-2 text-xs text-slate-600">
-                      <div>
-                        <span className="text-green-600">
-                          {building.income?.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-red-600">
-                          -{building.expenses?.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
-                        </span>
-                      </div>
-                      <div className={building.net_result >= 0 ? 'text-green-600' : 'text-red-600'}>
-                        {building.net_result?.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+            <Button onClick={handleExport} variant="outline" className="w-full">
+              <Download className="w-4 h-4 mr-2" />
+              JSON exportieren
+            </Button>
+          </>
         )}
       </CardContent>
     </Card>

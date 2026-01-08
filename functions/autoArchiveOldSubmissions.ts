@@ -3,77 +3,85 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
 
-    console.log('[AUTO ARCHIVE] Starting automatic archiving');
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    // Hole alle akzeptierten Submissions älter als das aktuelle Steuerjahr minus 2
-    const currentYear = new Date().getFullYear();
-    const archiveThreshold = currentYear - 2;
+    if (user.role !== 'admin') {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
+
+    const { archive_after_days = 365, dry_run = false } = await req.json();
+
+    console.log(`[AUTO-ARCHIVE] Starting ${dry_run ? 'dry run' : 'actual'} archiving`);
+
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - archive_after_days);
 
     const submissions = await base44.asServiceRole.entities.ElsterSubmission.filter({
       status: 'ACCEPTED',
-      tax_year: { $lt: archiveThreshold }
+      submission_date: { $lt: cutoffDate.toISOString() }
     });
 
-    const archived = [];
-    const failed = [];
+    const results = {
+      total_found: submissions.length,
+      archived: 0,
+      skipped: 0,
+      errors: []
+    };
 
     for (const submission of submissions) {
-      if (submission.status === 'ARCHIVED') {
-        continue; // Already archived
-      }
-
       try {
-        // Erstelle Backup vor Archivierung
-        await base44.asServiceRole.functions.invoke('createSubmissionBackup', {
-          submission_id: submission.id,
-          reason: 'Automatische GoBD-Archivierung'
-        });
+        if (submission.status === 'ARCHIVED') {
+          results.skipped++;
+          continue;
+        }
 
-        // Update Status zu ARCHIVED
-        await base44.asServiceRole.entities.ElsterSubmission.update(submission.id, {
-          status: 'ARCHIVED',
-          archived_at: new Date().toISOString(),
-          metadata: {
-            ...submission.metadata,
-            archive_reason: 'Automatische Archivierung nach 2 Jahren',
-            archive_date: new Date().toISOString()
-          }
-        });
+        if (!dry_run) {
+          // Erstelle Backup vor Archivierung
+          await base44.asServiceRole.functions.invoke('createSubmissionBackup', {
+            submission_id: submission.id,
+            backup_type: 'auto_archive'
+          });
 
-        // Log Audit Event
-        await base44.asServiceRole.functions.invoke('logElsterAuditEvent', {
-          submission_id: submission.id,
-          event_type: 'AUTO_ARCHIVED',
-          details: `Automatisch archiviert (Steuerjahr ${submission.tax_year})`,
-          metadata: { threshold_year: archiveThreshold }
-        });
+          // Archiviere
+          await base44.asServiceRole.entities.ElsterSubmission.update(submission.id, {
+            status: 'ARCHIVED',
+            archived_at: new Date().toISOString()
+          });
 
-        archived.push({
-          id: submission.id,
-          tax_year: submission.tax_year,
-          form_type: submission.tax_form_type
-        });
+          // Log
+          await base44.asServiceRole.entities.ActivityLog.create({
+            entity_type: 'ElsterSubmission',
+            entity_id: submission.id,
+            action: 'auto_archived',
+            user_id: user.id,
+            metadata: {
+              archive_after_days,
+              original_submission_date: submission.submission_date
+            }
+          });
+        }
 
-        console.log(`[ARCHIVED] ${submission.id} (${submission.tax_year})`);
+        results.archived++;
 
       } catch (error) {
-        failed.push({
-          id: submission.id,
+        console.error(`[ERROR] Failed to archive ${submission.id}:`, error);
+        results.errors.push({
+          submission_id: submission.id,
           error: error.message
         });
-        console.error(`[ERROR] Failed to archive ${submission.id}:`, error.message);
       }
     }
 
-    console.log(`[SUCCESS] Archived ${archived.length}, Failed ${failed.length}`);
+    console.log(`[AUTO-ARCHIVE] Complete: ${results.archived} archived, ${results.skipped} skipped`);
 
     return Response.json({
       success: true,
-      archived_count: archived.length,
-      failed_count: failed.length,
-      archived,
-      failed
+      dry_run,
+      results
     });
 
   } catch (error) {

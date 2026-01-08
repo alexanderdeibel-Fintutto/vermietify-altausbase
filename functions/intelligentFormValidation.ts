@@ -9,149 +9,139 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { submission_id } = await req.json();
+    const { form_data, form_type, legal_form, building_id, tax_year } = await req.json();
 
-    if (!submission_id) {
-      return Response.json({ error: 'submission_id required' }, { status: 400 });
+    if (!form_data || !form_type || !legal_form) {
+      return Response.json({ error: 'form_data, form_type and legal_form required' }, { status: 400 });
     }
 
-    console.log(`[VALIDATE] Intelligent validation for ${submission_id}`);
+    console.log(`[INTELLIGENT-VALIDATION] Validating ${form_type}`);
 
-    const submissions = await base44.entities.ElsterSubmission.filter({ id: submission_id });
-    if (!submissions || submissions.length === 0) {
-      return Response.json({ error: 'Submission not found' }, { status: 404 });
+    const validation = {
+      is_valid: true,
+      errors: [],
+      warnings: [],
+      suggestions: [],
+      confidence_score: 100,
+      context_checks: {}
+    };
+
+    // Hole historische Daten für Kontext
+    let historicalData = [];
+    if (building_id) {
+      historicalData = await base44.entities.ElsterSubmission.filter({
+        building_id,
+        tax_form_type: form_type,
+        status: { $in: ['ACCEPTED', 'SUBMITTED'] }
+      });
     }
 
-    const submission = submissions[0];
-    const errors = [];
-    const warnings = [];
-    const suggestions = [];
-    const data = submission.form_data || {};
+    // 1. Pflichtfeld-Prüfung
+    const requiredFields = {
+      ANLAGE_V: ['einnahmen_gesamt', 'werbungskosten_gesamt'],
+      EUER: ['betriebseinnahmen', 'betriebsausgaben'],
+      GEWERBESTEUER: ['gewinn', 'hinzurechnungen'],
+      UMSATZSTEUER: ['umsatz_gesamt', 'vorsteuer']
+    };
 
-    // Grundlegende Pflichtfeld-Validierung
-    const requiredFields = ['income_rent', 'expense_property_tax'];
-    requiredFields.forEach(field => {
-      if (!data[field] || data[field] === 0) {
-        errors.push({
+    const required = requiredFields[form_type] || [];
+    required.forEach(field => {
+      if (!form_data[field] && form_data[field] !== 0) {
+        validation.errors.push({
           field,
-          code: 'REQUIRED_FIELD',
-          message: `Pflichtfeld "${field}" fehlt oder ist 0`,
-          severity: 'error'
+          message: `Pflichtfeld fehlt: ${field}`,
+          severity: 'HIGH'
         });
+        validation.is_valid = false;
       }
     });
 
-    // Plausibilitätsprüfungen
-    if (data.income_rent && data.income_rent < 0) {
-      errors.push({
-        field: 'income_rent',
-        code: 'NEGATIVE_INCOME',
-        message: 'Mieteinnahmen können nicht negativ sein',
-        severity: 'error'
-      });
-    }
+    // 2. Numerische Plausibilität
+    Object.entries(form_data).forEach(([key, value]) => {
+      const num = parseFloat(value);
+      if (!isNaN(num)) {
+        if (num < 0 && !key.includes('verlust') && !key.includes('ausgaben')) {
+          validation.warnings.push({
+            field: key,
+            message: `Negativer Wert bei ${key}: ${num}`,
+            severity: 'MEDIUM'
+          });
+        }
 
-    // Werbungskosten höher als Einnahmen
-    const totalExpenses = (data.expense_property_tax || 0) + 
-                          (data.expense_insurance || 0) + 
-                          (data.expense_maintenance || 0) + 
-                          (data.expense_administration || 0) +
-                          (data.afa_amount || 0);
-
-    if (totalExpenses > (data.income_rent || 0) * 2) {
-      warnings.push({
-        field: 'expenses',
-        code: 'HIGH_EXPENSES',
-        message: `Werbungskosten (${totalExpenses.toFixed(2)}€) sind mehr als doppelt so hoch wie Einnahmen`,
-        severity: 'warning'
-      });
-    }
-
-    // AfA-Plausibilität
-    if (data.building_cost && data.afa_amount) {
-      const expectedAfa = data.building_cost * 0.02; // 2% linear
-      const deviation = Math.abs(data.afa_amount - expectedAfa) / expectedAfa;
-      
-      if (deviation > 0.1) {
-        warnings.push({
-          field: 'afa_amount',
-          code: 'AFA_DEVIATION',
-          message: `AfA-Betrag weicht um ${(deviation * 100).toFixed(1)}% vom erwarteten Wert ab (erwartet: ${expectedAfa.toFixed(2)}€)`,
-          severity: 'warning',
-          suggestion: `Prüfen Sie, ob der AfA-Satz korrekt ist (üblicherweise 2% für Wohngebäude)`
-        });
-      }
-    }
-
-    // Vergleich mit historischen Daten
-    const historicalSubmissions = await base44.entities.ElsterSubmission.filter({
-      building_id: submission.building_id,
-      tax_form_type: submission.tax_form_type,
-      status: 'ACCEPTED'
-    });
-
-    if (historicalSubmissions.length > 0) {
-      const lastYear = historicalSubmissions.sort((a, b) => b.tax_year - a.tax_year)[0];
-      
-      if (lastYear.form_data?.income_rent) {
-        const rentChange = ((data.income_rent - lastYear.form_data.income_rent) / lastYear.form_data.income_rent) * 100;
-        
-        if (Math.abs(rentChange) > 20) {
-          warnings.push({
-            field: 'income_rent',
-            code: 'RENT_CHANGE',
-            message: `Mieteinnahmen haben sich um ${rentChange.toFixed(1)}% geändert (Vorjahr: ${lastYear.form_data.income_rent.toFixed(2)}€)`,
-            severity: 'info',
-            suggestion: 'Bei größeren Änderungen sollte eine Begründung vorliegen'
+        if (Math.abs(num) > 10000000) {
+          validation.warnings.push({
+            field: key,
+            message: `Ungewöhnlich hoher Wert bei ${key}: ${num}`,
+            severity: 'MEDIUM'
           });
         }
       }
-    }
-
-    // Fehlende Optimierungen
-    if (!data.expense_maintenance || data.expense_maintenance === 0) {
-      suggestions.push({
-        field: 'expense_maintenance',
-        message: 'Keine Instandhaltungskosten angegeben',
-        benefit: 'Instandhaltungskosten sind sofort absetzbar und reduzieren Ihre Steuerlast',
-        action: 'Prüfen Sie, ob im Jahr Reparaturen durchgeführt wurden'
-      });
-    }
-
-    if (!data.expense_administration || data.expense_administration < 100) {
-      suggestions.push({
-        field: 'expense_administration',
-        message: 'Verwaltungskosten scheinen niedrig',
-        benefit: 'Kontoführungsgebühren, Software, Steuerberatung können angesetzt werden',
-        action: 'Überprüfen Sie alle administrativen Aufwendungen'
-      });
-    }
-
-    // KI-Confidence Score
-    let confidence = 100;
-    confidence -= errors.length * 20;
-    confidence -= warnings.length * 10;
-    confidence = Math.max(0, Math.min(100, confidence));
-
-    // Update Submission
-    await base44.entities.ElsterSubmission.update(submission_id, {
-      validation_errors: errors,
-      validation_warnings: warnings,
-      ai_confidence_score: confidence,
-      status: errors.length === 0 ? 'VALIDATED' : submission.status
     });
 
-    console.log(`[SUCCESS] Validation complete: ${errors.length} errors, ${warnings.length} warnings`);
+    // 3. Historischer Kontext
+    if (historicalData.length > 0) {
+      const avgValues = {};
+      historicalData.forEach(sub => {
+        Object.entries(sub.form_data || {}).forEach(([key, value]) => {
+          const num = parseFloat(value);
+          if (!isNaN(num)) {
+            avgValues[key] = (avgValues[key] || []).concat(num);
+          }
+        });
+      });
+
+      Object.entries(avgValues).forEach(([key, values]) => {
+        const avg = values.reduce((a, b) => a + b, 0) / values.length;
+        const currentValue = parseFloat(form_data[key]);
+
+        if (!isNaN(currentValue) && avg > 0) {
+          const deviation = Math.abs((currentValue - avg) / avg * 100);
+          
+          if (deviation > 50) {
+            validation.warnings.push({
+              field: key,
+              message: `${key} weicht ${Math.round(deviation)}% vom historischen Durchschnitt ab`,
+              severity: 'LOW'
+            });
+            validation.suggestions.push({
+              field: key,
+              suggestion: `Historischer Durchschnitt: ${Math.round(avg)}`,
+              confidence: 70
+            });
+          }
+        }
+      });
+
+      validation.context_checks.historical_comparison = 'completed';
+    }
+
+    // 4. Logische Konsistenz
+    if (form_type === 'ANLAGE_V') {
+      const einnahmen = parseFloat(form_data.einnahmen_gesamt || 0);
+      const ausgaben = parseFloat(form_data.werbungskosten_gesamt || 0);
+      const ueberschuss = parseFloat(form_data.ueberschuss || 0);
+      
+      const calculatedUeberschuss = einnahmen - ausgaben;
+      if (Math.abs(ueberschuss - calculatedUeberschuss) > 1) {
+        validation.errors.push({
+          field: 'ueberschuss',
+          message: `Überschuss stimmt nicht: Erwartet ${calculatedUeberschuss}, gefunden ${ueberschuss}`,
+          severity: 'HIGH'
+        });
+        validation.is_valid = false;
+      }
+    }
+
+    // Berechne Confidence Score
+    const errorPenalty = validation.errors.length * 20;
+    const warningPenalty = validation.warnings.length * 5;
+    validation.confidence_score = Math.max(0, 100 - errorPenalty - warningPenalty);
+
+    console.log(`[INTELLIGENT-VALIDATION] Complete: ${validation.errors.length} errors, ${validation.warnings.length} warnings`);
 
     return Response.json({
       success: true,
-      validation: {
-        is_valid: errors.length === 0,
-        confidence_score: confidence,
-        errors,
-        warnings,
-        suggestions
-      }
+      validation
     });
 
   } catch (error) {
