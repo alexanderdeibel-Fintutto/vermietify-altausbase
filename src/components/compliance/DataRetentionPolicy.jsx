@@ -1,88 +1,78 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Database, Trash2 } from 'lucide-react';
+import { Calendar, Database } from 'lucide-react';
 
 export default function DataRetentionPolicy() {
   const policies = [
     {
-      category: 'Benutzerdaten',
-      retention: 'Bis zur Löschung',
-      description: 'Persönliche Informationen werden bis zur aktiven Löschung durch Admin aufbewahrt',
-      icon: Database,
-      color: 'blue'
+      entity: 'User',
+      retention: 'Unbegrenzt (solange Account aktiv)',
+      deletion: 'Bei Account-Löschung oder auf Anfrage (GDPR)',
+      category: 'Personenbezogen'
     },
     {
-      category: 'Aktivitäts-Logs',
+      entity: 'UserActivity',
       retention: '2 Jahre',
-      description: 'Logs werden 2 Jahre für Audit-Zwecke aufbewahrt, dann automatisch gelöscht',
-      icon: Clock,
-      color: 'green'
+      deletion: 'Automatisch nach Ablauf',
+      category: 'Logs'
     },
     {
-      category: 'Test-Sessions',
+      entity: 'TestSession',
       retention: '1 Jahr',
-      description: 'Tester-Daten werden 1 Jahr aufbewahrt für Analyse-Zwecke',
-      icon: Clock,
-      color: 'purple'
+      deletion: 'Automatisch nach Ablauf',
+      category: 'Logs'
     },
     {
-      category: 'Gelöschte Accounts',
-      retention: '30 Tage',
-      description: 'Anonymisierte Daten gelöschter Accounts für rechtliche Absicherung',
-      icon: Trash2,
-      color: 'orange'
+      entity: 'APIKey',
+      retention: 'Bis Widerruf',
+      deletion: 'Manuell oder automatisch bei Ablauf',
+      category: 'Security'
+    },
+    {
+      entity: 'UserRoleAssignment',
+      retention: 'Unbegrenzt',
+      deletion: 'Bei Rollen-Entzug',
+      category: 'Permissions'
     }
   ];
-
-  const getColorClasses = (color) => {
-    const colors = {
-      blue: 'bg-blue-50 border-blue-200 text-blue-900',
-      green: 'bg-green-50 border-green-200 text-green-900',
-      purple: 'bg-purple-50 border-purple-200 text-purple-900',
-      orange: 'bg-orange-50 border-orange-200 text-orange-900'
-    };
-    return colors[color] || colors.blue;
-  };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Aufbewahrungsrichtlinien</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="w-5 h-5" />
+          Datenaufbewahrungsrichtlinien
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {policies.map((policy, idx) => {
-            const Icon = policy.icon;
-            return (
-              <div 
-                key={idx}
-                className={`p-4 border rounded-lg ${getColorClasses(policy.color)}`}
-              >
-                <div className="flex items-start gap-3">
-                  <Icon className="w-5 h-5 mt-0.5" />
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold">{policy.category}</h3>
-                      <Badge variant="outline" className="bg-white">
-                        {policy.retention}
-                      </Badge>
-                    </div>
-                    <p className="text-sm">{policy.description}</p>
-                  </div>
+        <div className="space-y-3">
+          {policies.map((policy, idx) => (
+            <div key={idx} className="p-4 border rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <Database className="w-4 h-4 text-slate-400" />
+                  <span className="font-medium">{policy.entity}</span>
+                </div>
+                <Badge variant="outline">{policy.category}</Badge>
+              </div>
+              <div className="text-sm space-y-1 ml-7">
+                <div>
+                  <span className="text-slate-600">Aufbewahrung: </span>
+                  <span className="font-medium">{policy.retention}</span>
+                </div>
+                <div>
+                  <span className="text-slate-600">Löschung: </span>
+                  <span>{policy.deletion}</span>
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
+        </div>
 
-          <div className="mt-6 p-4 bg-slate-50 border border-slate-200 rounded-lg">
-            <h4 className="font-semibold mb-2">Automatische Prozesse</h4>
-            <ul className="text-sm text-slate-700 space-y-1">
-              <li>• Aktivitäts-Logs älter als 2 Jahre werden monatlich gelöscht</li>
-              <li>• Test-Sessions älter als 1 Jahr werden vierteljährlich archiviert</li>
-              <li>• Anonymisierte Account-Daten werden nach 30 Tagen endgültig gelöscht</li>
-            </ul>
-          </div>
+        <div className="mt-6 p-4 bg-blue-50 rounded-lg text-sm text-blue-800">
+          <strong>Hinweis:</strong> Diese Richtlinien entsprechen den Anforderungen der DSGVO 
+          und können in der Funktion <code>cleanupOldData</code> konfiguriert werden.
         </div>
       </CardContent>
     </Card>
