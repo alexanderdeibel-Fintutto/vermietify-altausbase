@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -77,70 +78,65 @@ export default function NotificationManagement() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
         <h1 className="text-2xl font-bold text-slate-900">Benachrichtigungen verwalten</h1>
         <p className="text-slate-600">System-weite Benachrichtigungen erstellen und verwalten</p>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[
+          { icon: Bell, label: "Gesamt", value: stats.total, color: "blue" },
+          { icon: Bell, label: "Ungelesen", value: stats.unread, badge: true, color: "red" },
+          { icon: Users, label: "Empfänger", value: users.length, color: "green" },
+          { icon: BarChart3, label: "Nach Typ", stats: stats.byType }
+        ].map((stat, idx) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + idx * 0.05 }}
+          >
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-slate-600">Gesamt</div>
-                <div className="text-2xl font-bold">{stats.total}</div>
+            {stat.stats ? (
+              <>
+                <div className="text-sm text-slate-600 mb-2">Nach Typ</div>
+                <div className="space-y-1 text-xs">
+                  {Object.entries(stat.stats).map(([key, val]) => (
+                    <div key={key} className="flex justify-between">
+                      <span>{key.charAt(0).toUpperCase() + key.slice(1)}:</span>
+                      <span className="font-medium">{val}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm text-slate-600">{stat.label}</div>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                </div>
+                {stat.badge ? (
+                  <Badge className="bg-red-600">{stat.value}</Badge>
+                ) : (
+                  <stat.icon className={`w-8 h-8 text-${stat.color}-600`} />
+                )}
               </div>
-              <Bell className="w-8 h-8 text-blue-600" />
-            </div>
+            )}
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-slate-600">Ungelesen</div>
-                <div className="text-2xl font-bold">{stats.unread}</div>
-              </div>
-              <Badge className="bg-red-600">{stats.unread}</Badge>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm text-slate-600">Empfänger</div>
-                <div className="text-2xl font-bold">{users.length}</div>
-              </div>
-              <Users className="w-8 h-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-sm text-slate-600 mb-2">Nach Typ</div>
-            <div className="space-y-1 text-xs">
-              <div className="flex justify-between">
-                <span>Info:</span>
-                <span className="font-medium">{stats.byType.info}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Erfolg:</span>
-                <span className="font-medium">{stats.byType.success}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Warnung:</span>
-                <span className="font-medium">{stats.byType.warning}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Fehler:</span>
-                <span className="font-medium">{stats.byType.error}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          </motion.div>
+        ))}
       </div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
       <Tabs defaultValue="send">
         <TabsList>
           <TabsTrigger value="send">Benachrichtigung senden</TabsTrigger>
@@ -245,6 +241,7 @@ export default function NotificationManagement() {
           </Card>
         </TabsContent>
       </Tabs>
+      </motion.div>
     </div>
   );
 }

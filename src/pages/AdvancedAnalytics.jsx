@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,7 +58,11 @@ export default function AdvancedAnalytics() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
+      >
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Advanced Analytics</h1>
           <p className="text-slate-600">Detaillierte Analyse & Trends</p>
@@ -66,56 +71,44 @@ export default function AdvancedAnalytics() {
           reportType="Analytics Report"
           reportData={analytics}
         />
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[
+          { icon: BarChart3, label: "Aktivitäten", value: analytics.totalActivities, color: "blue" },
+          { icon: Users, label: "Aktive User", value: analytics.activeUsers, color: "green" },
+          { icon: TrendingUp, label: "Ø pro User", value: analytics.avgActivitiesPerUser.toFixed(1), color: "purple" },
+          { icon: Package, label: "Module Revenue", value: `€${analytics.moduleStats.revenue.toFixed(0)}`, color: "orange" }
+        ].map((stat, idx) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + idx * 0.05 }}
+          >
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-600">Aktivitäten</p>
-                <p className="text-2xl font-bold">{analytics.totalActivities}</p>
+                <p className="text-sm text-slate-600">{stat.label}</p>
+                <p className={`text-2xl font-bold ${stat.color !== 'blue' ? `text-${stat.color}-600` : ''}`}>
+                  {stat.value}
+                </p>
               </div>
-              <BarChart3 className="w-8 h-8 text-blue-600" />
+              <stat.icon className={`w-8 h-8 text-${stat.color}-600`} />
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Aktive User</p>
-                <p className="text-2xl font-bold">{analytics.activeUsers}</p>
-              </div>
-              <Users className="w-8 h-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Ø pro User</p>
-                <p className="text-2xl font-bold">{analytics.avgActivitiesPerUser.toFixed(1)}</p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Module Revenue</p>
-                <p className="text-2xl font-bold">€{analytics.moduleStats.revenue.toFixed(0)}</p>
-              </div>
-              <Package className="w-8 h-8 text-orange-600" />
-            </div>
-          </CardContent>
-        </Card>
+          </motion.div>
+        ))}
       </div>
 
-      <div className="flex items-center gap-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="flex items-center gap-4"
+      >
         <span className="text-sm font-medium">Zeitraum:</span>
         <Select value={timeRange} onValueChange={setTimeRange}>
           <SelectTrigger className="w-48">
@@ -128,8 +121,13 @@ export default function AdvancedAnalytics() {
             <SelectItem value="90">Letzte 90 Tage</SelectItem>
           </SelectContent>
         </Select>
-      </div>
+      </motion.div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
       <Tabs defaultValue="activity">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="activity">Aktivitäten</TabsTrigger>
@@ -200,6 +198,7 @@ export default function AdvancedAnalytics() {
           </Card>
         </TabsContent>
       </Tabs>
+      </motion.div>
     </div>
   );
 }

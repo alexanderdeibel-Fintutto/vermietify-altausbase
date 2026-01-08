@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -141,7 +142,11 @@ export default function ProjectManagement() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <motion.div 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-between"
+            >
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900">🚀 Projekt-Management</h1>
                     <p className="text-sm text-slate-600 mt-1">
@@ -179,9 +184,14 @@ export default function ProjectManagement() {
                         Neues Feature
                     </Button>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Live-Übersicht */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+            >
             <Card className="border-2 border-purple-300 bg-purple-50">
                 <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2">
@@ -190,71 +200,44 @@ export default function ProjectManagement() {
                     </CardTitle>
                 </CardHeader>
             </Card>
+            </motion.div>
 
             {/* Live-Statistik Dashboard */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {[
+                    { icon: Code, label: "In Entwicklung", value: inEntwicklung.length, color: "blue" },
+                    { icon: Clock, label: "Geplant", value: geplant.length, color: "slate" },
+                    { icon: CheckCircle2, label: "Fertig", value: fertig.length, color: "green" },
+                    { icon: Bug, label: "Offene Bugs", value: offeneBugs.length, color: "red" },
+                    { icon: TrendingUp, label: "Ø Fortschritt", value: `${avgProgress}%`, color: "purple" }
+                ].map((stat, idx) => (
+                    <motion.div
+                        key={stat.label}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 + idx * 0.05 }}
+                    >
                 <Card>
                     <CardContent className="p-4">
                         <div className="flex items-center gap-3">
-                            <Code className="w-8 h-8 text-blue-600" />
+                            <stat.icon className={`w-8 h-8 text-${stat.color}-600`} />
                             <div>
-                                <p className="text-2xl font-bold text-slate-900">{inEntwicklung.length}</p>
-                                <p className="text-xs text-slate-600">In Entwicklung</p>
+                                <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
+                                <p className="text-xs text-slate-600">{stat.label}</p>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
-
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                            <Clock className="w-8 h-8 text-slate-600" />
-                            <div>
-                                <p className="text-2xl font-bold text-slate-900">{geplant.length}</p>
-                                <p className="text-xs text-slate-600">Geplant</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                            <CheckCircle2 className="w-8 h-8 text-green-600" />
-                            <div>
-                                <p className="text-2xl font-bold text-slate-900">{fertig.length}</p>
-                                <p className="text-xs text-slate-600">Fertig</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                            <Bug className="w-8 h-8 text-red-600" />
-                            <div>
-                                <p className="text-2xl font-bold text-slate-900">{offeneBugs.length}</p>
-                                <p className="text-xs text-slate-600">Offene Bugs</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                            <TrendingUp className="w-8 h-8 text-purple-600" />
-                            <div>
-                                <p className="text-2xl font-bold text-slate-900">{avgProgress}%</p>
-                                <p className="text-xs text-slate-600">Ø Fortschritt</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                    </motion.div>
+                ))}
             </div>
 
             {/* Tabs */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+            >
             <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="roadmap">
@@ -637,6 +620,7 @@ export default function ProjectManagement() {
                     </Card>
                 </TabsContent>
             </Tabs>
+            </motion.div>
 
             {/* Feature Dialog */}
             <FeatureDialog
