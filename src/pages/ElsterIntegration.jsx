@@ -124,6 +124,8 @@ import DataQualityScore from '@/components/elster/DataQualityScore';
 import SmartFormSuggestions from '@/components/elster/SmartFormSuggestions';
 import SystemHealthCard from '@/components/elster/SystemHealthCard';
 import BulkValidationTool from '@/components/elster/BulkValidationTool';
+import DataCleanupTool from '@/components/elster/DataCleanupTool';
+import AdvancedValidationPanel from '@/components/elster/AdvancedValidationPanel';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -511,6 +513,7 @@ export default function ElsterIntegration() {
                   <SystemHealthCheck />
                 </div>
                 <div className="space-y-6">
+                  <DataCleanupTool />
                   <TaxLawUpdatesMonitor />
                   <IntegrationHealthMonitor />
                 </div>
