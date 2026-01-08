@@ -1,117 +1,75 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-const calculateLevenshteinDistance = (str1, str2) => {
-  const matrix = [];
-  
-  for (let i = 0; i <= str2.length; i++) {
-    matrix[i] = [i];
-  }
-  
-  for (let j = 0; j <= str1.length; j++) {
-    matrix[0][j] = j;
-  }
-  
-  for (let i = 1; i <= str2.length; i++) {
-    for (let j = 1; j <= str1.length; j++) {
-      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1,
-          matrix[i][j - 1] + 1,
-          matrix[i - 1][j] + 1
-        );
-      }
-    }
-  }
-  
-  return matrix[str2.length][str1.length];
-};
-
-const calculateLevenshteinSimilarity = (str1, str2) => {
-  const distance = calculateLevenshteinDistance(str1.toLowerCase(), str2.toLowerCase());
-  const maxLength = Math.max(str1.length, str2.length);
-  return ((maxLength - distance) / maxLength) * 100;
-};
-
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-
+    
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { report_id } = await req.json();
+    const { problem } = await req.json();
 
-    const newReport = await base44.entities.UserProblem.filter({ id: report_id });
-    if (!newReport || newReport.length === 0) {
-      return Response.json({ error: 'Report not found' }, { status: 404 });
-    }
+    // Alle Problem-Reports holen
+    const allProblems = await base44.asServiceRole.entities.UserProblem.list('-created_date', 500);
 
-    const report = newReport[0];
-    const allReports = await base44.asServiceRole.entities.UserProblem.list();
-
-    const similarities = allReports
-      .filter(r => r.id !== report.id)
-      .map(existingReport => {
+    // Ähnlichkeit berechnen
+    const similarReports = allProblems
+      .filter(p => p.id !== problem.id)
+      .map(p => {
         let similarityScore = 0;
-        const reasons = [];
 
-        if (report.element_selector && report.element_selector === existingReport.element_selector) {
-          similarityScore += 60;
-          reasons.push("Gleiches UI-Element");
-        }
+        // Gleicher Business-Bereich (40 Punkte)
+        if (p.business_area === problem.business_area) similarityScore += 40;
 
-        if (report.page_url && report.page_url === existingReport.page_url && 
-            report.problem_type === existingReport.problem_type) {
-          similarityScore += 40;
-          reasons.push("Gleiche Seite + Problem-Typ");
-        }
+        // Gleicher Problem-Typ (30 Punkte)
+        if (p.problem_type === problem.problem_type) similarityScore += 30;
 
-        if (report.business_area && report.business_area === existingReport.business_area) {
-          similarityScore += 25;
-          reasons.push("Gleicher Business-Bereich");
-        }
+        // Ähnlicher Titel (20 Punkte)
+        const titleSimilarity = calculateTextSimilarity(p.problem_titel, problem.problem_titel);
+        similarityScore += titleSimilarity * 20;
 
-        if (report.problem_titel && existingReport.problem_titel) {
-          const titleSimilarity = calculateLevenshteinSimilarity(
-            report.problem_titel, 
-            existingReport.problem_titel
-          );
-          if (titleSimilarity > 70) {
-            similarityScore += 30;
-            reasons.push(`Ähnlicher Titel (${Math.round(titleSimilarity)}%)`);
-          }
-        }
-
-        if (report.functional_severity && report.functional_severity === existingReport.functional_severity) {
-          similarityScore += 15;
-          reasons.push("Gleiche funktionale Schwere");
-        }
+        // Gleiche Seite/Element (10 Punkte)
+        if (p.page_url === problem.page_url) similarityScore += 5;
+        if (p.element_selector === problem.element_selector) similarityScore += 5;
 
         return {
-          report_id: existingReport.id,
-          report_title: existingReport.problem_titel,
+          problem: p,
           similarity_score: similarityScore,
-          similarity_reasons: reasons
+          match_reasons: [
+            p.business_area === problem.business_area && 'Gleicher Geschäftsbereich',
+            p.problem_type === problem.problem_type && 'Gleicher Problem-Typ',
+            p.page_url === problem.page_url && 'Gleiche Seite',
+            p.element_selector === problem.element_selector && 'Gleiches Element',
+            titleSimilarity > 0.5 && 'Ähnlicher Titel'
+          ].filter(Boolean)
         };
       })
-      .filter(s => s.similarity_score >= 50)
+      .filter(result => result.similarity_score >= 30)
       .sort((a, b) => b.similarity_score - a.similarity_score)
-      .slice(0, 5);
+      .slice(0, 10);
 
-    if (similarities.length > 0) {
-      await base44.asServiceRole.entities.UserProblem.update(report_id, {
-        related_reports: similarities.map(s => s.report_id)
-      });
-    }
-
-    return Response.json({ similarities });
+    return Response.json({
+      similar_reports: similarReports,
+      count: similarReports.length,
+      is_potential_duplicate: similarReports.length > 0 && similarReports[0].similarity_score >= 70
+    });
 
   } catch (error) {
     console.error('Error finding similar reports:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
+
+function calculateTextSimilarity(text1, text2) {
+  if (!text1 || !text2) return 0;
+  
+  const words1 = text1.toLowerCase().split(/\s+/);
+  const words2 = text2.toLowerCase().split(/\s+/);
+  
+  const commonWords = words1.filter(word => words2.includes(word));
+  const similarity = (2 * commonWords.length) / (words1.length + words2.length);
+  
+  return similarity;
+}

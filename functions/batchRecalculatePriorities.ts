@@ -1,180 +1,62 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-const calculateProblemPriority = (report) => {
-  let baseScore = 0;
-  const breakdown = {
-    functional_impact: 0,
-    ux_impact: 0,
-    business_criticality: 0,
-    user_impact: 0,
-    frequency_bonus: 0,
-    urgency_factor: 0
-  };
-
-  // 1. FUNKTIONALE SCHWERE
-  if (report.problem_type === "functional_bug" && report.functional_severity) {
-    const functionalScores = {
-      app_breaking: 200,
-      feature_blocking: 150,
-      workflow_impacting: 100,
-      minor_bug: 50,
-      cosmetic: 10
-    };
-    breakdown.functional_impact = functionalScores[report.functional_severity] || 0;
-    baseScore += breakdown.functional_impact;
-    
-    if (report.functional_details) {
-      if (report.functional_details.causes_data_loss) baseScore += 100;
-      if (report.functional_details.breaks_core_workflow) baseScore += 50;
-      if (report.functional_details.affects_multiple_users) baseScore += 25;
-      if (!report.functional_details.has_workaround) baseScore += 30;
-      if (report.functional_details.reproducible === "always") baseScore += 20;
-    }
-  }
-
-  // 2. UX SCHWERE
-  if (report.problem_type === "ux_issue" && report.ux_severity) {
-    const uxScores = {
-      unusable: 80,
-      highly_confusing: 50,
-      moderately_confusing: 30,
-      inconvenient: 15,
-      polish_opportunity: 5
-    };
-    breakdown.ux_impact = uxScores[report.ux_severity] || 0;
-    baseScore += breakdown.ux_impact;
-    
-    if (report.ux_details) {
-      if (report.ux_details.prevents_task_completion) baseScore += 40;
-      if (report.ux_details.requires_external_help) baseScore += 25;
-      if (report.ux_details.accessibility_issue) baseScore += 20;
-    }
-  }
-
-  // 3. BUSINESS-KRITIKALITÄT
-  const businessAreaWeights = {
-    auth_login: 3.0,
-    finances: 2.8,
-    objects: 2.5,
-    tenants: 2.5,
-    documents: 2.0,
-    taxes: 2.0,
-    operating_costs: 2.0,
-    reports: 1.5,
-    dashboard: 1.3,
-    settings: 1.0
-  };
-  
-  const businessImpactWeights = {
-    revenue_blocking: 2.5,
-    compliance_risk: 2.2,
-    user_retention_risk: 1.8,
-    efficiency_impact: 1.4,
-    nice_to_have: 1.0
-  };
-  
-  const areaMultiplier = businessAreaWeights[report.business_area] || 1.0;
-  const impactMultiplier = businessImpactWeights[report.business_impact] || 1.0;
-  
-  breakdown.business_criticality = baseScore * (areaMultiplier * impactMultiplier - 1);
-  baseScore *= (areaMultiplier * impactMultiplier);
-
-  // 4. USER-JOURNEY KRITIKALITÄT
-  const journeyWeights = {
-    first_login: 2.0,
-    onboarding: 1.8,
-    daily_work: 1.6,
-    monthly_tasks: 1.2,
-    yearly_tasks: 1.0,
-    edge_case: 0.8
-  };
-  
-  const journeyMultiplier = journeyWeights[report.user_journey_stage] || 1.0;
-  breakdown.user_impact = baseScore * (journeyMultiplier - 1);
-  baseScore *= journeyMultiplier;
-
-  // 5. BETROFFENE USER-ANZAHL
-  const userCountWeights = {
-    all_users: 2.0,
-    most_users: 1.7,
-    some_users: 1.3,
-    few_users: 1.0,
-    single_user: 0.5
-  };
-  
-  const userCountMultiplier = userCountWeights[report.affected_user_count_estimate] || 1.0;
-  baseScore *= userCountMultiplier;
-
-  // 6. HÄUFIGKEIT BONUS
-  breakdown.frequency_bonus = Math.min((report.frequency_count || 1) * 8, 50);
-  baseScore += breakdown.frequency_bonus;
-
-  // 7. URGENCY FACTOR
-  let urgencyBonus = 0;
-  if (report.business_details) {
-    if (report.business_details.affects_billing) urgencyBonus += 30;
-    if (report.business_details.affects_legal_compliance) urgencyBonus += 40;
-    if (report.business_details.affects_onboarding) urgencyBonus += 25;
-    if (report.business_details.affects_data_accuracy) urgencyBonus += 20;
-  }
-  
-  breakdown.urgency_factor = urgencyBonus;
-  baseScore += urgencyBonus;
-
-  // 8. BUSINESS PRIORITY KLASSIFIZIERUNG
-  let businessPriority;
-  if (baseScore >= 300) businessPriority = "p1_critical";
-  else if (baseScore >= 150) businessPriority = "p2_high";
-  else if (baseScore >= 75) businessPriority = "p3_medium";
-  else businessPriority = "p4_low";
-
-  return {
-    priority_score: Math.round(baseScore),
-    business_priority: businessPriority,
-    priority_breakdown: breakdown
-  };
-};
-
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-
+    
     if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const reports = await base44.asServiceRole.entities.UserProblem.list();
-    
-    let updatedCount = 0;
-    const results = [];
+    const { filter } = await req.json();
 
-    for (const report of reports) {
-      if (!report.priority_score || report.priority_score === 0) {
-        const priorityResult = calculateProblemPriority(report);
+    // Alle relevanten Problems holen
+    let problems;
+    if (filter) {
+      problems = await base44.asServiceRole.entities.UserProblem.filter(filter);
+    } else {
+      problems = await base44.asServiceRole.entities.UserProblem.list('-created_date', 1000);
+    }
+
+    const updated = [];
+    const errors = [];
+
+    // Für jedes Problem Priorität neu berechnen
+    for (const problem of problems) {
+      try {
+        // Priorität berechnen mit derselben Logik wie calculateIntelligentPriority
+        const result = await calculatePriority(problem);
         
-        await base44.asServiceRole.entities.UserProblem.update(report.id, {
-          priority_score: priorityResult.priority_score,
-          business_priority: priorityResult.business_priority,
-          priority_breakdown: priorityResult.priority_breakdown
+        await base44.asServiceRole.entities.UserProblem.update(problem.id, {
+          priority_score: result.priority_score,
+          business_priority: result.business_priority,
+          priority_breakdown: result.priority_breakdown
         });
-        
-        updatedCount++;
-        results.push({
-          id: report.id,
-          title: report.problem_titel,
-          old_score: report.priority_score || 0,
-          new_score: priorityResult.priority_score,
-          business_priority: priorityResult.business_priority
+
+        updated.push({
+          id: problem.id,
+          title: problem.problem_titel,
+          old_priority: problem.business_priority,
+          new_priority: result.business_priority,
+          score: result.priority_score
+        });
+
+      } catch (error) {
+        errors.push({
+          id: problem.id,
+          error: error.message
         });
       }
     }
 
-    return Response.json({ 
+    return Response.json({
       success: true,
-      total_reports: reports.length,
-      updated_count: updatedCount,
-      results: results
+      total_processed: problems.length,
+      updated: updated.length,
+      errors: errors.length,
+      updated_items: updated,
+      error_items: errors
     });
 
   } catch (error) {
@@ -182,3 +64,90 @@ Deno.serve(async (req) => {
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
+
+function calculatePriority(problem) {
+  let functionalScore = 0;
+  switch (problem.functional_severity) {
+    case 'app_breaking': functionalScore = 300; break;
+    case 'feature_blocking': functionalScore = 200; break;
+    case 'workflow_impacting': functionalScore = 100; break;
+    case 'minor_bug': functionalScore = 50; break;
+    case 'cosmetic': functionalScore = 10; break;
+  }
+
+  const details = problem.functional_details || {};
+  if (details.causes_data_loss) functionalScore += 100;
+  if (details.breaks_core_workflow) functionalScore += 50;
+  if (!details.has_workaround) functionalScore += 30;
+  if (details.affects_multiple_users) functionalScore += 20;
+  if (details.reproducible === 'always') functionalScore += 20;
+
+  let uxScore = 0;
+  switch (problem.ux_severity) {
+    case 'unusable': uxScore = 200; break;
+    case 'highly_confusing': uxScore = 150; break;
+    case 'moderately_confusing': uxScore = 80; break;
+    case 'inconvenient': uxScore = 40; break;
+    case 'polish_opportunity': uxScore = 10; break;
+  }
+
+  const uxDetails = problem.ux_details || {};
+  if (uxDetails.prevents_task_completion) uxScore += 50;
+  if (uxDetails.requires_external_help) uxScore += 30;
+  if (uxDetails.accessibility_issue) uxScore += 20;
+
+  let businessScore = 0;
+  switch (problem.business_impact) {
+    case 'revenue_blocking': businessScore = 400; break;
+    case 'compliance_risk': businessScore = 350; break;
+    case 'user_retention_risk': businessScore = 200; break;
+    case 'efficiency_impact': businessScore = 100; break;
+    case 'nice_to_have': businessScore = 20; break;
+  }
+
+  const businessDetails = problem.business_details || {};
+  if (businessDetails.affects_billing) businessScore += 100;
+  if (businessDetails.affects_legal_compliance) businessScore += 80;
+  if (businessDetails.affects_daily_workflow) businessScore += 50;
+  if (businessDetails.affects_onboarding) businessScore += 40;
+
+  let journeyScore = 0;
+  switch (problem.user_journey_stage) {
+    case 'first_login': journeyScore = 100; break;
+    case 'onboarding': journeyScore = 90; break;
+    case 'daily_work': journeyScore = 60; break;
+    case 'monthly_tasks': journeyScore = 30; break;
+    case 'yearly_tasks': journeyScore = 10; break;
+    case 'edge_case': journeyScore = 5; break;
+  }
+
+  let userCountScore = 0;
+  switch (problem.affected_user_count_estimate) {
+    case 'all_users': userCountScore = 100; break;
+    case 'most_users': userCountScore = 80; break;
+    case 'some_users': userCountScore = 50; break;
+    case 'few_users': userCountScore = 20; break;
+    case 'single_user': userCountScore = 5; break;
+  }
+
+  const totalScore = functionalScore + uxScore + businessScore + journeyScore + userCountScore;
+
+  let businessPriority;
+  if (totalScore >= 700) businessPriority = 'p1_critical';
+  else if (totalScore >= 450) businessPriority = 'p2_high';
+  else if (totalScore >= 200) businessPriority = 'p3_medium';
+  else businessPriority = 'p4_low';
+
+  return {
+    priority_score: totalScore,
+    business_priority: businessPriority,
+    priority_breakdown: {
+      functional_score: functionalScore,
+      ux_score: uxScore,
+      business_score: businessScore,
+      journey_score: journeyScore,
+      user_count_score: userCountScore,
+      total_score: totalScore
+    }
+  };
+}

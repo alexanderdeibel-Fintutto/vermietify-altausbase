@@ -4,82 +4,126 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-
+    
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { report_id } = await req.json();
+    const { problem_id, notification_type } = await req.json();
 
-    const reports = await base44.entities.UserProblem.filter({ id: report_id });
-    if (!reports || reports.length === 0) {
-      return Response.json({ error: 'Report not found' }, { status: 404 });
+    // Problem laden
+    const problems = await base44.asServiceRole.entities.UserProblem.filter({ id: problem_id });
+    if (problems.length === 0) {
+      return Response.json({ error: 'Problem not found' }, { status: 404 });
     }
+    const problem = problems[0];
 
-    const report = reports[0];
+    const notifications = [];
 
-    if (report.business_priority === "p1_critical") {
-      await base44.asServiceRole.entities.Notification.create({
-        user_id: null,
-        notification_type: "critical_issue_alert",
-        title: `🚨 CRITICAL: ${report.problem_titel}`,
-        message: `Kritisches Problem in ${report.business_area || report.betroffenes_modul}: ${report.problem_beschreibung?.substring(0, 100)}...`,
-        priority: "high",
-        is_read: false,
-        action_url: `/problem-reports?id=${report.id}`
-      });
-
-      const admins = await base44.asServiceRole.entities.User.filter({ role: "admin" });
+    // P1 Critical - Sofortige Benachrichtigung an alle Admins
+    if (problem.business_priority === 'p1_critical') {
+      const admins = await base44.asServiceRole.entities.User.filter({ role: 'admin' });
       
       for (const admin of admins) {
-        await base44.integrations.Core.SendEmail({
-          to: admin.email,
-          subject: `🚨 CRITICAL Issue: ${report.problem_titel}`,
-          body: `
-            <h2>Kritisches Problem gemeldet</h2>
-            <p><strong>Titel:</strong> ${report.problem_titel}</p>
-            <p><strong>Bereich:</strong> ${report.business_area || report.betroffenes_modul}</p>
-            <p><strong>Priority Score:</strong> ${report.priority_score}</p>
-            <p><strong>Beschreibung:</strong> ${report.problem_beschreibung}</p>
-            <p><strong>Reporter:</strong> ${report.tester_name || report.created_by}</p>
-            <p><a href="${Deno.env.get('APP_URL') || ''}/problem-reports?id=${report.id}">Zum Problem →</a></p>
-          `
+        await base44.asServiceRole.entities.Notification.create({
+          user_id: admin.id,
+          type: 'critical_issue',
+          title: '🔴 KRITISCHES PROBLEM',
+          message: `${problem.problem_titel} - Sofortige Bearbeitung erforderlich!`,
+          data: {
+            problem_id: problem.id,
+            priority: problem.business_priority,
+            score: problem.priority_score,
+            business_area: problem.business_area
+          },
+          is_read: false,
+          action_url: `/SupportCenter?problem=${problem.id}`
         });
+        notifications.push({ recipient: admin.email, type: 'critical' });
       }
     }
 
-    if (report.business_priority === "p2_high") {
-      await base44.asServiceRole.entities.Notification.create({
-        user_id: null,
-        notification_type: "high_priority_issue",
-        title: `⚠️ High Priority: ${report.problem_titel}`,
-        message: `Wichtiges Problem in ${report.business_area || report.betroffenes_modul}`,
-        priority: "medium",
-        is_read: false,
-        action_url: `/problem-reports?id=${report.id}`
+    // Revenue-Blocking - Finance Team benachrichtigen
+    if (problem.business_impact === 'revenue_blocking') {
+      const financeUsers = await base44.asServiceRole.entities.User.filter({ 
+        department: 'finance' 
       });
+      
+      for (const finUser of financeUsers) {
+        await base44.asServiceRole.entities.Notification.create({
+          user_id: finUser.id,
+          type: 'revenue_impact',
+          title: '💰 Revenue-Impact erkannt',
+          message: `Problem betrifft Umsatz: ${problem.problem_titel}`,
+          data: { problem_id: problem.id },
+          is_read: false
+        });
+        notifications.push({ recipient: finUser.email, type: 'revenue_impact' });
+      }
     }
 
-    const areaAssignments = {
-      auth_login: "security-team",
-      finances: "backend-team",
-      objects: "core-team",
-      tenants: "core-team",
-      documents: "frontend-team"
-    };
-
-    const suggestedAssignee = areaAssignments[report.business_area];
-    if (suggestedAssignee && !report.assigned_to) {
-      await base44.asServiceRole.entities.UserProblem.update(report_id, {
-        assigned_to: suggestedAssignee,
-        status: "triaged"
+    // Compliance Risk - Legal Team
+    if (problem.business_impact === 'compliance_risk') {
+      const legalUsers = await base44.asServiceRole.entities.User.filter({ 
+        department: 'legal' 
       });
+      
+      for (const legalUser of legalUsers) {
+        await base44.asServiceRole.entities.Notification.create({
+          user_id: legalUser.id,
+          type: 'compliance_risk',
+          title: '⚖️ Compliance-Risiko',
+          message: `Rechtliches Risiko erkannt: ${problem.problem_titel}`,
+          data: { problem_id: problem.id },
+          is_read: false
+        });
+        notifications.push({ recipient: legalUser.email, type: 'compliance' });
+      }
     }
 
-    return Response.json({ 
+    // Zugewiesenen Entwickler benachrichtigen
+    if (problem.assigned_to) {
+      const assignedDev = await base44.asServiceRole.entities.User.filter({ 
+        id: problem.assigned_to 
+      });
+      
+      if (assignedDev.length > 0) {
+        await base44.asServiceRole.entities.Notification.create({
+          user_id: assignedDev[0].id,
+          type: 'problem_assigned',
+          title: '📋 Neues Problem zugewiesen',
+          message: `${problem.problem_titel} (${problem.business_priority})`,
+          data: { problem_id: problem.id },
+          is_read: false,
+          action_url: `/SupportCenter?problem=${problem.id}`
+        });
+        notifications.push({ recipient: assignedDev[0].email, type: 'assignment' });
+      }
+    }
+
+    // Tester benachrichtigen falls Retest erforderlich
+    if (problem.retest_required && problem.retest_assigned_to) {
+      const tester = await base44.asServiceRole.entities.User.filter({ 
+        id: problem.retest_assigned_to 
+      });
+      
+      if (tester.length > 0) {
+        await base44.asServiceRole.entities.Notification.create({
+          user_id: tester[0].id,
+          type: 'retest_required',
+          title: '🔄 Retest erforderlich',
+          message: `Bitte Problem erneut testen: ${problem.problem_titel}`,
+          data: { problem_id: problem.id },
+          is_read: false
+        });
+        notifications.push({ recipient: tester[0].email, type: 'retest' });
+      }
+    }
+
+    return Response.json({
       success: true,
-      notifications_sent: report.business_priority === "p1_critical" ? "email_and_notification" : "notification_only",
-      auto_assigned: !!suggestedAssignee
+      notifications_sent: notifications.length,
+      notifications: notifications
     });
 
   } catch (error) {
