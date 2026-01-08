@@ -44,6 +44,10 @@ import QuickDuplicateButton from '@/components/elster/QuickDuplicateButton';
 import BulkActionsPanel from '@/components/elster/BulkActionsPanel';
 import TemplateEditor from '@/components/elster/TemplateEditor';
 import ComplianceDashboard from '@/components/elster/ComplianceDashboard';
+import StatusChangeDialog from '@/components/elster/StatusChangeDialog';
+import XMLPreview from '@/components/elster/XMLPreview';
+import CertificateRenewalReminder from '@/components/elster/CertificateRenewalReminder';
+import SystemHealthCheck from '@/components/elster/SystemHealthCheck';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from 'lucide-react';
 
@@ -155,7 +159,16 @@ export default function ElsterIntegration() {
           </TabsList>
 
           <TabsContent value="dashboard" className="mt-6">
-            <DashboardView submissions={submissions} />
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <SystemHealthCheck />
+                <CertificateRenewalReminder 
+                  certificates={certificates} 
+                  onUploadClick={() => setShowCertUpload(true)} 
+                />
+              </div>
+              <DashboardView submissions={submissions} />
+            </div>
           </TabsContent>
 
           <TabsContent value="create" className="mt-6">
