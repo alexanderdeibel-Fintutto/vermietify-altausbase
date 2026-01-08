@@ -1,147 +1,157 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useMemo } from 'react';
+import { useBuildingStats } from '@/components/buildings/useBuildingStats';
+import BuildingFilterBar from '@/components/buildings/BuildingFilterBar';
+import BuildingTable from '@/components/buildings/BuildingTable';
+import BuildingSummary from '@/components/buildings/BuildingSummary';
+import BuildingEditDialog from '@/components/buildings/BuildingEditDialog';
 import { base44 } from '@/api/base44Client';
-import { Building2 } from 'lucide-react';
-import { Skeleton } from "@/components/ui/skeleton";
-import PageHeader from '@/components/shared/PageHeader';
-import EmptyState from '@/components/shared/EmptyState';
-import BuildingCard from '@/components/buildings/BuildingCard';
-import BuildingForm from '@/components/buildings/BuildingForm';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/dialog';
 
-export default function Buildings() {
-    const [formOpen, setFormOpen] = useState(false);
-    const [editingBuilding, setEditingBuilding] = useState(null);
-    const queryClient = useQueryClient();
+export default function BuildingsPage() {
+  const [filters, setFilters] = useState({ status: 'all', city: 'all', search: '' });
+  const [editingBuilding, setEditingBuilding] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const queryClient = useQueryClient();
 
-    const { data: buildings = [], isLoading: loadingBuildings } = useQuery({
-        queryKey: ['buildings'],
-        queryFn: () => base44.entities.Building.list()
-    });
+  const { buildingStats, totalBuildings, totalUnitsCount, totalRentedUnits, totalRevenue } =
+    useBuildingStats();
 
-    const { data: units = [] } = useQuery({
-        queryKey: ['units'],
-        queryFn: () => base44.entities.Unit.list()
-    });
+  // Filter-Logik
+  const filteredStats = useMemo(() => {
+    return buildingStats.filter(stat => {
+      // Status-Filter
+      if (filters.status !== 'all') {
+        const occupancy = stat.occupancy;
+        if (filters.status === 'full' && occupancy !== 100) return false;
+        if (filters.status === 'partial' && (occupancy === 100 || occupancy <= 50)) return false;
+        if (filters.status === 'empty' && occupancy > 0) return false;
+      }
 
-    const createMutation = useMutation({
-        mutationFn: (data) => base44.entities.Building.create(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['buildings'] });
-            setFormOpen(false);
-        }
-    });
+      // City-Filter
+      if (filters.city !== 'all' && stat.building.city !== filters.city) return false;
 
-    const updateMutation = useMutation({
-        mutationFn: ({ id, data }) => base44.entities.Building.update(id, data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['buildings'] });
-            setFormOpen(false);
-            setEditingBuilding(null);
-        }
-    });
-
-    const handleSubmit = (data) => {
-        if (editingBuilding) {
-            updateMutation.mutate({ id: editingBuilding.id, data });
-        } else {
-            createMutation.mutate(data);
-        }
-    };
-
-    const handleAddNew = () => {
-        setEditingBuilding(null);
-        setFormOpen(true);
-    };
-
-    if (loadingBuildings) {
+      // Search-Filter
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
         return (
-            <div className="space-y-8">
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                >
-                    <Skeleton className="h-8 w-48 mb-2" />
-                    <Skeleton className="h-4 w-64" />
-                </motion.div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[...Array(3)].map((_, i) => (
-                        <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.1 }}
-                        >
-                            <Skeleton className="h-72 rounded-2xl" />
-                        </motion.div>
-                    ))}
-                </div>
-            </div>
+          stat.building.name.toLowerCase().includes(searchLower) ||
+          (stat.building.address && stat.building.address.toLowerCase().includes(searchLower))
         );
+      }
+
+      return true;
+    });
+  }, [buildingStats, filters]);
+
+  const deleteMutation = useMutation({
+    mutationFn: async (buildingId) => {
+      await base44.entities.Building.delete(buildingId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['buildings'] });
+      toast.success('Gebäude gelöscht');
+      setDeleteConfirm(null);
+    },
+    onError: () => toast.error('Fehler beim Löschen')
+  });
+
+  const handleDelete = (building) => {
+    setDeleteConfirm(building);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteConfirm) {
+      deleteMutation.mutate(deleteConfirm.id);
     }
+  };
 
-    return (
-        <div className="space-y-8">
-            <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-            >
-                <PageHeader 
-                    title="Objekte"
-                    subtitle={`${buildings.length} Immobilien verwalten`}
-                    action={handleAddNew}
-                    actionLabel="Objekt hinzufügen"
-                />
-            </motion.div>
+  const handleNewBuilding = async () => {
+    const newBuilding = await base44.entities.Building.create({
+      name: 'Neues Gebäude',
+      city: '',
+      address: ''
+    });
+    setEditingBuilding(newBuilding);
+  };
 
-            <AnimatePresence mode="wait">
-                {buildings.length === 0 ? (
-                    <motion.div
-                        key="empty"
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                    >
-                        <EmptyState
-                            icon={Building2}
-                            title="Noch keine Objekte"
-                            description="Fügen Sie Ihr erstes Mehrfamilienhaus hinzu, um mit der Verwaltung zu beginnen."
-                            action={handleAddNew}
-                            actionLabel="Erstes Objekt anlegen"
-                        />
-                    </motion.div>
-                ) : (
-                    <motion.div
-                        key="grid"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                    >
-                        {buildings.map((building, idx) => (
-                            <motion.div
-                                key={building.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: idx * 0.1 }}
-                            >
-                                <BuildingCard 
-                                    building={building}
-                                    units={units}
-                                />
-                            </motion.div>
-                        ))}
-                    </motion.div>
-                )}
-            </AnimatePresence>
+  const handleQuickAction = (building) => {
+    toast.info('⚡ Quick-Status wird noch implementiert');
+  };
 
-            <BuildingForm
-                open={formOpen}
-                onOpenChange={setFormOpen}
-                onSubmit={handleSubmit}
-                initialData={editingBuilding}
-                isLoading={createMutation.isPending || updateMutation.isPending}
-            />
+  return (
+    <div className="space-y-0 bg-white rounded-lg border border-slate-200 shadow-sm">
+      {/* Header */}
+      <div className="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-violet-50/30">
+        <h1 className="text-lg font-normal text-slate-900">🏢 Gebäude-Übersicht</h1>
+        <p className="text-sm text-slate-600 mt-0.5">{filteredStats.length} von {totalBuildings} Gebäuden</p>
+      </div>
+
+      {/* Filter-Bar */}
+      <BuildingFilterBar
+        buildings={buildingStats.map(s => s.building)}
+        filters={filters}
+        onStatusChange={(status) => setFilters({ ...filters, status })}
+        onCityChange={(city) => setFilters({ ...filters, city })}
+        onSearchChange={(search) => setFilters({ ...filters, search })}
+        onNewBuilding={handleNewBuilding}
+      />
+
+      {/* Tabelle */}
+      {filteredStats.length > 0 ? (
+        <>
+          <BuildingTable
+            stats={filteredStats}
+            onEdit={setEditingBuilding}
+            onDelete={handleDelete}
+            onQuickAction={handleQuickAction}
+          />
+          <BuildingSummary
+            totalBuildings={filteredStats.length}
+            totalUnitsCount={filteredStats.reduce((sum, s) => sum + s.totalUnits, 0)}
+            totalRentedUnits={filteredStats.reduce((sum, s) => sum + s.rentedUnits, 0)}
+            totalRevenue={filteredStats.reduce((sum, s) => sum + s.totalRent, 0)}
+          />
+        </>
+      ) : (
+        <div className="p-12 text-center text-slate-500">
+          <p>Keine Gebäude gefunden</p>
         </div>
-    );
+      )}
+
+      {/* Edit Dialog */}
+      <BuildingEditDialog
+        building={editingBuilding}
+        open={!!editingBuilding}
+        onOpenChange={(open) => !open && setEditingBuilding(null)}
+      />
+
+      {/* Delete Confirm */}
+      <AlertDialog open={!!deleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Gebäude löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteConfirm?.name} wird gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-2">
+            <AlertDialogCancel onClick={() => setDeleteConfirm(null)}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600 hover:bg-red-700">
+              Löschen
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
 }
