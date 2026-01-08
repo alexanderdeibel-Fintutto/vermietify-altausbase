@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Building2, Users, FileText, CreditCard, AlertCircle, TrendingUp, Home, BarChart3 } from 'lucide-react';
@@ -115,12 +116,19 @@ export default function Dashboard() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {[...Array(4)].map((_, i) => (
-                        <Skeleton key={i} className="h-36 rounded-2xl" />
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.1 }}
+                        >
+                            <Skeleton className="h-36 rounded-2xl" />
+                        </motion.div>
                     ))}
                 </div>
             </div>
         );
-    }
+        }
 
     return (
         <div className="space-y-8">
@@ -130,47 +138,43 @@ export default function Dashboard() {
             )}
 
             {/* Header */}
-            <div>
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+            >
                 <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">Dashboard</h1>
                 <p className="text-slate-500 mt-1">Übersicht Ihrer Immobilien</p>
-            </div>
+            </motion.div>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard
-                    title="Gebäude"
-                    value={buildings.length}
-                    subtitle={`${totalUnits} Wohneinheiten`}
-                    icon={Building2}
-                />
-                <StatCard
-                    title="Auslastung"
-                    value={`${occupancyRate}%`}
-                    subtitle={`${occupiedUnits} von ${totalUnits} vermietet`}
-                    icon={Home}
-                    trend={vacantUnits > 0 ? `${vacantUnits} leer` : null}
-                    trendUp={vacantUnits === 0}
-                />
-                <StatCard
-                    title="Mieteinnahmen"
-                    value={`€${monthlyIncome.toLocaleString('de-DE')}`}
-                    subtitle={format(new Date(), 'MMMM yyyy', { locale: de })}
-                    icon={TrendingUp}
-                    trend={expectedMonthlyRent > 0 ? `von €${expectedMonthlyRent.toLocaleString('de-DE')} erwartet` : null}
-                    trendUp={monthlyIncome >= expectedMonthlyRent}
-                />
-                <StatCard
-                    title="Offene Zahlungen"
-                    value={overdueItems.length}
-                    subtitle={overdueAmount > 0 ? `€${overdueAmount.toLocaleString('de-DE')} ausstehend` : 'Alle Zahlungen erhalten'}
-                    icon={AlertCircle}
-                />
+                {[
+                    { title: "Gebäude", value: buildings.length, subtitle: `${totalUnits} Wohneinheiten`, icon: Building2 },
+                    { title: "Auslastung", value: `${occupancyRate}%`, subtitle: `${occupiedUnits} von ${totalUnits} vermietet`, icon: Home, trend: vacantUnits > 0 ? `${vacantUnits} leer` : null, trendUp: vacantUnits === 0 },
+                    { title: "Mieteinnahmen", value: `€${monthlyIncome.toLocaleString('de-DE')}`, subtitle: format(new Date(), 'MMMM yyyy', { locale: de }), icon: TrendingUp, trend: expectedMonthlyRent > 0 ? `von €${expectedMonthlyRent.toLocaleString('de-DE')} erwartet` : null, trendUp: monthlyIncome >= expectedMonthlyRent },
+                    { title: "Offene Zahlungen", value: overdueItems.length, subtitle: overdueAmount > 0 ? `€${overdueAmount.toLocaleString('de-DE')} ausstehend` : 'Alle Zahlungen erhalten', icon: AlertCircle }
+                ].map((stat, idx) => (
+                    <motion.div
+                        key={stat.title}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                    >
+                        <StatCard {...stat} />
+                    </motion.div>
+                ))}
             </div>
 
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Income Chart */}
-                <Card className="lg:col-span-2 border-slate-200/50">
+                <motion.div
+                    className="lg:col-span-2"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5 }}
+                >
+                <Card className="border-slate-200/50">
                     <CardHeader>
                         <CardTitle className="text-lg font-semibold text-slate-800">Mieteinnahmen</CardTitle>
                     </CardHeader>
@@ -194,11 +198,17 @@ export default function Dashboard() {
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                        </Card>
+                        </motion.div>
 
-                {/* Status Distribution */}
-                <Card className="border-slate-200/50">
+                        {/* Status Distribution */}
+                        <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.6 }}
+                        >
+                        <Card className="border-slate-200/50">
                     <CardHeader>
                         <CardTitle className="text-lg font-semibold text-slate-800">Wohnungsstatus</CardTitle>
                     </CardHeader>
@@ -240,16 +250,30 @@ export default function Dashboard() {
                                 </div>
                             ))}
                         </div>
-                    </CardContent>
-                </Card>
-            </div>
+                        </CardContent>
+                        </Card>
+                        </motion.div>
+                        </div>
 
             {/* WhatsApp Widget & Quick Links */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <WhatsAppWidget />
-                
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7 }}
+                >
+                    <WhatsAppWidget />
+                </motion.div>
+
                 {/* Quick Links */}
                 <Link to={createPageUrl('Buildings')}>
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.75 }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                    >
                     <Card className="border-slate-200/50 hover:shadow-md transition-shadow cursor-pointer group">
                         <CardContent className="p-6">
                             <div className="flex items-center gap-4">
@@ -262,10 +286,18 @@ export default function Dashboard() {
                                 </div>
                             </div>
                         </CardContent>
-                    </Card>
-                </Link>
-                <Link to={createPageUrl('Payments')}>
-                    <Card className="border-slate-200/50 hover:shadow-md transition-shadow cursor-pointer group">
+                        </Card>
+                        </motion.div>
+                        </Link>
+                        <Link to={createPageUrl('Payments')}>
+                        <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.8 }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        >
+                        <Card className="border-slate-200/50 hover:shadow-md transition-shadow cursor-pointer group">
                         <CardContent className="p-6">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 transition-colors">
@@ -277,10 +309,18 @@ export default function Dashboard() {
                                 </div>
                             </div>
                         </CardContent>
-                    </Card>
-                </Link>
-                <Link to={createPageUrl('Analytics')}>
-                    <Card className="border-slate-200/50 hover:shadow-md transition-shadow cursor-pointer group">
+                        </Card>
+                        </motion.div>
+                        </Link>
+                        <Link to={createPageUrl('Analytics')}>
+                        <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.85 }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        >
+                        <Card className="border-slate-200/50 hover:shadow-md transition-shadow cursor-pointer group">
                         <CardContent className="p-6">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-200 transition-colors">
@@ -292,9 +332,10 @@ export default function Dashboard() {
                                 </div>
                             </div>
                         </CardContent>
-                    </Card>
-                </Link>
-            </div>
-        </div>
-    );
-}
+                        </Card>
+                        </motion.div>
+                        </Link>
+                        </div>
+                        </div>
+                        );
+                        }
