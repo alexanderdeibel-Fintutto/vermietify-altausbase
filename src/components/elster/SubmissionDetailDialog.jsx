@@ -26,6 +26,7 @@ import AutoCorrectButton from './AutoCorrectButton';
 import DuplicateDetector from './DuplicateDetector';
 import AuditTrailExporter from './AuditTrailExporter';
 import BackupManager from './BackupManager';
+import ErrorPredictionCard from './ErrorPredictionCard';
 
 export default function SubmissionDetailDialog({ submission, open, onOpenChange }) {
   const [showShareDialog, setShowShareDialog] = React.useState(false);
@@ -292,6 +293,9 @@ export default function SubmissionDetailDialog({ submission, open, onOpenChange 
               <AuditLogViewer submissionId={submission.id} />
               <VersionHistory submissionId={submission.id} />
             </div>
+
+            {/* Error Prediction */}
+            <ErrorPredictionCard submissionId={submission.id} />
 
             {/* Backup & Audit Export */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

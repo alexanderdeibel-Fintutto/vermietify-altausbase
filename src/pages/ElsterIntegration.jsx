@@ -140,6 +140,9 @@ import BulkPDFExportPanel from '@/components/elster/BulkPDFExportPanel';
 import DataQualityMonitor from '@/components/elster/DataQualityMonitor';
 import AnalyticsReportCard from '@/components/elster/AnalyticsReportCard';
 import WorkflowScheduler from '@/components/elster/WorkflowScheduler';
+import ErrorPredictionCard from '@/components/elster/ErrorPredictionCard';
+import TrendsDashboard from '@/components/elster/TrendsDashboard';
+import QuickStatsWidget from '@/components/elster/QuickStatsWidget';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -228,6 +231,8 @@ export default function ElsterIntegration() {
       </motion.div>
 
       <QuickInsights />
+
+      <QuickStatsWidget />
 
       <SmartFormSuggestions onCreateForm={(suggestion) => {
         setShowWizard(true);
@@ -536,6 +541,7 @@ export default function ElsterIntegration() {
                   <SystemHealthCheck />
                 </div>
                 <div className="space-y-6">
+                  <TrendsDashboard />
                   <DataQualityMonitor />
                   <AnalyticsReportCard />
                   <WorkflowScheduler />
