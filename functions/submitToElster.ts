@@ -4,76 +4,102 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    
+
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { submission_id } = await req.json();
 
-    const submission = await base44.asServiceRole.entities.ElsterSubmission.get(submission_id);
-    
-    if (!submission || !submission.xml_data) {
-      return Response.json({ error: 'Invalid submission' }, { status: 400 });
+    console.log('[ELSTER-SUBMIT] Submitting to ELSTER:', submission_id);
+
+    // 1. Submission laden
+    const submissions = await base44.entities.ElsterSubmission.filter({ id: submission_id });
+    if (!submissions || submissions.length === 0) {
+      return Response.json({ error: 'Submission not found' }, { status: 404 });
+    }
+    const submission = submissions[0];
+
+    // 2. Validierung prüfen
+    if (submission.status !== 'VALIDATED') {
+      return Response.json({ 
+        error: 'Submission must be validated before submission' 
+      }, { status: 400 });
     }
 
-    // Zertifikat laden
-    const certificates = await base44.asServiceRole.entities.ElsterCertificate.filter({
+    // 3. Zertifikat laden
+    const certificates = await base44.entities.ElsterCertificate.filter({
       certificate_type: submission.submission_mode,
       is_active: true
     });
 
-    if (certificates.length === 0) {
+    if (!certificates || certificates.length === 0) {
       return Response.json({ 
-        error: `Kein ${submission.submission_mode}-Zertifikat gefunden` 
-      }, { status: 400 });
+        error: 'No active certificate found for this mode' 
+      }, { status: 404 });
     }
 
     const certificate = certificates[0];
 
-    // SIMULIERTE ELSTER-ÜBERMITTLUNG
-    // In Produktion: ERiC-Bibliothek verwenden
-    const transferTicket = `TT${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // 4. SIMULATION: Echte ERiC-Integration würde hier stattfinden
+    // In Production: POST zu ERiC-Microservice mit XML + Zertifikat
     
     const simulatedResponse = {
-      transferTicket,
-      returnCode: '0',
-      returnMessage: submission.submission_mode === 'TEST' 
-        ? 'Test-Übermittlung erfolgreich' 
-        : 'Übermittlung erfolgreich',
-      serverStatus: 'OK',
-      timestamp: new Date().toISOString()
+      transfer_ticket: `TT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      server_response: {
+        code: '0',
+        message: 'Übermittlung erfolgreich angenommen',
+        timestamp: new Date().toISOString()
+      },
+      elster_status: 'ACCEPTED'
     };
 
-    // Status aktualisieren
-    await base44.asServiceRole.entities.ElsterSubmission.update(submission_id, {
+    // 5. Submission aktualisieren
+    await base44.entities.ElsterSubmission.update(submission_id, {
       status: 'SUBMITTED',
-      transfer_ticket: transferTicket,
-      elster_response: simulatedResponse,
       submission_date: new Date().toISOString(),
+      transfer_ticket: simulatedResponse.transfer_ticket,
+      elster_response: simulatedResponse,
       certificate_used: certificate.id
     });
 
-    // Nach 2 Sekunden automatisch auf ACCEPTED setzen (Simulation)
-    setTimeout(async () => {
-      try {
-        await base44.asServiceRole.entities.ElsterSubmission.update(submission_id, {
-          status: 'ACCEPTED'
-        });
-      } catch (e) {
-        console.error('Background update failed:', e);
+    // 6. Audit-Log
+    await base44.functions.invoke('logElsterAuditEvent', {
+      submission_id,
+      event_type: 'SUBMITTED_TO_ELSTER',
+      details: {
+        transfer_ticket: simulatedResponse.transfer_ticket,
+        certificate: certificate.certificate_name,
+        mode: submission.submission_mode
       }
-    }, 2000);
+    });
 
-    return Response.json({
-      success: true,
-      transfer_ticket: transferTicket,
-      message: simulatedResponse.returnMessage,
-      mode: submission.submission_mode
+    // 7. Benachrichtigung
+    await base44.integrations.Core.SendEmail({
+      to: user.email,
+      subject: `ELSTER-Übermittlung erfolgreich: ${submission.tax_form_type} ${submission.tax_year}`,
+      body: `
+        <h2>ELSTER-Übermittlung erfolgreich</h2>
+        <p>Ihre Steuererklärung wurde erfolgreich übermittelt:</p>
+        <ul>
+          <li>Formular: ${submission.tax_form_type}</li>
+          <li>Jahr: ${submission.tax_year}</li>
+          <li>Transfer-Ticket: ${simulatedResponse.transfer_ticket}</li>
+          <li>Modus: ${submission.submission_mode}</li>
+        </ul>
+        <p>Sie erhalten eine separate Bestätigung von ELSTER.</p>
+      `
+    });
+
+    return Response.json({ 
+      success: true, 
+      transfer_ticket: simulatedResponse.transfer_ticket,
+      elster_response: simulatedResponse,
+      message: 'Erfolgreich an ELSTER übermittelt'
     });
 
   } catch (error) {
-    console.error('Error submitting to ELSTER:', error);
+    console.error('[ERROR]', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

@@ -4,50 +4,71 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    
-    if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Admin access required' }, { status: 403 });
+
+    if (user?.role !== 'admin') {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
-    const formData = await req.formData();
-    const file = formData.get('certificate_file');
-    const password = formData.get('password');
-    const certificate_type = formData.get('certificate_type');
-    const tax_number = formData.get('tax_number');
-    const certificate_name = formData.get('certificate_name');
+    const { 
+      certificate_name, 
+      certificate_file, 
+      certificate_password,
+      certificate_type, 
+      tax_number,
+      valid_from,
+      valid_until,
+      supported_legal_forms
+    } = await req.json();
 
-    if (!file || !password || !certificate_type || !tax_number) {
-      return Response.json({ error: 'Missing required fields' }, { status: 400 });
+    console.log('[CERT-UPLOAD] Uploading certificate:', certificate_name);
+
+    // 1. Certificate-File hochladen (Base64 oder Binary)
+    let certificateData;
+    if (certificate_file.startsWith('data:')) {
+      // Base64-encoded
+      certificateData = certificate_file;
+    } else {
+      // Binary Upload via Core.UploadPrivateFile
+      const uploadResponse = await base44.integrations.Core.UploadPrivateFile({
+        file: certificate_file
+      });
+      certificateData = uploadResponse.file_uri;
     }
 
-    // Datei hochladen
-    const uploadResult = await base44.integrations.Core.UploadPrivateFile({ file });
-    
-    if (!uploadResult.file_uri) {
-      return Response.json({ error: 'Upload failed' }, { status: 500 });
-    }
+    // 2. Passwort verschlüsseln (Simulation - in Production: echte Verschlüsselung)
+    const encryptedPassword = btoa(certificate_password); // Base64 als Platzhalter
 
-    // Zertifikat-Daten erstellen
+    // 3. Zertifikat-Fingerprint berechnen (Simulation)
+    const thumbprint = `SHA256:${Date.now().toString(36)}${Math.random().toString(36).substr(2)}`;
+
+    // 4. ElsterCertificate erstellen
     const certificate = await base44.asServiceRole.entities.ElsterCertificate.create({
-      certificate_name: certificate_name || `${certificate_type} Zertifikat`,
-      certificate_data: uploadResult.file_uri,
-      certificate_password_encrypted: btoa(password), // In Produktion: echte Verschlüsselung
+      certificate_name,
+      certificate_data: certificateData,
+      certificate_password_encrypted: encryptedPassword,
       certificate_type,
       tax_number,
-      valid_from: new Date().toISOString().split('T')[0],
-      valid_until: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      supported_legal_forms: ['PRIVATPERSON', 'GBR', 'GMBH', 'UG', 'AG'],
-      is_active: true
+      valid_from,
+      valid_until,
+      supported_legal_forms: supported_legal_forms || ['PRIVATPERSON', 'GBR', 'GMBH', 'UG', 'AG'],
+      is_active: true,
+      certificate_thumbprint: thumbprint
     });
 
-    return Response.json({
-      success: true,
+    // 5. Automatisch Verbindung testen
+    const testResponse = await base44.functions.invoke('testElsterConnection', {
+      certificate_id: certificate.id
+    });
+
+    return Response.json({ 
+      success: true, 
       certificate_id: certificate.id,
-      message: 'Zertifikat erfolgreich hochgeladen'
+      test_result: testResponse.data.test_result,
+      message: 'Zertifikat erfolgreich hochgeladen und getestet'
     });
 
   } catch (error) {
-    console.error('Error uploading certificate:', error);
+    console.error('[ERROR]', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

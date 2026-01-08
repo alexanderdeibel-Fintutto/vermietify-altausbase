@@ -4,69 +4,41 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    
+
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { 
-      form_data, 
-      form_type,
-      legal_form,
-      building_id,
-      tax_year 
-    } = await req.json();
+    const { form_data, form_type, legal_form, building_id } = await req.json();
 
-    // Lade Vorjahresdaten zum Vergleich
-    let previousYearData = null;
-    if (building_id && tax_year) {
-      const prevSubmissions = await base44.asServiceRole.entities.ElsterSubmission.filter({
-        building_id,
-        tax_year: tax_year - 1,
-        status: 'ACCEPTED'
-      });
-      
-      if (prevSubmissions.length > 0) {
-        previousYearData = prevSubmissions[0].form_data;
-      }
-    }
-
-    // Lade Branchen-Benchmarks (falls vorhanden)
-    const allSubmissions = await base44.asServiceRole.entities.ElsterSubmission.filter({
-      tax_form_type: form_type,
-      legal_form,
-      status: 'ACCEPTED'
-    });
+    console.log('[PLAUSIBILITY] Validating:', form_type, legal_form);
 
     const prompt = `
-Du bist ein deutscher Steuerberater mit Spezialisierung auf Immobilienwirtschaft.
-
-Prüfe die Plausibilität dieser Steuerdaten:
+Du bist ein Experte für deutsche Steuergesetze und Immobilienwirtschaft. Prüfe die Plausibilität dieser Steuerdaten.
 
 FORMULAR: ${form_type}
 RECHTSFORM: ${legal_form}
-JAHR: ${tax_year}
 
-AKTUELLE DATEN:
+DATEN:
 ${JSON.stringify(form_data, null, 2)}
 
-${previousYearData ? `VORJAHRESDATEN (zum Vergleich):
-${JSON.stringify(previousYearData, null, 2)}` : ''}
+PRÜFE AUF:
+1. Ungewöhnliche Abweichungen von Branchendurchschnitt
+2. Typische Fehlerquellen (z.B. fehlende Posten)
+3. Rechtsform-spezifische Besonderheiten
+4. Verhältnismäßigkeit (z.B. Schuldzinsen zu Mieteinnahmen)
+5. Vollständigkeit der Pflichtangaben
+6. Mathematische Konsistenz
 
-BRANCHENDATEN:
-- Anzahl vergleichbarer Abgaben: ${allSubmissions.length}
+BRANCHENVERGLEICH IMMOBILIENWIRTSCHAFT:
+- Mieteinnahmen: Durchschnittlich 60-80€/qm/Jahr
+- Instandhaltungsrücklage: ca. 7-15€/qm/Jahr
+- Verwaltungskosten: ca. 20-30€/Einheit/Monat
+- AfA Gebäude: Standard 2-3%
+- Eigenkapitalrendite: 3-6% typisch
 
-PRÜFKRITERIEN:
-1. Ungewöhnliche Abweichungen zum Vorjahr (>30% ohne erkennbaren Grund)
-2. Typische Fehlerquellen bei ${form_type}
-3. Rechtsform-spezifische Besonderheiten für ${legal_form}
-4. Branchenübliche Werte für Immobilienwirtschaft
-5. Mathematische Konsistenz (Summen, Prozentsätze)
-6. Vollständigkeit der Pflichtfelder
-7. Formale Korrektheit (Formate, Bereiche)
-
-Antworte NUR mit JSON.
-`;
+Antworte NUR mit JSON, keine zusätzlichen Erklärungen.
+    `;
 
     const response = await base44.integrations.Core.InvokeLLM({
       prompt,
@@ -75,7 +47,11 @@ Antworte NUR mit JSON.
         properties: {
           plausibility_score: {
             type: "number",
-            description: "Gesamtbewertung 0-100"
+            description: "0-100, höher = plausibler"
+          },
+          overall_assessment: {
+            type: "string",
+            enum: ["EXCELLENT", "GOOD", "ACCEPTABLE", "QUESTIONABLE", "CRITICAL"]
           },
           anomalies: {
             type: "array",
@@ -83,57 +59,49 @@ Antworte NUR mit JSON.
               type: "object",
               properties: {
                 field: { type: "string" },
-                severity: { 
-                  type: "string",
-                  enum: ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
-                },
-                description: { type: "string" },
-                current_value: { type: "string" },
-                expected_range: { type: "string" }
+                issue: { type: "string" },
+                severity: { type: "string", enum: ["LOW", "MEDIUM", "HIGH", "CRITICAL"] },
+                expected_range: { type: "string" },
+                actual_value: { type: "string" }
               }
-            },
-            description: "Auffälligkeiten"
+            }
           },
           suggestions: {
             type: "array",
             items: {
               type: "object",
               properties: {
-                field: { type: "string" },
+                category: { type: "string" },
                 suggestion: { type: "string" },
-                reasoning: { type: "string" }
+                impact: { type: "string" }
               }
-            },
-            description: "Verbesserungsvorschläge"
+            }
           },
           warnings: {
             type: "array",
-            items: {
-              type: "object",
-              properties: {
-                category: { type: "string" },
-                message: { type: "string" },
-                impact: { type: "string" }
-              }
-            },
-            description: "Warnungen"
+            items: { type: "string" }
           },
-          overall_assessment: {
-            type: "string",
-            description: "Gesamtbeurteilung in 2-3 Sätzen"
+          compliance_check: {
+            type: "object",
+            properties: {
+              all_required_fields: { type: "boolean" },
+              mathematical_consistency: { type: "boolean" },
+              legal_requirements_met: { type: "boolean" }
+            }
           }
         },
-        required: ["plausibility_score", "anomalies", "suggestions", "warnings"]
+        required: ["plausibility_score", "overall_assessment", "anomalies", "suggestions"]
       }
     });
 
-    return Response.json({
-      success: true,
-      validation: response
+    return Response.json({ 
+      success: true, 
+      validation: response,
+      checked_at: new Date().toISOString()
     });
 
   } catch (error) {
-    console.error('Error in validateFormPlausibility:', error);
+    console.error('[ERROR]', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
