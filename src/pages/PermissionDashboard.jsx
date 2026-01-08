@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,60 +38,52 @@ export default function PermissionDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
+      >
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Permission Dashboard</h1>
           <p className="text-slate-600">Berechtigungssystem überwachen und testen</p>
         </div>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[
+          { icon: Shield, label: "Permissions", value: permissions.length, color: "blue" },
+          { icon: Users, label: "Rollen", value: roles.length, color: "purple" },
+          { icon: Key, label: "Zuweisungen", value: roleAssignments.length, color: "green" },
+          { icon: Lock, label: "Feld-Permissions", value: fieldPermissions.length, color: "orange" }
+        ].map((stat, idx) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + idx * 0.05 }}
+          >
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-600">Permissions</p>
-                <p className="text-2xl font-bold">{permissions.length}</p>
+                <p className="text-sm text-slate-600">{stat.label}</p>
+                <p className={`text-2xl font-bold ${stat.color !== 'blue' ? `text-${stat.color}-600` : ''}`}>
+                  {stat.value}
+                </p>
               </div>
-              <Shield className="w-8 h-8 text-blue-600" />
+              <stat.icon className={`w-8 h-8 text-${stat.color}-600`} />
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Rollen</p>
-                <p className="text-2xl font-bold text-purple-600">{roles.length}</p>
-              </div>
-              <Users className="w-8 h-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Zuweisungen</p>
-                <p className="text-2xl font-bold text-green-600">{roleAssignments.length}</p>
-              </div>
-              <Key className="w-8 h-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Feld-Permissions</p>
-                <p className="text-2xl font-bold text-orange-600">{fieldPermissions.length}</p>
-              </div>
-              <Lock className="w-8 h-8 text-orange-600" />
-            </div>
-          </CardContent>
-        </Card>
+          </motion.div>
+        ))}
       </div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
       <Tabs defaultValue="modules">
         <TabsList>
           <TabsTrigger value="modules">Nach Modul</TabsTrigger>
@@ -129,6 +122,7 @@ export default function PermissionDashboard() {
           <PermissionTester />
         </TabsContent>
       </Tabs>
+      </motion.div>
     </div>
   );
 }

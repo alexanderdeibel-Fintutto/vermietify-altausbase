@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Shield, FileText, Database, Download, Trash2 } from 'lucide-react';
@@ -10,61 +11,50 @@ import ConsentManager from '@/components/compliance/ConsentManager';
 export default function ComplianceCenter() {
   return (
     <div className="space-y-6">
-      <div>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <Shield className="w-7 h-7" />
           Compliance Center
         </h1>
         <p className="text-slate-600">DSGVO-konforme Datenverwaltung und Compliance-Tools</p>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[
+          { icon: Shield, label: "DSGVO", value: "✓", color: "green" },
+          { icon: Database, label: "Aufbewahrung", value: "5", color: "blue" },
+          { icon: Download, label: "Export", value: "✓", color: "purple" },
+          { icon: Trash2, label: "Löschung", value: "✓", color: "red" }
+        ].map((stat, idx) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + idx * 0.05 }}
+          >
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-600">DSGVO</p>
-                <p className="text-2xl font-bold text-green-600">✓</p>
+                <p className="text-sm text-slate-600">{stat.label}</p>
+                <p className={`text-2xl font-bold text-${stat.color}-600`}>{stat.value}</p>
               </div>
-              <Shield className="w-8 h-8 text-green-600" />
+              <stat.icon className={`w-8 h-8 text-${stat.color}-600`} />
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Aufbewahrung</p>
-                <p className="text-2xl font-bold text-blue-600">5</p>
-              </div>
-              <Database className="w-8 h-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Export</p>
-                <p className="text-2xl font-bold text-purple-600">✓</p>
-              </div>
-              <Download className="w-8 h-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Löschung</p>
-                <p className="text-2xl font-bold text-red-600">✓</p>
-              </div>
-              <Trash2 className="w-8 h-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
+          </motion.div>
+        ))}
       </div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
       <Tabs defaultValue="export">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="export">
@@ -202,7 +192,13 @@ export default function ComplianceCenter() {
           </div>
         </TabsContent>
       </Tabs>
+      </motion.div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
       <Card className="border-blue-200 bg-blue-50">
         <CardHeader>
           <CardTitle className="text-blue-900">Compliance-Status</CardTitle>
@@ -226,6 +222,7 @@ export default function ComplianceCenter() {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
     </div>
   );
 }

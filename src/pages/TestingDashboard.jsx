@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -103,74 +104,57 @@ export default function TestingDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
+      >
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Tester-Dashboard</h1>
           <p className="text-slate-600">Übersicht aller Test-Aktivitäten und Auswertungen</p>
         </div>
-      </div>
+      </motion.div>
 
       {/* Statistik-Übersicht */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        {[
+          { icon: TestTube, label: "Aktive Tester", value: testStats.activeTesters, color: "blue" },
+          { icon: Play, label: "Sessions heute", value: testStats.sessionsToday, color: "green" },
+          { icon: Clock, label: "Gesamte Testzeit", value: `${Math.round(testStats.totalHours)}h`, color: "purple" },
+          { icon: Star, label: "Ø Bewertung", value: testStats.averageRating, color: "orange" },
+          { icon: Target, label: "Features getestet", value: testStats.uniqueFeatures, color: "red" }
+        ].map((stat, idx) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + idx * 0.05 }}
+          >
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-600">Aktive Tester</p>
-                <p className="text-2xl font-bold text-blue-600">{testStats.activeTesters}</p>
+                <p className="text-sm text-slate-600">{stat.label}</p>
+                <p className={`text-2xl font-bold text-${stat.color}-600`}>{stat.value}</p>
               </div>
-              <TestTube className="w-8 h-8 text-blue-600" />
+              <stat.icon className={`w-8 h-8 text-${stat.color}-600`} />
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Sessions heute</p>
-                <p className="text-2xl font-bold text-green-600">{testStats.sessionsToday}</p>
-              </div>
-              <Play className="w-8 h-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Gesamte Testzeit</p>
-                <p className="text-2xl font-bold text-purple-600">{Math.round(testStats.totalHours)}h</p>
-              </div>
-              <Clock className="w-8 h-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Ø Bewertung</p>
-                <p className="text-2xl font-bold text-orange-600">{testStats.averageRating}</p>
-              </div>
-              <Star className="w-8 h-8 text-orange-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Features getestet</p>
-                <p className="text-2xl font-bold text-red-600">{testStats.uniqueFeatures}</p>
-              </div>
-              <Target className="w-8 h-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
+          </motion.div>
+        ))}
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {[0, 1].map(idx => (
+          <motion.div
+            key={idx}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 + idx * 0.1 }}
+          >
+            {idx === 0 ? (
         <Card>
           <CardHeader>
             <CardTitle>Testzeit pro Tag (letzte 30 Tage)</CardTitle>
@@ -187,7 +171,7 @@ export default function TestingDashboard() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-
+            ) : (
         <Card>
           <CardHeader>
             <CardTitle>Getestete Features</CardTitle>
@@ -204,10 +188,20 @@ export default function TestingDashboard() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
+            )}
+          </motion.div>
+        ))}
       </div>
 
       {/* Aktive Test-Sessions */}
+      <AnimatePresence>
       {activeSessions.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ delay: 0.6 }}
+        >
         <Card>
           <CardHeader>
             <CardTitle>Aktive Test-Sessions</CardTitle>
@@ -247,9 +241,16 @@ export default function TestingDashboard() {
             </div>
           </CardContent>
         </Card>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       {/* Test-Sessions Historie */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7 }}
+      >
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
@@ -320,6 +321,7 @@ export default function TestingDashboard() {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
     </div>
   );
 }
