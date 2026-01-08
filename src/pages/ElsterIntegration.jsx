@@ -98,6 +98,10 @@ import AITaxAdvisorChat from '@/components/elster/AITaxAdvisorChat';
 import AdvancedReportingDashboard from '@/components/elster/AdvancedReportingDashboard';
 import MultiYearTaxStrategy from '@/components/elster/MultiYearTaxStrategy';
 import RiskManagementSystem from '@/components/elster/RiskManagementSystem';
+import TaxLawUpdatesMonitor from '@/components/elster/TaxLawUpdatesMonitor';
+import WhiteLabelBranding from '@/components/elster/WhiteLabelBranding';
+import CostBenefitCalculator from '@/components/elster/CostBenefitCalculator';
+import APIDocumentationGenerator from '@/components/elster/APIDocumentationGenerator';
 
 export default function ElsterIntegration() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -205,7 +209,7 @@ export default function ElsterIntegration() {
             <TabsTrigger value="templates">Templates</TabsTrigger>
             <TabsTrigger value="categories">Kategorien</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="reports">Berichte</TabsTrigger>
+            <TabsTrigger value="settings">Einstellungen</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="mt-6">
@@ -442,29 +446,22 @@ export default function ElsterIntegration() {
             <ComplianceDashboard year={new Date().getFullYear()} />
           </TabsContent>
 
-          <TabsContent value="reports" className="mt-6">
+          <TabsContent value="settings" className="mt-6">
             <div className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <TaxReportingHub />
-                    <AdvancedExportImport />
+                    <WhiteLabelBranding />
+                    <CostBenefitCalculator />
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <TaxAdvisorReport />
-                    <FinancialDataSync />
+                    <APIDocumentationGenerator />
+                    <AutomatedBackupSystem />
                   </div>
                 </div>
                 <div className="space-y-6">
-                  <AuditReportGenerator />
-                  <AutomatedBackupSystem />
+                  <TaxLawUpdatesMonitor />
                 </div>
-              </div>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <TaxScenarioSimulator />
-                <OptimizationAssistant />
-                <TaxCalendar />
-                <YearEndSummary />
               </div>
             </div>
           </TabsContent>
