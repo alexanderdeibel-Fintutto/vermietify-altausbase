@@ -34,6 +34,7 @@ import OperatingCosts from './pages/OperatingCosts';
 import Payments from './pages/Payments';
 import PermissionDashboard from './pages/PermissionDashboard';
 import ProjectManagement from './pages/ProjectManagement';
+import ReportGenerator from './pages/ReportGenerator';
 import ReportScheduling from './pages/ReportScheduling';
 import RoleManagement from './pages/RoleManagement';
 import SuiteManagement from './pages/SuiteManagement';
@@ -43,6 +44,7 @@ import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
 import TaxForms from './pages/TaxForms';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
+import TesterOnboarding from './pages/TesterOnboarding';
 import TestingDashboard from './pages/TestingDashboard';
 import UnitDetail from './pages/UnitDetail';
 import UserDetail from './pages/UserDetail';
@@ -52,8 +54,7 @@ import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
-import ReportGenerator from './pages/ReportGenerator';
-import TesterOnboarding from './pages/TesterOnboarding';
+import ElsterIntegration from './pages/ElsterIntegration';
 import __Layout from './Layout.jsx';
 
 
@@ -94,6 +95,7 @@ export const PAGES = {
     "Payments": Payments,
     "PermissionDashboard": PermissionDashboard,
     "ProjectManagement": ProjectManagement,
+    "ReportGenerator": ReportGenerator,
     "ReportScheduling": ReportScheduling,
     "RoleManagement": RoleManagement,
     "SuiteManagement": SuiteManagement,
@@ -103,6 +105,7 @@ export const PAGES = {
     "Tax": Tax,
     "TaxForms": TaxForms,
     "TaxLibraryManagement": TaxLibraryManagement,
+    "TesterOnboarding": TesterOnboarding,
     "TestingDashboard": TestingDashboard,
     "UnitDetail": UnitDetail,
     "UserDetail": UserDetail,
@@ -112,8 +115,7 @@ export const PAGES = {
     "WhatsAppSettings": WhatsAppSettings,
     "WhatsAppSetup": WhatsAppSetup,
     "WorkflowAutomation": WorkflowAutomation,
-    "ReportGenerator": ReportGenerator,
-    "TesterOnboarding": TesterOnboarding,
+    "ElsterIntegration": ElsterIntegration,
 }
 
 export const pagesConfig = {
