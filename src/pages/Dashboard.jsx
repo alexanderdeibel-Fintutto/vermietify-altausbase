@@ -1,348 +1,110 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { Building2, Users, FileText, CreditCard, AlertCircle, TrendingUp, Home, BarChart3 } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, parseISO, isAfter, isBefore } from 'date-fns';
-import { de } from 'date-fns/locale';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
-import StatCard from '@/components/dashboard/StatCard';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import WhatsAppWidget from '@/components/whatsapp/WhatsAppWidget';
-import OnboardingResumeCard from '@/components/dashboard/OnboardingResumeCard';
-import ElsterDashboardWidget from '@/components/elster/ElsterDashboardWidget';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import QuickStats from '@/components/shared/QuickStats';
+import { TrendingUp, Users, Home, FileText, AlertCircle } from 'lucide-react';
 
-export default function Dashboard() {
-    const { data: user } = useQuery({
-        queryKey: ['current-user'],
-        queryFn: () => base44.auth.me()
-    });
+export default function DashboardPage() {
+  const revenueData = [
+    { month: 'Jan', revenue: 4000, expenses: 2400 },
+    { month: 'Feb', revenue: 3000, expenses: 1398 },
+    { month: 'Mär', revenue: 2000, expenses: 1800 },
+    { month: 'Apr', revenue: 2780, expenses: 1908 },
+    { month: 'Mai', revenue: 1890, expenses: 1200 },
+    { month: 'Jun', revenue: 2390, expenses: 1500 },
+  ];
 
-    const { data: onboardingProgress } = useQuery({
-        queryKey: ['onboarding-progress', user?.id],
-        queryFn: async () => {
-            const results = await base44.entities.OnboardingProgress.filter({ user_id: user.id });
-            return results[0];
-        },
-        enabled: !!user
-    });
+  const occupancyData = [
+    { name: 'Vermietet', value: 75 },
+    { name: 'Leer', value: 20 },
+    { name: 'In Renovierung', value: 5 },
+  ];
 
-    const { data: buildings = [], isLoading: loadingBuildings } = useQuery({
-        queryKey: ['buildings'],
-        queryFn: () => base44.entities.Building.list()
-    });
+  const COLORS = ['#10b981', '#f59e0b', '#ef4444'];
 
-    const { data: units = [], isLoading: loadingUnits } = useQuery({
-        queryKey: ['units'],
-        queryFn: () => base44.entities.Unit.list()
-    });
+  const stats = [
+    { label: 'Portfoliowert', value: '€2.4M' },
+    { label: 'Belegungsquote', value: '87%' },
+    { label: 'Monatliche Einnahmen', value: '€24K' },
+    { label: 'Ausstehende Zahlungen', value: '€3.2K' },
+  ];
 
-    const { data: contracts = [], isLoading: loadingContracts } = useQuery({
-        queryKey: ['contracts'],
-        queryFn: () => base44.entities.LeaseContract.list()
-    });
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900">📈 Dashboard</h1>
+        <p className="text-slate-600 mt-1">Übersicht Ihrer Immobilienportfolios</p>
+      </div>
 
-    const { data: financialItems = [], isLoading: loadingFinancialItems } = useQuery({
-        queryKey: ['financial-items'],
-        queryFn: () => base44.entities.FinancialItem.list()
-    });
+      <QuickStats stats={stats} accentColor="emerald" />
 
-    const isLoading = loadingBuildings || loadingUnits || loadingContracts || loadingFinancialItems;
+      <div className="grid grid-cols-2 gap-6">
+        <Card className="border border-slate-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg"><TrendingUp className="w-5 h-5 text-emerald-600" /> Einnahmen vs. Ausgaben</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={revenueData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="revenue" fill="#10b981" />
+                <Bar dataKey="expenses" fill="#ef4444" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-    // Calculate statistics
-    const activeContracts = contracts.filter(c => c.status === 'active');
-    const occupiedUnits = units.filter(u => u.status === 'occupied').length;
-    const vacantUnits = units.filter(u => u.status === 'vacant').length;
-    const totalUnits = units.length;
-    const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
+        <Card className="border border-slate-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg"><Home className="w-5 h-5 text-blue-600" /> Belegungsquote</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie data={occupancyData} cx="50%" cy="50%" labelLine={false} label={({ name, value }) => `${name} ${value}%`} outerRadius={80} fill="#3b82f6" dataKey="value">
+                  {occupancyData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
 
-    // Monthly rent income from financial items
-    const currentMonth = format(new Date(), 'yyyy-MM');
-    const currentMonthItems = financialItems.filter(f => 
-        f.payment_month === currentMonth && 
-        f.type === 'receivable' && 
-        f.category === 'rent' && 
-        f.status === 'paid'
-    );
-    const monthlyIncome = currentMonthItems.reduce((sum, f) => sum + (f.amount || 0), 0);
+      <div className="grid grid-cols-3 gap-6">
+        <Card className="border border-slate-200 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base"><FileText className="w-5 h-5 text-blue-600" /> Offene Verträge</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-blue-700">12</p>
+            <p className="text-sm text-blue-600 mt-2">Zur Überprüfung ausstehend</p>
+          </CardContent>
+        </Card>
 
-    // Expected vs received
-    const expectedMonthlyRent = activeContracts.reduce((sum, c) => sum + (c.total_rent || 0), 0);
-    
-    // Overdue payments
-    const overdueItems = financialItems.filter(f => 
-        f.type === 'receivable' && 
-        (f.status === 'overdue' || f.status === 'pending')
-    );
-    const overdueAmount = overdueItems.reduce((sum, f) => 
-        sum + ((f.expected_amount || 0) - (f.amount || 0)), 0
-    );
+        <Card className="border border-slate-200 bg-yellow-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base"><AlertCircle className="w-5 h-5 text-yellow-600" /> Ausstehende Zahlungen</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-yellow-700">5</p>
+            <p className="text-sm text-yellow-600 mt-2">Erfordert Aufmerksamkeit</p>
+          </CardContent>
+        </Card>
 
-    // Monthly income chart data (last 6 months)
-    const monthlyData = [];
-    for (let i = 5; i >= 0; i--) {
-        const date = new Date();
-        date.setMonth(date.getMonth() - i);
-        const monthKey = format(date, 'yyyy-MM');
-        const monthItems = financialItems.filter(f => 
-            f.payment_month === monthKey && 
-            f.type === 'receivable' && 
-            f.category === 'rent' && 
-            f.status === 'paid'
-        );
-        const income = monthItems.reduce((sum, f) => sum + (f.amount || 0), 0);
-        monthlyData.push({
-            month: format(date, 'MMM', { locale: de }),
-            income: income
-        });
-    }
-
-    // Unit status distribution
-    const statusData = [
-        { name: 'Vermietet', value: occupiedUnits, color: '#10b981' },
-        { name: 'Leer', value: vacantUnits, color: '#f59e0b' },
-        { name: 'Renovierung', value: units.filter(u => u.status === 'renovation').length, color: '#6366f1' }
-    ].filter(d => d.value > 0);
-
-    if (isLoading) {
-        return (
-            <div className="space-y-8">
-                <div>
-                    <Skeleton className="h-8 w-48 mb-2" />
-                    <Skeleton className="h-4 w-64" />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {[...Array(4)].map((_, i) => (
-                        <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.1 }}
-                        >
-                            <Skeleton className="h-36 rounded-2xl" />
-                        </motion.div>
-                    ))}
-                </div>
-            </div>
-        );
-        }
-
-    return (
-        <div className="space-y-8">
-            {/* Onboarding Resume Card */}
-            {onboardingProgress && !onboardingProgress.is_completed && (
-                <OnboardingResumeCard progress={onboardingProgress} />
-            )}
-
-            {/* Header */}
-            <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-            >
-                <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">Dashboard</h1>
-                <p className="text-slate-500 mt-1">Übersicht Ihrer Immobilien</p>
-            </motion.div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[
-                    { title: "Gebäude", value: buildings.length, subtitle: `${totalUnits} Wohneinheiten`, icon: Building2 },
-                    { title: "Auslastung", value: `${occupancyRate}%`, subtitle: `${occupiedUnits} von ${totalUnits} vermietet`, icon: Home, trend: vacantUnits > 0 ? `${vacantUnits} leer` : null, trendUp: vacantUnits === 0 },
-                    { title: "Mieteinnahmen", value: `€${monthlyIncome.toLocaleString('de-DE')}`, subtitle: format(new Date(), 'MMMM yyyy', { locale: de }), icon: TrendingUp, trend: expectedMonthlyRent > 0 ? `von €${expectedMonthlyRent.toLocaleString('de-DE')} erwartet` : null, trendUp: monthlyIncome >= expectedMonthlyRent },
-                    { title: "Offene Zahlungen", value: overdueItems.length, subtitle: overdueAmount > 0 ? `€${overdueAmount.toLocaleString('de-DE')} ausstehend` : 'Alle Zahlungen erhalten', icon: AlertCircle }
-                ].map((stat, idx) => (
-                    <motion.div
-                        key={stat.title}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.1 }}
-                    >
-                        <StatCard {...stat} />
-                    </motion.div>
-                ))}
-            </div>
-
-            {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Income Chart */}
-                <motion.div
-                    className="lg:col-span-2"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.5 }}
-                >
-                <Card className="border-slate-200/50">
-                    <CardHeader>
-                        <CardTitle className="text-lg font-semibold text-slate-800">Mieteinnahmen</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="h-64">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={monthlyData}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                    <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} />
-                                    <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={(v) => `€${v}`} />
-                                    <Tooltip 
-                                        formatter={(value) => [`€${value.toLocaleString('de-DE')}`, 'Einnahmen']}
-                                        contentStyle={{ 
-                                            backgroundColor: 'white', 
-                                            border: '1px solid #e2e8f0',
-                                            borderRadius: '12px',
-                                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                                        }}
-                                    />
-                                    <Bar dataKey="income" fill="#10b981" radius={[6, 6, 0, 0]} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                        </CardContent>
-                        </Card>
-                        </motion.div>
-
-                        {/* Status Distribution */}
-                        <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.6 }}
-                        >
-                        <Card className="border-slate-200/50">
-                    <CardHeader>
-                        <CardTitle className="text-lg font-semibold text-slate-800">Wohnungsstatus</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="h-48">
-                            {statusData.length > 0 ? (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={statusData}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={50}
-                                            outerRadius={70}
-                                            paddingAngle={5}
-                                            dataKey="value"
-                                        >
-                                            {statusData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={entry.color} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            ) : (
-                                <div className="flex items-center justify-center h-full text-slate-400">
-                                    Keine Wohnungen vorhanden
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex flex-wrap justify-center gap-4 mt-4">
-                            {statusData.map((item) => (
-                                <div key={item.name} className="flex items-center gap-2">
-                                    <div 
-                                        className="w-3 h-3 rounded-full" 
-                                        style={{ backgroundColor: item.color }}
-                                    />
-                                    <span className="text-sm text-slate-600">{item.name}: {item.value}</span>
-                                </div>
-                            ))}
-                        </div>
-                        </CardContent>
-                        </Card>
-                        </motion.div>
-                        </div>
-
-            {/* Widgets & Quick Links */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7 }}
-                >
-                    <WhatsAppWidget />
-                </motion.div>
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.72 }}
-                >
-                    <ElsterDashboardWidget />
-                </motion.div>
-
-                <Link to={createPageUrl('Buildings')}>
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.76 }}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                    >
-                    <Card className="border-slate-200/50 hover:shadow-md transition-shadow cursor-pointer group">
-                        <CardContent className="p-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
-                                    <Building2 className="w-6 h-6 text-emerald-600" />
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold text-slate-800">Gebäude verwalten</h3>
-                                    <p className="text-sm text-slate-500">{buildings.length} Gebäude</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                        </Card>
-                        </motion.div>
-                        </Link>
-                        <Link to={createPageUrl('Payments')}>
-                        <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.78 }}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        >
-                        <Card className="border-slate-200/50 hover:shadow-md transition-shadow cursor-pointer group">
-                        <CardContent className="p-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                                    <CreditCard className="w-6 h-6 text-blue-600" />
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold text-slate-800">Zahlungen prüfen</h3>
-                                    <p className="text-sm text-slate-500">{overdueItems.length} offen</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                        </Card>
-                        </motion.div>
-                        </Link>
-                        <Link to={createPageUrl('Analytics')}>
-                        <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.8 }}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        >
-                        <Card className="border-slate-200/50 hover:shadow-md transition-shadow cursor-pointer group">
-                        <CardContent className="p-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                                    <BarChart3 className="w-6 h-6 text-purple-600" />
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold text-slate-800">Auswertungen</h3>
-                                    <p className="text-sm text-slate-500">Analysen & Reports</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                        </Card>
-                        </motion.div>
-                        </Link>
-                        </div>
-                        </div>
-                        );
-                        }
+        <Card className="border border-slate-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base"><Users className="w-5 h-5 text-green-600" /> Aktive Mieter</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-green-700">47</p>
+            <p className="text-sm text-green-600 mt-2">In Ihren Gebäuden</p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
