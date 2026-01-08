@@ -3,128 +3,83 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
 
-    const { user_email, notification_type, submission_id, data } = await req.json();
-
-    if (!user_email || !notification_type) {
-      return Response.json({ error: 'user_email and notification_type required' }, { status: 400 });
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log(`[NOTIFICATION] Sending ${notification_type} to ${user_email}`);
+    const { type, submission_id, recipient_email, custom_message } = await req.json();
 
-    const notificationTemplates = {
-      SUBMISSION_ACCEPTED: {
-        subject: '✅ ELSTER-Submission erfolgreich akzeptiert',
-        body: (data) => `
-Gute Nachrichten!
+    if (!type || !submission_id) {
+      return Response.json({ error: 'type and submission_id required' }, { status: 400 });
+    }
 
-Ihre ELSTER-Submission wurde erfolgreich vom Finanzamt akzeptiert:
+    console.log(`[NOTIFICATION] Sending ${type} notification for ${submission_id}`);
 
-📋 Formular: ${data.form_type}
-📅 Steuerjahr: ${data.tax_year}
-🎫 Transfer-Ticket: ${data.transfer_ticket}
+    const submission = await base44.entities.ElsterSubmission.filter({ id: submission_id });
+    
+    if (submission.length === 0) {
+      return Response.json({ error: 'Submission not found' }, { status: 404 });
+    }
 
-Die Submission ist nun archiviert und 10 Jahre GoBD-konform aufbewahrt.
+    const sub = submission[0];
+    const recipientEmail = recipient_email || user.email;
 
-Mit freundlichen Grüßen
-Ihr ImmoVerwalter-Team
-        `.trim()
+    const templates = {
+      validation_passed: {
+        subject: `✅ ELSTER-Validierung erfolgreich - ${sub.tax_form_type}`,
+        body: `Ihre ELSTER-Submission wurde erfolgreich validiert.\n\nFormular: ${sub.tax_form_type}\nJahr: ${sub.tax_year}\nStatus: ${sub.status}\n\nSie können die Submission nun übermitteln.`
       },
-      SUBMISSION_REJECTED: {
-        subject: '❌ ELSTER-Submission abgelehnt',
-        body: (data) => `
-Ihre ELSTER-Submission wurde leider abgelehnt:
-
-📋 Formular: ${data.form_type}
-📅 Steuerjahr: ${data.tax_year}
-❌ Grund: ${data.error_message || 'Siehe ELSTER-Antwort'}
-
-Bitte überprüfen Sie die Daten und reichen Sie die Submission erneut ein.
-
-Mit freundlichen Grüßen
-Ihr ImmoVerwalter-Team
-        `.trim()
+      validation_failed: {
+        subject: `⚠️ ELSTER-Validierung fehlgeschlagen - ${sub.tax_form_type}`,
+        body: `Ihre ELSTER-Submission enthält Fehler.\n\nFormular: ${sub.tax_form_type}\nJahr: ${sub.tax_year}\nFehler: ${sub.validation_errors?.length || 0}\n\nBitte überprüfen Sie die Daten.`
       },
-      VALIDATION_FAILED: {
-        subject: '⚠️ Validierung fehlgeschlagen',
-        body: (data) => `
-Die Validierung Ihrer ELSTER-Submission ist fehlgeschlagen:
-
-📋 Formular: ${data.form_type}
-📅 Steuerjahr: ${data.tax_year}
-🔍 Fehler: ${data.error_count} Fehler gefunden
-
-Bitte korrigieren Sie die Fehler und validieren Sie erneut.
-
-Mit freundlichen Grüßen
-Ihr ImmoVerwalter-Team
-        `.trim()
+      submission_success: {
+        subject: `🎉 ELSTER-Übermittlung erfolgreich - ${sub.tax_form_type}`,
+        body: `Ihre ELSTER-Submission wurde erfolgreich übermittelt.\n\nFormular: ${sub.tax_form_type}\nJahr: ${sub.tax_year}\nTransfer-Ticket: ${sub.transfer_ticket || 'N/A'}\n\nSie erhalten in Kürze eine Bestätigung vom Finanzamt.`
       },
-      CERTIFICATE_EXPIRING: {
-        subject: '⏰ ELSTER-Zertifikat läuft bald ab',
-        body: (data) => `
-Ihr ELSTER-Zertifikat läuft bald ab:
-
-📜 Zertifikat: ${data.certificate_name}
-📅 Gültig bis: ${new Date(data.valid_until).toLocaleDateString('de-DE')}
-⏰ Verbleibend: ${data.days_remaining} Tage
-
-Bitte laden Sie rechtzeitig ein neues Zertifikat hoch.
-
-Mit freundlichen Grüßen
-Ihr ImmoVerwalter-Team
-        `.trim()
+      submission_failed: {
+        subject: `❌ ELSTER-Übermittlung fehlgeschlagen - ${sub.tax_form_type}`,
+        body: `Die Übermittlung Ihrer ELSTER-Submission ist fehlgeschlagen.\n\nFormular: ${sub.tax_form_type}\nJahr: ${sub.tax_year}\n\nBitte prüfen Sie die Fehlermeldungen und versuchen Sie es erneut.`
       },
-      DEADLINE_REMINDER: {
-        subject: '📅 Erinnerung: Steuer-Frist',
-        body: (data) => `
-Erinnerung an folgende Steuerfrist:
-
-📋 ${data.description}
-📅 Frist: ${new Date(data.deadline).toLocaleDateString('de-DE')}
-⏰ Verbleibend: ${data.days_until} Tage
-
-${data.days_until <= 7 ? '⚠️ WICHTIG: Die Frist läuft bald ab!' : ''}
-
-Mit freundlichen Grüßen
-Ihr ImmoVerwalter-Team
-        `.trim()
+      deadline_reminder: {
+        subject: `⏰ ELSTER-Frist-Erinnerung - ${sub.tax_form_type}`,
+        body: `Erinnerung: Die Abgabefrist für Ihre ELSTER-Submission rückt näher.\n\nFormular: ${sub.tax_form_type}\nJahr: ${sub.tax_year}\nStatus: ${sub.status}\n\nBitte vervollständigen Sie die Submission zeitnah.`
+      },
+      custom: {
+        subject: `ELSTER-Benachrichtigung - ${sub.tax_form_type}`,
+        body: custom_message || 'Neue Benachrichtigung zu Ihrer ELSTER-Submission.'
       }
     };
 
-    const template = notificationTemplates[notification_type];
-    if (!template) {
-      return Response.json({ error: 'Unknown notification type' }, { status: 400 });
-    }
+    const template = templates[type] || templates.custom;
 
-    // Sende E-Mail
     await base44.asServiceRole.integrations.Core.SendEmail({
-      to: user_email,
-      from_name: 'ImmoVerwalter ELSTER',
+      from_name: 'ELSTER-System',
+      to: recipientEmail,
       subject: template.subject,
-      body: template.body(data || {})
+      body: template.body
     });
 
-    // Erstelle In-App Notification
-    await base44.asServiceRole.entities.Notification.create({
-      user_email,
-      title: template.subject,
-      message: template.body(data || {}),
-      type: 'elster',
-      priority: ['SUBMISSION_REJECTED', 'VALIDATION_FAILED', 'CERTIFICATE_EXPIRING'].includes(notification_type) ? 'high' : 'normal',
-      link: submission_id ? `/elster/${submission_id}` : '/elster',
+    // Log
+    await base44.asServiceRole.entities.ActivityLog.create({
+      entity_type: 'ElsterSubmission',
+      entity_id: submission_id,
+      action: 'notification_sent',
+      user_id: user.id,
       metadata: {
-        notification_type,
-        submission_id,
-        ...data
+        notification_type: type,
+        recipient: recipientEmail,
+        sent_at: new Date().toISOString()
       }
     });
 
-    console.log('[SUCCESS] Notification sent');
+    console.log(`[NOTIFICATION] Sent successfully to ${recipientEmail}`);
 
     return Response.json({
       success: true,
-      notification_type
+      recipient: recipientEmail
     });
 
   } catch (error) {

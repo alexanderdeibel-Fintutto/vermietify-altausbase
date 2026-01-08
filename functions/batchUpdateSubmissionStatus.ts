@@ -5,92 +5,58 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
-    if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Admin access required' }, { status: 403 });
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { submission_ids, new_status, reason } = await req.json();
 
     if (!submission_ids || !Array.isArray(submission_ids) || !new_status) {
-      return Response.json({ error: 'submission_ids array and new_status required' }, { status: 400 });
+      return Response.json({ 
+        error: 'submission_ids (array) and new_status required' 
+      }, { status: 400 });
     }
 
-    console.log(`[BATCH UPDATE] Updating ${submission_ids.length} submissions to ${new_status}`);
+    console.log(`[BATCH-STATUS] Updating ${submission_ids.length} submissions to ${new_status}`);
 
-    const results = [];
+    const results = {
+      updated: 0,
+      failed: 0,
+      errors: []
+    };
 
     for (const id of submission_ids) {
       try {
-        const submissions = await base44.entities.ElsterSubmission.filter({ id });
-        
-        if (!submissions || submissions.length === 0) {
-          results.push({ id, success: false, error: 'Not found' });
-          continue;
-        }
+        await base44.asServiceRole.entities.ElsterSubmission.update(id, {
+          status: new_status
+        });
 
-        const submission = submissions[0];
-        const oldStatus = submission.status;
-
-        // Update status
-        await base44.entities.ElsterSubmission.update(id, {
-          status: new_status,
+        // Log
+        await base44.asServiceRole.entities.ActivityLog.create({
+          entity_type: 'ElsterSubmission',
+          entity_id: id,
+          action: 'status_changed',
+          user_id: user.id,
+          changes: { status: new_status },
           metadata: {
-            ...submission.metadata,
-            status_history: [
-              ...(submission.metadata?.status_history || []),
-              {
-                from: oldStatus,
-                to: new_status,
-                timestamp: new Date().toISOString(),
-                user: user.email,
-                reason: reason || 'Batch update'
-              }
-            ]
+            reason: reason || 'Batch-Update',
+            user_name: user.full_name,
+            previous_status: 'unknown'
           }
         });
 
-        // Log audit event
-        await base44.functions.invoke('logElsterAuditEvent', {
-          submission_id: id,
-          event_type: 'STATUS_CHANGED',
-          details: `Status changed from ${oldStatus} to ${new_status}: ${reason || 'Batch update'}`,
-          metadata: { batch_operation: true }
-        });
-
-        // Send notification if status is ACCEPTED or REJECTED
-        if (['ACCEPTED', 'REJECTED'].includes(new_status)) {
-          await base44.functions.invoke('sendElsterNotification', {
-            user_email: submission.created_by,
-            notification_type: new_status === 'ACCEPTED' ? 'SUBMISSION_ACCEPTED' : 'SUBMISSION_REJECTED',
-            submission_id: id,
-            data: {
-              form_type: submission.tax_form_type,
-              tax_year: submission.tax_year,
-              transfer_ticket: submission.transfer_ticket,
-              error_message: reason
-            }
-          });
-        }
-
-        results.push({ id, success: true, old_status: oldStatus, new_status });
-        console.log(`[SUCCESS] Updated ${id}: ${oldStatus} → ${new_status}`);
-
+        results.updated++;
       } catch (error) {
-        results.push({ id, success: false, error: error.message });
-        console.error(`[ERROR] Failed to update ${id}:`, error.message);
+        console.error(`Failed to update ${id}:`, error);
+        results.failed++;
+        results.errors.push({ id, error: error.message });
       }
     }
 
-    const successCount = results.filter(r => r.success).length;
-    const failCount = results.filter(r => !r.success).length;
-
-    console.log(`[BATCH COMPLETE] ${successCount} successful, ${failCount} failed`);
+    console.log(`[BATCH-STATUS] Complete: ${results.updated} updated, ${results.failed} failed`);
 
     return Response.json({
       success: true,
-      total: submission_ids.length,
-      success_count: successCount,
-      fail_count: failCount,
       results
     });
 

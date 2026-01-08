@@ -9,111 +9,98 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { building_id, form_type, source_year, target_year } = await req.json();
+    const { building_id, form_type, source_year } = await req.json();
 
-    if (!building_id || !form_type || !target_year) {
-      return Response.json({ error: 'building_id, form_type, and target_year required' }, { status: 400 });
+    if (!building_id || !form_type || !source_year) {
+      return Response.json({ 
+        error: 'building_id, form_type and source_year required' 
+      }, { status: 400 });
     }
 
-    console.log(`[AUTO-FILL] Generating predictions for ${target_year}`);
+    const targetYear = source_year + 1;
 
-    // Hole historische Daten
-    const historicalSubmissions = await base44.entities.ElsterSubmission.filter({
+    console.log(`[AUTO-FILL] Filling ${form_type} for ${targetYear} based on ${source_year}`);
+
+    // Hole Source-Submission
+    const sourceSubmissions = await base44.entities.ElsterSubmission.filter({
       building_id,
       tax_form_type: form_type,
-      status: 'ACCEPTED'
+      tax_year: source_year,
+      status: { $in: ['ACCEPTED', 'SUBMITTED'] }
     });
 
-    if (historicalSubmissions.length === 0) {
+    if (sourceSubmissions.length === 0) {
       return Response.json({ 
-        error: 'Keine historischen Daten vorhanden' 
+        error: `No accepted submission found for ${source_year}` 
       }, { status: 404 });
     }
 
-    // Sortiere nach Jahr
-    const sorted = historicalSubmissions.sort((a, b) => b.tax_year - a.tax_year);
-    const lastYear = sorted[0];
-    const twoYearsAgo = sorted.find(s => s.tax_year === lastYear.tax_year - 1);
-    const threeYearsAgo = sorted.find(s => s.tax_year === lastYear.tax_year - 2);
+    const source = sourceSubmissions[0];
 
-    // Berechne Trends und Vorhersagen
-    const predictions = {};
-    const fields = [
-      'income_rent',
-      'expense_property_tax',
-      'expense_insurance',
-      'expense_maintenance',
-      'expense_administration',
-      'expense_interest',
-      'afa_amount'
+    // Prüfe ob Target bereits existiert
+    const existing = await base44.entities.ElsterSubmission.filter({
+      building_id,
+      tax_form_type: form_type,
+      tax_year: targetYear
+    });
+
+    if (existing.length > 0) {
+      return Response.json({ 
+        error: `Submission for ${targetYear} already exists` 
+      }, { status: 400 });
+    }
+
+    // Erstelle neue Submission mit vorausgefüllten Daten
+    const newFormData = { ...source.form_data };
+    
+    // Aktualisiere Jahres-spezifische Felder
+    if (newFormData.steuerjahr) {
+      newFormData.steuerjahr = targetYear;
+    }
+
+    // Nullsetze transaktionale Daten (müssen neu eingegeben werden)
+    const transactionalFields = [
+      'einnahmen_gesamt',
+      'ausgaben_gesamt',
+      'ueberschuss',
+      'mieteinnahmen',
+      'nebenkosten'
     ];
 
-    fields.forEach(field => {
-      const values = [
-        lastYear.form_data?.[field] || 0,
-        twoYearsAgo?.form_data?.[field] || 0,
-        threeYearsAgo?.form_data?.[field] || 0
-      ].filter(v => v > 0);
-
-      if (values.length === 0) {
-        predictions[field] = {
-          predicted_value: 0,
-          confidence: 0,
-          method: 'no_data'
-        };
-        return;
-      }
-
-      // Durchschnitt der letzten Jahre
-      const avg = values.reduce((sum, v) => sum + v, 0) / values.length;
-
-      // Trend-Berechnung
-      let trend = 0;
-      if (values.length >= 2) {
-        const growth = ((values[0] - values[1]) / values[1]) * 100;
-        trend = growth;
-      }
-
-      // Vorhersage mit Trend
-      const predicted = values[0] * (1 + (trend / 100));
-
-      // Confidence basierend auf Datenmenge und Variabilität
-      let confidence = Math.min(values.length * 25, 100);
-      
-      // Reduziere Confidence bei hoher Volatilität
-      const variance = values.reduce((sum, v) => sum + Math.abs(v - avg), 0) / values.length;
-      const volatility = (variance / avg) * 100;
-      if (volatility > 20) confidence *= 0.8;
-
-      predictions[field] = {
-        predicted_value: Math.round(predicted * 100) / 100,
-        confidence: Math.round(confidence),
-        method: 'trend_analysis',
-        trend_percentage: Math.round(trend * 10) / 10,
-        historical_avg: Math.round(avg * 100) / 100,
-        data_points: values.length
-      };
-    });
-
-    // Intelligente Anpassungen
-    const inflation_rate = 0.03; // 3% geschätzte Inflation
-    Object.keys(predictions).forEach(field => {
-      if (field.startsWith('expense_')) {
-        predictions[field].predicted_value *= (1 + inflation_rate);
-        predictions[field].adjusted_for_inflation = true;
+    transactionalFields.forEach(field => {
+      if (field in newFormData) {
+        delete newFormData[field];
       }
     });
 
-    console.log('[SUCCESS] Predictions generated');
+    const newSubmission = await base44.entities.ElsterSubmission.create({
+      building_id,
+      tax_form_type: form_type,
+      legal_form: source.legal_form,
+      tax_year: targetYear,
+      submission_mode: source.submission_mode,
+      form_data: newFormData,
+      status: 'DRAFT'
+    });
+
+    // Log
+    await base44.asServiceRole.entities.ActivityLog.create({
+      entity_type: 'ElsterSubmission',
+      entity_id: newSubmission.id,
+      action: 'auto_filled',
+      user_id: user.id,
+      metadata: {
+        source_submission_id: source.id,
+        source_year: source_year,
+        target_year: targetYear
+      }
+    });
+
+    console.log(`[AUTO-FILL] Created submission ${newSubmission.id} for ${targetYear}`);
 
     return Response.json({
       success: true,
-      predictions,
-      source_data: {
-        last_year: lastYear.tax_year,
-        historical_count: historicalSubmissions.length
-      },
-      message: `Vorhersagen für ${target_year} basierend auf ${historicalSubmissions.length} Jahren`
+      submission: newSubmission
     });
 
   } catch (error) {
