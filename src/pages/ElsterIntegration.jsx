@@ -197,7 +197,26 @@ export default function ElsterIntegration() {
                   onUploadClick={() => setShowCertUpload(true)} 
                 />
               </div>
-              <DashboardView submissions={submissions} />
+
+              {/* Mobile View */}
+              <div className="lg:hidden">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Einreichungen (Mobile)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <MobileOptimizedView 
+                      submissions={submissions.slice(0, 10)}
+                      onSelectSubmission={setSelectedSubmission}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Desktop View */}
+              <div className="hidden lg:block">
+                <DashboardView submissions={submissions} />
+              </div>
             </div>
           </TabsContent>
 
