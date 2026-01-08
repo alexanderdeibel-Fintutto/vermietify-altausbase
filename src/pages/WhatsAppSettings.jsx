@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,13 +46,21 @@ export default function WhatsAppSettings() {
 
     return (
         <div className="p-6 max-w-6xl mx-auto space-y-6">
-            <div>
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+            >
                 <h1 className="text-3xl font-bold text-slate-900">WhatsApp Einstellungen</h1>
                 <p className="text-slate-600 mt-2">
                     Verwalten Sie Templates, Einwilligungen und Account-Einstellungen
                 </p>
-            </div>
+            </motion.div>
 
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+            >
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -90,7 +99,13 @@ export default function WhatsAppSettings() {
                     </div>
                 </CardContent>
             </Card>
+            </motion.div>
 
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+            >
             <Tabs defaultValue="dashboard">
                 <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="dashboard">
@@ -130,6 +145,7 @@ export default function WhatsAppSettings() {
                     <WebhookSetup accountId={account.id} />
                 </TabsContent>
             </Tabs>
+            </motion.div>
         </div>
     );
 }

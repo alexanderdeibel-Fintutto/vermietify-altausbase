@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,7 +46,11 @@ export default function WorkflowAutomation() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
+      >
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Workflow Automation</h1>
           <p className="text-slate-600">Automatisieren Sie wiederkehrende Aufgaben</p>
@@ -60,49 +65,50 @@ export default function WorkflowAutomation() {
           <Plus className="w-4 h-4 mr-2" />
           Workflow erstellen
         </Button>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[
+          { value: workflows.length, label: "Gesamt", color: "slate" },
+          { value: workflows.filter(w => w.is_active).length, label: "Aktiv", color: "green" },
+          { value: workflows.reduce((sum, w) => sum + (w.execution_count || 0), 0), label: "Ausführungen", color: "blue" },
+          { value: workflows.filter(w => w.trigger_type === 'schedule').length, label: "Zeitgesteuert", color: "purple" }
+        ].map((stat, idx) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + idx * 0.05 }}
+          >
         <Card>
           <CardContent className="p-6">
-            <div className="text-2xl font-bold text-slate-900">{workflows.length}</div>
-            <div className="text-sm text-slate-600">Gesamt</div>
+            <div className={`text-2xl font-bold text-${stat.color}-600`}>{stat.value}</div>
+            <div className="text-sm text-slate-600">{stat.label}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold text-green-600">
-              {workflows.filter(w => w.is_active).length}
-            </div>
-            <div className="text-sm text-slate-600">Aktiv</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold text-blue-600">
-              {workflows.reduce((sum, w) => sum + (w.execution_count || 0), 0)}
-            </div>
-            <div className="text-sm text-slate-600">Ausführungen</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold text-purple-600">
-              {workflows.filter(w => w.trigger_type === 'schedule').length}
-            </div>
-            <div className="text-sm text-slate-600">Zeitgesteuert</div>
-          </CardContent>
-        </Card>
+          </motion.div>
+        ))}
       </div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
       <Card>
         <CardHeader>
           <CardTitle>Workflows</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {workflows.map((workflow) => (
-              <div key={workflow.id} className="p-4 border rounded-lg">
+            {workflows.map((workflow, idx) => (
+              <motion.div 
+                key={workflow.id} 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 + idx * 0.05 }}
+                className="p-4 border rounded-lg"
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
@@ -153,11 +159,12 @@ export default function WorkflowAutomation() {
                     </Button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </CardContent>
       </Card>
+      </motion.div>
 
       <WorkflowBuilder
         open={builderOpen}

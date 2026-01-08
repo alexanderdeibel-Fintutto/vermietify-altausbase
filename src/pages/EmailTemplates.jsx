@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,7 +60,11 @@ export default function EmailTemplates() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
+      >
         <div>
           <h1 className="text-2xl font-bold text-slate-900">E-Mail Templates</h1>
           <p className="text-slate-600">Verwalten Sie Ihre E-Mail-Vorlagen</p>
@@ -74,10 +79,16 @@ export default function EmailTemplates() {
           <Plus className="w-4 h-4 mr-2" />
           Template erstellen
         </Button>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {categories.map(cat => (
+        {categories.map((cat, idx) => (
+          <motion.div
+            key={cat.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + idx * 0.05 }}
+          >
           <Card 
             key={cat.id}
             className={`cursor-pointer transition-all ${
@@ -95,10 +106,16 @@ export default function EmailTemplates() {
               </div>
             </CardContent>
           </Card>
+          </motion.div>
         ))}
       </div>
 
-      <div className="flex items-center gap-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="flex items-center gap-4"
+      >
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
@@ -108,11 +125,24 @@ export default function EmailTemplates() {
             className="pl-10"
           />
         </div>
-      </div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredTemplates.map(template => (
-          <Card key={template.id} className="hover:shadow-lg transition-shadow">
+      <AnimatePresence mode="wait">
+      <motion.div
+        key={filteredTemplates.length}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+      >
+        {filteredTemplates.map((template, idx) => (
+          <motion.div
+            key={template.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.05 }}
+          >
+          <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -184,10 +214,16 @@ export default function EmailTemplates() {
               </div>
             </CardContent>
           </Card>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
+      </AnimatePresence>
 
       {filteredTemplates.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
         <Card>
           <CardContent className="p-12 text-center">
             <Mail className="w-12 h-12 mx-auto text-slate-300 mb-4" />
@@ -199,6 +235,7 @@ export default function EmailTemplates() {
             </p>
           </CardContent>
         </Card>
+        </motion.div>
       )}
 
       <EmailTemplateEditor
