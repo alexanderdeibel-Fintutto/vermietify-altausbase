@@ -1,143 +1,110 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, BookOpen, Calculator, TrendingUp, FileCheck, Plus } from 'lucide-react';
-import PageHeader from '@/components/shared/PageHeader';
-import TaxLibraryManagement from './TaxLibraryManagement';
+import { Badge } from "@/components/ui/badge";
+import { FileText, CheckCircle, AlertCircle, Calendar } from 'lucide-react';
+import QuickStats from '@/components/shared/QuickStats';
 
-export default function Tax() {
-    return (
-        <div className="space-y-6">
-            <PageHeader 
-                title="Steuer"
-                subtitle="Verwaltung aller steuerrelevanten Daten"
-            />
+export default function TaxPage() {
+  const taxDeadlines = [
+    { form: 'Anlage V', dueDate: '2026-05-31', status: 'in_progress', completeness: 85 },
+    { form: 'Euer', dueDate: '2026-06-30', status: 'pending', completeness: 20 },
+    { form: 'Gewerbesteuer', dueDate: '2026-05-15', status: 'pending', completeness: 0 },
+  ];
 
-            <Tabs defaultValue="overview" className="space-y-6">
-                <TabsList className="bg-white border border-slate-200">
-                    <TabsTrigger value="overview">Übersicht</TabsTrigger>
-                    <TabsTrigger value="forms">Formulare</TabsTrigger>
-                    <TabsTrigger value="declarations">Erklärungen</TabsTrigger>
-                    <TabsTrigger value="library">Bibliothek</TabsTrigger>
-                </TabsList>
+  const stats = [
+    { label: 'Steuerformulare', value: taxDeadlines.length },
+    { label: 'Abgeschlossen', value: 1 },
+    { label: 'In Bearbeitung', value: 1 },
+    { label: 'Tage bis Deadline', value: 144 },
+  ];
 
-                <TabsContent value="overview" className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <Card className="p-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                                    <Calculator className="w-6 h-6 text-blue-600" />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-slate-600">Laufendes Jahr</p>
-                                    <p className="text-2xl font-bold text-slate-800">2026</p>
-                                </div>
-                            </div>
-                        </Card>
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900">🏦 Steuern</h1>
+        <p className="text-slate-600 mt-1">Steuerformulare und Compliance</p>
+      </div>
 
-                        <Card className="p-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                                    <FileText className="w-6 h-6 text-emerald-600" />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-slate-600">Erklärungen</p>
-                                    <p className="text-2xl font-bold text-slate-800">0</p>
-                                </div>
-                            </div>
-                        </Card>
+      <QuickStats stats={stats} accentColor="orange" />
 
-                        <Card className="p-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                                    <BookOpen className="w-6 h-6 text-amber-600" />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-slate-600">Formulare</p>
-                                    <p className="text-2xl font-bold text-slate-800">0</p>
-                                </div>
-                            </div>
-                        </Card>
+      <Tabs defaultValue="overview">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="overview">Übersicht</TabsTrigger>
+          <TabsTrigger value="deadlines">Fristen</TabsTrigger>
+          <TabsTrigger value="documents">Dokumente</TabsTrigger>
+        </TabsList>
 
-                        <Card className="p-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                                    <TrendingUp className="w-6 h-6 text-purple-600" />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-slate-600">Kategorien</p>
-                                    <p className="text-2xl font-bold text-slate-800">0</p>
-                                </div>
-                            </div>
-                        </Card>
+        <TabsContent value="overview" className="space-y-3">
+          {taxDeadlines.map((deadline, idx) => (
+            <Card key={idx} className="border border-slate-200">
+              <CardContent className="pt-6">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-5 h-5 text-orange-600" />
+                      <h3 className="font-semibold text-slate-900">{deadline.form}</h3>
+                      <Badge className={deadline.status === 'in_progress' ? 'bg-blue-600' : deadline.status === 'pending' ? 'bg-orange-600' : 'bg-green-600'}>
+                        {deadline.status === 'in_progress' ? 'In Bearbeitung' : deadline.status === 'pending' ? 'Ausstehend' : 'Abgeschlossen'}
+                      </Badge>
                     </div>
-
-                    <Card className="p-6">
-                        <h3 className="font-semibold text-slate-800 mb-4">Kommende Fristen</h3>
-                        <div className="text-center py-8 text-slate-500">
-                            Keine anstehenden Steuerfristen
-                        </div>
-                    </Card>
-
-                    <Card className="p-6">
-                        <h3 className="font-semibold text-slate-800 mb-4">Letzte Aktivitäten</h3>
-                        <div className="text-center py-8 text-slate-500">
-                            Keine Aktivitäten vorhanden
-                        </div>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="forms" className="space-y-6">
-                    <div className="flex justify-end mb-4">
-                        <Button className="bg-emerald-600 hover:bg-emerald-700">
-                            <Plus className="w-4 h-4 mr-2" />
-                            Neues Formular
-                        </Button>
+                    <span className="text-sm text-slate-600 flex items-center gap-1"><Calendar className="w-4 h-4" /> {deadline.dueDate}</span>
+                  </div>
+                  <div className="ml-8">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-slate-600">Fortschritt</span>
+                      <span className="font-semibold">{deadline.completeness}%</span>
                     </div>
-
-                    <Card className="p-12">
-                        <div className="text-center">
-                            <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <FileText className="w-8 h-8 text-slate-400" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-slate-800 mb-2">Noch keine Formulare</h3>
-                            <p className="text-slate-600 mb-6">Erstellen Sie Ihr erstes Steuerformular</p>
-                            <Button variant="outline">
-                                <Plus className="w-4 h-4 mr-2" />
-                                Formular erstellen
-                            </Button>
-                        </div>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="declarations" className="space-y-6">
-                    <div className="flex justify-end mb-4">
-                        <Button className="bg-emerald-600 hover:bg-emerald-700">
-                            <Plus className="w-4 h-4 mr-2" />
-                            Neue Erklärung
-                        </Button>
+                    <div className="w-full bg-slate-200 rounded-full h-2">
+                      <div className="bg-orange-600 h-2 rounded-full" style={{ width: `${deadline.completeness}%` }}></div>
                     </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
 
-                    <Card className="p-12">
-                        <div className="text-center">
-                            <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <FileCheck className="w-8 h-8 text-slate-400" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-slate-800 mb-2">Keine Steuererklärungen vorhanden</h3>
-                            <p className="text-slate-600 mb-6">Erstellen Sie Ihre erste Steuererklärung</p>
-                            <Button variant="outline">
-                                <Plus className="w-4 h-4 mr-2" />
-                                Erklärung erstellen
-                            </Button>
-                        </div>
-                    </Card>
-                </TabsContent>
+        <TabsContent value="deadlines">
+          <Card className="border border-slate-200">
+            <CardHeader>
+              <CardTitle>Wichtige Fristen</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {[
+                { date: '31.05.2026', item: 'Anlage V Einreichung' },
+                { date: '30.06.2026', item: 'Euer Einreichung' },
+                { date: '15.05.2026', item: 'Gewerbesteuer Zahlung' },
+              ].map((deadline, idx) => (
+                <div key={idx} className="flex items-center justify-between p-3 border border-slate-200 rounded-lg">
+                  <div>
+                    <p className="font-semibold text-slate-900">{deadline.item}</p>
+                    <p className="text-sm text-slate-600">{deadline.date}</p>
+                  </div>
+                  <AlertCircle className="w-5 h-5 text-orange-600" />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-                <TabsContent value="library">
-                    <TaxLibraryManagement />
-                </TabsContent>
-            </Tabs>
-        </div>
-    );
+        <TabsContent value="documents">
+          <Card className="border border-slate-200">
+            <CardHeader>
+              <CardTitle>Erforderliche Dokumente</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {['Finanzbuchungen', 'Mieteinnahmen', 'Betriebskosten', 'Reparaturen', 'Versicherungen'].map((doc, idx) => (
+                <div key={idx} className="flex items-center gap-2 p-3 border border-slate-200 rounded-lg">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span className="text-slate-900">{doc}</span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
 }
