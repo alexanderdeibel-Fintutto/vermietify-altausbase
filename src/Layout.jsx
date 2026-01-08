@@ -53,6 +53,7 @@ export default function Layout({ children, currentPageName }) {
 
     const navigation = [
         { name: 'Dashboard', href: createPageUrl('Dashboard'), icon: Home, page: 'Dashboard' },
+        { name: '🎨 Mein Dashboard', href: createPageUrl('CustomDashboard'), icon: Settings, page: 'CustomDashboard' },
         { name: '⚙️ Admin', href: createPageUrl('AdminDashboard'), icon: Settings, page: 'AdminDashboard' },
         { name: '🎯 Suite Management', href: createPageUrl('SuiteManagement'), icon: Settings, page: 'SuiteManagement' },
         { name: '👥 Benutzerverwaltung', href: createPageUrl('UserManagement'), icon: Users, page: 'UserManagement' },

@@ -1,6 +1,7 @@
 import APIKeyManagement from './pages/APIKeyManagement';
 import ActivityLogs from './pages/ActivityLogs';
 import AdminDashboard from './pages/AdminDashboard';
+import AdvancedAnalytics from './pages/AdvancedAnalytics';
 import Analytics from './pages/Analytics';
 import AuditReports from './pages/AuditReports';
 import BankAccounts from './pages/BankAccounts';
@@ -14,6 +15,7 @@ import CostTypes from './pages/CostTypes';
 import Dashboard from './pages/Dashboard';
 import DeveloperDocumentation from './pages/DeveloperDocumentation';
 import Documents from './pages/Documents';
+import EmailTemplates from './pages/EmailTemplates';
 import FinAPICallback from './pages/FinAPICallback';
 import FinancialItems from './pages/FinancialItems';
 import Finanzen from './pages/Finanzen';
@@ -22,9 +24,12 @@ import HilfeCenter from './pages/HilfeCenter';
 import Invoices from './pages/Invoices';
 import Kommunikation from './pages/Kommunikation';
 import ModuleManagement from './pages/ModuleManagement';
+import NotificationManagement from './pages/NotificationManagement';
 import OperatingCosts from './pages/OperatingCosts';
+import Payments from './pages/Payments';
 import PermissionDashboard from './pages/PermissionDashboard';
 import ProjectManagement from './pages/ProjectManagement';
+import ReportScheduling from './pages/ReportScheduling';
 import RoleManagement from './pages/RoleManagement';
 import SuiteManagement from './pages/SuiteManagement';
 import SupportCenter from './pages/SupportCenter';
@@ -37,15 +42,11 @@ import TestingDashboard from './pages/TestingDashboard';
 import UnitDetail from './pages/UnitDetail';
 import UserDetail from './pages/UserDetail';
 import UserManagement from './pages/UserManagement';
+import UserSettings from './pages/UserSettings';
 import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
-import AdvancedAnalytics from './pages/AdvancedAnalytics';
-import EmailTemplates from './pages/EmailTemplates';
-import Payments from './pages/Payments';
-import UserSettings from './pages/UserSettings';
-import NotificationManagement from './pages/NotificationManagement';
-import ReportScheduling from './pages/ReportScheduling';
+import CustomDashboard from './pages/CustomDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -53,6 +54,7 @@ export const PAGES = {
     "APIKeyManagement": APIKeyManagement,
     "ActivityLogs": ActivityLogs,
     "AdminDashboard": AdminDashboard,
+    "AdvancedAnalytics": AdvancedAnalytics,
     "Analytics": Analytics,
     "AuditReports": AuditReports,
     "BankAccounts": BankAccounts,
@@ -66,6 +68,7 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "DeveloperDocumentation": DeveloperDocumentation,
     "Documents": Documents,
+    "EmailTemplates": EmailTemplates,
     "FinAPICallback": FinAPICallback,
     "FinancialItems": FinancialItems,
     "Finanzen": Finanzen,
@@ -74,9 +77,12 @@ export const PAGES = {
     "Invoices": Invoices,
     "Kommunikation": Kommunikation,
     "ModuleManagement": ModuleManagement,
+    "NotificationManagement": NotificationManagement,
     "OperatingCosts": OperatingCosts,
+    "Payments": Payments,
     "PermissionDashboard": PermissionDashboard,
     "ProjectManagement": ProjectManagement,
+    "ReportScheduling": ReportScheduling,
     "RoleManagement": RoleManagement,
     "SuiteManagement": SuiteManagement,
     "SupportCenter": SupportCenter,
@@ -89,15 +95,11 @@ export const PAGES = {
     "UnitDetail": UnitDetail,
     "UserDetail": UserDetail,
     "UserManagement": UserManagement,
+    "UserSettings": UserSettings,
     "WhatsAppCommunication": WhatsAppCommunication,
     "WhatsAppSettings": WhatsAppSettings,
     "WhatsAppSetup": WhatsAppSetup,
-    "AdvancedAnalytics": AdvancedAnalytics,
-    "EmailTemplates": EmailTemplates,
-    "Payments": Payments,
-    "UserSettings": UserSettings,
-    "NotificationManagement": NotificationManagement,
-    "ReportScheduling": ReportScheduling,
+    "CustomDashboard": CustomDashboard,
 }
 
 export const pagesConfig = {
