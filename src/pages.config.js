@@ -229,6 +229,10 @@ import TaxSavingsOpportunities from './pages/TaxSavingsOpportunities';
 import TaxCalendarAndTimeline from './pages/TaxCalendarAndTimeline';
 import TaxLossHarvestingAdvisor from './pages/TaxLossHarvestingAdvisor';
 import SelfEmploymentTaxPlanner from './pages/SelfEmploymentTaxPlanner';
+import TaxComplianceChecker from './pages/TaxComplianceChecker';
+import WealthTaxCalculator from './pages/WealthTaxCalculator';
+import TaxFormGuide from './pages/TaxFormGuide';
+import MultiYearTaxStrategy from './pages/MultiYearTaxStrategy';
 import __Layout from './Layout.jsx';
 
 
@@ -464,6 +468,10 @@ export const PAGES = {
     "TaxCalendarAndTimeline": TaxCalendarAndTimeline,
     "TaxLossHarvestingAdvisor": TaxLossHarvestingAdvisor,
     "SelfEmploymentTaxPlanner": SelfEmploymentTaxPlanner,
+    "TaxComplianceChecker": TaxComplianceChecker,
+    "WealthTaxCalculator": WealthTaxCalculator,
+    "TaxFormGuide": TaxFormGuide,
+    "MultiYearTaxStrategy": MultiYearTaxStrategy,
 }
 
 export const pagesConfig = {
