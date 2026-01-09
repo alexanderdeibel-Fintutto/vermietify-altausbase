@@ -38,13 +38,13 @@ export default function BuildingFilterBar({
   };
 
   return (
-    <div className="flex flex-col gap-3 p-4 bg-slate-50 border-b border-slate-200">
-      <div className="flex items-center gap-3 flex-wrap">
+    <div className="flex flex-col gap-3 p-6 bg-white border-b border-slate-100">
+      <div className="flex items-center gap-4 flex-wrap">
         {/* Status Filter */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-slate-600">Status:</span>
+          <span className="text-xs font-extralight text-slate-400">Status:</span>
           <Select onValueChange={onStatusChange} defaultValue={filters.status || 'all'}>
-            <SelectTrigger className="w-40 h-9 text-sm">
+            <SelectTrigger className="w-40 h-9 text-sm font-extralight border-slate-200">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -57,9 +57,9 @@ export default function BuildingFilterBar({
 
         {/* City Filter */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-slate-600">Ort:</span>
+          <span className="text-xs font-extralight text-slate-400">Ort:</span>
           <Select onValueChange={onCityChange} defaultValue={filters.city || 'all'}>
-            <SelectTrigger className="w-40 h-9 text-sm">
+            <SelectTrigger className="w-40 h-9 text-sm font-extralight border-slate-200">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -73,11 +73,11 @@ export default function BuildingFilterBar({
 
         {/* Search */}
         <div className="flex-1 flex items-center gap-2">
-          <Search className="w-4 h-4 text-slate-400" />
+          <Search className="w-4 h-4 text-slate-300" />
           <Input
             placeholder="Gebäude-Name oder Adresse..."
             onChange={(e) => onSearchChange(e.target.value)}
-            className="h-9 text-sm"
+            className="h-9 text-sm font-extralight border-slate-200"
           />
         </div>
 

@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 
 export default function TenantTable({ tenants, onEdit, onDelete }) {
   return (
-    <div className="rounded-xl border border-slate-200 overflow-hidden">
+    <div className="rounded-lg border border-slate-100 overflow-hidden shadow-none">
       <table className="w-full">
         <thead>
-          <tr className="bg-slate-50 border-b border-slate-200">
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Name</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Email</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Telefon</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
+          <tr className="bg-white border-b border-slate-100">
+            <th className="px-6 py-3 text-left text-xs font-extralight text-slate-400">Name</th>
+            <th className="px-6 py-3 text-left text-xs font-extralight text-slate-400">Email</th>
+            <th className="px-6 py-3 text-left text-xs font-extralight text-slate-400">Telefon</th>
+            <th className="px-6 py-3 text-left text-xs font-extralight text-slate-400">Status</th>
             <th className="px-6 py-3"></th>
           </tr>
         </thead>
@@ -20,14 +20,14 @@ export default function TenantTable({ tenants, onEdit, onDelete }) {
           {tenants?.map((tenant, idx) => (
             <tr 
               key={idx}
-              className="border-b border-slate-100 hover:bg-green-50 transition-colors cursor-pointer"
+              className="border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer"
               onClick={() => onEdit?.(tenant)}
             >
-              <td className="px-6 py-4 text-sm font-medium text-slate-900">{tenant.full_name}</td>
-              <td className="px-6 py-4 text-sm text-slate-700">{tenant.email}</td>
-              <td className="px-6 py-4 text-sm text-slate-700">{tenant.phone || '—'}</td>
-              <td className="px-6 py-4 text-sm">
-                <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+              <td className="px-6 py-3 text-sm font-extralight text-slate-700">{tenant.full_name}</td>
+              <td className="px-6 py-3 text-sm font-extralight text-slate-500">{tenant.email}</td>
+              <td className="px-6 py-3 text-sm font-extralight text-slate-500">{tenant.phone || '—'}</td>
+              <td className="px-6 py-3 text-sm">
+                <span className="px-2 py-1 rounded-full text-xs font-extralight bg-slate-100 text-slate-600">
                   Aktiv
                 </span>
               </td>
