@@ -69,7 +69,7 @@ export default function KnowledgeBaseWidget() {
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input
-              placeholder="FAQ durchsuchen..."
+              placeholder="Nach Titel, Inhalt, Kategorie oder Tags durchsuchen..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 font-light"
@@ -91,6 +91,35 @@ export default function KnowledgeBaseWidget() {
             </SelectContent>
           </Select>
         </div>
+
+        {/* Active Filters Display */}
+        {(searchQuery || selectedCategory !== 'all') && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-light text-slate-600">Filter:</span>
+            {searchQuery && (
+              <Badge variant="outline" className="gap-2 font-light">
+                <span>Suche: "{searchQuery}"</span>
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="hover:opacity-70"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </Badge>
+            )}
+            {selectedCategory !== 'all' && (
+              <Badge variant="outline" className="gap-2 font-light">
+                <span>Kategorie: {categoryLabels[selectedCategory]}</span>
+                <button
+                  onClick={() => setSelectedCategory('all')}
+                  className="hover:opacity-70"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </Badge>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="space-y-3">
