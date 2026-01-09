@@ -9,6 +9,8 @@ import { ArrowLeft, Edit, Download, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import LeaseContractAnalyzer from '@/components/contracts/LeaseContractAnalyzer';
+import ContractDocumentManager from '@/components/contracts/ContractDocumentManager';
+import ContractRenewalTracker from '@/components/contracts/ContractRenewalTracker';
 
 export default function ContractDetailPage() {
   const { id } = useParams();
@@ -103,6 +105,11 @@ export default function ContractDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ContractRenewalTracker contractId={contract.id} />
+        <ContractDocumentManager contractId={contract.id} />
+      </div>
 
       <Card>
         <CardHeader>
