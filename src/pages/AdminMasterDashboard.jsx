@@ -159,25 +159,20 @@ export default function AdminMasterDashboard() {
           <TabsContent value="insights" className="p-6 space-y-4">
             {insights?.length > 0 ? (
               insights.map((insight, idx) => (
-                <Card key={idx} className="p-4 border border-slate-200">
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-light text-slate-900">{insight.title}</h4>
-                    <Badge className={`font-light ${
-                      insight.priority === 'critical' ? 'bg-red-100 text-red-800' :
-                      insight.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
-                      {insight.priority?.toUpperCase()}
-                    </Badge>
-                  </div>
-                  <p className="text-sm font-light text-slate-600 mb-3">{insight.ai_analysis}</p>
-                  <Button className="font-light text-sm bg-slate-700 hover:bg-slate-800">
-                    Insight-Details ansehen
-                  </Button>
-                </Card>
+                <LinkingCard
+                  key={idx}
+                  title={insight.title}
+                  source={insight.insight_type.toUpperCase()}
+                  links={[
+                    insight.description?.substring(0, 50) + '...',
+                    `Confidence: ${insight.confidence_score}%`,
+                    `Priority: ${insight.priority}`
+                  ]}
+                  action={true}
+                />
               ))
             ) : (
-              <p className="text-center text-slate-500 font-light py-8">Keine kritischen Insights</p>
+              <p className="text-center text-slate-500 font-light py-8">Keine Insights</p>
             )}
           </TabsContent>
 
