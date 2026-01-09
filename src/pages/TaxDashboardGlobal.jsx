@@ -1,60 +1,34 @@
 import React, { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Settings, Globe, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Globe, Settings, TrendingUp } from 'lucide-react';
+
+const COUNTRY_CONFIG = {
+  DE: { name: 'Deutschland', flag: '🇩🇪', path: 'TaxDashboard', color: 'from-blue-50 to-blue-100' },
+  AT: { name: 'Österreich', flag: '🇦🇹', path: 'TaxDashboardAT', color: 'from-red-50 to-red-100' },
+  CH: { name: 'Schweiz', flag: '🇨🇭', path: 'TaxDashboardCH', color: 'from-green-50 to-green-100' }
+};
 
 export default function TaxDashboardGlobal() {
-  const queryClient = useQueryClient();
-
-  const { data: config, isLoading } = useQuery({
-    queryKey: ['taxConfig'],
-    queryFn: async () => {
-      try {
-        const res = await base44.functions.invoke('getTaxConfig', {});
-        return res;
-      } catch (error) {
-        return null;
-      }
-    }
-  });
-
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: async () => await base44.auth.me()
+    queryFn: () => base44.auth.me()
   });
 
-  if (isLoading) {
-    return <div className="p-8 text-center">Wird geladen...</div>;
-  }
-
-  // If no country is configured, show setup
-  if (!config?.country) {
+  if (!user?.tax_setup_completed) {
     return (
-      <div className="max-w-2xl mx-auto py-8 px-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="w-5 h-5" />
-              Steuersystem nicht konfiguriert
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert className="border-yellow-200 bg-yellow-50">
-              <AlertCircle className="h-4 w-4 text-yellow-600" />
-              <AlertTitle>Erste Konfiguration erforderlich</AlertTitle>
-              <AlertDescription>
-                Bitte wählen Sie das Land aus, in dem Sie Ihre Steuererklärung einreichen.
-              </AlertDescription>
-            </Alert>
-            <Link to={createPageUrl('TaxSetup')}>
-              <Button className="w-full gap-2 bg-blue-600 hover:bg-blue-700">
-                <Settings className="w-4 h-4" />
-                Steuersystem konfigurieren
+      <div className="max-w-md mx-auto">
+        <Card className="border-2 border-blue-300">
+          <CardContent className="pt-6 text-center">
+            <p className="text-lg font-bold mb-4">🚀 Willkommen zur Steuerverwaltung</p>
+            <p className="text-slate-600 mb-4">Bitte konfigurieren Sie zunächst Ihre Länder und Daten.</p>
+            <Link to={createPageUrl('TaxSetupWizard')}>
+              <Button className="gap-2">
+                <Settings className="w-4 h-4" /> Konfiguration starten
               </Button>
             </Link>
           </CardContent>
@@ -63,94 +37,94 @@ export default function TaxDashboardGlobal() {
     );
   }
 
-  // Show configured dashboard
-  const SWISS_CANTONS = {
-    ZH: 'Zürich', BE: 'Bern', LU: 'Luzern', UR: 'Uri', SZ: 'Schwyz',
-    OW: 'Obwalden', NW: 'Nidwalden', GL: 'Glarus', ZG: 'Zug', FR: 'Freiburg',
-    SO: 'Solothurn', BS: 'Basel-Stadt', BL: 'Basel-Landschaft', SH: 'Schaffhausen',
-    AR: 'Appenzell Ausserrhoden', AI: 'Appenzell Innerrhoden', SG: 'Sankt Gallen',
-    GR: 'Graubünden', AG: 'Aargau', TG: 'Thurgau', TI: 'Tessin', VD: 'Waadt',
-    VS: 'Wallis', NE: 'Neuenburg', GE: 'Genf', JU: 'Jura'
-  };
-
-  const countryLabels = {
-    DE: '🇩🇪 Deutschland',
-    AT: '🇦🇹 Österreich',
-    CH: '🇨🇭 Schweiz'
-  };
+  const countries = user?.preferred_countries || ['DE'];
+  const primaryCountry = user?.primary_country || 'DE';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">🧾 Steuer-Cockpit</h1>
-          <p className="text-slate-500 mt-1">
-            {countryLabels[config.country]}
-            {config.canton && ` • Kanton ${config.canton}`}
-          </p>
-        </div>
-        <Link to={createPageUrl('TaxSetup')}>
-          <Button variant="outline" size="sm" gap="2">
-            <Settings className="w-4 h-4" /> Ändern
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <Globe className="w-8 h-8" /> Steuererklärung DACH
+        </h1>
+        <Link to={createPageUrl('TaxSetupWizard')}>
+          <Button variant="outline" className="gap-2">
+            <Settings className="w-4 h-4" /> Einstellungen
           </Button>
         </Link>
       </div>
 
-      {/* System Info */}
+      {/* Primary Country Card */}
+      {primaryCountry && (
+        <div>
+          <h2 className="text-lg font-bold mb-3">Hauptland</h2>
+          <Link to={createPageUrl(COUNTRY_CONFIG[primaryCountry].path)}>
+            <Card className={`bg-gradient-to-br ${COUNTRY_CONFIG[primaryCountry].color} hover:shadow-lg transition-shadow cursor-pointer border-2 border-slate-200`}>
+              <CardContent className="pt-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-4xl mb-2">{COUNTRY_CONFIG[primaryCountry].flag}</p>
+                    <p className="text-2xl font-bold">{COUNTRY_CONFIG[primaryCountry].name}</p>
+                    <p className="text-sm text-slate-600 mt-1">Zur Steuererklärung →</p>
+                  </div>
+                  <TrendingUp className="w-16 h-16 text-slate-300 opacity-30" />
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+      )}
+
+      {/* Other Countries */}
+      {countries.length > 1 && (
+        <div>
+          <h2 className="text-lg font-bold mb-3">Weitere Länder</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {countries.filter(c => c !== primaryCountry).map(country => (
+              <Link key={country} to={createPageUrl(COUNTRY_CONFIG[country].path)}>
+                <Card className={`bg-gradient-to-br ${COUNTRY_CONFIG[country].color} hover:shadow-lg transition-shadow cursor-pointer`}>
+                  <CardContent className="pt-6">
+                    <div>
+                      <p className="text-3xl mb-2">{COUNTRY_CONFIG[country].flag}</p>
+                      <p className="text-xl font-bold">{COUNTRY_CONFIG[country].name}</p>
+                      <p className="text-xs text-slate-600 mt-1">Zur Steuererklärung →</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Quick Stats */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-green-600" />
-            Steuersystem: {config.submission?.system}
-          </CardTitle>
+          <CardTitle>📊 Konfiguration</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
-          <p className="text-sm text-slate-600">{config.submission?.description}</p>
-          <div className="flex gap-2 flex-wrap pt-2">
-            {config.submission?.supportedFormats?.map(format => (
-              <span key={format} className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-medium">
-                {format.toUpperCase()}
-              </span>
-            ))}
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-slate-600">Länder</p>
+              <p className="text-lg font-bold">{countries.length}</p>
+            </div>
+            {user?.swiss_canton && (
+              <div>
+                <p className="text-slate-600">Schweizer Kanton</p>
+                <p className="text-lg font-bold">{user.swiss_canton}</p>
+              </div>
+            )}
+            <div>
+              <p className="text-slate-600">Sprache</p>
+              <p className="text-lg font-bold">{user?.language === 'de' ? 'Deutsch' : 'Englisch'}</p>
+            </div>
+            <div>
+              <p className="text-slate-600">Währung</p>
+              <p className="text-lg font-bold">{user?.currency_preference || 'EUR'}</p>
+            </div>
           </div>
         </CardContent>
       </Card>
-
-      {/* Available Forms */}
-      <div>
-        <h2 className="text-xl font-bold mb-3">Verfügbare Steuerformulare</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {config.forms?.map(form => (
-            <Link key={form.id} to={createPageUrl(`TaxForm_${form.id}`)}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-                <CardHeader>
-                  <CardTitle className="text-lg">{form.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-slate-600">{form.description}</p>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-4 border-t">
-        <Button variant="outline" className="justify-start gap-2">
-          📊 Jahresübersicht
-        </Button>
-        <Button variant="outline" className="justify-start gap-2">
-          💾 Exportieren
-        </Button>
-        <Button variant="outline" className="justify-start gap-2">
-          ⚙️ Validierung
-        </Button>
-        <Button variant="outline" className="justify-start gap-2">
-          📋 Checkliste
-        </Button>
-      </div>
     </div>
   );
 }
