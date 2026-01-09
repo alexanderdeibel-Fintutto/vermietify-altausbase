@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Send, Loader2, CheckCheck, Bot, User } from 'lucide-react';
+import { Send, Loader2, CheckCheck, Bot, User, Ticket } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
 export default function AdminMessagingInterface({ tenantId, tenant }) {
   const [messageText, setMessageText] = useState('');
@@ -58,6 +59,22 @@ export default function AdminMessagingInterface({ tenantId, tenant }) {
     onSuccess: (data) => {
       setAiSummary(data.summary);
       setShowAISummary(true);
+    }
+  });
+
+  const createTicketMutation = useMutation({
+    mutationFn: async (messageId) => {
+      const message = messages.find(m => m.id === messageId);
+      return await base44.functions.invoke('createTicketFromMessage', {
+        message_id: messageId,
+        tenant_id: tenantId,
+        tenant_email: tenant?.email,
+        message_text: message.message_text,
+        source: 'message'
+      });
+    },
+    onSuccess: (response) => {
+      toast.success(`Ticket ${response.data.ticket_number} erstellt`);
     }
   });
 
@@ -138,7 +155,7 @@ export default function AdminMessagingInterface({ tenantId, tenant }) {
           messages.map((msg) => (
             <div
               key={msg.id}
-              className={`flex ${msg.sender_type === 'admin' ? 'justify-end' : 'justify-start'}`}
+              className={`group flex ${msg.sender_type === 'admin' ? 'justify-end' : 'justify-start'}`}
             >
               <div
                 className={`max-w-[70%] rounded-lg p-3 ${
@@ -164,6 +181,20 @@ export default function AdminMessagingInterface({ tenantId, tenant }) {
                     <CheckCheck
                       className={`w-4 h-4 ${msg.is_read ? 'text-blue-200' : 'opacity-50'}`}
                     />
+                  )}
+                  {msg.sender_type === 'tenant' && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        createTicketMutation.mutate(msg.id);
+                      }}
+                      className="h-5 px-2 py-0 text-xs opacity-0 group-hover:opacity-100 transition-opacity text-slate-700 hover:text-slate-900"
+                    >
+                      <Ticket className="w-3 h-3 mr-1" />
+                      Ticket
+                    </Button>
                   )}
                 </div>
               </div>
