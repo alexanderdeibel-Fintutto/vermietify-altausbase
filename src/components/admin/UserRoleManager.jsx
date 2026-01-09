@@ -6,13 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Loader2, Plus, Trash2, Edit } from 'lucide-react';
 import { toast } from 'sonner';
+import RolePermissionEditor from './RolePermissionEditor';
+import RoleAssignmentManager from './RoleAssignmentManager';
 
 export default function UserRoleManager() {
   const [showDialog, setShowDialog] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
+  const [selectedRole, setSelectedRole] = useState(null);
   const [formData, setFormData] = useState({
     role_name: '',
     description: '',
@@ -24,6 +28,20 @@ export default function UserRoleManager() {
     queryFn: async () => {
       try {
         return await base44.entities.UserRole.list('-created_at', 50);
+      } catch {
+        return [];
+      }
+    }
+  });
+
+  const { data: profiles, isLoading: loadingProfiles } = useQuery({
+    queryKey: ['permissionProfiles'],
+    queryFn: async () => {
+      try {
+        const response = await base44.functions.invoke('manageRolePermissions', {
+          action: 'get_profiles'
+        });
+        return response.data.profiles;
       } catch {
         return [];
       }
@@ -58,6 +76,14 @@ export default function UserRoleManager() {
 
   return (
     <div className="space-y-4">
+      <Tabs defaultValue="roles" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="roles">Rollen</TabsTrigger>
+          <TabsTrigger value="assignments">Rollenzuweisungen</TabsTrigger>
+          <TabsTrigger value="permissions">Berechtigungen</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="roles" className="space-y-4 mt-4">
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent>
           <DialogHeader>
@@ -151,7 +177,11 @@ export default function UserRoleManager() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setSelectedRole(role)}
+                    >
                       <Edit className="w-3 h-3" />
                     </Button>
                     <Button
@@ -171,6 +201,28 @@ export default function UserRoleManager() {
       ) : (
         <p className="text-sm text-slate-600">Keine Rollen vorhanden</p>
       )}
+        </TabsContent>
+
+        <TabsContent value="assignments" className="mt-4">
+          <RoleAssignmentManager />
+        </TabsContent>
+
+        <TabsContent value="permissions" className="mt-4 space-y-4">
+          {selectedRole ? (
+            <RolePermissionEditor
+              role={selectedRole}
+              profiles={profiles}
+              onUpdate={refetch}
+            />
+          ) : (
+            <Card className="bg-slate-50">
+              <CardContent className="pt-4 text-center">
+                <p className="text-sm text-slate-600">Wählen Sie eine Rolle aus dem Tab 'Rollen' aus</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
