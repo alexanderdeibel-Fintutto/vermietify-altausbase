@@ -9,85 +9,42 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { taxYear } = await req.json();
+    const { countries = ['AT', 'CH', 'DE'], taxYear, income } = await req.json();
 
-    if (!taxYear) {
-      return Response.json({ error: 'Missing tax year' }, { status: 400 });
+    if (!taxYear || !income) {
+      return Response.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
-    // Fetch data from all three countries
-    const [atData, chData, deData] = await Promise.all([
-      {
-        calculations: await base44.entities.TaxCalculation.filter({ user_email: user.email, country: 'AT', tax_year: taxYear }) || [],
-        filings: await base44.entities.TaxFiling.filter({ user_email: user.email, country: 'AT', tax_year: taxYear }) || [],
-        investments: await base44.entities.InvestmentAT.filter({ user_email: user.email }) || []
-      },
-      {
-        calculations: await base44.entities.TaxCalculation.filter({ user_email: user.email, country: 'CH', tax_year: taxYear }) || [],
-        filings: await base44.entities.TaxFiling.filter({ user_email: user.email, country: 'CH', tax_year: taxYear }) || [],
-        investments: await base44.entities.InvestmentCH.filter({ user_email: user.email }) || []
-      },
-      {
-        calculations: await base44.entities.TaxCalculation.filter({ user_email: user.email, country: 'DE', tax_year: taxYear }) || [],
-        filings: await base44.entities.TaxFiling.filter({ user_email: user.email, country: 'DE', tax_year: taxYear }) || [],
-        investments: await base44.entities.Investment.filter({ user_email: user.email }) || []
-      }
-    ]);
-
-    const totalTaxAT = atData.calculations.reduce((sum, c) => sum + (c.total_tax || 0), 0);
-    const totalTaxCH = chData.calculations.reduce((sum, c) => sum + (c.total_tax || 0), 0);
-    const totalTaxDE = deData.calculations.reduce((sum, c) => sum + (c.total_tax || 0), 0);
-
-    // Use LLM to generate strategy
     const strategy = await base44.integrations.Core.InvokeLLM({
-      prompt: `Create an international tax strategy for a DACH taxpayer for tax year ${taxYear}.
+      prompt: `Create international tax strategy for someone operating in ${countries.join(', ')}.
 
-Austria Status:
-- Total Tax: €${Math.round(totalTaxAT)}
-- Tax Filings: ${atData.filings.length}
-- Investments: ${atData.investments.length}
+Profile:
+- Countries: ${countries.join(', ')}
+- Tax Year: ${taxYear}
+- Income: €${income}
 
-Switzerland Status:
-- Total Tax: CHF${Math.round(totalTaxCH)}
-- Tax Filings: ${chData.filings.length}
-- Investments: ${chData.investments.length}
-
-Germany Status:
-- Total Tax: €${Math.round(totalTaxDE)}
-- Tax Filings: ${deData.filings.length}
-- Investments: ${deData.investments.length}
-
-Provide a comprehensive multi-country tax strategy including:
-1. Overall Tax Burden Analysis
-2. Double Taxation Risks
-3. Treaty Benefits Opportunities
-4. Country-Specific Optimization
-5. Cross-Border Coordination Strategies
-6. Asset Allocation Recommendations
-7. Filing Efficiency Improvements
-8. Risk Assessment by Jurisdiction
-9. Estimated Overall Savings
-10. Implementation Timeline`,
+Develop strategy covering:
+1. Tax treaty optimization
+2. Permanent establishment risks
+3. Transfer pricing considerations
+4. Tax residency planning
+5. Business structure recommendations
+6. Filing requirements per country
+7. Double taxation avoidance
+8. Estimated total tax burden`,
       response_json_schema: {
         type: 'object',
         properties: {
-          overall_tax_burden: { type: 'number' },
-          effective_tax_rate: { type: 'number' },
-          double_taxation_risks: { type: 'array', items: { type: 'string' } },
-          treaty_benefits: { type: 'array', items: { type: 'string' } },
-          country_strategies: {
-            type: 'object',
-            properties: {
-              austria: { type: 'object', additionalProperties: true },
-              switzerland: { type: 'object', additionalProperties: true },
-              germany: { type: 'object', additionalProperties: true }
-            }
-          },
-          cross_border_opportunities: { type: 'array', items: { type: 'string' } },
-          estimated_savings: { type: 'number' },
-          priority_actions: { type: 'array', items: { type: 'string' } },
-          implementation_timeline: { type: 'string' },
-          risk_summary: { type: 'string' }
+          primary_residence: { type: 'string' },
+          treaty_opportunities: { type: 'array', items: { type: 'string' } },
+          pe_risks: { type: 'array', items: { type: 'string' } },
+          filing_requirements: { type: 'array', items: { type: 'string' } },
+          structure_recommendation: { type: 'string' },
+          estimated_total_tax: { type: 'number' },
+          estimated_optimized_tax: { type: 'number' },
+          potential_savings: { type: 'number' },
+          risk_level: { type: 'string' },
+          action_items: { type: 'array', items: { type: 'string' } }
         }
       }
     });
@@ -95,19 +52,14 @@ Provide a comprehensive multi-country tax strategy including:
     return Response.json({
       status: 'success',
       strategy: {
+        countries,
         tax_year: taxYear,
-        generated_at: new Date().toISOString(),
-        current_status: {
-          austria: { total_tax: totalTaxAT, filings: atData.filings.length },
-          switzerland: { total_tax: totalTaxCH, filings: chData.filings.length },
-          germany: { total_tax: totalTaxDE, filings: deData.filings.length },
-          combined_tax: totalTaxAT + totalTaxCH + totalTaxDE
-        },
-        strategy: strategy
+        income,
+        analysis: strategy
       }
     });
   } catch (error) {
-    console.error('International tax strategy error:', error);
+    console.error('Generate international strategy error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
