@@ -3,312 +3,200 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { TrendingDown, AlertTriangle, Trophy } from 'lucide-react';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
 export default function MultiCountryTaxComparison() {
-  const [taxYear] = useState(CURRENT_YEAR - 1);
+  const [taxYear, setTaxYear] = useState(CURRENT_YEAR);
 
-  const { data: summaryReport = {} } = useQuery({
-    queryKey: ['taxSummaryReport', taxYear],
+  const { data: comparison = {}, isLoading } = useQuery({
+    queryKey: ['multiCountryComparison', taxYear],
     queryFn: async () => {
-      const { data } = await base44.functions.invoke('generateTaxSummaryReport', {
-        taxYear,
-        countries: ['AT', 'CH', 'DE']
+      const response = await base44.functions.invoke('generateMultiCountryComparison', {
+        taxYear
       });
-      return data;
+      return response.data?.comparison || {};
     }
   });
 
-  const summary = summaryReport.summary || {};
-  const globalSummary = summaryReport.global_summary || {};
-
-  // Prepare chart data
   const comparisonData = [
-    {
-      country: 'Österreich',
-      income: summary.AT?.total_income || 0,
-      tax: 0,
-      effective_rate: 0
-    },
-    {
-      country: 'Schweiz',
-      income: summary.CH?.total_income || 0,
-      tax: 0,
-      effective_rate: 0
-    },
-    {
-      country: 'Deutschland',
-      income: summary.DE?.total_income || 0,
-      tax: 0,
-      effective_rate: 0
-    }
+    { country: 'Austria', tax: comparison.countries?.AT?.total_tax || 0 },
+    { country: 'Switzerland', tax: comparison.countries?.CH?.total_tax || 0 },
+    { country: 'Germany', tax: comparison.countries?.DE?.total_tax || 0 }
   ];
 
-  const featureComparison = [
-    {
-      feature: 'Kapitalertrag Tax',
-      AT: 'KESt 27,5%',
-      CH: 'Kanton 15-22%',
-      DE: 'Abgeltungssteuer 26,375%'
-    },
-    {
-      feature: 'Freibetrag',
-      AT: '€730 Sparerfreibetrag',
-      CH: 'Keiner',
-      DE: '€801 Sparerpauschbetrag'
-    },
-    {
-      feature: 'Vermögenssteuer',
-      AT: 'Ja (0,5%)',
-      CH: 'Ja (Kanton)',
-      DE: 'Nein'
-    },
-    {
-      feature: 'Kirchensteuer',
-      AT: 'Ja (bis 9%)',
-      CH: 'Nein',
-      DE: 'Ja (8-9%)'
-    },
-    {
-      feature: 'Hypothekarzinsen',
-      AT: 'Begrenzt',
-      CH: 'Vollständig abzugsf.',
-      DE: 'Nicht abzugsf.'
-    }
-  ];
-
-  const taxRateComparison = [
-    {
-      category: 'Kapitalertrag',
-      AT: summary.AT?.capital_income ? 27.5 : 0,
-      CH: summary.CH?.dividend_income ? 15 : 0,
-      DE: summary.DE?.capital_income ? 26.375 : 0
-    },
-    {
-      category: 'Mieteinnahmen',
-      AT: 42,
-      CH: summary.CH?.rental_income ? 20 : 0,
-      DE: 42
-    },
-    {
-      category: 'Vermögen',
-      AT: 0.5,
-      CH: 3,
-      DE: 0
-    }
-  ];
-
-  const statusBadge = (value) => {
-    if (!value) return <Badge className="bg-slate-100 text-slate-800">N/A</Badge>;
-    return <Badge className="bg-green-100 text-green-800">✓</Badge>;
-  };
+  const sortedByTax = [...comparisonData].sort((a, b) => a.tax - b.tax);
+  const minTax = sortedByTax[0];
+  const maxTax = sortedByTax[2];
+  const savings = maxTax.tax - minTax.tax;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">🌍 DACH Steuervergleich</h1>
-        <p className="text-slate-500 mt-1">Vergleichen Sie Ihre Steuersituation in Österreich, Schweiz & Deutschland</p>
+        <h1 className="text-3xl font-bold">🌍 Multi-Country Tax Comparison</h1>
+        <p className="text-slate-500 mt-1">Vergleichen Sie Ihre Steuerlast in AT, CH & DE</p>
       </div>
 
-      {/* Global Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <p className="text-sm text-slate-600">Länder</p>
-            <p className="text-3xl font-bold">{globalSummary.countries?.length || 3}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <p className="text-sm text-slate-600">Gesamteinkommen</p>
-            <p className="text-2xl font-bold">€{(globalSummary.total_income / 1000).toLocaleString('de-DE', { maximumFractionDigits: 1 })}K</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <p className="text-sm text-slate-600">Einträge gesamt</p>
-            <p className="text-3xl font-bold">{globalSummary.total_entries || 0}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <p className="text-sm text-slate-600">Steuerjahr</p>
-            <p className="text-3xl font-bold">{taxYear}</p>
-          </CardContent>
-        </Card>
+      {/* Controls */}
+      <div className="flex-1 max-w-xs">
+        <label className="text-sm font-medium">Steuerjahr</label>
+        <Select value={String(taxYear)} onValueChange={(v) => setTaxYear(parseInt(v))}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={String(CURRENT_YEAR - 1)}>{CURRENT_YEAR - 1}</SelectItem>
+            <SelectItem value={String(CURRENT_YEAR)}>{CURRENT_YEAR}</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Einkommen nach Land */}
-        <Card>
-          <CardHeader>
-            <CardTitle>📊 Gesamteinkommen nach Land</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={comparisonData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="country" />
-                <YAxis />
-                <Tooltip formatter={(value) => `€${value.toLocaleString('de-DE')}`} />
-                <Bar dataKey="income" fill="#3b82f6" name="Einkommen" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Steuersätze Radar */}
-        <Card>
-          <CardHeader>
-            <CardTitle>🎯 Effektive Steuersätze</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <RadarChart data={taxRateComparison}>
-                <PolarGrid />
-                <PolarAngleAxis dataKey="category" />
-                <PolarRadiusAxis angle={90} domain={[0, 50]} />
-                <Radar name="Österreich" dataKey="AT" stroke="#ef4444" fill="#ef4444" fillOpacity={0.25} />
-                <Radar name="Schweiz" dataKey="CH" stroke="#10b981" fill="#10b981" fillOpacity={0.25} />
-                <Radar name="Deutschland" dataKey="DE" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.25} />
-                <Legend />
-                <Tooltip />
-              </RadarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Detaillierte Vergleichstabelle */}
-      <Card>
-        <CardHeader>
-          <CardTitle>📋 Detaillierter Steuervergleich</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b">
-                <tr>
-                  <th className="text-left p-3 font-semibold">Steuerform</th>
-                  <th className="text-center p-3 font-semibold">🇦🇹 Österreich</th>
-                  <th className="text-center p-3 font-semibold">🇨🇭 Schweiz</th>
-                  <th className="text-center p-3 font-semibold">🇩🇪 Deutschland</th>
-                </tr>
-              </thead>
-              <tbody>
-                {featureComparison.map((row, idx) => (
-                  <tr key={idx} className="border-b hover:bg-slate-50">
-                    <td className="p-3 font-semibold text-slate-700">{row.feature}</td>
-                    <td className="p-3 text-center">{row.AT}</td>
-                    <td className="p-3 text-center">{row.CH}</td>
-                    <td className="p-3 text-center">{row.DE}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {isLoading ? (
+        <div className="text-center py-8">⏳ Lade Vergleich...</div>
+      ) : (
+        <>
+          {/* Key Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="border-green-300 bg-green-50">
+              <CardContent className="pt-6 text-center">
+                <Trophy className="w-6 h-6 text-green-600 mx-auto mb-2" />
+                <p className="text-sm text-slate-600">Günstigster</p>
+                <p className="text-2xl font-bold text-green-600 mt-2">{minTax.country}</p>
+                <p className="text-sm mt-1">€{Math.round(minTax.tax).toLocaleString()}</p>
+              </CardContent>
+            </Card>
+            <Card className="border-red-300 bg-red-50">
+              <CardContent className="pt-6 text-center">
+                <AlertTriangle className="w-6 h-6 text-red-600 mx-auto mb-2" />
+                <p className="text-sm text-slate-600">Höchster</p>
+                <p className="text-2xl font-bold text-red-600 mt-2">{maxTax.country}</p>
+                <p className="text-sm mt-1">€{Math.round(maxTax.tax).toLocaleString()}</p>
+              </CardContent>
+            </Card>
+            <Card className="border-blue-300 bg-blue-50">
+              <CardContent className="pt-6 text-center">
+                <TrendingDown className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                <p className="text-sm text-slate-600">Differenz</p>
+                <p className="text-2xl font-bold text-blue-600 mt-2">€{Math.round(savings).toLocaleString()}</p>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Country Details */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Austria */}
-        <Card className="border-red-300">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <span className="text-2xl">🇦🇹</span> Österreich
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <p className="text-xs text-slate-600">Gesamteinkommen</p>
-              <p className="font-semibold">€{(summary.AT?.total_income || 0).toLocaleString('de-DE')}</p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-600">Einträge</p>
-              <p className="font-semibold">{Object.values(summary.AT?.entries || {}).reduce((a, b) => a + b, 0)}</p>
-            </div>
-            <div className="pt-3 border-t">
-              <p className="text-xs font-semibold mb-2">Besonderheiten:</p>
-              <ul className="text-xs text-slate-600 space-y-1">
-                <li>✓ KESt 27,5% auf Kapitalerträge</li>
-                <li>✓ Sparerfreibetrag €730</li>
-                <li>✓ Anlage KAP erforderlich</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Comparison Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">📊 Steuerlast-Vergleich</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={comparisonData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="country" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => `€${value.toLocaleString()}`} />
+                  <Bar dataKey="tax" fill="#3b82f6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
 
-        {/* Switzerland */}
-        <Card className="border-green-300">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <span className="text-2xl">🇨🇭</span> Schweiz
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <p className="text-xs text-slate-600">Gesamteinkommen</p>
-              <p className="font-semibold">CHF {(summary.CH?.total_income || 0).toLocaleString('de-CH')}</p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-600">Einträge</p>
-              <p className="font-semibold">{Object.values(summary.CH?.entries || {}).reduce((a, b) => a + b, 0)}</p>
-            </div>
-            <div className="pt-3 border-t">
-              <p className="text-xs font-semibold mb-2">Besonderheiten:</p>
-              <ul className="text-xs text-slate-600 space-y-1">
-                <li>✓ Kanton-Steuersätze 15-22%</li>
-                <li>✓ Hypothekarzinsen 100% abzugsfähig</li>
-                <li>✓ Vermögenssteuer pro Kanton</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Ranking */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">🏆 Ranking nach Steuerlast</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {sortedByTax.map((item, idx) => (
+                <div key={item.country} className="flex items-center justify-between p-3 bg-slate-50 rounded border border-slate-200">
+                  <div className="flex items-center gap-3">
+                    <Badge className={`text-lg px-2.5 py-1 ${
+                      idx === 0 ? 'bg-green-100 text-green-800' :
+                      idx === 1 ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {idx + 1}
+                    </Badge>
+                    <p className="font-medium">{item.country}</p>
+                  </div>
+                  <p className="text-lg font-bold">€{Math.round(item.tax).toLocaleString()}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
 
-        {/* Germany */}
-        <Card className="border-yellow-300">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <span className="text-2xl">🇩🇪</span> Deutschland
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <p className="text-xs text-slate-600">Gesamteinkommen</p>
-              <p className="font-semibold">€{(summary.DE?.total_income || 0).toLocaleString('de-DE')}</p>
+          {/* Advantages */}
+          {comparison.analysis?.advantages && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {Object.entries(comparison.analysis.advantages).map(([country, advantages]) => (
+                <Card key={country}>
+                  <CardHeader>
+                    <CardTitle className="text-sm">
+                      {country === 'austria' && '🇦🇹 Österreich'}
+                      {country === 'switzerland' && '🇨🇭 Schweiz'}
+                      {country === 'germany' && '🇩🇪 Deutschland'}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-1">
+                      {(advantages || []).map((adv, i) => (
+                        <li key={i} className="text-xs text-slate-700 flex gap-1">
+                          <span>✓</span> {adv}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-            <div>
-              <p className="text-xs text-slate-600">Einträge</p>
-              <p className="font-semibold">{Object.values(summary.DE?.entries || {}).reduce((a, b) => a + b, 0)}</p>
-            </div>
-            <div className="pt-3 border-t">
-              <p className="text-xs font-semibold mb-2">Besonderheiten:</p>
-              <ul className="text-xs text-slate-600 space-y-1">
-                <li>✓ Abgeltungssteuer 26,375%</li>
-                <li>✓ Sparerpauschbetrag €801</li>
-                <li>✓ Kirchensteuer 8-9%</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          )}
 
-      {/* Recommendation */}
-      <Card className="bg-blue-50 border-blue-300">
-        <CardHeader>
-          <CardTitle>💡 Empfehlungen</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          <p>• <strong>Österreich:</strong> Nutzen Sie den Sparerfreibetrag von €730 durch Übertragung auf Partner</p>
-          <p>• <strong>Schweiz:</strong> Maximieren Sie Hypothekarzinsenabzüge bei Immobilienbesitz</p>
-          <p>• <strong>Deutschland:</strong> Verteilen Sie Gewinne auf mehrere Jahre zur Progression-Reduktion</p>
-        </CardContent>
-      </Card>
+          {/* Opportunities */}
+          {(comparison.analysis?.opportunities || []).length > 0 && (
+            <Card className="border-blue-300 bg-blue-50">
+              <CardHeader>
+                <CardTitle className="text-sm">💡 Optimierungsmöglichkeiten</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {comparison.analysis.opportunities.map((opp, i) => (
+                    <li key={i} className="text-sm flex gap-2">
+                      <Badge className="flex-shrink-0 bg-blue-200 text-blue-800 text-xs mt-0.5">
+                        {i + 1}
+                      </Badge>
+                      {opp}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Recommendations */}
+          {(comparison.analysis?.recommendations || []).length > 0 && (
+            <Alert className="border-green-300 bg-green-50">
+              <AlertDescription className="text-green-900 text-sm space-y-2">
+                <strong>✅ Empfehlungen:</strong>
+                <ul className="list-disc list-inside space-y-1 mt-2">
+                  {comparison.analysis.recommendations.map((rec, i) => (
+                    <li key={i}>{rec}</li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+        </>
+      )}
     </div>
   );
 }
