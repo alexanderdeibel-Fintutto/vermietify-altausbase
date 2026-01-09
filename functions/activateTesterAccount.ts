@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
       }
     });
 
-    // Step 7: Update TesterInvitation status
+    // Step 8: Update TesterInvitation status
     await base44.asServiceRole.entities.TesterInvitation.update(invitation.id, {
       status: 'accepted',
       accepted_at: new Date().toISOString(),
