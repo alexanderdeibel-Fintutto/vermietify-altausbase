@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,29 @@ import { useAdaptiveNavigation } from './useAdaptiveNavigation';
 
 export default function AdaptiveNavigation({ currentPageName }) {
   const { visibleFeatures, unlockedCount, loading } = useAdaptiveNavigation();
+
+  // Keyboard shortcuts (Ctrl/Cmd + Number)
+  const handleKeyDown = useCallback((e) => {
+    if (e.ctrlKey || e.metaKey) {
+      const keyMap = {
+        '1': 'Dashboard',
+        '2': 'Finanzen',
+        '3': 'Buildings',
+        '4': 'Tenants',
+        '5': 'Tax'
+      };
+      
+      if (keyMap[e.key]) {
+        e.preventDefault();
+        window.location.href = createPageUrl(keyMap[e.key]);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 
   const navigationItems = [
     { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, page: 'Dashboard' },
@@ -39,7 +62,11 @@ export default function AdaptiveNavigation({ currentPageName }) {
   }
 
   return (
-    <nav className="flex items-center gap-2 px-4 overflow-x-auto">
+    <nav 
+      className="flex items-center gap-2 px-4 overflow-x-auto"
+      role="navigation"
+      aria-label="Hauptnavigation"
+    >
       {navigationItems.map((item) => {
         if (!visibleFeatures.has(item.key)) return null;
         
@@ -57,6 +84,9 @@ export default function AdaptiveNavigation({ currentPageName }) {
                 ? "bg-emerald-50 text-emerald-700" 
                 : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
             )}
+            aria-label={item.label}
+            aria-current={isActive ? 'page' : undefined}
+            role="link"
           >
             <Icon className={cn("w-4 h-4", isActive ? "text-emerald-600" : "text-slate-400")} />
             <span className="hidden md:inline">{item.label}</span>

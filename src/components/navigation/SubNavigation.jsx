@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { ChevronRight, ChevronDown, Lock } from 'lucide-react';
@@ -107,7 +107,12 @@ export default function SubNavigation({ mainSection, visibleFeatures = [] }) {
 
   return (
     <div className="bg-white border-b border-slate-200 px-4 lg:px-8 py-2">
-      <div className="flex items-center gap-4 overflow-x-auto">
+      <div 
+        ref={scrollRef}
+        className="flex items-center gap-4 overflow-x-auto scroll-smooth"
+        role="navigation"
+        aria-label="Sekundäre Navigation"
+      >
         {visibleItems.map((item) => {
           const isActive = location.pathname === createPageUrl(item.key);
           const isLocked = !item.alwaysVisible && !visibleFeatures.includes(item.requiresFeature || item.key);
@@ -122,6 +127,9 @@ export default function SubNavigation({ mainSection, visibleFeatures = [] }) {
                 isLocked && "opacity-50 cursor-not-allowed"
               )}
               onClick={(e) => isLocked && e.preventDefault()}
+              aria-label={`${item.label}${isLocked ? ' (gesperrt)' : ''}`}
+              aria-current={isActive ? 'page' : undefined}
+              tabIndex={isLocked ? -1 : 0}
             >
               {isLocked && <Lock className="w-3 h-3" />}
               {item.label}
