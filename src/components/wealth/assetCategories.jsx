@@ -1,99 +1,89 @@
 export const ASSET_CATEGORIES = {
-  STOCKS: {
+  stocks: {
     id: 'stocks',
     label: 'Aktien',
-    icon: '📈',
+    icon: 'TrendingUp',
     steuer_formular: 'anlage_kap',
     steuer_zeile: 'zeile_9',
     subcategories: ['einzelaktien', 'etf', 'aktienfonds', 'reits']
   },
-  BONDS: {
+  bonds: {
     id: 'bonds',
     label: 'Anleihen',
-    icon: '📋',
+    icon: 'FileText',
     steuer_formular: 'anlage_kap',
     steuer_zeile: 'zeile_7',
     subcategories: ['staatsanleihen', 'unternehmensanleihen', 'pfandbriefe']
   },
-  FUNDS: {
+  funds: {
     id: 'funds',
     label: 'Investmentfonds',
-    icon: '💼',
+    icon: 'Briefcase',
     steuer_formular: 'anlage_kap',
     steuer_zeile: 'zeile_12',
     subcategories: ['aktienfonds', 'mischfonds', 'immobilienfonds']
   },
-  CRYPTO: {
+  crypto: {
     id: 'crypto',
     label: 'Kryptowährungen',
-    icon: '₿',
+    icon: 'Zap',
     steuer_formular: 'anlage_so',
     steuer_zeile: 'zeile_41',
     subcategories: ['bitcoin', 'ethereum', 'altcoins', 'stablecoins']
   },
-  PRECIOUS_METALS: {
+  precious_metals: {
     id: 'precious_metals',
     label: 'Edelmetalle',
-    icon: '💎',
+    icon: 'Award',
     steuer_formular: 'anlage_so',
     steuer_zeile: 'zeile_41',
     subcategories: ['gold', 'silber', 'platin', 'palladium']
   },
-  CASH: {
+  cash: {
     id: 'cash',
     label: 'Bankguthaben',
-    icon: '🏦',
+    icon: 'DollarSign',
     steuer_formular: 'anlage_kap',
     steuer_zeile: 'zeile_7',
     subcategories: ['tagesgeld', 'festgeld', 'sparbuch', 'girokonto']
   },
-  INSURANCE: {
+  insurance: {
     id: 'insurance',
     label: 'Lebensversicherungen',
-    icon: '🛡️',
+    icon: 'Shield',
     steuer_formular: 'anlage_kap',
     steuer_zeile: 'zeile_33',
     subcategories: ['kapitallebensversicherung', 'rentenversicherung', 'fondsgebunden']
   },
-  BUSINESS_SHARES: {
+  business_shares: {
     id: 'business_shares',
     label: 'Unternehmensbeteiligungen',
-    icon: '🏢',
+    icon: 'Building2',
     steuer_formular: 'anlage_so',
     steuer_zeile: 'zeile_13',
     subcategories: ['gmbh_anteile', 'personengesellschaft', 'stille_beteiligung']
   },
-  COLLECTIBLES: {
+  collectibles: {
     id: 'collectibles',
     label: 'Sammlerobjekte',
-    icon: '🎨',
+    icon: 'Palette',
     steuer_formular: 'anlage_so',
     steuer_zeile: 'zeile_41',
     subcategories: ['kunst', 'oldtimer', 'uhren', 'muenzen', 'briefmarken']
   },
-  FOREIGN_ASSETS: {
+  foreign_assets: {
     id: 'foreign_assets',
     label: 'Ausländische Vermögenswerte',
-    icon: '🌍',
+    icon: 'Globe',
     steuer_formular: 'anlage_aus',
     steuer_zeile: 'zeile_7',
     subcategories: ['auslaendische_aktien', 'auslaendische_immobilien', 'offshore_konten']
   }
 };
 
-export const getCategoryById = (categoryId) => {
-  return Object.values(ASSET_CATEGORIES).find(cat => cat.id === categoryId);
-};
+export const getCategoryById = (id) => ASSET_CATEGORIES[id] || null;
 
-export const getAllCategories = () => {
-  return Object.values(ASSET_CATEGORIES).map(cat => ({
-    value: cat.id,
-    label: cat.label,
-    icon: cat.icon
-  }));
-};
-
-export const getSubcategories = (categoryId) => {
-  const category = getCategoryById(categoryId);
-  return category?.subcategories || [];
+export const getCategoryIcon = (id) => {
+  const category = ASSET_CATEGORIES[id];
+  return category?.icon || 'Package';
 };
