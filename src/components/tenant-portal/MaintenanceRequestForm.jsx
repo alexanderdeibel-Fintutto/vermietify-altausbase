@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import MobilePhotoUpload from '@/components/mobile/MobilePhotoUpload';
 
 const CATEGORIES = [
   { value: 'heating', label: 'Heizung' },
@@ -29,7 +30,8 @@ export default function MaintenanceRequestForm({ tenantId, onSubmit }) {
     title: '',
     description: '',
     category: 'other',
-    priority: 'medium'
+    priority: 'medium',
+    attachments: []
   });
 
   const handleSubmit = async (e) => {
@@ -100,6 +102,19 @@ export default function MaintenanceRequestForm({ tenantId, onSubmit }) {
               placeholder="Beschreibe das Problem detailliert..."
               className="min-h-24"
             />
+          </div>
+
+          <div>
+            <label className="text-sm font-semibold block mb-2">Fotos anhängen</label>
+            <MobilePhotoUpload
+              onUploadComplete={(urls) => setFormData({ ...formData, attachments: urls })}
+              maxFiles={5}
+            />
+            {formData.attachments.length > 0 && (
+              <p className="text-xs text-green-600 mt-2">
+                {formData.attachments.length} Datei(en) angehängt
+              </p>
+            )}
           </div>
 
           <div className="flex gap-2">
