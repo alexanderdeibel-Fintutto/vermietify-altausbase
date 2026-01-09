@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Home, Building2, Users, Briefcase } from 'lucide-react';
+import { Home, Building2, Users, Briefcase, TrendingUp } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 export default function HorizontalMainNavigation() {
@@ -9,6 +9,7 @@ export default function HorizontalMainNavigation() {
   
   const getActiveSection = () => {
     const path = location.pathname.toLowerCase();
+    if (path.includes('wealth') || path.includes('vermogen')) return 'vermogen';
     if (path.includes('building') || path.includes('unit') || path.includes('insurance') || path.includes('finanzen')) return 'immobilien';
     if (path.includes('tenant') || path.includes('contract') || path.includes('operating')) return 'mieter';
     if (path.includes('firma') || path.includes('company')) return 'firma';
@@ -41,6 +42,14 @@ export default function HorizontalMainNavigation() {
       page: 'Tenants',
       colorActive: 'bg-emerald-50 text-emerald-700',
       colorHover: 'hover:bg-emerald-50/50'
+    },
+    {
+      key: 'vermogen',
+      label: 'Mein Vermögen',
+      icon: TrendingUp,
+      page: 'WealthManagement',
+      colorActive: 'bg-amber-50 text-amber-700',
+      colorHover: 'hover:bg-amber-50/50'
     },
     {
       key: 'firma',
