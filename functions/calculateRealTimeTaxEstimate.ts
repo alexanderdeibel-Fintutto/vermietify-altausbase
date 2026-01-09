@@ -9,44 +9,43 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { country, year_to_date_income, capital_gains, crypto_gains } = await req.json();
+    const { country, income_data } = await req.json();
+    // income_data: { employment: 100000, freelance: 50000, investments: 25000, crypto_gains: 10000 }
 
-    // KI-basierte Real-time Steuerberechnung
+    // Real-time Tax Estimate (live calculator)
     const estimate = await base44.integrations.Core.InvokeLLM({
-      prompt: `Berechne die Steuerschuld für ${country} mit aktuellen ${new Date().getFullYear()} Daten:
+      prompt: `Berechne Real-Time Steuerschätzung für ${user.email} in ${country}:
 
-EINKOMMEN:
-- Laufendes Einkommen (YTD): $${year_to_date_income}
-- Kapitalerträge: $${capital_gains}
-- Kryptowährungen-Gewinne: $${crypto_gains}
+EINKOMMEN (YTD oder geschätzt):
+${JSON.stringify(income_data, null, 2)}
 
-Länder-Spezifisch für ${country}:
-- Aktuelle Steuersätze
-- Sozialversicherung
-- Withholding-Taxes
-- Abzüge & Freibeträge
-- Estimated Quarterly Payments (falls relevant)
+BERECHNE:
+1. Gross Income
+2. Deductions (standard/estimated)
+3. Taxable Income
+4. Tax Calculation (progressiv nach Country)
+5. Credits applicable
+6. Net Tax
+7. Estimated Q payments needed
+8. Withholding adequacy
 
-Berechne:
-1. Federal/National Tax
-2. Lokale/Kantonal Taxes (falls zutreffend)
-3. Geschätzte Steuerschuld
-4. Empfohlene Q-Payments
-5. Eventuell fällige Strafzinsen
-6. Optimierungsmöglichkeiten`,
+GEBE AUCH:
+- Marginal Tax Rate
+- Effective Tax Rate
+- Refund/Payment Estimate
+- If increased income by 10% what happens`,
       response_json_schema: {
         type: "object",
         properties: {
-          country: { type: "string" },
-          year_to_date_income: { type: "number" },
-          federal_tax: { type: "number" },
-          local_tax: { type: "number" },
-          total_estimated_tax: { type: "number" },
-          quarterly_payment_due: { type: "number" },
-          next_payment_date: { type: "string" },
-          penalty_if_underpaid: { type: "number" },
-          optimization_tips: { type: "array", items: { type: "string" } },
-          confidence_score: { type: "number" }
+          gross_income: { type: "number" },
+          estimated_deductions: { type: "number" },
+          taxable_income: { type: "number" },
+          estimated_tax: { type: "number" },
+          marginal_rate: { type: "number" },
+          effective_rate: { type: "number" },
+          withholding_needed: { type: "number" },
+          refund_or_payment: { type: "number" },
+          quarterly_payment: { type: "number" }
         }
       }
     });
@@ -54,8 +53,8 @@ Berechne:
     return Response.json({
       user_email: user.email,
       country,
-      calculated_at: new Date().toISOString(),
-      ...estimate
+      estimate,
+      timestamp: new Date().toISOString()
     });
 
   } catch (error) {
