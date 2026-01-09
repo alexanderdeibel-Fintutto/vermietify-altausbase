@@ -5,7 +5,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, TrendingUp, Users, Zap, Download, Bell, Settings, Clock } from 'lucide-react';
+import { AlertCircle, TrendingUp, Users, Zap, Download, Bell, Settings, Clock, Activity } from 'lucide-react';
+import { StatTrend, LinkingCard, AlertWidget } from '@/components/admin/DashboardEnhancements';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
@@ -81,37 +82,13 @@ export default function AdminMasterDashboard() {
           </Card>
         )}
 
-        {/* Stats Grid */}
+        {/* Stats Grid with Trends */}
         {data && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <Card className="p-6 bg-white border border-slate-200">
-              <p className="text-sm font-light text-slate-600 mb-2">Aktive Phasen</p>
-              <h3 className="text-2xl font-light text-slate-900 mb-2">{phases.length}</h3>
-              <p className="text-xs font-light text-slate-500">{data.total_testers} Tester aktiv</p>
-            </Card>
-
-            <Card className="p-6 bg-white border border-slate-200">
-              <p className="text-sm font-light text-slate-600 mb-2">Completion-Rate</p>
-              <h3 className="text-2xl font-light text-slate-900 mb-2">{data.completion_rate}%</h3>
-              <div className="w-full h-1.5 bg-slate-200 rounded-full">
-                <div
-                  className="h-1.5 bg-green-600 rounded-full"
-                  style={{ width: `${data.completion_rate}%` }}
-                />
-              </div>
-            </Card>
-
-            <Card className="p-6 bg-white border border-slate-200">
-              <p className="text-sm font-light text-slate-600 mb-2">Probleme (7d)</p>
-              <h3 className="text-2xl font-light text-slate-900 mb-2">{data.problems_reported}</h3>
-              <p className="text-xs font-light text-slate-500">Durchschnitt: {Math.round(data.problems_reported / 7)}/Tag</p>
-            </Card>
-
-            <Card className="p-6 bg-white border border-slate-200">
-              <p className="text-sm font-light text-slate-600 mb-2">AI-Insights</p>
-              <h3 className="text-2xl font-light text-slate-900 mb-2">{insights.length}</h3>
-              <Badge className="bg-orange-100 text-orange-800 font-light text-xs">⚠️ {insights.filter(i => i.priority === 'critical').length} kritisch</Badge>
-            </Card>
+            <StatTrend label="Aktive Phasen" value={phases.length} trend="up" percentage={12} />
+            <StatTrend label="Completion-Rate" value={`${data.completion_rate}%`} trend="up" percentage={8} />
+            <StatTrend label="Probleme (7d)" value={data.problems_reported} trend="down" percentage={5} />
+            <StatTrend label="AI-Insights" value={insights.length} trend="up" percentage={23} />
           </div>
         )}
 
