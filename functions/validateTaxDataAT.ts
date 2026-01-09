@@ -3,72 +3,88 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { userId, taxYear } = await req.json();
+    const { taxYear } = await req.json();
 
     const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    console.log(`Validating AT tax data for ${taxYear}`);
+
+    const [investments, otherIncomes, capitalGains] = await Promise.all([
+      base44.entities.InvestmentAT.filter({ tax_year: taxYear }) || [],
+      base44.entities.OtherIncomeAT.filter({ tax_year: taxYear }) || [],
+      base44.entities.CapitalGainAT.filter({ tax_year: taxYear }) || []
+    ]);
 
     const errors = [];
     const warnings = [];
-
-    // Fetch data
-    const investments = await base44.entities.InvestmentAT.filter({ tax_year: taxYear }) || [];
-    const otherIncomes = await base44.entities.OtherIncomeAT.filter({ tax_year: taxYear }) || [];
-    const capitalGains = await base44.entities.CapitalGainAT.filter({ tax_year: taxYear }) || [];
+    const info = [];
 
     // Validate investments
     for (const inv of investments) {
-      if (!inv.gross_income || inv.gross_income <= 0) {
-        errors.push(`Investment "${inv.title}": Bruttoeinkommen erforderlich`);
-      }
-      if (inv.gross_income > 1000000) {
-        warnings.push(`Investment "${inv.title}": Betrag €${inv.gross_income} wirkt unrealistisch hoch`);
-      }
-      if (!inv.institution || inv.institution.length === 0) {
-        errors.push(`Investment "${inv.title}": Finanzinstitut erforderlich`);
+      if (!inv.title) errors.push(`Investment: Titel fehlt`);
+      if (!inv.institution) errors.push(`Investment: Bank/Institution fehlt`);
+      if (inv.gross_income < 0) errors.push(`Investment "${inv.title}": Bruttoertrag darf nicht negativ sein`);
+      
+      if (inv.withheld_tax_kest > inv.gross_income * 0.275) {
+        warnings.push(`Investment "${inv.title}": KESt-Betrag scheint zu hoch`);
       }
     }
 
     // Validate other incomes
-    for (const income of otherIncomes) {
-      if (!income.amount || income.amount <= 0) {
-        errors.push(`Sonstige Einkunft "${income.description}": Betrag erforderlich`);
-      }
-      if (!income.income_type) {
-        errors.push(`Sonstige Einkunft "${income.description}": Einkunftsart erforderlich`);
-      }
+    for (const oi of otherIncomes) {
+      if (!oi.description) errors.push(`Sonstige Einkunft: Beschreibung fehlt`);
+      if (!oi.income_type) errors.push(`Sonstige Einkunft: Typ fehlt`);
+      if (oi.amount <= 0) errors.push(`Sonstige Einkunft "${oi.description}": Betrag muss > 0 sein`);
     }
 
     // Validate capital gains
-    for (const gain of capitalGains) {
-      if (gain.sale_date < gain.acquisition_date) {
-        errors.push(`Veräußerung "${gain.description}": Verkaufsdatum vor Kaufdatum`);
+    for (const cg of capitalGains) {
+      if (!cg.description) errors.push(`Veräußerungsgewinn: Beschreibung fehlt`);
+      if (cg.sale_date && cg.acquisition_date) {
+        const saleDate = new Date(cg.sale_date);
+        const acqDate = new Date(cg.acquisition_date);
+        if (saleDate < acqDate) errors.push(`Veräußerungsgewinn "${cg.description}": Verkaufsdatum liegt vor Kaufdatum`);
       }
-      if (gain.sale_price <= 0 || gain.acquisition_cost < 0) {
-        errors.push(`Veräußerung "${gain.description}": Ungültige Beträge`);
+      if (cg.sale_price <= 0 || cg.acquisition_cost <= 0) {
+        errors.push(`Veräußerungsgewinn "${cg.description}": Preise müssen > 0 sein`);
       }
     }
 
-    // Check sparer allowance
-    const totalInvestmentIncome = investments.reduce((sum, inv) => sum + inv.gross_income, 0);
-    if (totalInvestmentIncome > 730 && investments.length === 0) {
-      warnings.push('Sparerfreibetrag (€730) könnte überschritten sein - KESt Berechnung notwendig');
+    // Check minimum data completeness
+    const hasInvestments = investments.length > 0;
+    const hasOtherIncomes = otherIncomes.length > 0;
+    const hasCapitalGains = capitalGains.length > 0;
+
+    if (!hasInvestments && !hasOtherIncomes && !hasCapitalGains) {
+      warnings.push('Keine Einnahmedaten für Steuerjahr gefunden');
     }
+
+    const totalIncome = investments.reduce((s, i) => s + (i.gross_income || 0), 0) +
+                        otherIncomes.reduce((s, i) => s + (i.amount || 0), 0);
+
+    if (totalIncome > 0) {
+      info.push(`Gesamteinkommen: €${totalIncome.toFixed(2)}`);
+    }
+
+    const isValid = errors.length === 0;
 
     return Response.json({
-      isValid: errors.length === 0,
+      isValid,
       errors,
       warnings,
+      info,
+      timestamp: new Date().toISOString(),
       summary: {
-        investmentsCount: investments.length,
-        otherIncomesCount: otherIncomes.length,
-        capitalGainsCount: capitalGains.length,
-        totalInvestmentIncome: totalInvestmentIncome
+        errorsCount: errors.length,
+        warningsCount: warnings.length,
+        dataCount: {
+          investments: investments.length,
+          otherIncomes: otherIncomes.length,
+          capitalGains: capitalGains.length
+        }
       }
     });
-
   } catch (error) {
     console.error('Validation error:', error);
     return Response.json({ error: error.message }, { status: 500 });
