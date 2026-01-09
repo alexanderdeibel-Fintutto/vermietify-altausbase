@@ -174,6 +174,7 @@ import TaxLawUpdates from './pages/TaxLawUpdates';
 import InternationalTaxComparison from './pages/InternationalTaxComparison';
 import TaxDocumentProcessor from './pages/TaxDocumentProcessor';
 import TaxReturnFilingManager from './pages/TaxReturnFilingManager';
+import TaxOptimizationAnalyzer from './pages/TaxOptimizationAnalyzer';
 import __Layout from './Layout.jsx';
 
 
@@ -354,6 +355,7 @@ export const PAGES = {
     "InternationalTaxComparison": InternationalTaxComparison,
     "TaxDocumentProcessor": TaxDocumentProcessor,
     "TaxReturnFilingManager": TaxReturnFilingManager,
+    "TaxOptimizationAnalyzer": TaxOptimizationAnalyzer,
 }
 
 export const pagesConfig = {
