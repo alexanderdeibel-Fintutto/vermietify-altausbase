@@ -164,6 +164,7 @@ import TaxFilingWizard from './pages/TaxFilingWizard';
 import MultiCountryTaxComparison from './pages/MultiCountryTaxComparison';
 import TaxComplianceTracker from './pages/TaxComplianceTracker';
 import TaxDocumentManager from './pages/TaxDocumentManager';
+import TaxScenarioSimulator from './pages/TaxScenarioSimulator';
 import __Layout from './Layout.jsx';
 
 
@@ -334,6 +335,7 @@ export const PAGES = {
     "MultiCountryTaxComparison": MultiCountryTaxComparison,
     "TaxComplianceTracker": TaxComplianceTracker,
     "TaxDocumentManager": TaxDocumentManager,
+    "TaxScenarioSimulator": TaxScenarioSimulator,
 }
 
 export const pagesConfig = {
