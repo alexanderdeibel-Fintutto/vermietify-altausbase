@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -12,49 +11,48 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import { TrendingUp, DollarSign, AlertTriangle } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
 
 const CURRENT_YEAR = new Date().getFullYear();
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
 export default function InvestmentTaxTracking() {
   const [country, setCountry] = useState('DE');
   const [taxYear, setTaxYear] = useState(CURRENT_YEAR);
-  const [track, setTrack] = useState(false);
+  const [tracking, setTracking] = useState(false);
 
-  const { data: tracking = {}, isLoading } = useQuery({
+  const { data: analysis = {}, isLoading } = useQuery({
     queryKey: ['investmentTax', country, taxYear],
     queryFn: async () => {
       const response = await base44.functions.invoke('trackInvestmentTax', {
         country,
         taxYear
       });
-      return response.data?.tracking || {};
+      return response.data?.analysis || {};
     },
-    enabled: track
+    enabled: tracking
   });
 
-  const analysis = tracking.analysis || {};
-  
-  const incomeData = [
-    { name: 'Dividenden', value: Math.round(analysis.dividend_income || 0) },
-    { name: 'Langfristige Gewinne', value: Math.round(analysis.capital_gains_long_term || 0) },
-    { name: 'Kurzfristige Gewinne', value: Math.round(analysis.capital_gains_short_term || 0) }
-  ].filter(d => d.value > 0);
+  const pieData = [
+    { name: 'Kapitalgewinne', value: Math.abs(analysis.taxable_gains || 0) },
+    { name: 'Dividenden', value: analysis.dividend_income || 0 },
+    { name: 'Zinsen', value: analysis.interest_income || 0 }
+  ].filter(item => item.value > 0);
+
+  const COLORS = ['#ef4444', '#3b82f6', '#10b981'];
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">📈 Investment Tax Tracking</h1>
-        <p className="text-slate-500 mt-1">Verfolgen und optimieren Sie Anlagebesteuerung</p>
+        <h1 className="text-3xl font-bold">📈 Anlagen-Steuer Tracking</h1>
+        <p className="text-slate-500 mt-1">Überwachen Sie Ihre Anlagensteuern</p>
       </div>
 
       {/* Controls */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="text-sm font-medium">Land</label>
-          <Select value={country} onValueChange={setCountry}>
+          <Select value={country} onValueChange={setCountry} disabled={tracking}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -67,88 +65,84 @@ export default function InvestmentTaxTracking() {
         </div>
         <div>
           <label className="text-sm font-medium">Steuerjahr</label>
-          <Select value={String(taxYear)} onValueChange={(v) => setTaxYear(parseInt(v))}>
+          <Select value={String(taxYear)} onValueChange={(v) => setTaxYear(parseInt(v))} disabled={tracking}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={String(CURRENT_YEAR - 1)}>{CURRENT_YEAR - 1}</SelectItem>
-              <SelectItem value={String(CURRENT_YEAR)}>{CURRENT_YEAR}</SelectItem>
+              {[CURRENT_YEAR - 1, CURRENT_YEAR].map(year => (
+                <SelectItem key={year} value={String(year)}>{year}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
         <div className="flex items-end">
           <Button
-            onClick={() => setTrack(true)}
+            onClick={() => setTracking(true)}
             className="w-full bg-blue-600 hover:bg-blue-700"
+            disabled={tracking}
           >
-            Analyse Starten
+            Analysieren
           </Button>
         </div>
       </div>
 
-      {isLoading && track && (
-        <div className="text-center py-8">⏳ Tracking wird durchgeführt...</div>
-      )}
-
-      {track && tracking.analysis && (
+      {isLoading ? (
+        <div className="text-center py-8">⏳ Analyse läuft...</div>
+      ) : tracking && Object.keys(analysis).length > 0 ? (
         <>
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="border-blue-300 bg-blue-50">
+          {/* KPI Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
               <CardContent className="pt-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm text-slate-600">Steuerpflichtiges Einkommen</p>
-                    <p className="text-3xl font-bold text-blue-600 mt-2">
-                      €{Math.round(analysis.total_taxable_income || 0).toLocaleString()}
-                    </p>
-                  </div>
-                  <DollarSign className="w-8 h-8 text-blue-400" />
-                </div>
+                <p className="text-xs text-slate-600">Steuerpflichtiger Gewinne</p>
+                <p className="text-2xl font-bold text-red-600 mt-2">
+                  €{Math.round(analysis.taxable_gains || 0).toLocaleString()}
+                </p>
               </CardContent>
             </Card>
-
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-xs text-slate-600">Verfügbare Verluste</p>
+                <p className="text-2xl font-bold text-green-600 mt-2">
+                  €{Math.round(analysis.available_losses || 0).toLocaleString()}
+                </p>
+              </CardContent>
+            </Card>
             <Card className="border-red-300 bg-red-50">
               <CardContent className="pt-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm text-slate-600">Geschätzte Steuerbelastung</p>
-                    <p className="text-3xl font-bold text-red-600 mt-2">
-                      €{Math.round(analysis.tax_liability || 0).toLocaleString()}
-                    </p>
-                  </div>
-                  <AlertTriangle className="w-8 h-8 text-red-400" />
-                </div>
+                <p className="text-xs text-slate-600">Geschätzte Steuerpflicht</p>
+                <p className="text-2xl font-bold text-red-600 mt-2">
+                  €{Math.round(analysis.tax_liability || 0).toLocaleString()}
+                </p>
               </CardContent>
             </Card>
           </div>
 
           {/* Income Breakdown */}
-          {incomeData.length > 0 && (
+          {pieData.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">💰 Einkommens-Zusammensetzung</CardTitle>
+                <CardTitle className="text-sm">📊 Einkommensaufschlüsselung</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
                     <Pie
-                      data={incomeData}
+                      data={pieData}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, value }) => `${name}: €${value.toLocaleString()}`}
-                      outerRadius={100}
+                      label={({ name, value }) => `${name}: €${Math.round(value).toLocaleString()}`}
+                      outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {incomeData.map((entry, index) => (
+                      {pieData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => `€${value.toLocaleString()}`} />
-                    <Legend />
+                    <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -156,52 +150,58 @@ export default function InvestmentTaxTracking() {
           )}
 
           {/* Income Details */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {analysis.dividend_income > 0 && (
-              <Card className="border-green-300 bg-green-50">
-                <CardContent className="pt-6">
-                  <p className="text-sm text-slate-600">Dividendeneinkommen</p>
-                  <p className="text-2xl font-bold text-green-600 mt-2">
-                    €{Math.round(analysis.dividend_income).toLocaleString()}
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-            {analysis.capital_gains_long_term > 0 && (
-              <Card className="border-blue-300 bg-blue-50">
-                <CardContent className="pt-6">
-                  <p className="text-sm text-slate-600">Langfristige Gewinne</p>
-                  <p className="text-2xl font-bold text-blue-600 mt-2">
-                    €{Math.round(analysis.capital_gains_long_term).toLocaleString()}
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-            {analysis.available_losses > 0 && (
-              <Card className="border-orange-300 bg-orange-50">
-                <CardContent className="pt-6">
-                  <p className="text-sm text-slate-600">Verfügbare Verluste</p>
-                  <p className="text-2xl font-bold text-orange-600 mt-2">
-                    €{Math.round(analysis.available_losses).toLocaleString()}
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">💰 Einkommensdetails</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="border-l-4 border-red-300 pl-3">
+                <p className="text-sm text-slate-600">Kapitalgewinne</p>
+                <p className="text-lg font-bold text-red-600">€{Math.round(analysis.taxable_gains || 0).toLocaleString()}</p>
+              </div>
+              <div className="border-l-4 border-blue-300 pl-3">
+                <p className="text-sm text-slate-600">Dividendeneinkommen</p>
+                <p className="text-lg font-bold text-blue-600">€{Math.round(analysis.dividend_income || 0).toLocaleString()}</p>
+              </div>
+              <div className="border-l-4 border-green-300 pl-3">
+                <p className="text-sm text-slate-600">Zinseinkommen</p>
+                <p className="text-lg font-bold text-green-600">€{Math.round(analysis.interest_income || 0).toLocaleString()}</p>
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Documentation Status */}
-          {analysis.documentation_status && Object.keys(analysis.documentation_status).length > 0 && (
-            <Card>
+          {/* Opportunities */}
+          {(analysis.optimization_opportunities || []).length > 0 && (
+            <Card className="border-green-300 bg-green-50">
               <CardHeader>
-                <CardTitle className="text-sm">📋 Dokumentations-Status</CardTitle>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <TrendingDown className="w-4 h-4 text-green-600" />
+                  💡 Optimierungsmöglichkeiten
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {Object.entries(analysis.documentation_status).map(([doc, status]) => (
-                  <div key={doc} className="flex justify-between items-center p-2 bg-slate-50 rounded">
-                    <span className="text-sm">{doc}</span>
-                    <Badge className={status === 'complete' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
-                      {status === 'complete' ? '✓ Vollständig' : '⚠️ ' + (status || 'Ausstehend')}
-                    </Badge>
+                {analysis.optimization_opportunities.map((opp, i) => (
+                  <div key={i} className="text-sm p-2 bg-white rounded">
+                    • {opp}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Wash Sale Warnings */}
+          {(analysis.wash_sale_warnings || []).length > 0 && (
+            <Card className="border-orange-300 bg-orange-50">
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-orange-600" />
+                  ⚠️ Wash-Sale Warnungen
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {analysis.wash_sale_warnings.map((warning, i) => (
+                  <div key={i} className="text-sm p-2 bg-white rounded">
+                    {warning}
                   </div>
                 ))}
               </CardContent>
@@ -212,35 +212,23 @@ export default function InvestmentTaxTracking() {
           {(analysis.recommendations || []).length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" />
-                  Optimierungsempfehlungen
-                </CardTitle>
+                <CardTitle className="text-sm">📋 Empfehlungen</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 {analysis.recommendations.map((rec, i) => (
-                  <div key={i} className="flex gap-3 p-2 bg-blue-50 rounded text-sm">
-                    <span className="text-blue-600 font-bold">→</span>
+                  <div key={i} className="text-sm p-2 bg-slate-50 rounded flex gap-2">
+                    <span className="text-blue-600 font-bold flex-shrink-0">{i + 1}.</span>
                     {rec}
                   </div>
                 ))}
               </CardContent>
             </Card>
           )}
-
-          {/* Optimization Potential */}
-          {analysis.optimization_potential > 0 && (
-            <Card className="border-green-300 bg-green-50">
-              <CardContent className="pt-6">
-                <p className="text-sm text-slate-600">Optimierungs-Potenzial</p>
-                <p className="text-3xl font-bold text-green-600 mt-2">
-                  €{Math.round(analysis.optimization_potential).toLocaleString()}
-                </p>
-                <p className="text-xs text-slate-600 mt-2">Mögliche Einsparungen durch Optimierung</p>
-              </CardContent>
-            </Card>
-          )}
         </>
+      ) : (
+        <div className="text-center py-8 text-slate-500">
+          Klicken Sie "Analysieren", um Ihre Anlagensteuern zu überwachen
+        </div>
       )}
     </div>
   );

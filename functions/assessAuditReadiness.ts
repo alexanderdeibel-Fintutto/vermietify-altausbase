@@ -15,69 +15,56 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
-    // Fetch audit-relevant data
+    // Fetch all relevant data
     const [filings, documents, compliance, calculations, alerts] = await Promise.all([
-      base44.entities.TaxFiling.filter({ user_email: user.email, country, tax_year: taxYear }) || [],
-      base44.entities.TaxDocument.filter({ user_email: user.email, country, tax_year: taxYear }) || [],
-      base44.entities.TaxCompliance.filter({ user_email: user.email, country, tax_year: taxYear }) || [],
-      base44.entities.TaxCalculation.filter({ user_email: user.email, country, tax_year: taxYear }) || [],
-      base44.entities.TaxAlert.filter({ user_email: user.email, country }) || []
+      base44.entities.TaxFiling.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
+      base44.entities.TaxDocument.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
+      base44.entities.TaxCompliance.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
+      base44.entities.TaxCalculation.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
+      base44.entities.TaxAlert.filter({ user_email: user.email, country }).catch(() => [])
     ]);
 
     const assessment = await base44.integrations.Core.InvokeLLM({
-      prompt: `Assess audit readiness for ${country} taxpayer for tax year ${taxYear}.
+      prompt: `Assess audit readiness for ${country}, year ${taxYear}.
 
-Data Summary:
-- Filings: ${filings.length} (${filings.filter(f => f.status === 'submitted').length} submitted)
-- Documents: ${documents.length} (${documents.filter(d => d.status === 'processed').length} processed)
-- Compliance Items: ${compliance.length} (${compliance.filter(c => c.status === 'completed').length} completed)
-- Tax Calculations: ${calculations.length}
-- Active Alerts: ${alerts.length}
+Data:
+- Filings: ${filings.length}
+- Documents: ${documents.length}
+- Compliance items: ${compliance.length} (${compliance.filter(c => c.status === 'completed').length} completed)
+- Calculations filed: ${calculations.length}
+- Open alerts: ${alerts.filter(a => !a.is_resolved).length}
 
 Provide comprehensive audit readiness assessment:
 1. Overall readiness score (0-100)
-2. Critical vulnerabilities
-3. Documentation gaps
-4. High-risk areas
-5. Compliance gaps
-6. Record-keeping assessment
-7. Timeline adequacy
-8. Recommended actions before audit
-9. Support documentation needed
-10. Estimated audit risk level`,
+2. Documentation completeness
+3. Record retention compliance
+4. Red flags and risk areas
+5. Critical gaps
+6. Preparation recommendations
+7. Timeline for improvement`,
       response_json_schema: {
         type: 'object',
         properties: {
-          overall_readiness: { type: 'number' },
+          readiness_score: { type: 'number' },
+          status: { type: 'string' },
+          documentation_score: { type: 'number' },
+          compliance_score: { type: 'number' },
+          record_retention_score: { type: 'number' },
+          red_flags: { type: 'array', items: { type: 'string' } },
+          critical_gaps: { type: 'array', items: { type: 'string' } },
           audit_risk_level: { type: 'string' },
-          vulnerabilities: { type: 'array', items: { type: 'object', additionalProperties: true } },
-          documentation_gaps: { type: 'array', items: { type: 'string' } },
-          compliance_issues: { type: 'array', items: { type: 'string' } },
-          high_risk_areas: { type: 'array', items: { type: 'string' } },
-          record_keeping_score: { type: 'number' },
-          recommended_actions: { type: 'array', items: { type: 'string' } },
-          timeline_adequacy: { type: 'string' },
-          estimated_vulnerability_percentage: { type: 'number' }
+          recommendations: { type: 'array', items: { type: 'string' } },
+          weeks_to_prepare: { type: 'number' }
         }
       }
     });
 
     return Response.json({
       status: 'success',
-      assessment: {
-        country,
-        tax_year: taxYear,
-        assessed_at: new Date().toISOString(),
-        data_summary: {
-          filings: filings.length,
-          documents: documents.length,
-          compliance_items: compliance.length
-        },
-        assessment: assessment
-      }
+      assessment
     });
   } catch (error) {
-    console.error('Assess audit readiness error:', error);
+    console.error('Audit readiness error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
