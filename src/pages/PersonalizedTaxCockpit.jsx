@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, CheckCircle2, Clock, Zap } from 'lucide-react';
-import { LinearProgress } from '@/components/ui/progress';
+import { Progress } from '@/components/ui/progress';
 
 export default function PersonalizedTaxCockpit() {
   const [taxYear] = useState(new Date().getFullYear() - 1);
@@ -89,7 +89,7 @@ export default function PersonalizedTaxCockpit() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <LinearProgress value={progressPercent} className="h-2" />
+          <Progress value={progressPercent} className="h-2" />
           <p className="text-xs font-light text-slate-600">{Math.round(progressPercent)}% fertig</p>
         </CardContent>
       </Card>
