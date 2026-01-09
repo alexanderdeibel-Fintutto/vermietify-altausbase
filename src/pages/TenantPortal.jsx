@@ -4,11 +4,11 @@ import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
-import LeaseDetailsCard from '@/components/tenant-portal/LeaseDetailsCard';
-import PaymentHistoryWidget from '@/components/tenant-portal/PaymentHistoryWidget';
-import MaintenanceRequestForm from '@/components/tenant-portal/MaintenanceRequestForm';
-import MaintenanceRequestList from '@/components/tenant-portal/MaintenanceRequestList';
-import KnowledgeBaseWidget from '@/components/tenant-portal/KnowledgeBaseWidget';
+import LeaseDetailsCard from '@/components/tenant-portal/LeaseDetailsCard.js';
+import PaymentHistoryWidget from '@/components/tenant-portal/PaymentHistoryWidget.js';
+import MaintenanceRequestForm from '@/components/tenant-portal/MaintenanceRequestForm.js';
+import MaintenanceRequestList from '@/components/tenant-portal/MaintenanceRequestList.js';
+import KnowledgeBaseWidget from '@/components/tenant-portal/KnowledgeBaseWidget.js';
 
 export default function TenantPortal() {
   const [activeTab, setActiveTab] = useState('overview');
