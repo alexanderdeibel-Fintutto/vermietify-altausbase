@@ -208,6 +208,10 @@ import TaxBracketCalculator from './pages/TaxBracketCalculator';
 import EstimatedTaxScheduler from './pages/EstimatedTaxScheduler';
 import TaxScenarioComparison from './pages/TaxScenarioComparison';
 import TaxRiskAssessmentPanel from './pages/TaxRiskAssessmentPanel';
+import IncomeOptimizationTool from './pages/IncomeOptimizationTool';
+import CapitalGainsManagement from './pages/CapitalGainsManagement';
+import DeductionMaximizationTool from './pages/DeductionMaximizationTool';
+import InternationalTaxPlanning from './pages/InternationalTaxPlanning';
 import __Layout from './Layout.jsx';
 
 
@@ -422,6 +426,10 @@ export const PAGES = {
     "EstimatedTaxScheduler": EstimatedTaxScheduler,
     "TaxScenarioComparison": TaxScenarioComparison,
     "TaxRiskAssessmentPanel": TaxRiskAssessmentPanel,
+    "IncomeOptimizationTool": IncomeOptimizationTool,
+    "CapitalGainsManagement": CapitalGainsManagement,
+    "DeductionMaximizationTool": DeductionMaximizationTool,
+    "InternationalTaxPlanning": InternationalTaxPlanning,
 }
 
 export const pagesConfig = {
