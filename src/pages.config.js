@@ -48,6 +48,7 @@ import CapitalGainsManagement from './pages/CapitalGainsManagement';
 import CapitalGainsOptimizer from './pages/CapitalGainsOptimizer';
 import CharitableDonationPlanner from './pages/CharitableDonationPlanner';
 import CommunicationCenter from './pages/CommunicationCenter';
+import ComplexTaxSetupWizard from './pages/ComplexTaxSetupWizard';
 import ComplianceAudit from './pages/ComplianceAudit';
 import ComplianceCenter from './pages/ComplianceCenter';
 import ComplianceMonitoringDashboard from './pages/ComplianceMonitoringDashboard';
@@ -109,7 +110,6 @@ import MaintenanceTasks from './pages/MaintenanceTasks';
 import MarketAnalytics from './pages/MarketAnalytics';
 import MieterSelfServicePortal from './pages/MieterSelfServicePortal';
 import ModuleManagement from './pages/ModuleManagement';
-import Payments from './pages/Payments';
 import MultiCountryTaxComparison from './pages/MultiCountryTaxComparison';
 import MultiYearTaxComparison from './pages/MultiYearTaxComparison';
 import MultiYearTaxStrategy from './pages/MultiYearTaxStrategy';
@@ -122,6 +122,7 @@ import OperatingCostsManagement from './pages/OperatingCostsManagement';
 import OtherIncomeCH from './pages/OtherIncomeCH';
 import PackageManager from './pages/PackageManager';
 import PackageTestPage from './pages/PackageTestPage';
+import Payments from './pages/Payments';
 import PerformanceMonitor from './pages/PerformanceMonitor';
 import PermissionDashboard from './pages/PermissionDashboard';
 import ProjectManagement from './pages/ProjectManagement';
@@ -170,6 +171,7 @@ import TaxDashboardAT from './pages/TaxDashboardAT';
 import TaxDashboardCH from './pages/TaxDashboardCH';
 import TaxDashboardDE from './pages/TaxDashboardDE';
 import TaxDashboardGlobal from './pages/TaxDashboardGlobal';
+import TaxDashboardMultiCountry from './pages/TaxDashboardMultiCountry';
 import TaxDataImportHub from './pages/TaxDataImportHub';
 import TaxDeadlines from './pages/TaxDeadlines';
 import TaxDeductionOptimizer from './pages/TaxDeductionOptimizer';
@@ -240,8 +242,6 @@ import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import ComplexTaxSetupWizard from './pages/ComplexTaxSetupWizard';
-import TaxDashboardMultiCountry from './pages/TaxDashboardMultiCountry';
 import __Layout from './Layout.jsx';
 
 
@@ -296,6 +296,7 @@ export const PAGES = {
     "CapitalGainsOptimizer": CapitalGainsOptimizer,
     "CharitableDonationPlanner": CharitableDonationPlanner,
     "CommunicationCenter": CommunicationCenter,
+    "ComplexTaxSetupWizard": ComplexTaxSetupWizard,
     "ComplianceAudit": ComplianceAudit,
     "ComplianceCenter": ComplianceCenter,
     "ComplianceMonitoringDashboard": ComplianceMonitoringDashboard,
@@ -357,7 +358,6 @@ export const PAGES = {
     "MarketAnalytics": MarketAnalytics,
     "MieterSelfServicePortal": MieterSelfServicePortal,
     "ModuleManagement": ModuleManagement,
-    "Payments": Payments,
     "MultiCountryTaxComparison": MultiCountryTaxComparison,
     "MultiYearTaxComparison": MultiYearTaxComparison,
     "MultiYearTaxStrategy": MultiYearTaxStrategy,
@@ -370,6 +370,7 @@ export const PAGES = {
     "OtherIncomeCH": OtherIncomeCH,
     "PackageManager": PackageManager,
     "PackageTestPage": PackageTestPage,
+    "Payments": Payments,
     "PerformanceMonitor": PerformanceMonitor,
     "PermissionDashboard": PermissionDashboard,
     "ProjectManagement": ProjectManagement,
@@ -418,6 +419,7 @@ export const PAGES = {
     "TaxDashboardCH": TaxDashboardCH,
     "TaxDashboardDE": TaxDashboardDE,
     "TaxDashboardGlobal": TaxDashboardGlobal,
+    "TaxDashboardMultiCountry": TaxDashboardMultiCountry,
     "TaxDataImportHub": TaxDataImportHub,
     "TaxDeadlines": TaxDeadlines,
     "TaxDeductionOptimizer": TaxDeductionOptimizer,
@@ -488,8 +490,6 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "ComplexTaxSetupWizard": ComplexTaxSetupWizard,
-    "TaxDashboardMultiCountry": TaxDashboardMultiCountry,
 }
 
 export const pagesConfig = {

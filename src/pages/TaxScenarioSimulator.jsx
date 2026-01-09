@@ -1,213 +1,128 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Zap, TrendingDown } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TrendingUp, DollarSign } from 'lucide-react';
 
 export default function TaxScenarioSimulator() {
-  const [country, setCountry] = useState('DE');
-  const [scenarioType, setScenarioType] = useState('income_adjustment');
-  const [parameters, setParameters] = useState({ income: 100000, deductions: 15000 });
-  const [simulating, setSimulating] = useState(false);
+  const [taxYear] = useState(new Date().getFullYear() - 1);
+  const [scenarios, setScenarios] = useState([
+    { name: 'Baseline', type: 'current' },
+    { name: 'Salary +50k', salary_increase: 50000 },
+    { name: 'Crypto +100k', crypto_gains: 100000 },
+    { name: 'Freelance Income +30k', freelance_income: 30000 }
+  ]);
+  const [results, setResults] = useState(null);
 
-  const { data: result = {}, isLoading } = useQuery({
-    queryKey: ['taxScenario', country, scenarioType, parameters],
-    queryFn: async () => {
-      const response = await base44.functions.invoke('generateAdvancedTaxScenario', {
-        country,
-        scenarioType,
-        parameters
+  const simulate = useMutation({
+    mutationFn: async () => {
+      const res = await base44.functions.invoke('runTaxScenarioSimulation', {
+        tax_year: taxYear,
+        scenarios: scenarios.filter(s => s.type !== 'current')
       });
-      return response.data?.scenario || {};
+      return res.data;
     },
-    enabled: simulating
+    onSuccess: (data) => setResults(data)
   });
 
-  const scenarios = [
-    { value: 'income_adjustment', label: 'Einkommensanpassung' },
-    { value: 'deduction_increase', label: 'Erhöhte Abzüge' },
-    { value: 'structure_change', label: 'Strukturänderung' },
-    { value: 'timing_shift', label: 'Einkommens-Timing' },
-    { value: 'investment_scenario', label: 'Anlage-Szenario' }
-  ];
+  const addScenario = () => {
+    setScenarios([...scenarios, { name: 'New Scenario' }]);
+  };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">🎲 Steuer-Szenario-Simulator</h1>
-        <p className="text-slate-500 mt-1">Testen Sie verschiedene Szenarien und deren Auswirkungen</p>
+        <h1 className="text-3xl font-light">Steuerszenario-Simulator</h1>
+        <p className="text-slate-500 font-light mt-2">Simuliere verschiedene Tax Szenarien für {taxYear}</p>
       </div>
 
-      {/* Scenario Setup */}
-      <Card className="border-blue-300 bg-blue-50">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Szenario-Konfiguration</CardTitle>
+          <CardTitle className="text-sm">Szenarien definieren</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium">Land</label>
-              <Select value={country} onValueChange={setCountry} disabled={simulating}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="AT">🇦🇹 Österreich</SelectItem>
-                  <SelectItem value="CH">🇨🇭 Schweiz</SelectItem>
-                  <SelectItem value="DE">🇩🇪 Deutschland</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Szenario-Typ</label>
-              <Select value={scenarioType} onValueChange={setScenarioType} disabled={simulating}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {scenarios.map(s => (
-                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Einkommen (€)</label>
+        <CardContent className="space-y-3">
+          {scenarios.map((scenario, i) => (
+            <div key={i} className="p-3 bg-slate-50 rounded-lg space-y-2">
               <Input
-                type="number"
-                value={parameters.income}
-                onChange={(e) => setParameters({ ...parameters, income: parseInt(e.target.value) || 0 })}
-                disabled={simulating}
+                placeholder="Szenario Name"
+                value={scenario.name}
+                onChange={(e) => {
+                  const updated = [...scenarios];
+                  updated[i].name = e.target.value;
+                  setScenarios(updated);
+                }}
               />
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  type="number"
+                  placeholder="Salary Increase"
+                  value={scenario.salary_increase || ''}
+                  onChange={(e) => {
+                    const updated = [...scenarios];
+                    updated[i].salary_increase = parseInt(e.target.value) || 0;
+                    setScenarios(updated);
+                  }}
+                />
+                <Input
+                  type="number"
+                  placeholder="Crypto Gains"
+                  value={scenario.crypto_gains || ''}
+                  onChange={(e) => {
+                    const updated = [...scenarios];
+                    updated[i].crypto_gains = parseInt(e.target.value) || 0;
+                    setScenarios(updated);
+                  }}
+                />
+              </div>
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium">Abzüge (€)</label>
-              <Input
-                type="number"
-                value={parameters.deductions}
-                onChange={(e) => setParameters({ ...parameters, deductions: parseInt(e.target.value) || 0 })}
-                disabled={simulating}
-              />
-            </div>
-          </div>
-
-          <Button
-            onClick={() => setSimulating(true)}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-            disabled={simulating}
+          ))}
+          <Button onClick={addScenario} variant="outline" className="w-full">
+            + Szenario hinzufügen
+          </Button>
+          <Button 
+            onClick={() => simulate.mutate()}
+            disabled={simulate.isPending}
+            className="w-full"
           >
-            {simulating ? '⏳ Wird simuliert...' : 'Szenario simulieren'}
+            {simulate.isPending ? 'Simuliere...' : 'Szenarien simulieren'}
           </Button>
         </CardContent>
       </Card>
 
-      {isLoading ? (
-        <div className="text-center py-8">⏳ Simulation läuft...</div>
-      ) : simulating && result.content ? (
-        <>
-          {/* Impact Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <p className="text-xs text-slate-600">Steuerauswirkung</p>
-                <p className={`text-2xl font-bold mt-2 ${(result.content.tax_impact || 0) < 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  €{Math.round(result.content.tax_impact || 0).toLocaleString()}
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <p className="text-xs text-slate-600">Geschätzte Verbindlichkeit</p>
-                <p className="text-2xl font-bold text-blue-600 mt-2">
-                  €{Math.round(result.content.projected_liability || 0).toLocaleString()}
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <p className="text-xs text-slate-600">Einsparungen vs. Basis</p>
-                <p className="text-2xl font-bold text-green-600 mt-2">
-                  €{Math.round(result.content.savings_vs_baseline || 0).toLocaleString()}
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <p className="text-xs text-slate-600">Machbarkeit</p>
-                <p className={`text-lg font-bold mt-2 ${result.content.feasibility === 'high' ? 'text-green-600' : result.content.feasibility === 'medium' ? 'text-yellow-600' : 'text-red-600'}`}>
-                  {result.content.feasibility}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Implementation Steps */}
-          {(result.content?.implementation_steps || []).length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Zap className="w-4 h-4" />
-                  📋 Implementierungsschritte
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {result.content.implementation_steps.map((step, i) => (
-                  <div key={i} className="text-sm p-2 bg-slate-50 rounded flex gap-2">
-                    <span className="text-blue-600 font-bold flex-shrink-0">{i + 1}.</span>
-                    {step}
+      {results && (
+        <div className="space-y-3">
+          <h2 className="text-lg font-light">Ergebnisse</h2>
+          {results.results?.map((result, i) => (
+            <Card key={i}>
+              <CardContent className="pt-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-light text-sm">{result.scenario_name}</p>
+                    <p className="text-xs text-slate-500 font-light mt-1">
+                      Effektiver Satz: {(result.effective_rate * 100).toFixed(1)}%
+                    </p>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Success Factors */}
-          {(result.content?.success_factors || []).length > 0 && (
-            <Card className="border-green-300 bg-green-50">
-              <CardHeader>
-                <CardTitle className="text-sm">✓ Erfolgsfaktoren</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {result.content.success_factors.map((factor, i) => (
-                  <div key={i} className="text-sm p-2 bg-white rounded">
-                    • {factor}
+                  <div className="text-right">
+                    <p className="font-light text-sm">${result.estimated_tax?.toLocaleString()}</p>
+                    <p className={`text-xs font-light mt-1 ${result.tax_increase > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                      {result.tax_increase > 0 ? '+' : ''}{result.tax_increase?.toLocaleString()}
+                    </p>
                   </div>
-                ))}
+                </div>
+                {result.mitigation_strategies?.length > 0 && (
+                  <div className="mt-3 p-2 bg-blue-50 rounded text-xs font-light">
+                    <p className="text-blue-900 mb-1">Optimierungen:</p>
+                    {result.mitigation_strategies.map((s, j) => (
+                      <p key={j}>• {s}</p>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
-          )}
-
-          {/* Risk Assessment */}
-          {result.content?.risk_score !== undefined && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">🛡️ Risikobewertung</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm">
-                  Risiko-Score: <span className="font-bold">{Math.round(result.content.risk_score)}/100</span>
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </>
-      ) : (
-        <div className="text-center py-8 text-slate-500">
-          Konfigurieren Sie ein Szenario und klicken Sie "Szenario simulieren"
+          ))}
         </div>
       )}
     </div>

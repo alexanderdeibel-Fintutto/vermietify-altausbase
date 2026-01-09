@@ -9,56 +9,57 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { country, totalAssets, familyStatus, charitableGoals } = await req.json();
+    const { tax_year } = await req.json();
+    const profile = (await base44.entities.TaxProfile.filter({ user_email: user.email }, '-updated_date', 1))[0];
 
-    if (!country || !totalAssets) {
-      return Response.json({ error: 'Missing parameters' }, { status: 400 });
-    }
-
+    // Estate-Planung für Vermögensübergabe
     const planning = await base44.integrations.Core.InvokeLLM({
-      prompt: `Create comprehensive estate tax planning strategy for ${country}.
+      prompt: `Erstelle umfassendes Estate Tax Planning für ${user.email} in ${profile.primary_residence_country}:
 
-Estate Profile:
-- Total Assets: €${Math.round(totalAssets)}
-- Family Status: ${familyStatus || 'Not specified'}
-- Charitable Goals: ${charitableGoals ? 'Yes' : 'No'}
+VERMÖGEN:
+- Immobilien: ${profile.number_of_properties}
+- Firmenanteile: ${profile.number_of_companies}
+- Kryptowährungen: ${profile.has_crypto_assets}
 
-Provide:
-1. Estate tax liability estimate
-2. Federal and state estate tax implications
-3. Exemption utilization strategies
-4. Trust planning (revocable, irrevocable, bypass trusts)
-5. Charitable giving strategies
-6. Life insurance planning
-7. Asset titling optimization
-8. Business succession planning
-9. Portability election strategy
-10. Annual gift tax exclusion planning
-11. Generation-skipping tax considerations
-12. Probate avoidance strategies`,
+LÄNDER-REGELN:
+- ${profile.primary_residence_country} Inheritance Tax
+- Gift Tax Thresholds
+- Estate Duty
+- Grenzüberschreitende Transferregeln
+
+ANALYSIERE:
+1. Aktuelle Estate Tax Exposure
+2. Optimale Transfermechanismen
+3. Trust-Strukturen (falls sinnvoll)
+4. Timing-Strategien
+5. Beneficiary-Planung
+6. Dokumentation-Requirements
+7. Estimited Tax Liability bei Tod
+8. Mitigation Strategies
+
+GEBE KONKRETE HANDLUNGSEMPFEHLUNGEN`,
       response_json_schema: {
-        type: 'object',
+        type: "object",
         properties: {
-          current_estate_analysis: { type: 'object', additionalProperties: true },
-          estimated_estate_tax: { type: 'number' },
-          available_exemptions: { type: 'number' },
-          tax_reduction_strategies: { type: 'array', items: { type: 'object', additionalProperties: true } },
-          trust_recommendations: { type: 'array', items: { type: 'string' } },
-          estimated_tax_savings: { type: 'number' }
+          country: { type: "string" },
+          estimated_estate_value: { type: "number" },
+          current_tax_liability: { type: "number" },
+          optimized_tax_liability: { type: "number" },
+          potential_savings: { type: "number" },
+          strategies: { type: "array", items: { type: "string" } },
+          risk_factors: { type: "array", items: { type: "string" } },
+          timeline_for_implementation: { type: "string" }
         }
       }
     });
 
     return Response.json({
-      status: 'success',
-      planning: {
-        country,
-        generated_at: new Date().toISOString(),
-        content: planning
-      }
+      user_email: user.email,
+      tax_year,
+      estate_plan: planning
     });
+
   } catch (error) {
-    console.error('Generate estate tax planning error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
