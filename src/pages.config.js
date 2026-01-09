@@ -170,6 +170,7 @@ import TaxRemindersCenter from './pages/TaxRemindersCenter';
 import TaxAuditPreparation from './pages/TaxAuditPreparation';
 import TaxLossHarvesting from './pages/TaxLossHarvesting';
 import GlobalTaxDeadlineCalendar from './pages/GlobalTaxDeadlineCalendar';
+import TaxLawUpdates from './pages/TaxLawUpdates';
 import __Layout from './Layout.jsx';
 
 
@@ -346,6 +347,7 @@ export const PAGES = {
     "TaxAuditPreparation": TaxAuditPreparation,
     "TaxLossHarvesting": TaxLossHarvesting,
     "GlobalTaxDeadlineCalendar": GlobalTaxDeadlineCalendar,
+    "TaxLawUpdates": TaxLawUpdates,
 }
 
 export const pagesConfig = {
