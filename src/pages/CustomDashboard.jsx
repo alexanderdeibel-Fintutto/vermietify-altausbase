@@ -92,7 +92,7 @@ export default function CustomDashboard() {
           <Settings className="w-12 h-12 mx-auto text-slate-400 mb-3" />
           <h3 className="text-lg font-medium text-slate-900 mb-2">Noch keine Widgets</h3>
           <p className="text-slate-600 mb-4">Fügen Sie Widgets hinzu, um Ihr Dashboard zu personalisieren</p>
-          <Button onClick={() => setLibraryOpen(true)}>
+          <Button onClick={() => setLibraryOpen(true)} className="bg-slate-700 hover:bg-slate-800 font-extralight">
             <Plus className="w-4 h-4 mr-2" />
             Erstes Widget hinzufügen
           </Button>
