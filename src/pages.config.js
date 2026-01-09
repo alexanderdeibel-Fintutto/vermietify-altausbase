@@ -168,6 +168,7 @@ import TaxScenarioSimulator from './pages/TaxScenarioSimulator';
 import TaxAdvisorPortal from './pages/TaxAdvisorPortal';
 import TaxRemindersCenter from './pages/TaxRemindersCenter';
 import TaxAuditPreparation from './pages/TaxAuditPreparation';
+import TaxLossHarvesting from './pages/TaxLossHarvesting';
 import __Layout from './Layout.jsx';
 
 
@@ -342,6 +343,7 @@ export const PAGES = {
     "TaxAdvisorPortal": TaxAdvisorPortal,
     "TaxRemindersCenter": TaxRemindersCenter,
     "TaxAuditPreparation": TaxAuditPreparation,
+    "TaxLossHarvesting": TaxLossHarvesting,
 }
 
 export const pagesConfig = {
