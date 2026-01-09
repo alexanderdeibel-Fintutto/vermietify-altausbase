@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Mail, MessageCircle, Phone, Send } from 'lucide-react';
 import QuickStats from '@/components/shared/QuickStats';
+import ModuleGuard from '@/components/package/ModuleGuard';
 
 export default function KommunikationPage() {
   const messages = [
@@ -30,6 +31,7 @@ export default function KommunikationPage() {
   };
 
   return (
+    <ModuleGuard moduleName="kommunikation">
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-slate-900">📞 Kommunikation</h1>
@@ -93,5 +95,6 @@ export default function KommunikationPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </ModuleGuard>
   );
 }

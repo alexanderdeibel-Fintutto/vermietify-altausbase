@@ -97,11 +97,17 @@ export default function Layout({ children, currentPageName }) {
                     </div>
 
                     <div className="p-4">
-                    <p className="text-xs text-slate-500 mb-2">Quick Links</p>
+                    <p className="text-xs text-slate-500 mb-2">Module</p>
                     <div className="space-y-1">
-                        <Link to={createPageUrl('Buildings')} onClick={() => setSidebarOpen(false)} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg">Objekte</Link>
-                        <Link to={createPageUrl('Tenants')} onClick={() => setSidebarOpen(false)} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg">Mieter</Link>
-                        <Link to={createPageUrl('Finanzen')} onClick={() => setSidebarOpen(false)} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg">Finanzen</Link>
+                        {hasModuleAccess('objekte') && <Link to={createPageUrl('Buildings')} onClick={() => setSidebarOpen(false)} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg">🏠 Objekte</Link>}
+                        {hasModuleAccess('mieter') && <Link to={createPageUrl('Tenants')} onClick={() => setSidebarOpen(false)} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg">👥 Mieter</Link>}
+                        {hasModuleAccess('finanzen') && <Link to={createPageUrl('Finanzen')} onClick={() => setSidebarOpen(false)} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg">💰 Finanzen</Link>}
+                        {hasModuleAccess('banking') && <Link to={createPageUrl('BankAccounts')} onClick={() => setSidebarOpen(false)} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg">🏦 Banking</Link>}
+                        {hasModuleAccess('steuer') && <Link to={createPageUrl('TaxManagement')} onClick={() => setSidebarOpen(false)} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg">📈 Steuern</Link>}
+                        {hasModuleAccess('betriebskosten') && <Link to={createPageUrl('OperatingCosts')} onClick={() => setSidebarOpen(false)} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg">📊 Betriebskosten</Link>}
+                        {hasModuleAccess('dokumentation') && <Link to={createPageUrl('Documents')} onClick={() => setSidebarOpen(false)} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg">📄 Dokumente</Link>}
+                        {hasModuleAccess('kommunikation') && <Link to={createPageUrl('Kommunikation')} onClick={() => setSidebarOpen(false)} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg">📧 Kommunikation</Link>}
+                        {hasModuleAccess('aufgaben') && <Link to={createPageUrl('Tasks')} onClick={() => setSidebarOpen(false)} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg">✅ Aufgaben</Link>}
                     </div>
                     </div>
             </aside>
