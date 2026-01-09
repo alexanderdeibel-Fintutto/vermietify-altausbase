@@ -15,47 +15,41 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
-    // Fetch investment and capital gains data
-    const [gains, losses] = await Promise.all([
-      country === 'CH' 
-        ? await base44.entities.CapitalGainCH.filter({ tax_year: taxYear }) || []
-        : country === 'AT'
-        ? await base44.entities.CapitalGainAT.filter({ tax_year: taxYear }) || []
-        : await base44.entities.CapitalGain.filter({ tax_year: taxYear }) || [],
-      base44.entities.TaxLossCarryforward.filter({ user_email: user.email, country, tax_year: taxYear }) || []
+    // Fetch investment-related data
+    const [investments, gains, losses, docs] = await Promise.all([
+      base44.entities.Investment.filter({ user_email: user.email, country }).catch(() => []),
+      base44.entities.CapitalGain.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
+      base44.entities.TaxLossCarryforward.filter({ user_email: user.email, country }).catch(() => []),
+      base44.entities.TaxDocument.filter({ user_email: user.email, country, tax_year: taxYear, document_type: 'investment_confirmation' }).catch(() => [])
     ]);
 
-    const tracking = await base44.integrations.Core.InvokeLLM({
-      prompt: `Analyze investment tax tracking for ${country} taxpayer, tax year ${taxYear}.
+    const analysis = await base44.integrations.Core.InvokeLLM({
+      prompt: `Analyze investment tax situation for ${country}, tax year ${taxYear}.
 
-Data:
-- Capital Gains: ${gains.length}
-- Tax Losses: ${losses.length}
-- Total Gains: €${gains.reduce((s, g) => s + (g.capital_gain || 0), 0)}
-- Total Losses: €${losses.reduce((s, l) => s + (l.loss_amount || 0), 0)}
+Portfolio Data:
+- Total Investments: ${investments.length}
+- Capital Gains: €${gains.reduce((s, g) => s + (g.capital_gain || 0), 0)}
+- Loss Carryforwards: €${losses.reduce((s, l) => s + (l.remaining_amount || 0), 0)}
+- Documentation: ${docs.length} files
 
 Provide:
-1. Investment portfolio tax summary
-2. Short-term vs long-term gains analysis
-3. Tax loss harvesting opportunities
-4. Carryforward status
-5. Dividend and income tracking
-6. Currency/foreign asset implications
-7. Optimization strategies
-8. Documentation gaps`,
+1. Tax-efficient investment overview
+2. Gains/losses summary
+3. Dividend taxation status
+4. Required documentation checklist
+5. Optimization recommendations`,
       response_json_schema: {
         type: 'object',
         properties: {
-          total_capital_gains: { type: 'number' },
-          total_capital_losses: { type: 'number' },
-          net_position: { type: 'number' },
-          short_term_gains: { type: 'number' },
-          long_term_gains: { type: 'number' },
+          total_taxable_income: { type: 'number' },
+          dividend_income: { type: 'number' },
+          capital_gains_long_term: { type: 'number' },
+          capital_gains_short_term: { type: 'number' },
+          available_losses: { type: 'number' },
           tax_liability: { type: 'number' },
-          harvesting_opportunities: { type: 'array', items: { type: 'string' } },
-          carryforward_summary: { type: 'string' },
-          optimization_strategies: { type: 'array', items: { type: 'string' } },
-          documentation_checklist: { type: 'array', items: { type: 'string' } }
+          documentation_status: { type: 'object', additionalProperties: { type: 'string' } },
+          recommendations: { type: 'array', items: { type: 'string' } },
+          optimization_potential: { type: 'number' }
         }
       }
     });
@@ -65,16 +59,13 @@ Provide:
       tracking: {
         country,
         tax_year: taxYear,
-        generated_at: new Date().toISOString(),
-        investments: {
-          gains_count: gains.length,
-          losses_count: losses.length
-        },
-        analysis: tracking
+        portfolio_size: investments.length,
+        realized_gains: gains.reduce((s, g) => s + (g.capital_gain || 0), 0),
+        analysis
       }
     });
   } catch (error) {
-    console.error('Track investment tax error:', error);
+    console.error('Investment tax tracking error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
