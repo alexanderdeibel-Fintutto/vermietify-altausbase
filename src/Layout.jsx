@@ -31,6 +31,11 @@ const TesterTracker = lazy(() => import('@/components/testing/TesterTracker'));
 const SmartProblemReportButton = lazy(() => import('@/components/testing/SmartProblemReportButton'));
 const FeatureUnlockNotification = lazy(() => import('@/components/navigation/FeatureUnlockNotification'));
 
+// Lazy load admin pages (loaded only when needed)
+const AdminAIAnalytics = lazy(() => import('@/pages/AdminAIAnalytics'));
+const AdminTesterAnalytics = lazy(() => import('@/pages/AdminTesterAnalytics'));
+const TesterManagement = lazy(() => import('@/pages/TesterManagement'));
+
 const LoadingFallback = () => null;
 
 export default function Layout({ children, currentPageName }) {

@@ -3,12 +3,14 @@ import APILogs from './pages/APILogs';
 import ActivityLogs from './pages/ActivityLogs';
 import AdaptiveNavigationAdmin from './pages/AdaptiveNavigationAdmin';
 import AdminAIAnalytics from './pages/AdminAIAnalytics';
+import AdminAIAnalyticsLazy from './pages/AdminAIAnalyticsLazy';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminMasterDashboard from './pages/AdminMasterDashboard';
 import AdminPackageSetup from './pages/AdminPackageSetup';
 import AdminSetupGuide from './pages/AdminSetupGuide';
 import AdminTestCleanup from './pages/AdminTestCleanup';
 import AdminTesterAnalytics from './pages/AdminTesterAnalytics';
+import AdminTesterAnalyticsLazy from './pages/AdminTesterAnalyticsLazy';
 import AdvancedAnalytics from './pages/AdvancedAnalytics';
 import AdvancedReportBuilder from './pages/AdvancedReportBuilder';
 import AdvancedSearch from './pages/AdvancedSearch';
@@ -102,6 +104,7 @@ import TesterAcceptInvitation from './pages/TesterAcceptInvitation';
 import TesterActivityAnalytics from './pages/TesterActivityAnalytics';
 import TesterDashboard from './pages/TesterDashboard';
 import TesterManagement from './pages/TesterManagement';
+import TesterManagementLazy from './pages/TesterManagementLazy';
 import TesterOnboarding from './pages/TesterOnboarding';
 import TestingDashboard from './pages/TestingDashboard';
 import ThemeManagement from './pages/ThemeManagement';
@@ -117,9 +120,6 @@ import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import AdminAIAnalyticsLazy from './pages/AdminAIAnalyticsLazy';
-import AdminTesterAnalyticsLazy from './pages/AdminTesterAnalyticsLazy';
-import TesterManagementLazy from './pages/TesterManagementLazy';
 import __Layout from './Layout.jsx';
 
 
@@ -129,12 +129,14 @@ export const PAGES = {
     "ActivityLogs": ActivityLogs,
     "AdaptiveNavigationAdmin": AdaptiveNavigationAdmin,
     "AdminAIAnalytics": AdminAIAnalytics,
+    "AdminAIAnalyticsLazy": AdminAIAnalyticsLazy,
     "AdminDashboard": AdminDashboard,
     "AdminMasterDashboard": AdminMasterDashboard,
     "AdminPackageSetup": AdminPackageSetup,
     "AdminSetupGuide": AdminSetupGuide,
     "AdminTestCleanup": AdminTestCleanup,
     "AdminTesterAnalytics": AdminTesterAnalytics,
+    "AdminTesterAnalyticsLazy": AdminTesterAnalyticsLazy,
     "AdvancedAnalytics": AdvancedAnalytics,
     "AdvancedReportBuilder": AdvancedReportBuilder,
     "AdvancedSearch": AdvancedSearch,
@@ -228,6 +230,7 @@ export const PAGES = {
     "TesterActivityAnalytics": TesterActivityAnalytics,
     "TesterDashboard": TesterDashboard,
     "TesterManagement": TesterManagement,
+    "TesterManagementLazy": TesterManagementLazy,
     "TesterOnboarding": TesterOnboarding,
     "TestingDashboard": TestingDashboard,
     "ThemeManagement": ThemeManagement,
@@ -243,9 +246,6 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "AdminAIAnalyticsLazy": AdminAIAnalyticsLazy,
-    "AdminTesterAnalyticsLazy": AdminTesterAnalyticsLazy,
-    "TesterManagementLazy": TesterManagementLazy,
 }
 
 export const pagesConfig = {
