@@ -274,6 +274,7 @@ import SmartTaskDashboard from './pages/SmartTaskDashboard';
 import MobileApp from './pages/MobileApp';
 import StaffMobileApp from './pages/StaffMobileApp';
 import MobileMeterScanning from './pages/MobileMeterScanning';
+import MeterDashboard from './pages/MeterDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -554,6 +555,7 @@ export const PAGES = {
     "MobileApp": MobileApp,
     "StaffMobileApp": StaffMobileApp,
     "MobileMeterScanning": MobileMeterScanning,
+    "MeterDashboard": MeterDashboard,
 }
 
 export const pagesConfig = {
