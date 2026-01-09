@@ -96,6 +96,7 @@ import Tenants from './pages/Tenants';
 import TesterManagement from './pages/TesterManagement';
 import TesterOnboarding from './pages/TesterOnboarding';
 import TestingDashboard from './pages/TestingDashboard';
+import ThemeManagement from './pages/ThemeManagement';
 import UnitDetail from './pages/UnitDetail';
 import UnitsManagement from './pages/UnitsManagement';
 import UserAudit from './pages/UserAudit';
@@ -108,7 +109,7 @@ import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import ThemeManagement from './pages/ThemeManagement';
+import TesterAcceptInvitation from './pages/TesterAcceptInvitation';
 import __Layout from './Layout.jsx';
 
 
@@ -211,6 +212,7 @@ export const PAGES = {
     "TesterManagement": TesterManagement,
     "TesterOnboarding": TesterOnboarding,
     "TestingDashboard": TestingDashboard,
+    "ThemeManagement": ThemeManagement,
     "UnitDetail": UnitDetail,
     "UnitsManagement": UnitsManagement,
     "UserAudit": UserAudit,
@@ -223,7 +225,7 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "ThemeManagement": ThemeManagement,
+    "TesterAcceptInvitation": TesterAcceptInvitation,
 }
 
 export const pagesConfig = {
