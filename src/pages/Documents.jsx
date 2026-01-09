@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, FileCode, Type, FolderOpen, Sparkles } from 'lucide-react';
+import { FileText, FileCode, Type, FolderOpen, Sparkles, Upload } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { base44 } from '@/api/base44Client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DocumentsList from '../components/documents/DocumentsList';
+import DocumentListEnhanced from '../components/documents/DocumentListEnhanced';
+import DocumentUploadDialog from '../components/documents/DocumentUploadDialog';
 import TemplatesList from '../components/documents/TemplatesList';
 import TextBlocksList from '../components/documents/TextBlocksList';
 import OriginalsList from '../components/documents/OriginalsList';
@@ -11,6 +16,41 @@ import ModuleGuard from '@/components/package/ModuleGuard';
 
 export default function DocumentsPage() {
     const [importerOpen, setImporterOpen] = useState(false);
+    const [uploadOpen, setUploadOpen] = useState(false);
+    const queryClient = useQueryClient();
+
+    // Fetch data for upload dialog
+    const { data: documents = [] } = useQuery({
+      queryKey: ['documents'],
+      queryFn: () => base44.entities.Document.list('-created_date', 200),
+    });
+
+    const { data: buildings = [] } = useQuery({
+      queryKey: ['buildings'],
+      queryFn: () => base44.entities.Building.list('-updated_date', 50),
+    });
+
+    const { data: tenants = [] } = useQuery({
+      queryKey: ['tenants'],
+      queryFn: () => base44.entities.Tenant.list('-updated_date', 100),
+    });
+
+    const { data: contracts = [] } = useQuery({
+      queryKey: ['contracts'],
+      queryFn: () => base44.entities.LeaseContract.list('-updated_date', 100),
+    });
+
+    const { data: equipment = [] } = useQuery({
+      queryKey: ['equipment'],
+      queryFn: () => base44.entities.Equipment.list('-updated_date', 100),
+    });
+
+    const deleteMutation = useMutation({
+      mutationFn: (docId) => base44.entities.Document.delete(docId),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['documents'] });
+      },
+    });
     
     return (
         <ModuleGuard moduleName="dokumentation">
@@ -29,6 +69,15 @@ export default function DocumentsPage() {
                 transition={{ delay: 0.1 }}
             >
             <Tabs defaultValue="documents" className="w-full">
+                <div className="flex justify-end mb-4">
+                    <Button
+                        onClick={() => setUploadOpen(true)}
+                        className="bg-blue-600 hover:bg-blue-700 font-light gap-2"
+                    >
+                        <Upload className="w-4 h-4" />
+                        Dokument hochladen
+                    </Button>
+                </div>
                 <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="documents">
                         <FileText className="w-4 h-4 mr-2" />
@@ -49,7 +98,10 @@ export default function DocumentsPage() {
                 </TabsList>
 
                 <TabsContent value="documents" className="mt-6">
-                    <DocumentsList />
+                    <DocumentListEnhanced 
+                        documents={documents}
+                        onDelete={(docId) => deleteMutation.mutate(docId)}
+                    />
                 </TabsContent>
 
                 <TabsContent value="templates" className="mt-6">
@@ -75,6 +127,18 @@ export default function DocumentsPage() {
                 </TabsContent>
                 </Tabs>
                 </motion.div>
+
+                <DocumentUploadDialog
+                    open={uploadOpen}
+                    onOpenChange={setUploadOpen}
+                    buildings={buildings}
+                    tenants={tenants}
+                    contracts={contracts}
+                    equipment={equipment}
+                    onSuccess={() => {
+                        queryClient.invalidateQueries({ queryKey: ['documents'] });
+                    }}
+                />
                 </div>
                 </ModuleGuard>
                 );

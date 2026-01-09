@@ -1,112 +1,84 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Download, Send, CheckCircle, Edit } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { X } from 'lucide-react';
 
-const STATUS_OPTIONS = [
-    { value: 'zu_erledigen', label: 'Zu erledigen' },
-    { value: 'erinnern', label: 'Erinnern' },
-    { value: 'erstellt', label: 'Erstellt' },
-    { value: 'geaendert', label: 'Geändert' },
-    { value: 'versendet', label: 'Versendet' },
-    { value: 'unterschrieben', label: 'Unterschrieben' },
-    { value: 'gescannt', label: 'Gescannt' }
-];
+export default function DocumentPreviewDialog({ open, onOpenChange, document = null }) {
+  if (!document) return null;
 
-export default function DocumentPreviewDialog({ document, open, onOpenChange, onStatusChange }) {
-    const [newStatus, setNewStatus] = React.useState(document?.status);
+  const isPdf = document.file_type === 'pdf' || document.file_url?.endsWith('.pdf');
+  const isImage = document.file_type === 'image' || /\.(jpg|jpeg|png|gif|webp)$/i.test(document.file_url);
 
-    React.useEffect(() => {
-        setNewStatus(document?.status);
-    }, [document]);
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogHeader>
+          <DialogTitle className="font-light">{document.name}</DialogTitle>
+        </DialogHeader>
 
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>{document?.name}</DialogTitle>
-                </DialogHeader>
+        <div className="relative w-full h-[60vh] bg-slate-100 rounded-lg overflow-hidden">
+          {isPdf && (
+            <iframe
+              src={document.file_url}
+              className="w-full h-full border-0"
+              title={document.name}
+            />
+          )}
 
-                <div className="space-y-6">
-                    <div className="flex gap-4">
-                        <div className="flex-1">
-                            <Label>Status ändern</Label>
-                            <Select value={newStatus} onValueChange={setNewStatus}>
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {STATUS_OPTIONS.map(opt => (
-                                        <SelectItem key={opt.value} value={opt.value}>
-                                            {opt.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <Button
-                            onClick={() => onStatusChange(newStatus)}
-                            disabled={newStatus === document?.status}
-                            className="mt-6"
-                        >
-                            Status aktualisieren
-                        </Button>
-                    </div>
+          {isImage && (
+            <img
+              src={document.file_url}
+              alt={document.name}
+              className="w-full h-full object-contain"
+            />
+          )}
 
-                    {document?.versandstatus === 'versendet' && (
-                        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
-                            <h3 className="font-medium text-emerald-900 mb-2">📮 Versand-Information</h3>
-                            <div className="grid grid-cols-2 gap-3 text-sm">
-                                <div>
-                                    <p className="text-emerald-600">Versandstatus</p>
-                                    <p className="font-medium text-emerald-900">Versendet</p>
-                                </div>
-                                {document.versandt_am && (
-                                    <div>
-                                        <p className="text-emerald-600">Versendet am</p>
-                                        <p className="font-medium text-emerald-900">
-                                            {new Date(document.versandt_am).toLocaleString('de-DE')}
-                                        </p>
-                                    </div>
-                                )}
-                                {document.versandart && (
-                                    <div>
-                                        <p className="text-emerald-600">Versandart</p>
-                                        <p className="font-medium text-emerald-900">
-                                            {document.versandart === 'r1' ? 'Einschreiben Einwurf' : 
-                                             document.versandart === 'r2' ? 'Einschreiben' : 'Normal'}
-                                        </p>
-                                    </div>
-                                )}
-                                {document.lxp_job_id && (
-                                    <div>
-                                        <p className="text-emerald-600">LetterXpress Job-ID</p>
-                                        <p className="font-medium text-emerald-900">{document.lxp_job_id}</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
+          {!isPdf && !isImage && (
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-slate-600 font-light mb-4">Vorschau nicht verfügbar</p>
+                <a
+                  href={document.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-700 font-light text-sm"
+                >
+                  Datei öffnen →
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
 
-                    <div className="border-t pt-4">
-                        <div 
-                            className="prose prose-sm max-w-none bg-white p-8 border rounded-lg"
-                            dangerouslySetInnerHTML={{ __html: document?.content || '' }}
-                        />
-                    </div>
-
-                    <div className="flex gap-2 pt-4 border-t">
-                        {document?.pdf_url && (
-                            <Button variant="outline" onClick={() => window.open(document.pdf_url, '_blank')}>
-                                <Download className="w-4 h-4 mr-2" />
-                                PDF herunterladen
-                            </Button>
-                        )}
-                    </div>
-                </div>
-            </DialogContent>
-        </Dialog>
-    );
+        <div className="grid grid-cols-2 gap-4 text-xs border-t border-slate-200 pt-4">
+          <div>
+            <p className="text-slate-500 font-light">Typ</p>
+            <p className="text-slate-900 font-light capitalize">{document.file_type}</p>
+          </div>
+          <div>
+            <p className="text-slate-500 font-light">Größe</p>
+            <p className="text-slate-900 font-light">
+              {document.file_size ? (document.file_size / 1024 / 1024).toFixed(2) + ' MB' : '—'}
+            </p>
+          </div>
+          {document.entity_references?.length > 0 && (
+            <div className="col-span-2">
+              <p className="text-slate-500 font-light mb-1">Verknüpfungen</p>
+              <div className="flex flex-wrap gap-1">
+                {document.entity_references.map((ref, idx) => (
+                  <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                    {ref.entity_name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
