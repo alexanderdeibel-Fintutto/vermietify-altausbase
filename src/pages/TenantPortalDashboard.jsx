@@ -24,6 +24,8 @@ import SupportTicketManager from '@/components/communication/SupportTicketManage
 import MyLeasesWidget from '@/components/tenant-portal/MyLeasesWidget';
 import FinancialSnapshotWidget from '@/components/tenant-portal/FinancialSnapshotWidget';
 import MaintenanceOverviewWidget from '@/components/tenant-portal/MaintenanceOverviewWidget';
+import NotificationOverview from '@/components/notifications/NotificationOverview';
+import NotificationSettings from '@/components/notifications/NotificationSettings';
 
 export default function TenantPortalDashboard() {
   const [tenantId] = useState(new URLSearchParams(window.location.search).get('id'));
@@ -155,7 +157,7 @@ export default function TenantPortalDashboard() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-7 mb-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-8 mb-6">
             <TabsTrigger value="overview">Übersicht</TabsTrigger>
             <TabsTrigger value="contracts">Verträge</TabsTrigger>
             <TabsTrigger value="finances">Finanzen</TabsTrigger>
@@ -163,6 +165,7 @@ export default function TenantPortalDashboard() {
             <TabsTrigger value="messages">Nachrichten</TabsTrigger>
             <TabsTrigger value="documents">Dokumente</TabsTrigger>
             <TabsTrigger value="feedback">Feedback</TabsTrigger>
+            <TabsTrigger value="notifications">Benachrichtigungen</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -350,6 +353,12 @@ export default function TenantPortalDashboard() {
               tenantEmail={tenant?.email} 
               tenantName={tenant?.name}
             />
+          </TabsContent>
+
+          {/* Notifications Tab */}
+          <TabsContent value="notifications" className="space-y-6">
+            <NotificationOverview />
+            <NotificationSettings />
           </TabsContent>
           </Tabs>
       </main>

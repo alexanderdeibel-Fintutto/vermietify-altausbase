@@ -10,6 +10,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Bell, Settings, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
 const typeIcons = {
   maintenance_assigned: '🔧',
@@ -17,7 +19,13 @@ const typeIcons = {
   task_overdue: '⏰',
   tenant_communication: '💬',
   report_generated: '📊',
-  system_alert: '🚨'
+  system_alert: '🚨',
+  payment: '💰',
+  maintenance: '🔧',
+  contract: '📄',
+  message: '💬',
+  ticket: '🎫',
+  system: '⚙️'
 };
 
 const priorityColors = {
@@ -37,18 +45,48 @@ export default function NotificationCenter() {
   });
 
   const { data: notifications = [] } = useQuery({
-    queryKey: ['notifications', currentUser?.id],
+    queryKey: ['notifications', currentUser?.email],
     queryFn: () => {
-      if (!currentUser?.id) return [];
+      if (!currentUser?.email) return [];
       return base44.entities.Notification.filter(
-        { user_id: currentUser.id },
+        { user_email: currentUser.email },
         '-created_date',
         50
       );
     },
-    enabled: !!currentUser?.id,
+    enabled: !!currentUser?.email,
     refetchInterval: 30000 // Refetch every 30 seconds
   });
+
+  // Request push permission for critical notifications
+  React.useEffect(() => {
+    const checkPushPermission = async () => {
+      if ('Notification' in window && Notification.permission === 'default') {
+        const criticalUnread = notifications.filter(n => !n.is_read && n.priority === 'critical');
+        if (criticalUnread.length > 0) {
+          await Notification.requestPermission();
+        }
+      }
+    };
+    checkPushPermission();
+  }, [notifications]);
+
+  // Show browser push for critical notifications
+  React.useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const newCritical = notifications.filter(n => !n.is_read && n.priority === 'critical' && !n.sent_via_push);
+      newCritical.forEach(notif => {
+        new Notification(notif.title, {
+          body: notif.message,
+          icon: '/favicon.ico',
+          badge: '/favicon.ico',
+          tag: notif.id
+        });
+        // Mark as sent
+        base44.entities.Notification.update(notif.id, { sent_via_push: true });
+      });
+    }
+  }, [notifications]);
 
   const markAsReadMutation = useMutation({
     mutationFn: (notificationId) => 
@@ -141,7 +179,7 @@ export default function NotificationCenter() {
                   }}
                 >
                   <div className="flex items-start gap-2">
-                    <span className="text-lg mt-0.5">{typeIcons[notif.notification_type] || '📌'}</span>
+                   <span className="text-lg mt-0.5">{typeIcons[notif.type] || typeIcons[notif.notification_type] || '📌'}</span>
                     <div className="flex-1">
                       <h4 className="font-light text-slate-900 text-sm">{notif.title}</h4>
                       <p className="text-xs font-light text-slate-600 mt-0.5">{notif.message}</p>
@@ -173,22 +211,27 @@ export default function NotificationCenter() {
         </div>
 
         <div className="border-t border-slate-200 p-3 flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 font-light text-xs"
-            onClick={() => setOpen(false)}
-          >
-            Schließen
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-slate-600"
-            title="Benachrichtigungseinstellungen"
-          >
-            <Settings className="w-4 h-4" />
-          </Button>
+          <Link to={createPageUrl('NotificationCenter')} className="flex-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full font-light text-xs"
+              onClick={() => setOpen(false)}
+            >
+              Alle anzeigen
+            </Button>
+          </Link>
+          <Link to={createPageUrl('NotificationCenter')}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-slate-600"
+              title="Benachrichtigungseinstellungen"
+              onClick={() => setOpen(false)}
+            >
+              <Settings className="w-4 h-4" />
+            </Button>
+          </Link>
         </div>
       </PopoverContent>
     </Popover>
