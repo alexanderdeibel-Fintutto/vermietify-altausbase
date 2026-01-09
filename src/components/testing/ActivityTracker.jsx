@@ -17,16 +17,23 @@ export function useActivityTracker() {
         }
 
         // Track Page Visit
-        await base44.functions.invoke('trackTesterActivity', {
-          activity_type: 'page_visit',
-          page_url: window.location.pathname,
-          page_title: document.title,
-          session_id: sessionIdRef.current,
-          viewport_width: window.innerWidth,
-          viewport_height: window.innerHeight,
-          user_agent: navigator.userAgent,
-          duration_seconds: Math.round((Date.now() - pageStartTimeRef.current) / 1000)
-        });
+        const testAccount = await base44.entities.TestAccount.filter(
+          { user_email: user.email },
+          '-created_date',
+          1
+        );
+        
+        if (testAccount[0]) {
+          await base44.functions.invoke('trackTesterActivity', {
+            test_account_id: testAccount[0].id,
+            activity_type: 'page_visit',
+            page_url: window.location.pathname,
+            page_title: document.title,
+            viewport_width: window.innerWidth,
+            viewport_height: window.innerHeight,
+            time_spent_seconds: Math.round((Date.now() - pageStartTimeRef.current) / 1000)
+          });
+        }
       } catch (error) {
         console.error('Activity tracking error:', error);
       }
@@ -37,18 +44,27 @@ export function useActivityTracker() {
         const user = await base44.auth.me();
         if (!user) return;
 
+        const testAccount = await base44.entities.TestAccount.filter(
+          { user_email: user.email },
+          '-created_date',
+          1
+        );
+        
+        if (!testAccount[0]) return;
+
         const target = e.target;
         await base44.functions.invoke('trackTesterActivity', {
+          test_account_id: testAccount[0].id,
           activity_type: 'click',
           page_url: window.location.pathname,
           page_title: document.title,
-          element_selector: target.className || target.id || target.tagName,
-          element_text: target.textContent?.substring(0, 100),
-          element_type: target.tagName.toLowerCase(),
-          session_id: sessionIdRef.current,
+          element_data: {
+            selector: target.className || target.id || target.tagName,
+            text: target.textContent?.substring(0, 100),
+            type: target.tagName.toLowerCase()
+          },
           viewport_width: window.innerWidth,
-          viewport_height: window.innerHeight,
-          user_agent: navigator.userAgent
+          viewport_height: window.innerHeight
         });
       } catch (error) {
         console.error('Click tracking error:', error);
