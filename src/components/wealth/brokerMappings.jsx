@@ -1,9 +1,7 @@
-// Broker-spezifische CSV-Mapping-Konfigurationen
 export const BROKER_MAPPINGS = {
-  TRADE_REPUBLIC: {
+  trade_republic: {
     name: 'trade_republic',
     display_name: 'Trade Republic',
-    csv_format_version: '1.0',
     date_format: 'DD.MM.YYYY',
     decimal_separator: ',',
     encoding: 'UTF-8',
@@ -16,18 +14,11 @@ export const BROKER_MAPPINGS = {
       'Anzahl': 'quantity',
       'Preis': 'price',
       'Währung': 'currency'
-    },
-    validation_rules: {
-      required_fields: ['ISIN', 'Datum', 'Anzahl', 'Preis'],
-      numeric_fields: ['Anzahl', 'Preis'],
-      date_field: 'Datum'
     }
   },
-
-  SCALABLE_CAPITAL: {
+  scalable_capital: {
     name: 'scalable_capital',
     display_name: 'Scalable Capital',
-    csv_format_version: '1.0',
     date_format: 'YYYY-MM-DD',
     decimal_separator: '.',
     encoding: 'UTF-8',
@@ -39,18 +30,11 @@ export const BROKER_MAPPINGS = {
       'Datum': 'date',
       'Nominal': 'quantity',
       'Kurs': 'price'
-    },
-    validation_rules: {
-      required_fields: ['ISIN', 'Datum', 'Nominal', 'Kurs'],
-      numeric_fields: ['Nominal', 'Kurs'],
-      date_field: 'Datum'
     }
   },
-
-  ING_DIBA: {
+  ing_diba: {
     name: 'ing_diba',
     display_name: 'ING',
-    csv_format_version: '1.0',
     date_format: 'DD.MM.YYYY',
     decimal_separator: ',',
     encoding: 'ISO-8859-1',
@@ -61,18 +45,11 @@ export const BROKER_MAPPINGS = {
       'Ausführungsdatum': 'date',
       'Stück': 'quantity',
       'Ausführungskurs': 'price'
-    },
-    validation_rules: {
-      required_fields: ['ISIN', 'Ausführungsdatum', 'Stück', 'Ausführungskurs'],
-      numeric_fields: ['Stück', 'Ausführungskurs'],
-      date_field: 'Ausführungsdatum'
     }
   },
-
-  COMDIRECT: {
+  comdirect: {
     name: 'comdirect',
     display_name: 'comdirect',
-    csv_format_version: '1.0',
     date_format: 'DD.MM.YYYY',
     decimal_separator: ',',
     encoding: 'UTF-8',
@@ -84,18 +61,11 @@ export const BROKER_MAPPINGS = {
       'Nominal': 'quantity',
       'Kurs': 'price',
       'Währung': 'currency'
-    },
-    validation_rules: {
-      required_fields: ['ISIN', 'Geschäftstag', 'Nominal', 'Kurs'],
-      numeric_fields: ['Nominal', 'Kurs'],
-      date_field: 'Geschäftstag'
     }
   },
-
-  GENERIC: {
+  generic: {
     name: 'generic',
     display_name: 'Allgemeines CSV-Format',
-    csv_format_version: '1.0',
     date_format: 'DD.MM.YYYY',
     decimal_separator: ',',
     encoding: 'UTF-8',
@@ -107,52 +77,17 @@ export const BROKER_MAPPINGS = {
       'Anzahl': 'quantity',
       'Preis': 'price',
       'Kategorie': 'asset_category'
-    },
-    validation_rules: {
-      required_fields: ['ISIN', 'Datum', 'Anzahl', 'Preis'],
-      numeric_fields: ['Anzahl', 'Preis'],
-      date_field: 'Datum'
     }
   }
 };
 
-// Getter-Funktionen
-export const getBrokerMappings = () => {
-  return Object.entries(BROKER_MAPPINGS).map(([key, mapping]) => ({
-    id: key,
-    ...mapping
-  }));
-};
-
-export const getBrokerMappingByName = (brokerName) => {
-  return Object.values(BROKER_MAPPINGS).find(m => m.name === brokerName);
-};
-
-export const getBrokerMappingById = (brokerId) => {
-  return BROKER_MAPPINGS[brokerId];
-};
-
-// CSV-Spalten-Auto-Detection Funktion
 export const detectBrokerFromCSVHeaders = (headers) => {
-  const normalizedHeaders = headers.map(h => h.trim().toLowerCase());
+  const headerStr = headers.join('|').toLowerCase();
   
-  // Scoring-System: Welcher Broker passt am besten?
-  const scores = {};
+  if (headerStr.includes('gattungsbezeichnung') && headerStr.includes('geschäftstag')) return 'comdirect';
+  if (headerStr.includes('produktbezeichnung') && headerStr.includes('ausführungsdatum')) return 'ing_diba';
+  if (headerStr.includes('gattungsbezeichnung') && headerStr.includes('nominal') && headerStr.includes('notierung')) return 'scalable_capital';
+  if (headerStr.includes('typ') && headerStr.includes('anzahl') && headerStr.includes('preis')) return 'trade_republic';
   
-  Object.entries(BROKER_MAPPINGS).forEach(([key, mapping]) => {
-    const mappedColumns = Object.keys(mapping.column_mappings);
-    let matchCount = 0;
-    
-    mappedColumns.forEach(col => {
-      if (normalizedHeaders.includes(col.toLowerCase())) {
-        matchCount++;
-      }
-    });
-    
-    scores[key] = matchCount;
-  });
-  
-  // Broker mit höchstem Score
-  const bestMatch = Object.entries(scores).sort(([, a], [, b]) => b - a)[0];
-  return bestMatch ? bestMatch[0] : null;
+  return null;
 };
