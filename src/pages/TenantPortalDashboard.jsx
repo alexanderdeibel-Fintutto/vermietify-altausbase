@@ -21,6 +21,9 @@ import TenantFeedbackForm from '@/components/tenant-portal/TenantFeedbackForm';
 import TenantAIChatbot from '@/components/tenant-portal/TenantAIChatbot';
 import TenantFinancialOverview from '@/components/tenant-portal/TenantFinancialOverview';
 import SupportTicketManager from '@/components/communication/SupportTicketManager';
+import MyLeasesWidget from '@/components/tenant-portal/MyLeasesWidget';
+import FinancialSnapshotWidget from '@/components/tenant-portal/FinancialSnapshotWidget';
+import MaintenanceOverviewWidget from '@/components/tenant-portal/MaintenanceOverviewWidget';
 
 export default function TenantPortalDashboard() {
   const [tenantId] = useState(new URLSearchParams(window.location.search).get('id'));
@@ -122,7 +125,14 @@ export default function TenantPortalDashboard() {
         {/* Welcome Section */}
         <TenantPortalWelcome tenant={tenant} />
 
-        {/* Dashboard Widgets */}
+        {/* Personalized Dashboard Widgets */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <MyLeasesWidget tenantId={tenantId} />
+          <FinancialSnapshotWidget tenantEmail={tenant.email} tenantId={tenantId} />
+          <MaintenanceOverviewWidget tenantId={tenantId} />
+        </div>
+
+        {/* Additional Dashboard Widgets */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <UpcomingPaymentsWidget tenantEmail={tenant.email} />
           <LeaseExpiryWidget tenantId={tenantId} />
