@@ -166,6 +166,7 @@ import TaxComplianceTracker from './pages/TaxComplianceTracker';
 import TaxDocumentManager from './pages/TaxDocumentManager';
 import TaxScenarioSimulator from './pages/TaxScenarioSimulator';
 import TaxAdvisorPortal from './pages/TaxAdvisorPortal';
+import TaxRemindersCenter from './pages/TaxRemindersCenter';
 import __Layout from './Layout.jsx';
 
 
@@ -338,6 +339,7 @@ export const PAGES = {
     "TaxDocumentManager": TaxDocumentManager,
     "TaxScenarioSimulator": TaxScenarioSimulator,
     "TaxAdvisorPortal": TaxAdvisorPortal,
+    "TaxRemindersCenter": TaxRemindersCenter,
 }
 
 export const pagesConfig = {
