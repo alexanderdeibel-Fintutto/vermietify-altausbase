@@ -4,11 +4,11 @@ import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/shared/PageHeader';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import TesterInvitationForm from '@/components/testing/TesterInvitationForm';
-import TesterStatsWidget from '@/components/testing/TesterStatsWidget';
-import TesterListTable from '@/components/testing/TesterListTable';
-import PendingInvitationsTable from '@/components/testing/PendingInvitationsTable';
-import TesterActivityFeed from '@/components/testing/TesterActivityFeed';
+import TesterInvitationForm from '@/components/testing/TesterInvitationForm.jsx';
+import TesterStatsWidget from '@/components/testing/TesterStatsWidget.jsx';
+import TesterListTable from '@/components/testing/TesterListTable.jsx';
+import PendingInvitationsTable from '@/components/testing/PendingInvitationsTable.jsx';
+import TesterActivityFeed from '@/components/testing/TesterActivityFeed.jsx';
 
 export default function TesterManagement() {
   const [showInviteForm, setShowInviteForm] = useState(false);
