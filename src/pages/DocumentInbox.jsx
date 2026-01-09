@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Upload, Search, FileText, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import InboxCard from '@/components/documentInbox/InboxCard';
 import InboxEditSheet from '@/components/documentInbox/InboxEditSheet';
+import ManualUploadDialog from '@/components/documentInbox/ManualUploadDialog';
 
 const DOCTYPE_ICONS = {
   invoice: '🧾',
@@ -42,6 +43,7 @@ export default function DocumentInbox() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedInbox, setSelectedInbox] = useState(null);
   const [showEditSheet, setShowEditSheet] = useState(false);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: inboxItems = [] } = useQuery({
@@ -78,7 +80,10 @@ export default function DocumentInbox() {
           <h1 className="text-3xl font-bold">📥 Dokumenten-Eingang</h1>
           <p className="text-slate-500 mt-1">Automatische Dokumentenerkennung und Zuordnung</p>
         </div>
-        <Button className="gap-2 bg-blue-600 hover:bg-blue-700">
+        <Button
+          className="gap-2 bg-blue-600 hover:bg-blue-700"
+          onClick={() => setShowUploadDialog(true)}
+        >
           <Upload className="w-4 h-4" />
           Manuell hochladen
         </Button>
@@ -180,6 +185,15 @@ export default function DocumentInbox() {
           }}
         />
       )}
+
+      {/* Manual Upload Dialog */}
+      <ManualUploadDialog
+        open={showUploadDialog}
+        onOpenChange={setShowUploadDialog}
+        onSuccess={async () => {
+          await queryClient.invalidateQueries({ queryKey: ['documentInbox'] });
+        }}
+      />
     </div>
   );
 }

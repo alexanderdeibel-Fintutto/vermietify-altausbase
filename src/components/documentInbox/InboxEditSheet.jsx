@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import MatchSuggestions from './MatchSuggestions';
 import {
   Select,
   SelectContent,
@@ -219,22 +220,17 @@ export default function InboxEditSheet({ item, open, onOpenChange, onSave }) {
               </Card>
             )}
 
-            {/* Match Info */}
-            {formData.match_confidence > 0 && (
-              <Card className="border-green-200 bg-green-50">
-                <CardHeader>
-                  <CardTitle className="text-sm">🔗 Match-Vorschlag</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm font-medium">
-                    {formData.matched_entity_type} ({formData.match_confidence}% Konfidenz)
-                  </p>
-                  <p className="text-xs text-slate-600 mt-1">
-                    Wird automatisch zugeordnet bei Bestätigung
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+            {/* Match Suggestions */}
+            <MatchSuggestions
+              item={formData}
+              selectedMatch={formData.matched_entity_id || 'new'}
+              onSelectMatch={(val) =>
+                setFormData({
+                  ...formData,
+                  matched_entity_id: val === 'new' ? null : val
+                })
+              }
+            />
 
             {/* KI Analysis */}
             <Card className="border-blue-200 bg-blue-50">
