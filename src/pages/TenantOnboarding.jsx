@@ -12,8 +12,6 @@ import PersonalizedGuide from '@/components/onboarding/PersonalizedGuide';
 
 export default function TenantOnboarding() {
   const [currentStep, setCurrentStep] = useState(0);
-  const [tenantType, setTenantType] = useState(null);
-  const [wizardData, setWizardData] = useState(null);
   const [completedSteps, setCompletedSteps] = useState(new Set());
   const queryClient = useQueryClient();
 
@@ -34,17 +32,12 @@ export default function TenantOnboarding() {
 
   const createOnboardingMutation = useMutation({
     mutationFn: async (data) => {
-      const result = await base44.functions.invoke('initiateTenantOnboarding', {
-        tenant_id: tenantData.id,
-        tenant_email: tenantData.email,
-        tenant_name: tenantData.full_name,
-        unit_id: data.unit_id,
-        building_id: data.building_id,
-        rent_amount: data.rent_amount,
-        start_date: data.start_date,
-        tenant_type: tenantType
+      return await base44.entities.Tenant.update(tenantData.id, {
+        phone: data.primary_contact_phone,
+        emergency_contact: data.emergency_contact,
+        notification_method: data.notification_method,
+        preferred_contact_time: data.preferred_contact_time
       });
-      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tenantData'] });
@@ -53,7 +46,6 @@ export default function TenantOnboarding() {
   });
 
   const handleWizardComplete = (data) => {
-    setWizardData(data);
     createOnboardingMutation.mutate(data);
   };
 
@@ -127,7 +119,6 @@ export default function TenantOnboarding() {
         <TabsContent value="step-0">
           <OnboardingSetupWizard
             tenantData={tenantData}
-            onTenantTypeChange={setTenantType}
             onComplete={handleWizardComplete}
             isLoading={createOnboardingMutation.isPending}
           />
@@ -136,7 +127,6 @@ export default function TenantOnboarding() {
         <TabsContent value="step-1">
           <OnboardingChecklist
             tenantId={tenantData.id}
-            tenantType={tenantType}
             onStepComplete={() => setCompletedSteps(new Set([...completedSteps, 'checklist']))}
           />
         </TabsContent>
@@ -144,7 +134,6 @@ export default function TenantOnboarding() {
         <TabsContent value="step-2">
           <PersonalizedGuide
             tenantData={tenantData}
-            tenantType={tenantType}
             onGuideComplete={() => setCompletedSteps(new Set([...completedSteps, 'guides']))}
           />
         </TabsContent>

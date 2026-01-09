@@ -5,31 +5,17 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle2, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const CHECKLIST_ITEMS = {
-  residential: [
-    { id: 'profile', label: 'Profil vervollständigen', description: 'Fügen Sie Ihre persönlichen Informationen hinzu' },
-    { id: 'documents', label: 'Dokumente unterzeichnen', description: 'Überprüfen und unterzeichnen Sie alle erforderlichen Dokumente' },
-    { id: 'payment', label: 'Zahlungsmethode hinzufügen', description: 'Richten Sie Ihre bevorzugte Zahlungsmethode ein' },
-    { id: 'portal', label: 'Portal erkunden', description: 'Erfahren Sie mehr über die Funktionen des Mieterportals' },
-    { id: 'maintenance', label: 'Inspektionsbericht', description: 'Erstellen Sie einen Inspektionsbericht beim Einzug' }
-  ],
-  commercial: [
-    { id: 'profile', label: 'Geschäftsprofil', description: 'Vervollständigen Sie Ihre Geschäftsinformationen' },
-    { id: 'tax', label: 'Steuerkennzeichen', description: 'Geben Sie Ihre Steuerkennzeichen ein' },
-    { id: 'documents', label: 'Geschäftsdokumente', description: 'Laden Sie erforderliche Geschäftsdokumente hoch' },
-    { id: 'payment', label: 'Zahlungsdetails', description: 'Richten Sie Ihre Bankverbindung ein' }
-  ],
-  student: [
-    { id: 'profile', label: 'Studentenprofil', description: 'Registrieren Sie Ihre Studieninformation' },
-    { id: 'documents', label: 'Studienbescheinigung', description: 'Laden Sie Ihre aktuelle Studienbescheinigung hoch' },
-    { id: 'payment', label: 'Zahlungsmethode', description: 'Wählen Sie Ihre bevorzugte Zahlungsart' },
-    { id: 'roommate', label: 'Mitbewohner erfassen', description: 'Geben Sie Informationen zu Ihren Mitbewohnern ein' }
-  ]
-};
+const CHECKLIST_ITEMS = [
+  { id: 'documents', label: 'Mietvertrag & Hausordnung lesen', description: 'Überprüfen Sie alle wichtigen Dokumente' },
+  { id: 'payment', label: 'Zahlungsmethode hinzufügen', description: 'Richten Sie Ihre bevorzugte Zahlungsmethode ein' },
+  { id: 'portal', label: 'Portal Features kennenlernen', description: 'Erkunden Sie die Funktionen des Mieterportals' },
+  { id: 'maintenance', label: 'Inspektionsbericht erstellen', description: 'Dokumentieren Sie den Zustand bei Einzug' },
+  { id: 'contact', label: 'Kontaktdaten bestätigen', description: 'Stellen Sie sicher, dass Ihre Kontaktdaten aktuell sind' }
+];
 
-export default function OnboardingChecklist({ tenantId, tenantType = 'residential', onStepComplete }) {
+export default function OnboardingChecklist({ tenantId, onStepComplete }) {
   const [checkedItems, setCheckedItems] = useState(new Set());
-  const items = CHECKLIST_ITEMS[tenantType] || CHECKLIST_ITEMS.residential;
+  const items = CHECKLIST_ITEMS;
 
   useEffect(() => {
     if (checkedItems.size === items.length) {

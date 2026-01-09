@@ -14,47 +14,24 @@ import { toast } from 'sonner';
 
 const STEPS = [
   {
-    title: 'Miettyp',
-    description: 'Wählen Sie Ihren Miettyp aus',
-    fields: ['tenant_type']
-  },
-  {
-    title: 'Gebäudeinformationen',
-    description: 'Geben Sie Informationen zu Ihrem Gebäude ein',
-    fields: ['building_id', 'building_name', 'building_address']
-  },
-  {
-    title: 'Einheitdetails',
-    description: 'Informationen zu Ihrer Einheit',
-    fields: ['unit_id', 'unit_number', 'unit_type']
-  },
-  {
-    title: 'Mietvereinbarung',
-    description: 'Mietvereinbarungsdetails',
-    fields: ['rent_amount', 'start_date', 'end_date']
-  },
-  {
-    title: 'Primärer Kontakt',
-    description: 'Primäre Kontaktinformation',
+    title: 'Kontaktdaten',
+    description: 'Fügen Sie Ihre Kontaktinformationen hinzu',
     fields: ['primary_contact_phone', 'emergency_contact']
+  },
+  {
+    title: 'Kommunikationseinstellungen',
+    description: 'Bevorzugte Kommunikationsmethoden',
+    fields: ['notification_method', 'preferred_contact_time']
   }
 ];
 
-export default function OnboardingSetupWizard({ tenantData, onTenantTypeChange, onComplete, isLoading }) {
+export default function OnboardingSetupWizard({ tenantData, onComplete, isLoading }) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [formData, setFormData] = useState({
-    tenant_type: '',
-    building_id: '',
-    building_name: '',
-    building_address: '',
-    unit_id: '',
-    unit_number: '',
-    unit_type: 'apartment',
-    rent_amount: '',
-    start_date: new Date().toISOString().split('T')[0],
-    end_date: '',
     primary_contact_phone: tenantData?.phone || '',
-    emergency_contact: ''
+    emergency_contact: '',
+    notification_method: 'email',
+    preferred_contact_time: 'morning'
   });
 
   const currentStep = STEPS[currentStepIndex];
@@ -62,11 +39,7 @@ export default function OnboardingSetupWizard({ tenantData, onTenantTypeChange, 
   const isFirstStep = currentStepIndex === 0;
 
   const handleInputChange = (field, value) => {
-    const newData = { ...formData, [field]: value };
-    setFormData(newData);
-    if (field === 'tenant_type') {
-      onTenantTypeChange(value);
-    }
+    setFormData({ ...formData, [field]: value });
   };
 
   const handleNext = () => {
@@ -112,106 +85,8 @@ export default function OnboardingSetupWizard({ tenantData, onTenantTypeChange, 
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Step 1: Tenant Type */}
+        {/* Step 1: Contact Info */}
         {currentStepIndex === 0 && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {['residential', 'commercial', 'student'].map(type => (
-                <button
-                  key={type}
-                  onClick={() => handleInputChange('tenant_type', type)}
-                  className={`p-4 border-2 rounded-lg transition-all ${
-                    formData.tenant_type === type
-                      ? 'border-slate-700 bg-slate-50'
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <p className="font-semibold text-slate-900">
-                    {type === 'residential' ? 'Wohnmiete' : type === 'commercial' ? 'Gewerbe' : 'Student'}
-                  </p>
-                  <p className="text-sm text-slate-600 mt-1">
-                    {type === 'residential' && 'Für Wohnzwecke'}
-                    {type === 'commercial' && 'Für geschäftliche Zwecke'}
-                    {type === 'student' && 'Für studentisches Wohnen'}
-                  </p>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Building */}
-        {currentStepIndex === 1 && (
-          <div className="space-y-4">
-            <Input
-              placeholder="Gebäude-ID"
-              value={formData.building_id}
-              onChange={(e) => handleInputChange('building_id', e.target.value)}
-            />
-            <Input
-              placeholder="Gebäudename"
-              value={formData.building_name}
-              onChange={(e) => handleInputChange('building_name', e.target.value)}
-            />
-            <Input
-              placeholder="Gebäudeadresse"
-              value={formData.building_address}
-              onChange={(e) => handleInputChange('building_address', e.target.value)}
-            />
-          </div>
-        )}
-
-        {/* Step 3: Unit */}
-        {currentStepIndex === 2 && (
-          <div className="space-y-4">
-            <Input
-              placeholder="Einheit-ID"
-              value={formData.unit_id}
-              onChange={(e) => handleInputChange('unit_id', e.target.value)}
-            />
-            <Input
-              placeholder="Einheitsnummer"
-              value={formData.unit_number}
-              onChange={(e) => handleInputChange('unit_number', e.target.value)}
-            />
-            <Select value={formData.unit_type} onValueChange={(val) => handleInputChange('unit_type', val)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Einheitstyp" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="apartment">Wohnung</SelectItem>
-                <SelectItem value="house">Haus</SelectItem>
-                <SelectItem value="studio">Studio</SelectItem>
-                <SelectItem value="office">Büro</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-        {/* Step 4: Lease */}
-        {currentStepIndex === 3 && (
-          <div className="space-y-4">
-            <Input
-              type="number"
-              placeholder="Monatliche Miete (€)"
-              value={formData.rent_amount}
-              onChange={(e) => handleInputChange('rent_amount', e.target.value)}
-            />
-            <Input
-              type="date"
-              value={formData.start_date}
-              onChange={(e) => handleInputChange('start_date', e.target.value)}
-            />
-            <Input
-              type="date"
-              value={formData.end_date}
-              onChange={(e) => handleInputChange('end_date', e.target.value)}
-            />
-          </div>
-        )}
-
-        {/* Step 5: Contact */}
-        {currentStepIndex === 4 && (
           <div className="space-y-4">
             <Input
               type="tel"
@@ -220,10 +95,43 @@ export default function OnboardingSetupWizard({ tenantData, onTenantTypeChange, 
               onChange={(e) => handleInputChange('primary_contact_phone', e.target.value)}
             />
             <Input
-              placeholder="Notfallkontakt"
+              placeholder="Notfallkontakt (Name & Nummer)"
               value={formData.emergency_contact}
               onChange={(e) => handleInputChange('emergency_contact', e.target.value)}
             />
+          </div>
+        )}
+
+        {/* Step 2: Preferences */}
+        {currentStepIndex === 1 && (
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-slate-900 mb-2 block">Bevorzugte Kommunikationsmethode</label>
+              <Select value={formData.notification_method} onValueChange={(val) => handleInputChange('notification_method', val)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="sms">SMS</SelectItem>
+                  <SelectItem value="both">Email & SMS</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-900 mb-2 block">Bevorzugte Kontaktzeit</label>
+              <Select value={formData.preferred_contact_time} onValueChange={(val) => handleInputChange('preferred_contact_time', val)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="morning">Morgens (08:00-12:00)</SelectItem>
+                  <SelectItem value="afternoon">Nachmittags (12:00-18:00)</SelectItem>
+                  <SelectItem value="evening">Abends (18:00-22:00)</SelectItem>
+                  <SelectItem value="flexible">Flexibel</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         )}
 

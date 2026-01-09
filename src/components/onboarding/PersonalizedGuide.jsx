@@ -38,7 +38,7 @@ const GUIDE_SECTIONS = [
   }
 ];
 
-export default function PersonalizedGuide({ tenantData, tenantType = 'residential', onGuideComplete }) {
+export default function PersonalizedGuide({ tenantData, onGuideComplete }) {
   const [selectedGuide, setSelectedGuide] = useState('getting_started');
   const [guideContent, setGuideContent] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -48,7 +48,7 @@ export default function PersonalizedGuide({ tenantData, tenantType = 'residentia
     setIsLoading(true);
     try {
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `Create a personalized, beginner-friendly guide for a ${tenantType} tenant about "${GUIDE_SECTIONS.find(s => s.id === section)?.title}". 
+        prompt: `Create a personalized, beginner-friendly guide for a tenant about "${GUIDE_SECTIONS.find(s => s.id === section)?.title}". 
 The tenant is ${tenantData.full_name}. 
 Make it practical, step-by-step, with clear instructions. Include tips and common questions.
 Format in markdown with sections and bullet points.`,
