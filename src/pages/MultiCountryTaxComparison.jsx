@@ -3,197 +3,244 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TrendingDown, AlertTriangle, Trophy } from 'lucide-react';
+import { CheckCircle2, TrendingDown } from 'lucide-react';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
 export default function MultiCountryTaxComparison() {
   const [taxYear, setTaxYear] = useState(CURRENT_YEAR);
+  const [income, setIncome] = useState('100000');
+  const [countries, setCountries] = useState(['AT', 'CH', 'DE']);
+  const [compare, setCompare] = useState(false);
 
   const { data: comparison = {}, isLoading } = useQuery({
-    queryKey: ['multiCountryComparison', taxYear],
+    queryKey: ['multiCountryComparison', taxYear, income, countries],
     queryFn: async () => {
       const response = await base44.functions.invoke('generateMultiCountryComparison', {
-        taxYear
+        taxYear,
+        income: parseFloat(income),
+        countries
       });
       return response.data?.comparison || {};
-    }
+    },
+    enabled: compare && !!income
   });
 
-  const comparisonData = [
-    { country: 'Austria', tax: comparison.countries?.AT?.total_tax || 0 },
-    { country: 'Switzerland', tax: comparison.countries?.CH?.total_tax || 0 },
-    { country: 'Germany', tax: comparison.countries?.DE?.total_tax || 0 }
-  ];
+  const analysis = comparison.analysis || {};
+  
+  const chartData = (analysis.countries || []).map(c => ({
+    country: c.country,
+    'Brutto': income,
+    'Steuern': Math.round(c.income_tax + (c.wealth_tax || 0) + (c.social_contributions || 0)),
+    'Netto': Math.round(c.net_income)
+  }));
 
-  const sortedByTax = [...comparisonData].sort((a, b) => a.tax - b.tax);
-  const minTax = sortedByTax[0];
-  const maxTax = sortedByTax[2];
-  const savings = maxTax.tax - minTax.tax;
+  const toggleCountry = (code) => {
+    if (countries.includes(code)) {
+      setCountries(countries.filter(c => c !== code));
+    } else {
+      setCountries([...countries, code]);
+    }
+  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">🌍 Multi-Country Tax Comparison</h1>
-        <p className="text-slate-500 mt-1">Vergleichen Sie Ihre Steuerlast in AT, CH & DE</p>
+        <h1 className="text-3xl font-bold">🌍 Multi-Länder Steuervergleich</h1>
+        <p className="text-slate-500 mt-1">Vergleichen Sie Steuerlast in verschiedenen Ländern</p>
       </div>
 
       {/* Controls */}
-      <div className="flex-1 max-w-xs">
-        <label className="text-sm font-medium">Steuerjahr</label>
-        <Select value={String(taxYear)} onValueChange={(v) => setTaxYear(parseInt(v))}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={String(CURRENT_YEAR - 1)}>{CURRENT_YEAR - 1}</SelectItem>
-            <SelectItem value={String(CURRENT_YEAR)}>{CURRENT_YEAR}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <Card className="border-blue-300 bg-blue-50">
+        <CardHeader>
+          <CardTitle className="text-sm">Parameter</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium">Jahreseinkommen (€)</label>
+              <Input
+                type="number"
+                value={income}
+                onChange={(e) => setIncome(e.target.value)}
+                placeholder="100000"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Steuerjahr</label>
+              <Input
+                type="number"
+                value={taxYear}
+                onChange={(e) => setTaxYear(parseInt(e.target.value))}
+              />
+            </div>
+          </div>
 
-      {isLoading ? (
-        <div className="text-center py-8">⏳ Lade Vergleich...</div>
-      ) : (
+          <div>
+            <label className="text-sm font-medium mb-2 block">Länder auswählen</label>
+            <div className="flex gap-2 flex-wrap">
+              {['AT', 'CH', 'DE'].map(code => (
+                <Button
+                  key={code}
+                  variant={countries.includes(code) ? 'default' : 'outline'}
+                  onClick={() => toggleCountry(code)}
+                  className="gap-2"
+                >
+                  {code === 'AT' && '🇦🇹'}
+                  {code === 'CH' && '🇨🇭'}
+                  {code === 'DE' && '🇩🇪'}
+                  {code}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <Button
+            onClick={() => setCompare(true)}
+            disabled={!income || countries.length === 0}
+            className="w-full bg-blue-600 hover:bg-blue-700"
+          >
+            Vergleich Durchführen
+          </Button>
+        </CardContent>
+      </Card>
+
+      {isLoading && compare && (
+        <div className="text-center py-8">⏳ Vergleich wird durchgeführt...</div>
+      )}
+
+      {compare && analysis.countries && (
         <>
-          {/* Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="border-green-300 bg-green-50">
-              <CardContent className="pt-6 text-center">
-                <Trophy className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                <p className="text-sm text-slate-600">Günstigster</p>
-                <p className="text-2xl font-bold text-green-600 mt-2">{minTax.country}</p>
-                <p className="text-sm mt-1">€{Math.round(minTax.tax).toLocaleString()}</p>
-              </CardContent>
-            </Card>
-            <Card className="border-red-300 bg-red-50">
-              <CardContent className="pt-6 text-center">
-                <AlertTriangle className="w-6 h-6 text-red-600 mx-auto mb-2" />
-                <p className="text-sm text-slate-600">Höchster</p>
-                <p className="text-2xl font-bold text-red-600 mt-2">{maxTax.country}</p>
-                <p className="text-sm mt-1">€{Math.round(maxTax.tax).toLocaleString()}</p>
+              <CardContent className="pt-6">
+                <p className="text-sm text-slate-600">Günstigstes Land</p>
+                <p className="text-2xl font-bold text-green-600 mt-2">
+                  {analysis.most_favorable || 'N/A'}
+                </p>
               </CardContent>
             </Card>
             <Card className="border-blue-300 bg-blue-50">
-              <CardContent className="pt-6 text-center">
-                <TrendingDown className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                <p className="text-sm text-slate-600">Differenz</p>
-                <p className="text-2xl font-bold text-blue-600 mt-2">€{Math.round(savings).toLocaleString()}</p>
+              <CardContent className="pt-6">
+                <p className="text-sm text-slate-600">Sparpotenzial</p>
+                <p className="text-2xl font-bold text-blue-600 mt-2">
+                  €{Math.round(analysis.savings_potential || 0).toLocaleString()}
+                </p>
               </CardContent>
             </Card>
           </div>
 
           {/* Comparison Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">📊 Steuerlast-Vergleich</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={comparisonData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="country" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => `€${value.toLocaleString()}`} />
-                  <Bar dataKey="tax" fill="#3b82f6" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Ranking */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">🏆 Ranking nach Steuerlast</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {sortedByTax.map((item, idx) => (
-                <div key={item.country} className="flex items-center justify-between p-3 bg-slate-50 rounded border border-slate-200">
-                  <div className="flex items-center gap-3">
-                    <Badge className={`text-lg px-2.5 py-1 ${
-                      idx === 0 ? 'bg-green-100 text-green-800' :
-                      idx === 1 ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {idx + 1}
-                    </Badge>
-                    <p className="font-medium">{item.country}</p>
-                  </div>
-                  <p className="text-lg font-bold">€{Math.round(item.tax).toLocaleString()}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          {/* Advantages */}
-          {comparison.analysis?.advantages && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {Object.entries(comparison.analysis.advantages).map(([country, advantages]) => (
-                <Card key={country}>
-                  <CardHeader>
-                    <CardTitle className="text-sm">
-                      {country === 'austria' && '🇦🇹 Österreich'}
-                      {country === 'switzerland' && '🇨🇭 Schweiz'}
-                      {country === 'germany' && '🇩🇪 Deutschland'}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-1">
-                      {(advantages || []).map((adv, i) => (
-                        <li key={i} className="text-xs text-slate-700 flex gap-1">
-                          <span>✓</span> {adv}
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {/* Opportunities */}
-          {(comparison.analysis?.opportunities || []).length > 0 && (
-            <Card className="border-blue-300 bg-blue-50">
+          {chartData.length > 0 && (
+            <Card>
               <CardHeader>
-                <CardTitle className="text-sm">💡 Optimierungsmöglichkeiten</CardTitle>
+                <CardTitle className="text-sm">💰 Steuervergleich</CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2">
-                  {comparison.analysis.opportunities.map((opp, i) => (
-                    <li key={i} className="text-sm flex gap-2">
-                      <Badge className="flex-shrink-0 bg-blue-200 text-blue-800 text-xs mt-0.5">
-                        {i + 1}
-                      </Badge>
-                      {opp}
-                    </li>
-                  ))}
-                </ul>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="country" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => `€${value.toLocaleString()}`} />
+                    <Legend />
+                    <Bar dataKey="Brutto" fill="#94a3b8" />
+                    <Bar dataKey="Steuern" fill="#ef4444" />
+                    <Bar dataKey="Netto" fill="#10b981" />
+                  </BarChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
           )}
 
+          {/* Country Details */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {analysis.countries.map(country => (
+              <Card key={country.country}>
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-sm">{country.country}</CardTitle>
+                    {country.country === analysis.most_favorable && (
+                      <Badge className="bg-green-100 text-green-800">Beste</Badge>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <p className="text-xs text-slate-600">Effektiver Steuersatz</p>
+                    <p className="text-xl font-bold text-red-600">{Math.round(country.effective_rate || 0)}%</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-600">Nettoeinkommen</p>
+                    <p className="text-lg font-bold text-green-600">€{Math.round(country.net_income || 0).toLocaleString()}</p>
+                  </div>
+                  <div className="text-xs space-y-1">
+                    <p>📊 Einkommensteuer: €{Math.round(country.income_tax || 0).toLocaleString()}</p>
+                    <p>💼 Sozialabgaben: €{Math.round(country.social_contributions || 0).toLocaleString()}</p>
+                    {country.wealth_tax > 0 && (
+                      <p>🏦 Vermögensteuer: €{Math.round(country.wealth_tax).toLocaleString()}</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Advantages/Disadvantages */}
+          {analysis.countries && analysis.countries.length > 0 && (
+            analysis.countries.map(country => (
+              <Card key={`${country.country}-details`}>
+                <CardHeader>
+                  <CardTitle className="text-sm">{country.country} - Besonderheiten</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-bold text-green-600 mb-2 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Vorteile
+                    </h4>
+                    <div className="space-y-1">
+                      {country.advantages?.map((adv, i) => (
+                        <p key={i} className="text-sm text-slate-600">✓ {adv}</p>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-red-600 mb-2 flex items-center gap-2">
+                      <TrendingDown className="w-4 h-4" />
+                      Nachteile
+                    </h4>
+                    <div className="space-y-1">
+                      {country.disadvantages?.map((dis, i) => (
+                        <p key={i} className="text-sm text-slate-600">✗ {dis}</p>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+
           {/* Recommendations */}
-          {(comparison.analysis?.recommendations || []).length > 0 && (
-            <Alert className="border-green-300 bg-green-50">
-              <AlertDescription className="text-green-900 text-sm space-y-2">
-                <strong>✅ Empfehlungen:</strong>
-                <ul className="list-disc list-inside space-y-1 mt-2">
-                  {comparison.analysis.recommendations.map((rec, i) => (
-                    <li key={i}>{rec}</li>
-                  ))}
-                </ul>
-              </AlertDescription>
-            </Alert>
+          {(analysis.recommendations || []).length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">💡 Empfehlungen</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {analysis.recommendations.map((rec, i) => (
+                  <div key={i} className="flex gap-3 p-2 bg-blue-50 rounded text-sm">
+                    <span className="text-blue-600 font-bold">{i + 1}.</span>
+                    {rec}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
           )}
         </>
       )}

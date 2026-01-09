@@ -9,46 +9,53 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { country, taxYear } = await req.json();
+    const { country, taxYear, income, expenses = {}, assets = {} } = await req.json();
 
-    if (!country || !taxYear) {
+    if (!country || !taxYear || !income) {
       return Response.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
-    // Fetch tax-related data with limits
-    const [calcs, docs, planning] = await Promise.all([
-      base44.entities.TaxCalculation.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
-      base44.entities.TaxDocument.filter({ user_email: user.email, country, tax_year: taxYear }, '-updated_date', 5).catch(() => []),
-      base44.entities.TaxPlanning.filter({ user_email: user.email, country, tax_year: taxYear }, '-updated_date', 3).catch(() => [])
-    ]);
-
     const optimization = await base44.integrations.Core.InvokeLLM({
-      prompt: `Analyze tax deductions for ${country} taxpayer, tax year ${taxYear}.
+      prompt: `Provide advanced tax deduction optimization for ${country}, year ${taxYear}.
 
-Current Data:
-- Tax Calculation: €${calcs[0]?.total_tax || 0} total tax
-- Documents uploaded: ${docs.length}
-- Active planning items: ${planning.length}
+Profile:
+- Income: €${income}
+- Expenses: ${JSON.stringify(expenses)}
+- Assets: ${JSON.stringify(assets)}
 
-Provide:
-1. Top 5 deduction opportunities
-2. Compliance risk assessment
-3. Implementation timeline
-4. Estimated tax savings
-5. Documentation requirements
-6. Quarterly payment impact
-7. Year-end actions
-8. Future optimization strategies`,
+Analyze:
+1. All eligible deductions per country law
+2. Often-missed deduction opportunities
+3. Timing strategies (current/future year)
+4. Capital loss harvesting potential
+5. Business structure optimization
+6. Estimated tax savings
+7. Risk assessment
+8. Implementation roadmap`,
       response_json_schema: {
         type: 'object',
         properties: {
-          opportunities: { type: 'array', items: { type: 'object', additionalProperties: true } },
-          estimated_savings: { type: 'number' },
-          compliance_risk: { type: 'string' },
+          available_deductions: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                category: { type: 'string' },
+                current_amount: { type: 'number' },
+                optimized_amount: { type: 'number' },
+                potential_savings: { type: 'number' },
+                implementation: { type: 'string' }
+              }
+            }
+          },
+          overlooked_opportunities: { type: 'array', items: { type: 'string' } },
+          total_potential_deductions: { type: 'number' },
+          estimated_tax_savings: { type: 'number' },
+          effective_tax_rate_before: { type: 'number' },
+          effective_tax_rate_after: { type: 'number' },
+          risk_level: { type: 'string' },
           implementation_steps: { type: 'array', items: { type: 'string' } },
-          required_documents: { type: 'array', items: { type: 'string' } },
-          timeline: { type: 'string' },
-          quarterly_impact: { type: 'number' }
+          next_year_strategies: { type: 'array', items: { type: 'string' } }
         }
       }
     });
@@ -58,6 +65,7 @@ Provide:
       optimization: {
         country,
         tax_year: taxYear,
+        baseline_income: income,
         analysis: optimization
       }
     });

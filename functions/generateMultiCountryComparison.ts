@@ -9,49 +9,45 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { taxYear } = await req.json();
+    const { taxYear, income, countries = ['AT', 'CH', 'DE'] } = await req.json();
 
-    if (!taxYear) {
-      return Response.json({ error: 'Missing tax year' }, { status: 400 });
+    if (!taxYear || !income) {
+      return Response.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
-    // Fetch data for all three countries
-    const atCalc = await base44.entities.TaxCalculation.filter({ 
-      user_email: user.email, country: 'AT', tax_year: taxYear 
-    }) || [];
-    const chCalc = await base44.entities.TaxCalculation.filter({ 
-      user_email: user.email, country: 'CH', tax_year: taxYear 
-    }) || [];
-    const deCalc = await base44.entities.TaxCalculation.filter({ 
-      user_email: user.email, country: 'DE', tax_year: taxYear 
-    }) || [];
-
-    const taxAT = atCalc.reduce((sum, c) => sum + (c.total_tax || 0), 0);
-    const taxCH = chCalc.reduce((sum, c) => sum + (c.total_tax || 0), 0);
-    const taxDE = deCalc.reduce((sum, c) => sum + (c.total_tax || 0), 0);
-
-    // Use LLM to generate comparison
     const comparison = await base44.integrations.Core.InvokeLLM({
-      prompt: `Create a detailed multi-country tax comparison for tax year ${taxYear}.
+      prompt: `Compare tax burden for income of €${income} across countries: ${countries.join(', ')} for tax year ${taxYear}.
 
-Austria: €${Math.round(taxAT)} total tax
-Switzerland: CHF${Math.round(taxCH)} total tax
-Germany: €${Math.round(taxDE)} total tax
-
-Generate a comparison including:
-1. Ranking by tax burden
-2. Effective tax rates
-3. Country-specific advantages
-4. Opportunities for optimization
-5. Risk considerations
-6. Recommendations`,
+Analyze:
+1. Income tax rates and brackets
+2. Wealth tax/asset tax considerations
+3. Deduction opportunities
+4. Social contributions
+5. Total effective tax rates
+6. Advantages/disadvantages per country
+7. Relocation considerations`,
       response_json_schema: {
         type: 'object',
         properties: {
-          ranking: { type: 'array', items: { type: 'string' } },
-          advantages: { type: 'object', additionalProperties: { type: 'array', items: { type: 'string' } } },
-          opportunities: { type: 'array', items: { type: 'string' } },
-          risks: { type: 'array', items: { type: 'string' } },
+          countries: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                country: { type: 'string' },
+                income_tax: { type: 'number' },
+                wealth_tax: { type: 'number' },
+                social_contributions: { type: 'number' },
+                deductions: { type: 'number' },
+                effective_rate: { type: 'number' },
+                net_income: { type: 'number' },
+                advantages: { type: 'array', items: { type: 'string' } },
+                disadvantages: { type: 'array', items: { type: 'string' } }
+              }
+            }
+          },
+          most_favorable: { type: 'string' },
+          savings_potential: { type: 'number' },
           recommendations: { type: 'array', items: { type: 'string' } }
         }
       }
@@ -61,11 +57,8 @@ Generate a comparison including:
       status: 'success',
       comparison: {
         tax_year: taxYear,
-        countries: {
-          AT: { total_tax: taxAT, calculations: atCalc.length },
-          CH: { total_tax: taxCH, calculations: chCalc.length },
-          DE: { total_tax: taxDE, calculations: deCalc.length }
-        },
+        annual_income: income,
+        countries: countries,
         analysis: comparison
       }
     });
