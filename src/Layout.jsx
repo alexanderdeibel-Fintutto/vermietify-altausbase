@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from './utils';
+import { useActivityTracker } from '@/components/testing/ActivityTracker';
 import { 
-                        Building2, 
-                        Menu,
-                        X,
-                        Users,
-                        Settings,
-                        Plus
-                    } from 'lucide-react';
+                              Building2, 
+                              Menu,
+                              X,
+                              Users,
+                              Settings,
+                              Plus,
+                              Zap
+                          } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import SuiteSwitcher from '@/components/suite/SuiteSwitcher';
