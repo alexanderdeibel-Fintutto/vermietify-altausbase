@@ -1,212 +1,267 @@
 import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { AlertCircle, CheckCircle2, Clock, Calendar } from 'lucide-react';
-import { toast } from 'sonner';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar, AlertTriangle, CheckCircle2, Clock, Bell } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const CURRENT_YEAR = new Date().getFullYear();
-const COUNTRIES = { DE: '🇩🇪 Deutschland', AT: '🇦🇹 Österreich', CH: '🇨🇭 Schweiz' };
 
 export default function TaxDeadlines() {
-  const [selectedCountry, setSelectedCountry] = useState('');
-  const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
-  const queryClient = useQueryClient();
+  const [selectedCountry, setSelectedCountry] = useState('AT');
+  const [taxYear, setTaxYear] = useState(CURRENT_YEAR);
 
   const { data: deadlines = [] } = useQuery({
-    queryKey: ['taxDeadlines', selectedCountry, selectedYear],
-    queryFn: async () => {
-      let query = { tax_year: selectedYear };
-      if (selectedCountry) query.country = selectedCountry;
-      return await base44.entities.TaxDeadline.filter(query, '-deadline_date', 100) || [];
-    }
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.TaxDeadline.update(data.id, { status: data.status }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['taxDeadlines'] });
-      toast.success('Status aktualisiert');
-    }
-  });
-
-  const sendRemindersMutation = useMutation({
-    mutationFn: () => base44.functions.invoke('sendTaxReminders', {}),
-    onSuccess: (data) => {
-      toast.success(`${data.remindersSent} Erinnerungen gesendet`);
-      queryClient.invalidateQueries({ queryKey: ['taxDeadlines'] });
-    }
+    queryKey: ['taxDeadlines', selectedCountry, taxYear],
+    queryFn: () => base44.entities.TaxDeadline.filter({ country: selectedCountry, tax_year: taxYear }) || []
   });
 
   const getStatusIcon = (status) => {
-    const icons = {
-      pending: '⏳',
-      in_progress: '🔄',
-      completed: '✅',
-      overdue: '❌'
-    };
-    return icons[status] || '•';
+    switch (status) {
+      case 'completed':
+        return <CheckCircle2 className="w-5 h-5 text-green-600" />;
+      case 'pending':
+        return <Clock className="w-5 h-5 text-yellow-600" />;
+      case 'overdue':
+        return <AlertTriangle className="w-5 h-5 text-red-600" />;
+      default:
+        return <Clock className="w-5 h-5 text-slate-400" />;
+    }
   };
 
-  const getPriorityColor = (priority) => {
-    const colors = {
-      low: 'bg-blue-100 text-blue-800',
-      medium: 'bg-yellow-100 text-yellow-800',
-      high: 'bg-orange-100 text-orange-800',
-      critical: 'bg-red-100 text-red-800'
-    };
-    return colors[priority] || 'bg-slate-100 text-slate-800';
+  const getStatusBadge = (deadlineDate) => {
+    const today = new Date();
+    const deadline = new Date(deadlineDate);
+    const daysUntil = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
+
+    if (daysUntil < 0) {
+      return <Badge className="bg-red-100 text-red-800">⏰ Überfällig ({Math.abs(daysUntil)} Tage)</Badge>;
+    } else if (daysUntil <= 7) {
+      return <Badge className="bg-orange-100 text-orange-800">⚠️ Diese Woche ({daysUntil} Tage)</Badge>;
+    } else if (daysUntil <= 30) {
+      return <Badge className="bg-yellow-100 text-yellow-800">📅 Diesen Monat ({daysUntil} Tage)</Badge>;
+    } else {
+      return <Badge className="bg-green-100 text-green-800">✅ Geplant ({daysUntil} Tage)</Badge>;
+    }
   };
 
-  const getDaysUntil = (date) => {
-    const d = Math.floor((new Date(date) - new Date()) / (1000 * 60 * 60 * 24));
-    return d;
+  const priorityColors = {
+    low: 'border-blue-300 bg-blue-50',
+    medium: 'border-yellow-300 bg-yellow-50',
+    high: 'border-orange-300 bg-orange-50',
+    critical: 'border-red-300 bg-red-50'
   };
 
-  const getUrgency = (days) => {
-    if (days < 0) return { label: 'Überfällig', color: 'text-red-600' };
-    if (days === 0) return { label: 'Heute!', color: 'text-red-600' };
-    if (days <= 7) return { label: `${days}d`, color: 'text-red-600' };
-    if (days <= 14) return { label: `${days}d`, color: 'text-orange-600' };
-    return { label: `${days}d`, color: 'text-green-600' };
+  const priorityIcons = {
+    low: '🔵',
+    medium: '🟡',
+    high: '🔴',
+    critical: '🚨'
   };
 
-  const sortedDeadlines = [...deadlines].sort((a, b) => 
-    new Date(a.deadline_date) - new Date(b.deadline_date)
-  );
+  const countries = [
+    { code: 'AT', name: '🇦🇹 Österreich', color: 'border-l-4 border-red-500' },
+    { code: 'CH', name: '🇨🇭 Schweiz', color: 'border-l-4 border-green-500' },
+    { code: 'DE', name: '🇩🇪 Deutschland', color: 'border-l-4 border-yellow-500' }
+  ];
 
-  const upcoming = sortedDeadlines.filter(d => getDaysUntil(d.deadline_date) >= 0);
-  const overdue = sortedDeadlines.filter(d => getDaysUntil(d.deadline_date) < 0);
+  const upcomingDeadlines = deadlines.filter(d => {
+    const deadline = new Date(d.deadline_date);
+    const daysUntil = Math.ceil((deadline - new Date()) / (1000 * 60 * 60 * 24));
+    return daysUntil > 0 && daysUntil <= 90;
+  });
+
+  const overdueDeadlines = deadlines.filter(d => {
+    const deadline = new Date(d.deadline_date);
+    const daysUntil = Math.ceil((deadline - new Date()) / (1000 * 60 * 60 * 24));
+    return daysUntil < 0;
+  });
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">📅 Steuerterminte {selectedYear}</h1>
-        <Button onClick={() => sendRemindersMutation.mutate()} className="gap-2">
-          🔔 Erinnerungen senden
+        <div>
+          <h1 className="text-4xl font-bold flex items-center gap-3">
+            <Calendar className="w-10 h-10" />
+            Steuer-Fristen & Deadlines
+          </h1>
+          <p className="text-slate-500 mt-2">DACH Steuerjahr {taxYear}</p>
+        </div>
+        <Button className="gap-2 bg-blue-600 hover:bg-blue-700">
+          <Bell className="w-4 h-4" /> Reminders aktivieren
         </Button>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-4">
-        <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Alle Länder" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={null}>Alle Länder</SelectItem>
-            {Object.entries(COUNTRIES).map(([code, name]) => (
-              <SelectItem key={code} value={code}>{name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(Number(v))}>
-          <SelectTrigger className="w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {[2025, 2026, 2027].map(year => (
-              <SelectItem key={year} value={String(year)}>{year}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Overdue Alerts */}
-      {overdue.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="font-bold text-red-600 flex items-center gap-2">
-            <AlertCircle className="w-5 h-5" /> Überfällige Termine ({overdue.length})
-          </h3>
-          {overdue.map(deadline => (
-            <Card key={deadline.id} className="border-red-300 bg-red-50">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="font-bold">{deadline.title}</p>
-                    <p className="text-sm text-slate-600">{COUNTRIES[deadline.country]}</p>
-                  </div>
-                  <div className="text-right mr-4">
-                    <p className="text-lg font-bold text-red-600">❌ Überfällig</p>
-                    <p className="text-xs text-slate-500">{deadline.deadline_date}</p>
-                  </div>
-                  <Select value={deadline.status} onValueChange={(status) => updateMutation.mutate({ id: deadline.id, status })}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Offen</SelectItem>
-                      <SelectItem value="in_progress">In Bearbeitung</SelectItem>
-                      <SelectItem value="completed">Abgeschlossen</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Upcoming Deadlines */}
-      <div>
-        <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
-          <Calendar className="w-5 h-5" /> Bevorstehende Termine ({upcoming.length})
-        </h3>
-        <div className="space-y-2">
-          {upcoming.map(deadline => {
-            const daysUntil = getDaysUntil(deadline.deadline_date);
-            const urgency = getUrgency(daysUntil);
-            return (
-              <Card key={deadline.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-start gap-3 flex-1">
-                      <span className="text-2xl">{getStatusIcon(deadline.status)}</span>
-                      <div>
-                        <p className="font-bold">{deadline.title}</p>
-                        <p className="text-sm text-slate-600">{deadline.description}</p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Badge className={getPriorityColor(deadline.priority)}>
-                            {deadline.priority}
-                          </Badge>
-                          <Badge variant="outline">{COUNTRIES[deadline.country]}</Badge>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right mr-4">
-                      <p className={`text-2xl font-bold ${urgency.color}`}>{urgency.label}</p>
-                      <p className="text-xs text-slate-500">{deadline.deadline_date}</p>
-                    </div>
-                    <Select value={deadline.status} onValueChange={(status) => updateMutation.mutate({ id: deadline.id, status })}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Offen</SelectItem>
-                        <SelectItem value="in_progress">In Bearbeitung</SelectItem>
-                        <SelectItem value="completed">Abgeschlossen</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Empty State */}
-      {deadlines.length === 0 && (
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <p className="text-slate-500">Keine Termine für diesen Zeitraum</p>
+      {/* Alert for overdue */}
+      {overdueDeadlines.length > 0 && (
+        <Card className="border-2 border-red-500 bg-red-50">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-6 h-6 text-red-600 mt-1 flex-shrink-0" />
+              <div>
+                <h3 className="font-semibold text-red-900">⚠️ Überfällige Fristen</h3>
+                <p className="text-sm text-red-800 mt-1">
+                  Sie haben {overdueDeadlines.length} überfällige Steuerfrist(en). Bitte kümmern Sie sich schnellstmöglich darum!
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
+
+      {/* Country Tabs */}
+      <Tabs value={selectedCountry} onValueChange={setSelectedCountry}>
+        <TabsList className="grid w-full grid-cols-3">
+          {countries.map(c => (
+            <TabsTrigger key={c.code} value={c.code}>{c.name}</TabsTrigger>
+          ))}
+        </TabsList>
+
+        {countries.map(country => (
+          <TabsContent key={country.code} value={country.code} className="space-y-4">
+            {/* Filters */}
+            <div className="flex gap-2">
+              <Select value={String(taxYear)} onValueChange={(v) => setTaxYear(parseInt(v))}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[CURRENT_YEAR - 1, CURRENT_YEAR, CURRENT_YEAR + 1].map(y => (
+                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <p className="text-sm text-slate-600">Gesamt Fristen</p>
+                  <p className="text-3xl font-bold">{deadlines.length}</p>
+                </CardContent>
+              </Card>
+              <Card className="border-orange-300 bg-orange-50">
+                <CardContent className="pt-6 text-center">
+                  <p className="text-sm text-slate-600">Diese Woche</p>
+                  <p className="text-3xl font-bold text-orange-600">
+                    {deadlines.filter(d => {
+                      const daysUntil = Math.ceil((new Date(d.deadline_date) - new Date()) / (1000 * 60 * 60 * 24));
+                      return daysUntil > 0 && daysUntil <= 7;
+                    }).length}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-yellow-300 bg-yellow-50">
+                <CardContent className="pt-6 text-center">
+                  <p className="text-sm text-slate-600">Diesen Monat</p>
+                  <p className="text-3xl font-bold text-yellow-600">
+                    {deadlines.filter(d => {
+                      const daysUntil = Math.ceil((new Date(d.deadline_date) - new Date()) / (1000 * 60 * 60 * 24));
+                      return daysUntil > 0 && daysUntil <= 30;
+                    }).length}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-red-300 bg-red-50">
+                <CardContent className="pt-6 text-center">
+                  <p className="text-sm text-slate-600">Überfällig</p>
+                  <p className="text-3xl font-bold text-red-600">{overdueDeadlines.length}</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Deadlines List */}
+            <div className="space-y-3">
+              {deadlines.length === 0 ? (
+                <Card>
+                  <CardContent className="pt-6 text-center text-slate-500">
+                    Keine Fristen für {taxYear} erfasst.
+                  </CardContent>
+                </Card>
+              ) : (
+                deadlines
+                  .sort((a, b) => new Date(a.deadline_date) - new Date(b.deadline_date))
+                  .map(deadline => (
+                    <Card key={deadline.id} className={`${priorityColors[deadline.priority]} border-2`}>
+                      <CardContent className="pt-6">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-2xl">{priorityIcons[deadline.priority]}</span>
+                              <h3 className="font-semibold">{deadline.title}</h3>
+                              {getStatusBadge(deadline.deadline_date)}
+                            </div>
+                            <p className="text-sm text-slate-600 mb-3">{deadline.description}</p>
+                            <div className="grid grid-cols-3 gap-4 text-sm">
+                              <div>
+                                <span className="text-slate-600">Fällig am:</span>
+                                <p className="font-semibold">
+                                  {new Date(deadline.deadline_date).toLocaleDateString('de-DE', {
+                                    weekday: 'short',
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit'
+                                  })}
+                                </p>
+                              </div>
+                              <div>
+                                <span className="text-slate-600">Art:</span>
+                                <p className="font-semibold">
+                                  {deadline.deadline_type === 'submission' ? '📋 Einreichung' : '💰 Zahlung'}
+                                </p>
+                              </div>
+                              <div>
+                                <span className="text-slate-600">Erinnerung:</span>
+                                <p className="font-semibold">{deadline.reminder_days_before} Tage vorher</p>
+                              </div>
+                            </div>
+                          </div>
+                          <Button variant="outline" size="sm" className="ml-4">
+                            Erledigt
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+              )}
+            </div>
+          </TabsContent>
+        ))}
+      </Tabs>
+
+      {/* Info Section */}
+      <Card className="bg-gradient-to-r from-slate-50 to-slate-100">
+        <CardHeader>
+          <CardTitle>💡 Tipps & Hinweise</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-3 bg-white rounded border-l-4 border-blue-500">
+              <p className="font-semibold text-sm">🇦🇹 Österreich</p>
+              <p className="text-xs text-slate-600 mt-1">Steuererklärung bis 30.06. (mit Berater bis 02.08.)</p>
+            </div>
+            <div className="p-3 bg-white rounded border-l-4 border-green-500">
+              <p className="font-semibold text-sm">🇨🇭 Schweiz</p>
+              <p className="text-xs text-slate-600 mt-1">Erklärung bis 15.03. des Folgejahres, unterschiedlich pro Kanton</p>
+            </div>
+            <div className="p-3 bg-white rounded border-l-4 border-yellow-500">
+              <p className="font-semibold text-sm">🇩🇪 Deutschland</p>
+              <p className="text-xs text-slate-600 mt-1">Erklärung bis 31.05. (mit Berater bis 30.09.)</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
