@@ -1,47 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { HelpCircle, X } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { HelpCircle } from 'lucide-react';
+import { useOnboardingState } from './useOnboardingState';
 import IntelligentOnboardingWizardDialog from './IntelligentOnboardingWizardDialog';
 
 export default function IntelligentOnboardingWizardButton() {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [onboardingState, setOnboardingState] = useState(null);
   const [isSkipped, setIsSkipped] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    evaluateState();
-    // Re-evaluate every 60 seconds or when page becomes visible
-    const interval = setInterval(evaluateState, 60000);
-    const handleVisibility = () => {
-      if (!document.hidden) evaluateState();
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
-  }, []);
-
-  const evaluateState = async () => {
-    try {
-      const res = await base44.functions.invoke('evaluateOnboardingState', {});
-      setOnboardingState(res.data?.state);
-      
-      // Auto-open if should show and not skipped
-      if (res.data?.state?.should_show_onboarding && !isSkipped) {
-        // Only auto-open if it's been at least 10 seconds since page load
-        setTimeout(() => setDialogOpen(true), 10000);
-      }
-    } catch (err) {
-      console.error('Onboarding evaluation failed:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { onboardingState, loading, refetch } = useOnboardingState();
 
   const handleSkip = async (e) => {
     e.stopPropagation();
@@ -49,7 +16,7 @@ export default function IntelligentOnboardingWizardButton() {
     setDialogOpen(false);
     
     try {
-      // Save skip to DB with 24h expiration
+      const base44 = await import('@/api/base44Client').then(m => m.base44);
       const onboardingRecords = await base44.entities.UserOnboarding.filter(
         { user_id: onboardingState.user_id },
         null,
@@ -69,14 +36,13 @@ export default function IntelligentOnboardingWizardButton() {
       console.error('Skip save failed:', err);
     }
     
-    // Reset skip after 24 hours
     setTimeout(() => setIsSkipped(false), 24 * 60 * 60 * 1000);
   };
 
-  const handleDialogClose = () => {
+  const handleDialogClose = async () => {
     setDialogOpen(false);
     // Re-evaluate after dialog closes in case something changed
-    evaluateState();
+    await refetch();
   };
 
   if (loading || !onboardingState || !onboardingState.should_show_onboarding || isSkipped) {

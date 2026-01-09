@@ -34,25 +34,55 @@ export default function IntelligentOnboardingWizardDialog({
   const allSteps = onboardingState.all_steps;
   const progress = (onboardingState.completed_steps.length / allSteps.length) * 100;
 
+  const validateStep = () => {
+    const stepId = nextStep?.id;
+    
+    if (stepId === 'add_building') {
+      if (!formData.building_name?.trim()) {
+        toast.error('Bitte geben Sie einen Objektnamen ein');
+        return false;
+      }
+      if (!formData.building_address?.trim()) {
+        toast.error('Bitte geben Sie eine Adresse ein');
+        return false;
+      }
+    }
+    
+    if (stepId === 'add_tenant') {
+      if (!formData.tenant_name?.trim()) {
+        toast.error('Bitte geben Sie einen Mieter-Namen ein');
+        return false;
+      }
+      if (!formData.tenant_email?.trim()) {
+        toast.error('Bitte geben Sie eine E-Mail-Adresse ein');
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
   const handleStepComplete = async () => {
+    if (!validateStep()) return;
+    
     setIsSubmitting(true);
     try {
       const stepId = nextStep?.id;
 
       // Step-specific data saving
-      if (stepId === 'add_building' && formData.building_name) {
+      if (stepId === 'add_building') {
         await base44.entities.Building.create({
-          name: formData.building_name,
-          street: formData.building_address,
-          zip: formData.building_zip,
+          name: formData.building_name.trim(),
+          street: formData.building_address.trim(),
+          zip: formData.building_zip?.trim(),
           type: 'residential'
         });
       }
 
-      if (stepId === 'add_tenant' && formData.tenant_name) {
+      if (stepId === 'add_tenant') {
         await base44.entities.Tenant.create({
-          name: formData.tenant_name,
-          email: formData.tenant_email
+          name: formData.tenant_name.trim(),
+          email: formData.tenant_email.trim()
         });
       }
 
@@ -78,6 +108,7 @@ export default function IntelligentOnboardingWizardDialog({
       }
 
       toast.success(`✅ ${nextStep.title} abgeschlossen!`);
+      setFormData({});
       onOpenChange();
     } catch (err) {
       toast.error('Fehler beim Speichern: ' + err.message);
@@ -257,14 +288,15 @@ export default function IntelligentOnboardingWizardDialog({
           <Button
             variant="ghost"
             onClick={onSkip}
+            disabled={isSubmitting}
             className="flex-1 font-light text-slate-600"
           >
             Später
           </Button>
           <Button
             onClick={handleStepComplete}
-            disabled={isSubmitting}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 font-light gap-2"
+            disabled={isSubmitting || !formData.building_name?.trim()}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 font-light gap-2 disabled:opacity-50"
           >
             {isSubmitting ? (
               <>

@@ -41,18 +41,18 @@ Deno.serve(async (req) => {
     );
     const packageConfig = packageRecords[0];
 
-    // Fetch existing data counts
+    // Fetch existing data counts with user filter
     const [buildings, bankAccounts, contracts, tasks] = await Promise.all([
-      base44.entities.Building.filter({}, null, 1),
-      base44.entities.BankAccount.filter({}, null, 1),
-      base44.entities.LeaseContract.filter({}, null, 1),
-      base44.entities.Task.filter({}, null, 1)
+      base44.entities.Building.list('-created_date', 1),
+      base44.entities.BankAccount.list('-created_date', 1),
+      base44.entities.LeaseContract.list('-created_date', 1),
+      base44.entities.Task.list('-created_date', 1)
     ]);
 
-    const buildingCount = buildings.length;
-    const bankAccountCount = bankAccounts.length;
-    const contractCount = contracts.length;
-    const taskCount = tasks.length;
+    const buildingCount = buildings?.length || 0;
+    const bankAccountCount = bankAccounts?.length || 0;
+    const contractCount = contracts?.length || 0;
+    const taskCount = tasks?.length || 0;
 
     // Define onboarding steps based on package
     const packageType = packageConfig?.package_type || 'easyVermieter';
