@@ -47,6 +47,7 @@ import BankReconciliation from './pages/BankReconciliation';
 import BankingManagement from './pages/BankingManagement';
 import BudgetAnalysis from './pages/BudgetAnalysis';
 import BudgetPlanning from './pages/BudgetPlanning';
+import BuildingBoard from './pages/BuildingBoard';
 import BuildingDetail from './pages/BuildingDetail';
 import Buildings from './pages/Buildings';
 import BulkOperations from './pages/BulkOperations';
@@ -107,11 +108,11 @@ import IntegrationHub from './pages/IntegrationHub';
 import IntegrationMarketplace from './pages/IntegrationMarketplace';
 import InternationalTaxComparison from './pages/InternationalTaxComparison';
 import InternationalTaxPlanning from './pages/InternationalTaxPlanning';
-import InternationalTaxStrategy from './pages/InternationalTaxStrategy';
-import Invoices from './pages/Invoices';
-import InvestmentTaxTracking from './pages/InvestmentTaxTracking';
 import InvestmentsCH from './pages/InvestmentsCH';
+import InternationalTaxStrategy from './pages/InternationalTaxStrategy';
+import InvestmentTaxTracking from './pages/InvestmentTaxTracking';
 import InvoiceManagement from './pages/InvoiceManagement';
+import Invoices from './pages/Invoices';
 import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
 import Kommunikation from './pages/Kommunikation';
 import LeaseContracts from './pages/LeaseContracts';
@@ -125,6 +126,7 @@ import MultiYearTaxComparison from './pages/MultiYearTaxComparison';
 import MultiYearTaxStrategy from './pages/MultiYearTaxStrategy';
 import MyAccount from './pages/MyAccount';
 import NavigationDemo from './pages/NavigationDemo';
+import NotificationCenter from './pages/NotificationCenter';
 import NotificationManagement from './pages/NotificationManagement';
 import Onboarding from './pages/Onboarding';
 import OnboardingWizard from './pages/OnboardingWizard';
@@ -230,6 +232,7 @@ import TaxYearClosingChecklist from './pages/TaxYearClosingChecklist';
 import TaxYearPlannerPage from './pages/TaxYearPlannerPage';
 import TenantCommunication from './pages/TenantCommunication';
 import TenantCommunicationCenter from './pages/TenantCommunicationCenter';
+import TenantCommunicationHub from './pages/TenantCommunicationHub';
 import TenantDetail from './pages/TenantDetail';
 import TenantOnboarding from './pages/TenantOnboarding';
 import TenantPortal from './pages/TenantPortal';
@@ -250,6 +253,7 @@ import UserAudit from './pages/UserAudit';
 import UserDetail from './pages/UserDetail';
 import UserManagement from './pages/UserManagement';
 import UserSettings from './pages/UserSettings';
+import VendorManagement from './pages/VendorManagement';
 import WealthAdvanced from './pages/WealthAdvanced';
 import WealthAnalytics from './pages/WealthAnalytics';
 import WealthAutomation from './pages/WealthAutomation';
@@ -266,11 +270,8 @@ import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import NotificationCenter from './pages/NotificationCenter';
-import BuildingBoard from './pages/BuildingBoard';
-import TenantCommunicationHub from './pages/TenantCommunicationHub';
-import VendorManagement from './pages/VendorManagement';
 import SmartTaskDashboard from './pages/SmartTaskDashboard';
+import MobileApp from './pages/MobileApp';
 import __Layout from './Layout.jsx';
 
 
@@ -324,6 +325,7 @@ export const PAGES = {
     "BankingManagement": BankingManagement,
     "BudgetAnalysis": BudgetAnalysis,
     "BudgetPlanning": BudgetPlanning,
+    "BuildingBoard": BuildingBoard,
     "BuildingDetail": BuildingDetail,
     "Buildings": Buildings,
     "BulkOperations": BulkOperations,
@@ -384,11 +386,11 @@ export const PAGES = {
     "IntegrationMarketplace": IntegrationMarketplace,
     "InternationalTaxComparison": InternationalTaxComparison,
     "InternationalTaxPlanning": InternationalTaxPlanning,
-    "InternationalTaxStrategy": InternationalTaxStrategy,
-    "Invoices": Invoices,
-    "InvestmentTaxTracking": InvestmentTaxTracking,
     "InvestmentsCH": InvestmentsCH,
+    "InternationalTaxStrategy": InternationalTaxStrategy,
+    "InvestmentTaxTracking": InvestmentTaxTracking,
     "InvoiceManagement": InvoiceManagement,
+    "Invoices": Invoices,
     "KnowledgeManagementDashboard": KnowledgeManagementDashboard,
     "Kommunikation": Kommunikation,
     "LeaseContracts": LeaseContracts,
@@ -402,6 +404,7 @@ export const PAGES = {
     "MultiYearTaxStrategy": MultiYearTaxStrategy,
     "MyAccount": MyAccount,
     "NavigationDemo": NavigationDemo,
+    "NotificationCenter": NotificationCenter,
     "NotificationManagement": NotificationManagement,
     "Onboarding": Onboarding,
     "OnboardingWizard": OnboardingWizard,
@@ -507,6 +510,7 @@ export const PAGES = {
     "TaxYearPlannerPage": TaxYearPlannerPage,
     "TenantCommunication": TenantCommunication,
     "TenantCommunicationCenter": TenantCommunicationCenter,
+    "TenantCommunicationHub": TenantCommunicationHub,
     "TenantDetail": TenantDetail,
     "TenantOnboarding": TenantOnboarding,
     "TenantPortal": TenantPortal,
@@ -527,6 +531,7 @@ export const PAGES = {
     "UserDetail": UserDetail,
     "UserManagement": UserManagement,
     "UserSettings": UserSettings,
+    "VendorManagement": VendorManagement,
     "WealthAdvanced": WealthAdvanced,
     "WealthAnalytics": WealthAnalytics,
     "WealthAutomation": WealthAutomation,
@@ -543,11 +548,8 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "NotificationCenter": NotificationCenter,
-    "BuildingBoard": BuildingBoard,
-    "TenantCommunicationHub": TenantCommunicationHub,
-    "VendorManagement": VendorManagement,
     "SmartTaskDashboard": SmartTaskDashboard,
+    "MobileApp": MobileApp,
 }
 
 export const pagesConfig = {
