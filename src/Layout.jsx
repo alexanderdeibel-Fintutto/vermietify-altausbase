@@ -86,7 +86,7 @@ export default function Layout({ children, currentPageName }) {
                         <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center">
                             <Building2 className="w-5 h-5 text-white" />
                         </div>
-                        <span className="font-semibold text-slate-800 text-lg tracking-tight">ImmoVerwalter</span>
+                        <span className="font-medium text-slate-800 text-lg">ImmoVerwalter</span>
                     </div>
                     <button 
                         onClick={() => setSidebarOpen(false)}
