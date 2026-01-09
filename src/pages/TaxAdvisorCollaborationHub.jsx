@@ -1,103 +1,148 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Users, Share2, MessageSquare } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Mail, Share2, Download, Check } from 'lucide-react';
 
 export default function TaxAdvisorCollaborationHub() {
   const [advisorEmail, setAdvisorEmail] = useState('');
-  const [taxYear, setTaxYear] = useState(new Date().getFullYear());
-  const [sharing, setSharing] = useState(false);
+  const [taxYear] = useState(new Date().getFullYear() - 1);
+  const [shared, setShared] = useState(false);
 
-  const { data: shares = [] } = useQuery({
-    queryKey: ['taxShares'],
+  const { data: profile } = useQuery({
+    queryKey: ['taxProfile'],
     queryFn: async () => {
-      const response = await base44.entities.PortfolioShare.filter({ share_type: 'advisor' });
-      return response || [];
+      const user = await base44.auth.me();
+      const profiles = await base44.entities.TaxProfile.filter({ user_email: user.email }, '-updated_date', 1);
+      return profiles[0];
     }
   });
 
-  const handleShareWithAdvisor = async () => {
+  const generateReportMutation = useMutation({
+    mutationFn: async () => {
+      return base44.functions.invoke('generateTaxAdvisorReport', { tax_year: taxYear });
+    }
+  });
+
+  const shareReport = async () => {
     if (!advisorEmail) return;
-    setSharing(true);
-    await base44.functions.invoke('shareWithTaxAdvisor', {
-      advisor_email: advisorEmail,
-      tax_year: taxYear,
-      country: 'DE',
-      data_types: ['comprehensive', 'compliance']
+    
+    // Bericht generieren
+    const reportRes = await generateReportMutation.mutateAsync();
+    
+    // Email senden
+    await base44.integrations.Core.SendEmail({
+      to: advisorEmail,
+      subject: `Steuerbericht ${taxYear} - Zur Überprüfung`,
+      body: `Hallo,\n\nhier ist der Steuerbericht für ${taxYear} zur Überprüfung.\n\nSteuerjahr: ${taxYear}\nLänder: ${profile.tax_jurisdictions.join(', ')}\nProfil: ${profile.profile_type}\n\nBitte überprüfen und bei Fragen kontaktieren.\n\nBest regards`
     });
-    setAdvisorEmail('');
-    setSharing(false);
+
+    setShared(true);
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">👥 Steuerberater-Collaboration</h1>
-        <p className="text-slate-500 mt-1">Teilen Sie Daten und arbeiten Sie mit Steuerfachleuten zusammen</p>
+        <h1 className="text-3xl font-light">Steuerberater-Collaboration</h1>
+        <p className="text-slate-500 font-light mt-2">Teile Berichte mit deinem Steuerberater</p>
       </div>
 
-      <Card className="border-blue-300 bg-blue-50">
-        <CardHeader>
-          <CardTitle className="text-sm">Mit Steuerberater teilen</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input
-              type="email"
-              placeholder="advisor@example.com"
-              value={advisorEmail}
-              onChange={(e) => setAdvisorEmail(e.target.value)}
-              disabled={sharing}
-            />
-            <Input
-              type="number"
-              value={taxYear}
-              onChange={(e) => setTaxYear(parseInt(e.target.value))}
-              disabled={sharing}
-            />
-            <Button
-              onClick={handleShareWithAdvisor}
-              className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
-              disabled={sharing || !advisorEmail}
-            >
-              <Share2 className="w-4 h-4" />
-              Teilen
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="share">
+        <TabsList>
+          <TabsTrigger value="share">Bericht Teilen</TabsTrigger>
+          <TabsTrigger value="documents">Dokumente</TabsTrigger>
+          <TabsTrigger value="communication">Kommunikation</TabsTrigger>
+        </TabsList>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Gemeinsame Zugriffe
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {shares.length === 0 ? (
-            <p className="text-sm text-slate-500">Noch keine Steuerberater hinzugefügt</p>
-          ) : (
-            <div className="space-y-2">
-              {shares.map(share => (
-                <div key={share.id} className="p-3 bg-slate-50 rounded flex justify-between items-center">
-                  <div>
-                    <p className="font-medium text-sm">{share.shared_with_email}</p>
-                    <p className="text-xs text-slate-600">Rolle: {share.advisor_role}</p>
-                  </div>
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <MessageSquare className="w-4 h-4" />
-                    Nachricht
-                  </Button>
+        <TabsContent value="share" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Bericht mit Steuerberater teilen</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-light">Email des Steuerberaters</label>
+                <Input
+                  type="email"
+                  placeholder="berater@example.com"
+                  value={advisorEmail}
+                  onChange={(e) => setAdvisorEmail(e.target.value)}
+                />
+              </div>
+              <Button 
+                onClick={shareReport}
+                disabled={!advisorEmail || generateReportMutation.isPending}
+                className="w-full gap-2"
+              >
+                <Share2 className="w-4 h-4" />
+                {shared ? 'Versendet' : 'Bericht generieren & teilen'}
+              </Button>
+              {shared && (
+                <div className="p-3 bg-green-50 rounded-lg flex items-center gap-2 text-sm text-green-700 font-light">
+                  <Check className="w-4 h-4" />
+                  Bericht wurde versendet
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Verfügbare Berichte</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Button variant="outline" className="w-full gap-2">
+                <Download className="w-4 h-4" />
+                Tax Summary {taxYear}
+              </Button>
+              <Button variant="outline" className="w-full gap-2">
+                <Download className="w-4 h-4" />
+                Multi-Country Report
+              </Button>
+              <Button variant="outline" className="w-full gap-2">
+                <Download className="w-4 h-4" />
+                Compliance Checklist
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="documents">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Dokumente für Steuerberater</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-slate-600 font-light">
+              <p>Alle erforderlichen Dokumente für die Steuererklärung:</p>
+              <ul className="mt-3 space-y-1 text-xs">
+                <li>✓ Kontoauszüge</li>
+                <li>✓ Handelsbestätigungen</li>
+                <li>✓ Immobiliendokumente</li>
+                <li>✓ GmbH-Auszüge</li>
+                <li>✓ Kryptowährungsreporte</li>
+              </ul>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="communication">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Nachricht an Steuerberater</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input placeholder="Nachricht eingeben..." />
+              <Button className="w-full gap-2">
+                <Mail className="w-4 h-4" />
+                Nachricht senden
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

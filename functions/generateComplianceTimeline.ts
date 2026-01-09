@@ -9,62 +9,108 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { year } = await req.json();
-
-    console.log(`[TIMELINE] Generating compliance timeline for ${year}`);
-
-    const deadlines = {
-      'ANLAGE_V': { month: 7, day: 31, name: 'Anlage V Abgabe' },
-      'EUER': { month: 7, day: 31, name: 'EÜR Abgabe' },
-      'UMSATZSTEUER': { month: 1, day: 31, name: 'Umsatzsteuer Voranmeldung (Dez)' },
-      'GEWERBESTEUER': { month: 7, day: 31, name: 'Gewerbesteuererklärung' }
-    };
-
-    const submissions = await base44.entities.ElsterSubmission.filter({
-      tax_year: year
-    });
+    const { tax_year } = await req.json();
+    const profile = (await base44.entities.TaxProfile.filter({ user_email: user.email }, '-updated_date', 1))[0];
 
     const timeline = [];
 
-    // Deadlines hinzufügen
-    for (const [formType, deadline] of Object.entries(deadlines)) {
-      const sub = submissions.find(s => s.tax_form_type === formType);
-      const deadlineDate = new Date(year + 1, deadline.month - 1, deadline.day);
+    const deadlines = {
+      'CH': {
+        docs_collect: '31.12',
+        docs_deadline: '01.01',
+        prelim_check: '01.02',
+        filing_deadline: '15.03',
+        extension_deadline: null
+      },
+      'DE': {
+        docs_collect: '31.12',
+        docs_deadline: '01.01',
+        prelim_check: '15.04',
+        filing_deadline: '31.05',
+        extension_deadline: '31.08'
+      },
+      'AT': {
+        docs_collect: '31.12',
+        docs_deadline: '01.01',
+        prelim_check: '01.05',
+        filing_deadline: '02.06',
+        extension_deadline: '31.08'
+      }
+    };
+
+    // Timeline-Schritte für jedes Land
+    for (const country of profile.tax_jurisdictions) {
+      const config = deadlines[country];
       
       timeline.push({
-        date: deadlineDate,
-        type: 'deadline',
-        form_type: formType,
-        name: deadline.name,
-        status: sub ? 'submitted' : 'pending',
-        days_until: Math.ceil((deadlineDate - new Date()) / (1000 * 60 * 60 * 24))
+        country,
+        step: 1,
+        title: `Dokumentensammlung ${country}`,
+        description: 'Alle erforderlichen Dokumente zusammentragen',
+        target_date: `${tax_year}-12-31`,
+        priority: 'high',
+        action_items: ['Kontoauszüge', 'Handelsbestätigungen', 'Immobilien-Nachweise', 'GmbH-Unterlagen']
       });
-    }
 
-    // Submissions hinzufügen
-    submissions.forEach(sub => {
-      if (sub.submission_date) {
+      timeline.push({
+        country,
+        step: 2,
+        title: `Vorprüfung ${country}`,
+        description: 'Plausibilitätsprüfung und Validierung',
+        target_date: `${tax_year + 1}-01-31`,
+        priority: 'high',
+        action_items: ['Daten validieren', 'Fehlende Dokumente identifizieren', 'Anomalien prüfen']
+      });
+
+      timeline.push({
+        country,
+        step: 3,
+        title: `Formularfüllung ${country}`,
+        description: 'Steuererklärung ausfüllen',
+        target_date: `${tax_year + 1}-02-28`,
+        priority: 'medium',
+        action_items: ['Formulare generieren', 'Mit Berater abstimmen', 'Unterschriften vorbereiten']
+      });
+
+      timeline.push({
+        country,
+        step: 4,
+        title: `FINAL: Einreichung ${country}`,
+        description: `Steuererklärung einreichen bis ${config.filing_deadline}`,
+        target_date: config.filing_deadline.split('.')[1] === '03' 
+          ? `${tax_year + 1}-03-10`
+          : `${tax_year + 1}-05-25`,
+        priority: 'critical',
+        action_items: ['Elektronisch signieren', 'Einreichen', 'Bestätigung archivieren']
+      });
+
+      if (config.extension_deadline) {
         timeline.push({
-          date: new Date(sub.submission_date),
-          type: 'submission',
-          form_type: sub.tax_form_type,
-          name: `${sub.tax_form_type} übermittelt`,
-          status: sub.status
+          country,
+          step: 5,
+          title: `Verlängerungsfrist ${country}`,
+          description: 'Verlängerungsmöglichkeit nutzen',
+          target_date: config.extension_deadline.split('.')[1] === '08' 
+            ? `${tax_year + 1}-08-25`
+            : `${tax_year + 1}-08-31`,
+          priority: 'low',
+          action_items: ['Verlängerungsantrag stellen (falls nötig)']
         });
       }
-    });
+    }
 
-    timeline.sort((a, b) => a.date - b.date);
-
-    console.log(`[TIMELINE] Generated ${timeline.length} events`);
+    // Sortieren nach Datum
+    timeline.sort((a, b) => new Date(a.target_date) - new Date(b.target_date));
 
     return Response.json({
-      success: true,
-      timeline
+      user_email: user.email,
+      tax_year,
+      timeline,
+      countries: profile.tax_jurisdictions,
+      profile_type: profile.profile_type
     });
 
   } catch (error) {
-    console.error('[ERROR]', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
