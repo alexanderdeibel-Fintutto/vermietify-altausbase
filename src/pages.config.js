@@ -152,6 +152,8 @@ import TaxSetupWizard from './pages/TaxSetupWizard';
 import AnlageE1cAT from './pages/AnlageE1cAT';
 import TaxAdminPanel from './pages/TaxAdminPanel';
 import AnlageVGAT from './pages/AnlageVGAT';
+import OtherIncomeCH from './pages/OtherIncomeCH';
+import CapitalGainCH from './pages/CapitalGainCH';
 import __Layout from './Layout.jsx';
 
 
@@ -310,6 +312,8 @@ export const PAGES = {
     "AnlageE1cAT": AnlageE1cAT,
     "TaxAdminPanel": TaxAdminPanel,
     "AnlageVGAT": AnlageVGAT,
+    "OtherIncomeCH": OtherIncomeCH,
+    "CapitalGainCH": CapitalGainCH,
 }
 
 export const pagesConfig = {
