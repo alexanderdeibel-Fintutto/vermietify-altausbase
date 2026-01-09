@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
@@ -11,17 +11,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
 export default function TaxYearClosingChecklist() {
   const [country, setCountry] = useState('DE');
-  const [taxYear, setTaxYear] = useState(CURRENT_YEAR - 1);
+  const [taxYear, setTaxYear] = useState(CURRENT_YEAR);
   const [checkedItems, setCheckedItems] = useState(new Set());
 
   const { data: checklist = {}, isLoading } = useQuery({
-    queryKey: ['taxClosingChecklist', country, taxYear],
+    queryKey: ['closingChecklist', country, taxYear],
     queryFn: async () => {
       const response = await base44.functions.invoke('generateTaxYearClosingChecklist', {
         country,
@@ -31,32 +32,35 @@ export default function TaxYearClosingChecklist() {
     }
   });
 
-  const toggleCheck = (id) => {
-    const newChecked = new Set(checkedItems);
-    if (newChecked.has(id)) {
-      newChecked.delete(id);
+  const toggleCheck = (item) => {
+    const newSet = new Set(checkedItems);
+    if (newSet.has(item)) {
+      newSet.delete(item);
     } else {
-      newChecked.add(id);
+      newSet.add(item);
     }
-    setCheckedItems(newChecked);
+    setCheckedItems(newSet);
   };
 
-  const completionPercentage = (checkedItems.size / Math.max(1, 
-    (checklist.checklist?.critical_tasks?.length || 0) +
-    (checklist.checklist?.documentation?.length || 0) +
-    (checklist.checklist?.filings?.length || 0)
-  )) * 100;
+  const allItems = [
+    ...(checklist.items?.critical_tasks || []).map(t => t.task || t),
+    ...(checklist.items?.documentation || []),
+    ...(checklist.items?.filings || []),
+    ...(checklist.items?.review_items || [])
+  ];
+
+  const progress = allItems.length > 0 ? Math.round((checkedItems.size / allItems.length) * 100) : 0;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">✅ Tax Year Closing Checklist</h1>
-        <p className="text-slate-500 mt-1">Systematisches Abschließen Ihres Steuerjahres</p>
+        <h1 className="text-3xl font-bold">📋 Tax Year Closing Checklist</h1>
+        <p className="text-slate-500 mt-1">Schließen Sie Ihr Steuerjahr ab</p>
       </div>
 
       {/* Controls */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="text-sm font-medium">Land</label>
           <Select value={country} onValueChange={setCountry}>
@@ -77,24 +81,33 @@ export default function TaxYearClosingChecklist() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={String(CURRENT_YEAR - 2)}>{CURRENT_YEAR - 2}</SelectItem>
               <SelectItem value={String(CURRENT_YEAR - 1)}>{CURRENT_YEAR - 1}</SelectItem>
               <SelectItem value={String(CURRENT_YEAR)}>{CURRENT_YEAR}</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <div>
-          <label className="text-sm font-medium">Fortschritt</label>
-          <div className="mt-2 text-2xl font-bold text-blue-600">{Math.round(completionPercentage)}%</div>
-        </div>
       </div>
 
       {isLoading ? (
-        <div className="text-center py-8">⏳ Lade Checkliste...</div>
+        <div className="text-center py-8">⏳ Checkliste wird erstellt...</div>
       ) : (
         <>
+          {/* Progress */}
+          <Card className="border-2 border-blue-300 bg-blue-50">
+            <CardContent className="pt-6">
+              <div className="flex justify-between items-center mb-3">
+                <span className="font-medium">Fortschritt</span>
+                <span className="font-bold text-blue-600">{progress}%</span>
+              </div>
+              <Progress value={progress} className="h-3" />
+              <p className="text-sm text-slate-600 mt-3">
+                {checkedItems.size} von {allItems.length} Aufgaben abgeschlossen
+              </p>
+            </CardContent>
+          </Card>
+
           {/* Critical Tasks */}
-          {(checklist.checklist?.critical_tasks || []).length > 0 && (
+          {(checklist.items?.critical_tasks || []).length > 0 && (
             <Card className="border-red-300 bg-red-50">
               <CardHeader>
                 <CardTitle className="text-sm flex items-center gap-2">
@@ -102,27 +115,23 @@ export default function TaxYearClosingChecklist() {
                   Kritische Aufgaben
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                {checklist.checklist.critical_tasks.map((task, i) => {
-                  const itemId = `critical-${i}`;
+              <CardContent className="space-y-3">
+                {checklist.items.critical_tasks.map((task, i) => {
+                  const taskKey = task.task || task;
+                  const isChecked = checkedItems.has(taskKey);
                   return (
-                    <label key={itemId} className="flex items-center gap-3 p-2 hover:bg-white rounded cursor-pointer">
+                    <div key={i} className="flex gap-3 p-3 bg-white rounded items-start">
                       <Checkbox
-                        checked={checkedItems.has(itemId)}
-                        onCheckedChange={() => toggleCheck(itemId)}
+                        checked={isChecked}
+                        onCheckedChange={() => toggleCheck(taskKey)}
                       />
                       <div className="flex-1">
-                        <p className="font-medium text-sm">{task.title || task.task}</p>
-                        {task.deadline && (
-                          <p className="text-xs text-slate-600 mt-0.5">Deadline: {task.deadline}</p>
-                        )}
+                        <p className={`text-sm font-medium ${isChecked ? 'line-through text-slate-500' : ''}`}>
+                          {taskKey}
+                        </p>
+                        {task.deadline && <p className="text-xs text-red-600 mt-1">Fällig: {task.deadline}</p>}
                       </div>
-                      {task.priority && (
-                        <Badge className="flex-shrink-0 bg-red-200 text-red-800 text-xs">
-                          {task.priority.toUpperCase()}
-                        </Badge>
-                      )}
-                    </label>
+                    </div>
                   );
                 })}
               </CardContent>
@@ -130,109 +139,69 @@ export default function TaxYearClosingChecklist() {
           )}
 
           {/* Documentation */}
-          {(checklist.checklist?.documentation || []).length > 0 && (
+          {(checklist.items?.documentation || []).length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">📋 Dokumentation</CardTitle>
+                <CardTitle className="text-sm">📄 Dokumentation</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {checklist.checklist.documentation.map((doc, i) => {
-                  const itemId = `doc-${i}`;
+                {checklist.items.documentation.map((doc, i) => {
+                  const isChecked = checkedItems.has(doc);
                   return (
-                    <label key={itemId} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded cursor-pointer">
+                    <div key={i} className="flex gap-3 p-2 bg-slate-50 rounded items-start">
                       <Checkbox
-                        checked={checkedItems.has(itemId)}
-                        onCheckedChange={() => toggleCheck(itemId)}
+                        checked={isChecked}
+                        onCheckedChange={() => toggleCheck(doc)}
                       />
-                      <span className="text-sm">{doc}</span>
-                    </label>
+                      <p className={`text-sm ${isChecked ? 'line-through text-slate-500' : ''}`}>{doc}</p>
+                    </div>
                   );
                 })}
               </CardContent>
             </Card>
           )}
 
-          {/* Filings */}
-          {(checklist.checklist?.filings || []).length > 0 && (
+          {/* Review Items */}
+          {(checklist.items?.review_items || []).length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">📄 Anträge</CardTitle>
+                <CardTitle className="text-sm">🔍 Überprüfungs-Elemente</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {checklist.checklist.filings.map((filing, i) => {
-                  const itemId = `filing-${i}`;
+                {checklist.items.review_items.map((item, i) => {
+                  const isChecked = checkedItems.has(item);
                   return (
-                    <label key={itemId} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded cursor-pointer">
+                    <div key={i} className="flex gap-3 p-2 bg-slate-50 rounded items-start">
                       <Checkbox
-                        checked={checkedItems.has(itemId)}
-                        onCheckedChange={() => toggleCheck(itemId)}
+                        checked={isChecked}
+                        onCheckedChange={() => toggleCheck(item)}
                       />
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{filing.name || filing.title}</p>
-                        {filing.deadline && (
-                          <p className="text-xs text-slate-600 mt-0.5">Fällig: {filing.deadline}</p>
-                        )}
-                      </div>
-                    </label>
+                      <p className={`text-sm ${isChecked ? 'line-through text-slate-500' : ''}`}>{item}</p>
+                    </div>
                   );
                 })}
               </CardContent>
             </Card>
           )}
 
-          {/* Reviews */}
-          {(checklist.checklist?.reviews || []).length > 0 && (
-            <Card>
+          {/* Retention Guidelines */}
+          {(checklist.items?.retention_guidelines || []).length > 0 && (
+            <Card className="border-green-300 bg-green-50">
               <CardHeader>
-                <CardTitle className="text-sm">🔍 Überprüfungen</CardTitle>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5" />
+                  Aufbewahrungsrichtlinien
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {checklist.checklist.reviews.map((review, i) => {
-                  const itemId = `review-${i}`;
-                  return (
-                    <label key={itemId} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded cursor-pointer">
-                      <Checkbox
-                        checked={checkedItems.has(itemId)}
-                        onCheckedChange={() => toggleCheck(itemId)}
-                      />
-                      <span className="text-sm">{review}</span>
-                    </label>
-                  );
-                })}
+                {checklist.items.retention_guidelines.map((guideline, i) => (
+                  <div key={i} className="text-sm p-2 bg-white rounded">
+                    • {guideline}
+                  </div>
+                ))}
               </CardContent>
             </Card>
           )}
-
-          {/* Timeline */}
-          {checklist.checklist?.timeline && (
-            <Card className="bg-blue-50 border-blue-300">
-              <CardHeader>
-                <CardTitle className="text-sm">📅 Zeitplan</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-slate-700">
-                {checklist.checklist.timeline}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Completion Info */}
-          <Card className="border-green-300 bg-green-50">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
-                <div>
-                  <p className="font-semibold text-green-900">Fortschritt</p>
-                  <p className="text-sm text-green-800 mt-1">
-                    {checkedItems.size} von {
-                      (checklist.checklist?.critical_tasks?.length || 0) +
-                      (checklist.checklist?.documentation?.length || 0) +
-                      (checklist.checklist?.filings?.length || 0)
-                    } Aufgaben erledigt
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </>
       )}
     </div>

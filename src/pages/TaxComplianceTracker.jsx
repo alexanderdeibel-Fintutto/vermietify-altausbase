@@ -12,78 +12,42 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
-} from 'recharts';
-import { CheckCircle2, AlertTriangle, Clock, TrendingUp } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
 
 const CURRENT_YEAR = new Date().getFullYear();
-
-const COLORS = {
-  completed: '#10b981',
-  pending: '#f59e0b',
-  at_risk: '#ef4444'
-};
 
 export default function TaxComplianceTracker() {
   const [country, setCountry] = useState('DE');
   const [taxYear, setTaxYear] = useState(CURRENT_YEAR);
 
-  // Fetch compliance report
-  const { data: report = {}, isLoading } = useQuery({
-    queryKey: ['complianceReport', country, taxYear],
+  const { data: compliance = {}, isLoading } = useQuery({
+    queryKey: ['taxCompliance', country, taxYear],
     queryFn: async () => {
-      const response = await base44.functions.invoke('generateComplianceReport', {
+      const response = await base44.functions.invoke('monitorTaxComplianceStatus', {
         country,
         taxYear
       });
-      return response.data?.report || {};
+      return response.data?.compliance_status || {};
     }
   });
 
-  const complianceData = [
-    { name: 'Completed', value: report.requirements_breakdown?.completed || 0, fill: COLORS.completed },
-    { name: 'Pending', value: report.requirements_breakdown?.pending || 0, fill: COLORS.pending },
-    { name: 'At Risk', value: report.requirements_breakdown?.at_risk || 0, fill: COLORS.at_risk }
-  ];
-
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'at_risk':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-slate-100 text-slate-800';
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'completed':
-        return '✓';
-      case 'pending':
-        return '⏳';
-      case 'at_risk':
-        return '⚠️';
-      default:
-        return '?';
-    }
+  const getScoreColor = (score) => {
+    if (score >= 80) return 'text-green-600 bg-green-50 border-green-300';
+    if (score >= 60) return 'text-yellow-600 bg-yellow-50 border-yellow-300';
+    return 'text-red-600 bg-red-50 border-red-300';
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">📋 Tax Compliance Tracker</h1>
-        <p className="text-slate-500 mt-1">Verfolgen Sie Ihren Compliance-Status</p>
+        <h1 className="text-3xl font-bold">✅ Tax Compliance Tracker</h1>
+        <p className="text-slate-500 mt-1">Überwachen Sie Ihren Compliance-Status</p>
       </div>
 
       {/* Controls */}
-      <div className="flex gap-4 flex-wrap">
-        <div className="flex-1 max-w-xs">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
           <label className="text-sm font-medium">Land</label>
           <Select value={country} onValueChange={setCountry}>
             <SelectTrigger>
@@ -96,7 +60,7 @@ export default function TaxComplianceTracker() {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex-1 max-w-xs">
+        <div>
           <label className="text-sm font-medium">Steuerjahr</label>
           <Select value={String(taxYear)} onValueChange={(v) => setTaxYear(parseInt(v))}>
             <SelectTrigger>
@@ -111,197 +75,92 @@ export default function TaxComplianceTracker() {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-8">⏳ Lade Compliance-Report...</div>
+        <div className="text-center py-8">⏳ Compliance wird überprüft...</div>
       ) : (
         <>
-          {/* Overall Status Card */}
-          <Card className="border-blue-300 bg-blue-50">
+          {/* Compliance Score */}
+          <Card className={`border-2 ${getScoreColor(compliance.assessment?.compliance_score || 0)}`}>
             <CardContent className="pt-6">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-semibold">Gesamt-Compliance-Status</h3>
-                  <Badge className="bg-blue-200 text-blue-800 text-lg px-3 py-1">
-                    {report.compliance_score || 0}/100
-                  </Badge>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center">
+                  <p className="text-sm text-slate-600">Compliance-Bewertung</p>
+                  <p className="text-4xl font-bold mt-2">
+                    {Math.round(compliance.assessment?.compliance_score || 0)}%
+                  </p>
+                  <Progress 
+                    value={compliance.assessment?.compliance_score || 0} 
+                    className="mt-3"
+                  />
                 </div>
-                <Progress value={report.compliance_score || 0} />
-                <p className="text-sm text-slate-700">{report.overall_status}</p>
+                <div className="text-center md:col-span-2">
+                  <p className="text-sm text-slate-600">Status</p>
+                  <Badge className={`mt-2 text-base py-2 px-4 ${
+                    (compliance.assessment?.status || '').toLowerCase().includes('compliant')
+                      ? 'bg-green-100 text-green-800'
+                      : (compliance.assessment?.status || '').toLowerCase().includes('at risk')
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {compliance.assessment?.status || 'UNKNOWN'}
+                  </Badge>
+                  <p className="text-sm text-slate-700 mt-3">
+                    {compliance.assessment?.overall_assessment || 'Keine Bewertung verfügbar'}
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <CheckCircle2 className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold">{report.metrics?.compliance_rate || 0}%</p>
-                <p className="text-xs text-slate-600 mt-1">Compliance-Rate</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <TrendingUp className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold">{Math.round(report.metrics?.documentation_completeness || 0)}%</p>
-                <p className="text-xs text-slate-600 mt-1">Dokumentation</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <Clock className="w-6 h-6 text-yellow-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold">{report.requirements_breakdown?.pending || 0}</p>
-                <p className="text-xs text-slate-600 mt-1">Ausstehend</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <AlertTriangle className="w-6 h-6 text-red-600 mx-auto mb-2" />
-                <p className="text-2xl font-bold">{report.metrics?.critical_alerts || 0}</p>
-                <p className="text-xs text-slate-600 mt-1">Kritische Issues</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Compliance Chart */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
+          {/* Critical Issues */}
+          {(compliance.assessment?.critical_issues || []).length > 0 && (
+            <Card className="border-red-300 bg-red-50">
               <CardHeader>
-                <CardTitle className="text-sm">📊 Anforderungen-Status</CardTitle>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5" />
+                  Kritische Probleme
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie
-                      data={complianceData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, value }) => `${name}: ${value}`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {complianceData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">📈 Erfüllungsgrad</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <p className="text-sm font-medium">Compliance-Anforderungen</p>
-                    <p className="text-sm font-bold">
-                      {report.requirements_breakdown?.completed}/{report.requirements_breakdown?.total}
-                    </p>
+              <CardContent className="space-y-2">
+                {compliance.assessment.critical_issues.map((issue, i) => (
+                  <div key={i} className="flex gap-2 text-sm p-2 bg-white rounded">
+                    <span className="flex-shrink-0 text-red-600">!</span>
+                    {issue}
                   </div>
-                  <Progress
-                    value={
-                      (report.requirements_breakdown?.completed / report.requirements_breakdown?.total) * 100 || 0
-                    }
-                  />
-                </div>
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <p className="text-sm font-medium">Dokumentation</p>
-                    <p className="text-sm font-bold">{Math.round(report.metrics?.documentation_completeness || 0)}%</p>
-                  </div>
-                  <Progress value={report.metrics?.documentation_completeness || 0} />
-                </div>
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <p className="text-sm font-medium">Einreichung</p>
-                    <p className="text-sm font-bold">{Math.round(report.metrics?.filing_status || 0)}%</p>
-                  </div>
-                  <Progress value={report.metrics?.filing_status || 0} />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Requirements List */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">🎯 Compliance-Anforderungen</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 max-h-96 overflow-y-auto">
-              {(report.requirements_details || []).map((req, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 rounded border border-slate-200">
-                  <span className="text-lg">{getStatusIcon(req.status)}</span>
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{req.requirement}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Progress value={req.completion} className="flex-1 h-1.5" />
-                      <span className="text-xs text-slate-600">{Math.round(req.completion)}%</span>
-                    </div>
-                  </div>
-                  <Badge className={getStatusColor(req.status)}>{req.status?.toUpperCase()}</Badge>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          {/* Achievements */}
-          {(report.key_achievements || []).length > 0 && (
-            <Card className="border-green-300 bg-green-50">
-              <CardHeader>
-                <CardTitle className="text-sm">✅ Erfolge</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {report.key_achievements.map((achievement, i) => (
-                    <li key={i} className="flex gap-2 text-sm">
-                      <span className="text-green-600">✓</span> {achievement}
-                    </li>
-                  ))}
-                </ul>
+                ))}
               </CardContent>
             </Card>
           )}
 
-          {/* Priority Actions */}
-          {(report.priority_actions || []).length > 0 && (
+          {/* At-Risk Items */}
+          {(compliance.assessment?.at_risk_items || []).length > 0 && (
             <Card className="border-orange-300 bg-orange-50">
               <CardHeader>
-                <CardTitle className="text-sm">🎯 Prioritäre Aktionen</CardTitle>
+                <CardTitle className="text-sm">⚠️ Gefährdete Bereiche</CardTitle>
               </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {report.priority_actions.map((action, i) => (
-                    <li key={i} className="flex gap-2 text-sm">
-                      <Badge className="flex-shrink-0 bg-orange-200 text-orange-800 text-xs mt-0.5">
-                        {i + 1}
-                      </Badge>
-                      {action}
-                    </li>
-                  ))}
-                </ul>
+              <CardContent className="space-y-2">
+                {compliance.assessment.at_risk_items.map((item, i) => (
+                  <div key={i} className="flex gap-2 text-sm p-2 bg-white rounded">
+                    <Clock className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                    {item}
+                  </div>
+                ))}
               </CardContent>
             </Card>
           )}
 
-          {/* Recommendations */}
-          {(report.recommendations || []).length > 0 && (
+          {/* Next Steps */}
+          {(compliance.assessment?.next_steps || []).length > 0 && (
             <Card className="border-blue-300 bg-blue-50">
               <CardHeader>
-                <CardTitle className="text-sm">💡 Empfehlungen</CardTitle>
+                <CardTitle className="text-sm">🚀 Nächste Schritte</CardTitle>
               </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {report.recommendations.map((rec, i) => (
-                    <li key={i} className="text-sm flex gap-2">
-                      <span>→</span> {rec}
-                    </li>
-                  ))}
-                </ul>
+              <CardContent className="space-y-2">
+                {compliance.assessment.next_steps.map((step, i) => (
+                  <div key={i} className="flex gap-3 text-sm p-2 bg-white rounded">
+                    <span className="font-bold text-blue-600 flex-shrink-0">{i + 1}.</span>
+                    {step}
+                  </div>
+                ))}
               </CardContent>
             </Card>
           )}

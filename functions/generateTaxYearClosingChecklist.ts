@@ -15,42 +15,36 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
-    // Fetch all tax data to determine status
-    const [filings, documents, compliance, deadlines] = await Promise.all([
-      base44.entities.TaxFiling.filter({ user_email: user.email, country, tax_year: taxYear }) || [],
-      base44.entities.TaxDocument.filter({ user_email: user.email, country, tax_year: taxYear }) || [],
-      base44.entities.TaxCompliance.filter({ user_email: user.email, country, tax_year: taxYear }) || [],
-      base44.entities.TaxDeadline.filter({ country, is_active: true }) || []
+    // Fetch tax data
+    const [filings, docs, compliance] = await Promise.all([
+      base44.entities.TaxFiling.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
+      base44.entities.TaxDocument.filter({ user_email: user.email, country, tax_year: taxYear }, '-updated_date', 5).catch(() => []),
+      base44.entities.TaxCompliance.filter({ user_email: user.email, country, tax_year: taxYear }, '-updated_date', 5).catch(() => [])
     ]);
 
     const checklist = await base44.integrations.Core.InvokeLLM({
-      prompt: `Create a comprehensive tax year closing checklist for ${country} for tax year ${taxYear}.
+      prompt: `Generate tax year closing checklist for ${country}, year ${taxYear}.
 
-Status:
-- Filings: ${filings.length} (${filings.filter(f => f.status === 'submitted').length} submitted)
-- Documents: ${documents.length} (${documents.filter(d => d.status === 'processed').length} processed)
-- Compliance: ${compliance.length} (${compliance.filter(c => c.status === 'completed').length} completed)
-- Deadlines: ${deadlines.length}
+Current data:
+- Filings: ${filings.length}
+- Documents: ${docs.length}
+- Compliance items: ${compliance.length}
 
-Generate a detailed checklist with:
-1. Critical closing tasks
-2. Document collection requirements
-3. Filing deadlines
-4. Final reviews needed
-5. Archive and storage steps
-6. Tax advisor coordination tasks
-7. Estimated timeline
-8. Risk mitigation items`,
+Create checklist with:
+1. Critical final tasks
+2. Documentation gathering
+3. Filing preparations
+4. Record retention
+5. Archiving steps
+6. Year-end review items`,
       response_json_schema: {
         type: 'object',
         properties: {
-          critical_tasks: { type: 'array', items: { type: 'object', additionalProperties: true } },
+          critical_tasks: { type: 'array', items: { type: 'object', properties: { task: { type: 'string' }, deadline: { type: 'string' }, priority: { type: 'string' } }, additionalProperties: true } },
           documentation: { type: 'array', items: { type: 'string' } },
-          filings: { type: 'array', items: { type: 'object', additionalProperties: true } },
-          reviews: { type: 'array', items: { type: 'string' } },
-          archival: { type: 'array', items: { type: 'string' } },
-          timeline: { type: 'string' },
-          completion_estimate: { type: 'number' }
+          filings: { type: 'array', items: { type: 'string' } },
+          review_items: { type: 'array', items: { type: 'string' } },
+          retention_guidelines: { type: 'array', items: { type: 'string' } }
         }
       }
     });
@@ -60,8 +54,7 @@ Generate a detailed checklist with:
       checklist: {
         country,
         tax_year: taxYear,
-        generated_at: new Date().toISOString(),
-        checklist: checklist
+        items: checklist
       }
     });
   } catch (error) {
