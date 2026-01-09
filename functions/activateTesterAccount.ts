@@ -138,7 +138,14 @@ Deno.serve(async (req) => {
       }
     });
 
-    // Step 6: Log initial activity
+    // Step 6: Seed test data for tester
+    try {
+      await base44.asServiceRole.functions.invoke('seedTestData', {});
+    } catch (err) {
+      console.log('Could not seed test data:', err.message);
+    }
+
+    // Step 7: Log initial activity
     await base44.asServiceRole.entities.TesterActivity.create({
       test_account_id: testAccount.id,
       session_id: `init_${Date.now()}`,
