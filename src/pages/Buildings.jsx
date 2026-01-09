@@ -84,11 +84,11 @@ export default function BuildingsPage() {
   };
 
   return (
-    <div className="space-y-0 bg-white rounded-lg border border-slate-100 shadow-none">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="px-8 py-6 border-b border-slate-100">
-        <h1 className="text-xl font-extralight text-slate-600 tracking-wide">Gebäude</h1>
-        <p className="text-xs font-extralight text-slate-400 mt-2">{filteredStats.length} von {totalBuildings} Gebäuden</p>
+      <div>
+        <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Gebäude</h1>
+        <p className="text-sm font-extralight text-slate-400 mt-1">{filteredStats.length} von {totalBuildings} Gebäuden</p>
       </div>
 
       {/* Filter-Bar */}
@@ -113,27 +113,29 @@ export default function BuildingsPage() {
         )}
       />
 
-      {/* Tabelle */}
-      {filteredStats.length > 0 ? (
-        <>
-          <BuildingTable
-            stats={filteredStats}
-            onEdit={setEditingBuilding}
-            onDelete={handleDelete}
-            onQuickAction={handleQuickAction}
-          />
-          <BuildingSummary
-            totalBuildings={filteredStats.length}
-            totalUnitsCount={filteredStats.reduce((sum, s) => sum + s.totalUnits, 0)}
-            totalRentedUnits={filteredStats.reduce((sum, s) => sum + s.rentedUnits, 0)}
-            totalRevenue={filteredStats.reduce((sum, s) => sum + s.totalRent, 0)}
-          />
-        </>
-      ) : (
-        <div className="p-12 text-center text-slate-500">
-          <p>Keine Gebäude gefunden</p>
-        </div>
-      )}
+      {/* Content */}
+      <div className="bg-white rounded-lg border border-slate-100 shadow-none">
+        {filteredStats.length > 0 ? (
+          <>
+            <BuildingTable
+              stats={filteredStats}
+              onEdit={setEditingBuilding}
+              onDelete={handleDelete}
+              onQuickAction={handleQuickAction}
+            />
+            <BuildingSummary
+              totalBuildings={filteredStats.length}
+              totalUnitsCount={filteredStats.reduce((sum, s) => sum + s.totalUnits, 0)}
+              totalRentedUnits={filteredStats.reduce((sum, s) => sum + s.rentedUnits, 0)}
+              totalRevenue={filteredStats.reduce((sum, s) => sum + s.totalRent, 0)}
+            />
+          </>
+        ) : (
+          <div className="p-12 text-center">
+            <p className="text-sm font-extralight text-slate-400">Keine Gebäude gefunden</p>
+          </div>
+        )}
+      </div>
 
       {/* Edit Dialog */}
       <BuildingEditDialog
