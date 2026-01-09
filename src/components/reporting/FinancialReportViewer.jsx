@@ -5,13 +5,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Download, Share2, Printer } from 'lucide-react';
+import { Download, Share2, Printer, Zap } from 'lucide-react';
 import { toast } from 'sonner';
+import CostOptimizationPanel from './CostOptimizationPanel';
 
 const COLORS = ['#0f172a', '#64748b', '#94a3b8', '#cbd5e1', '#e2e8f0'];
 
 export default function FinancialReportViewer({ report }) {
   const [activeTab, setActiveTab] = useState('summary');
+  const [costAnalysis, setCostAnalysis] = useState(null);
 
   if (!report) {
     return <div className="text-center text-slate-500">Kein Bericht vorhanden</div>;
@@ -35,6 +37,22 @@ export default function FinancialReportViewer({ report }) {
 
   const handleExport = (format) => {
     toast.success(`Report als ${format.toUpperCase()} exportiert`);
+  };
+
+  const handleAnalyzeCosts = async () => {
+    try {
+      const response = await base44.functions.invoke('generateCostOptimizationAnalysis', {
+        report_id: report.id,
+        metrics: report.metrics,
+        period_start: report.period_start,
+        period_end: report.period_end,
+        historical_data: report.metrics // Simplified - in production, fetch actual historical data
+      });
+      setCostAnalysis(response.data.analysis);
+      toast.success('Kostenanalyse abgeschlossen');
+    } catch (error) {
+      toast.error(`Fehler: ${error.message}`);
+    }
   };
 
   return (
@@ -86,10 +104,11 @@ export default function FinancialReportViewer({ report }) {
 
       {/* Detailed Analysis */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="summary">Übersicht</TabsTrigger>
           <TabsTrigger value="income">Einkommen</TabsTrigger>
           <TabsTrigger value="expenses">Ausgaben</TabsTrigger>
+          <TabsTrigger value="optimization">Optimierung</TabsTrigger>
           <TabsTrigger value="insights">Insights</TabsTrigger>
         </TabsList>
 
@@ -193,6 +212,43 @@ export default function FinancialReportViewer({ report }) {
                 </ul>
               </CardContent>
             </Card>
+          )}
+        </TabsContent>
+
+        {/* Optimization Tab */}
+        <TabsContent value="optimization" className="space-y-4">
+          {!costAnalysis ? (
+            <Card>
+              <CardContent className="pt-4">
+                <div className="text-center space-y-4">
+                  <Zap className="w-12 h-12 text-blue-500 mx-auto" />
+                  <div>
+                    <p className="font-semibold mb-1">Kostenoptimierungsanalyse</p>
+                    <p className="text-xs text-slate-600 mb-4">
+                      AI-gestützte Analyse zur Identifizierung von Sparpotentialen
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleAnalyzeCosts}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    Analyse starten
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <Button
+                onClick={handleAnalyzeCosts}
+                variant="outline"
+                size="sm"
+                className="mb-2"
+              >
+                Neu analysieren
+              </Button>
+              <CostOptimizationPanel analysis={costAnalysis} />
+            </>
           )}
         </TabsContent>
 
