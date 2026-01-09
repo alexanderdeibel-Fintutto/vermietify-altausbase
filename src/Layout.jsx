@@ -21,6 +21,8 @@ import SubNavigation from '@/components/navigation/SubNavigation';
 import MobileBottomNav from '@/components/navigation/MobileBottomNav';
 import BreadcrumbNavigation from '@/components/navigation/BreadcrumbNavigation';
 import HamburgerMenu from '@/components/navigation/HamburgerMenu';
+import DeepSubNavigation from '@/components/navigation/DeepSubNavigation';
+import QuickActions from '@/components/navigation/QuickActions';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 
@@ -107,6 +109,7 @@ export default function Layout({ children, currentPageName }) {
                             <AdaptiveNavigation currentPageName={currentPageName} />
                         </div>
                         <div className="flex items-center gap-3 flex-shrink-0">
+                            <QuickActions visibleFeatures={visibleFeatures} />
                             <SuiteSwitcher />
                             <NotificationCenter />
                             <Link to={createPageUrl('MyAccount')}>
@@ -128,6 +131,9 @@ export default function Layout({ children, currentPageName }) {
 
                     {/* Sub-Navigation */}
                     {mainSection && <SubNavigation mainSection={mainSection} visibleFeatures={visibleFeatures} />}
+
+                    {/* Deep Sub-Navigation (Level 3+) */}
+                    <DeepSubNavigation parentSection={mainSection} currentPage={currentPageName} visibleFeatures={visibleFeatures} />
 
                     {/* Page content */}
                     <main className="p-4 lg:p-8 mb-20 lg:mb-0">
