@@ -52,9 +52,13 @@ export default function HorizontalMainNavigation() {
     }
   ];
 
+  const activeSectionData = sections.find(s => s.key === activeSection);
+  const ActiveIcon = activeSectionData?.icon || Home;
+
   return (
-    <nav className="h-12 border-b border-slate-100 bg-white">
-      <div className="flex items-center h-full px-8 gap-1">
+    <nav className="border-b border-slate-100 bg-white">
+      {/* Desktop Navigation */}
+      <div className="hidden lg:flex items-center h-12 px-8 gap-1">
         {sections.map((section) => {
           const Icon = section.icon;
           const isActive = activeSection === section.key;
@@ -73,6 +77,16 @@ export default function HorizontalMainNavigation() {
             </a>
           );
         })}
+      </div>
+
+      {/* Mobile Navigation - Expandable */}
+      <div className="lg:hidden">
+        <div className="flex items-center justify-between px-6 py-3">
+          <div className="flex items-center gap-2 text-sm font-extralight text-slate-700">
+            <ActiveIcon className="w-4 h-4" />
+            {activeSectionData?.label}
+          </div>
+        </div>
       </div>
     </nav>
   );

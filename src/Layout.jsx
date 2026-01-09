@@ -96,8 +96,15 @@ export default function Layout({ children, currentPageName }) {
                         </div>
                     </div>
 
-                    {/* Horizontal Main Navigation */}
-                    <HorizontalMainNavigation />
+                    {/* Horizontal Main Navigation - Desktop */}
+                    <div className="hidden lg:block">
+                        <HorizontalMainNavigation />
+                    </div>
+                    
+                    {/* Mobile Main Navigation Dropdown */}
+                    <div className="lg:hidden border-t border-slate-100">
+                        <HorizontalMainNavigation />
+                    </div>
                 </header>
 
                 {/* Sub-Navigation */}
