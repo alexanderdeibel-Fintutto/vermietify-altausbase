@@ -9,55 +9,55 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { country, taxYear, plannedDonation, grossIncome } = await req.json();
+    const { tax_year, country, donation_budget } = await req.json();
 
-    if (!country || !taxYear || !plannedDonation) {
-      return Response.json({ error: 'Missing parameters' }, { status: 400 });
-    }
-
+    // Charitable Donation Tax Optimization
     const strategy = await base44.integrations.Core.InvokeLLM({
-      prompt: `Generate charitable giving tax strategy for ${country}, year ${taxYear}.
+      prompt: `Erstelle optimale Charities Donations Strategie für ${user.email} (${tax_year}):
 
-Donor Profile:
-- Planned Donations: €${Math.round(plannedDonation)}
-- Gross Income: €${Math.round(grossIncome || 0)}
+BUDGET: $${donation_budget}
+COUNTRY: ${country}
 
-Create detailed strategy:
-1. Tax deduction eligibility analysis
-2. Donation timing optimization
-3. Appreciated asset donation strategies
-4. Donor-advised fund opportunities
-5. Charitable remainder trust (CRT) planning
-6. Bunching strategy for deductions
-7. Qualified charitable distributions (QCD)
-8. Below-market charitable loans
-9. Conservation easement donations
-10. Estimated tax deduction and savings
-11. Documentation requirements`,
+TAX RULES:
+${country === 'CH' ? 'Kantonale Unterschiede, max 20% Einkommen, Spendenbescheinigung erforderlich' :
+country === 'DE' ? 'Max 20% Einkommen Abzug, Bestandteile (Geldspenden vs. Sachspenden), Daueraufträge' :
+'Max 10-15% Einkommen, Listed Charities, Donor-Advised Funds'}
+
+OPTIMIERE:
+1. Entity-Type für Spenden (Donor-Advised Funds, Stiftungen)
+2. Timing (dieses Jahr vs. nächstes)
+3. Asset-Type (Cash vs. Appreciated Securities)
+4. Tax-Loss Harvesting + Charitable
+5. Clustering (jährlich vs. multi-year)
+6. International Giving (Spendenabzug in mehreren Ländern)
+
+GEBE:
+- Maximale Spenden-Abzüge
+- Entity-Recommendations
+- Timing Strategy
+- Documentation Checklist`,
       response_json_schema: {
-        type: 'object',
+        type: "object",
         properties: {
-          tax_deduction_analysis: { type: 'object', additionalProperties: true },
-          donation_strategies: { type: 'array', items: { type: 'object', additionalProperties: true } },
-          timing_recommendations: { type: 'array', items: { type: 'string' } },
-          estimated_tax_savings: { type: 'number' },
-          documentation_checklist: { type: 'array', items: { type: 'string' } },
-          compliance_notes: { type: 'array', items: { type: 'string' } }
+          country: { type: "string" },
+          recommended_donation_amount: { type: "number" },
+          tax_deduction: { type: "number" },
+          estimated_tax_savings: { type: "number" },
+          suggested_donation_vehicles: { type: "array", items: { type: "string" } },
+          timing_strategy: { type: "string" },
+          charity_selection_criteria: { type: "array", items: { type: "string" } }
         }
       }
     });
 
     return Response.json({
-      status: 'success',
-      strategy: {
-        country,
-        tax_year: taxYear,
-        generated_at: new Date().toISOString(),
-        content: strategy
-      }
+      user_email: user.email,
+      country,
+      tax_year,
+      charitable_strategy: strategy
     });
+
   } catch (error) {
-    console.error('Generate charitable donation strategy error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
