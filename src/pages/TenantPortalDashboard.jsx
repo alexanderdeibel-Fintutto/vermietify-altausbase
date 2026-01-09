@@ -17,6 +17,7 @@ import LeaseExpiryWidget from '@/components/tenant-portal/LeaseExpiryWidget';
 import RecentCommunicationsWidget from '@/components/tenant-portal/RecentCommunicationsWidget';
 import OutstandingTasksWidget from '@/components/tenant-portal/OutstandingTasksWidget';
 import TenantDocumentsManager from '@/components/tenant-portal/TenantDocumentsManager';
+import TenantFeedbackForm from '@/components/tenant-portal/TenantFeedbackForm';
 
 export default function TenantPortalDashboard() {
   const [tenantId] = useState(new URLSearchParams(window.location.search).get('id'));
@@ -141,12 +142,13 @@ export default function TenantPortalDashboard() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6 mb-6">
             <TabsTrigger value="overview">Übersicht</TabsTrigger>
             <TabsTrigger value="contracts">Verträge</TabsTrigger>
             <TabsTrigger value="maintenance">Anfragen</TabsTrigger>
             <TabsTrigger value="messages">Nachrichten</TabsTrigger>
             <TabsTrigger value="documents">Dokumente</TabsTrigger>
+            <TabsTrigger value="feedback">Feedback</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -316,7 +318,16 @@ export default function TenantPortalDashboard() {
           <TabsContent value="documents">
             <TenantDocumentsManager tenantId={tenantId} />
           </TabsContent>
-        </Tabs>
+
+          {/* Feedback Tab */}
+          <TabsContent value="feedback">
+            <TenantFeedbackForm 
+              tenantId={tenantId} 
+              tenantEmail={tenant?.email} 
+              tenantName={tenant?.name}
+            />
+          </TabsContent>
+          </Tabs>
       </main>
     </div>
   );

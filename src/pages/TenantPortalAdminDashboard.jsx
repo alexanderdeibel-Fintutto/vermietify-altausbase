@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import TenantPortalCard from '@/components/tenant-portal-admin/TenantPortalCard';
 import TenantAdministrationPanel from '@/components/tenant-portal-admin/TenantAdministrationPanel';
 import AdminMessagingInterface from '@/components/messaging/AdminMessagingInterface';
+import TenantFeedbackManager from '@/components/admin/TenantFeedbackManager';
 
 export default function TenantPortalAdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -65,6 +66,7 @@ export default function TenantPortalAdminDashboard() {
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="administration">Verwaltung</TabsTrigger>
           <TabsTrigger value="communication">Kommunikation</TabsTrigger>
+          <TabsTrigger value="feedback">Feedback</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -183,7 +185,12 @@ export default function TenantPortalAdminDashboard() {
             </Card>
           )}
         </TabsContent>
-      </Tabs>
+
+        {/* Feedback Tab */}
+        <TabsContent value="feedback">
+          <TenantFeedbackManager />
+        </TabsContent>
+        </Tabs>
     </div>
   );
 }
