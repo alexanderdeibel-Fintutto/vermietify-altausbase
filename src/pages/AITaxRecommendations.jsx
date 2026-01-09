@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import {
   Select,
   SelectContent,
@@ -10,13 +11,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { TrendingUp, Zap, Target, AlertTriangle } from 'lucide-react';
+import { AlertTriangle, TrendingDown, Clock, Target } from 'lucide-react';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
 export default function AITaxRecommendations() {
   const [country, setCountry] = useState('DE');
   const [taxYear, setTaxYear] = useState(CURRENT_YEAR);
+  const [generating, setGenerating] = useState(false);
 
   const { data: recommendations = {}, isLoading } = useQuery({
     queryKey: ['aiTaxRecommendations', country, taxYear],
@@ -26,25 +28,35 @@ export default function AITaxRecommendations() {
         taxYear
       });
       return response.data?.recommendations || {};
-    }
+    },
+    enabled: generating
   });
 
-  const analysis = recommendations.ai_analysis || {};
-  const profile = recommendations.profile || {};
+  const getPriorityColor = (priority) => {
+    if (priority >= 8) return 'bg-red-100 text-red-800';
+    if (priority >= 5) return 'bg-orange-100 text-orange-800';
+    return 'bg-blue-100 text-blue-800';
+  };
+
+  const getRiskColor = (risk) => {
+    if (risk === 'high') return 'bg-red-100 text-red-800';
+    if (risk === 'medium') return 'bg-yellow-100 text-yellow-800';
+    return 'bg-green-100 text-green-800';
+  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">🤖 AI Steuererkenntnis</h1>
-        <p className="text-slate-500 mt-1">Personalisierte Empfehlungen für maximale Steuerersparnis</p>
+        <h1 className="text-3xl font-bold">🤖 AI Steuer-Empfehlungen</h1>
+        <p className="text-slate-500 mt-1">Personalisierte KI-gestützte Optimierungsvorschläge</p>
       </div>
 
       {/* Controls */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="text-sm font-medium">Land</label>
-          <Select value={country} onValueChange={setCountry}>
+          <Select value={country} onValueChange={setCountry} disabled={generating}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -57,7 +69,7 @@ export default function AITaxRecommendations() {
         </div>
         <div>
           <label className="text-sm font-medium">Steuerjahr</label>
-          <Select value={String(taxYear)} onValueChange={(v) => setTaxYear(parseInt(v))}>
+          <Select value={String(taxYear)} onValueChange={(v) => setTaxYear(parseInt(v))} disabled={generating}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -68,56 +80,67 @@ export default function AITaxRecommendations() {
             </SelectContent>
           </Select>
         </div>
+        <div className="flex items-end">
+          <button
+            onClick={() => setGenerating(true)}
+            className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium disabled:opacity-50"
+            disabled={generating}
+          >
+            {generating ? '⏳ Wird generiert...' : 'Empfehlungen generieren'}
+          </button>
+        </div>
       </div>
 
       {isLoading ? (
-        <div className="text-center py-8">🤖 KI analysiert Ihre Steuersituation...</div>
-      ) : (
+        <div className="text-center py-8">⏳ Empfehlungen werden generiert...</div>
+      ) : generating && recommendations.content ? (
         <>
-          {/* Profile Summary */}
-          {profile.total_tax > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="border-blue-300 bg-blue-50">
-                <CardContent className="pt-6">
-                  <p className="text-sm text-slate-600">Geschätzte Steuerersparnis</p>
-                  <p className="text-3xl font-bold text-blue-600 mt-2">
-                    €{Math.round(analysis.total_potential_savings || 0).toLocaleString()}
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="border-green-300 bg-green-50">
-                <CardContent className="pt-6">
-                  <p className="text-sm text-slate-600">Einrichtungsdauer</p>
-                  <p className="text-lg font-bold text-green-600 mt-2">{analysis.implementation_timeline || '1-2 Wochen'}</p>
-                </CardContent>
-              </Card>
-            </div>
+          {/* Total Estimated Savings */}
+          {recommendations.content.total_estimated_savings && (
+            <Card className="border-green-300 bg-green-50">
+              <CardContent className="pt-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm text-slate-600">Geschätzte Gesamteinsparungen</p>
+                    <p className="text-3xl font-bold text-green-600 mt-2">
+                      €{Math.round(recommendations.content.total_estimated_savings).toLocaleString()}
+                    </p>
+                  </div>
+                  <TrendingDown className="w-12 h-12 text-green-300" />
+                </div>
+              </CardContent>
+            </Card>
           )}
 
-          {/* Immediate Opportunities */}
-          {(analysis.immediate_opportunities || []).length > 0 && (
-            <Card className="border-green-300 bg-green-50">
+          {/* Immediate Actions */}
+          {(recommendations.content.immediate_actions || []).length > 0 && (
+            <Card>
               <CardHeader>
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-green-600" />
-                  🎯 Sofort umsetzbar
+                  <AlertTriangle className="w-4 h-4 text-red-600" />
+                  🚨 Sofortige Maßnahmen
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {analysis.immediate_opportunities.map((opp, i) => (
-                  <div key={i} className="bg-white rounded-lg p-3 border-l-4 border-green-500">
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-bold text-sm">{opp.title}</h4>
-                      {opp.potential_savings > 0 && (
-                        <Badge className="bg-green-600 text-white">
-                          €{Math.round(opp.potential_savings).toLocaleString()}
+                {recommendations.content.immediate_actions.map((action, i) => (
+                  <div key={i} className="border-l-4 border-red-300 pl-3 py-2 bg-red-50 p-3 rounded">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{action.action}</p>
+                        {action.benefit && (
+                          <p className="text-xs text-green-600 mt-1">
+                            Einsparung: €{Math.round(action.benefit).toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex gap-2 ml-2">
+                        <Badge className={getPriorityColor(action.priority)}>
+                          P{action.priority}
                         </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-600 mb-2">{opp.description}</p>
-                    <div className="flex gap-2">
-                      <Badge variant="outline" className="text-xs">{opp.effort_level}</Badge>
-                      <Badge variant="outline" className="text-xs">{opp.timeline}</Badge>
+                        <Badge className={getRiskColor(action.risk_level)}>
+                          {action.risk_level}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -125,83 +148,93 @@ export default function AITaxRecommendations() {
             </Card>
           )}
 
-          {/* Medium-term Strategies */}
-          {(analysis.medium_term_strategies || []).length > 0 && (
+          {/* Medium Term Opportunities */}
+          {(recommendations.content.medium_term_opportunities || []).length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <Target className="w-5 h-5 text-blue-600" />
-                  📈 Mittelfristige Strategien (3-12 Monate)
+                  <Clock className="w-4 h-4 text-blue-600" />
+                  📅 Mittelfristige Chancen (6 Monate)
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                {analysis.medium_term_strategies.map((strategy, i) => (
-                  <div key={i} className="flex gap-2 text-sm p-2 bg-slate-50 rounded">
-                    <span className="text-blue-600 font-bold flex-shrink-0">{i + 1}.</span>
-                    {strategy}
+              <CardContent className="space-y-3">
+                {recommendations.content.medium_term_opportunities.map((opp, i) => (
+                  <div key={i} className="border-l-4 border-blue-300 pl-3 py-2 bg-blue-50 p-3 rounded">
+                    <p className="font-medium text-sm">{opp.opportunity}</p>
+                    {opp.potential_savings && (
+                      <p className="text-xs text-slate-600 mt-1">
+                        💰 Potential: €{Math.round(opp.potential_savings).toLocaleString()}
+                      </p>
+                    )}
+                    {opp.timeline_months && (
+                      <p className="text-xs text-slate-600">
+                        ⏱️ Zeitrahmen: {opp.timeline_months} Monate
+                      </p>
+                    )}
+                    {(opp.requirements || []).length > 0 && (
+                      <div className="text-xs mt-2">
+                        <p className="text-slate-600">Anforderungen:</p>
+                        <ul className="mt-1 space-y-1">
+                          {opp.requirements.map((req, j) => (
+                            <li key={j}>• {req}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 ))}
               </CardContent>
             </Card>
           )}
 
-          {/* Long-term Planning */}
-          {(analysis.long_term_planning || []).length > 0 && (
+          {/* Long Term Strategies */}
+          {(recommendations.content.long_term_strategies || []).length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-purple-600" />
-                  🚀 Langfristige Planung (1+ Jahre)
+                  <Target className="w-4 h-4 text-purple-600" />
+                  🎯 Langfristige Strategien
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                {analysis.long_term_planning.map((plan, i) => (
-                  <div key={i} className="flex gap-2 text-sm p-2 bg-slate-50 rounded">
-                    <span className="text-purple-600 font-bold flex-shrink-0">{i + 1}.</span>
-                    {plan}
+              <CardContent className="space-y-3">
+                {recommendations.content.long_term_strategies.map((strategy, i) => (
+                  <div key={i} className="border-l-4 border-purple-300 pl-3 py-2 bg-purple-50 p-3 rounded">
+                    <p className="font-medium text-sm">{strategy.strategy}</p>
+                    <p className="text-xs text-slate-600 mt-1">{strategy.description}</p>
+                    {strategy.long_term_benefit && (
+                      <p className="text-xs text-purple-600 mt-1 font-medium">
+                        {strategy.long_term_benefit}
+                      </p>
+                    )}
                   </div>
                 ))}
               </CardContent>
             </Card>
           )}
 
-          {/* Risk Areas */}
-          {(analysis.risk_areas || []).length > 0 && (
-            <Card className="border-yellow-300 bg-yellow-50">
+          {/* Risk Warnings */}
+          {(recommendations.content.risk_warnings || []).length > 0 && (
+            <Card className="border-orange-300 bg-orange-50">
               <CardHeader>
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                  ⚠️ Risikobereich zu beachten
+                  <AlertTriangle className="w-4 h-4 text-orange-600" />
+                  ⚠️ Risikowarnungen
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {analysis.risk_areas.map((risk, i) => (
-                  <div key={i} className="flex gap-2 text-sm p-2 bg-white rounded">
-                    <span className="text-yellow-600 font-bold">!</span>
-                    {risk}
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Compliance Checklist */}
-          {(analysis.compliance_checklist || []).length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">✅ Compliance-Checkliste</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {analysis.compliance_checklist.map((item, i) => (
-                  <div key={i} className="flex gap-2 text-sm p-2 bg-slate-50 rounded">
-                    <span className="text-green-600">☑</span>
-                    {item}
+                {recommendations.content.risk_warnings.map((warning, i) => (
+                  <div key={i} className="text-sm p-2 bg-white rounded">
+                    • {warning}
                   </div>
                 ))}
               </CardContent>
             </Card>
           )}
         </>
+      ) : (
+        <div className="text-center py-8 text-slate-500">
+          Klicken Sie "Empfehlungen generieren", um personalisierte AI-Vorschläge zu erhalten
+        </div>
       )}
     </div>
   );

@@ -195,6 +195,7 @@ import TaxAdvisorPortalPage from './pages/TaxAdvisorPortalPage';
 import TaxYearPlannerPage from './pages/TaxYearPlannerPage';
 import CapitalGainsOptimizer from './pages/CapitalGainsOptimizer';
 import TaxPerformanceDashboard from './pages/TaxPerformanceDashboard';
+import AnnualTaxReview from './pages/AnnualTaxReview';
 import __Layout from './Layout.jsx';
 
 
@@ -396,6 +397,7 @@ export const PAGES = {
     "TaxYearPlannerPage": TaxYearPlannerPage,
     "CapitalGainsOptimizer": CapitalGainsOptimizer,
     "TaxPerformanceDashboard": TaxPerformanceDashboard,
+    "AnnualTaxReview": AnnualTaxReview,
 }
 
 export const pagesConfig = {
