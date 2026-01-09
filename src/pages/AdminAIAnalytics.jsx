@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
@@ -18,7 +18,9 @@ export default function AdminAIAnalytics() {
       return base44.functions.invoke('analyzeUXPatterns', {
         min_frequency: 2
       });
-    }
+    },
+    staleTime: 5 * 60 * 1000, // 5min cache
+    gcTime: 15 * 60 * 1000 // 15min garbage collection
   });
 
   // Fetch insights
@@ -31,7 +33,9 @@ export default function AdminAIAnalytics() {
         analytics_data: {}
       });
     },
-    enabled: !!patterns?.data?.patterns
+    enabled: !!patterns?.data?.patterns,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000
   });
 
   // Fetch A/B tests
@@ -44,17 +48,26 @@ export default function AdminAIAnalytics() {
         user_segments: []
       });
     },
-    enabled: !!insights?.data?.insights
+    enabled: !!insights?.data?.insights,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000
   });
 
-  const handleRefresh = async () => {
+  // Memoize computed stats
+  const stats = useMemo(() => ({
+    patterns_found: patterns?.data?.patterns_found || 0,
+    insights_generated: insights?.data?.insights_generated || 0,
+    ab_test_recommendations: abTests?.data?.ab_test_recommendations || 0
+  }), [patterns?.data?.patterns_found, insights?.data?.insights_generated, abTests?.data?.ab_test_recommendations]);
+
+  const handleRefresh = useCallback(async () => {
     setLoading(true);
     try {
       await refetchPatterns();
     } finally {
       setLoading(false);
     }
-  };
+  }, [refetchPatterns]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
@@ -79,15 +92,15 @@ export default function AdminAIAnalytics() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card className="p-6 bg-white border border-slate-200">
             <p className="text-sm font-light text-slate-600 mb-2">Erkannte Muster</p>
-            <h3 className="text-2xl font-light text-slate-900">{patterns?.data?.patterns_found || 0}</h3>
+            <h3 className="text-2xl font-light text-slate-900">{stats.patterns_found}</h3>
           </Card>
           <Card className="p-6 bg-white border border-slate-200">
             <p className="text-sm font-light text-slate-600 mb-2">AI-Insights</p>
-            <h3 className="text-2xl font-light text-slate-900">{insights?.data?.insights_generated || 0}</h3>
+            <h3 className="text-2xl font-light text-slate-900">{stats.insights_generated}</h3>
           </Card>
           <Card className="p-6 bg-white border border-slate-200">
             <p className="text-sm font-light text-slate-600 mb-2">A/B-Test-Empfehlungen</p>
-            <h3 className="text-2xl font-light text-slate-900">{abTests?.data?.ab_test_recommendations || 0}</h3>
+            <h3 className="text-2xl font-light text-slate-900">{stats.ab_test_recommendations}</h3>
           </Card>
         </div>
 

@@ -41,12 +41,12 @@ Deno.serve(async (req) => {
     );
     const packageConfig = packageRecords[0];
 
-    // Fetch existing data counts with user filter
+    // Fetch existing data counts with optimized queries (minimal limit)
     const [buildings, bankAccounts, contracts, tasks] = await Promise.all([
-      base44.entities.Building.list('-created_date', 1),
-      base44.entities.BankAccount.list('-created_date', 1),
-      base44.entities.LeaseContract.list('-created_date', 1),
-      base44.entities.Task.list('-created_date', 1)
+      base44.entities.Building.filter({ created_by: user.email }, '-created_date', 1),
+      base44.entities.BankAccount.filter({ created_by: user.email }, '-created_date', 1),
+      base44.entities.LeaseContract.filter({ created_by: user.email }, '-created_date', 1),
+      base44.entities.Task.filter({ created_by: user.email }, '-created_date', 1)
     ]);
 
     const buildingCount = buildings?.length || 0;

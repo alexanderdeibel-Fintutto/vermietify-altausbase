@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
@@ -11,10 +11,10 @@ import { Download, TrendingUp, Users, AlertCircle, CheckCircle2 } from 'lucide-r
 import { format } from 'date-fns';
 
 export default function AdminTesterAnalytics() {
-  const [timeRange, setTimeRange] = useState('7d');
+  const [timeRange, setTimeRange] = useState('7');
   const [loading, setLoading] = useState(false);
 
-  // Fetch analytics data
+  // Fetch analytics data with caching
   const { data: analyticsData } = useQuery({
     queryKey: ['testerAnalytics', timeRange],
     queryFn: async () => {
@@ -26,12 +26,31 @@ export default function AdminTesterAnalytics() {
         end_date: endDate
       });
     },
-    refetchInterval: 30000
+    staleTime: 2 * 60 * 1000, // 2min cache
+    gcTime: 10 * 60 * 1000 // 10min garbage collection
   });
 
   const data = analyticsData?.data;
 
-  const handleExport = async () => {
+  // Memoize chart data
+  const chartData = useMemo(() => 
+    data?.top_problem_pages?.map(p => ({
+      name: p.page_title?.slice(0, 20) || 'Unbekannt',
+      problems: p.count,
+      severity: Math.round(p.avg_severity)
+    })) || [],
+    [data?.top_problem_pages]
+  );
+
+  // Memoize heatmap sorted data
+  const heatmapData = useMemo(() =>
+    data?.heatmap_data ? Object.entries(data.heatmap_data)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5) : [],
+    [data?.heatmap_data]
+  );
+
+  const handleExport = useCallback(async () => {
     setLoading(true);
     try {
       await base44.functions.invoke('exportTesterReport', {
@@ -44,7 +63,7 @@ export default function AdminTesterAnalytics() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeRange]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
@@ -128,11 +147,7 @@ export default function AdminTesterAnalytics() {
                   <Card className="p-6 border border-slate-200">
                     <h3 className="font-light text-slate-900 mb-4">Top Problem-Seiten</h3>
                     <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={data.top_problem_pages.map(p => ({
-                        name: p.page_title?.slice(0, 20) || 'Unbekannt',
-                        problems: p.count,
-                        severity: Math.round(p.avg_severity)
-                      }))}>
+                      <BarChart data={chartData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                         <YAxis />
@@ -220,16 +235,12 @@ export default function AdminTesterAnalytics() {
                 <h3 className="font-light text-slate-900 mb-4">Seiten-Engagement</h3>
                 {data?.heatmap_data ? (
                   <div className="space-y-2">
-                    {Object.entries(data.heatmap_data)
-                      .sort((a, b) => b[1] - a[1])
-                      .slice(0, 5)
-                      .map(([page, clicks], idx) => (
-                        <div key={idx} className="flex items-center justify-between text-sm">
-                          <span className="font-light text-slate-700 truncate max-w-[200px]">{page.slice(0, 25)}</span>
-                          <Badge className="bg-blue-100 text-blue-800 font-light text-xs">{clicks} Klicks</Badge>
-                        </div>
-                      ))
-                    }
+                    {heatmapData.map(([page, clicks], idx) => (
+                      <div key={idx} className="flex items-center justify-between text-sm">
+                        <span className="font-light text-slate-700 truncate max-w-[200px]">{page.slice(0, 25)}</span>
+                        <Badge className="bg-blue-100 text-blue-800 font-light text-xs">{clicks} Klicks</Badge>
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <p className="text-sm font-light text-slate-500">Keine Daten</p>

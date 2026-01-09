@@ -8,16 +8,14 @@ Deno.serve(async (req) => {
 
     console.log('Analyzing UX patterns:', { test_phase_id, min_frequency });
 
-    // Get journeys
-    const journeys = await base44.asServiceRole.entities.UserJourney.filter({
-      test_account_id: { $nin: [] } // Get all
-    }, null, 1000);
+    // Get journeys with optimized limit
+    const journeys = await base44.asServiceRole.entities.UserJourney.list('-created_date', 500);
 
-    console.log('Analyzing', journeys.length, 'journeys');
+    console.log('Analyzing', journeys?.length || 0, 'journeys');
 
     // Analyze journey patterns
     const journeyPatterns = {};
-    journeys.forEach(j => {
+    (journeys || []).forEach(j => {
       const pathKey = j.path_sequence.join(' -> ');
       if (!journeyPatterns[pathKey]) {
         journeyPatterns[pathKey] = {
@@ -35,13 +33,13 @@ Deno.serve(async (req) => {
       if (!j.completed) journeyPatterns[pathKey].dropout_page = j.dropout_page;
     });
 
-    // Get problems for sentiment analysis
-    const problems = await base44.asServiceRole.entities.UserProblem.filter({}, null, 1000);
+    // Get problems with optimized limit
+    const problems = await base44.asServiceRole.entities.UserProblem.list('-created_date', 200);
 
-    // Analyze click patterns per page
+    // Analyze click patterns per page with optimized limit
     const activities = await base44.asServiceRole.entities.TesterActivity.filter({
       activity_type: 'click'
-    }, null, 2000);
+    }, '-created_date', 1000);
 
     const clickPatterns = {};
     activities.forEach(a => {
