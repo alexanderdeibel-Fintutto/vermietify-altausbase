@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Edit, Download, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import LeaseContractAnalyzer from '@/components/contracts/LeaseContractAnalyzer';
 
 export default function ContractDetailPage() {
   const { id } = useParams();
@@ -111,6 +112,11 @@ export default function ContractDetailPage() {
           <p className="text-slate-700">{contract.notes || 'Keine Notizen vorhanden'}</p>
         </CardContent>
       </Card>
+
+      <LeaseContractAnalyzer 
+        contractId={contract.id} 
+        contractText={contract.contract_text || contract.notes}
+      />
     </div>
   );
 }
