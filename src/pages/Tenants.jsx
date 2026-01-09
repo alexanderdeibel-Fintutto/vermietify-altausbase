@@ -28,7 +28,26 @@ export default function TenantsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Tenant.create(data),
+    mutationFn: async (data) => {
+      const tenant = await base44.entities.Tenant.create(data);
+      
+      // Trigger onboarding workflow
+      try {
+        await base44.functions.invoke('initiateTenantOnboarding', {
+          tenant_id: tenant.id,
+          tenant_email: data.email,
+          tenant_name: data.full_name,
+          unit_id: data.unit_id,
+          building_id: data.building_id,
+          rent_amount: data.rent_amount,
+          start_date: data.start_date
+        });
+      } catch (error) {
+        console.warn('Onboarding workflow failed:', error);
+      }
+
+      return tenant;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tenants'] });
       setShowDialog(false);
