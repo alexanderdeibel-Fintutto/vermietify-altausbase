@@ -212,6 +212,9 @@ import IncomeOptimizationTool from './pages/IncomeOptimizationTool';
 import CapitalGainsManagement from './pages/CapitalGainsManagement';
 import DeductionMaximizationTool from './pages/DeductionMaximizationTool';
 import InternationalTaxPlanning from './pages/InternationalTaxPlanning';
+import EntityTaxPlanning from './pages/EntityTaxPlanning';
+import EstateTaxPlanning from './pages/EstateTaxPlanning';
+import TaxCreditsAndIncentives from './pages/TaxCreditsAndIncentives';
 import __Layout from './Layout.jsx';
 
 
@@ -430,6 +433,9 @@ export const PAGES = {
     "CapitalGainsManagement": CapitalGainsManagement,
     "DeductionMaximizationTool": DeductionMaximizationTool,
     "InternationalTaxPlanning": InternationalTaxPlanning,
+    "EntityTaxPlanning": EntityTaxPlanning,
+    "EstateTaxPlanning": EstateTaxPlanning,
+    "TaxCreditsAndIncentives": TaxCreditsAndIncentives,
 }
 
 export const pagesConfig = {
