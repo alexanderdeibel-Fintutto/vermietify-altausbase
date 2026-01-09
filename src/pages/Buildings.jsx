@@ -84,11 +84,11 @@ export default function BuildingsPage() {
   };
 
   return (
-    <div className="space-y-0 bg-white rounded-lg border border-slate-200 shadow-sm">
+    <div className="space-y-0 bg-white rounded-lg border border-slate-100 shadow-none">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-violet-50/30">
-        <h1 className="text-lg font-light text-slate-900">Gebäude</h1>
-        <p className="text-sm text-slate-600 mt-0.5">{filteredStats.length} von {totalBuildings} Gebäuden</p>
+      <div className="px-8 py-6 border-b border-slate-100">
+        <h1 className="text-xl font-extralight text-slate-600 tracking-wide">Gebäude</h1>
+        <p className="text-xs font-extralight text-slate-400 mt-2">{filteredStats.length} von {totalBuildings} Gebäuden</p>
       </div>
 
       {/* Filter-Bar */}
