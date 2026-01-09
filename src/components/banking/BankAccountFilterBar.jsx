@@ -24,7 +24,7 @@ export default function BankAccountFilterBar({ onSearchChange, onTypeChange, onN
           </SelectContent>
         </Select>
       </div>
-      <Button onClick={onNewAccount} className="bg-teal-600 hover:bg-teal-700"><Plus className="w-4 h-4 mr-2" />Konto hinzufügen</Button>
+      <Button onClick={onNewAccount} className="bg-slate-700 hover:bg-slate-800 font-extralight"><Plus className="w-4 h-4 mr-2" />Konto hinzufügen</Button>
     </div>
   );
 }

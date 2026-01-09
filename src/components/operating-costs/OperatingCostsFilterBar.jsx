@@ -25,7 +25,7 @@ export default function OperatingCostsFilterBar({ onSearchChange, onTypeChange, 
           </SelectContent>
         </Select>
       </div>
-      <Button onClick={onNewCost} className="bg-amber-600 hover:bg-amber-700"><Plus className="w-4 h-4 mr-2" />Neue Kosten</Button>
+      <Button onClick={onNewCost} className="bg-slate-700 hover:bg-slate-800 font-extralight"><Plus className="w-4 h-4 mr-2" />Neue Kosten</Button>
     </div>
   );
 }

@@ -24,7 +24,7 @@ export default function TaxFilterBar({ onSearchChange, onYearChange, onNewForm }
           </SelectContent>
         </Select>
       </div>
-      <Button onClick={onNewForm} className="bg-purple-600 hover:bg-purple-700"><Plus className="w-4 h-4 mr-2" />Neues Formular</Button>
+      <Button onClick={onNewForm} className="bg-slate-700 hover:bg-slate-800 font-extralight"><Plus className="w-4 h-4 mr-2" />Neues Formular</Button>
     </div>
   );
 }

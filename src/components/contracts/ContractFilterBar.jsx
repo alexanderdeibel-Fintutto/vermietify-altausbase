@@ -38,7 +38,7 @@ export default function ContractFilterBar({ onSearchChange, onStatusChange, onNe
         </Select>
       </div>
 
-      <Button onClick={onNewContract} className="bg-blue-600 hover:bg-blue-700">
+      <Button onClick={onNewContract} className="bg-slate-700 hover:bg-slate-800 font-extralight">
         <Plus className="w-4 h-4 mr-2" />
         Neuer Vertrag
       </Button>
