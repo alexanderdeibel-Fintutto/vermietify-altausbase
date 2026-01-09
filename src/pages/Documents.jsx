@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, FileCode, Type, FolderOpen, Sparkles, Upload } from 'lucide-react';
+import { FileText, FileCode, Type, FolderOpen, Sparkles, Upload, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -13,17 +13,65 @@ import TextBlocksList from '../components/documents/TextBlocksList';
 import OriginalsList from '../components/documents/OriginalsList';
 import PDFTemplateImporter from '../components/documents/PDFTemplateImporter';
 import ModuleGuard from '@/components/package/ModuleGuard';
+import AdvancedDocumentSearch from '../components/documents/AdvancedDocumentSearch';
 
 export default function DocumentsPage() {
     const [importerOpen, setImporterOpen] = useState(false);
     const [uploadOpen, setUploadOpen] = useState(false);
+    const [searchFilters, setSearchFilters] = useState({});
+    const [showSearch, setShowSearch] = useState(false);
     const queryClient = useQueryClient();
 
     // Fetch data for upload dialog
-    const { data: documents = [] } = useQuery({
+    const { data: allDocuments = [] } = useQuery({
       queryKey: ['documents'],
       queryFn: () => base44.entities.Document.list('-created_date', 200),
     });
+
+    // Filter documents based on search
+    const documents = React.useMemo(() => {
+      let filtered = [...allDocuments];
+
+      if (searchFilters.searchText) {
+        const search = searchFilters.searchText.toLowerCase();
+        filtered = filtered.filter(doc => 
+          doc.title?.toLowerCase().includes(search) ||
+          doc.description?.toLowerCase().includes(search)
+        );
+      }
+
+      if (searchFilters.documentType && searchFilters.documentType !== 'all') {
+        filtered = filtered.filter(doc => doc.document_type === searchFilters.documentType);
+      }
+
+      if (searchFilters.status && searchFilters.status !== 'all') {
+        filtered = filtered.filter(doc => doc.status === searchFilters.status);
+      }
+
+      if (searchFilters.dateFrom) {
+        filtered = filtered.filter(doc => 
+          new Date(doc.created_at) >= new Date(searchFilters.dateFrom)
+        );
+      }
+
+      if (searchFilters.dateTo) {
+        filtered = filtered.filter(doc => 
+          new Date(doc.created_at) <= new Date(searchFilters.dateTo)
+        );
+      }
+
+      if (searchFilters.tags?.length > 0) {
+        filtered = filtered.filter(doc => 
+          searchFilters.tags.some(tag => 
+            doc.tags?.includes(tag) || 
+            doc.title?.includes(tag) ||
+            doc.description?.includes(tag)
+          )
+        );
+      }
+
+      return filtered;
+    }, [allDocuments, searchFilters]);
 
     const { data: buildings = [] } = useQuery({
       queryKey: ['buildings'],
@@ -69,7 +117,15 @@ export default function DocumentsPage() {
                 transition={{ delay: 0.1 }}
             >
             <Tabs defaultValue="documents" className="w-full">
-                <div className="flex justify-end mb-4">
+                <div className="flex justify-between items-center mb-4">
+                    <Button
+                        onClick={() => setShowSearch(!showSearch)}
+                        variant="outline"
+                        className="gap-2"
+                    >
+                        <Search className="w-4 h-4" />
+                        Erweiterte Suche
+                    </Button>
                     <Button
                         onClick={() => setUploadOpen(true)}
                         className="bg-blue-600 hover:bg-blue-700 font-light gap-2"
@@ -78,6 +134,12 @@ export default function DocumentsPage() {
                         Dokument hochladen
                     </Button>
                 </div>
+
+                {showSearch && (
+                    <div className="mb-6">
+                        <AdvancedDocumentSearch onSearch={setSearchFilters} />
+                    </div>
+                )}
                 <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="documents">
                         <FileText className="w-4 h-4 mr-2" />
