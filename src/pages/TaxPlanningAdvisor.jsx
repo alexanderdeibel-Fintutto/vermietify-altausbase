@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
 import {
   Select,
   SelectContent,
@@ -13,75 +13,63 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TrendingDown, AlertTriangle, CheckCircle2, Zap } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CheckCircle2, AlertTriangle, Lightbulb, Clock, Zap } from 'lucide-react';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
 export default function TaxPlanningAdvisor() {
-  const [country, setCountry] = useState('DE');
+  const [selectedCountry, setSelectedCountry] = useState('DE');
   const [taxYear, setTaxYear] = useState(CURRENT_YEAR);
-  const [canton, setCanton] = useState('ZH');
+  const [filterPriority, setFilterPriority] = useState('all');
+  const [filterDifficulty, setFilterDifficulty] = useState('all');
+  const [completedStrategies, setCompletedStrategies] = useState(new Set());
 
-  const { data: recommendations = [], isLoading } = useQuery({
-    queryKey: ['taxOptimizations', country, taxYear, canton],
+  // Generate tax planning strategies
+  const { data: planningData = {}, isLoading } = useQuery({
+    queryKey: ['taxPlanningStrategy', selectedCountry, taxYear],
     queryFn: async () => {
-      const { data } = await base44.functions.invoke('generateTaxOptimizationPlan', {
-        country,
-        taxYear,
-        canton: country === 'CH' ? canton : undefined
+      const response = await base44.functions.invoke('generateTaxPlanningStrategy', {
+        country: selectedCountry,
+        taxYear
       });
-      return data.recommendations || [];
-    },
-    enabled: !!country && !!taxYear
-  });
-
-  const implementMutation = useMutation({
-    mutationFn: async (recommendation) => {
-      // Create planning record
-      await base44.entities.TaxPlanning.create({
-        user_email: (await base44.auth.me()).email,
-        country,
-        tax_year: taxYear,
-        planning_type: recommendation.planning_type,
-        title: recommendation.title,
-        description: recommendation.description,
-        estimated_savings: recommendation.estimated_savings,
-        implementation_effort: recommendation.implementation_effort,
-        risk_level: recommendation.risk_level,
-        deadline: recommendation.deadline,
-        status: 'planned'
-      });
+      return response.data;
     }
   });
 
-  const riskColors = {
-    low: 'bg-green-100 text-green-800',
-    medium: 'bg-yellow-100 text-yellow-800',
-    high: 'bg-red-100 text-red-800'
+  const filteredStrategies = (planningData.strategies || []).filter(strategy => {
+    if (filterPriority !== 'all' && strategy.priority !== filterPriority) return false;
+    if (filterDifficulty !== 'all' && strategy.difficulty !== filterDifficulty) return false;
+    return true;
+  });
+
+  const completionPercentage = (completedStrategies.size / (planningData.strategies?.length || 1)) * 100;
+
+  const priorityColors = {
+    high: 'bg-red-100 text-red-800 border-red-300',
+    medium: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+    low: 'bg-blue-100 text-blue-800 border-blue-300'
   };
 
-  const effortIcons = {
-    low: '⚡',
-    medium: '⏱️',
-    high: '🔧'
+  const difficultyEmojis = {
+    easy: '✅',
+    medium: '⚠️',
+    hard: '🔴'
   };
-
-  const totalSavings = recommendations.reduce((s, r) => s + (r.estimated_savings || 0), 0);
-  const highRiskCount = recommendations.filter(r => r.risk_level === 'high').length;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">🎯 Tax Planning Advisor</h1>
-        <p className="text-slate-500 mt-1">Maßgeschneiderte Optimierungsempfehlungen für Ihr Steuerjahr</p>
+        <h1 className="text-3xl font-bold">📋 Tax Planning Advisor</h1>
+        <p className="text-slate-500 mt-1">Personalisierte Steueroptimierungsstrategien für Ihr Land</p>
       </div>
 
-      {/* Country Selection */}
-      <div className="flex gap-4">
+      {/* Controls */}
+      <div className="flex gap-4 flex-wrap">
         <div className="flex-1 max-w-xs">
           <label className="text-sm font-medium">Land</label>
-          <Select value={country} onValueChange={setCountry}>
+          <Select value={selectedCountry} onValueChange={setSelectedCountry}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -95,145 +83,241 @@ export default function TaxPlanningAdvisor() {
 
         <div className="flex-1 max-w-xs">
           <label className="text-sm font-medium">Steuerjahr</label>
-          <Select value={taxYear.toString()} onValueChange={(v) => setTaxYear(parseInt(v))}>
+          <Select value={String(taxYear)} onValueChange={(v) => setTaxYear(parseInt(v))}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[CURRENT_YEAR - 1, CURRENT_YEAR, CURRENT_YEAR + 1].map(y => (
-                <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-              ))}
+              <SelectItem value={String(CURRENT_YEAR - 1)}>{CURRENT_YEAR - 1}</SelectItem>
+              <SelectItem value={String(CURRENT_YEAR)}>{CURRENT_YEAR}</SelectItem>
             </SelectContent>
           </Select>
         </div>
-
-        {country === 'CH' && (
-          <div className="flex-1 max-w-xs">
-            <label className="text-sm font-medium">Kanton</label>
-            <Select value={canton} onValueChange={setCanton}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {['ZH', 'BE', 'LU', 'AG', 'SG', 'BS', 'BL', 'VD', 'GE'].map(c => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
       </div>
 
-      {/* Summary */}
-      {recommendations.length > 0 && (
-        <Card className="bg-gradient-to-r from-green-50 to-emerald-50">
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm text-slate-600">Empfehlungen</p>
-                <p className="text-3xl font-bold">{recommendations.length}</p>
-              </div>
-              <div>
-                <p className="text-sm text-slate-600">Geschätzte Ersparnisse</p>
-                <p className="text-3xl font-bold">
-                  {totalSavings > 1000 ? '€' : '€'}
-                  {(totalSavings / 1000).toLocaleString('de-DE', { maximumFractionDigits: 1 })}K
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-slate-600">Durchschn. Aufwand</p>
-                <p className="text-3xl font-bold">
-                  {recommendations.filter(r => r.implementation_effort === 'low').length > 
-                   recommendations.filter(r => r.implementation_effort === 'high').length ? 
-                   '⚡ Niedrig' : '🔧 Hoch'}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Risk Warning */}
-      {highRiskCount > 0 && (
-        <Alert className="border-orange-300 bg-orange-50">
-          <AlertTriangle className="h-4 w-4 text-orange-600" />
-          <AlertDescription className="text-orange-800">
-            ⚠️ {highRiskCount} Empfehlung(en) mit hohem Risiko. Konsultieren Sie einen Steuerberater vor der Umsetzung.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Recommendations */}
       {isLoading ? (
-        <div className="text-center py-8 text-slate-500">
-          ⏳ Analysiere Optimierungspotenziale...
-        </div>
-      ) : recommendations.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="pt-6 text-center text-slate-500">
-            Keine Optimierungsmöglichkeiten gefunden. Ihre Steuersituation ist optimal strukturiert! ✅
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {recommendations.map((rec, idx) => (
-            <Card key={idx} className="hover:shadow-lg transition-shadow">
-              <CardContent className="pt-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-semibold text-lg">{rec.title}</h3>
-                      <Badge className={riskColors[rec.risk_level]}>
-                        {rec.risk_level === 'low' ? '✅ Sicher' : 
-                         rec.risk_level === 'medium' ? '⚠️ Moderat' : '🔴 Risiko'}
-                      </Badge>
-                      <Badge variant="outline">
-                        {effortIcons[rec.implementation_effort]} {
-                          rec.implementation_effort === 'low' ? 'Einfach' :
-                          rec.implementation_effort === 'medium' ? 'Mittel' : 'Aufwändig'
-                        }
-                      </Badge>
-                    </div>
+        <div className="text-center py-8">⏳ Analysiere Optionen...</div>
+      ) : planningData.strategies ? (
+        <>
+          {/* Overall Savings Alert */}
+          <Alert className="border-green-300 bg-green-50">
+            <Lightbulb className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-900">
+              <strong>Potenzielle Einsparungen:</strong> €{planningData.total_potential_savings?.toLocaleString('de-DE') || 0} 
+              durch Implementierung aller Strategien
+            </AlertDescription>
+          </Alert>
 
-                    <p className="text-slate-600 mb-3">{rec.description}</p>
-
-                    <div className="flex gap-4 text-sm">
-                      <div>
-                        <span className="text-slate-600">Geschätzte Ersparnisse:</span>
-                        <p className="font-semibold text-green-600">
-                          €{(rec.estimated_savings || 0).toLocaleString('de-DE')}
-                        </p>
-                      </div>
-                      {rec.deadline && (
-                        <div>
-                          <span className="text-slate-600">Deadline:</span>
-                          <p className="font-semibold">{new Date(rec.deadline).toLocaleDateString('de-DE')}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={() => implementMutation.mutate(rec)}
-                    className="bg-blue-600 hover:bg-blue-700 gap-2 whitespace-nowrap"
-                    size="sm"
-                  >
-                    <Zap className="w-4 h-4" /> Planen
-                  </Button>
+          {/* Progress Overview */}
+          <Card className="border-blue-300 bg-blue-50">
+            <CardContent className="pt-6">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <p className="font-semibold">Umsetzungsfortschritt</p>
+                  <Badge>{Math.round(completionPercentage)}%</Badge>
                 </div>
+                <Progress value={completionPercentage} className="h-2" />
+                <div className="text-sm text-slate-600">
+                  {completedStrategies.size} von {planningData.strategies?.length || 0} Strategien umgesetzt
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Summary Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <AlertTriangle className="w-6 h-6 mx-auto text-red-600 mb-2" />
+                <p className="text-sm text-slate-600">Hohe Priorität</p>
+                <p className="text-3xl font-bold">{planningData.summary?.high_priority || 0}</p>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <Lightbulb className="w-6 h-6 mx-auto text-yellow-600 mb-2" />
+                <p className="text-sm text-slate-600">Mittlere Priorität</p>
+                <p className="text-3xl font-bold">{planningData.summary?.medium_priority || 0}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <Zap className="w-6 h-6 mx-auto text-green-600 mb-2" />
+                <p className="text-sm text-slate-600">Einfach umsetzbar</p>
+                <p className="text-3xl font-bold">{planningData.summary?.easy_to_implement || 0}</p>
+              </CardContent>
+            </Card>
+          </div>
 
-      {/* Footer */}
-      <Alert className="bg-blue-50 border-blue-300">
-        <AlertDescription className="text-blue-900">
-          💡 <strong>Hinweis:</strong> Dies sind Vorschläge basierend auf Ihren Daten. 
-          Konsultieren Sie einen Steuerberater für verbindliche Beratung.
-        </AlertDescription>
-      </Alert>
+          {/* Filters */}
+          <div className="flex gap-4 flex-wrap">
+            <div className="flex-1 max-w-xs">
+              <label className="text-sm font-medium">Nach Priorität filtern</label>
+              <Select value={filterPriority} onValueChange={setFilterPriority}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle Prioritäten</SelectItem>
+                  <SelectItem value="high">Hohe Priorität</SelectItem>
+                  <SelectItem value="medium">Mittlere Priorität</SelectItem>
+                  <SelectItem value="low">Niedrige Priorität</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex-1 max-w-xs">
+              <label className="text-sm font-medium">Nach Schwierigkeit filtern</label>
+              <Select value={filterDifficulty} onValueChange={setFilterDifficulty}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle Schwierigkeitsgrade</SelectItem>
+                  <SelectItem value="easy">Einfach</SelectItem>
+                  <SelectItem value="medium">Mittel</SelectItem>
+                  <SelectItem value="hard">Schwierig</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Strategies Tabs */}
+          <Tabs defaultValue="all" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="all">Alle ({filteredStrategies.length})</TabsTrigger>
+              <TabsTrigger value="high">Hohe Priorität ({filteredStrategies.filter(s => s.priority === 'high').length})</TabsTrigger>
+              <TabsTrigger value="medium">Mittlere Priorität ({filteredStrategies.filter(s => s.priority === 'medium').length})</TabsTrigger>
+              <TabsTrigger value="easy">Einfach ({filteredStrategies.filter(s => s.difficulty === 'easy').length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="all" className="space-y-3 mt-4">
+              {filteredStrategies.map(strategy => (
+                <StrategyCard
+                  key={strategy.id}
+                  strategy={strategy}
+                  isCompleted={completedStrategies.has(strategy.id)}
+                  onToggleComplete={() => {
+                    const newSet = new Set(completedStrategies);
+                    if (newSet.has(strategy.id)) {
+                      newSet.delete(strategy.id);
+                    } else {
+                      newSet.add(strategy.id);
+                    }
+                    setCompletedStrategies(newSet);
+                  }}
+                  priorityColors={priorityColors}
+                  difficultyEmojis={difficultyEmojis}
+                />
+              ))}
+            </TabsContent>
+
+            {['high', 'medium', 'easy'].map(tab => (
+              <TabsContent key={tab} value={tab} className="space-y-3 mt-4">
+                {filteredStrategies
+                  .filter(s => tab === 'easy' ? s.difficulty === 'easy' : s.priority === tab)
+                  .map(strategy => (
+                    <StrategyCard
+                      key={strategy.id}
+                      strategy={strategy}
+                      isCompleted={completedStrategies.has(strategy.id)}
+                      onToggleComplete={() => {
+                        const newSet = new Set(completedStrategies);
+                        if (newSet.has(strategy.id)) {
+                          newSet.delete(strategy.id);
+                        } else {
+                          newSet.add(strategy.id);
+                        }
+                        setCompletedStrategies(newSet);
+                      }}
+                      priorityColors={priorityColors}
+                      difficultyEmojis={difficultyEmojis}
+                    />
+                  ))}
+              </TabsContent>
+            ))}
+          </Tabs>
+
+          {/* Info Card */}
+          <Card className="border-blue-300 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="text-sm">💡 Hinweise zur Steuerplanung</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-2 text-slate-700">
+              <p>✓ Priorisieren Sie "Hohe Priorität"-Strategien für maximale Einsparungen</p>
+              <p>✓ "Einfach"-Strategien können sofort umgesetzt werden</p>
+              <p>✓ Aktivieren Sie eine Strategie in den Checkboxen, um Ihren Fortschritt zu verfolgen</p>
+              <p>✓ Konsultieren Sie einen Steuerberater vor der Umsetzung komplexer Strategien</p>
+            </CardContent>
+          </Card>
+        </>
+      ) : null}
     </div>
+  );
+}
+
+function StrategyCard({ strategy, isCompleted, onToggleComplete, priorityColors, difficultyEmojis }) {
+  return (
+    <Card
+      className={`border-l-4 cursor-pointer transition-all ${
+        strategy.priority === 'high'
+          ? 'border-l-red-500 hover:bg-red-50'
+          : strategy.priority === 'medium'
+          ? 'border-l-yellow-500 hover:bg-yellow-50'
+          : 'border-l-blue-500 hover:bg-blue-50'
+      } ${isCompleted ? 'opacity-60' : ''}`}
+      onClick={onToggleComplete}
+    >
+      <CardContent className="pt-6">
+        <div className="flex items-start gap-4">
+          {/* Checkbox */}
+          <div className="flex-shrink-0 pt-1">
+            {isCompleted ? (
+              <CheckCircle2 className="w-6 h-6 text-green-600" />
+            ) : (
+              <div className="w-6 h-6 border-2 border-slate-300 rounded" />
+            )}
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className={`font-bold ${isCompleted ? 'line-through text-slate-500' : ''}`}>
+                  {strategy.title}
+                </h3>
+                <p className="text-sm text-slate-600 mt-1">{strategy.description}</p>
+              </div>
+              <div className="flex gap-2 flex-shrink-0">
+                <Badge className={priorityColors[strategy.priority]}>
+                  {strategy.priority === 'high' ? '🔴' : strategy.priority === 'medium' ? '🟡' : '🟢'}
+                  {' '}
+                  {strategy.priority.toUpperCase()}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Badges */}
+            <div className="flex gap-2 flex-wrap">
+              <Badge variant="outline" className="text-xs">
+                {difficultyEmojis[strategy.difficulty]} {strategy.difficulty}
+              </Badge>
+              <Badge variant="outline" className="text-xs bg-green-50 text-green-800">
+                💰 €{strategy.estimated_savings.toLocaleString('de-DE')} Ersparnisse
+              </Badge>
+              <Badge variant="outline" className="text-xs">
+                <Clock className="w-3 h-3 mr-1" />
+                Bis {new Date(strategy.deadline).toLocaleDateString('de-DE')}
+              </Badge>
+            </div>
+
+            {/* Implementation */}
+            <div className="bg-slate-50 p-2 rounded text-sm">
+              <p className="text-slate-700">{strategy.implementation}</p>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
