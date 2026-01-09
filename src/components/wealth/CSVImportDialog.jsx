@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Loader2, Upload, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Loader2, Upload, CheckCircle2, AlertCircle, AlertTriangle, Info } from 'lucide-react';
 import { BROKER_MAPPINGS, detectBrokerFromCSVHeaders } from './brokerMappings';
 
 export default function CSVImportDialog({ open, onOpenChange, onImport, isLoading }) {
@@ -84,8 +84,12 @@ export default function CSVImportDialog({ open, onOpenChange, onImport, isLoadin
         
         setResults({
           success_count: result.success_count || 0,
+          total_rows: result.total_rows || 0,
+          error_count: result.error_count || 0,
+          warning_count: result.warning_count || 0,
           errors: result.errors || [],
-          batch_id: result.batch_id
+          batch_id: result.batch_id,
+          message: result.message
         });
         
         setSelectedTab('import-results');
@@ -247,30 +251,98 @@ export default function CSVImportDialog({ open, onOpenChange, onImport, isLoadin
           <TabsContent value="import-results" className="space-y-4">
             {results && (
               <>
-                <div className="flex items-center gap-2 text-green-600">
-                  <CheckCircle2 className="w-5 h-5" />
-                  <span className="font-light">{results.success_count} Positionen erfolgreich importiert</span>
-                </div>
+                {/* Success Summary */}
+                {results.success_count > 0 && (
+                  <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                    <div>
+                      <p className="font-light text-green-900">
+                        ✓ {results.success_count} von {results.total_rows} Positionen erfolgreich importiert
+                      </p>
+                      <p className="text-xs text-green-700 font-light">
+                        Batch ID: {results.batch_id}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
-                {results.errors?.length > 0 && (
-                  <Card className="border-red-200 bg-red-50">
+                {results.success_count === 0 && (
+                  <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                    <p className="font-light text-red-900">
+                      Kein Import möglich - siehe Fehler unten
+                    </p>
+                  </div>
+                )}
+
+                {/* Errors & Warnings */}
+                {results.error_count > 0 && (
+                  <Card className={results.warning_count > 0 ? 'border-yellow-200 bg-yellow-50' : 'border-red-200 bg-red-50'}>
                     <CardHeader>
-                      <CardTitle className="text-sm text-red-700 flex items-center gap-2">
-                        <AlertCircle className="w-4 h-4" />
-                        {results.errors.length} Fehler beim Import
+                      <CardTitle className={`text-sm flex items-center gap-2 ${results.warning_count > 0 ? 'text-yellow-700' : 'text-red-700'}`}>
+                        {results.warning_count > 0 ? (
+                          <>
+                            <AlertTriangle className="w-4 h-4" />
+                            {results.warning_count} Warnung(en), {results.error_count - results.warning_count} Fehler
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle className="w-4 h-4" />
+                            {results.error_count} Fehler beim Import
+                          </>
+                        )}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-1 max-h-48 overflow-y-auto">
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
                         {results.errors.map((error, idx) => (
-                          <p key={idx} className="text-xs text-red-600 font-light">
-                            Zeile {error.row}: {error.message}
-                          </p>
+                          <div
+                            key={idx}
+                            className={`text-xs font-light p-2 rounded flex items-start gap-2 ${
+                              error.severity === 'warning'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {error.severity === 'warning' ? (
+                              <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                            ) : (
+                              <AlertCircle className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                            )}
+                            <div>
+                              <span className="font-medium">
+                                {error.row === 0 || error.row === 'system' || error.row === 'batch_create'
+                                  ? 'Import-Fehler'
+                                  : `Zeile ${error.row}`}
+                              </span>
+                              : {error.message}
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </CardContent>
                   </Card>
                 )}
+
+                {/* Summary Stats */}
+                <Card className="bg-slate-50">
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <p className="text-2xl font-light text-green-600">{results.success_count}</p>
+                        <p className="text-xs text-slate-600 font-light">Erfolgreich</p>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-light text-yellow-600">{results.warning_count || 0}</p>
+                        <p className="text-xs text-slate-600 font-light">Warnungen</p>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-light text-red-600">{(results.error_count || 0) - (results.warning_count || 0)}</p>
+                        <p className="text-xs text-slate-600 font-light">Fehler</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </>
             )}
           </TabsContent>
