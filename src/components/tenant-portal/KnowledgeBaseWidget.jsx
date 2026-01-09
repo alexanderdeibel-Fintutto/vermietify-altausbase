@@ -48,12 +48,14 @@ export default function KnowledgeBaseWidget() {
   });
 
   const filteredArticles = useMemo(() => {
+    const query = searchQuery.toLowerCase();
     return articles.filter(article => {
       const matchesCategory = selectedCategory === 'all' || article.category === selectedCategory;
       const matchesSearch =
-        article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        article.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        article.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+        article.title.toLowerCase().includes(query) ||
+        article.content.toLowerCase().includes(query) ||
+        categoryLabels[article.category]?.toLowerCase().includes(query) ||
+        article.tags?.some(tag => tag.toLowerCase().includes(query));
       return matchesCategory && matchesSearch;
     });
   }, [articles, searchQuery, selectedCategory]);
