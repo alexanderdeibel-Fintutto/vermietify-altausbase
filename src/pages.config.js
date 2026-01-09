@@ -227,6 +227,8 @@ import BusinessStructureOptimizer from './pages/BusinessStructureOptimizer';
 import RetirementIncomeTaxOptimizer from './pages/RetirementIncomeTaxOptimizer';
 import TaxSavingsOpportunities from './pages/TaxSavingsOpportunities';
 import TaxCalendarAndTimeline from './pages/TaxCalendarAndTimeline';
+import TaxLossHarvestingAdvisor from './pages/TaxLossHarvestingAdvisor';
+import SelfEmploymentTaxPlanner from './pages/SelfEmploymentTaxPlanner';
 import __Layout from './Layout.jsx';
 
 
@@ -460,6 +462,8 @@ export const PAGES = {
     "RetirementIncomeTaxOptimizer": RetirementIncomeTaxOptimizer,
     "TaxSavingsOpportunities": TaxSavingsOpportunities,
     "TaxCalendarAndTimeline": TaxCalendarAndTimeline,
+    "TaxLossHarvestingAdvisor": TaxLossHarvestingAdvisor,
+    "SelfEmploymentTaxPlanner": SelfEmploymentTaxPlanner,
 }
 
 export const pagesConfig = {
