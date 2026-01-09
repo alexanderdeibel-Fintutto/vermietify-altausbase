@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 
 export default function QuickStats({ stats, accentColor = 'purple' }) {
   return (
-    <div className="grid grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {stats.map((stat, idx) => (
         <Card key={idx} className="p-6 border border-slate-100 bg-white shadow-none">
           <p className="text-xs font-extralight text-slate-400 tracking-wide">{stat.label}</p>

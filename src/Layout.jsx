@@ -77,20 +77,20 @@ export default function Layout({ children, currentPageName }) {
 
                         {/* Right Actions */}
                         <div className="flex items-center gap-3">
-                            <Button variant="ghost" size="sm" className="gap-2 font-extralight">
+                            <Button variant="ghost" size="sm" className="gap-2 font-extralight text-slate-600 hover:text-slate-900 hover:bg-slate-50">
                                 <Plus className="w-4 h-4" />
                                 Neu
                             </Button>
                             <NotificationCenter />
                             <SuiteSwitcher />
                             <Link to={createPageUrl('MyAccount')}>
-                                <Button variant="ghost" size="icon" title="Mein Account">
-                                    <Users className="w-5 h-5 text-slate-600" />
+                                <Button variant="ghost" size="icon" title="Mein Account" className="text-slate-400 hover:text-slate-700">
+                                    <Users className="w-5 h-5" />
                                 </Button>
                             </Link>
                             <Link to={createPageUrl('UserSettings')}>
-                                <Button variant="ghost" size="icon" title="Einstellungen">
-                                    <Settings className="w-5 h-5 text-slate-600" />
+                                <Button variant="ghost" size="icon" title="Einstellungen" className="text-slate-400 hover:text-slate-700">
+                                    <Settings className="w-5 h-5" />
                                 </Button>
                             </Link>
                         </div>
@@ -114,7 +114,7 @@ export default function Layout({ children, currentPageName }) {
                 <DeepSubNavigation parentSection={mainSection} currentPage={currentPageName} visibleFeatures={visibleFeatures} />
 
                 {/* Main Content - Full Width */}
-                <main className="p-8 mb-20 lg:mb-0 max-w-[1600px] mx-auto">
+                <main className="p-6 lg:p-8 mb-20 lg:mb-0 max-w-[1600px] mx-auto">
                     {children}
                 </main>
 
