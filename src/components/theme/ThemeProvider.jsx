@@ -50,12 +50,15 @@ export function ThemeProvider({ children }) {
   const currentTheme = themes.find(t => t.key === effectiveThemeKey) || 
                        themes.find(t => t.key === 'light');
 
-  // Apply theme to CSS variables
+  // Apply theme to CSS variables with smooth transition
   useEffect(() => {
     if (!currentTheme) return;
 
     const root = document.documentElement;
     const tokens = currentTheme.design_tokens;
+
+    // Start transition
+    root.style.transition = 'background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease';
 
     // Apply colors
     if (tokens.colors) {
@@ -77,6 +80,13 @@ export function ThemeProvider({ children }) {
         root.style.setProperty(`--effect-${key}`, value);
       });
     }
+
+    // Reset transition after 300ms
+    const timer = setTimeout(() => {
+      root.style.transition = '';
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [currentTheme]);
 
   const switchTheme = async (themeKey) => {
