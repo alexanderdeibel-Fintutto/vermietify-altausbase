@@ -4,116 +4,117 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Lightbulb, TrendingDown, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { ChevronDown, ChevronUp, Lightbulb, TrendingDown, CheckCircle2 } from 'lucide-react';
 
 export default function TaxOptimizationPanel({ country, taxYear, canton }) {
   const [expandedId, setExpandedId] = useState(null);
 
-  const { data: optimization, isLoading } = useQuery({
-    queryKey: ['taxOptimization', country, taxYear, canton],
+  const { data: optimizations, isLoading } = useQuery({
+    queryKey: ['taxOptimizations', country, taxYear, canton],
     queryFn: async () => {
-      const functionName = country === 'AT' ? 'generateTaxOptimizationAT' : 'generateTaxOptimizationCH';
-      const user = await base44.auth.me();
-      const payload = { userId: user.id, taxYear };
-      if (canton) payload.canton = canton;
-      return await base44.functions.invoke(functionName, payload);
-    }
+      if (country === 'AT') {
+        const { data } = await base44.functions.invoke('generateTaxOptimizationAT', { taxYear });
+        return data;
+      } else if (country === 'CH') {
+        const { data } = await base44.functions.invoke('generateTaxOptimizationCH', { taxYear, canton });
+        return data;
+      }
+      return null;
+    },
+    enabled: !!country && !!taxYear
   });
 
   if (isLoading) {
-    return <div className="text-center py-8">⏳ Wird optimiert...</div>;
+    return <div className="text-center py-4">⏳ Analysiere Optimierungspotenziale...</div>;
   }
 
-  if (!optimization?.recommendations || optimization.recommendations.length === 0) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <p className="text-center text-slate-500">✅ Keine Optimierungsmöglichkeiten gefunden</p>
-        </CardContent>
-      </Card>
-    );
+  if (!optimizations || optimizations.recommendations.length === 0) {
+    return null;
   }
 
-  const priorityConfig = {
-    high: { icon: '🔴', bg: 'bg-red-50', border: 'border-red-200' },
-    medium: { icon: '🟡', bg: 'bg-yellow-50', border: 'border-yellow-200' },
-    low: { icon: '🟢', bg: 'bg-green-50', border: 'border-green-200' }
+  const { recommendations, summary } = optimizations;
+  const priorityColors = {
+    high: 'bg-red-100 text-red-800 border-red-300',
+    medium: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+    low: 'bg-blue-100 text-blue-800 border-blue-300'
+  };
+
+  const priorityIcons = {
+    high: '🔴',
+    medium: '🟡',
+    low: '🔵'
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold flex items-center gap-2">
-          <Lightbulb className="w-5 h-5 text-yellow-500" />
-          Steueroptimierung
-        </h3>
-        <Badge className="bg-blue-100 text-blue-800">
-          💰 {optimization.summary.currency} {optimization.summary.estimatedSavings}
-        </Badge>
-      </div>
-
-      {optimization.recommendations.map((rec) => {
-        const config = priorityConfig[rec.priority];
-        return (
-          <Card key={rec.id} className={`${config.bg} ${config.border} border cursor-pointer transition-all`}>
-            <div
-              onClick={() => setExpandedId(expandedId === rec.id ? null : rec.id)}
-              className="p-4"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xl">{config.icon}</span>
-                    <p className="font-bold">{rec.title}</p>
-                  </div>
-                  <p className="text-sm text-slate-600">{rec.description}</p>
+    <Card className="border-2 border-green-300 bg-green-50">
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Lightbulb className="w-5 h-5 text-yellow-600" /> Steueroptimierungen
+            </CardTitle>
+            <p className="text-sm text-slate-600 mt-1">
+              {summary.totalRecommendations} Empfehlungen mit {summary.highPriority} hoher Priorität
+            </p>
+          </div>
+          <Badge className="bg-green-200 text-green-800 text-lg px-3 py-1">
+            <TrendingDown className="w-4 h-4 inline mr-2" />
+            {summary.totalPotentialSavings.toLocaleString('de-DE')}
+            {country === 'AT' ? '€' : 'CHF'}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {recommendations.map((rec, idx) => (
+          <div
+            key={rec.id}
+            className={`border rounded-lg p-4 cursor-pointer transition-all ${priorityColors[rec.priority]}`}
+            onClick={() => setExpandedId(expandedId === rec.id ? null : rec.id)}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{priorityIcons[rec.priority]}</span>
+                  <h3 className="font-bold">{rec.title}</h3>
+                  <Badge variant="outline" className="text-xs">
+                    Ersparnisse: {rec.potentialSavings.toLocaleString('de-DE')}
+                    {country === 'AT' ? '€' : 'CHF'}
+                  </Badge>
                 </div>
-                {rec.savings > 0 && (
-                  <div className="text-right ml-4">
-                    <p className="text-sm text-slate-600">Ersparnisse</p>
-                    <p className="text-lg font-bold text-green-600">
-                      {optimization.summary.currency} {rec.savings.toFixed(0)}
-                    </p>
-                  </div>
-                )}
+                <p className="text-sm mt-2">{rec.description}</p>
               </div>
-
-              {expandedId === rec.id && (
-                <div className="mt-4 pt-4 border-t border-slate-300">
-                  <div className="bg-white bg-opacity-50 p-3 rounded mb-3">
-                    <p className="text-sm font-medium mb-2">💡 Empfohlene Aktion:</p>
-                    <p className="text-sm text-slate-700">{rec.action}</p>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      toast.success('Zur Aufgabenliste hinzugefügt');
-                    }}
-                  >
-                    ✅ Zur Aufgabenliste
-                  </Button>
-                </div>
+              {expandedId === rec.id ? (
+                <ChevronUp className="w-5 h-5 mt-1" />
+              ) : (
+                <ChevronDown className="w-5 h-5 mt-1" />
               )}
             </div>
-          </Card>
-        );
-      })}
 
-      <Card className="bg-gradient-to-br from-slate-50 to-blue-50">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-3">
-            <TrendingDown className="w-6 h-6 text-green-600" />
-            <div>
-              <p className="text-sm text-slate-600">Geschätztes Sparpotential</p>
-              <p className="text-2xl font-bold">
-                {optimization.summary.currency} {optimization.summary.estimatedSavings}
-              </p>
-            </div>
+            {expandedId === rec.id && (
+              <div className="mt-4 pt-4 border-t space-y-3">
+                <div>
+                  <h4 className="font-semibold text-sm mb-2">📋 Empfehlung:</h4>
+                  <p className="text-sm">{rec.recommendation}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm mb-2">💡 Auswirkung:</h4>
+                  <p className="text-sm">{rec.impact}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm mb-2">💰 Potenzielle Ersparnis:</h4>
+                  <p className="text-lg font-bold">
+                    {rec.potentialSavings.toLocaleString('de-DE')}
+                    {country === 'AT' ? '€' : 'CHF'}
+                  </p>
+                </div>
+                <Button className="w-full bg-green-600 hover:bg-green-700 gap-2">
+                  <CheckCircle2 className="w-4 h-4" /> Maßnahme implementieren
+                </Button>
+              </div>
+            )}
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 }
