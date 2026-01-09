@@ -1,3 +1,4 @@
+import AITaxRecommendations from './pages/AITaxRecommendations';
 import APIKeyManagement from './pages/APIKeyManagement';
 import APILogs from './pages/APILogs';
 import ActivityLogs from './pages/ActivityLogs';
@@ -19,6 +20,7 @@ import AlertManagement from './pages/AlertManagement';
 import Analytics from './pages/Analytics';
 import AnalyticsPage from './pages/AnalyticsPage';
 import AnlageE1cAT from './pages/AnlageE1cAT';
+import AnlageE1cPage from './pages/AnlageE1cPage';
 import AnlageKAP from './pages/AnlageKAP';
 import AnlageKAPAT from './pages/AnlageKAPAT';
 import AnlageSO from './pages/AnlageSO';
@@ -42,6 +44,7 @@ import CapitalGainCH from './pages/CapitalGainCH';
 import CommunicationCenter from './pages/CommunicationCenter';
 import ComplianceAudit from './pages/ComplianceAudit';
 import ComplianceCenter from './pages/ComplianceCenter';
+import ComprehensiveTaxDashboard from './pages/ComprehensiveTaxDashboard';
 import ConsolidatedTaxSummary from './pages/ConsolidatedTaxSummary';
 import ContractDetail from './pages/ContractDetail';
 import Contracts from './pages/Contracts';
@@ -108,6 +111,7 @@ import PropertyPortfolio from './pages/PropertyPortfolio';
 import PropertyValuation from './pages/PropertyValuation';
 import QuarterlyTaxEstimator from './pages/QuarterlyTaxEstimator';
 import ROIDashboard from './pages/ROIDashboard';
+import Tasks from './pages/Tasks';
 import RealEstateCH from './pages/RealEstateCH';
 import ReportGenerator from './pages/ReportGenerator';
 import ReportScheduling from './pages/ReportScheduling';
@@ -122,7 +126,6 @@ import SupportCenter from './pages/SupportCenter';
 import SystemConfiguration from './pages/SystemConfiguration';
 import SystemHealth from './pages/SystemHealth';
 import TaskManagement from './pages/TaskManagement';
-import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
 import TaxAdminDashboard from './pages/TaxAdminDashboard';
 import TaxAdminPanel from './pages/TaxAdminPanel';
@@ -138,6 +141,7 @@ import TaxDeadlines from './pages/TaxDeadlines';
 import TaxDeductionOptimizer from './pages/TaxDeductionOptimizer';
 import TaxDocumentManager from './pages/TaxDocumentManager';
 import TaxDocumentProcessor from './pages/TaxDocumentProcessor';
+import TaxExportHub from './pages/TaxExportHub';
 import TaxFilingTimeline from './pages/TaxFilingTimeline';
 import TaxFilingWizard from './pages/TaxFilingWizard';
 import TaxForms from './pages/TaxForms';
@@ -187,14 +191,13 @@ import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import AnlageE1cPage from './pages/AnlageE1cPage';
-import TaxExportHub from './pages/TaxExportHub';
-import AITaxRecommendations from './pages/AITaxRecommendations';
-import ComprehensiveTaxDashboard from './pages/ComprehensiveTaxDashboard';
+import TaxAdvisorPortalPage from './pages/TaxAdvisorPortalPage';
+import TaxYearPlannerPage from './pages/TaxYearPlannerPage';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AITaxRecommendations": AITaxRecommendations,
     "APIKeyManagement": APIKeyManagement,
     "APILogs": APILogs,
     "ActivityLogs": ActivityLogs,
@@ -216,6 +219,7 @@ export const PAGES = {
     "Analytics": Analytics,
     "AnalyticsPage": AnalyticsPage,
     "AnlageE1cAT": AnlageE1cAT,
+    "AnlageE1cPage": AnlageE1cPage,
     "AnlageKAP": AnlageKAP,
     "AnlageKAPAT": AnlageKAPAT,
     "AnlageSO": AnlageSO,
@@ -239,6 +243,7 @@ export const PAGES = {
     "CommunicationCenter": CommunicationCenter,
     "ComplianceAudit": ComplianceAudit,
     "ComplianceCenter": ComplianceCenter,
+    "ComprehensiveTaxDashboard": ComprehensiveTaxDashboard,
     "ConsolidatedTaxSummary": ConsolidatedTaxSummary,
     "ContractDetail": ContractDetail,
     "Contracts": Contracts,
@@ -305,6 +310,7 @@ export const PAGES = {
     "PropertyValuation": PropertyValuation,
     "QuarterlyTaxEstimator": QuarterlyTaxEstimator,
     "ROIDashboard": ROIDashboard,
+    "Tasks": Tasks,
     "RealEstateCH": RealEstateCH,
     "ReportGenerator": ReportGenerator,
     "ReportScheduling": ReportScheduling,
@@ -319,7 +325,6 @@ export const PAGES = {
     "SystemConfiguration": SystemConfiguration,
     "SystemHealth": SystemHealth,
     "TaskManagement": TaskManagement,
-    "Tasks": Tasks,
     "Tax": Tax,
     "TaxAdminDashboard": TaxAdminDashboard,
     "TaxAdminPanel": TaxAdminPanel,
@@ -335,6 +340,7 @@ export const PAGES = {
     "TaxDeductionOptimizer": TaxDeductionOptimizer,
     "TaxDocumentManager": TaxDocumentManager,
     "TaxDocumentProcessor": TaxDocumentProcessor,
+    "TaxExportHub": TaxExportHub,
     "TaxFilingTimeline": TaxFilingTimeline,
     "TaxFilingWizard": TaxFilingWizard,
     "TaxForms": TaxForms,
@@ -384,10 +390,8 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "AnlageE1cPage": AnlageE1cPage,
-    "TaxExportHub": TaxExportHub,
-    "AITaxRecommendations": AITaxRecommendations,
-    "ComprehensiveTaxDashboard": ComprehensiveTaxDashboard,
+    "TaxAdvisorPortalPage": TaxAdvisorPortalPage,
+    "TaxYearPlannerPage": TaxYearPlannerPage,
 }
 
 export const pagesConfig = {
