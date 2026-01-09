@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { TrendingUp, Lightbulb } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -21,37 +21,43 @@ export default function TaxPlanningAdvisor() {
   const [country, setCountry] = useState('DE');
   const [taxYear, setTaxYear] = useState(CURRENT_YEAR);
   const [projectedIncome, setProjectedIncome] = useState('');
-  const [showStrategy, setShowStrategy] = useState(false);
+  const [generatePlan, setGeneratePlan] = useState(false);
 
   const { data: strategy = {}, isLoading } = useQuery({
     queryKey: ['taxStrategy', country, taxYear, projectedIncome],
     queryFn: async () => {
-      if (!projectedIncome) return {};
       const response = await base44.functions.invoke('generateTaxPlanningStrategy', {
         country,
         taxYear,
-        projectedIncome: parseFloat(projectedIncome)
+        projectedIncome: projectedIncome ? parseFloat(projectedIncome) : null
       });
       return response.data?.strategy || {};
     },
-    enabled: showStrategy && !!projectedIncome
+    enabled: generatePlan && !!projectedIncome
   });
+
+  const quarterlyData = strategy.plan?.quarterly_plan 
+    ? Object.entries(strategy.plan.quarterly_plan).map(([q, amount]) => ({
+        name: q.toUpperCase(),
+        amount: Math.round(amount)
+      }))
+    : [];
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">💡 Tax Planning Advisor</h1>
-        <p className="text-slate-500 mt-1">AI-gestützte Steuerplanungs-Strategien</p>
+        <h1 className="text-3xl font-bold">🎯 Tax Planning Advisor</h1>
+        <p className="text-slate-500 mt-1">Personalisierte Steuerstrategie entwickeln</p>
       </div>
 
       {/* Input Section */}
       <Card className="border-2 border-blue-300 bg-blue-50">
         <CardHeader>
-          <CardTitle className="text-sm">📊 Planungs-Parameter</CardTitle>
+          <CardTitle className="text-sm">📋 Planungs-Parameter</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium">Land</label>
               <Select value={country} onValueChange={setCountry}>
@@ -72,177 +78,141 @@ export default function TaxPlanningAdvisor() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={String(CURRENT_YEAR - 1)}>{CURRENT_YEAR - 1}</SelectItem>
                   <SelectItem value={String(CURRENT_YEAR)}>{CURRENT_YEAR}</SelectItem>
                   <SelectItem value={String(CURRENT_YEAR + 1)}>{CURRENT_YEAR + 1}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <label className="text-sm font-medium">Projiziertes Einkommen (€)</label>
-              <Input
-                type="number"
-                placeholder="z.B. 50000"
-                value={projectedIncome}
-                onChange={(e) => setProjectedIncome(e.target.value)}
-              />
-            </div>
           </div>
+
+          <div>
+            <label className="text-sm font-medium">Projiziertes Jahreseinkommen (€)</label>
+            <Input
+              type="number"
+              placeholder="z.B. 100000"
+              value={projectedIncome}
+              onChange={(e) => setProjectedIncome(e.target.value)}
+            />
+          </div>
+
           <Button
-            onClick={() => setShowStrategy(true)}
+            onClick={() => setGeneratePlan(true)}
             disabled={!projectedIncome}
             className="w-full bg-blue-600 hover:bg-blue-700"
           >
-            <Lightbulb className="w-4 h-4 mr-2" />
-            Strategie Generieren
+            Steuerstrategie Generieren
           </Button>
         </CardContent>
       </Card>
 
-      {isLoading && showStrategy && (
-        <div className="text-center py-8">⏳ Strategie wird generiert...</div>
+      {isLoading && generatePlan && (
+        <div className="text-center py-8">⏳ Strategie wird entwickelt...</div>
       )}
 
-      {showStrategy && strategy.strategy && (
+      {generatePlan && strategy.plan && (
         <>
-          {/* Savings Summary */}
-          {strategy.strategy?.estimated_tax_savings && (
+          {/* Key Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="border-green-300 bg-green-50">
               <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <TrendingUp className="w-8 h-8 text-green-600" />
-                  <div>
-                    <p className="text-sm text-slate-600">Geschätzte Steuereinsparungen</p>
-                    <p className="text-3xl font-bold text-green-600">
-                      €{Math.round(strategy.strategy.estimated_tax_savings).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
+                <p className="text-sm text-slate-600">Geschätzte Ersparnis</p>
+                <p className="text-3xl font-bold text-green-600 mt-2">
+                  €{Math.round(strategy.plan?.estimated_savings || 0).toLocaleString()}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-blue-300 bg-blue-50">
+              <CardContent className="pt-6">
+                <p className="text-sm text-slate-600">Monatliches Sparziel</p>
+                <p className="text-3xl font-bold text-blue-600 mt-2">
+                  €{Math.round(strategy.plan?.monthly_savings_target || 0).toLocaleString()}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-sm text-slate-600">Risiko-Level</p>
+                <Badge className={`mt-2 ${
+                  strategy.plan?.risk_level?.toLowerCase() === 'low'
+                    ? 'bg-green-100 text-green-800'
+                    : strategy.plan?.risk_level?.toLowerCase() === 'high'
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {strategy.plan?.risk_level || 'UNKNOWN'}
+                </Badge>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Quarterly Payment Plan */}
+          {quarterlyData.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">📊 Vierteljährlicher Zahlungsplan</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={quarterlyData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => `€${value.toLocaleString()}`} />
+                    <Bar dataKey="amount" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
           )}
 
-          {/* Income Optimization */}
-          {(strategy.strategy?.income_optimization || []).length > 0 && (
+          {/* Income Strategies */}
+          {(strategy.plan?.income_strategies || []).length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">💰 Einkommens-Optimierung</CardTitle>
+                <CardTitle className="text-sm">💰 Einkommens-Strategien</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {strategy.strategy.income_optimization.map((opt, i) => (
-                  <div key={i} className="p-3 bg-blue-50 rounded border border-blue-200">
-                    <p className="font-medium text-sm">{opt.strategy || opt.title}</p>
-                    {opt.savings && (
-                      <p className="text-xs text-blue-600 mt-1">
-                        Potenzielle Ersparnis: €{Math.round(opt.savings).toLocaleString()}
-                      </p>
-                    )}
-                    {opt.feasibility && (
-                      <Badge className="mt-2 text-xs">{opt.feasibility}</Badge>
-                    )}
+                {strategy.plan.income_strategies.map((strat, i) => (
+                  <div key={i} className="flex gap-3 text-sm p-2 bg-slate-50 rounded">
+                    <span className="flex-shrink-0 text-blue-600">→</span>
+                    {strat}
                   </div>
                 ))}
               </CardContent>
             </Card>
           )}
 
-          {/* Deduction Strategies */}
-          {(strategy.strategy?.deduction_strategies || []).length > 0 && (
+          {/* Deduction Opportunities */}
+          {(strategy.plan?.deduction_opportunities || []).length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">📝 Abzugs-Strategien</CardTitle>
+                <CardTitle className="text-sm">🎯 Abzugs-Möglichkeiten</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {strategy.strategy.deduction_strategies.map((ded, i) => (
-                  <div key={i} className="p-3 bg-amber-50 rounded border border-amber-200">
-                    <p className="font-medium text-sm">{ded.deduction || ded.strategy}</p>
-                    {ded.amount && (
-                      <p className="text-xs text-amber-700 mt-1">
-                        Max. Betrag: €{Math.round(ded.amount).toLocaleString()}
-                      </p>
+                {strategy.plan.deduction_opportunities.map((opp, i) => (
+                  <div key={i} className="p-3 bg-slate-50 rounded border border-blue-200">
+                    <p className="font-medium text-sm">{opp.title || opp.name || `Möglichkeit ${i + 1}`}</p>
+                    {opp.description && <p className="text-xs text-slate-600 mt-1">{opp.description}</p>}
+                    {opp.potential_savings && (
+                      <p className="text-sm text-green-600 font-bold mt-2">💚 €{Math.round(opp.potential_savings).toLocaleString()}</p>
                     )}
                   </div>
                 ))}
               </CardContent>
             </Card>
-          )}
-
-          {/* Timing Strategies */}
-          {(strategy.strategy?.timing_strategies || []).length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">⏰ Timing-Strategien</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {strategy.strategy.timing_strategies.map((timing, i) => (
-                  <div key={i} className="flex gap-2 text-sm p-2 bg-slate-50 rounded">
-                    <span className="flex-shrink-0">→</span>
-                    {timing}
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Quarterly Payments */}
-          {(strategy.strategy?.quarterly_payments || []).length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">📅 Vierteljährliche Zahlungen</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                {strategy.strategy.quarterly_payments.map((payment, i) => (
-                  <div key={i} className="p-3 bg-green-50 rounded border border-green-200 text-center">
-                    <p className="text-xs text-slate-600">Q{i + 1}</p>
-                    <p className="text-lg font-bold text-green-600 mt-1">
-                      €{Math.round(payment.amount || 0).toLocaleString()}
-                    </p>
-                    {payment.due_date && (
-                      <p className="text-xs text-slate-600 mt-1">Fällig: {payment.due_date}</p>
-                    )}
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Risk Factors */}
-          {(strategy.strategy?.risk_factors || []).length > 0 && (
-            <Alert className="border-orange-300 bg-orange-50">
-              <AlertDescription className="text-orange-900 text-sm">
-                <strong>⚠️ Risiko-Faktoren:</strong>
-                <ul className="mt-2 space-y-1">
-                  {strategy.strategy.risk_factors.map((risk, i) => (
-                    <li key={i}>• {risk}</li>
-                  ))}
-                </ul>
-              </AlertDescription>
-            </Alert>
           )}
 
           {/* Implementation Timeline */}
-          {strategy.strategy?.implementation_timeline && (
-            <Card className="bg-slate-50">
-              <CardHeader>
-                <CardTitle className="text-sm">📋 Umsetzungs-Zeitplan</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-slate-700">
-                {strategy.strategy.implementation_timeline}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Key Decisions */}
-          {(strategy.strategy?.key_decisions || []).length > 0 && (
+          {(strategy.plan?.implementation_timeline || []).length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">🎯 Kritische Entscheidungen</CardTitle>
+                <CardTitle className="text-sm">📅 Umsetzungs-Zeitplan</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {strategy.strategy.key_decisions.map((decision, i) => (
-                  <div key={i} className="flex gap-2 text-sm p-2 bg-purple-50 rounded border border-purple-200">
-                    <span className="font-bold text-purple-600 flex-shrink-0">{i + 1}.</span>
-                    {decision}
+                {strategy.plan.implementation_timeline.map((step, i) => (
+                  <div key={i} className="flex gap-3 text-sm p-2 bg-slate-50 rounded">
+                    <span className="font-bold text-blue-600 flex-shrink-0">{i + 1}.</span>
+                    {step}
                   </div>
                 ))}
               </CardContent>
