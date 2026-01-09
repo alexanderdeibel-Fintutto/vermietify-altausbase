@@ -10,6 +10,7 @@ import { Loader2, Search, MessageSquare, Lock, CheckCircle2, AlertCircle } from 
 import { toast } from 'sonner';
 import TenantPortalCard from '@/components/tenant-portal-admin/TenantPortalCard';
 import TenantAdministrationPanel from '@/components/tenant-portal-admin/TenantAdministrationPanel';
+import AdminMessagingInterface from '@/components/messaging/AdminMessagingInterface';
 
 export default function TenantPortalAdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -189,61 +190,43 @@ export default function TenantPortalAdminDashboard() {
 
 function TenantCommunicationAdmin({ tenantId, tenant, locks }) {
   return (
-    <div className="space-y-6">
-      {/* Locks Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lock className="w-5 h-5" />
-            Verwaltungsaufgaben
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {locks.length === 0 ? (
-            <p className="text-sm text-slate-600">Keine ausstehenden Aufgaben</p>
-          ) : (
-            locks.map(lock => (
-              <div key={lock.id} className="p-3 border border-slate-200 rounded-lg">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <p className="font-semibold text-slate-900">{lock.title}</p>
-                    <p className="text-xs text-slate-600 mt-1">{lock.description}</p>
-                  </div>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Messaging Interface - Takes 2 columns */}
+      <div className="lg:col-span-2">
+        <AdminMessagingInterface tenantId={tenantId} tenant={tenant} />
+      </div>
+
+      {/* Locks Sidebar */}
+      <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Lock className="w-4 h-4" />
+              Aufgaben
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {locks.length === 0 ? (
+              <p className="text-sm text-slate-600">Keine Aufgaben</p>
+            ) : (
+              locks.slice(0, 5).map(lock => (
+                <div key={lock.id} className="p-2 border border-slate-200 rounded text-xs">
+                  <p className="font-semibold text-slate-900">{lock.title}</p>
                   <Badge
-                    className={
+                    className={`mt-1 text-xs ${
                       lock.status === 'pending'
                         ? 'bg-amber-100 text-amber-800'
-                        : lock.status === 'completed'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-slate-100 text-slate-800'
-                    }
+                        : 'bg-green-100 text-green-800'
+                    }`}
                   >
                     {lock.status === 'pending' ? 'Ausstehend' : 'Erledigt'}
                   </Badge>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-slate-600">
-                  <span>Fällig: {new Date(lock.due_date).toLocaleDateString('de-DE')}</span>
-                </div>
-              </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Messages */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5" />
-            Nachrichten
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-sm text-slate-600 p-4 bg-slate-50 rounded">
-            Kommunikationsmodul wird implementiert
-          </div>
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2, FileText, MessageSquare, Wrench, Home, Search, Download, User, LogOut } from 'lucide-react';
 import TenantPortalWelcome from '@/components/tenant-portal/TenantPortalWelcome';
 import MaintenanceRequestForm from '@/components/tenant-portal/MaintenanceRequestForm';
-import TenantLiveChat from '@/components/tenant-portal/TenantLiveChat';
+import TenantMessagingInterface from '@/components/messaging/TenantMessagingInterface';
 import TenantDocumentsViewer from '@/components/tenant-portal/TenantDocumentsViewer';
 import TenantNotificationCenter from '@/components/tenant-portal/TenantNotificationCenter';
 
@@ -332,7 +332,7 @@ export default function TenantPortalDashboard() {
 
           {/* Messages Tab */}
           <TabsContent value="messages">
-            <TenantLiveChat tenantId={tenantId} tenant={tenant} />
+            <TenantMessagingInterface tenantId={tenantId} tenantEmail={tenant?.email} />
           </TabsContent>
 
           {/* Documents Tab */}
