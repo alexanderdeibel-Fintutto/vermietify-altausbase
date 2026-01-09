@@ -6,15 +6,15 @@ export default function PageHeader({ title, subtitle, action, actionLabel, actio
     return (
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
-                <h1 className="text-2xl font-extralight text-slate-600 tracking-wide">{title}</h1>
+                <h1 className="text-2xl font-extralight text-[var(--color-primary-600)] tracking-wide">{title}</h1>
                 {subtitle && (
-                    <p className="text-sm font-extralight text-slate-400 mt-1">{subtitle}</p>
+                    <p className="text-sm font-extralight text-[var(--color-primary-400)] mt-1">{subtitle}</p>
                 )}
             </div>
             {action && (
                 <Button 
                     onClick={action}
-                    className="bg-slate-700 hover:bg-slate-800 text-white font-extralight gap-2"
+                    className="bg-[var(--color-primary-700)] hover:bg-[var(--color-primary-800)] text-white font-extralight gap-2"
                 >
                     <ActionIcon className="w-4 h-4" />
                     {actionLabel}
