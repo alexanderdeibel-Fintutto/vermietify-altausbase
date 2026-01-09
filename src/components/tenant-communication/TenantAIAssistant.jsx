@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Loader, MessageCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import FAQIntegration from './FAQIntegration';
 
 export default function TenantAIAssistant({ tenantId }) {
   const [messages, setMessages] = useState([
@@ -44,7 +45,7 @@ export default function TenantAIAssistant({ tenantId }) {
 
   const assistantMutation = useMutation({
     mutationFn: async (userMessage) => {
-      const response = await base44.functions.invoke('aiTenantAssistant', {
+      const response = await base44.functions.invoke('enhanceAITenantAssistant', {
         message: userMessage,
         tenantContext,
         conversationHistory: messages,
@@ -120,6 +121,11 @@ export default function TenantAIAssistant({ tenantId }) {
           <Send className="w-4 h-4" />
         </Button>
       </form>
+
+      <div className="border-t border-slate-200 pt-4">
+        <p className="text-xs font-light text-slate-600 mb-3">💡 Häufig gestellte Fragen:</p>
+        <FAQIntegration />
+      </div>
     </Card>
   );
 }
