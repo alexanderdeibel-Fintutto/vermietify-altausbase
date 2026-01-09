@@ -17,6 +17,9 @@ import AdvancedSearch from './pages/AdvancedSearch';
 import AlertManagement from './pages/AlertManagement';
 import Analytics from './pages/Analytics';
 import AnalyticsPage from './pages/AnalyticsPage';
+import AnlageKAP from './pages/AnlageKAP';
+import AnlageSO from './pages/AnlageSO';
+import AnlageVG from './pages/AnlageVG';
 import AuditLog from './pages/AuditLog';
 import AuditReports from './pages/AuditReports';
 import AutomationRules from './pages/AutomationRules';
@@ -98,9 +101,12 @@ import SystemHealth from './pages/SystemHealth';
 import TaskManagement from './pages/TaskManagement';
 import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
+import TaxDashboard from './pages/TaxDashboard';
+import TaxDashboardGlobal from './pages/TaxDashboardGlobal';
 import TaxForms from './pages/TaxForms';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import TaxManagement from './pages/TaxManagement';
+import TaxSetup from './pages/TaxSetup';
 import TenantCommunication from './pages/TenantCommunication';
 import TenantCommunicationCenter from './pages/TenantCommunicationCenter';
 import TenantPortal from './pages/TenantPortal';
@@ -120,24 +126,24 @@ import UserDetail from './pages/UserDetail';
 import UserManagement from './pages/UserManagement';
 import UserSettings from './pages/UserSettings';
 import WealthAdvanced from './pages/WealthAdvanced';
+import WealthAnalytics from './pages/WealthAnalytics';
 import WealthAutomation from './pages/WealthAutomation';
+import WealthIntegrations from './pages/WealthIntegrations';
 import WealthManagement from './pages/WealthManagement';
+import WealthMobile from './pages/WealthMobile';
+import WealthTeam from './pages/WealthTeam';
 import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import WealthMobile from './pages/WealthMobile';
-import WealthAnalytics from './pages/WealthAnalytics';
-import WealthIntegrations from './pages/WealthIntegrations';
-import WealthTeam from './pages/WealthTeam';
-import TaxDashboard from './pages/TaxDashboard';
-import AnlageKAP from './pages/AnlageKAP';
-import AnlageSO from './pages/AnlageSO';
-import AnlageVG from './pages/AnlageVG';
-import TaxSetup from './pages/TaxSetup';
-import TaxDashboardGlobal from './pages/TaxDashboardGlobal';
+import AnlageKAPAT from './pages/AnlageKAPAT';
+import AnlageSOAT from './pages/AnlageSOAT';
+import TaxDashboardAT from './pages/TaxDashboardAT';
+import InvestmentsCH from './pages/InvestmentsCH';
+import RealEstateCH from './pages/RealEstateCH';
+import TaxDashboardCH from './pages/TaxDashboardCH';
 import __Layout from './Layout.jsx';
 
 
@@ -161,6 +167,9 @@ export const PAGES = {
     "AlertManagement": AlertManagement,
     "Analytics": Analytics,
     "AnalyticsPage": AnalyticsPage,
+    "AnlageKAP": AnlageKAP,
+    "AnlageSO": AnlageSO,
+    "AnlageVG": AnlageVG,
     "AuditLog": AuditLog,
     "AuditReports": AuditReports,
     "AutomationRules": AutomationRules,
@@ -242,9 +251,12 @@ export const PAGES = {
     "TaskManagement": TaskManagement,
     "Tasks": Tasks,
     "Tax": Tax,
+    "TaxDashboard": TaxDashboard,
+    "TaxDashboardGlobal": TaxDashboardGlobal,
     "TaxForms": TaxForms,
     "TaxLibraryManagement": TaxLibraryManagement,
     "TaxManagement": TaxManagement,
+    "TaxSetup": TaxSetup,
     "TenantCommunication": TenantCommunication,
     "TenantCommunicationCenter": TenantCommunicationCenter,
     "TenantPortal": TenantPortal,
@@ -264,24 +276,24 @@ export const PAGES = {
     "UserManagement": UserManagement,
     "UserSettings": UserSettings,
     "WealthAdvanced": WealthAdvanced,
+    "WealthAnalytics": WealthAnalytics,
     "WealthAutomation": WealthAutomation,
+    "WealthIntegrations": WealthIntegrations,
     "WealthManagement": WealthManagement,
+    "WealthMobile": WealthMobile,
+    "WealthTeam": WealthTeam,
     "WhatsAppCommunication": WhatsAppCommunication,
     "WhatsAppSettings": WhatsAppSettings,
     "WhatsAppSetup": WhatsAppSetup,
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "WealthMobile": WealthMobile,
-    "WealthAnalytics": WealthAnalytics,
-    "WealthIntegrations": WealthIntegrations,
-    "WealthTeam": WealthTeam,
-    "TaxDashboard": TaxDashboard,
-    "AnlageKAP": AnlageKAP,
-    "AnlageSO": AnlageSO,
-    "AnlageVG": AnlageVG,
-    "TaxSetup": TaxSetup,
-    "TaxDashboardGlobal": TaxDashboardGlobal,
+    "AnlageKAPAT": AnlageKAPAT,
+    "AnlageSOAT": AnlageSOAT,
+    "TaxDashboardAT": TaxDashboardAT,
+    "InvestmentsCH": InvestmentsCH,
+    "RealEstateCH": RealEstateCH,
+    "TaxDashboardCH": TaxDashboardCH,
 }
 
 export const pagesConfig = {
