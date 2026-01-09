@@ -1,368 +1,249 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { ASSET_CATEGORIES } from './assetCategories';
-import { getSubcategories } from './assetCategories';
-
-const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF'];
 
 export default function AssetWizard({ open, onOpenChange, onSubmit, isLoading }) {
   const [step, setStep] = useState(1);
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [formData, setFormData] = useState({
-    asset_category: '',
-    asset_subcategory: '',
     name: '',
+    asset_subcategory: '',
+    quantity: '',
+    purchase_price: '',
+    current_value: '',
+    purchase_date: '',
+    currency: 'EUR',
     isin: '',
     wkn: '',
-    purchase_date: '',
-    purchase_price: '',
-    quantity: '',
-    current_value: '',
-    currency: 'EUR',
-    notes: '',
+    description: '',
+    notes: ''
   });
-  const [documents, setDocuments] = useState([]);
 
-  const handleCategorySelect = (categoryKey) => {
-    const category = ASSET_CATEGORIES[categoryKey];
-    setSelectedCategory(categoryKey);
-    setFormData(prev => ({
-      ...prev,
-      asset_category: category.id,
-      asset_subcategory: ''
-    }));
+  const handleCategorySelect = (categoryId) => {
+    setSelectedCategory(categoryId);
+    setStep(2);
   };
 
-  const handleInputChange = (field, value) => {
+  const handleFormChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleDocumentUpload = (e) => {
-    const files = Array.from(e.target.files || []);
-    setDocuments(prev => [...prev, ...files]);
-  };
-
-  const handleSubmit = () => {
-    onSubmit({
+  const handleSubmit = async () => {
+    await onSubmit({
       ...formData,
-      documents: documents.map(doc => ({ name: doc.name, size: doc.size }))
+      asset_category: selectedCategory,
+      quantity: parseFloat(formData.quantity),
+      purchase_price: parseFloat(formData.purchase_price),
+      current_value: parseFloat(formData.current_value)
     });
   };
 
-  const isStepValid = () => {
-    switch (step) {
-      case 1:
-        return selectedCategory;
-      case 2:
-        return formData.name && formData.quantity && formData.purchase_price && 
-               formData.current_value && formData.purchase_date;
-      case 3:
-        return true;
-      case 4:
-        return true;
-      default:
-        return false;
-    }
-  };
-
-  const subcategoryOptions = getSubcategories(selectedCategory);
-  const categoryObj = ASSET_CATEGORIES[selectedCategory];
+  const category = selectedCategory ? ASSET_CATEGORIES[selectedCategory] : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Vermögenswert hinzufügen</DialogTitle>
-          <DialogDescription>
-            Schritt {step} von 4: {step === 1 && 'Vermögensart wählen'}
-            {step === 2 && 'Details eingeben'}
-            {step === 3 && 'Dokumente hochladen (optional)'}
-            {step === 4 && 'Zusammenfassung'}
-          </DialogDescription>
         </DialogHeader>
 
-        <div className="min-h-96">
-          {/* Step 1: Category Selection */}
-          {step === 1 && (
-            <div className="space-y-4">
-              <p className="text-sm text-slate-600">Wählen Sie die Vermögensart:</p>
-              <div className="grid grid-cols-2 gap-3">
-                {Object.entries(ASSET_CATEGORIES).map(([key, category]) => (
-                  <Card
-                    key={key}
-                    className={`cursor-pointer transition-all ${
-                      selectedCategory === key
-                        ? 'ring-2 ring-blue-500 bg-blue-50'
-                        : 'hover:ring-2 hover:ring-slate-300'
-                    }`}
-                    onClick={() => handleCategorySelect(key)}
-                  >
-                    <CardContent className="p-4 text-center">
-                      <div className="text-2xl mb-2">{category.icon}</div>
-                      <h3 className="font-light text-sm text-slate-900">{category.label}</h3>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+        {/* Schritt 1: Kategorie wählen */}
+        {step === 1 && (
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600">Wählen Sie die Vermögensart:</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {Object.entries(ASSET_CATEGORIES).map(([key, cat]) => (
+                <Card
+                  key={key}
+                  className="cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
+                  onClick={() => handleCategorySelect(key)}
+                >
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl mb-2">{cat.label.split('')[0]}</div>
+                    <h3 className="text-sm font-medium text-slate-900">{cat.label}</h3>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {cat.subcategories.slice(0, 2).join(', ')}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Step 2: Details */}
-          {step === 2 && (
-            <div className="space-y-4">
+        {/* Schritt 2: Details eingeben */}
+        {step === 2 && category && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs font-light">Name/Bezeichnung *</Label>
+                <Label className="text-sm font-light">Name/Bezeichnung</Label>
                 <Input
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
                   placeholder="z.B. Apple Inc. Aktien"
-                  className="font-light mt-1"
+                  value={formData.name}
+                  onChange={(e) => handleFormChange('name', e.target.value)}
+                  className="mt-1"
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs font-light">ISIN</Label>
-                  <Input
-                    value={formData.isin}
-                    onChange={(e) => handleInputChange('isin', e.target.value)}
-                    placeholder="z.B. US0378331005"
-                    className="font-light mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs font-light">WKN</Label>
-                  <Input
-                    value={formData.wkn}
-                    onChange={(e) => handleInputChange('wkn', e.target.value)}
-                    placeholder="z.B. 865985"
-                    className="font-light mt-1"
-                  />
-                </div>
-              </div>
-
-              {subcategoryOptions.length > 0 && (
-                <div>
-                  <Label className="text-xs font-light">Unterkategorie</Label>
-                  <Select
-                    value={formData.asset_subcategory}
-                    onValueChange={(value) => handleInputChange('asset_subcategory', value)}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Wählen..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {subcategoryOptions.map(sub => (
-                        <SelectItem key={sub} value={sub}>
-                          {sub}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label className="text-xs font-light">Kaufdatum *</Label>
-                  <Input
-                    type="date"
-                    value={formData.purchase_date}
-                    onChange={(e) => handleInputChange('purchase_date', e.target.value)}
-                    className="font-light mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs font-light">Menge *</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.quantity}
-                    onChange={(e) => handleInputChange('quantity', e.target.value)}
-                    placeholder="0.00"
-                    className="font-light mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs font-light">Währung</Label>
-                  <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CURRENCIES.map(cur => (
-                        <SelectItem key={cur} value={cur}>{cur}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs font-light">Kaufpreis pro Einheit ({formData.currency}) *</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.purchase_price}
-                    onChange={(e) => handleInputChange('purchase_price', e.target.value)}
-                    placeholder="0.00"
-                    className="font-light mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs font-light">Aktueller Wert ({formData.currency}) *</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.current_value}
-                    onChange={(e) => handleInputChange('current_value', e.target.value)}
-                    placeholder="0.00"
-                    className="font-light mt-1"
-                  />
-                </div>
               </div>
 
               <div>
-                <Label className="text-xs font-light">Notizen</Label>
-                <Textarea
-                  value={formData.notes}
-                  onChange={(e) => handleInputChange('notes', e.target.value)}
-                  placeholder="Persönliche Notizen..."
-                  rows={2}
-                  className="font-light text-sm mt-1"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Documents */}
-          {step === 3 && (
-            <div className="space-y-4">
-              <p className="text-sm text-slate-600">
-                Laden Sie optional Kaufbelege, Depotauszüge oder andere Dokumente hoch.
-              </p>
-              <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center">
+                <Label className="text-sm font-light">ISIN (optional)</Label>
                 <Input
-                  type="file"
-                  multiple
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={handleDocumentUpload}
-                  className="hidden"
-                  id="file-upload"
+                  placeholder="DE0007164600"
+                  value={formData.isin}
+                  onChange={(e) => handleFormChange('isin', e.target.value)}
+                  className="mt-1"
                 />
-                <label htmlFor="file-upload" className="cursor-pointer">
-                  <div className="text-sm text-slate-600">
-                    <p className="font-light mb-1">Dateien hierher ziehen oder klicken zum Hochladen</p>
-                    <p className="text-xs text-slate-500">PDF, JPG, PNG - max. 10 MB</p>
-                  </div>
-                </label>
               </div>
-              {documents.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-sm font-light text-slate-900">{documents.length} Datei(en) ausgewählt:</p>
-                  {documents.map((doc, idx) => (
-                    <div key={idx} className="flex items-center justify-between bg-slate-50 p-2 rounded text-sm">
-                      <span className="font-light">{doc.name}</span>
-                      <button
-                        onClick={() => setDocuments(docs => docs.filter((_, i) => i !== idx))}
-                        className="text-red-600 hover:text-red-700 font-light"
-                      >
-                        Entfernen
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
 
-          {/* Step 4: Summary */}
-          {step === 4 && (
-            <Card>
-              <CardContent className="pt-6 space-y-4">
-                <h3 className="font-light text-slate-900">Zusammenfassung</h3>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <span className="text-slate-600">Vermögensart:</span>
-                  <span className="font-light">{categoryObj?.label}</span>
+              <div>
+                <Label className="text-sm font-light">Anzahl</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.quantity}
+                  onChange={(e) => handleFormChange('quantity', e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label className="text-sm font-light">Kaufpreis pro Einheit</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.purchase_price}
+                  onChange={(e) => handleFormChange('purchase_price', e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label className="text-sm font-light">Aktueller Kurs pro Einheit</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.current_value}
+                  onChange={(e) => handleFormChange('current_value', e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label className="text-sm font-light">Kaufdatum</Label>
+                <Input
+                  type="date"
+                  value={formData.purchase_date}
+                  onChange={(e) => handleFormChange('purchase_date', e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label className="text-sm font-light">Währung</Label>
+                <Select value={formData.currency} onValueChange={(value) => handleFormChange('currency', value)}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="GBP">GBP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-sm font-light">Art</Label>
+                <Select value={formData.asset_subcategory} onValueChange={(value) => handleFormChange('asset_subcategory', value)}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Wählen..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {category.subcategories.map(sub => (
+                      <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-sm font-light">Notizen</Label>
+              <Textarea
+                placeholder="Weitere Informationen..."
+                value={formData.notes}
+                onChange={(e) => handleFormChange('notes', e.target.value)}
+                className="mt-1 h-20"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Schritt 3: Zusammenfassung */}
+        {step === 3 && category && (
+          <div className="space-y-4">
+            <Card className="p-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
                   <span className="text-slate-600">Name:</span>
-                  <span className="font-light">{formData.name}</span>
-                  {formData.isin && (
-                    <>
-                      <span className="text-slate-600">ISIN:</span>
-                      <span className="font-light">{formData.isin}</span>
-                    </>
-                  )}
-                  <span className="text-slate-600">Menge:</span>
-                  <span className="font-light">{formData.quantity}</span>
-                  <span className="text-slate-600">Kaufpreis:</span>
-                  <span className="font-light">
-                    {parseFloat(formData.purchase_price).toLocaleString('de-DE')} {formData.currency}
-                  </span>
-                  <span className="text-slate-600">Gesamtwert:</span>
-                  <span className="font-light text-green-600">
-                    {(parseFloat(formData.quantity) * parseFloat(formData.purchase_price)).toLocaleString('de-DE')} {formData.currency}
-                  </span>
-                  {categoryObj?.steuer_formular && (
-                    <>
-                      <span className="text-slate-600">Steuerformular:</span>
-                      <span className="font-light">{categoryObj.steuer_formular}</span>
-                    </>
-                  )}
+                  <div className="font-medium">{formData.name}</div>
                 </div>
-                {documents.length > 0 && (
-                  <div className="pt-4 border-t border-slate-200">
-                    <p className="text-sm font-light text-slate-600">{documents.length} Dokument(e) hochgeladen</p>
+                <div>
+                  <span className="text-slate-600">Kategorie:</span>
+                  <div className="font-medium">{category.label}</div>
+                </div>
+                <div>
+                  <span className="text-slate-600">Anzahl:</span>
+                  <div className="font-medium">{formData.quantity}</div>
+                </div>
+                <div>
+                  <span className="text-slate-600">Kaufpreis:</span>
+                  <div className="font-medium">{formData.purchase_price} {formData.currency}</div>
+                </div>
+                <div>
+                  <span className="text-slate-600">Aktueller Wert:</span>
+                  <div className="font-medium text-green-600">
+                    {(parseFloat(formData.quantity) * parseFloat(formData.current_value)).toFixed(2)} {formData.currency}
                   </div>
-                )}
-              </CardContent>
+                </div>
+                <div>
+                  <span className="text-slate-600">Gewinn/Verlust:</span>
+                  <div className="font-medium">
+                    {(parseFloat(formData.quantity) * (parseFloat(formData.current_value) - parseFloat(formData.purchase_price))).toFixed(2)} {formData.currency}
+                  </div>
+                </div>
+              </div>
             </Card>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="flex justify-between pt-6">
           <Button
             variant="outline"
-            onClick={() => {
-              if (step > 1) {
-                setStep(step - 1);
-              } else {
-                onOpenChange(false);
-              }
-            }}
-            className="font-light"
+            onClick={() => step > 1 ? setStep(step - 1) : onOpenChange(false)}
+            disabled={isLoading}
           >
-            <ChevronLeft className="w-4 h-4 mr-1" />
+            <ChevronLeft className="h-4 w-4 mr-2" />
             {step === 1 ? 'Abbrechen' : 'Zurück'}
           </Button>
 
           <Button
             onClick={() => {
-              if (step < 4) {
-                setStep(step + 1);
-              } else {
-                handleSubmit();
-              }
+              if (step === 3) handleSubmit();
+              else setStep(step + 1);
             }}
-            disabled={!isStepValid() || isLoading}
-            className="bg-slate-900 hover:bg-slate-800 font-light"
+            disabled={isLoading}
+            className="bg-slate-900 hover:bg-slate-800"
           >
-            {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {step === 4 ? 'Hinzufügen' : 'Weiter'}
-            {step < 4 && <ChevronRight className="w-4 h-4 ml-1" />}
+            {step === 3 ? 'Erstellen' : 'Weiter'}
+            <ChevronRight className="h-4 w-4 ml-2" />
           </Button>
         </div>
       </DialogContent>
