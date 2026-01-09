@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { 
-                  Building2, 
-                  Menu,
-                  X,
-                  Users,
-                  Settings,
-                  Plus
-              } from 'lucide-react';
+                        Building2, 
+                        Menu,
+                        X,
+                        Users,
+                        Settings,
+                        Plus
+                    } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import SuiteSwitcher from '@/components/suite/SuiteSwitcher';
@@ -25,6 +25,7 @@ import QuickActions from '@/components/navigation/QuickActions';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { usePackageAccess } from '@/components/hooks/usePackageAccess';
+import { ThemeProvider } from '@/components/theme/ThemeProvider';
 
 export default function Layout({ children, currentPageName }) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -60,8 +61,9 @@ export default function Layout({ children, currentPageName }) {
     const mainSection = getCurrentMainSection();
 
     return (
-            <OnboardingRedirect>
-            <TesterTracker>
+                    <ThemeProvider>
+                    <OnboardingRedirect>
+                    <TesterTracker>
             <FeatureUnlockNotification />
             <div className="min-h-screen bg-slate-50">
                 {/* Top Header Bar */}
@@ -126,5 +128,6 @@ export default function Layout({ children, currentPageName }) {
             </div>
             </TesterTracker>
             </OnboardingRedirect>
-        );
-    }
+            </ThemeProvider>
+            );
+            }
