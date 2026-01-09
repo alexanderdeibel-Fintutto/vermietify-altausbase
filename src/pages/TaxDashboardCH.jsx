@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { toast } from 'sonner';
 
 const CURRENT_YEAR = new Date().getFullYear();
 const SWISS_CANTONS = { ZH: 'Zürich', BE: 'Bern', LU: 'Luzern', AG: 'Aargau', SG: 'Sankt Gallen', VS: 'Wallis', VD: 'Waadt', TI: 'Tessin', GE: 'Genf', BS: 'Basel-Stadt' };
@@ -97,9 +98,27 @@ export default function TaxDashboardCH() {
           </Card>
 
           <div className="flex gap-2">
-            <Button variant="outline" className="gap-2">📄 Erklärung</Button>
-            <Button variant="outline" className="gap-2">✅ Validieren</Button>
-            <Button className="gap-2 ml-auto bg-blue-600 hover:bg-blue-700">💾 Exportieren</Button>
+            <Button 
+              variant="outline" 
+              className="gap-2"
+              onClick={async () => {
+                try {
+                  const user = await base44.auth.me();
+                  const res = await base44.functions.invoke('generatePDFAnlageCH', {
+                    userId: user.id,
+                    taxYear,
+                    canton
+                  });
+                  window.open(res.file_url, '_blank');
+                  toast.success('PDF erstellt');
+                } catch (error) {
+                  toast.error('PDF-Fehler: ' + error.message);
+                }
+              }}
+              className="gap-2 ml-auto bg-blue-600 hover:bg-blue-700"
+            >
+              💾 Exportieren
+            </Button>
           </div>
         </>
       )}

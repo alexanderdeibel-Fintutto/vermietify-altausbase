@@ -7,6 +7,7 @@ import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -97,7 +98,26 @@ export default function TaxDashboardAT() {
       </Card>
 
       <div className="flex gap-2">
-        <Button variant="outline" className="gap-2">💾 Exportieren</Button>
+        <Button 
+          variant="outline" 
+          className="gap-2"
+          onClick={async () => {
+            try {
+              const user = await base44.auth.me();
+              const res = await base44.functions.invoke('generatePDFAnlageAT', {
+                userId: user.id,
+                taxYear,
+                formType: 'e1kv'
+              });
+              window.open(res.file_url, '_blank');
+              toast.success('PDF erstellt');
+            } catch (error) {
+              toast.error('PDF-Fehler: ' + error.message);
+            }
+          }}
+        >
+          💾 Exportieren
+        </Button>
         <Button variant="outline" className="gap-2">✅ Validieren</Button>
       </div>
     </div>
