@@ -51,8 +51,8 @@ export default function FinancialItemsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">📊 Finanzbuchungen</h1>
-        <p className="text-slate-600 mt-1">Verwalten Sie alle Finanzeinträge und Buchungen</p>
+        <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Finanzbuchungen</h1>
+        <p className="text-sm font-extralight text-slate-400 mt-1">Verwalten Sie alle Finanzeinträge und Buchungen</p>
       </div>
       <QuickStats stats={stats} accentColor="fuchsia" />
       <FinancialItemFilterBar onSearchChange={setSearch} onNewItem={() => { setEditingItem(null); setFormData({}); setShowDialog(true); }} />
@@ -73,7 +73,7 @@ export default function FinancialItemsPage() {
             <Input placeholder="Datum" type="date" value={formData.date || ''} onChange={(e) => setFormData({...formData, date: e.target.value})} />
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={() => setShowDialog(false)}>Abbrechen</Button>
-              <Button onClick={() => editingItem ? updateMutation.mutate(formData) : createMutation.mutate(formData)} className="bg-fuchsia-600 hover:bg-fuchsia-700">Speichern</Button>
+              <Button onClick={() => editingItem ? updateMutation.mutate(formData) : createMutation.mutate(formData)} className="bg-slate-700 hover:bg-slate-800 font-extralight">Speichern</Button>
             </div>
           </div>
         </DialogContent>

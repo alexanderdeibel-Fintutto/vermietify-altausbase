@@ -49,8 +49,8 @@ export default function UnitsManagementPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">🏠 Wohneinheiten</h1>
-        <p className="text-slate-600 mt-1">Verwalten Sie alle Ihre Wohneinheiten</p>
+        <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Wohneinheiten</h1>
+        <p className="text-sm font-extralight text-slate-400 mt-1">Verwalten Sie alle Ihre Wohneinheiten</p>
       </div>
       <QuickStats stats={stats} accentColor="sky" />
       <UnitFilterBar onSearchChange={setSearch} onNewUnit={() => { setEditingUnit(null); setFormData({}); setShowDialog(true); }} />
@@ -65,7 +65,7 @@ export default function UnitsManagementPage() {
             <Input placeholder="Miete" type="number" value={formData.rent || ''} onChange={(e) => setFormData({...formData, rent: parseFloat(e.target.value)})} />
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={() => setShowDialog(false)}>Abbrechen</Button>
-              <Button onClick={() => editingUnit ? updateMutation.mutate(formData) : createMutation.mutate(formData)} className="bg-sky-600 hover:bg-sky-700">Speichern</Button>
+              <Button onClick={() => editingUnit ? updateMutation.mutate(formData) : createMutation.mutate(formData)} className="bg-slate-700 hover:bg-slate-800 font-extralight">Speichern</Button>
             </div>
           </div>
         </DialogContent>

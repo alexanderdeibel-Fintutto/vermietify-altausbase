@@ -31,8 +31,8 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">📋 Reports</h1>
-        <p className="text-slate-600 mt-1">Erstellen und verwalten Sie automatisierte Reports</p>
+        <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Reports</h1>
+        <p className="text-sm font-extralight text-slate-400 mt-1">Erstellen und verwalten Sie automatisierte Reports</p>
       </div>
       <QuickStats stats={stats} accentColor="rose" />
       <ReportFilterBar onSearchChange={setSearch} onGenerateReport={() => {}} />

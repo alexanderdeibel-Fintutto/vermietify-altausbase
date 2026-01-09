@@ -265,7 +265,7 @@ export default function Contracts() {
                                 setEditingContract(null);
                                 setFormOpen(true);
                             }}
-                            className="bg-emerald-600 hover:bg-emerald-700"
+                            className="bg-slate-700 hover:bg-slate-800 font-extralight"
                         >
                             Vertrag hinzufügen
                         </Button>
@@ -444,7 +444,7 @@ export default function Contracts() {
                     <div className="flex justify-end mb-4">
                         <Button 
                             onClick={() => setAddFinancialItemOpen(true)}
-                            className="bg-emerald-600 hover:bg-emerald-700"
+                            className="bg-slate-700 hover:bg-slate-800 font-extralight"
                         >
                             Mietforderung hinzufügen
                         </Button>
