@@ -178,6 +178,8 @@ import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import AuditReadinessAssessment from './pages/AuditReadinessAssessment';
 import InternationalTaxStrategy from './pages/InternationalTaxStrategy';
 import TaxReportExport from './pages/TaxReportExport';
+import TaxRiskAssessment from './pages/TaxRiskAssessment';
+import AdvancedReporting from './pages/AdvancedReporting';
 import __Layout from './Layout.jsx';
 
 
@@ -362,6 +364,8 @@ export const PAGES = {
     "AuditReadinessAssessment": AuditReadinessAssessment,
     "InternationalTaxStrategy": InternationalTaxStrategy,
     "TaxReportExport": TaxReportExport,
+    "TaxRiskAssessment": TaxRiskAssessment,
+    "AdvancedReporting": AdvancedReporting,
 }
 
 export const pagesConfig = {
