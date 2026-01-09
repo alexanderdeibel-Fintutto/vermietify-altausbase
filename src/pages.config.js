@@ -173,6 +173,7 @@ import GlobalTaxDeadlineCalendar from './pages/GlobalTaxDeadlineCalendar';
 import TaxLawUpdates from './pages/TaxLawUpdates';
 import InternationalTaxComparison from './pages/InternationalTaxComparison';
 import TaxDocumentProcessor from './pages/TaxDocumentProcessor';
+import TaxReturnFilingManager from './pages/TaxReturnFilingManager';
 import __Layout from './Layout.jsx';
 
 
@@ -352,6 +353,7 @@ export const PAGES = {
     "TaxLawUpdates": TaxLawUpdates,
     "InternationalTaxComparison": InternationalTaxComparison,
     "TaxDocumentProcessor": TaxDocumentProcessor,
+    "TaxReturnFilingManager": TaxReturnFilingManager,
 }
 
 export const pagesConfig = {
