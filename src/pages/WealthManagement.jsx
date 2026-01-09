@@ -8,10 +8,13 @@ import PortfolioKPICards from '@/components/wealth/PortfolioKPICards';
 import AssetPortfolioTable from '@/components/wealth/AssetPortfolioTable';
 import AssetWizard from '@/components/wealth/AssetWizard';
 import CSVImportDialog from '@/components/wealth/CSVImportDialog';
+import AssetDetailModal from '@/components/wealth/AssetDetailModal';
+import ImportHistoryPanel from '@/components/wealth/ImportHistoryPanel';
 
 export default function WealthManagementPage() {
   const [showWizard, setShowWizard] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery({
@@ -104,7 +107,7 @@ export default function WealthManagementPage() {
           ) : (
             <AssetPortfolioTable
               portfolio={portfolio}
-              onEdit={(asset) => console.log('Edit not implemented yet', asset)}
+              onSelectAsset={setSelectedAsset}
               onDelete={(id) => deleteMutation.mutate(id)}
             />
           )}
@@ -122,11 +125,26 @@ export default function WealthManagementPage() {
         open={showImportDialog}
         onOpenChange={setShowImportDialog}
         onImport={(data) => {
-          // Import wird direkt in CSVImportDialog via Backend-Function aufgerufen
           queryClient.invalidateQueries({ queryKey: ['assetPortfolio'] });
+          queryClient.invalidateQueries({ queryKey: ['importBatches'] });
         }}
         isLoading={false}
       />
+
+      <AssetDetailModal
+        asset={selectedAsset}
+        open={!!selectedAsset}
+        onOpenChange={(open) => !open && setSelectedAsset(null)}
+        onEdit={(asset) => console.log('Edit asset:', asset)}
+        onDelete={(id) => {
+          deleteMutation.mutate(id);
+          setSelectedAsset(null);
+        }}
+      />
+
+      <div className="mt-8">
+        <ImportHistoryPanel />
+      </div>
     </div>
   );
 }
