@@ -112,6 +112,7 @@ import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import TesterAcceptInvitation from './pages/TesterAcceptInvitation';
 import TesterDashboard from './pages/TesterDashboard';
 import TesterActivityAnalytics from './pages/TesterActivityAnalytics';
+import AdminTesterAnalytics from './pages/AdminTesterAnalytics';
 import __Layout from './Layout.jsx';
 
 
@@ -230,6 +231,7 @@ export const PAGES = {
     "TesterAcceptInvitation": TesterAcceptInvitation,
     "TesterDashboard": TesterDashboard,
     "TesterActivityAnalytics": TesterActivityAnalytics,
+    "AdminTesterAnalytics": AdminTesterAnalytics,
 }
 
 export const pagesConfig = {
