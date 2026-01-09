@@ -147,6 +147,7 @@ import TaxDashboardCH from './pages/TaxDashboardCH';
 import DACHTaxComparison from './pages/DACHTaxComparison';
 import DACHComplianceChecklist from './pages/DACHComplianceChecklist';
 import TaxDeadlines from './pages/TaxDeadlines';
+import GlobalWealthDashboard from './pages/GlobalWealthDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -300,6 +301,7 @@ export const PAGES = {
     "DACHTaxComparison": DACHTaxComparison,
     "DACHComplianceChecklist": DACHComplianceChecklist,
     "TaxDeadlines": TaxDeadlines,
+    "GlobalWealthDashboard": GlobalWealthDashboard,
 }
 
 export const pagesConfig = {
