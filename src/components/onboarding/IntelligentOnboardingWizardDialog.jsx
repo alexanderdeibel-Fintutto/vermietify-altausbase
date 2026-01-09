@@ -12,7 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { X, ChevronRight, CheckCircle2, Loader2 } from 'lucide-react';
+import { X, ChevronRight, CheckCircle2, Loader2, Clock, Lightbulb } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
@@ -27,6 +27,8 @@ export default function IntelligentOnboardingWizardDialog({
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [formData, setFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dismissalExplanation, setDismissalExplanation] = useState(null);
+  const [loadingExplanation, setLoadingExplanation] = useState(false);
 
   if (!open || !onboardingState) return null;
 
@@ -114,6 +116,30 @@ export default function IntelligentOnboardingWizardDialog({
       toast.error('Fehler beim Speichern: ' + err.message);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDismissWithExplanation = async () => {
+    if (dismissalExplanation) {
+      onSkip();
+      setDismissalExplanation(null);
+      return;
+    }
+
+    setLoadingExplanation(true);
+    try {
+      const res = await base44.functions.invoke('generateDismissalExplanation', {
+        step_id: nextStep?.id,
+        step_title: nextStep?.title,
+        user_data: onboardingState?.user_insights
+      });
+      
+      setDismissalExplanation(res.data?.explanation);
+    } catch (err) {
+      console.error('Failed to generate explanation:', err);
+      onSkip();
+    } finally {
+      setLoadingExplanation(false);
     }
   };
 
@@ -270,6 +296,21 @@ export default function IntelligentOnboardingWizardDialog({
           {renderStepContent()}
         </div>
 
+        {/* AI Dismissal Explanation */}
+        {dismissalExplanation && (
+          <Card className="p-4 bg-amber-50 border border-amber-200 mb-4 space-y-3">
+            <div className="flex items-start gap-2">
+              <Lightbulb className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <p className="text-xs font-light text-amber-900 font-semibold">Warum dieser Schritt?</p>
+                <p className="text-xs font-light text-amber-800">{dismissalExplanation.context}</p>
+                <p className="text-xs font-light text-amber-700"><strong>Beste Zeit:</strong> {dismissalExplanation.timing}</p>
+                <p className="text-xs font-light text-amber-700 italic">💡 {dismissalExplanation.encouragement}</p>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Completed Steps */}
         <div className="space-y-2 mb-6">
           <p className="text-xs font-light text-slate-600 uppercase tracking-wide">Abgeschlossen</p>
@@ -287,11 +328,26 @@ export default function IntelligentOnboardingWizardDialog({
         <div className="flex gap-2">
           <Button
             variant="ghost"
-            onClick={onSkip}
-            disabled={isSubmitting}
-            className="flex-1 font-light text-slate-600"
+            onClick={handleDismissWithExplanation}
+            disabled={isSubmitting || loadingExplanation}
+            className="flex-1 font-light text-slate-600 gap-2"
           >
-            Später
+            {loadingExplanation ? (
+              <>
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Analysiere...
+              </>
+            ) : dismissalExplanation ? (
+              <>
+                <Clock className="w-3 h-3" />
+                Später
+              </>
+            ) : (
+              <>
+                <Clock className="w-3 h-3" />
+                Warum später?
+              </>
+            )}
           </Button>
           <Button
             onClick={handleStepComplete}
