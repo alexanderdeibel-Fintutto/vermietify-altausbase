@@ -88,4 +88,6 @@ const IntelligentOnboardingWizardButton = React.memo(function IntelligentOnboard
       />
     </>
   );
-}
+});
+
+export default IntelligentOnboardingWizardButton;
