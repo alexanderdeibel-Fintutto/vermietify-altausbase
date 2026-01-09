@@ -115,6 +115,7 @@ import TesterActivityAnalytics from './pages/TesterActivityAnalytics';
 import AdminTesterAnalytics from './pages/AdminTesterAnalytics';
 import AdminTestCleanup from './pages/AdminTestCleanup';
 import AdminAIAnalytics from './pages/AdminAIAnalytics';
+import AdminMasterDashboard from './pages/AdminMasterDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -236,6 +237,7 @@ export const PAGES = {
     "AdminTesterAnalytics": AdminTesterAnalytics,
     "AdminTestCleanup": AdminTestCleanup,
     "AdminAIAnalytics": AdminAIAnalytics,
+    "AdminMasterDashboard": AdminMasterDashboard,
 }
 
 export const pagesConfig = {
