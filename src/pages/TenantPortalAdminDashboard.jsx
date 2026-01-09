@@ -12,6 +12,7 @@ import TenantPortalCard from '@/components/tenant-portal-admin/TenantPortalCard'
 import TenantAdministrationPanel from '@/components/tenant-portal-admin/TenantAdministrationPanel';
 import AdminMessagingInterface from '@/components/messaging/AdminMessagingInterface';
 import TenantFeedbackManager from '@/components/admin/TenantFeedbackManager';
+import MaintenanceNotificationSender from '@/components/admin/MaintenanceNotificationSender';
 
 export default function TenantPortalAdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,6 +68,7 @@ export default function TenantPortalAdminDashboard() {
           <TabsTrigger value="administration">Verwaltung</TabsTrigger>
           <TabsTrigger value="communication">Kommunikation</TabsTrigger>
           <TabsTrigger value="feedback">Feedback</TabsTrigger>
+          <TabsTrigger value="notifications">Benachrichtigungen</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -189,6 +191,11 @@ export default function TenantPortalAdminDashboard() {
         {/* Feedback Tab */}
         <TabsContent value="feedback">
           <TenantFeedbackManager />
+        </TabsContent>
+
+        {/* Notifications Tab */}
+        <TabsContent value="notifications">
+          <MaintenanceNotificationSender />
         </TabsContent>
         </Tabs>
     </div>

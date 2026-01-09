@@ -18,6 +18,7 @@ import RecentCommunicationsWidget from '@/components/tenant-portal/RecentCommuni
 import OutstandingTasksWidget from '@/components/tenant-portal/OutstandingTasksWidget';
 import TenantDocumentsManager from '@/components/tenant-portal/TenantDocumentsManager';
 import TenantFeedbackForm from '@/components/tenant-portal/TenantFeedbackForm';
+import TenantAIChatbot from '@/components/tenant-portal/TenantAIChatbot';
 
 export default function TenantPortalDashboard() {
   const [tenantId] = useState(new URLSearchParams(window.location.search).get('id'));
@@ -204,26 +205,30 @@ export default function TenantPortalDashboard() {
               </Card>
             </div>
 
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Schnellaktionen</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-3">
-                <Button onClick={() => setShowMaintenanceForm(true)} className="bg-blue-600 hover:bg-blue-700 gap-2">
-                  <Wrench className="w-4 h-4" />
-                  Wartungsanfrage
-                </Button>
-                <Button onClick={() => setActiveTab('messages')} variant="outline" className="gap-2">
-                  <MessageSquare className="w-4 h-4" />
-                  Team kontaktieren
-                </Button>
-                <Button onClick={() => setActiveTab('documents')} variant="outline" className="gap-2">
-                  <Download className="w-4 h-4" />
-                  Dokumente
-                </Button>
-              </CardContent>
-            </Card>
+            {/* Quick Actions & AI Chatbot */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Schnellaktionen</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-wrap gap-3">
+                  <Button onClick={() => setShowMaintenanceForm(true)} className="bg-blue-600 hover:bg-blue-700 gap-2">
+                    <Wrench className="w-4 h-4" />
+                    Wartungsanfrage
+                  </Button>
+                  <Button onClick={() => setActiveTab('messages')} variant="outline" className="gap-2">
+                    <MessageSquare className="w-4 h-4" />
+                    Team kontaktieren
+                  </Button>
+                  <Button onClick={() => setActiveTab('documents')} variant="outline" className="gap-2">
+                    <Download className="w-4 h-4" />
+                    Dokumente
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <TenantAIChatbot tenantId={tenantId} />
+            </div>
           </TabsContent>
 
           {/* Contracts Tab */}
