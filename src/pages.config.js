@@ -180,6 +180,8 @@ import InternationalTaxStrategy from './pages/InternationalTaxStrategy';
 import TaxReportExport from './pages/TaxReportExport';
 import TaxRiskAssessment from './pages/TaxRiskAssessment';
 import AdvancedReporting from './pages/AdvancedReporting';
+import TaxDeductionOptimizer from './pages/TaxDeductionOptimizer';
+import QuarterlyTaxEstimator from './pages/QuarterlyTaxEstimator';
 import __Layout from './Layout.jsx';
 
 
@@ -366,6 +368,8 @@ export const PAGES = {
     "TaxReportExport": TaxReportExport,
     "TaxRiskAssessment": TaxRiskAssessment,
     "AdvancedReporting": AdvancedReporting,
+    "TaxDeductionOptimizer": TaxDeductionOptimizer,
+    "QuarterlyTaxEstimator": QuarterlyTaxEstimator,
 }
 
 export const pagesConfig = {
