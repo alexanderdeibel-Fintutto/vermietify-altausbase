@@ -75,8 +75,13 @@ export default function AnlageSO() {
   });
 
   const handleSubmit = () => {
-    if (!formData.description || !formData.amount) {
-      toast.error('Bitte füllen Sie alle erforderlichen Felder aus');
+    const errors = [];
+    if (!formData.description || formData.description.length === 0) errors.push('Beschreibung erforderlich');
+    if (formData.amount <= 0) errors.push('Betrag muss > 0 sein');
+    if (formData.allowable_expenses > formData.amount) errors.push('Werbungskosten dürfen Betrag nicht übersteigen');
+    
+    if (errors.length > 0) {
+      toast.error(errors.join(', '));
       return;
     }
     createMutation.mutate(formData);

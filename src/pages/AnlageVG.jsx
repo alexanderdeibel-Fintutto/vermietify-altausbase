@@ -85,8 +85,18 @@ export default function AnlageVG() {
   });
 
   const handleSubmit = () => {
-    if (!formData.description || !formData.acquisition_date) {
-      toast.error('Bitte füllen Sie alle erforderlichen Felder aus');
+    const errors = [];
+    const acqDate = new Date(formData.acquisition_date);
+    const saleDate = new Date(formData.sale_date);
+
+    if (!formData.description || formData.description.length === 0) errors.push('Beschreibung erforderlich');
+    if (!formData.acquisition_date) errors.push('Anschaffungsdatum erforderlich');
+    if (saleDate <= acqDate) errors.push('Veräußerungsdatum muss nach Anschaffungsdatum liegen');
+    if (formData.sale_price < 0 || formData.acquisition_costs < 0) errors.push('Preise dürfen nicht negativ sein');
+    if (formData.selling_costs > formData.sale_price * 0.1) errors.push('Veräußerungskosten wirken unrealistisch hoch');
+
+    if (errors.length > 0) {
+      toast.error(errors.join(', '));
       return;
     }
     createMutation.mutate(formData);

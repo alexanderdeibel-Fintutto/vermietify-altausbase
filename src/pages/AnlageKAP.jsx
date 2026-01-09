@@ -67,9 +67,15 @@ export default function AnlageKAP() {
     }
   });
 
-  const handleSubmit = () => {
-    if (!formData.title || !formData.institution) {
-      toast.error('Bitte füllen Sie alle Felder aus');
+  const handleSubmit = async () => {
+    const errors = [];
+    if (!formData.title || formData.title.length === 0) errors.push('Bezeichnung erforderlich');
+    if (!formData.institution || formData.institution.length === 0) errors.push('Kreditinstitut erforderlich');
+    if (formData.gross_income <= 0) errors.push('Bruttoeinkommen muss > 0 sein');
+    if (formData.gross_income > 1000000) errors.push('Betrag unrealistisch hoch');
+    
+    if (errors.length > 0) {
+      toast.error(errors.join(', '));
       return;
     }
     createMutation.mutate(formData);
