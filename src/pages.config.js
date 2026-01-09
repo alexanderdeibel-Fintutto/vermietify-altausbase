@@ -202,6 +202,9 @@ import WealthTaxIntegration from './pages/WealthTaxIntegration';
 import RealEstateTaxPlanning from './pages/RealEstateTaxPlanning';
 import SelfEmploymentTaxPlanning from './pages/SelfEmploymentTaxPlanning';
 import TaxFormLibrary from './pages/TaxFormLibrary';
+import RetirementTaxPlanning from './pages/RetirementTaxPlanning';
+import CharitableDonationPlanner from './pages/CharitableDonationPlanner';
+import TaxBracketCalculator from './pages/TaxBracketCalculator';
 import __Layout from './Layout.jsx';
 
 
@@ -410,6 +413,9 @@ export const PAGES = {
     "RealEstateTaxPlanning": RealEstateTaxPlanning,
     "SelfEmploymentTaxPlanning": SelfEmploymentTaxPlanning,
     "TaxFormLibrary": TaxFormLibrary,
+    "RetirementTaxPlanning": RetirementTaxPlanning,
+    "CharitableDonationPlanner": CharitableDonationPlanner,
+    "TaxBracketCalculator": TaxBracketCalculator,
 }
 
 export const pagesConfig = {
