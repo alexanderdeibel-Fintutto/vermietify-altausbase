@@ -4,7 +4,7 @@ import { createPageUrl } from '@/utils';
 import { Home, Building2, Users, Briefcase, TrendingUp } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
-export default function HorizontalMainNavigation() {
+export default function HorizontalMainNavigation({ activeCategory = null }) {
   const location = useLocation();
   
   const getActiveSection = () => {
@@ -17,6 +17,30 @@ export default function HorizontalMainNavigation() {
   };
 
   const activeSection = getActiveSection();
+  
+  // Filter sections based on active category from MainCategoryTabs
+  const getFilteredSections = () => {
+    const allSections = [
+      { key: 'privat', label: 'Privat', icon: Home, page: 'Dashboard', colorActive: 'bg-blue-50 text-blue-700', colorHover: 'hover:bg-blue-50/50', category: 'private' },
+      { key: 'immobilien', label: 'Immobilien', icon: Building2, page: 'Buildings', colorActive: 'bg-violet-50 text-violet-700', colorHover: 'hover:bg-violet-50/50', category: 'real_estate' },
+      { key: 'mieter', label: 'Mieter', icon: Users, page: 'Tenants', colorActive: 'bg-emerald-50 text-emerald-700', colorHover: 'hover:bg-emerald-50/50', category: 'tenants' },
+      { key: 'vermogen', label: 'Mein Vermögen', icon: TrendingUp, page: 'WealthManagement', colorActive: 'bg-amber-50 text-amber-700', colorHover: 'hover:bg-amber-50/50', category: 'wealth' },
+      { key: 'firma', label: 'Meine Firma', icon: Briefcase, page: 'Dashboard', colorActive: 'bg-orange-50 text-orange-700', colorHover: 'hover:bg-orange-50/50', category: 'business' }
+    ];
+    
+    if (!activeCategory) return allSections;
+    
+    return allSections.filter(section => {
+      if (activeCategory === 'real_estate') return section.category === 'real_estate';
+      if (activeCategory === 'tenants') return section.category === 'tenants';
+      if (activeCategory === 'private') return section.category === 'private';
+      if (activeCategory === 'wealth') return section.category === 'wealth';
+      if (activeCategory === 'business') return section.category === 'business';
+      return true;
+    });
+  };
+  
+  const sections = getFilteredSections();
 
   const sections = [
     {
