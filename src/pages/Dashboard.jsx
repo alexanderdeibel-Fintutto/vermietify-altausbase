@@ -7,6 +7,7 @@ import FeatureDiscoveryPanel from '@/components/navigation/FeatureDiscoveryPanel
 import NewFeaturesWidget from '@/components/dashboard/NewFeaturesWidget';
 import NavigationRoadmap from '@/components/navigation/NavigationRoadmap';
 import LifecycleHints from '@/components/navigation/LifecycleHints';
+import ExtendedSmartHints from '@/components/navigation/ExtendedSmartHints';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import QuickStats from '@/components/shared/QuickStats';
@@ -44,6 +45,7 @@ export default function DashboardPage() {
       <FeatureDiscoveryPanel />
       <OnboardingProgress />
       <UnlockProgressTracker />
+      <ExtendedSmartHints />
       <SmartHints />
       <div>
         <h1 className="text-3xl font-bold text-slate-900">📈 Dashboard</h1>

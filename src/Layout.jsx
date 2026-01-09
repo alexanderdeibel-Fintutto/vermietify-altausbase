@@ -20,7 +20,9 @@ import FeatureUnlockNotification from '@/components/navigation/FeatureUnlockNoti
 import SubNavigation from '@/components/navigation/SubNavigation';
 import MobileBottomNav from '@/components/navigation/MobileBottomNav';
 import BreadcrumbNavigation from '@/components/navigation/BreadcrumbNavigation';
+import HamburgerMenu from '@/components/navigation/HamburgerMenu';
 import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 
 export default function Layout({ children, currentPageName }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -94,13 +96,13 @@ export default function Layout({ children, currentPageName }) {
                 {/* Top bar */}
                 <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200/50">
                     <div className="flex items-center h-16 px-4 lg:px-8 gap-4">
-                    <base44 className="hidden" />
                         <button 
                             onClick={() => setSidebarOpen(true)}
                             className="lg:hidden p-2 hover:bg-slate-100 rounded-lg flex-shrink-0"
                         >
                             <Menu className="w-5 h-5 text-slate-600" />
                         </button>
+                        <HamburgerMenu currentSection={mainSection} visibleFeatures={visibleFeatures} />
                         <div className="flex-1 min-w-0">
                             <AdaptiveNavigation currentPageName={currentPageName} />
                         </div>
