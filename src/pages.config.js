@@ -129,6 +129,7 @@ import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import WealthMobile from './pages/WealthMobile';
+import WealthAnalytics from './pages/WealthAnalytics';
 import __Layout from './Layout.jsx';
 
 
@@ -264,6 +265,7 @@ export const PAGES = {
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "WealthMobile": WealthMobile,
+    "WealthAnalytics": WealthAnalytics,
 }
 
 export const pagesConfig = {
