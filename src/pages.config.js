@@ -256,6 +256,7 @@ import TaxAIChatbot from './pages/TaxAIChatbot';
 import OnboardingWizard from './pages/OnboardingWizard';
 import AIRuleApprovalDashboard from './pages/AIRuleApprovalDashboard';
 import TaxOptimizationStrategy from './pages/TaxOptimizationStrategy';
+import FinancialReporting from './pages/FinancialReporting';
 import __Layout from './Layout.jsx';
 
 
@@ -518,6 +519,7 @@ export const PAGES = {
     "OnboardingWizard": OnboardingWizard,
     "AIRuleApprovalDashboard": AIRuleApprovalDashboard,
     "TaxOptimizationStrategy": TaxOptimizationStrategy,
+    "FinancialReporting": FinancialReporting,
 }
 
 export const pagesConfig = {
