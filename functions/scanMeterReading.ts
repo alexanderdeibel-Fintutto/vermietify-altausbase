@@ -17,13 +17,13 @@ Deno.serve(async (req) => {
 1. ZÄHLERNUMMER: Die eindeutige Nummer des Zählers (meist alphanumerisch, z.B. "E12345678" oder "12345678")
 2. ZÄHLERSTAND: Der aktuelle Zählerstand (Ziffern auf dem Display)
 3. ZÄHLERTYP: Art des Zählers (Strom, Wasser, Gas, Heizung)
-
-Gib NUR valide Daten zurück. Wenn du dir bei einer Information nicht sicher bist, gib null zurück.
+4. BILDQUALITÄT: Bewertung der Bildqualität für Erkennung
 
 WICHTIG:
 - Zählernummer: Suche nach einer Seriennummer oder ID auf dem Zähler
 - Zählerstand: Lese ALLE sichtbaren Ziffern ab (auch Nachkommastellen)
-- Ignoriere rote Ziffern oder Kommaziffern bei der Hauptablesung
+- Ignoriere rote Ziffern bei der Hauptablesung
+- Gib geschätzte relative Positionen der erkannten Felder an (0-100% von links/oben)
 
 Antworte im JSON-Format:
 {
@@ -31,6 +31,15 @@ Antworte im JSON-Format:
   "reading_value": erkannter Zählerstand als Zahl oder null,
   "meter_type": "electricity|water|gas|heating oder null",
   "confidence": Zahl zwischen 0 und 1 für Erkennungssicherheit,
+  "image_quality": {
+    "sharpness": Schärfe 0-1,
+    "lighting": Beleuchtung 0-1,
+    "angle": Winkel OK (0-1)
+  },
+  "detected_regions": {
+    "meter_number_position": {"x": Prozent, "y": Prozent, "width": Prozent, "height": Prozent} oder null,
+    "reading_position": {"x": Prozent, "y": Prozent, "width": Prozent, "height": Prozent} oder null
+  },
   "notes": "Zusätzliche Hinweise oder Probleme"
 }`;
 
@@ -44,6 +53,37 @@ Antworte im JSON-Format:
           reading_value: { type: ["number", "null"] },
           meter_type: { type: ["string", "null"] },
           confidence: { type: "number" },
+          image_quality: {
+            type: "object",
+            properties: {
+              sharpness: { type: "number" },
+              lighting: { type: "number" },
+              angle: { type: "number" }
+            }
+          },
+          detected_regions: {
+            type: "object",
+            properties: {
+              meter_number_position: {
+                type: ["object", "null"],
+                properties: {
+                  x: { type: "number" },
+                  y: { type: "number" },
+                  width: { type: "number" },
+                  height: { type: "number" }
+                }
+              },
+              reading_position: {
+                type: ["object", "null"],
+                properties: {
+                  x: { type: "number" },
+                  y: { type: "number" },
+                  width: { type: "number" },
+                  height: { type: "number" }
+                }
+              }
+            }
+          },
           notes: { type: "string" }
         }
       }
@@ -96,6 +136,8 @@ Antworte im JSON-Format:
       meter_location: meter ? `${meter.building_name || ''} - ${meter.location || ''}`.trim() : null,
       reading_date: new Date().toISOString().split('T')[0],
       ai_notes: aiResult.notes,
+      image_quality: aiResult.image_quality || {},
+      detected_regions: aiResult.detected_regions || {},
       suggested_meters: meter ? [] : []
     });
 

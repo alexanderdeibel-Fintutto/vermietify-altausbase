@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Camera, Scan, CheckCircle, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
+import MeterImageAnnotation from './MeterImageAnnotation';
 
 export default function MobileMeterScanner({ buildingId, onComplete }) {
   const [capturedImage, setCapturedImage] = useState(null);
@@ -139,18 +140,19 @@ export default function MobileMeterScanner({ buildingId, onComplete }) {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Captured Image Preview */}
+            {/* Annotated Image with Visual Feedback */}
             <div className="relative">
-              <img 
-                src={capturedImage} 
-                alt="Captured meter" 
-                className="w-full rounded-lg border-2 border-slate-200"
+              <MeterImageAnnotation
+                imageUrl={capturedImage}
+                detectedRegions={result?.detected_regions}
+                imageQuality={result?.image_quality}
+                confidence={result?.confidence}
               />
               <Button
                 size="icon"
                 variant="destructive"
                 onClick={resetScanner}
-                className="absolute top-2 right-2"
+                className="absolute top-2 right-2 z-10"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -166,17 +168,14 @@ export default function MobileMeterScanner({ buildingId, onComplete }) {
 
             {result && !analyzing && (
               <div className="space-y-4">
-                {/* Confidence Badge */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold">Erkennungsgenauigkeit:</span>
-                  <Badge className={
-                    result.confidence >= 0.8 ? 'bg-green-100 text-green-800' :
-                    result.confidence >= 0.6 ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }>
-                    {Math.round(result.confidence * 100)}%
-                  </Badge>
-                </div>
+                {/* AI Notes */}
+                {result.ai_notes && (
+                  <Card className="p-3 bg-blue-50 border-blue-200">
+                    <p className="text-xs text-blue-900">
+                      💡 {result.ai_notes}
+                    </p>
+                  </Card>
+                )}
 
                 {/* Detected Data */}
                 <div className="space-y-3 bg-slate-50 rounded-lg p-4">
