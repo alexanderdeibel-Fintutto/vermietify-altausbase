@@ -15,46 +15,54 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
-    // Fetch all relevant data
-    const [filings, calculations, documents, alerts, deadlines, compliance] = await Promise.all([
-      base44.entities.TaxFiling.filter({ user_email: user.email, country, tax_year: taxYear }),
-      base44.entities.TaxCalculation.filter({ user_email: user.email, country, tax_year: taxYear }),
-      base44.entities.TaxDocument.filter({ user_email: user.email, country, tax_year: taxYear }),
-      base44.entities.TaxAlert.filter({ user_email: user.email, country, is_resolved: false }),
-      base44.entities.TaxDeadline.filter({ country, deadline_date: { $gte: new Date().toISOString().split('T')[0] } }),
-      base44.entities.TaxCompliance.filter({ user_email: user.email, country, tax_year: taxYear })
+    // Fetch all tax data with limits to prevent rate limiting
+    const [calcs, filings, docs, compliance, alerts, scenarios] = await Promise.all([
+      base44.entities.TaxCalculation.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
+      base44.entities.TaxFiling.filter({ user_email: user.email, country, tax_year: taxYear }, '-updated_date', 3).catch(() => []),
+      base44.entities.TaxDocument.filter({ user_email: user.email, country, tax_year: taxYear }, '-updated_date', 5).catch(() => []),
+      base44.entities.TaxCompliance.filter({ user_email: user.email, country, tax_year: taxYear }, '-updated_date', 5).catch(() => []),
+      base44.entities.TaxAlert.filter({ user_email: user.email, country }).catch(() => []),
+      base44.entities.TaxScenario.filter({ user_email: user.email, country, tax_year: taxYear }, '-updated_date', 3).catch(() => [])
     ]);
 
-    // Calculate summary statistics
-    const totalTax = calculations.reduce((sum, c) => sum + (c.total_tax || 0), 0);
-    const documentCount = documents.length;
-    const unresolvedAlerts = alerts.length;
-    const complianceRate = compliance.length > 0 
-      ? (compliance.filter(c => c.status === 'completed').length / compliance.length * 100).toFixed(0)
-      : 0;
+    const report = await base44.integrations.Core.InvokeLLM({
+      prompt: `Generate comprehensive tax report for ${country} taxpayer, tax year ${taxYear}.
 
-    // Determine overall status
-    let overallStatus = 'on_track';
-    if (unresolvedAlerts > 5 || complianceRate < 50) {
-      overallStatus = 'at_risk';
-    } else if (unresolvedAlerts > 2) {
-      overallStatus = 'needs_attention';
-    }
+Data Summary:
+- Tax Calculations: ${calcs.length}
+- Tax Filings: ${filings.length} (${filings.filter(f => f.status === 'submitted').length} submitted)
+- Documents: ${docs.length} (${docs.filter(d => d.status === 'processed').length} processed)
+- Compliance Items: ${compliance.length} (${compliance.filter(c => c.status === 'completed').length} completed)
+- Alerts: ${alerts.length}
+- Scenarios Analyzed: ${scenarios.length}
 
-    // Generate recommendations
-    const recommendations = [];
-    if (documentCount < 10) {
-      recommendations.push('Sammeln Sie mehr Belege zur vollständigen Dokumentation');
-    }
-    if (unresolvedAlerts > 0) {
-      recommendations.push(`Lösen Sie ${unresolvedAlerts} ausstehende Alerts`);
-    }
-    if (complianceRate < 100) {
-      recommendations.push('Vervollständigen Sie alle Compliance-Anforderungen');
-    }
-    if (recommendations.length === 0) {
-      recommendations.push('Alle Anforderungen sind erfüllt - Steuererklärung bereit');
-    }
+Total Tax: €${calcs.reduce((s, c) => s + (c.total_tax || 0), 0)}
+
+Generate comprehensive report with:
+1. Executive summary
+2. Key metrics and KPIs
+3. Tax liability breakdown
+4. Filing status overview
+5. Compliance assessment
+6. Document checklist
+7. Risk analysis
+8. Recommendations
+9. Timeline for next steps
+10. Year-over-year comparison suggestion`,
+      response_json_schema: {
+        type: 'object',
+        properties: {
+          executive_summary: { type: 'string' },
+          key_metrics: { type: 'object', additionalProperties: true },
+          tax_breakdown: { type: 'object', additionalProperties: true },
+          filing_status: { type: 'string' },
+          compliance_score: { type: 'number' },
+          critical_items: { type: 'array', items: { type: 'string' } },
+          recommendations: { type: 'array', items: { type: 'string' } },
+          next_steps: { type: 'array', items: { type: 'string' } }
+        }
+      }
+    });
 
     return Response.json({
       status: 'success',
@@ -62,52 +70,11 @@ Deno.serve(async (req) => {
         country,
         tax_year: taxYear,
         generated_at: new Date().toISOString(),
-        summary: {
-          total_tax: totalTax,
-          documents_collected: documentCount,
-          unresolved_alerts: unresolvedAlerts,
-          compliance_rate: parseFloat(complianceRate),
-          overall_status: overallStatus
-        },
-        filings: {
-          count: filings.length,
-          status: filings[0]?.status || 'draft',
-          completion_percentage: filings[0]?.completion_percentage || 0
-        },
-        calculations: {
-          count: calculations.length,
-          total_tax: totalTax
-        },
-        documents: {
-          count: documentCount,
-          by_type: documents.reduce((acc, d) => {
-            acc[d.document_type] = (acc[d.document_type] || 0) + 1;
-            return acc;
-          }, {})
-        },
-        alerts: {
-          count: unresolvedAlerts,
-          critical: alerts.filter(a => a.severity === 'critical').length,
-          warnings: alerts.filter(a => a.severity === 'warning').length
-        },
-        deadlines: {
-          total: deadlines.length,
-          urgent: deadlines.filter(d => {
-            const daysUntil = Math.floor((new Date(d.deadline_date) - new Date()) / (1000 * 60 * 60 * 24));
-            return daysUntil <= 14;
-          }).length
-        },
-        compliance: {
-          total: compliance.length,
-          completed: compliance.filter(c => c.status === 'completed').length,
-          pending: compliance.filter(c => c.status === 'pending').length,
-          at_risk: compliance.filter(c => c.status === 'at_risk').length
-        },
-        recommendations
+        content: report
       }
     });
   } catch (error) {
-    console.error('Tax report generation error:', error);
+    console.error('Generate comprehensive report error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

@@ -9,107 +9,72 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { scenario } = await req.json();
+    const { country, taxYear, scenarioType, parameters } = await req.json();
 
-    if (!scenario) {
-      return Response.json({ error: 'Missing scenario' }, { status: 400 });
+    if (!country || !taxYear || !scenarioType) {
+      return Response.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
-    const { country, taxYear, parameters } = scenario;
+    // Fetch base calculation
+    const baseCalc = await base44.entities.TaxCalculation.filter(
+      { user_email: user.email, country, tax_year: taxYear },
+      '-updated_date',
+      1
+    ).catch(() => [])[0];
 
-    // Base scenario calculation
-    const baseIncome = parameters.base_income || 0;
-    const baseInvestments = parameters.base_investments || 0;
-    const adjustedIncome = parameters.adjusted_income || baseIncome;
-    const adjustedInvestments = parameters.adjusted_investments || baseInvestments;
+    const simulation = await base44.integrations.Core.InvokeLLM({
+      prompt: `Simulate tax scenario for ${country}, scenario type: ${scenarioType}, tax year ${taxYear}.
 
-    // Country-specific calculations
-    const calculations = {
-      AT: {
-        income_tax_rate: 0.42,
-        capital_gains_tax: 0.275,
-        wealth_tax_rate: 0,
-        calculate: (income, investments, wealth) => ({
-          income_tax: income * 0.42,
-          capital_gains_tax: investments * 0.275,
-          wealth_tax: 0,
-          total: (income * 0.42) + (investments * 0.275)
-        })
-      },
-      CH: {
-        income_tax_rate: 0.22,
-        capital_gains_tax: 0,
-        wealth_tax_rate: 0.001,
-        calculate: (income, investments, wealth) => ({
-          income_tax: income * 0.22,
-          capital_gains_tax: 0,
-          wealth_tax: wealth * 0.001,
-          total: (income * 0.22) + (wealth * 0.001)
-        })
-      },
-      DE: {
-        income_tax_rate: 0.42,
-        capital_gains_tax: 0.26375,
-        wealth_tax_rate: 0,
-        calculate: (income, investments, wealth) => ({
-          income_tax: income * 0.42,
-          capital_gains_tax: investments * 0.26375,
-          wealth_tax: 0,
-          total: (income * 0.42) + (investments * 0.26375)
-        })
+Base Data:
+- Current Total Tax: €${baseCalc?.total_tax || 0}
+- Current Parameters: ${JSON.stringify(parameters || {})}
+
+Scenario Type: ${scenarioType}
+- income_increase: What if income increases by X%?
+- deduction_increase: What if deductions increase by X%?
+- business_expansion: What if business expands?
+- investment_change: What if investment portfolio changes?
+
+Provide:
+1. Scenario description
+2. Projected tax impact
+3. Tax savings/increase percentage
+4. Monthly payment impact
+5. Risk assessment
+6. Implementation feasibility
+7. Timeline
+8. Alternative strategies`,
+      response_json_schema: {
+        type: 'object',
+        properties: {
+          scenario_name: { type: 'string' },
+          description: { type: 'string' },
+          projected_tax: { type: 'number' },
+          tax_change: { type: 'number' },
+          percentage_change: { type: 'number' },
+          monthly_impact: { type: 'number' },
+          feasibility: { type: 'string' },
+          risk_level: { type: 'string' },
+          advantages: { type: 'array', items: { type: 'string' } },
+          disadvantages: { type: 'array', items: { type: 'string' } },
+          implementation_steps: { type: 'array', items: { type: 'string' } }
+        }
       }
-    };
-
-    const calc = calculations[country];
-    if (!calc) {
-      return Response.json({ error: 'Unsupported country' }, { status: 400 });
-    }
-
-    // Calculate base scenario
-    const baseTax = calc.calculate(baseIncome, baseInvestments, parameters.wealth || 0);
-    const adjustedTax = calc.calculate(adjustedIncome, adjustedInvestments, parameters.wealth || 0);
-
-    const impact = {
-      income_change: adjustedIncome - baseIncome,
-      investment_change: adjustedInvestments - baseInvestments,
-      tax_change: adjustedTax.total - baseTax.total,
-      tax_savings_percentage: ((baseTax.total - adjustedTax.total) / baseTax.total * 100).toFixed(2),
-      effective_rate_base: (baseTax.total / (baseIncome + baseInvestments) * 100).toFixed(2),
-      effective_rate_adjusted: (adjustedTax.total / (adjustedIncome + adjustedInvestments) * 100).toFixed(2)
-    };
-
-    // Determine risk level
-    let risk_level = 'low';
-    if (adjustedTax.total < baseTax.total * 0.7) {
-      risk_level = 'high'; // Aggressive optimization
-    } else if (adjustedTax.total < baseTax.total * 0.85) {
-      risk_level = 'medium';
-    }
-
-    // Generate recommendations
-    const recommendations = [];
-    if (impact.tax_savings_percentage > 20) {
-      recommendations.push('Hohe Einsparungen erkannt - Konsultieren Sie einen Steuerberater zur Validierung');
-    }
-    if (risk_level === 'high') {
-      recommendations.push('Dieses Szenario birgt erhöhtes Revisionsrisiko - Dokumentation ist entscheidend');
-    }
-    recommendations.push('Überprüfen Sie alle Annahmen mit aktuellen Steuertarife');
+    });
 
     return Response.json({
       status: 'success',
-      scenario_id: Math.random().toString(36).substr(2, 9),
-      country,
-      tax_year: taxYear,
-      base_calculation: baseTax,
-      adjusted_calculation: adjustedTax,
-      impact,
-      risk_level,
-      recommendations,
-      feasibility_score: Math.max(30, Math.min(100, 100 - (risk_level === 'high' ? 30 : risk_level === 'medium' ? 15 : 0)))
+      simulation: {
+        country,
+        tax_year: taxYear,
+        scenario_type: scenarioType,
+        created_at: new Date().toISOString(),
+        base_tax: baseCalc?.total_tax || 0,
+        result: simulation
+      }
     });
   } catch (error) {
-    console.error('Tax scenario simulation error:', error);
+    console.error('Simulate tax scenario error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
