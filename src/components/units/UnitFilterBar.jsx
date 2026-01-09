@@ -24,7 +24,7 @@ export default function UnitFilterBar({ onSearchChange, onStatusChange, onNewUni
           </SelectContent>
         </Select>
       </div>
-      <Button onClick={onNewUnit} className="bg-sky-600 hover:bg-sky-700"><Plus className="w-4 h-4 mr-2" />Neue Einheit</Button>
+      <Button onClick={onNewUnit} className="bg-slate-700 hover:bg-slate-800 font-extralight"><Plus className="w-4 h-4 mr-2" />Neue Einheit</Button>
     </div>
   );
 }

@@ -39,7 +39,7 @@ export default function InvoiceFilterBar({ onSearchChange, onStatusChange, onNew
         </Select>
       </div>
 
-      <Button onClick={onNewInvoice} className="bg-orange-600 hover:bg-orange-700">
+      <Button onClick={onNewInvoice} className="bg-slate-700 hover:bg-slate-800 font-extralight">
         <Plus className="w-4 h-4 mr-2" />
         Neue Rechnung
       </Button>

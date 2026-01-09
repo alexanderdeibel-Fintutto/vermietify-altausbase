@@ -24,7 +24,7 @@ export default function FinancialItemFilterBar({ onSearchChange, onTypeChange, o
           </SelectContent>
         </Select>
       </div>
-      <Button onClick={onNewItem} className="bg-fuchsia-600 hover:bg-fuchsia-700"><Plus className="w-4 h-4 mr-2" />Neue Buchung</Button>
+      <Button onClick={onNewItem} className="bg-slate-700 hover:bg-slate-800 font-extralight"><Plus className="w-4 h-4 mr-2" />Neue Buchung</Button>
     </div>
   );
 }

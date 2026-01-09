@@ -24,7 +24,7 @@ export default function ReportFilterBar({ onSearchChange, onTypeChange, onGenera
           </SelectContent>
         </Select>
       </div>
-      <Button onClick={onGenerateReport} className="bg-rose-600 hover:bg-rose-700"><Plus className="w-4 h-4 mr-2" />Neuer Report</Button>
+      <Button onClick={onGenerateReport} className="bg-slate-700 hover:bg-slate-800 font-extralight"><Plus className="w-4 h-4 mr-2" />Neuer Report</Button>
     </div>
   );
 }
