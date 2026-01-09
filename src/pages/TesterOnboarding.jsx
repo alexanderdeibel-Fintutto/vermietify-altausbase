@@ -1,125 +1,200 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { CheckCircle, Circle, ChevronRight } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import { TestTube, CheckCircle, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
 export default function TesterOnboardingPage() {
-  const [currentStep, setCurrentStep] = useState(0);
+  const [token, setToken] = useState('');
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [validInvite, setValidInvite] = useState(false);
+  const [error, setError] = useState('');
+  const [step, setStep] = useState('verify'); // verify, register, complete
+  const navigate = useNavigate();
 
-  const steps = [
-    { title: 'Account erstellen', description: 'Registrieren Sie sich als Tester', completed: true },
-    { title: 'Einladung akzeptieren', description: 'Akzeptieren Sie die Test-Einladung', completed: true },
-    { title: 'Test-Konto einrichten', description: 'Erstellen Sie ein Test-Konto', completed: false },
-    { title: 'Erste Aufgabe', description: 'Führen Sie Ihre erste Test-Aufgabe durch', completed: false },
-    { title: 'Feedback einreichen', description: 'Reichen Sie Ihr erstes Feedback ein', completed: false },
-  ];
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const inviteToken = params.get('token');
+    
+    if (inviteToken) {
+      setToken(inviteToken);
+      verifyInvitation(inviteToken);
+    } else {
+      setError('Kein Einladungstoken gefunden');
+      setLoading(false);
+    }
+  }, []);
 
-  const testAccounts = [
-    { type: 'Admin', email: 'admin@test.example.com', password: '••••••••' },
-    { type: 'User', email: 'user@test.example.com', password: '••••••••' },
-  ];
+  const verifyInvitation = async (inviteToken) => {
+    try {
+      const invitations = await base44.entities.TesterInvitation.filter({ 
+        invitation_token: inviteToken 
+      });
+
+      if (invitations.length === 0) {
+        setError('Ungültiger Einladungslink');
+        setLoading(false);
+        return;
+      }
+
+      const invitation = invitations[0];
+
+      if (invitation.status !== 'pending') {
+        setError('Diese Einladung wurde bereits verwendet');
+        setLoading(false);
+        return;
+      }
+
+      if (new Date(invitation.expires_at) < new Date()) {
+        setError('Diese Einladung ist abgelaufen');
+        setLoading(false);
+        return;
+      }
+
+      setEmail(invitation.invited_email);
+      setValidInvite(true);
+      setLoading(false);
+    } catch (err) {
+      setError('Fehler beim Überprüfen der Einladung');
+      setLoading(false);
+    }
+  };
+
+  const handleAccept = async () => {
+    try {
+      setLoading(true);
+      
+      await base44.functions.invoke('createTesterAccount', {
+        invitationToken: token,
+        testerEmail: email
+      });
+
+      setStep('complete');
+    } catch (err) {
+      setError(err.message || 'Fehler beim Erstellen des Accounts');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading && step === 'verify') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-6">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6 text-center">
+            <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4" />
+            <p className="text-slate-600">Einladung wird überprüft...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center p-6">
+        <Card className="w-full max-w-md border-red-200">
+          <CardContent className="pt-6 text-center">
+            <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-slate-900 mb-2">Fehler</h2>
+            <p className="text-slate-600">{error}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (step === 'complete') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center p-6">
+        <Card className="w-full max-w-md border-green-200">
+          <CardContent className="pt-6 text-center">
+            <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-slate-900 mb-2">Willkommen im Beta-Test!</h2>
+            <p className="text-slate-600 mb-6">
+              Dein Tester-Account wurde erfolgreich erstellt. Du erhältst gleich eine Email mit deinen Zugangsdaten.
+            </p>
+            <Button 
+              className="w-full bg-green-600 hover:bg-green-700"
+              onClick={() => window.location.href = '/'}
+            >
+              Zum Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">🎯 Tester Onboarding</h1>
-        <p className="text-slate-600 mt-1">Schritt-für-Schritt Anleitung zum Testen</p>
-      </div>
-
-      <Card className="border border-slate-200">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-6">
+      <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Fortschritt: {currentStep + 1}/{steps.length}</CardTitle>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+              <TestTube className="w-6 h-6 text-white" />
+            </div>
+            <CardTitle>Beta-Tester Einladung</CardTitle>
+          </div>
         </CardHeader>
-        <CardContent>
-          <Progress value={((currentStep + 1) / steps.length) * 100} className="h-2" />
-        </CardContent>
-      </Card>
-
-      <div className="space-y-3">
-        {steps.map((step, idx) => (
-          <div
-            key={idx}
-            className={`p-4 border rounded-lg cursor-pointer transition-all ${
-              idx === currentStep
-                ? 'border-blue-500 bg-blue-50'
-                : idx < currentStep
-                ? 'border-green-500 bg-green-50'
-                : 'border-slate-200 bg-white'
-            }`}
-            onClick={() => setCurrentStep(idx)}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 flex-1">
-                {idx < currentStep ? (
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                ) : (
-                  <Circle className="w-6 h-6 text-slate-400" />
-                )}
-                <div>
-                  <p className="font-semibold text-slate-900">Schritt {idx + 1}: {step.title}</p>
-                  <p className="text-sm text-slate-600">{step.description}</p>
-                </div>
-              </div>
-              {idx === currentStep && <ChevronRight className="w-5 h-5 text-blue-600" />}
+        <CardContent className="space-y-4">
+          <div>
+            <p className="text-slate-600 mb-4">
+              Du wurdest eingeladen, unsere Immobilienverwaltungs-App zu testen!
+            </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <p className="text-sm text-slate-600 mb-2">
+                <strong>Email:</strong> {email}
+              </p>
+              <p className="text-sm text-slate-600">
+                <strong>Account-Typ:</strong> Beta-Tester (Admin-Rechte, volle Module)
+              </p>
             </div>
           </div>
-        ))}
-      </div>
 
-      {currentStep === 2 && (
-        <Card className="border border-blue-200 bg-blue-50">
-          <CardHeader>
-            <CardTitle>Test-Konten</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {testAccounts.map((account, idx) => (
-              <div key={idx} className="p-3 bg-white border border-blue-200 rounded-lg">
-                <p className="font-semibold text-slate-900">{account.type} Account</p>
-                <p className="text-sm text-slate-600">Email: {account.email}</p>
-                <p className="text-sm text-slate-600">Passwort: {account.password}</p>
-              </div>
-            ))}
-            <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={() => setCurrentStep(3)}>
-              Konten einrichten
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-slate-900">Als Beta-Tester erhältst du:</h3>
+            <ul className="space-y-2 text-sm text-slate-600">
+              <li className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                Kostenloser Admin-Zugang
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                Alle Module freigeschaltet
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                Unbegrenzte Objekte & Mieter
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                Bug-Report Tool integriert
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                Direkter Kontakt zum Entwickler-Team
+              </li>
+            </ul>
+          </div>
 
-      {currentStep === 3 && (
-        <Card className="border border-blue-200 bg-blue-50">
-          <CardHeader>
-            <CardTitle>Erste Test-Aufgabe</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="font-semibold text-slate-900 mb-2">Aufgabe: Navigation testen</p>
-              <ol className="text-sm text-slate-700 list-decimal list-inside space-y-1">
-                <li>Melden Sie sich mit dem Admin-Konto an</li>
-                <li>Navigieren Sie durch alle Hauptmenüpunkte</li>
-                <li>Überprüfen Sie auf Fehler oder fehlende Links</li>
-                <li>Notieren Sie alle Probleme</li>
-              </ol>
-            </div>
-            <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={() => setCurrentStep(4)}>
-              Aufgabe abgeschlossen
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+          <Button 
+            className="w-full bg-blue-600 hover:bg-blue-700"
+            onClick={handleAccept}
+            disabled={loading}
+          >
+            {loading ? 'Account wird erstellt...' : 'Einladung annehmen'}
+          </Button>
 
-      {currentStep === 4 && (
-        <Card className="border border-green-200 bg-green-50">
-          <CardHeader>
-            <CardTitle>Feedback einreichen</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-slate-700">Nutzen Sie den "Problem melden" Button in der App um Ihr Feedback einzureichen.</p>
-            <Button className="w-full bg-green-600 hover:bg-green-700">Problem melden</Button>
-          </CardContent>
-        </Card>
-      )}
+          <p className="text-xs text-slate-500 text-center">
+            Mit dem Akzeptieren stimmst du zu, aktiv am Beta-Test teilzunehmen und Feedback zu geben.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

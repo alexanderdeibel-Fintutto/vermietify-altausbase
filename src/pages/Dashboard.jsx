@@ -1,6 +1,7 @@
 import React from 'react';
 import SmartHints from '@/components/navigation/SmartHints';
 import OnboardingProgress from '@/components/navigation/OnboardingProgress';
+import TesterDashboardWidget from '@/components/testing/TesterDashboardWidget';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import QuickStats from '@/components/shared/QuickStats';
@@ -33,6 +34,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      <TesterDashboardWidget />
       <OnboardingProgress />
       <SmartHints />
       <div>

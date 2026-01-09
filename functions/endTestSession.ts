@@ -9,49 +9,49 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { session_id, feedback_rating, notes } = await req.json();
+    const { data } = await req.json();
+    const { sessionId } = data;
 
-    // Session laden
-    const sessions = await base44.asServiceRole.entities.TestSession.filter({ id: session_id });
+    // Get session
+    const sessions = await base44.entities.TestSession.filter({ id: sessionId });
+    
     if (sessions.length === 0) {
       return Response.json({ error: 'Session not found' }, { status: 404 });
     }
+
     const session = sessions[0];
 
-    const endTime = new Date();
+    // Calculate duration
     const startTime = new Date(session.session_start);
-    const duration = Math.round((endTime - startTime) / 60000); // Minuten
+    const endTime = new Date();
+    const durationMinutes = Math.round((endTime - startTime) / 1000 / 60);
 
-    // Session beenden
-    await base44.asServiceRole.entities.TestSession.update(session_id, {
+    // Update session
+    await base44.entities.TestSession.update(sessionId, {
       session_end: endTime.toISOString(),
-      total_duration: duration,
-      feedback_rating: feedback_rating,
-      notes: notes
+      session_status: 'completed',
+      total_duration_minutes: durationMinutes
     });
 
-    // Assignment aktualisieren falls vorhanden
-    if (session.assignment_id) {
-      const assignments = await base44.asServiceRole.entities.TestAssignment.filter({ id: session.assignment_id });
+    // Update assignment if exists
+    if (session.test_assignment_id) {
+      const assignments = await base44.entities.TestAssignment.filter({ 
+        id: session.test_assignment_id 
+      });
+      
       if (assignments.length > 0) {
         const assignment = assignments[0];
-        await base44.asServiceRole.entities.TestAssignment.update(session.assignment_id, {
-          status: 'testing_complete',
-          completed_at: endTime.toISOString(),
-          time_spent: (assignment.time_spent || 0) + duration,
-          feedback: notes
+        await base44.entities.TestAssignment.update(assignment.id, {
+          time_spent: (assignment.time_spent || 0) + durationMinutes
         });
       }
     }
 
-    return Response.json({
-      success: true,
-      duration: duration,
-      message: 'Test-Session beendet'
+    return Response.json({ 
+      success: true, 
+      duration: durationMinutes 
     });
-
   } catch (error) {
-    console.error('Error ending test session:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
