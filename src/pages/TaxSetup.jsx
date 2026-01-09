@@ -6,7 +6,41 @@ import { useMutation } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import CountrySelector from '@/components/tax/CountrySelector';
 import CantonSelector from '@/components/tax/CantonSelector';
-import { COUNTRIES, SWISS_CANTONS } from '@/utils/taxLocalization';
+
+const COUNTRIES = {
+  DE: { code: 'DE', name: 'Deutschland', label: '🇩🇪 Deutschland' },
+  AT: { code: 'AT', name: 'Österreich', label: '🇦🇹 Österreich' },
+  CH: { code: 'CH', name: 'Schweiz', label: '🇨🇭 Schweiz' }
+};
+
+const SWISS_CANTONS = {
+  ZH: { code: 'ZH', name: 'Zürich' },
+  BE: { code: 'BE', name: 'Bern' },
+  LU: { code: 'LU', name: 'Luzern' },
+  UR: { code: 'UR', name: 'Uri' },
+  SZ: { code: 'SZ', name: 'Schwyz' },
+  OW: { code: 'OW', name: 'Obwalden' },
+  NW: { code: 'NW', name: 'Nidwalden' },
+  GL: { code: 'GL', name: 'Glarus' },
+  ZG: { code: 'ZG', name: 'Zug' },
+  FR: { code: 'FR', name: 'Freiburg' },
+  SO: { code: 'SO', name: 'Solothurn' },
+  BS: { code: 'BS', name: 'Basel-Stadt' },
+  BL: { code: 'BL', name: 'Basel-Landschaft' },
+  SH: { code: 'SH', name: 'Schaffhausen' },
+  AR: { code: 'AR', name: 'Appenzell Ausserrhoden' },
+  AI: { code: 'AI', name: 'Appenzell Innerrhoden' },
+  SG: { code: 'SG', name: 'Sankt Gallen' },
+  GR: { code: 'GR', name: 'Graubünden' },
+  AG: { code: 'AG', name: 'Aargau' },
+  TG: { code: 'TG', name: 'Thurgau' },
+  TI: { code: 'TI', name: 'Tessin' },
+  VD: { code: 'VD', name: 'Waadt' },
+  VS: { code: 'VS', name: 'Wallis' },
+  NE: { code: 'NE', name: 'Neuenburg' },
+  GE: { code: 'GE', name: 'Genf' },
+  JU: { code: 'JU', name: 'Jura' }
+};
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 

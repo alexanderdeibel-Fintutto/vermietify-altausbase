@@ -1,8 +1,12 @@
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { COUNTRIES } from '@/utils/taxLocalization';
 import { Globe } from 'lucide-react';
+
+const COUNTRIES = {
+  DE: { code: 'DE', name: 'Deutschland', label: '🇩🇪 Deutschland', locale: 'de-DE', currency: 'EUR' },
+  AT: { code: 'AT', name: 'Österreich', label: '🇦🇹 Österreich', locale: 'de-AT', currency: 'EUR' },
+  CH: { code: 'CH', name: 'Schweiz', label: '🇨🇭 Schweiz', locale: 'de-CH', currency: 'CHF' }
+};
 
 export default function CountrySelector({ value, onChange, label = 'Steuerjahr Land' }) {
   return (

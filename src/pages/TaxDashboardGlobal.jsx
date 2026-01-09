@@ -64,6 +64,15 @@ export default function TaxDashboardGlobal() {
   }
 
   // Show configured dashboard
+  const SWISS_CANTONS = {
+    ZH: 'Zürich', BE: 'Bern', LU: 'Luzern', UR: 'Uri', SZ: 'Schwyz',
+    OW: 'Obwalden', NW: 'Nidwalden', GL: 'Glarus', ZG: 'Zug', FR: 'Freiburg',
+    SO: 'Solothurn', BS: 'Basel-Stadt', BL: 'Basel-Landschaft', SH: 'Schaffhausen',
+    AR: 'Appenzell Ausserrhoden', AI: 'Appenzell Innerrhoden', SG: 'Sankt Gallen',
+    GR: 'Graubünden', AG: 'Aargau', TG: 'Thurgau', TI: 'Tessin', VD: 'Waadt',
+    VS: 'Wallis', NE: 'Neuenburg', GE: 'Genf', JU: 'Jura'
+  };
+
   const countryLabels = {
     DE: '🇩🇪 Deutschland',
     AT: '🇦🇹 Österreich',
