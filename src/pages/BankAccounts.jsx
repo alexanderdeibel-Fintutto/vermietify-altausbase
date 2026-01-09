@@ -165,7 +165,7 @@ function BankAccountForm({ open, onOpenChange, onSubmit, initialData, isLoading 
                         </Button>
                         <Button 
                             type="submit" 
-                            className="bg-emerald-600 hover:bg-emerald-700"
+                            className="bg-slate-700 hover:bg-slate-800 font-extralight"
                             disabled={isLoading}
                         >
                             {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
@@ -509,7 +509,7 @@ export default function BankAccounts() {
                     <Button
                         onClick={handleConnectBank}
                         disabled={isConnecting}
-                        className="bg-blue-600 hover:bg-blue-700 gap-2"
+                        className="bg-slate-700 hover:bg-slate-800 font-extralight gap-2"
                     >
                         <Link2 className="w-4 h-4" />
                         Bank verbinden
@@ -519,7 +519,7 @@ export default function BankAccounts() {
                             setEditingAccount(null);
                             setFormOpen(true);
                         }}
-                        className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+                        className="bg-slate-700 hover:bg-slate-800 font-extralight gap-2"
                     >
                         <Plus className="w-4 h-4" />
                         Manuell hinzufügen
@@ -547,15 +547,14 @@ export default function BankAccounts() {
                         <Button 
                             onClick={handleConnectBank}
                             disabled={isConnecting}
-                            className="bg-blue-600 hover:bg-blue-700 gap-2"
+                            className="bg-slate-700 hover:bg-slate-800 font-extralight gap-2"
                         >
                             <Link2 className="w-4 h-4" />
                             Bank verbinden
                         </Button>
                         <Button 
                             onClick={() => setFormOpen(true)}
-                            variant="outline"
-                            className="gap-2"
+                            className="bg-slate-700 hover:bg-slate-800 font-extralight gap-2"
                         >
                             <Plus className="w-4 h-4" />
                             Manuell hinzufügen
