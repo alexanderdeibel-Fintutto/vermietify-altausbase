@@ -457,8 +457,8 @@ export default function BankAccounts() {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex-1 mb-6"
             >
-                <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">Bank/Kasse</h1>
-                <p className="text-slate-500 mt-1">Konten und Transaktionen verwalten</p>
+                <h1 className="text-2xl font-extralight text-slate-600 tracking-wide">Bank/Kasse</h1>
+                <p className="text-sm font-extralight text-slate-400 mt-1">Konten und Transaktionen verwalten</p>
             </motion.div>
 
             <motion.div
@@ -467,12 +467,12 @@ export default function BankAccounts() {
                 transition={{ delay: 0.1 }}
             >
             <Tabs defaultValue="accounts" className="w-full">
-                <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
-                    <TabsTrigger value="accounts" className="gap-2">
+                <TabsList className="grid w-full max-w-md grid-cols-2 mb-6 bg-slate-50 border border-slate-100">
+                    <TabsTrigger value="accounts" className="gap-2 font-extralight data-[state=active]:bg-white data-[state=active]:text-slate-700">
                         <CreditCard className="w-4 h-4" />
                         Konten
                     </TabsTrigger>
-                    <TabsTrigger value="reconciliation" className="gap-2">
+                    <TabsTrigger value="reconciliation" className="gap-2 font-extralight data-[state=active]:bg-white data-[state=active]:text-slate-700">
                         <ArrowLeftRight className="w-4 h-4" />
                         Abgleich
                     </TabsTrigger>
@@ -585,7 +585,7 @@ export default function BankAccounts() {
                             >
                             <Card 
                                 key={account.id}
-                                className="border-slate-200/50 hover:shadow-md transition-shadow cursor-pointer"
+                                className="border-slate-100 shadow-none hover:shadow-sm transition-shadow cursor-pointer"
                                 onClick={() => {
                                     if (isCash) {
                                         setSelectedCashAccount(account);
@@ -600,19 +600,19 @@ export default function BankAccounts() {
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2">
-                                                    <CardTitle className="text-lg">{account.name}</CardTitle>
+                                                    <CardTitle className="text-base font-light text-slate-700">{account.name}</CardTitle>
                                                     {account.account_type === 'cash' && (
-                                                       <Badge className="bg-amber-100 text-amber-700">
+                                                       <Badge className="bg-slate-100 text-slate-600 font-extralight">
                                                            Kasse
                                                        </Badge>
                                                     )}
                                                     {account.is_primary && (
-                                                       <Badge className="bg-emerald-100 text-emerald-700">
+                                                       <Badge className="bg-slate-100 text-slate-600 font-extralight">
                                                            Hauptkonto
                                                        </Badge>
                                                     )}
                                                     {account.finapi_connection_id && (
-                                                       <Badge className="bg-blue-100 text-blue-700 text-xs">
+                                                       <Badge className="bg-slate-100 text-slate-600 text-xs font-extralight">
                                                            <Link2 className="w-3 h-3 mr-1" />
                                                            Verbunden
                                                        </Badge>
@@ -700,32 +700,32 @@ export default function BankAccounts() {
                                             )}
 
                                             <div className="pt-4 border-t border-slate-100">
-                                                            <p className="text-sm text-slate-500 mb-2">Kontostand</p>
-                                                            <p className="text-3xl font-bold text-slate-800">
+                                                            <p className="text-xs text-slate-400 mb-2 font-extralight">Kontostand</p>
+                                                            <p className="text-3xl font-extralight text-slate-700">
                                                                 €{(stats.balance || 0).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
                                                             </p>
                                                         </div>
 
                                             <div className="pt-4 border-t border-slate-100">
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                                                            <TrendingUp className="w-4 h-4 text-emerald-600" />
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center">
+                                                            <TrendingUp className="w-4 h-4 text-slate-400" />
                                                         </div>
                                                         <div>
-                                                            <p className="text-xs text-slate-500">Eingänge</p>
-                                                            <p className="text-sm font-semibold text-slate-800">
+                                                            <p className="text-xs text-slate-400 font-extralight">Eingänge</p>
+                                                            <p className="text-sm font-light text-slate-700">
                                                                 €{stats.income.toLocaleString('de-DE')}
                                                             </p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                                                            <TrendingDown className="w-4 h-4 text-red-600" />
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center">
+                                                            <TrendingDown className="w-4 h-4 text-slate-400" />
                                                         </div>
                                                         <div>
-                                                            <p className="text-xs text-slate-500">Ausgänge</p>
-                                                            <p className="text-sm font-semibold text-slate-800">
+                                                            <p className="text-xs text-slate-400 font-extralight">Ausgänge</p>
+                                                            <p className="text-sm font-light text-slate-700">
                                                                 €{stats.expenses.toLocaleString('de-DE')}
                                                             </p>
                                                         </div>

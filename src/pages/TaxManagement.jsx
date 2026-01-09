@@ -35,10 +35,10 @@ export default function TaxManagementPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">🧮 Steuern & ELSTER</h1>
-        <p className="text-slate-600 mt-1">Verwalten Sie Ihre Steuererklärungen und ELSTER-Übermittlungen</p>
+        <h1 className="text-2xl font-extralight text-slate-600 tracking-wide">Steuern & ELSTER</h1>
+        <p className="text-sm font-extralight text-slate-400 mt-1">Verwalten Sie Ihre Steuererklärungen und ELSTER-Übermittlungen</p>
       </div>
-      <QuickStats stats={stats} accentColor="purple" />
+      <QuickStats stats={stats} />
       <TaxFilterBar onSearchChange={setSearch} onNewForm={() => setShowDialog(true)} />
       <TaxFormTable forms={filteredForms} onEdit={() => {}} onDelete={(f) => deleteMutation.mutate(f.id)} onDownload={() => {}} />
       <Dialog open={showDialog} onOpenChange={setShowDialog}>

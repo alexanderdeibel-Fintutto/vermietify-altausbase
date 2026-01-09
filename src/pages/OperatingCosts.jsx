@@ -35,10 +35,10 @@ export default function OperatingCosts() {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
             >
-            <PageHeader 
-                title="Betriebskosten"
-                subtitle={`${statements.length} Abrechnungen`}
-            />
+            <div>
+                <h1 className="text-2xl font-extralight text-slate-600 tracking-wide">Betriebskosten</h1>
+                <p className="text-sm font-extralight text-slate-400 mt-1">{statements.length} Abrechnungen</p>
+            </div>
             </motion.div>
 
             <motion.div
@@ -93,7 +93,7 @@ export default function OperatingCosts() {
                             >
                             <Card 
                                 key={statement.id} 
-                                className={`border-slate-200/50 hover:shadow-md transition-shadow cursor-pointer ${isDraft ? 'border-amber-300 bg-amber-50/30' : ''}`}
+                                className={`border-slate-100 shadow-none hover:shadow-sm transition-shadow cursor-pointer ${isDraft ? 'border-slate-200 bg-slate-50' : ''}`}
                                 onClick={() => {
                                     if (isDraft) {
                                         setEditingStatement(statement);
@@ -106,21 +106,21 @@ export default function OperatingCosts() {
                                 <CardContent className="p-6">
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isDraft ? 'bg-amber-100' : 'bg-emerald-100'}`}>
-                                                <FileText className={`w-5 h-5 ${isDraft ? 'text-amber-600' : 'text-emerald-600'}`} />
+                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isDraft ? 'bg-slate-100' : 'bg-slate-50'}`}>
+                                                <FileText className={`w-5 h-5 ${isDraft ? 'text-slate-500' : 'text-slate-400'}`} />
                                             </div>
                                             <div>
                                                 <div className="flex items-center gap-2">
-                                                    <h3 className="font-semibold text-slate-800">
+                                                    <h3 className="font-light text-slate-700">
                                                         Abrechnung {new Date(statement.period_start).getFullYear()}
                                                     </h3>
                                                     {isDraft && (
-                                                        <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded">
+                                                        <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-extralight rounded">
                                                             Entwurf
                                                         </span>
                                                     )}
                                                 </div>
-                                                <p className="text-sm text-slate-500">
+                                                <p className="text-sm text-slate-400 font-extralight">
                                                     {building?.name || 'Unbekanntes Gebäude'}
                                                 </p>
                                             </div>
