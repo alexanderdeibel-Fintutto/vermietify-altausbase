@@ -15,49 +15,51 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
-    // Fetch all tax data with limits to prevent rate limiting
-    const [calcs, filings, docs, compliance, alerts, scenarios] = await Promise.all([
+    // Fetch comprehensive data
+    const [filings, calculations, documents, compliance, alerts, scenarios, losses] = await Promise.all([
+      base44.entities.TaxFiling.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
       base44.entities.TaxCalculation.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
-      base44.entities.TaxFiling.filter({ user_email: user.email, country, tax_year: taxYear }, '-updated_date', 3).catch(() => []),
-      base44.entities.TaxDocument.filter({ user_email: user.email, country, tax_year: taxYear }, '-updated_date', 5).catch(() => []),
-      base44.entities.TaxCompliance.filter({ user_email: user.email, country, tax_year: taxYear }, '-updated_date', 5).catch(() => []),
+      base44.entities.TaxDocument.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
+      base44.entities.TaxCompliance.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
       base44.entities.TaxAlert.filter({ user_email: user.email, country }).catch(() => []),
-      base44.entities.TaxScenario.filter({ user_email: user.email, country, tax_year: taxYear }, '-updated_date', 3).catch(() => [])
+      base44.entities.TaxScenario.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
+      base44.entities.TaxLossCarryforward.filter({ user_email: user.email, country }).catch(() => [])
     ]);
 
+    const totalTax = calculations.reduce((sum, c) => sum + (c.total_tax || 0), 0);
+    const documentCount = documents.length;
+    const complianceRate = compliance.length > 0 
+      ? (compliance.filter(c => c.status === 'completed').length / compliance.length * 100)
+      : 0;
+
     const report = await base44.integrations.Core.InvokeLLM({
-      prompt: `Generate comprehensive tax report for ${country} taxpayer, tax year ${taxYear}.
+      prompt: `Generate comprehensive professional tax report for ${country}, year ${taxYear}.
 
-Data Summary:
-- Tax Calculations: ${calcs.length}
-- Tax Filings: ${filings.length} (${filings.filter(f => f.status === 'submitted').length} submitted)
-- Documents: ${docs.length} (${docs.filter(d => d.status === 'processed').length} processed)
-- Compliance Items: ${compliance.length} (${compliance.filter(c => c.status === 'completed').length} completed)
-- Alerts: ${alerts.length}
+Summary Data:
+- Total Tax: €${Math.round(totalTax)}
+- Documents: ${documentCount}
+- Compliance Rate: ${Math.round(complianceRate)}%
 - Scenarios Analyzed: ${scenarios.length}
+- Loss Carryforwards: ${losses.length}
+- Active Alerts: ${alerts.filter(a => !a.is_resolved).length}
 
-Total Tax: €${calcs.reduce((s, c) => s + (c.total_tax || 0), 0)}
-
-Generate comprehensive report with:
-1. Executive summary
+Create executive-ready report with:
+1. Professional summary
 2. Key metrics and KPIs
-3. Tax liability breakdown
-4. Filing status overview
-5. Compliance assessment
-6. Document checklist
-7. Risk analysis
-8. Recommendations
-9. Timeline for next steps
-10. Year-over-year comparison suggestion`,
+3. Tax calculation overview
+4. Compliance status
+5. Risk assessment
+6. Planning recommendations
+7. Next steps and timeline`,
       response_json_schema: {
         type: 'object',
         properties: {
+          report_title: { type: 'string' },
           executive_summary: { type: 'string' },
           key_metrics: { type: 'object', additionalProperties: true },
-          tax_breakdown: { type: 'object', additionalProperties: true },
-          filing_status: { type: 'string' },
-          compliance_score: { type: 'number' },
-          critical_items: { type: 'array', items: { type: 'string' } },
+          calculation_overview: { type: 'object', additionalProperties: true },
+          compliance_status: { type: 'string' },
+          risk_assessment: { type: 'string' },
           recommendations: { type: 'array', items: { type: 'string' } },
           next_steps: { type: 'array', items: { type: 'string' } }
         }
@@ -70,7 +72,12 @@ Generate comprehensive report with:
         country,
         tax_year: taxYear,
         generated_at: new Date().toISOString(),
-        content: report
+        content: report,
+        data_summary: {
+          total_tax: totalTax,
+          documents_count: documentCount,
+          compliance_rate: Math.round(complianceRate)
+        }
       }
     });
   } catch (error) {
