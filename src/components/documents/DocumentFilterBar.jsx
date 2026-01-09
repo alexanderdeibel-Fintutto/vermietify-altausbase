@@ -25,7 +25,7 @@ export default function DocumentFilterBar({ onSearchChange, onTypeChange, onNewD
           </SelectContent>
         </Select>
       </div>
-      <Button onClick={onNewDocument} className="bg-indigo-600 hover:bg-indigo-700"><Plus className="w-4 h-4 mr-2" />Dokument hochladen</Button>
+      <Button onClick={onNewDocument} className="bg-slate-700 hover:bg-slate-800 font-extralight"><Plus className="w-4 h-4 mr-2" />Dokument hochladen</Button>
     </div>
   );
 }

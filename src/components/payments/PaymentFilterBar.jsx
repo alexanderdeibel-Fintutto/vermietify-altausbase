@@ -25,7 +25,7 @@ export default function PaymentFilterBar({ onSearchChange, onStatusChange, onNew
           </SelectContent>
         </Select>
       </div>
-      <Button onClick={onNewPayment} className="bg-violet-600 hover:bg-violet-700"><Plus className="w-4 h-4 mr-2" />Neue Zahlung</Button>
+      <Button onClick={onNewPayment} className="bg-slate-700 hover:bg-slate-800 font-extralight"><Plus className="w-4 h-4 mr-2" />Neue Zahlung</Button>
     </div>
   );
 }

@@ -25,7 +25,7 @@ export default function CostTypeFilterBar({ onSearchChange, onCategoryChange, on
           </SelectContent>
         </Select>
       </div>
-      <Button onClick={onNewCostType} className="bg-indigo-600 hover:bg-indigo-700"><Plus className="w-4 h-4 mr-2" />Neue Kostenart</Button>
+      <Button onClick={onNewCostType} className="bg-slate-700 hover:bg-slate-800 font-extralight"><Plus className="w-4 h-4 mr-2" />Neue Kostenart</Button>
     </div>
   );
 }
