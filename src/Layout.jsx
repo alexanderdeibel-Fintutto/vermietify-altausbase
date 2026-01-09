@@ -3,14 +3,13 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { useActivityTracker } from '@/components/testing/ActivityTracker';
 import { 
-                                    Building2, 
-                                    Menu,
-                                    X,
-                                    Users,
-                                    Settings,
-                                    Plus,
-                                    Zap
-                                } from 'lucide-react';
+                                          Building2, 
+                                          Menu,
+                                          X,
+                                          Users,
+                                          Settings,
+                                          Zap
+                                      } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import SuiteSwitcher from '@/components/suite/SuiteSwitcher';
@@ -26,6 +25,7 @@ import { base44 } from '@/api/base44Client';
 import { usePackageAccess } from '@/components/hooks/usePackageAccess';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import DocumentInboxNavItem from '@/components/navigation/DocumentInboxNavItem';
+import MainCategoryTabs from '@/components/navigation/MainCategoryTabs';
 
 // Lazy load heavy components
 const TesterTracker = lazy(() => import('@/components/testing/TesterTracker'));
