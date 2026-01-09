@@ -4,7 +4,6 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Select,
   SelectContent,
@@ -12,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { AlertTriangle, AlertCircle, CheckCircle2, Shield } from 'lucide-react';
+import { AlertTriangle, Shield, TrendingUp } from 'lucide-react';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -21,50 +20,33 @@ export default function TaxRiskAssessment() {
   const [taxYear, setTaxYear] = useState(CURRENT_YEAR);
 
   const { data: assessment = {}, isLoading } = useQuery({
-    queryKey: ['taxRiskAssessment', country, taxYear],
+    queryKey: ['taxRisk', country, taxYear],
     queryFn: async () => {
       const response = await base44.functions.invoke('calculateTaxRisk', {
         country,
         taxYear
       });
-      return response.data?.risk_assessment || {};
+      return response.data?.assessment || {};
     }
   });
 
-  const getRiskColor = (level) => {
-    switch (level?.toLowerCase()) {
-      case 'critical':
-        return { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-300' };
-      case 'high':
-        return { bg: 'bg-orange-100', text: 'text-orange-800', border: 'border-orange-300' };
-      case 'medium':
-        return { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-300' };
-      default:
-        return { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-300' };
-    }
+  const analysis = assessment.analysis || {};
+  const riskScore = analysis.overall_risk_score || 0;
+
+  const getRiskColor = (score) => {
+    if (score < 30) return { bg: 'bg-green-100', text: 'text-green-800', label: 'Niedrig' };
+    if (score < 60) return { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Mittel' };
+    return { bg: 'bg-red-100', text: 'text-red-800', label: 'Hoch' };
   };
 
-  const getRiskIcon = (level) => {
-    switch (level?.toLowerCase()) {
-      case 'critical':
-        return '🔴';
-      case 'high':
-        return '🟠';
-      case 'medium':
-        return '🟡';
-      default:
-        return '🟢';
-    }
-  };
-
-  const riskColors = getRiskColor(assessment.analysis?.risk_level);
+  const riskColor = getRiskColor(riskScore);
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">🛡️ Tax Risk Assessment</h1>
-        <p className="text-slate-500 mt-1">Umfassende Bewertung Ihres Steuer-Compliance-Risikos</p>
+        <h1 className="text-3xl font-bold">⚠️ Steuer-Risikobewertung</h1>
+        <p className="text-slate-500 mt-1">Bewerten Sie Ihr Steuer-Risiko-Profil</p>
       </div>
 
       {/* Controls */}
@@ -97,63 +79,93 @@ export default function TaxRiskAssessment() {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-8">⏳ Bewerte Risiken...</div>
+        <div className="text-center py-8">⏳ Risikobewertung wird durchgeführt...</div>
       ) : (
         <>
-          {/* Risk Summary */}
-          <Card className={`border-2 ${riskColors.border} ${riskColors.bg}`}>
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-start gap-4 mb-4">
-                <div>
-                  <p className="text-sm text-slate-600">Gesamtrisiko-Score</p>
-                  <div className="flex items-baseline gap-2 mt-1">
-                    <p className="text-4xl font-bold">{assessment.analysis?.overall_risk_score || 0}</p>
-                    <p className="text-lg">/ 100</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl">{getRiskIcon(assessment.analysis?.risk_level)}</p>
-                  <Badge className={`${riskColors.bg} ${riskColors.text} mt-2`}>
-                    {assessment.analysis?.risk_level?.toUpperCase() || 'UNKNOWN'}
-                  </Badge>
-                </div>
-              </div>
-              <Progress value={assessment.analysis?.overall_risk_score || 0} className="h-3" />
-            </CardContent>
-          </Card>
-
-          {/* Audit Vulnerability */}
-          <Card>
+          {/* Risk Score */}
+          <Card className={riskColor.bg}>
             <CardHeader>
-              <CardTitle className="text-sm">🔍 Prüfungs-Anfälligkeit</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-sm text-slate-600">Anfälligkeit</span>
-                  <span className="text-sm font-medium">
-                    {assessment.analysis?.audit_vulnerability_score || 0}%
-                  </span>
-                </div>
-                <Progress value={assessment.analysis?.audit_vulnerability_score || 0} className="h-2" />
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <AlertTriangle className={`w-5 h-5 ${riskColor.text}`} />
+                  Gesamt-Risiko-Score
+                </CardTitle>
+                <Badge className={riskColor.bg + ' ' + riskColor.text}>
+                  {riskColor.label}
+                </Badge>
               </div>
-              <p className="text-xs text-slate-700">
-                Je höher der Wert, desto wahrscheinlicher ist eine Prüfung.
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-4xl font-bold text-center">{Math.round(riskScore)}/100</div>
+              <Progress value={riskScore} className="h-3" />
+              <p className="text-sm text-center text-slate-600">
+                {riskScore < 30 ? 'Ihr Steuerprofil ist gut dokumentiert und konform.' :
+                 riskScore < 60 ? 'Es gibt einige Bereiche, die Aufmerksamkeit benötigen.' :
+                 'Erhebliche Risiken erfordern sofortige Maßnahmen.'}
               </p>
             </CardContent>
           </Card>
 
-          {/* Risk Factors */}
-          {(assessment.analysis?.key_risk_factors || []).length > 0 && (
-            <Card className="border-orange-300 bg-orange-50">
+          {/* Audit Probability */}
+          {typeof analysis.audit_probability === 'number' && (
+            <Card>
               <CardHeader>
-                <CardTitle className="text-sm">⚠️ Wichtigste Risikofaktoren</CardTitle>
+                <CardTitle className="text-sm">📋 Audit-Wahrscheinlichkeit</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-2xl font-bold">{Math.round(analysis.audit_probability)}%</span>
+                  <Shield className="w-5 h-5 text-blue-600" />
+                </div>
+                <Progress value={analysis.audit_probability} className="h-2" />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Risk Categories */}
+          {(analysis.risk_categories || []).length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">📊 Risiko-Kategorien</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {analysis.risk_categories.map((category, i) => (
+                  <div key={i} className="border-l-4 border-red-300 pl-4 py-2">
+                    <div className="flex justify-between items-start mb-1">
+                      <h4 className="font-bold text-sm">{category.name || `Kategorie ${i + 1}`}</h4>
+                      {category.severity && (
+                        <Badge className={
+                          category.severity === 'high' ? 'bg-red-100 text-red-800' :
+                          category.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-green-100 text-green-800'
+                        }>
+                          {category.severity}
+                        </Badge>
+                      )}
+                    </div>
+                    {category.description && (
+                      <p className="text-xs text-slate-600">{category.description}</p>
+                    )}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Red Flags */}
+          {(analysis.red_flags || []).length > 0 && (
+            <Card className="border-red-300 bg-red-50">
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-600" />
+                  Warnsignale
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {assessment.analysis.key_risk_factors.map((factor, i) => (
-                  <div key={i} className="flex gap-2 text-sm">
-                    <AlertTriangle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
-                    <span>{factor}</span>
+                {analysis.red_flags.map((flag, i) => (
+                  <div key={i} className="flex gap-2 text-sm p-2 bg-white rounded">
+                    <span className="text-red-600 font-bold">!</span>
+                    {flag}
                   </div>
                 ))}
               </CardContent>
@@ -161,33 +173,36 @@ export default function TaxRiskAssessment() {
           )}
 
           {/* Compliance Gaps */}
-          {(assessment.analysis?.compliance_gaps || []).length > 0 && (
-            <Card className="border-red-300 bg-red-50">
+          {(analysis.compliance_gaps || []).length > 0 && (
+            <Card>
               <CardHeader>
-                <CardTitle className="text-sm">❌ Compliance-Lücken</CardTitle>
+                <CardTitle className="text-sm">🔍 Compliance-Lücken</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {assessment.analysis.compliance_gaps.map((gap, i) => (
-                  <div key={i} className="flex gap-2 text-sm">
-                    <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-                    <span>{gap}</span>
+                {analysis.compliance_gaps.map((gap, i) => (
+                  <div key={i} className="flex gap-2 text-sm p-2 bg-yellow-50 rounded border border-yellow-200">
+                    <span className="text-yellow-600 font-bold">→</span>
+                    {gap}
                   </div>
                 ))}
               </CardContent>
             </Card>
           )}
 
-          {/* Mitigation Recommendations */}
-          {(assessment.analysis?.mitigation_recommendations || []).length > 0 && (
+          {/* Mitigation Strategies */}
+          {(analysis.mitigation_strategies || []).length > 0 && (
             <Card className="border-green-300 bg-green-50">
               <CardHeader>
-                <CardTitle className="text-sm">✅ Risiko-Minderungsmaßnahmen</CardTitle>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-green-600" />
+                  Minderungs-Strategien
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {assessment.analysis.mitigation_recommendations.map((rec, i) => (
-                  <div key={i} className="flex gap-2 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                    <span>{rec}</span>
+                {analysis.mitigation_strategies.map((strategy, i) => (
+                  <div key={i} className="flex gap-3 p-2 bg-white rounded text-sm">
+                    <span className="font-bold text-green-600 flex-shrink-0">{i + 1}.</span>
+                    {strategy}
                   </div>
                 ))}
               </CardContent>
@@ -195,59 +210,21 @@ export default function TaxRiskAssessment() {
           )}
 
           {/* Priority Actions */}
-          {(assessment.analysis?.priority_actions || []).length > 0 && (
-            <Alert className="border-blue-300 bg-blue-50">
-              <AlertDescription className="text-blue-900">
-                <strong className="text-sm">🎯 Sofort-Maßnahmen:</strong>
-                <ol className="list-decimal list-inside mt-2 space-y-1 text-sm">
-                  {assessment.analysis.priority_actions.map((action, i) => (
-                    <li key={i}>{action}</li>
-                  ))}
-                </ol>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Timeline */}
-          {assessment.analysis?.timeline && (
+          {(analysis.priority_actions || []).length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">📅 Umsetzungs-Timeline</CardTitle>
+                <CardTitle className="text-sm">⚡ Prioritäts-Maßnahmen</CardTitle>
               </CardHeader>
-              <CardContent className="text-sm text-slate-700">
-                {assessment.analysis.timeline}
+              <CardContent className="space-y-2">
+                {analysis.priority_actions.map((action, i) => (
+                  <div key={i} className="flex gap-3 p-2 bg-slate-50 rounded text-sm border-l-3 border-blue-500">
+                    <span className="font-bold text-blue-600 flex-shrink-0">{i + 1}.</span>
+                    {action}
+                  </div>
+                ))}
               </CardContent>
             </Card>
           )}
-
-          {/* Data Summary */}
-          <Card className="border-slate-300 bg-slate-50">
-            <CardHeader>
-              <CardTitle className="text-sm">📊 Daten-Zusammenfassung</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 md:grid-cols-5 gap-3 text-center text-sm">
-              <div>
-                <p className="text-slate-600">Dokumente</p>
-                <p className="text-2xl font-bold">{assessment.data_summary?.documents || 0}</p>
-              </div>
-              <div>
-                <p className="text-slate-600">Anträge</p>
-                <p className="text-2xl font-bold">{assessment.data_summary?.filings || 0}</p>
-              </div>
-              <div>
-                <p className="text-slate-600">Compliance</p>
-                <p className="text-2xl font-bold">{assessment.data_summary?.compliance_items || 0}</p>
-              </div>
-              <div>
-                <p className="text-slate-600">Audits</p>
-                <p className="text-2xl font-bold">{assessment.data_summary?.audits || 0}</p>
-              </div>
-              <div>
-                <p className="text-slate-600">Warnungen</p>
-                <p className="text-2xl font-bold">{assessment.data_summary?.alerts || 0}</p>
-              </div>
-            </CardContent>
-          </Card>
         </>
       )}
     </div>

@@ -9,96 +9,52 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { taxYear } = await req.json();
+    const { country, taxYear } = await req.json();
 
-    if (!taxYear) {
-      return Response.json({ error: 'Missing tax year' }, { status: 400 });
+    if (!country || !taxYear) {
+      return Response.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
-    // Fetch all tax data across all countries
-    const [
-      atCalcs, chCalcs, deCalcs,
-      atFiled, chFiled, deFiled,
-      atDocs, chDocs, deDocs,
-      atCompliance, chCompliance, deCompliance,
-      atAlerts, chAlerts, deAlerts
-    ] = await Promise.all([
-      base44.entities.TaxCalculation.filter({ user_email: user.email, country: 'AT', tax_year: taxYear }) || [],
-      base44.entities.TaxCalculation.filter({ user_email: user.email, country: 'CH', tax_year: taxYear }) || [],
-      base44.entities.TaxCalculation.filter({ user_email: user.email, country: 'DE', tax_year: taxYear }) || [],
-      base44.entities.TaxFiling.filter({ user_email: user.email, country: 'AT', tax_year: taxYear }) || [],
-      base44.entities.TaxFiling.filter({ user_email: user.email, country: 'CH', tax_year: taxYear }) || [],
-      base44.entities.TaxFiling.filter({ user_email: user.email, country: 'DE', tax_year: taxYear }) || [],
-      base44.entities.TaxDocument.filter({ user_email: user.email, country: 'AT', tax_year: taxYear }) || [],
-      base44.entities.TaxDocument.filter({ user_email: user.email, country: 'CH', tax_year: taxYear }) || [],
-      base44.entities.TaxDocument.filter({ user_email: user.email, country: 'DE', tax_year: taxYear }) || [],
-      base44.entities.TaxCompliance.filter({ user_email: user.email, country: 'AT', tax_year: taxYear }) || [],
-      base44.entities.TaxCompliance.filter({ user_email: user.email, country: 'CH', tax_year: taxYear }) || [],
-      base44.entities.TaxCompliance.filter({ user_email: user.email, country: 'DE', tax_year: taxYear }) || [],
-      base44.entities.TaxAlert.filter({ user_email: user.email, country: 'AT', tax_year: taxYear }) || [],
-      base44.entities.TaxAlert.filter({ user_email: user.email, country: 'CH', tax_year: taxYear }) || [],
-      base44.entities.TaxAlert.filter({ user_email: user.email, country: 'DE', tax_year: taxYear }) || []
+    // Fetch all tax-related data
+    const [filings, calculations, planning, scenarios, alerts, documents] = await Promise.all([
+      base44.entities.TaxFiling.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
+      base44.entities.TaxCalculation.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
+      base44.entities.TaxPlanning.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
+      base44.entities.TaxScenario.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
+      base44.entities.TaxAlert.filter({ user_email: user.email, country }).catch(() => []),
+      base44.entities.TaxDocument.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => [])
     ]);
 
-    const summary = {
-      AT: {
-        total_tax: atCalcs.reduce((s, c) => s + (c.total_tax || 0), 0),
-        filings: atFiled.length,
-        submitted: atFiled.filter(f => f.status === 'submitted').length,
-        documents: atDocs.length,
-        compliance: atCompliance.length,
-        completed_compliance: atCompliance.filter(c => c.status === 'completed').length,
-        alerts: atAlerts.length,
-        critical_alerts: atAlerts.filter(a => a.severity === 'critical').length
-      },
-      CH: {
-        total_tax: chCalcs.reduce((s, c) => s + (c.total_tax || 0), 0),
-        filings: chFiled.length,
-        submitted: chFiled.filter(f => f.status === 'submitted').length,
-        documents: chDocs.length,
-        compliance: chCompliance.length,
-        completed_compliance: chCompliance.filter(c => c.status === 'completed').length,
-        alerts: chAlerts.length,
-        critical_alerts: chAlerts.filter(a => a.severity === 'critical').length
-      },
-      DE: {
-        total_tax: deCalcs.reduce((s, c) => s + (c.total_tax || 0), 0),
-        filings: deFiled.length,
-        submitted: deFiled.filter(f => f.status === 'submitted').length,
-        documents: deDocs.length,
-        compliance: deCompliance.length,
-        completed_compliance: deCompliance.filter(c => c.status === 'completed').length,
-        alerts: deAlerts.length,
-        critical_alerts: deAlerts.filter(a => a.severity === 'critical').length
-      }
-    };
+    const summary = await base44.integrations.Core.InvokeLLM({
+      prompt: `Create comprehensive tax summary for ${country}, year ${taxYear}.
 
-    const consolidation = await base44.integrations.Core.InvokeLLM({
-      prompt: `Create consolidated tax summary for tax year ${taxYear} across all DACH countries.
-
-Summary Data:
-${JSON.stringify(summary, null, 2)}
+Data:
+- Filings: ${filings.length}
+- Calculations: ${calculations.length} (Total tax: €${calculations.reduce((s, c) => s + (c.total_tax || 0), 0)})
+- Planning Items: ${planning.length}
+- Scenarios Analyzed: ${scenarios.length}
+- Active Alerts: ${alerts.filter(a => !a.is_resolved).length}
+- Documents: ${documents.length}
 
 Provide:
-1. Overall tax burden summary
-2. Filing progress status
-3. Documentation completeness
-4. Compliance status overview
-5. Critical alerts summary
-6. Key actions needed
-7. Overall readiness score`,
+1. Executive summary
+2. Tax liability overview
+3. Key planning items
+4. Risk assessment
+5. Action items
+6. Next steps timeline`,
       response_json_schema: {
         type: 'object',
         properties: {
-          overall_status: { type: 'string' },
-          total_tax_burden: { type: 'number' },
-          filing_progress: { type: 'number' },
-          documentation_completeness: { type: 'number' },
-          compliance_rate: { type: 'number' },
-          overall_readiness: { type: 'number' },
-          critical_issues: { type: 'array', items: { type: 'string' } },
-          key_actions: { type: 'array', items: { type: 'string' } },
-          next_milestones: { type: 'array', items: { type: 'string' } }
+          executive_summary: { type: 'string' },
+          total_tax_liability: { type: 'number' },
+          filing_status: { type: 'string' },
+          key_metrics: { type: 'object', additionalProperties: { type: 'number' } },
+          planning_items: { type: 'array', items: { type: 'string' } },
+          risk_assessment: { type: 'string' },
+          action_items: { type: 'array', items: { type: 'string' } },
+          compliance_status: { type: 'string' },
+          estimated_refund_or_liability: { type: 'number' }
         }
       }
     });
@@ -106,13 +62,15 @@ Provide:
     return Response.json({
       status: 'success',
       summary: {
+        country,
         tax_year: taxYear,
-        countries: summary,
-        consolidation: consolidation
+        filing_count: filings.length,
+        document_count: documents.length,
+        analysis: summary
       }
     });
   } catch (error) {
-    console.error('Consolidate tax summary error:', error);
+    console.error('Consolidate summary error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
