@@ -184,6 +184,8 @@ import TaxDeductionOptimizer from './pages/TaxDeductionOptimizer';
 import QuarterlyTaxEstimator from './pages/QuarterlyTaxEstimator';
 import ConsolidatedTaxSummary from './pages/ConsolidatedTaxSummary';
 import InvestmentTaxTracking from './pages/InvestmentTaxTracking';
+import TaxYearClosingChecklist from './pages/TaxYearClosingChecklist';
+import TaxFilingTimeline from './pages/TaxFilingTimeline';
 import __Layout from './Layout.jsx';
 
 
@@ -374,6 +376,8 @@ export const PAGES = {
     "QuarterlyTaxEstimator": QuarterlyTaxEstimator,
     "ConsolidatedTaxSummary": ConsolidatedTaxSummary,
     "InvestmentTaxTracking": InvestmentTaxTracking,
+    "TaxYearClosingChecklist": TaxYearClosingChecklist,
+    "TaxFilingTimeline": TaxFilingTimeline,
 }
 
 export const pagesConfig = {
