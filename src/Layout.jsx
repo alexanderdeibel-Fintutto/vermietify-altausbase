@@ -40,19 +40,28 @@ const TesterManagement = lazy(() => import('@/pages/TesterManagement'));
 const LoadingFallback = () => null;
 
 export default function Layout({ children, currentPageName }) {
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const { hasModuleAccess, packageConfig } = usePackageAccess();
-    useActivityTracker(); // Track user activity for testers
-    
-    const { data: navigationState } = useQuery({
-        queryKey: ['navigationState'],
-        queryFn: async () => {
-            const states = await base44.entities.NavigationState.list('-updated_date', 1);
-            return states[0];
-        },
-        staleTime: 5 * 60 * 1000,
-        cacheTime: 10 * 60 * 1000
-    });
+          const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+          const [activeCategory, setActiveCategory] = useState('real_estate');
+          const { hasModuleAccess, packageConfig } = usePackageAccess();
+          useActivityTracker(); // Track user activity for testers
+
+          // Get dynamic app name from package
+          const getAppName = () => {
+            if (packageConfig?.name) {
+              return `FinX${packageConfig.name.replace('Package', '')}`;
+            }
+            return 'FinX';
+          };
+
+          const { data: navigationState } = useQuery({
+              queryKey: ['navigationState'],
+              queryFn: async () => {
+                  const states = await base44.entities.NavigationState.list('-updated_date', 1);
+                  return states[0];
+              },
+              staleTime: 5 * 60 * 1000,
+              cacheTime: 10 * 60 * 1000
+          });
 
     let visibleFeatures = navigationState?.visible_features || [];
     if (packageConfig && hasModuleAccess) {
