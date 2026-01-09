@@ -132,6 +132,7 @@ import WealthMobile from './pages/WealthMobile';
 import WealthAnalytics from './pages/WealthAnalytics';
 import WealthIntegrations from './pages/WealthIntegrations';
 import WealthTeam from './pages/WealthTeam';
+import TaxDashboard from './pages/TaxDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -270,6 +271,7 @@ export const PAGES = {
     "WealthAnalytics": WealthAnalytics,
     "WealthIntegrations": WealthIntegrations,
     "WealthTeam": WealthTeam,
+    "TaxDashboard": TaxDashboard,
 }
 
 export const pagesConfig = {
