@@ -16,6 +16,7 @@ export default function BuildingFilterBar({
   onCityChange,
   onSearchChange,
   onNewBuilding,
+  renderNewButton,
   filters = {}
 }) {
   const cities = useMemo(() => {
@@ -81,14 +82,16 @@ export default function BuildingFilterBar({
         </div>
 
         {/* New Button */}
-        <Button
-          onClick={onNewBuilding}
-          size="sm"
-          className="bg-violet-600 hover:bg-violet-700 h-9 whitespace-nowrap"
-        >
-          <Plus className="w-4 h-4 mr-1" />
-          Neu
-        </Button>
+        {renderNewButton ? renderNewButton(onNewBuilding) : (
+          <Button
+            onClick={onNewBuilding}
+            size="sm"
+            className="bg-violet-600 hover:bg-violet-700 h-9 whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            Neu
+          </Button>
+        )}
       </div>
     </div>
   );

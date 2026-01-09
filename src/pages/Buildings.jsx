@@ -9,6 +9,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import DeleteConfirmDialog from '@/components/buildings/DeleteConfirmDialog';
 import LimitGuard from '@/components/package/LimitGuard';
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function BuildingsPage() {
   const [filters, setFilters] = useState({ status: 'all', city: 'all', search: '' });
@@ -96,12 +98,17 @@ export default function BuildingsPage() {
         onStatusChange={(status) => setFilters({ ...filters, status })}
         onCityChange={(city) => setFilters({ ...filters, city })}
         onSearchChange={(search) => setFilters({ ...filters, search })}
-        onNewBuilding={() => {}}
-        renderNewButton={(onClick) => (
+        onNewBuilding={handleNewBuilding}
+        renderNewButton={() => (
           <LimitGuard limitType="buildings" currentCount={totalBuildings}>
-            <button onClick={() => { onClick(); handleNewBuilding(); }}>
-              Neues Gebäude
-            </button>
+            <Button
+              onClick={handleNewBuilding}
+              size="sm"
+              className="bg-violet-600 hover:bg-violet-700 h-9 whitespace-nowrap"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Neu
+            </Button>
           </LimitGuard>
         )}
       />
