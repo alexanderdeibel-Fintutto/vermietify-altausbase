@@ -26,6 +26,7 @@ import { usePackageAccess } from '@/components/hooks/usePackageAccess';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import DocumentInboxNavItem from '@/components/navigation/DocumentInboxNavItem';
 import MainCategoryTabs from '@/components/navigation/MainCategoryTabs';
+import CategorySubNavigation from '@/components/navigation/CategorySubNavigation';
 
 // Lazy load heavy components
 const TesterTracker = lazy(() => import('@/components/testing/TesterTracker'));
@@ -141,6 +142,9 @@ export default function Layout({ children, currentPageName }) {
                                         <HorizontalMainNavigation activeCategory={activeCategory} />
                                     </div>
                 </header>
+
+                {/* Category Sub-Navigation */}
+                <CategorySubNavigation activeCategory={activeCategory} />
 
                 {/* Sub-Navigation */}
                 {mainSection && <DynamicSubNavigation mainSection={mainSection} visibleFeatures={visibleFeatures} />}
