@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import QuickStats from '@/components/shared/QuickStats';
+import DocumentInboxDashboardWidget from '@/components/documentInbox/DocumentInboxDashboardWidget';
 
 export default function FinanzenPage() {
   const monthlyData = [
@@ -29,6 +30,8 @@ export default function FinanzenPage() {
       </div>
 
       <QuickStats stats={stats} accentColor="green" />
+
+      <DocumentInboxDashboardWidget />
 
       <Tabs defaultValue="overview">
         <TabsList className="grid w-full grid-cols-3">

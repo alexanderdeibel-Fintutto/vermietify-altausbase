@@ -25,6 +25,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { usePackageAccess } from '@/components/hooks/usePackageAccess';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
+import DocumentInboxNavItem from '@/components/navigation/DocumentInboxNavItem';
 
 // Lazy load heavy components
 const TesterTracker = lazy(() => import('@/components/testing/TesterTracker'));
@@ -63,6 +64,7 @@ export default function Layout({ children, currentPageName }) {
     
     const getCurrentMainSection = () => {
         const path = window.location.pathname.toLowerCase();
+        if (path.includes('documentinbox')) return 'dokumenteingang';
         if (path.includes('finanzen') || path.includes('invoice') || path.includes('bank')) return 'finanzen';
         if (path.includes('building') || path.includes('unit') || path.includes('insurance')) return 'immobilien';
         if (path.includes('tenant') || path.includes('contract') || path.includes('operating')) return 'mieter';
@@ -115,10 +117,15 @@ export default function Layout({ children, currentPageName }) {
                                     <Settings className="w-5 h-5" />
                                 </Button>
                             </Link>
-                        </div>
-                    </div>
+                            </div>
+                            </div>
 
-                    {/* Horizontal Main Navigation - Desktop */}
+                            {/* Document Inbox Quick Link */}
+                            <div className="px-8 py-2 border-b border-slate-100 bg-white">
+                            <DocumentInboxNavItem />
+                            </div>
+
+                            {/* Horizontal Main Navigation - Desktop */}
                     <div className="hidden lg:block">
                         <HorizontalMainNavigation />
                     </div>
