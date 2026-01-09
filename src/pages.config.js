@@ -158,6 +158,7 @@ import TaxDashboardDE from './pages/TaxDashboardDE';
 import GlobalTaxOverview from './pages/GlobalTaxOverview';
 import AnlageSODE from './pages/AnlageSODE';
 import AnlageVGDE from './pages/AnlageVGDE';
+import TaxAdminDashboard from './pages/TaxAdminDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -322,6 +323,7 @@ export const PAGES = {
     "GlobalTaxOverview": GlobalTaxOverview,
     "AnlageSODE": AnlageSODE,
     "AnlageVGDE": AnlageVGDE,
+    "TaxAdminDashboard": TaxAdminDashboard,
 }
 
 export const pagesConfig = {
