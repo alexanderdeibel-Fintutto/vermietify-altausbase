@@ -251,6 +251,7 @@ import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import TaxRuleAdmin from './pages/TaxRuleAdmin';
 import TaxAuthoritySubmissions from './pages/TaxAuthoritySubmissions';
+import SubmissionDashboard from './pages/SubmissionDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -508,6 +509,7 @@ export const PAGES = {
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "TaxRuleAdmin": TaxRuleAdmin,
     "TaxAuthoritySubmissions": TaxAuthoritySubmissions,
+    "SubmissionDashboard": SubmissionDashboard,
 }
 
 export const pagesConfig = {
