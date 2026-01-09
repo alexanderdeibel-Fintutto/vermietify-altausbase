@@ -3,14 +3,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Upload } from 'lucide-react';
 import PortfolioKPICards from '@/components/wealth/PortfolioKPICards';
 import AssetPortfolioTable from '@/components/wealth/AssetPortfolioTable';
-import AssetFormDialog from '@/components/wealth/AssetFormDialog';
+import AssetWizard from '@/components/wealth/AssetWizard';
+import CSVImportDialog from '@/components/wealth/CSVImportDialog';
 
 export default function WealthManagementPage() {
-  const [showDialog, setShowDialog] = useState(false);
-  const [editingAsset, setEditingAsset] = useState(null);
+  const [showWizard, setShowWizard] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery({
@@ -37,23 +38,12 @@ export default function WealthManagementPage() {
       ...data,
       user_id: currentUser.id,
       last_updated: new Date().toISOString(),
+      import_source: 'manual',
+      validation_status: 'validated',
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assetPortfolio'] });
-      setShowDialog(false);
-      setEditingAsset(null);
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.AssetPortfolio.update(editingAsset.id, {
-      ...data,
-      last_updated: new Date().toISOString(),
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assetPortfolio'] });
-      setShowDialog(false);
-      setEditingAsset(null);
+      setShowWizard(false);
     },
   });
 
@@ -62,22 +52,8 @@ export default function WealthManagementPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['assetPortfolio'] }),
   });
 
-  const handleOpenDialog = (asset = null) => {
-    setEditingAsset(asset);
-    setShowDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setShowDialog(false);
-    setEditingAsset(null);
-  };
-
-  const handleSubmit = (formData) => {
-    if (editingAsset) {
-      updateMutation.mutate(formData);
-    } else {
-      createMutation.mutate(formData);
-    }
+  const handleWizardSubmit = (formData) => {
+    createMutation.mutate(formData);
   };
 
   if (!currentUser) {
@@ -102,15 +78,25 @@ export default function WealthManagementPage() {
       <PortfolioKPICards portfolio={portfolio} />
 
       <Card>
-        <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+        <div className="p-6 border-b border-slate-200 flex justify-between items-center gap-3">
           <h2 className="text-lg font-light text-slate-900">Portfolio Übersicht</h2>
-          <Button
-            onClick={() => handleOpenDialog()}
-            className="bg-slate-900 hover:bg-slate-800 font-light gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Vermögenswert hinzufügen
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowImportDialog(true)}
+              variant="outline"
+              className="font-light gap-2"
+            >
+              <Upload className="w-4 h-4" />
+              Importieren
+            </Button>
+            <Button
+              onClick={() => setShowWizard(true)}
+              className="bg-slate-900 hover:bg-slate-800 font-light gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Hinzufügen
+            </Button>
+          </div>
         </div>
         <div className="p-6">
           {isLoading ? (
@@ -118,19 +104,28 @@ export default function WealthManagementPage() {
           ) : (
             <AssetPortfolioTable
               portfolio={portfolio}
-              onEdit={handleOpenDialog}
+              onEdit={(asset) => console.log('Edit not implemented yet', asset)}
               onDelete={(id) => deleteMutation.mutate(id)}
             />
           )}
         </div>
       </Card>
 
-      <AssetFormDialog
-        open={showDialog}
-        onOpenChange={handleCloseDialog}
-        onSubmit={handleSubmit}
-        initialData={editingAsset}
-        isLoading={createMutation.isPending || updateMutation.isPending}
+      <AssetWizard
+        open={showWizard}
+        onOpenChange={setShowWizard}
+        onSubmit={handleWizardSubmit}
+        isLoading={createMutation.isPending}
+      />
+
+      <CSVImportDialog
+        open={showImportDialog}
+        onOpenChange={setShowImportDialog}
+        onImport={(data) => {
+          console.log('CSV Import:', data);
+          // TODO: Implement CSV import backend function
+        }}
+        isLoading={false}
       />
     </div>
   );
