@@ -74,6 +74,13 @@ export function ThemeProvider({ children }) {
       });
     }
 
+    // Apply spacing
+    if (tokens.spacing) {
+      Object.entries(tokens.spacing).forEach(([key, value]) => {
+        root.style.setProperty(`--spacing-${key}`, value);
+      });
+    }
+
     // Apply effects
     if (tokens.effects) {
       Object.entries(tokens.effects).forEach(([key, value]) => {
