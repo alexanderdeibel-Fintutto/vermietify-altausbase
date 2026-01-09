@@ -33,24 +33,23 @@ export default function AssetPortfolioTable({ portfolio = [], onEdit, onDelete, 
   };
 
   return (
-    <div className="rounded-lg border border-slate-200 overflow-hidden">
-      <table className="w-full">
+    <div className="w-full overflow-x-auto -mx-6 lg:mx-0 rounded-lg border border-slate-200 lg:rounded-lg">
+      <table className="w-full min-w-max lg:min-w-full">
         <thead>
           <tr className="bg-slate-50 border-b border-slate-200">
-            <th className="px-6 py-3 text-left text-xs font-light text-slate-600 uppercase">Vermögenswert</th>
-            <th className="px-6 py-3 text-left text-xs font-light text-slate-600 uppercase">Kategorie</th>
-            <th className="px-6 py-3 text-left text-xs font-light text-slate-600 uppercase">Menge</th>
-            <th className="px-6 py-3 text-right text-xs font-light text-slate-600 uppercase">Kaufpreis</th>
-            <th className="px-6 py-3 text-right text-xs font-light text-slate-600 uppercase">Aktueller Wert</th>
-            <th className="px-6 py-3 text-right text-xs font-light text-slate-600 uppercase">Gesamtwert</th>
-            <th className="px-6 py-3 text-center text-xs font-light text-slate-600 uppercase">Status</th>
-            <th className="px-6 py-3 text-right text-xs font-light text-slate-600 uppercase">Aktionen</th>
+            <th className="px-3 lg:px-6 py-3 text-left text-xs font-light text-slate-600 uppercase">Vermögenswert</th>
+            <th className="px-3 lg:px-6 py-3 text-left text-xs font-light text-slate-600 uppercase hidden sm:table-cell">Kategorie</th>
+            <th className="px-3 lg:px-6 py-3 text-right text-xs font-light text-slate-600 uppercase">Menge</th>
+            <th className="px-3 lg:px-6 py-3 text-right text-xs font-light text-slate-600 uppercase hidden md:table-cell">Einstand</th>
+            <th className="px-3 lg:px-6 py-3 text-right text-xs font-light text-slate-600 uppercase hidden lg:table-cell">Aktuell</th>
+            <th className="px-3 lg:px-6 py-3 text-right text-xs font-light text-slate-600 uppercase">Wert</th>
+            <th className="px-3 lg:px-6 py-3 text-right text-xs font-light text-slate-600 uppercase">Aktionen</th>
           </tr>
         </thead>
         <tbody>
           {portfolio.length === 0 ? (
             <tr>
-              <td colSpan="8" className="px-6 py-8 text-center">
+              <td colSpan="7" className="px-3 lg:px-6 py-8 text-center">
                 <p className="text-sm font-light text-slate-500">Keine Vermögenswerte vorhanden</p>
               </td>
             </tr>
@@ -64,27 +63,27 @@ export default function AssetPortfolioTable({ portfolio = [], onEdit, onDelete, 
 
               return (
                 <tr key={asset.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4 text-sm font-light text-slate-900">
-                    <div>
-                      <p className="font-medium">{asset.name}</p>
-                      {asset.isin && <p className="text-xs text-slate-500">ISIN: {asset.isin}</p>}
+                  <td className="px-3 lg:px-6 py-4 text-sm font-light text-slate-900 whitespace-nowrap">
+                    <div className="max-w-xs">
+                      <p className="font-medium truncate">{asset.name}</p>
+                      {asset.isin && <p className="text-xs text-slate-500 truncate">ISIN: {asset.isin}</p>}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm font-light">
-                    <Badge className="bg-slate-100 text-slate-800">
-                      {category?.icon} {category?.label}
+                  <td className="px-3 lg:px-6 py-4 text-sm font-light hidden sm:table-cell">
+                    <Badge className="bg-slate-100 text-slate-800 whitespace-nowrap">
+                      {category?.label}
                     </Badge>
                   </td>
-                  <td className="px-6 py-4 text-sm font-light text-slate-900">
+                  <td className="px-3 lg:px-6 py-4 text-sm font-light text-slate-900 text-right whitespace-nowrap">
                     {asset.quantity.toLocaleString('de-DE', { maximumFractionDigits: 2 })}
                   </td>
-                  <td className="px-6 py-4 text-sm font-light text-slate-900 text-right">
+                  <td className="px-3 lg:px-6 py-4 text-sm font-light text-slate-900 text-right hidden md:table-cell whitespace-nowrap">
                     €{asset.purchase_price.toLocaleString('de-DE', { maximumFractionDigits: 2 })}
                   </td>
-                  <td className="px-6 py-4 text-sm font-light text-slate-900 text-right">
+                  <td className="px-3 lg:px-6 py-4 text-sm font-light text-slate-900 text-right hidden lg:table-cell whitespace-nowrap">
                     €{asset.current_value.toLocaleString('de-DE', { maximumFractionDigits: 2 })}
                   </td>
-                  <td className="px-6 py-4 text-sm font-light text-right">
+                  <td className="px-3 lg:px-6 py-4 text-sm font-light text-right whitespace-nowrap">
                     <div>
                       <p className="font-medium">€{totalValue.toLocaleString('de-DE', { maximumFractionDigits: 0 })}</p>
                       <p className={`text-xs ${gain >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -92,12 +91,7 @@ export default function AssetPortfolioTable({ portfolio = [], onEdit, onDelete, 
                       </p>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center">
-                    <Badge className={getStatusColor(asset.status)}>
-                      {getStatusLabel(asset.status)}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 text-right flex gap-1 justify-end">
+                  <td className="px-3 lg:px-6 py-4 text-right flex gap-1 justify-end whitespace-nowrap">
                     <Button size="icon" variant="ghost" onClick={() => onSelectAsset?.(asset)} className="h-8 w-8" title="Details">
                       <Eye className="w-4 h-4 text-slate-600" />
                     </Button>

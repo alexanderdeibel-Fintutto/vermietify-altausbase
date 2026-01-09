@@ -49,19 +49,21 @@ export default function PortfolioKPICards({ portfolio = [] }) {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
       {kpis.map((kpi, idx) => {
         const Icon = kpi.icon;
         return (
-          <Card key={idx} className={`p-6 ${kpi.bgColor}`}>
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-xs font-light text-slate-600 uppercase tracking-wider">{kpi.label}</p>
-                <p className={`text-2xl font-light mt-2 ${kpi.color}`}>
+          <Card key={idx} className={`p-4 lg:p-6 ${kpi.bgColor}`}>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-light text-slate-600 uppercase tracking-wider line-clamp-1">
+                  {kpi.label}
+                </p>
+                <p className={`text-lg lg:text-2xl font-light mt-1 lg:mt-2 break-words ${kpi.color}`}>
                   {kpi.value}
                 </p>
               </div>
-              <Icon className={`w-8 h-8 ${kpi.color} opacity-20`} />
+              <Icon className={`w-6 lg:w-8 h-6 lg:h-8 ${kpi.color} opacity-20 flex-shrink-0`} />
             </div>
           </Card>
         );

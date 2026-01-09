@@ -70,10 +70,10 @@ export default function WealthManagementPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       <div>
-        <h1 className="text-3xl font-light text-slate-900">Mein Vermögen</h1>
-        <p className="text-sm font-light text-slate-600 mt-1">
+        <h1 className="text-2xl lg:text-3xl font-light text-slate-900">Mein Vermögen</h1>
+        <p className="text-xs lg:text-sm font-light text-slate-600 mt-1">
           Verwalten Sie alle Ihre Vermögenswerte für eine ganzheitliche Übersicht
         </p>
       </div>
@@ -81,27 +81,28 @@ export default function WealthManagementPage() {
       <PortfolioKPICards portfolio={portfolio} />
 
       <Card>
-        <div className="p-6 border-b border-slate-200 flex justify-between items-center gap-3">
-          <h2 className="text-lg font-light text-slate-900">Portfolio Übersicht</h2>
-          <div className="flex gap-2">
+        <div className="p-4 lg:p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <h2 className="text-base lg:text-lg font-light text-slate-900">Portfolio Übersicht</h2>
+          <div className="flex gap-2 flex-col sm:flex-row">
             <Button
               onClick={() => setShowImportDialog(true)}
               variant="outline"
-              className="font-light gap-2"
+              className="font-light gap-2 text-sm w-full sm:w-auto"
             >
               <Upload className="w-4 h-4" />
-              Importieren
+              <span className="hidden sm:inline">Importieren</span>
+              <span className="sm:hidden">Import</span>
             </Button>
             <Button
               onClick={() => setShowWizard(true)}
-              className="bg-slate-900 hover:bg-slate-800 font-light gap-2"
+              className="bg-slate-900 hover:bg-slate-800 font-light gap-2 text-sm w-full sm:w-auto"
             >
               <Plus className="w-4 h-4" />
               Hinzufügen
             </Button>
           </div>
         </div>
-        <div className="p-6">
+        <div className="p-4 lg:p-6 overflow-x-hidden">
           {isLoading ? (
             <p className="text-sm font-light text-slate-600">Lädt...</p>
           ) : (
@@ -142,7 +143,7 @@ export default function WealthManagementPage() {
         }}
       />
 
-      <div className="mt-8">
+      <div className="mt-6 lg:mt-8">
         <ImportHistoryPanel />
       </div>
     </div>
