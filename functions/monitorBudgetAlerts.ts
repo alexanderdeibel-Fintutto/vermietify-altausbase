@@ -1,122 +1,129 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 /**
- * Monitors budget spending and creates alerts when thresholds are exceeded
- * Scheduled to run daily
+ * Monitors budgets and sends alerts when spending approaches limits
+ * Should be called regularly as a scheduled task
  */
 Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
+    try {
+        const base44 = createClientFromRequest(req);
 
-    console.log('Monitoring budget alerts...');
+        console.log('Starting budget alert monitoring');
 
-    // Fetch all cost centers
-    const costCenters = await base44.asServiceRole.entities.CostCenter.list('-updated_date', 100);
-    const transactions = await base44.asServiceRole.entities.FinancialItem.list('-transaction_date', 1000);
-
-    let alertCount = 0;
-
-    for (const costCenter of costCenters) {
-      if (!costCenter.is_active || !costCenter.budget_amount) {
-        continue;
-      }
-
-      // Get current month
-      const now = new Date();
-      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-      // Calculate spending for this month
-      const monthTransactions = transactions.filter(t => {
-        if (t.cost_center_id !== costCenter.id) return false;
-        if (t.transaction_type !== 'expense') return false;
+        // Get all active rolling budgets
+        const budgets = await base44.asServiceRole.entities.RollingBudget.list('-created_at', 100);
         
-        const transDate = new Date(t.transaction_date);
-        const transMonth = `${transDate.getFullYear()}-${String(transDate.getMonth() + 1).padStart(2, '0')}`;
-        return transMonth === currentMonth;
-      });
+        const alerts = [];
 
-      const spentAmount = monthTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
-      const remainingAmount = costCenter.budget_amount - spentAmount;
-      const usagePercentage = (spentAmount / costCenter.budget_amount) * 100;
+        for (const budget of budgets) {
+            if (!budget.is_active) continue;
 
-      // Check for existing alerts
-      const existingAlerts = await base44.asServiceRole.entities.BudgetAlert.filter(
-        { cost_center_id: costCenter.id, is_resolved: false },
-        null,
-        10
-      );
+            // Get current period
+            const today = new Date();
+            const currentPeriod = budget.periods?.find(p => {
+                const start = new Date(p.period_start);
+                const end = new Date(p.period_end);
+                return today >= start && today <= end;
+            });
 
-      // Determine alert level
-      let shouldAlert = false;
-      let alertType = '';
+            if (!currentPeriod) continue;
 
-      if (usagePercentage >= 90) {
-        alertType = 'critical';
-        shouldAlert = true;
-      } else if (usagePercentage >= 75) {
-        alertType = 'warning';
-        shouldAlert = true;
-      }
+            // Get recent transactions to calculate spending
+            const reports = await base44.asServiceRole.entities.FinancialReport.filter(
+                { 
+                    user_email: budget.user_email,
+                    period_start: currentPeriod.period_start
+                },
+                '-generated_at',
+                1
+            );
 
-      if (shouldAlert) {
-        // Check if alert already exists
-        const existingAlert = existingAlerts.find(a => a.alert_type === alertType);
+            if (!reports.length) continue;
 
-        if (!existingAlert) {
-          const alert = await base44.asServiceRole.entities.BudgetAlert.create({
-            cost_center_id: costCenter.id,
-            alert_type: alertType,
-            threshold_percentage: usagePercentage,
-            budget_amount: costCenter.budget_amount,
-            spent_amount: spentAmount,
-            remaining_amount: remainingAmount,
-            alert_date: new Date().toISOString(),
-            notes: `${usagePercentage.toFixed(1)}% des Budgets verbraucht`
-          });
+            const report = reports[0];
+            const expenses = report.metrics?.expense_analysis?.categories || {};
 
-          alertCount++;
+            // Check each category
+            for (const [category, spending] of Object.entries(expenses)) {
+                const budget_limit = currentPeriod.category_budgets?.[category] || 0;
+                
+                if (budget_limit === 0) continue;
 
-          // Send notification to admins
-          try {
-            const allUsers = await base44.asServiceRole.entities.User.list('-updated_date', 100);
-            const admins = allUsers.filter(u => u.role === 'admin');
+                const percentage = (spending / budget_limit) * 100;
 
-            for (const admin of admins) {
-              await base44.asServiceRole.entities.Notification.create({
-                user_id: admin.id,
-                user_email: admin.email,
-                title: `${alertType === 'critical' ? '🚨' : '⚠️'} Budget-Warnung: ${costCenter.name}`,
-                message: `${usagePercentage.toFixed(1)}% des Budgets verbraucht (${spentAmount.toFixed(2)}€ von ${costCenter.budget_amount.toFixed(2)}€)`,
-                notification_type: 'system_alert',
-                priority: alertType === 'critical' ? 'critical' : 'high',
-                metadata: {
-                  cost_center_id: costCenter.id,
-                  usage_percentage: usagePercentage
+                if (percentage >= 100) {
+                    alerts.push({
+                        type: 'budget_exceeded',
+                        severity: 'high',
+                        budget_id: budget.id,
+                        category,
+                        spending,
+                        budget_limit,
+                        percentage: Math.round(percentage)
+                    });
+                } else if (percentage >= 80) {
+                    alerts.push({
+                        type: 'budget_warning',
+                        severity: 'medium',
+                        budget_id: budget.id,
+                        category,
+                        spending,
+                        budget_limit,
+                        percentage: Math.round(percentage)
+                    });
                 }
-              });
             }
-          } catch (err) {
-            console.error(`Failed to create notifications: ${err.message}`);
-          }
         }
-      } else {
-        // Resolve existing alerts if spending is now under threshold
-        for (const alert of existingAlerts) {
-          await base44.asServiceRole.entities.BudgetAlert.update(alert.id, {
-            is_resolved: true
-          });
+
+        // Create notifications for alerts
+        for (const alert of alerts) {
+            const budget = budgets.find(b => b.id === alert.budget_id);
+            if (!budget) continue;
+
+            const message = alert.type === 'budget_exceeded'
+                ? `⚠️ Budget für ${alert.category} überschritten: ${alert.percentage}% (${alert.spending}€ / ${alert.budget_limit}€)`
+                : `⏱️ Budget für ${alert.category} zu ${alert.percentage}% ausgeschöpft (${alert.spending}€ / ${alert.budget_limit}€)`;
+
+            // Create notification
+            await base44.asServiceRole.entities.Notification.create({
+                user_email: budget.user_email,
+                notification_type: alert.type,
+                severity: alert.severity,
+                message,
+                related_id: budget.id,
+                created_at: new Date().toISOString(),
+                is_read: false
+            });
+
+            // Send email
+            try {
+                const user = await base44.asServiceRole.entities.User.filter(
+                    { email: budget.user_email },
+                    null,
+                    1
+                );
+
+                if (user.length > 0) {
+                    await base44.integrations.Core.SendEmail({
+                        to: budget.user_email,
+                        subject: `${alert.type === 'budget_exceeded' ? '🚨 Budget überschritten' : '⏱️ Budget-Warnung'}: ${alert.category}`,
+                        body: message
+                    });
+                }
+            } catch (error) {
+                console.warn(`Failed to send email: ${error.message}`);
+            }
         }
-      }
+
+        return Response.json({
+            success: true,
+            alerts_generated: alerts.length,
+            high_severity: alerts.filter(a => a.severity === 'high').length,
+            medium_severity: alerts.filter(a => a.severity === 'medium').length
+        });
+
+    } catch (error) {
+        console.error('Error monitoring budgets:', error);
+        return Response.json({ error: error.message }, { status: 500 });
     }
-
-    console.log(`Processed ${alertCount} budget alerts`);
-
-    return Response.json({
-      success: true,
-      alert_count: alertCount
-    });
-  } catch (error) {
-    console.error('Error monitoring budget alerts:', error);
-    return Response.json({ error: error.message }, { status: 500 });
-  }
 });
