@@ -14,6 +14,8 @@ export default function TesterTracker({ children }) {
   const location = useLocation();
   const sessionIdRef = useRef(null);
   const startTimeRef = useRef(null);
+  const lastTrackRef = useRef(null);
+  const debounceRef = useRef(null);
   
   // Session starten
   useEffect(() => {
@@ -29,16 +31,22 @@ export default function TesterTracker({ children }) {
     }
     
     return () => {
-      if (sessionIdRef.current) {
+      if (sessionIdRef.current && debounceRef.current) {
+        clearTimeout(debounceRef.current);
         endTestSession();
       }
     };
   }, [isTester]);
   
-  // Seiten-Tracking
+  // Seiten-Tracking mit Debounce
   useEffect(() => {
     if (isTester && sessionIdRef.current) {
-      trackPageVisit();
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+      debounceRef.current = setTimeout(() => {
+        trackPageVisit();
+      }, 500);
     }
   }, [location.pathname]);
   

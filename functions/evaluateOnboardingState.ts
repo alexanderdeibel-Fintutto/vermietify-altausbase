@@ -41,14 +41,23 @@ Deno.serve(async (req) => {
     );
     const packageConfig = packageRecords[0];
 
-    // Fetch existing data counts with optimized queries
+    // Fetch existing data counts with optimized queries and error handling
+    const fetchSafe = async (entity, query) => {
+      try {
+        return await entity.filter(query, '-created_date', 1) || [];
+      } catch (e) {
+        console.warn(`Failed to fetch ${entity.constructor.name}:`, e.message);
+        return [];
+      }
+    };
+
     const [buildings, bankAccounts, contracts, tasks, tenants, invoices] = await Promise.all([
-      base44.entities.Building.filter({ created_by: user.email }, '-created_date', 5),
-      base44.entities.BankAccount.filter({ created_by: user.email }, '-created_date', 1),
-      base44.entities.LeaseContract.filter({ created_by: user.email }, '-created_date', 1),
-      base44.entities.Task.filter({ created_by: user.email }, '-created_date', 1),
-      base44.entities.Tenant?.filter?.({ created_by: user.email }, '-created_date', 1).catch(() => []),
-      base44.entities.Invoice?.filter?.({ created_by: user.email }, '-created_date', 1).catch(() => [])
+      base44.entities.Building.filter({ created_by: user.email }, '-created_date', 5).catch(() => []),
+      base44.entities.BankAccount.filter({ created_by: user.email }, '-created_date', 1).catch(() => []),
+      base44.entities.LeaseContract.filter({ created_by: user.email }, '-created_date', 1).catch(() => []),
+      base44.entities.Task.filter({ created_by: user.email }, '-created_date', 1).catch(() => []),
+      (base44.entities.Tenant ? base44.entities.Tenant.filter({ created_by: user.email }, '-created_date', 1) : Promise.resolve([])).catch(() => []),
+      (base44.entities.Invoice ? base44.entities.Invoice.filter({ created_by: user.email }, '-created_date', 1) : Promise.resolve([])).catch(() => [])
     ]);
 
     const buildingCount = buildings?.length || 0;

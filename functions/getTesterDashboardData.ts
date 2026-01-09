@@ -20,25 +20,24 @@ Deno.serve(async (req) => {
     );
     const activeSession = sessions[0];
 
-    // Fetch assignments
-    const assignments = await base44.asServiceRole.entities.TestAssignment.filter(
-      { test_account_id },
-      '-created_date'
-    );
-
-    // Fetch recent problems (max 10)
-    const problems = await base44.asServiceRole.entities.UserProblem.filter(
-      { test_account_id },
-      '-created_date',
-      10
-    );
-
-    // Fetch recent activities (max 20)
-    const activities = await base44.asServiceRole.entities.TesterActivity.filter(
-      { test_account_id },
-      '-timestamp',
-      20
-    );
+    // Fetch assignments, problems, activities with limits to prevent rate limiting
+    const [assignments, problems, activities] = await Promise.all([
+      base44.asServiceRole.entities.TestAssignment.filter(
+        { test_account_id },
+        '-created_date',
+        5
+      ).catch(() => []),
+      base44.asServiceRole.entities.UserProblem.filter(
+        { test_account_id },
+        '-created_date',
+        5
+      ).catch(() => []),
+      base44.asServiceRole.entities.TesterActivity.filter(
+        { test_account_id },
+        '-timestamp',
+        10
+      ).catch(() => [])
+    ]);
 
     // Calculate completion percentage
     const completedAssignments = assignments.filter(a => a.status === 'completed').length;
