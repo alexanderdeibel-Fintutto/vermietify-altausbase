@@ -8,11 +8,13 @@ import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { FileText, CheckCircle2, AlertCircle, Plus, Download } from 'lucide-react';
+import TaxExportDialog from '@/components/tax/TaxExportDialog';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
 export default function TaxDashboard() {
   const [taxYear, setTaxYear] = useState(CURRENT_YEAR);
+  const [showExportDialog, setShowExportDialog] = useState(false);
 
   const { data: forms = [] } = useQuery({
     queryKey: ['taxForms', taxYear],
@@ -96,19 +98,27 @@ export default function TaxDashboard() {
           <h1 className="text-3xl font-bold">🧾 Steuer-Dashboard</h1>
           <p className="text-slate-500 mt-1">Steuerjahr {taxYear}</p>
         </div>
-        <div className="w-32">
-          <Select value={String(taxYear)} onValueChange={(v) => setTaxYear(Number(v))}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {[CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2].map(year => (
-                <SelectItem key={year} value={String(year)}>{year}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-3">
+          <div className="w-32">
+            <Select value={String(taxYear)} onValueChange={(v) => setTaxYear(Number(v))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2].map(year => (
+                  <SelectItem key={year} value={String(year)}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button onClick={() => setShowExportDialog(true)} className="gap-2 bg-green-600 hover:bg-green-700">
+            <Download className="w-4 h-4" /> Exportieren
+          </Button>
         </div>
       </div>
+
+      {/* Export Dialog */}
+      <TaxExportDialog open={showExportDialog} onOpenChange={setShowExportDialog} taxYear={taxYear} />
 
       {/* Anlagen Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
