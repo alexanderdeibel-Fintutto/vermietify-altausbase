@@ -71,10 +71,10 @@ export default function CustomDashboard() {
         className="flex justify-between items-center"
       >
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Mein Dashboard</h1>
-          <p className="text-slate-600">Personalisierbare Widget-Ansicht</p>
+          <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Mein Dashboard</h1>
+          <p className="text-sm font-extralight text-slate-400 mt-1">Personalisierbare Widget-Ansicht</p>
         </div>
-        <Button onClick={() => setLibraryOpen(true)} className="bg-emerald-600 hover:bg-emerald-700">
+        <Button onClick={() => setLibraryOpen(true)} className="bg-slate-700 hover:bg-slate-800 font-extralight">
           <Plus className="w-4 h-4 mr-2" />
           Widget hinzufügen
         </Button>
