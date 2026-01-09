@@ -3,93 +3,124 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { userId, taxYear, canton } = await req.json();
+    const { taxYear, canton } = await req.json();
 
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const investments = await base44.entities.InvestmentCH.filter({ tax_year: taxYear, canton }) || [];
-    const realEstates = await base44.entities.RealEstateCH.filter({ tax_year: taxYear, canton }) || [];
+    console.log(`Generating CH tax optimization recommendations for ${taxYear} in canton ${canton}`);
 
+    // Fetch all data
+    const [investments, realEstates, otherIncomes, cantonConfigs] = await Promise.all([
+      base44.entities.InvestmentCH.filter({ tax_year: taxYear, canton }) || [],
+      base44.entities.RealEstateCH.filter({ tax_year: taxYear, canton }) || [],
+      base44.entities.OtherIncomeCH.filter({ tax_year: taxYear, canton }) || [],
+      base44.entities.CantonConfig.filter({ canton_code: canton }) || []
+    ]);
+
+    const cantonConfig = cantonConfigs[0];
     const recommendations = [];
-    let potentialSavings = 0;
 
-    // Check 1: Withholding tax recovery
-    const totalWithholding = investments.reduce((sum, inv) => sum + (inv.withholding_tax_paid || 0), 0);
-    if (totalWithholding > 500) {
+    // Recommendation 1: Mortgage Interest Deduction
+    const totalMortgageInterest = realEstates.reduce((s, re) => s + (re.mortgage_interest_deductible || 0), 0);
+    const underutilizedProperties = realEstates.filter(
+      re => re.mortgage_debt > 0 && (!re.mortgage_interest_deductible || re.mortgage_interest_deductible === 0)
+    );
+    if (underutilizedProperties.length > 0) {
+      const estimatedSavings = underutilizedProperties.reduce((s, p) => {
+        const interest = (p.mortgage_debt || 0) * 0.02; // 2% average rate
+        return s + interest;
+      }, 0);
       recommendations.push({
-        id: 'withholding_recovery',
-        title: 'Verrechnungssteuer-Rückforderung',
-        description: `Bezahlte Verrechnungssteuer: CHF ${totalWithholding.toFixed(0)}. Dies kann teilweise zurückgefordert werden.`,
-        savings: totalWithholding * 0.5,
+        id: 'mortgage_deduction',
+        title: 'Hypothekarzinsen vollständig abziehen',
+        description: `${underutilizedProperties.length} Immobilie(n) ohne Zinsabzug`,
         priority: 'high',
-        action: 'Reichen Sie eine Rückforderung bei der Steueramt ein.'
+        potentialSavings: estimatedSavings * (0.077 + (cantonConfig?.cantonal_income_tax_rate || 0.08)),
+        recommendation: 'Dokumentieren Sie alle Hypothekarzinsen der steuerpflichtigen Immobilien',
+        impact: 'Immobiliensteuern-Optimierung'
       });
-      potentialSavings += totalWithholding * 0.5;
     }
 
-    // Check 2: Mortgage interest deduction for real estate
-    const totalMortgageInterest = realEstates.reduce((sum, re) => sum + (re.mortgage_interest_deductible || 0), 0);
-    if (totalMortgageInterest > 1000) {
+    // Recommendation 2: Wealth Tax Threshold
+    const totalWealth = investments.reduce((s, i) => s + (i.current_value * i.quantity), 0) +
+                        realEstates.reduce((s, r) => s + (r.current_market_value || 0), 0);
+    const wealthThreshold = cantonConfig?.wealth_tax_threshold || 100000;
+    if (totalWealth > wealthThreshold && totalWealth < wealthThreshold * 1.15) {
       recommendations.push({
-        id: 'mortgage_interest',
-        title: 'Hypothekarzins-Abzug optimieren',
-        description: `Abzugsberechtigte Hypothekarzinsen: CHF ${totalMortgageInterest.toFixed(0)}. Diese sind vollständig vom steuerbaren Einkommen abzugsfähig.`,
-        savings: totalMortgageInterest * 0.25, // average tax rate
+        id: 'wealth_threshold',
+        title: 'Vermögenssteuer-Schwellenwert prüfen',
+        description: 'Ihr Vermögen liegt nahe dem kantonalen Steuerschwellenwert',
+        priority: 'medium',
+        potentialSavings: (totalWealth - wealthThreshold) * (cantonConfig?.wealth_tax_rate || 0.001),
+        recommendation: 'Prüfen Sie Strategien zur Vermögensoptimierung um den Schwellenwert',
+        impact: 'Vermögenssteuer-Reduktion'
+      });
+    }
+
+    // Recommendation 3: Property Tax Optimization
+    const totalPropertyTax = realEstates.reduce((s, r) => s + (r.property_tax || 0), 0);
+    const propertiesWithoutTax = realEstates.filter(r => !r.property_tax || r.property_tax === 0).length;
+    if (propertiesWithoutTax > 0) {
+      recommendations.push({
+        id: 'property_tax',
+        title: 'Liegenschaftssteuer erfassen',
+        description: `${propertiesWithoutTax} Immobilie(n) ohne erfasste Liegenschaftssteuer`,
+        priority: 'medium',
+        potentialSavings: propertiesWithoutTax * 1000 * (cantonConfig?.cantonal_income_tax_rate || 0.08),
+        recommendation: 'Ermitteln und dokumentieren Sie die kantonale Liegenschaftssteuer',
+        impact: 'Kostenabzug optimierung'
+      });
+    }
+
+    // Recommendation 4: Withholding Tax Credit
+    const withholdingTaxPaid = investments.reduce((s, i) => s + (i.withholding_tax_paid || 0), 0);
+    if (withholdingTaxPaid === 0 && investments.length > 0 && investments.some(i => i.dividend_income > 0)) {
+      recommendations.push({
+        id: 'withholding_credit',
+        title: 'Verrechnungssteuer nicht geltend gemacht',
+        description: 'Sie haben Dividendeneinkommen, aber keine Verrechnungssteuer verbucht',
         priority: 'high',
-        action: 'Stellen Sie sicher, dass alle Hypothekarzinsen dokumentiert sind.'
-      });
-      potentialSavings += totalMortgageInterest * 0.25;
-    }
-
-    // Check 3: Diversification to reduce wealth tax
-    const totalWealth = investments.reduce((sum, inv) => sum + (inv.quantity * inv.current_value), 0) +
-                        realEstates.reduce((sum, re) => sum + re.current_market_value, 0);
-    if (totalWealth > 500000) {
-      recommendations.push({
-        id: 'wealth_diversification',
-        title: 'Vermögensstrukturierung für Kantonssteuer',
-        description: `Gesamtvermögen: CHF ${totalWealth.toFixed(0)}. Eine strategische Diversifizierung kann Vermögenssteuer sparen.`,
-        savings: (totalWealth * 0.01) * 0.05, // estimate
-        priority: 'medium',
-        action: 'Beraten Sie sich mit einem Steuerberater zur optimalen Struktur.'
+        potentialSavings: investments.reduce((s, i) => s + ((i.dividend_income || 0) * 0.35 * 0.5), 0),
+        recommendation: 'Erfassen Sie die bezahlte Verrechnungssteuer für Kreditanrechnung',
+        impact: 'Steuergutschrift'
       });
     }
 
-    // Check 4: Tax-loss harvesting opportunities
-    const unrealizedLosses = investments.filter(inv => (inv.quantity * inv.current_value) < (inv.quantity * inv.acquisition_price));
-    if (unrealizedLosses.length > 0) {
-      const totalLosses = unrealizedLosses.reduce((sum, inv) => 
-        sum + ((inv.quantity * inv.acquisition_price) - (inv.quantity * inv.current_value)), 0);
+    // Recommendation 5: Imputed Rent Liability
+    const primaryResidences = realEstates.filter(r => r.is_primary_residence);
+    const hasImputedRentTaxation = cantonConfig?.imputed_rent_taxable || false;
+    if (primaryResidences.length > 0 && hasImputedRentTaxation) {
       recommendations.push({
-        id: 'tax_loss_harvesting',
-        title: 'Tax-Loss Harvesting',
-        description: `${unrealizedLosses.length} Positionen mit Kursverlusten: CHF ${totalLosses.toFixed(0)}. Realisierte Verluste senken steuerbares Einkommen.`,
-        savings: totalLosses * 0.3, // average cantonal rate
-        priority: 'medium',
-        action: 'Realisieren Sie Verluste vor Jahresende für Steueroptimierung.'
+        id: 'imputed_rent',
+        title: 'Eigenmietwert-Besteuerung prüfen',
+        description: `Ihr Kanton besteuert Eigenmietwert (${primaryResidences.length} Hauptwohnsitz)`,
+        priority: 'low',
+        potentialSavings: 0, // Just informational
+        recommendation: 'Informieren Sie sich über kantonale Regelungen zum Eigenmietwert',
+        impact: 'Informativ'
       });
-      potentialSavings += totalLosses * 0.3;
     }
+
+    const totalPotentialSavings = recommendations.reduce((s, r) => s + r.potentialSavings, 0);
 
     return Response.json({
       success: true,
-      country: 'CH',
-      canton,
       taxYear,
-      recommendations: recommendations.sort((a, b) => 
-        (b.priority === 'high' ? 3 : b.priority === 'medium' ? 2 : 1) - 
-        (a.priority === 'high' ? 3 : a.priority === 'medium' ? 2 : 1)
-      ),
+      canton,
+      recommendations: recommendations.sort((a, b) => {
+        const priorityOrder = { high: 0, medium: 1, low: 2 };
+        return (priorityOrder[a.priority] || 3) - (priorityOrder[b.priority] || 3);
+      }),
       summary: {
         totalRecommendations: recommendations.length,
-        estimatedSavings: potentialSavings.toFixed(2),
-        currency: 'CHF'
-      }
+        totalPotentialSavings: Math.round(totalPotentialSavings),
+        highPriority: recommendations.filter(r => r.priority === 'high').length
+      },
+      timestamp: new Date().toISOString()
     });
-
   } catch (error) {
-    console.error('CH tax optimization error:', error);
+    console.error('Optimization error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
