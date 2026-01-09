@@ -383,23 +383,46 @@ Deno.serve(async (req) => {
     // Assets erstellen (mit Rollback bei kritischen Fehlern)
     let createdCount = 0;
     let createErrors = [];
+    const createdAssetIds = [];
 
     if (assetsToCreate.length > 0) {
       try {
         // Batch-Insert mit Fehlerbehandlung
         const results = await base44.asServiceRole.entities.AssetPortfolio.bulkCreate(assetsToCreate);
         createdCount = results.length || 0;
+        results.forEach(asset => createdAssetIds.push(asset.id));
+
+        // ImportBatchLog erstellen
+        await base44.entities.ImportBatchLog.create({
+          user_id: user.id,
+          batch_id: batchId,
+          broker_source: broker_key,
+          file_name: 'import.csv',
+          import_date: new Date().toISOString(),
+          total_rows: rows.length,
+          success_count: createdCount,
+          error_count: errors.filter(e => e.severity === 'error').length,
+          warning_count: errors.filter(e => e.severity === 'warning').length,
+          created_asset_ids: createdAssetIds,
+          status: 'completed',
+          error_log: errors
+        });
 
         // ActivityLog
         await base44.entities.ActivityLog.create({
+          user_id: user.id,
           action: 'csv_import_completed',
-          entity_type: 'AssetPortfolio',
+          entity_type: 'ImportBatch',
+          entity_id: batchId,
           details: {
             batch_id: batchId,
+            broker: broker_key,
             success_count: createdCount,
             error_count: errors.length,
-            total_rows: rows.length
-          }
+            total_rows: rows.length,
+            created_assets: createdAssetIds
+          },
+          status: 'success'
         });
 
       } catch (createError) {
@@ -408,6 +431,24 @@ Deno.serve(async (req) => {
           severity: 'error',
           message: `Datenbankfehler beim Speichern: ${createError.message}`
         });
+
+        // FailedLog
+        try {
+          await base44.entities.ImportBatchLog.create({
+            user_id: user.id,
+            batch_id: batchId,
+            broker_source: broker_key,
+            file_name: 'import.csv',
+            import_date: new Date().toISOString(),
+            total_rows: rows.length,
+            success_count: 0,
+            error_count: errors.length + 1,
+            status: 'failed',
+            error_log: [...errors, ...createErrors]
+          });
+        } catch (logError) {
+          console.warn('Could not log failed import:', logError);
+        }
       }
     }
 
