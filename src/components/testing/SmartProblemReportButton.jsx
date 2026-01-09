@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
-import SmartProblemReportDialog from '@/components/testing/SmartProblemReportDialog';
+import SmartProblemReportDialog from './SmartProblemReportDialog';
 
 export default function SmartProblemReportButton() {
   const [dialogOpen, setDialogOpen] = useState(false);
