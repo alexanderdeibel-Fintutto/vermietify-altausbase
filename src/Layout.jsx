@@ -17,7 +17,7 @@ import SuiteSwitcher from '@/components/suite/SuiteSwitcher';
 import { Button } from "@/components/ui/button";
 import OnboardingRedirect from '@/components/onboarding/OnboardingRedirect';
 import HorizontalMainNavigation from '@/components/navigation/HorizontalMainNavigation';
-import SubNavigation from '@/components/navigation/SubNavigation';
+import DynamicSubNavigation from '@/components/navigation/DynamicSubNavigation';
 import MobileBottomNav from '@/components/navigation/MobileBottomNav';
 import DeepSubNavigation from '@/components/navigation/DeepSubNavigation';
 import IntelligentOnboardingWizardButton from '@/components/onboarding/IntelligentOnboardingWizardButton';
@@ -130,7 +130,7 @@ export default function Layout({ children, currentPageName }) {
                 </header>
 
                 {/* Sub-Navigation */}
-                {mainSection && <SubNavigation mainSection={mainSection} visibleFeatures={visibleFeatures} />}
+                {mainSection && <DynamicSubNavigation mainSection={mainSection} visibleFeatures={visibleFeatures} />}
 
                 {/* Deep Sub-Navigation */}
                 <DeepSubNavigation parentSection={mainSection} currentPage={currentPageName} visibleFeatures={visibleFeatures} />
