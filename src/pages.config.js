@@ -156,6 +156,8 @@ import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import TaxDashboardDE from './pages/TaxDashboardDE';
 import GlobalTaxOverview from './pages/GlobalTaxOverview';
+import AnlageSODE from './pages/AnlageSODE';
+import AnlageVGDE from './pages/AnlageVGDE';
 import __Layout from './Layout.jsx';
 
 
@@ -318,6 +320,8 @@ export const PAGES = {
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "TaxDashboardDE": TaxDashboardDE,
     "GlobalTaxOverview": GlobalTaxOverview,
+    "AnlageSODE": AnlageSODE,
+    "AnlageVGDE": AnlageVGDE,
 }
 
 export const pagesConfig = {
