@@ -137,6 +137,7 @@ import AnlageKAP from './pages/AnlageKAP';
 import AnlageSO from './pages/AnlageSO';
 import AnlageVG from './pages/AnlageVG';
 import TaxSetup from './pages/TaxSetup';
+import TaxDashboardGlobal from './pages/TaxDashboardGlobal';
 import __Layout from './Layout.jsx';
 
 
@@ -280,6 +281,7 @@ export const PAGES = {
     "AnlageSO": AnlageSO,
     "AnlageVG": AnlageVG,
     "TaxSetup": TaxSetup,
+    "TaxDashboardGlobal": TaxDashboardGlobal,
 }
 
 export const pagesConfig = {
