@@ -41,9 +41,10 @@ export default function TaxOptimizationAnalyzer() {
 
   // Implement recommendation
   const { mutate: implementRecommendation, isLoading: isImplementing } = useMutation({
-    mutationFn: (recommendation) =>
-      base44.entities.TaxPlanning.create({
-        user_email: (await base44.auth.me()).email,
+    mutationFn: async (recommendation) => {
+      const user = await base44.auth.me();
+      return base44.entities.TaxPlanning.create({
+        user_email: user.email,
         country,
         tax_year: taxYear,
         planning_type: recommendation.category || 'income_optimization',
@@ -53,7 +54,8 @@ export default function TaxOptimizationAnalyzer() {
         implementation_effort: recommendation.effort?.toLowerCase() || 'medium',
         risk_level: recommendation.risk?.toLowerCase() || 'low',
         status: 'planned'
-      }),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['taxOptimization'] });
     }
