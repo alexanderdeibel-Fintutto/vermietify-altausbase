@@ -270,6 +270,7 @@ import NotificationCenter from './pages/NotificationCenter';
 import BuildingBoard from './pages/BuildingBoard';
 import TenantCommunicationHub from './pages/TenantCommunicationHub';
 import VendorManagement from './pages/VendorManagement';
+import SmartTaskDashboard from './pages/SmartTaskDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -546,6 +547,7 @@ export const PAGES = {
     "BuildingBoard": BuildingBoard,
     "TenantCommunicationHub": TenantCommunicationHub,
     "VendorManagement": VendorManagement,
+    "SmartTaskDashboard": SmartTaskDashboard,
 }
 
 export const pagesConfig = {
