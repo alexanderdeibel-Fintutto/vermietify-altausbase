@@ -253,6 +253,7 @@ import TaxRuleAdmin from './pages/TaxRuleAdmin';
 import TaxAuthoritySubmissions from './pages/TaxAuthoritySubmissions';
 import SubmissionDashboard from './pages/SubmissionDashboard';
 import TaxAIChatbot from './pages/TaxAIChatbot';
+import OnboardingWizard from './pages/OnboardingWizard';
 import __Layout from './Layout.jsx';
 
 
@@ -512,6 +513,7 @@ export const PAGES = {
     "TaxAuthoritySubmissions": TaxAuthoritySubmissions,
     "SubmissionDashboard": SubmissionDashboard,
     "TaxAIChatbot": TaxAIChatbot,
+    "OnboardingWizard": OnboardingWizard,
 }
 
 export const pagesConfig = {
