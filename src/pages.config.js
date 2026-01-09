@@ -8,6 +8,7 @@ import AdminAIAnalyticsLazy from './pages/AdminAIAnalyticsLazy';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminMasterDashboard from './pages/AdminMasterDashboard';
 import AdminPackageSetup from './pages/AdminPackageSetup';
+import AdminSettings from './pages/AdminSettings';
 import AdminSetupGuide from './pages/AdminSetupGuide';
 import AdminTestCleanup from './pages/AdminTestCleanup';
 import AdminTesterAnalytics from './pages/AdminTesterAnalytics';
@@ -66,6 +67,7 @@ import DeveloperDocumentation from './pages/DeveloperDocumentation';
 import DividendOptimization from './pages/DividendOptimization';
 import DocumentGeneration from './pages/DocumentGeneration';
 import DocumentInbox from './pages/DocumentInbox';
+import DocumentInboxSettings from './pages/DocumentInboxSettings';
 import DocumentLibrary from './pages/DocumentLibrary';
 import DocumentManagement from './pages/DocumentManagement';
 import Documents from './pages/Documents';
@@ -107,6 +109,7 @@ import MaintenanceTasks from './pages/MaintenanceTasks';
 import MarketAnalytics from './pages/MarketAnalytics';
 import MieterSelfServicePortal from './pages/MieterSelfServicePortal';
 import ModuleManagement from './pages/ModuleManagement';
+import Payments from './pages/Payments';
 import MultiCountryTaxComparison from './pages/MultiCountryTaxComparison';
 import MultiYearTaxComparison from './pages/MultiYearTaxComparison';
 import MultiYearTaxStrategy from './pages/MultiYearTaxStrategy';
@@ -119,7 +122,6 @@ import OperatingCostsManagement from './pages/OperatingCostsManagement';
 import OtherIncomeCH from './pages/OtherIncomeCH';
 import PackageManager from './pages/PackageManager';
 import PackageTestPage from './pages/PackageTestPage';
-import Payments from './pages/Payments';
 import PerformanceMonitor from './pages/PerformanceMonitor';
 import PermissionDashboard from './pages/PermissionDashboard';
 import ProjectManagement from './pages/ProjectManagement';
@@ -238,8 +240,6 @@ import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import DocumentInboxSettings from './pages/DocumentInboxSettings';
-import AdminSettings from './pages/AdminSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -254,6 +254,7 @@ export const PAGES = {
     "AdminDashboard": AdminDashboard,
     "AdminMasterDashboard": AdminMasterDashboard,
     "AdminPackageSetup": AdminPackageSetup,
+    "AdminSettings": AdminSettings,
     "AdminSetupGuide": AdminSetupGuide,
     "AdminTestCleanup": AdminTestCleanup,
     "AdminTesterAnalytics": AdminTesterAnalytics,
@@ -312,6 +313,7 @@ export const PAGES = {
     "DividendOptimization": DividendOptimization,
     "DocumentGeneration": DocumentGeneration,
     "DocumentInbox": DocumentInbox,
+    "DocumentInboxSettings": DocumentInboxSettings,
     "DocumentLibrary": DocumentLibrary,
     "DocumentManagement": DocumentManagement,
     "Documents": Documents,
@@ -353,6 +355,7 @@ export const PAGES = {
     "MarketAnalytics": MarketAnalytics,
     "MieterSelfServicePortal": MieterSelfServicePortal,
     "ModuleManagement": ModuleManagement,
+    "Payments": Payments,
     "MultiCountryTaxComparison": MultiCountryTaxComparison,
     "MultiYearTaxComparison": MultiYearTaxComparison,
     "MultiYearTaxStrategy": MultiYearTaxStrategy,
@@ -365,7 +368,6 @@ export const PAGES = {
     "OtherIncomeCH": OtherIncomeCH,
     "PackageManager": PackageManager,
     "PackageTestPage": PackageTestPage,
-    "Payments": Payments,
     "PerformanceMonitor": PerformanceMonitor,
     "PermissionDashboard": PermissionDashboard,
     "ProjectManagement": ProjectManagement,
@@ -484,8 +486,6 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "DocumentInboxSettings": DocumentInboxSettings,
-    "AdminSettings": AdminSettings,
 }
 
 export const pagesConfig = {

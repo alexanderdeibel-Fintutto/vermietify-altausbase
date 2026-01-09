@@ -133,12 +133,12 @@ export default function Layout({ children, currentPageName }) {
 
                                     {/* Horizontal Main Navigation - Desktop */}
                                     <div className="hidden lg:block">
-                                        <HorizontalMainNavigation />
+                                        <HorizontalMainNavigation activeCategory={activeCategory} />
                                     </div>
 
                                     {/* Mobile Main Navigation Dropdown */}
                                     <div className="lg:hidden border-t border-slate-100">
-                                        <HorizontalMainNavigation />
+                                        <HorizontalMainNavigation activeCategory={activeCategory} />
                                     </div>
                 </header>
 
