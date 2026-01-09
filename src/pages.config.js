@@ -149,6 +149,7 @@ import DACHComplianceChecklist from './pages/DACHComplianceChecklist';
 import TaxDeadlines from './pages/TaxDeadlines';
 import GlobalWealthDashboard from './pages/GlobalWealthDashboard';
 import TaxSetupWizard from './pages/TaxSetupWizard';
+import AnlageE1cAT from './pages/AnlageE1cAT';
 import __Layout from './Layout.jsx';
 
 
@@ -304,6 +305,7 @@ export const PAGES = {
     "TaxDeadlines": TaxDeadlines,
     "GlobalWealthDashboard": GlobalWealthDashboard,
     "TaxSetupWizard": TaxSetupWizard,
+    "AnlageE1cAT": AnlageE1cAT,
 }
 
 export const pagesConfig = {
