@@ -193,6 +193,8 @@ import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import TaxAdvisorPortalPage from './pages/TaxAdvisorPortalPage';
 import TaxYearPlannerPage from './pages/TaxYearPlannerPage';
+import CapitalGainsOptimizer from './pages/CapitalGainsOptimizer';
+import TaxPerformanceDashboard from './pages/TaxPerformanceDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -392,6 +394,8 @@ export const PAGES = {
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "TaxAdvisorPortalPage": TaxAdvisorPortalPage,
     "TaxYearPlannerPage": TaxYearPlannerPage,
+    "CapitalGainsOptimizer": CapitalGainsOptimizer,
+    "TaxPerformanceDashboard": TaxPerformanceDashboard,
 }
 
 export const pagesConfig = {
