@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
 import SmartProblemReportDialog from './SmartProblemReportDialog';
 import { base44 } from '@/api/base44Client';
 
-export default function SmartProblemReportButton() {
+const SmartProblemReportButton = React.memo(function SmartProblemReportButton() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [testAccountId, setTestAccountId] = useState(null);
+
+  const handleOpenDialog = useCallback(() => setDialogOpen(true), []);
 
   useEffect(() => {
     const getTesterInfo = async () => {
@@ -35,7 +37,7 @@ export default function SmartProblemReportButton() {
     <>
       <div className="fixed bottom-8 right-8 z-40">
         <Button
-          onClick={() => setDialogOpen(true)}
+          onClick={handleOpenDialog}
           className="bg-red-600 hover:bg-red-700 text-white rounded-full w-14 h-14 shadow-lg gap-2"
           title="Problem melden 🐛"
         >
@@ -46,4 +48,6 @@ export default function SmartProblemReportButton() {
       <SmartProblemReportDialog open={dialogOpen} onOpenChange={setDialogOpen} testAccountId={testAccountId} />
     </>
   );
-}
+});
+
+export default SmartProblemReportButton;

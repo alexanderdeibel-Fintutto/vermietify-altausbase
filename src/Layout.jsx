@@ -1,34 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { useActivityTracker } from '@/components/testing/ActivityTracker';
 import { 
-                              Building2, 
-                              Menu,
-                              X,
-                              Users,
-                              Settings,
-                              Plus,
-                              Zap
-                          } from 'lucide-react';
+                                    Building2, 
+                                    Menu,
+                                    X,
+                                    Users,
+                                    Settings,
+                                    Plus,
+                                    Zap
+                                } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import SuiteSwitcher from '@/components/suite/SuiteSwitcher';
-import TesterTracker from '@/components/testing/TesterTracker';
-import SmartProblemReportButton from '@/components/testing/SmartProblemReportButton';
 import { Button } from "@/components/ui/button";
 import OnboardingRedirect from '@/components/onboarding/OnboardingRedirect';
 import HorizontalMainNavigation from '@/components/navigation/HorizontalMainNavigation';
-import FeatureUnlockNotification from '@/components/navigation/FeatureUnlockNotification';
 import SubNavigation from '@/components/navigation/SubNavigation';
 import MobileBottomNav from '@/components/navigation/MobileBottomNav';
 import DeepSubNavigation from '@/components/navigation/DeepSubNavigation';
-import QuickActions from '@/components/navigation/QuickActions';
 import IntelligentOnboardingWizardButton from '@/components/onboarding/IntelligentOnboardingWizardButton';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { usePackageAccess } from '@/components/hooks/usePackageAccess';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
+
+// Lazy load heavy components
+const TesterTracker = lazy(() => import('@/components/testing/TesterTracker'));
+const SmartProblemReportButton = lazy(() => import('@/components/testing/SmartProblemReportButton'));
+const FeatureUnlockNotification = lazy(() => import('@/components/navigation/FeatureUnlockNotification'));
+
+const LoadingFallback = () => null;
 
 export default function Layout({ children, currentPageName }) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -65,11 +68,14 @@ export default function Layout({ children, currentPageName }) {
     const mainSection = getCurrentMainSection();
 
     return (
-                    <ThemeProvider>
-                    <OnboardingRedirect>
-                    <TesterTracker>
-            <FeatureUnlockNotification />
-            <div className="min-h-screen bg-slate-50">
+                            <ThemeProvider>
+                            <OnboardingRedirect>
+                            <Suspense fallback={null}>
+                              <TesterTracker>
+                                <Suspense fallback={null}>
+                                  <FeatureUnlockNotification />
+                                </Suspense>
+                                <div className="min-h-screen bg-slate-50">
                 {/* Top Header Bar */}
                 <header className="sticky top-0 z-50 bg-white border-b border-slate-100">
                     <div className="flex items-center justify-between h-16 px-8">
@@ -130,16 +136,19 @@ export default function Layout({ children, currentPageName }) {
                 </main>
 
                 {/* Smart Problem Report Button */}
-                <SmartProblemReportButton />
+                <Suspense fallback={null}>
+                  <SmartProblemReportButton />
+                </Suspense>
 
                 {/* Intelligent Onboarding Wizard Button */}
                 <IntelligentOnboardingWizardButton />
 
                 {/* Mobile Bottom Navigation */}
                 <MobileBottomNav visibleFeatures={visibleFeatures} />
-            </div>
-            </TesterTracker>
-            </OnboardingRedirect>
-            </ThemeProvider>
-            );
+                </div>
+                      </TesterTracker>
+                    </Suspense>
+                </OnboardingRedirect>
+                </ThemeProvider>
+                );
             }

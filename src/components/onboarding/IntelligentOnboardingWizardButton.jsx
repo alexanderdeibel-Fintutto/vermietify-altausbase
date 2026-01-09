@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { HelpCircle } from 'lucide-react';
 import { useOnboardingState } from './useOnboardingState';
 import IntelligentOnboardingWizardDialog from './IntelligentOnboardingWizardDialog';
 
-export default function IntelligentOnboardingWizardButton() {
+const IntelligentOnboardingWizardButton = React.memo(function IntelligentOnboardingWizardButton() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isSkipped, setIsSkipped] = useState(false);
   const { onboardingState, loading, refetch } = useOnboardingState();
+
+  const handleOpenDialog = useCallback(() => setDialogOpen(true), []);
 
   const handleSkip = async (e) => {
     e.stopPropagation();
@@ -54,7 +56,7 @@ export default function IntelligentOnboardingWizardButton() {
       {/* Floating Button */}
       <div className="fixed bottom-8 left-8 z-40">
         <button
-          onClick={() => setDialogOpen(true)}
+          onClick={handleOpenDialog}
           className="relative group"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full blur opacity-75 group-hover:opacity-100 transition animate-pulse"></div>

@@ -117,6 +117,9 @@ import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
+import AdminAIAnalyticsLazy from './pages/AdminAIAnalyticsLazy';
+import AdminTesterAnalyticsLazy from './pages/AdminTesterAnalyticsLazy';
+import TesterManagementLazy from './pages/TesterManagementLazy';
 import __Layout from './Layout.jsx';
 
 
@@ -240,6 +243,9 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
+    "AdminAIAnalyticsLazy": AdminAIAnalyticsLazy,
+    "AdminTesterAnalyticsLazy": AdminTesterAnalyticsLazy,
+    "TesterManagementLazy": TesterManagementLazy,
 }
 
 export const pagesConfig = {
