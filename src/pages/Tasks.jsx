@@ -34,6 +34,7 @@ import PerformanceMonitor from '@/components/tasks/PerformanceMonitor';
 import SetupWizard from '@/components/tasks/SetupWizard';
 import TestingPanel from '@/components/tasks/TestingPanel';
 import { HelpButton } from '@/components/shared/HelpSystem';
+import ModuleGuard from '@/components/package/ModuleGuard';
 
 export default function Tasks() {
     const [formOpen, setFormOpen] = useState(false);
@@ -113,6 +114,7 @@ export default function Tasks() {
     };
 
     return (
+        <ModuleGuard moduleName="aufgaben">
         <div className="space-y-6">
             {/* Header */}
             <motion.div 
@@ -252,5 +254,6 @@ export default function Tasks() {
                 }}
                 />
                 </div>
+                </ModuleGuard>
                 );
                 }

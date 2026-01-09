@@ -7,13 +7,13 @@ import TemplatesList from '../components/documents/TemplatesList';
 import TextBlocksList from '../components/documents/TextBlocksList';
 import OriginalsList from '../components/documents/OriginalsList';
 import PDFTemplateImporter from '../components/documents/PDFTemplateImporter';
-import ModuleAccessGuard from '../components/suite/ModuleAccessGuard';
+import ModuleGuard from '@/components/package/ModuleGuard';
 
 export default function DocumentsPage() {
     const [importerOpen, setImporterOpen] = useState(false);
     
     return (
-        <ModuleAccessGuard moduleName="documents">
+        <ModuleGuard moduleName="dokumentation">
             <div className="space-y-6">
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
@@ -76,6 +76,6 @@ export default function DocumentsPage() {
                 </Tabs>
                 </motion.div>
                 </div>
-                </ModuleAccessGuard>
+                </ModuleGuard>
                 );
                 }
