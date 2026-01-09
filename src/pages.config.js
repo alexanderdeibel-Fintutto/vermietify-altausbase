@@ -150,6 +150,7 @@ import TaxDeadlines from './pages/TaxDeadlines';
 import GlobalWealthDashboard from './pages/GlobalWealthDashboard';
 import TaxSetupWizard from './pages/TaxSetupWizard';
 import AnlageE1cAT from './pages/AnlageE1cAT';
+import TaxAdminPanel from './pages/TaxAdminPanel';
 import __Layout from './Layout.jsx';
 
 
@@ -306,6 +307,7 @@ export const PAGES = {
     "GlobalWealthDashboard": GlobalWealthDashboard,
     "TaxSetupWizard": TaxSetupWizard,
     "AnlageE1cAT": AnlageE1cAT,
+    "TaxAdminPanel": TaxAdminPanel,
 }
 
 export const pagesConfig = {
