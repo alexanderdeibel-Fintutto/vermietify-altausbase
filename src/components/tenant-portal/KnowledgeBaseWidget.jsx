@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, ChevronDown, ChevronUp, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, ThumbsUp, ThumbsDown, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 const categoryEmojis = {
