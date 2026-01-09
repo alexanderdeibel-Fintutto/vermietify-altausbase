@@ -88,6 +88,7 @@ import TaxManagement from './pages/TaxManagement';
 import TenantCommunication from './pages/TenantCommunication';
 import TenantPortal from './pages/TenantPortal';
 import Tenants from './pages/Tenants';
+import TesterManagement from './pages/TesterManagement';
 import TesterOnboarding from './pages/TesterOnboarding';
 import TestingDashboard from './pages/TestingDashboard';
 import UnitDetail from './pages/UnitDetail';
@@ -102,7 +103,7 @@ import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import TesterManagement from './pages/TesterManagement';
+import AdaptiveNavigationAdmin from './pages/AdaptiveNavigationAdmin';
 import __Layout from './Layout.jsx';
 
 
@@ -197,6 +198,7 @@ export const PAGES = {
     "TenantCommunication": TenantCommunication,
     "TenantPortal": TenantPortal,
     "Tenants": Tenants,
+    "TesterManagement": TesterManagement,
     "TesterOnboarding": TesterOnboarding,
     "TestingDashboard": TestingDashboard,
     "UnitDetail": UnitDetail,
@@ -211,7 +213,7 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "TesterManagement": TesterManagement,
+    "AdaptiveNavigationAdmin": AdaptiveNavigationAdmin,
 }
 
 export const pagesConfig = {
