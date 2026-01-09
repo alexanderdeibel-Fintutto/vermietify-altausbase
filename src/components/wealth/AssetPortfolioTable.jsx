@@ -2,10 +2,10 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit2, Trash2 } from 'lucide-react';
+import { Edit2, Trash2, Eye } from 'lucide-react';
 import { getCategoryById } from './assetCategories';
 
-export default function AssetPortfolioTable({ portfolio = [], onEdit, onDelete }) {
+export default function AssetPortfolioTable({ portfolio = [], onEdit, onDelete, onSelectAsset }) {
   const getStatusColor = (status) => {
     switch (status) {
       case 'active':
@@ -98,10 +98,10 @@ export default function AssetPortfolioTable({ portfolio = [], onEdit, onDelete }
                     </Badge>
                   </td>
                   <td className="px-6 py-4 text-right flex gap-1 justify-end">
-                    <Button size="icon" variant="ghost" onClick={() => onEdit?.(asset)} className="h-8 w-8">
-                      <Edit2 className="w-4 h-4 text-blue-600" />
+                    <Button size="icon" variant="ghost" onClick={() => onSelectAsset?.(asset)} className="h-8 w-8" title="Details">
+                      <Eye className="w-4 h-4 text-slate-600" />
                     </Button>
-                    <Button size="icon" variant="ghost" onClick={() => onDelete?.(asset.id)} className="h-8 w-8">
+                    <Button size="icon" variant="ghost" onClick={() => onDelete?.(asset.id)} className="h-8 w-8" title="Löschen">
                       <Trash2 className="w-4 h-4 text-red-600" />
                     </Button>
                   </td>
