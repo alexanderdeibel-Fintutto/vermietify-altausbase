@@ -17,9 +17,34 @@ import { Button } from "@/components/ui/button";
 import OnboardingRedirect from '@/components/onboarding/OnboardingRedirect';
 import AdaptiveNavigation from '@/components/navigation/AdaptiveNavigation';
 import FeatureUnlockNotification from '@/components/navigation/FeatureUnlockNotification';
+import SubNavigation from '@/components/navigation/SubNavigation';
+import MobileBottomNav from '@/components/navigation/MobileBottomNav';
+import BreadcrumbNavigation from '@/components/navigation/BreadcrumbNavigation';
+import { useQuery } from '@tanstack/react-query';
 
 export default function Layout({ children, currentPageName }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    
+    const { data: navigationState } = useQuery({
+        queryKey: ['navigationState'],
+        queryFn: async () => {
+            const states = await base44.entities.NavigationState.list('-updated_date', 1);
+            return states[0];
+        }
+    });
+
+    const visibleFeatures = navigationState?.visible_features || [];
+    
+    const getCurrentMainSection = () => {
+        const path = window.location.pathname.toLowerCase();
+        if (path.includes('finanzen') || path.includes('invoice') || path.includes('bank')) return 'finanzen';
+        if (path.includes('building') || path.includes('unit') || path.includes('insurance')) return 'immobilien';
+        if (path.includes('tenant') || path.includes('contract') || path.includes('operating')) return 'mieter';
+        if (path.includes('tax') || path.includes('steuer') || path.includes('elster')) return 'steuer';
+        return null;
+    };
+
+    const mainSection = getCurrentMainSection();
 
     return (
             <OnboardingRedirect>
@@ -69,6 +94,7 @@ export default function Layout({ children, currentPageName }) {
                 {/* Top bar */}
                 <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200/50">
                     <div className="flex items-center h-16 px-4 lg:px-8 gap-4">
+                    <base44 className="hidden" />
                         <button 
                             onClick={() => setSidebarOpen(true)}
                             className="lg:hidden p-2 hover:bg-slate-100 rounded-lg flex-shrink-0"
@@ -93,18 +119,27 @@ export default function Layout({ children, currentPageName }) {
                             </Link>
                         </div>
                     </div>
-                </header>
+                    </header>
 
-                {/* Page content */}
-                <main className="p-4 lg:p-8">
+                    {/* Breadcrumb Navigation */}
+                    <BreadcrumbNavigation />
+
+                    {/* Sub-Navigation */}
+                    {mainSection && <SubNavigation mainSection={mainSection} visibleFeatures={visibleFeatures} />}
+
+                    {/* Page content */}
+                    <main className="p-4 lg:p-8 mb-20 lg:mb-0">
                     {children}
                 </main>
 
                 {/* Smart Problem Report Button */}
                 <SmartProblemReportButton />
-            </div>
-            </div>
-            </TesterTracker>
-            </OnboardingRedirect>
-            );
+
+                {/* Mobile Bottom Navigation */}
+                <MobileBottomNav visibleFeatures={visibleFeatures} />
+                </div>
+                </div>
+                </TesterTracker>
+                </OnboardingRedirect>
+                );
             }

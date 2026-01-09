@@ -6,6 +6,7 @@ import UnlockProgressTracker from '@/components/navigation/UnlockProgressTracker
 import FeatureDiscoveryPanel from '@/components/navigation/FeatureDiscoveryPanel';
 import NewFeaturesWidget from '@/components/dashboard/NewFeaturesWidget';
 import NavigationRoadmap from '@/components/navigation/NavigationRoadmap';
+import LifecycleHints from '@/components/navigation/LifecycleHints';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import QuickStats from '@/components/shared/QuickStats';
@@ -39,6 +40,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <TesterDashboardWidget />
+      <LifecycleHints />
       <FeatureDiscoveryPanel />
       <OnboardingProgress />
       <UnlockProgressTracker />
