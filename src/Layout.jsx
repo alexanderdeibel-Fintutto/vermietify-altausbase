@@ -2,88 +2,29 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { 
-          Building2, 
-          Home, 
-          Users, 
-          FileText, 
-          CreditCard, 
-          BarChart3, 
-          Landmark,
-          Menu,
-          X,
-          ChevronRight,
-          BookOpen,
-          MessageSquare,
-          HelpCircle,
-          AlertCircle,
-          Target,
-          Settings,
-          Shield,
-          TestTube,
-          Mail,
-          Calendar,
-          Search,
-          Upload,
-          Zap,
-          Database,
-          Sparkles,
-          Package,
-          TrendingUp,
-          Activity,
-          Bell,
-          Gift
-      } from 'lucide-react';
+            Building2, 
+            Menu,
+            X,
+            Users,
+            Settings
+        } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import SuiteSwitcher from '@/components/suite/SuiteSwitcher';
-import { useUserSuites } from '@/components/suite/useModuleAccess';
 import TesterTracker from '@/components/testing/TesterTracker';
 import SmartProblemReportButton from '@/components/testing/SmartProblemReportButton';
 import { Button } from "@/components/ui/button";
 import OnboardingRedirect from '@/components/onboarding/OnboardingRedirect';
-import { DynamicNavigation } from '@/components/DynamicNavigation';
+import AdaptiveNavigation from '@/components/navigation/AdaptiveNavigation';
+import FeatureUnlockNotification from '@/components/navigation/FeatureUnlockNotification';
 
 export default function Layout({ children, currentPageName }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const { data: userSuites } = useUserSuites();
-
-    // Hilfsfunktion: Prüft ob User Zugriff auf ein Modul hat
-    const hasModuleAccess = (moduleName) => {
-        if (!userSuites) return true; // Während des Ladens: alles anzeigen
-        
-        // Prüfe ob Modul in einer aktiven Suite enthalten ist
-        const hasViaSuite = userSuites.suites?.some(suite => 
-            suite.included_modules?.includes(moduleName)
-        );
-        
-        // Prüfe ob direkter Modul-Zugriff besteht
-        const hasDirectAccess = userSuites.modules?.some(mod => 
-            mod.name === moduleName && mod.access.access_level !== 'none'
-        );
-        
-        return hasViaSuite || hasDirectAccess;
-    };
-
-    // Admin-Navigation (immer sichtbar für Admins)
-            const adminNavigation = [
-                    { name: '🚀 Setup-Assistent', href: createPageUrl('Onboarding'), icon: Sparkles, page: 'Onboarding' },
-                    { name: '🎨 Mein Dashboard', href: createPageUrl('CustomDashboard'), icon: Settings, page: 'CustomDashboard' },
-                    { name: '⚙️ Admin', href: createPageUrl('AdminDashboard'), icon: Settings, page: 'AdminDashboard' },
-                    { name: '🎯 Suite Management', href: createPageUrl('SuiteManagement'), icon: Settings, page: 'SuiteManagement' },
-                    { name: '📦 Paketverwalter', href: createPageUrl('PackageManager'), icon: Package, page: 'PackageManager' },
-                    { name: '👥 Benutzerverwaltung', href: createPageUrl('UserManagement'), icon: Users, page: 'UserManagement' },
-                    { name: '🔐 Rollen', href: createPageUrl('RoleManagement'), icon: Shield, page: 'RoleManagement' },
-                    { name: '📦 Module', href: createPageUrl('ModuleManagement'), icon: Package, page: 'ModuleManagement' },
-                    { name: '───────────', disabled: true },
-                    { name: '📖 Entwickler-Doku', href: createPageUrl('DeveloperDocumentation'), icon: BookOpen, page: 'DeveloperDocumentation' },
-                    { name: '🆘 Support-Center', href: createPageUrl('SupportCenter'), icon: AlertCircle, page: 'SupportCenter' },
-            ];
-
-            const visibleNavigation = adminNavigation;
 
     return (
             <OnboardingRedirect>
             <TesterTracker>
+            <FeatureUnlockNotification />
             <div className="min-h-screen bg-slate-50">
             {/* Mobile sidebar backdrop */}
             {sidebarOpen && (
@@ -111,55 +52,33 @@ export default function Layout({ children, currentPageName }) {
                     >
                         <X className="w-5 h-5 text-slate-500" />
                     </button>
-                </div>
+                    </div>
 
-                <nav className="p-4 space-y-1">
-                    {visibleNavigation.map((item) => {
-                        if (item.disabled) {
-                            return (
-                                <div key={item.name} className="my-2 border-t border-slate-200" />
-                            );
-                        }
-                        const isActive = currentPageName === item.page;
-                        return (
-                            <Link
-                                key={item.name}
-                                to={item.href}
-                                onClick={() => setSidebarOpen(false)}
-                                className={cn(
-                                    "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
-                                    isActive 
-                                        ? "bg-emerald-50 text-emerald-700" 
-                                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                                )}
-                            >
-                                <item.icon className={cn(
-                                    "w-5 h-5",
-                                    isActive ? "text-emerald-600" : "text-slate-400"
-                                )} />
-                                {item.name}
-                                {isActive && (
-                                    <ChevronRight className="w-4 h-4 ml-auto text-emerald-500" />
-                                )}
-                            </Link>
-                        );
-                    })}
-                </nav>
+                    <div className="p-4">
+                    <p className="text-xs text-slate-500 mb-2">Quick Links</p>
+                    <div className="space-y-1">
+                        <Link to={createPageUrl('Buildings')} onClick={() => setSidebarOpen(false)} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg">Objekte</Link>
+                        <Link to={createPageUrl('Tenants')} onClick={() => setSidebarOpen(false)} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg">Mieter</Link>
+                        <Link to={createPageUrl('Finanzen')} onClick={() => setSidebarOpen(false)} className="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 rounded-lg">Finanzen</Link>
+                    </div>
+                    </div>
             </aside>
 
             {/* Main content */}
             <div className="lg:pl-72">
                 {/* Top bar */}
-                <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-md border-b border-slate-200/50">
-                    <div className="flex items-center justify-between h-full px-4 lg:px-8">
+                <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200/50">
+                    <div className="flex items-center h-16 px-4 lg:px-8 gap-4">
                         <button 
                             onClick={() => setSidebarOpen(true)}
-                            className="lg:hidden p-2 hover:bg-slate-100 rounded-lg"
+                            className="lg:hidden p-2 hover:bg-slate-100 rounded-lg flex-shrink-0"
                         >
                             <Menu className="w-5 h-5 text-slate-600" />
                         </button>
-                        <div className="flex-1" />
-                        <div className="flex items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                            <AdaptiveNavigation currentPageName={currentPageName} />
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0">
                             <SuiteSwitcher />
                             <NotificationCenter />
                             <Link to={createPageUrl('MyAccount')}>
@@ -172,7 +91,7 @@ export default function Layout({ children, currentPageName }) {
                             <Settings className="w-5 h-5 text-slate-600" />
                             </Button>
                             </Link>
-                                </div>
+                        </div>
                     </div>
                 </header>
 
