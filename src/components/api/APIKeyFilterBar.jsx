@@ -24,7 +24,7 @@ export default function APIKeyFilterBar({ onSearchChange, onStatusChange, onNewK
           </SelectContent>
         </Select>
       </div>
-      <Button onClick={onNewKey} className="bg-red-600 hover:bg-red-700"><Plus className="w-4 h-4 mr-2" />Neuer Key</Button>
+      <Button onClick={onNewKey} className="bg-slate-700 hover:bg-slate-800 font-extralight"><Plus className="w-4 h-4 mr-2" />Neuer Key</Button>
     </div>
   );
 }

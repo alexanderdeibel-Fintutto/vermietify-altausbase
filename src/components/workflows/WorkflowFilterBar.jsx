@@ -24,7 +24,7 @@ export default function WorkflowFilterBar({ onSearchChange, onStatusChange, onNe
           </SelectContent>
         </Select>
       </div>
-      <Button onClick={onNewWorkflow} className="bg-cyan-600 hover:bg-cyan-700"><Plus className="w-4 h-4 mr-2" />Neuer Workflow</Button>
+      <Button onClick={onNewWorkflow} className="bg-slate-700 hover:bg-slate-800 font-extralight"><Plus className="w-4 h-4 mr-2" />Neuer Workflow</Button>
     </div>
   );
 }
