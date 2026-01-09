@@ -1,7 +1,9 @@
 import APIKeyManagement from './pages/APIKeyManagement';
 import APILogs from './pages/APILogs';
 import ActivityLogs from './pages/ActivityLogs';
+import AdaptiveNavigationAdmin from './pages/AdaptiveNavigationAdmin';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminPackageSetup from './pages/AdminPackageSetup';
 import AdvancedAnalytics from './pages/AdvancedAnalytics';
 import AdvancedReportBuilder from './pages/AdvancedReportBuilder';
 import AdvancedSearch from './pages/AdvancedSearch';
@@ -35,6 +37,7 @@ import DocumentManagement from './pages/DocumentManagement';
 import Documents from './pages/Documents';
 import ElsterIntegration from './pages/ElsterIntegration';
 import EmailTemplates from './pages/EmailTemplates';
+import FeatureCatalog from './pages/FeatureCatalog';
 import FinAPICallback from './pages/FinAPICallback';
 import FinancialForecasting from './pages/FinancialForecasting';
 import FinancialItems from './pages/FinancialItems';
@@ -56,11 +59,13 @@ import MarketAnalytics from './pages/MarketAnalytics';
 import MieterSelfServicePortal from './pages/MieterSelfServicePortal';
 import ModuleManagement from './pages/ModuleManagement';
 import MyAccount from './pages/MyAccount';
+import NavigationDemo from './pages/NavigationDemo';
 import NotificationManagement from './pages/NotificationManagement';
 import Onboarding from './pages/Onboarding';
 import OperatingCosts from './pages/OperatingCosts';
 import OperatingCostsManagement from './pages/OperatingCostsManagement';
 import PackageManager from './pages/PackageManager';
+import PackageTestPage from './pages/PackageTestPage';
 import Payments from './pages/Payments';
 import PerformanceMonitor from './pages/PerformanceMonitor';
 import PermissionDashboard from './pages/PermissionDashboard';
@@ -103,11 +108,6 @@ import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import AdaptiveNavigationAdmin from './pages/AdaptiveNavigationAdmin';
-import FeatureCatalog from './pages/FeatureCatalog';
-import NavigationDemo from './pages/NavigationDemo';
-import AdminPackageSetup from './pages/AdminPackageSetup';
-import PackageTestPage from './pages/PackageTestPage';
 import __Layout from './Layout.jsx';
 
 
@@ -115,7 +115,9 @@ export const PAGES = {
     "APIKeyManagement": APIKeyManagement,
     "APILogs": APILogs,
     "ActivityLogs": ActivityLogs,
+    "AdaptiveNavigationAdmin": AdaptiveNavigationAdmin,
     "AdminDashboard": AdminDashboard,
+    "AdminPackageSetup": AdminPackageSetup,
     "AdvancedAnalytics": AdvancedAnalytics,
     "AdvancedReportBuilder": AdvancedReportBuilder,
     "AdvancedSearch": AdvancedSearch,
@@ -149,6 +151,7 @@ export const PAGES = {
     "Documents": Documents,
     "ElsterIntegration": ElsterIntegration,
     "EmailTemplates": EmailTemplates,
+    "FeatureCatalog": FeatureCatalog,
     "FinAPICallback": FinAPICallback,
     "FinancialForecasting": FinancialForecasting,
     "FinancialItems": FinancialItems,
@@ -170,11 +173,13 @@ export const PAGES = {
     "MieterSelfServicePortal": MieterSelfServicePortal,
     "ModuleManagement": ModuleManagement,
     "MyAccount": MyAccount,
+    "NavigationDemo": NavigationDemo,
     "NotificationManagement": NotificationManagement,
     "Onboarding": Onboarding,
     "OperatingCosts": OperatingCosts,
     "OperatingCostsManagement": OperatingCostsManagement,
     "PackageManager": PackageManager,
+    "PackageTestPage": PackageTestPage,
     "Payments": Payments,
     "PerformanceMonitor": PerformanceMonitor,
     "PermissionDashboard": PermissionDashboard,
@@ -217,11 +222,6 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "AdaptiveNavigationAdmin": AdaptiveNavigationAdmin,
-    "FeatureCatalog": FeatureCatalog,
-    "NavigationDemo": NavigationDemo,
-    "AdminPackageSetup": AdminPackageSetup,
-    "PackageTestPage": PackageTestPage,
 }
 
 export const pagesConfig = {

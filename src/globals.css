@@ -7,11 +7,11 @@ css
 
 @layer base {
   body {
-    @apply font-montserrat font-normal;
+    @apply font-montserrat font-light;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-medium;
+    @apply font-normal;
   }
   
   * {

@@ -123,7 +123,7 @@ export default function Tasks() {
                 className="flex items-center justify-between"
             >
                 <div>
-                    <h1 className="text-2xl font-medium text-slate-800">Aufgaben</h1>
+                    <h1 className="text-2xl font-light text-slate-800">Aufgaben</h1>
                     <p className="text-slate-500">Verwalten Sie alle Tasks und Workflows</p>
                 </div>
                 <div className="flex items-center gap-2">

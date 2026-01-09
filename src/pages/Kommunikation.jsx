@@ -34,7 +34,7 @@ export default function KommunikationPage() {
     <ModuleGuard moduleName="kommunikation">
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-medium text-slate-900">📞 Kommunikation</h1>
+        <h1 className="text-3xl font-light text-slate-900">Kommunikation</h1>
         <p className="text-slate-600 mt-1">Zentrale Verwaltung aller Kommunikationskanäle</p>
       </div>
 
