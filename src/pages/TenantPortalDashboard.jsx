@@ -6,11 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, FileText, MessageSquare, Wrench, Home, Search, Download, Bell, User, LogOut } from 'lucide-react';
+import { Loader2, FileText, MessageSquare, Wrench, Home, Search, Download, User, LogOut } from 'lucide-react';
 import TenantPortalWelcome from '@/components/tenant-portal/TenantPortalWelcome';
 import MaintenanceRequestForm from '@/components/tenant-portal/MaintenanceRequestForm';
 import TenantLiveChat from '@/components/tenant-portal/TenantLiveChat';
 import TenantDocumentsViewer from '@/components/tenant-portal/TenantDocumentsViewer';
+import TenantNotificationCenter from '@/components/tenant-portal/TenantNotificationCenter';
 
 export default function TenantPortalDashboard() {
   const [tenantId] = useState(new URLSearchParams(window.location.search).get('id'));
@@ -98,14 +99,7 @@ export default function TenantPortalDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" title="Benachrichtigungen">
-                <Bell className="w-5 h-5 text-slate-600" />
-                {unreadMessages.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center">
-                    {unreadMessages.length}
-                  </span>
-                )}
-              </Button>
+              <TenantNotificationCenter tenantId={tenantId} />
               <Button variant="ghost" size="icon">
                 <User className="w-5 h-5 text-slate-600" />
               </Button>
