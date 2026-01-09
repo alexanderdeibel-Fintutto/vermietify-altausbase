@@ -93,6 +93,11 @@ export default function Layout({ children, currentPageName }) {
                                     <Users className="w-5 h-5" />
                                 </Button>
                             </Link>
+                            <Link to={createPageUrl('TesterManagement')}>
+                                <Button variant="ghost" size="icon" title="Tester-Admin" className="text-slate-400 hover:text-slate-700">
+                                    <Zap className="w-5 h-5" />
+                                </Button>
+                            </Link>
                             <Link to={createPageUrl('UserSettings')}>
                                 <Button variant="ghost" size="icon" title="Einstellungen" className="text-slate-400 hover:text-slate-700">
                                     <Settings className="w-5 h-5" />
