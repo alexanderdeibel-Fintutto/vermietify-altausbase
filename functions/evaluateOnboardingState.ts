@@ -11,13 +11,27 @@ Deno.serve(async (req) => {
 
     console.log('Evaluating onboarding state for user:', user.email);
 
-    // Fetch user onboarding progress
+    // Fetch or init user onboarding progress
     const onboardingRecords = await base44.entities.UserOnboarding.filter(
       { user_id: user.id },
       null,
       1
     );
-    const onboarding = onboardingRecords[0];
+    
+    let onboarding = onboardingRecords[0];
+    
+    // Initialize if doesn't exist
+    if (!onboarding) {
+      console.log('Creating new UserOnboarding record for user:', user.id);
+      onboarding = await base44.entities.UserOnboarding.create({
+        user_id: user.id,
+        completed_steps: [],
+        onboarding_progress: 0,
+        current_step: 'welcome',
+        user_level: 'beginner',
+        days_since_signup: 0
+      });
+    }
 
     // Fetch user package config
     const packageRecords = await base44.entities.UserPackageConfiguration.filter(
@@ -117,9 +131,13 @@ Deno.serve(async (req) => {
       step.trigger()
     );
 
+    // Check if skipped recently (within 24h)
+    const skipUntil = onboarding?.skip_until ? new Date(onboarding.skip_until) : null;
+    const isCurrentlySkipped = skipUntil && new Date() < skipUntil;
+
     // Determine if onboarding assistant should be visible
     const nextStep = nextRequiredStep || nextOptionalStep;
-    const shouldShowOnboarding = !!nextStep;
+    const shouldShowOnboarding = !!nextStep && !isCurrentlySkipped;
 
     // Calculate progress
     const completedSteps = steps.filter(s => s.completed).length;
