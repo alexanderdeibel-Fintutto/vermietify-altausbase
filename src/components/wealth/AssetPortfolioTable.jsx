@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Edit2, Trash2 } from 'lucide-react';
-import { getCategoryById } from '@/components/wealth/assetCategories';
+import { getCategoryById } from './assetCategories';
 
 export default function AssetPortfolioTable({ portfolio = [], onEdit, onDelete }) {
   const getStatusColor = (status) => {

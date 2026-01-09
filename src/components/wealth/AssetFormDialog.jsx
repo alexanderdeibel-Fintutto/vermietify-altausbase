@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
-import { getAllCategories, getSubcategories } from '@/components/wealth/assetCategories';
+import { getAllCategories, getSubcategories } from './assetCategories';
 
 export default function AssetFormDialog({ open, onOpenChange, onSubmit, initialData, isLoading }) {
   const [formData, setFormData] = React.useState(initialData || {});
