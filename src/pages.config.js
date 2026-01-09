@@ -1,3 +1,4 @@
+import AIRuleApprovalDashboard from './pages/AIRuleApprovalDashboard';
 import AITaxAdvisor from './pages/AITaxAdvisor';
 import AITaxRecommendations from './pages/AITaxRecommendations';
 import APIKeyManagement from './pages/APIKeyManagement';
@@ -87,6 +88,7 @@ import FinAPICallback from './pages/FinAPICallback';
 import FinanceManagement from './pages/FinanceManagement';
 import FinancialForecasting from './pages/FinancialForecasting';
 import FinancialItems from './pages/FinancialItems';
+import FinancialReporting from './pages/FinancialReporting';
 import Finanzen from './pages/Finanzen';
 import GeneratedBookings from './pages/GeneratedBookings';
 import GlobalSettings from './pages/GlobalSettings';
@@ -106,8 +108,8 @@ import InvestmentTaxTracking from './pages/InvestmentTaxTracking';
 import InvestmentsCH from './pages/InvestmentsCH';
 import InvoiceManagement from './pages/InvoiceManagement';
 import Invoices from './pages/Invoices';
-import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
 import Kommunikation from './pages/Kommunikation';
+import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
 import LeaseContracts from './pages/LeaseContracts';
 import MaintenanceManager from './pages/MaintenanceManager';
 import MaintenanceTasks from './pages/MaintenanceTasks';
@@ -121,6 +123,7 @@ import MyAccount from './pages/MyAccount';
 import NavigationDemo from './pages/NavigationDemo';
 import NotificationManagement from './pages/NotificationManagement';
 import Onboarding from './pages/Onboarding';
+import OnboardingWizard from './pages/OnboardingWizard';
 import OperatingCosts from './pages/OperatingCosts';
 import OperatingCostsManagement from './pages/OperatingCostsManagement';
 import OtherIncomeCH from './pages/OtherIncomeCH';
@@ -150,6 +153,7 @@ import SelfEmploymentTaxPlanner from './pages/SelfEmploymentTaxPlanner';
 import SelfEmploymentTaxPlanning from './pages/SelfEmploymentTaxPlanning';
 import SettingsPage from './pages/SettingsPage';
 import SmartExpenseTracker from './pages/SmartExpenseTracker';
+import SubmissionDashboard from './pages/SubmissionDashboard';
 import SuiteManagement from './pages/SuiteManagement';
 import SuppliersManagement from './pages/SuppliersManagement';
 import SupportCenter from './pages/SupportCenter';
@@ -158,6 +162,7 @@ import SystemHealth from './pages/SystemHealth';
 import TaskManagement from './pages/TaskManagement';
 import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
+import TaxAIChatbot from './pages/TaxAIChatbot';
 import TaxAdminDashboard from './pages/TaxAdminDashboard';
 import TaxAdminPanel from './pages/TaxAdminPanel';
 import TaxAdvisorCollaborationHub from './pages/TaxAdvisorCollaborationHub';
@@ -165,6 +170,7 @@ import TaxAdvisorPortal from './pages/TaxAdvisorPortal';
 import TaxAdvisorPortalPage from './pages/TaxAdvisorPortalPage';
 import TaxAnalyticsReporting from './pages/TaxAnalyticsReporting';
 import TaxAuditPreparation from './pages/TaxAuditPreparation';
+import TaxAuthoritySubmissions from './pages/TaxAuthoritySubmissions';
 import TaxAutomationCenter from './pages/TaxAutomationCenter';
 import TaxBracketCalculator from './pages/TaxBracketCalculator';
 import TaxCalendarAndTimeline from './pages/TaxCalendarAndTimeline';
@@ -197,6 +203,7 @@ import TaxLossHarvestingAdvisor from './pages/TaxLossHarvestingAdvisor';
 import TaxManagement from './pages/TaxManagement';
 import TaxMonitoringDashboard from './pages/TaxMonitoringDashboard';
 import TaxOptimizationAnalyzer from './pages/TaxOptimizationAnalyzer';
+import TaxOptimizationStrategy from './pages/TaxOptimizationStrategy';
 import TaxPerformanceDashboard from './pages/TaxPerformanceDashboard';
 import TaxPlanningAdvisor from './pages/TaxPlanningAdvisor';
 import TaxRemindersCenter from './pages/TaxRemindersCenter';
@@ -206,6 +213,7 @@ import TaxReportingHub from './pages/TaxReportingHub';
 import TaxReturnFilingManager from './pages/TaxReturnFilingManager';
 import TaxRiskAssessment from './pages/TaxRiskAssessment';
 import TaxRiskAssessmentPanel from './pages/TaxRiskAssessmentPanel';
+import TaxRuleAdmin from './pages/TaxRuleAdmin';
 import TaxSavingsOpportunities from './pages/TaxSavingsOpportunities';
 import TaxScenarioComparison from './pages/TaxScenarioComparison';
 import TaxScenarioSimulator from './pages/TaxScenarioSimulator';
@@ -249,18 +257,12 @@ import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import TaxRuleAdmin from './pages/TaxRuleAdmin';
-import TaxAuthoritySubmissions from './pages/TaxAuthoritySubmissions';
-import SubmissionDashboard from './pages/SubmissionDashboard';
-import TaxAIChatbot from './pages/TaxAIChatbot';
-import OnboardingWizard from './pages/OnboardingWizard';
-import AIRuleApprovalDashboard from './pages/AIRuleApprovalDashboard';
-import TaxOptimizationStrategy from './pages/TaxOptimizationStrategy';
-import FinancialReporting from './pages/FinancialReporting';
+import SyncManagement from './pages/SyncManagement';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AIRuleApprovalDashboard": AIRuleApprovalDashboard,
     "AITaxAdvisor": AITaxAdvisor,
     "AITaxRecommendations": AITaxRecommendations,
     "APIKeyManagement": APIKeyManagement,
@@ -350,6 +352,7 @@ export const PAGES = {
     "FinanceManagement": FinanceManagement,
     "FinancialForecasting": FinancialForecasting,
     "FinancialItems": FinancialItems,
+    "FinancialReporting": FinancialReporting,
     "Finanzen": Finanzen,
     "GeneratedBookings": GeneratedBookings,
     "GlobalSettings": GlobalSettings,
@@ -369,8 +372,8 @@ export const PAGES = {
     "InvestmentsCH": InvestmentsCH,
     "InvoiceManagement": InvoiceManagement,
     "Invoices": Invoices,
-    "KnowledgeManagementDashboard": KnowledgeManagementDashboard,
     "Kommunikation": Kommunikation,
+    "KnowledgeManagementDashboard": KnowledgeManagementDashboard,
     "LeaseContracts": LeaseContracts,
     "MaintenanceManager": MaintenanceManager,
     "MaintenanceTasks": MaintenanceTasks,
@@ -384,6 +387,7 @@ export const PAGES = {
     "NavigationDemo": NavigationDemo,
     "NotificationManagement": NotificationManagement,
     "Onboarding": Onboarding,
+    "OnboardingWizard": OnboardingWizard,
     "OperatingCosts": OperatingCosts,
     "OperatingCostsManagement": OperatingCostsManagement,
     "OtherIncomeCH": OtherIncomeCH,
@@ -413,6 +417,7 @@ export const PAGES = {
     "SelfEmploymentTaxPlanning": SelfEmploymentTaxPlanning,
     "SettingsPage": SettingsPage,
     "SmartExpenseTracker": SmartExpenseTracker,
+    "SubmissionDashboard": SubmissionDashboard,
     "SuiteManagement": SuiteManagement,
     "SuppliersManagement": SuppliersManagement,
     "SupportCenter": SupportCenter,
@@ -421,6 +426,7 @@ export const PAGES = {
     "TaskManagement": TaskManagement,
     "Tasks": Tasks,
     "Tax": Tax,
+    "TaxAIChatbot": TaxAIChatbot,
     "TaxAdminDashboard": TaxAdminDashboard,
     "TaxAdminPanel": TaxAdminPanel,
     "TaxAdvisorCollaborationHub": TaxAdvisorCollaborationHub,
@@ -428,6 +434,7 @@ export const PAGES = {
     "TaxAdvisorPortalPage": TaxAdvisorPortalPage,
     "TaxAnalyticsReporting": TaxAnalyticsReporting,
     "TaxAuditPreparation": TaxAuditPreparation,
+    "TaxAuthoritySubmissions": TaxAuthoritySubmissions,
     "TaxAutomationCenter": TaxAutomationCenter,
     "TaxBracketCalculator": TaxBracketCalculator,
     "TaxCalendarAndTimeline": TaxCalendarAndTimeline,
@@ -460,6 +467,7 @@ export const PAGES = {
     "TaxManagement": TaxManagement,
     "TaxMonitoringDashboard": TaxMonitoringDashboard,
     "TaxOptimizationAnalyzer": TaxOptimizationAnalyzer,
+    "TaxOptimizationStrategy": TaxOptimizationStrategy,
     "TaxPerformanceDashboard": TaxPerformanceDashboard,
     "TaxPlanningAdvisor": TaxPlanningAdvisor,
     "TaxRemindersCenter": TaxRemindersCenter,
@@ -469,6 +477,7 @@ export const PAGES = {
     "TaxReturnFilingManager": TaxReturnFilingManager,
     "TaxRiskAssessment": TaxRiskAssessment,
     "TaxRiskAssessmentPanel": TaxRiskAssessmentPanel,
+    "TaxRuleAdmin": TaxRuleAdmin,
     "TaxSavingsOpportunities": TaxSavingsOpportunities,
     "TaxScenarioComparison": TaxScenarioComparison,
     "TaxScenarioSimulator": TaxScenarioSimulator,
@@ -512,14 +521,7 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "TaxRuleAdmin": TaxRuleAdmin,
-    "TaxAuthoritySubmissions": TaxAuthoritySubmissions,
-    "SubmissionDashboard": SubmissionDashboard,
-    "TaxAIChatbot": TaxAIChatbot,
-    "OnboardingWizard": OnboardingWizard,
-    "AIRuleApprovalDashboard": AIRuleApprovalDashboard,
-    "TaxOptimizationStrategy": TaxOptimizationStrategy,
-    "FinancialReporting": FinancialReporting,
+    "SyncManagement": SyncManagement,
 }
 
 export const pagesConfig = {
