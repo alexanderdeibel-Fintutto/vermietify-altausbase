@@ -237,6 +237,7 @@ import TaxReportingHub from './pages/TaxReportingHub';
 import TaxMonitoringDashboard from './pages/TaxMonitoringDashboard';
 import TaxAdvisorCollaborationHub from './pages/TaxAdvisorCollaborationHub';
 import TaxDataImportHub from './pages/TaxDataImportHub';
+import DocumentInbox from './pages/DocumentInbox';
 import __Layout from './Layout.jsx';
 
 
@@ -480,6 +481,7 @@ export const PAGES = {
     "TaxMonitoringDashboard": TaxMonitoringDashboard,
     "TaxAdvisorCollaborationHub": TaxAdvisorCollaborationHub,
     "TaxDataImportHub": TaxDataImportHub,
+    "DocumentInbox": DocumentInbox,
 }
 
 export const pagesConfig = {
