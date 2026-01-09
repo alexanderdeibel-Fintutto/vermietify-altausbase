@@ -7,11 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { formatDistanceToNow } from 'date-fns';
+import { de } from 'date-fns/locale';
 import { 
   RefreshCw, Clock, Activity, Bell, Play, Settings, AlertTriangle, 
   CheckCircle2, AlertCircle, Download, Lightbulb 
 } from 'lucide-react';
-import { formatRelativeTime } from '@/utils';
 
 export default function AutomationDashboard({ userId }) {
   const queryClient = useQueryClient();
@@ -95,7 +96,9 @@ export default function AutomationDashboard({ userId }) {
               <p className="text-xs text-slate-600">Letzte Aktualisierung</p>
             </div>
             {automationConfigs.length > 0 && automationConfigs[0].last_run ? (
-              <p className="text-lg font-medium">{formatRelativeTime(automationConfigs[0].last_run)}</p>
+              <p className="text-lg font-medium">
+                {formatDistanceToNow(new Date(automationConfigs[0].last_run), { addSuffix: true, locale: de })}
+              </p>
             ) : (
               <p className="text-lg font-medium">—</p>
             )}
@@ -160,7 +163,7 @@ export default function AutomationDashboard({ userId }) {
                   )}
                   {config.last_run && (
                     <span className="text-xs text-slate-500">
-                      vor {formatRelativeTime(config.last_run)}
+                      {formatDistanceToNow(new Date(config.last_run), { addSuffix: true, locale: de })}
                     </span>
                   )}
                 </div>
@@ -201,7 +204,7 @@ export default function AutomationDashboard({ userId }) {
                     </AlertDescription>
                   </div>
                   <span className="text-xs text-slate-500 ml-2">
-                    {formatRelativeTime(alert.triggered_at)}
+                    {formatDistanceToNow(new Date(alert.triggered_at), { addSuffix: true, locale: de })}
                   </span>
                 </div>
 
