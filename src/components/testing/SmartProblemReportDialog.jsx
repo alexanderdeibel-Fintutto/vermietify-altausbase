@@ -1,278 +1,289 @@
 import React, { useState } from 'react';
 import html2canvas from 'html2canvas';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import { Loader2, Send, AlertTriangle, Zap } from 'lucide-react';
+import { Loader2, Send, AlertTriangle, CheckCircle2, Image } from 'lucide-react';
 
-export default function SmartProblemReportDialog({ open, onOpenChange }) {
-  const [step, setStep] = useState('type'); // type, details, review, submitted
-  const [problemType, setProblemType] = useState(null);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [severity, setSeverity] = useState('medium');
-  const [reportedElements, setReportedElements] = useState([]);
-  const [submitting, setSubmitting] = useState(false);
-  const [priorityScore, setPriorityScore] = useState(null);
+const PROBLEM_TYPES = [
+  { value: 'functional_bug', label: '🐛 Fehler - Etwas funktioniert nicht', color: 'bg-red-50' },
+  { value: 'ux_issue', label: '😕 Verbesserung - Das könnte besser sein', color: 'bg-yellow-50' },
+  { value: 'feature_request', label: '💡 Verwirrung - Ich verstehe etwas nicht', color: 'bg-blue-50' },
+  { value: 'performance', label: '⚡ Kritisch - App ist nicht nutzbar', color: 'bg-orange-50' },
+  { value: 'visual_bug', label: '🎨 Sonstiges - Anderes Problem', color: 'bg-purple-50' }
+];
 
-  const handleScreenshot = async () => {
+const SEVERITY_LEVELS = [
+  { value: 'app_breaking', label: '🚨 App-Fehler', emoji: '🚨' },
+  { value: 'feature_blocking', label: '⛔ Feature blockiert', emoji: '⛔' },
+  { value: 'workflow_impacting', label: '⚠️ Arbeitsablauf beeinträchtigt', emoji: '⚠️' },
+  { value: 'minor_bug', label: '⚪ Kleiner Fehler', emoji: '⚪' },
+  { value: 'cosmetic', label: '✨ Optische Verbesserung', emoji: '✨' }
+];
+
+export default function SmartProblemReportDialog({ open, onOpenChange, testAccountId }) {
+  const [step, setStep] = useState(1); // 1: Type, 2: Details, 3: Confirmation
+  const [loading, setLoading] = useState(false);
+  const [screenshot, setScreenshot] = useState(null);
+  const [screenshotBase64, setScreenshotBase64] = useState(null);
+
+  const [formData, setFormData] = useState({
+    problem_type: 'functional_bug',
+    severity: 'minor_bug',
+    problem_title: '',
+    problem_description: '',
+    expected_behavior: '',
+    actual_behavior: '',
+    steps_to_reproduce: ''
+  });
+
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleCaptureScreenshot = async () => {
     try {
-      const canvas = await html2canvas(document.body);
-      const image = canvas.toDataURL('image/png');
-      setReportedElements(prev => [...prev, { type: 'screenshot', url: image }]);
-      toast.success('Screenshot hinzugefügt');
+      setLoading(true);
+      const canvas = await html2canvas(document.body, {
+        allowTaint: true,
+        useCORS: true,
+        scale: 1,
+        backgroundColor: null
+      });
+      const dataUrl = canvas.toDataURL('image/png');
+      setScreenshotBase64(dataUrl);
+      setScreenshot(dataUrl);
+      toast.success('Screenshot erstellt ✅');
     } catch (error) {
-      toast.error('Screenshot fehler: ' + error.message);
+      toast.error('Screenshot konnte nicht erstellt werden');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSubmit = async () => {
-    if (!title.trim() || !description.trim()) {
-      toast.error('Titel und Beschreibung erforderlich');
+    if (!formData.problem_title || !formData.problem_description) {
+      toast.error('Bitte fülle alle erforderlichen Felder aus');
       return;
     }
 
-    setSubmitting(true);
-
     try {
-      // Calculate priority
-      const priorityResponse = await base44.functions.invoke('calculateIntelligentPriority', {
-        functional_severity: severity,
-        business_impact: 'efficiency_impact',
-        ux_severity: severity === 'app_breaking' ? 'unusable' : 'inconvenient',
-        affected_user_count_estimate: 'some_users',
-        user_journey_stage: 'daily_work'
+      setLoading(true);
+      const response = await base44.functions.invoke('submitProblemReport', {
+        test_account_id: testAccountId,
+        problem_title: formData.problem_title,
+        problem_description: formData.problem_description,
+        problem_type: formData.problem_type,
+        severity: formData.severity,
+        page_url: window.location.href,
+        page_title: document.title,
+        screenshot_base64: screenshotBase64,
+        expected_behavior: formData.expected_behavior,
+        actual_behavior: formData.actual_behavior,
+        steps_to_reproduce: formData.steps_to_reproduce
       });
 
-      if (priorityResponse.data.success) {
-        setPriorityScore(priorityResponse.data.priority_score);
-      }
-
-      // Create problem report
-      const reportData = {
-        problem_titel: title,
-        problem_beschreibung: description,
-        problem_type: problemType,
-        functional_severity: severity,
-        page_url: window.location.pathname,
-        page_title: document.title,
-        status: 'open',
-        priority_score: priorityResponse.data?.priority_score || 0,
-        business_priority: priorityResponse.data?.business_priority || 'p4_low',
-        priority_breakdown: priorityResponse.data?.breakdown,
-        screenshot_url: reportedElements.find(e => e.type === 'screenshot')?.url,
-        expected_behavior: '',
-        actual_behavior: description,
-        browser_info: {
-          user_agent: navigator.userAgent,
-          viewport: {
-            width: window.innerWidth,
-            height: window.innerHeight
-          }
-        }
-      };
-
-      const createResponse = await base44.functions.invoke('createUserProblem', reportData);
-
-      if (createResponse.data.success) {
-        toast.success('Problem erfolgreich gemeldet! 📝');
-        setStep('submitted');
-        setTimeout(() => {
-          onOpenChange(false);
-          setStep('type');
-          setTitle('');
-          setDescription('');
-          setProblemType(null);
-          setReportedElements([]);
-          setSeverity('medium');
-        }, 2000);
+      if (response.data.success) {
+        setSubmitted(true);
+        setStep(3);
+        toast.success('Problem gemeldet! ✅');
       }
     } catch (error) {
-      toast.error('Fehler: ' + error.message);
+      toast.error('Fehler beim Absenden: ' + error.message);
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
+  };
+
+  const handleReset = () => {
+    setStep(1);
+    setFormData({
+      problem_type: 'functional_bug',
+      severity: 'minor_bug',
+      problem_title: '',
+      problem_description: '',
+      expected_behavior: '',
+      actual_behavior: '',
+      steps_to_reproduce: ''
+    });
+    setScreenshot(null);
+    setScreenshotBase64(null);
+    setSubmitted(false);
+    onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Problem melden 🐛</DialogTitle>
-          <DialogDescription>
-            Hilf uns, die App zu verbessern, indem du Bugs und Probleme meldest.
-          </DialogDescription>
+          <DialogTitle>🐛 Problem melden</DialogTitle>
         </DialogHeader>
 
-        {step === 'type' && (
+        {/* Step 1: Problem Type Selection */}
+        {step === 1 && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { id: 'functional_bug', label: '🔧 Funktionaler Bug', desc: 'App funktioniert nicht richtig' },
-                { id: 'ux_issue', label: '😕 UX Problem', desc: 'Verwirrend oder unbenutzbar' },
-                { id: 'performance', label: '⚡ Performance', desc: 'Sehr langsam oder friert ein' },
-                { id: 'visual_bug', label: '🎨 Visueller Bug', desc: 'Design/Layout Problem' },
-                { id: 'feature_request', label: '💡 Feature-Wunsch', desc: 'Neue Funktion vorschlagen' },
-                { id: 'data_issue', label: '📊 Daten-Problem', desc: 'Falsche/verlorene Daten' }
-              ].map(type => (
-                <Card
-                  key={type.id}
-                  className={`p-4 cursor-pointer transition ${
-                    problemType === type.id ? 'border-blue-500 bg-blue-50' : 'border-slate-200'
+            <p className="text-sm font-light text-slate-600">Was ist passiert?</p>
+            <div className="space-y-2">
+              {PROBLEM_TYPES.map(type => (
+                <button
+                  key={type.value}
+                  onClick={() => {
+                    setFormData({ ...formData, problem_type: type.value });
+                    setStep(2);
+                  }}
+                  className={`w-full p-3 rounded-lg border-2 transition-all ${
+                    formData.problem_type === type.value
+                      ? 'border-slate-700 bg-slate-50'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
                   }`}
-                  onClick={() => setProblemType(type.id)}
                 >
-                  <p className="font-light text-slate-800">{type.label}</p>
-                  <p className="text-xs font-light text-slate-500">{type.desc}</p>
-                </Card>
+                  <div className="text-left font-light text-slate-700">{type.label}</div>
+                </button>
               ))}
             </div>
-
-            <Button 
-              onClick={() => setStep('details')}
-              disabled={!problemType}
-              className="w-full bg-blue-600 hover:bg-blue-700"
-            >
-              Weiter
-            </Button>
           </div>
         )}
 
-        {step === 'details' && (
+        {/* Step 2: Problem Details */}
+        {step === 2 && (
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-light text-slate-700">Titel</label>
+              <label className="block text-sm font-light text-slate-700 mb-1">Titel *</label>
               <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Kurzbeschreibung des Problems"
-                className="mt-1"
+                placeholder="Kurze Zusammenfassung des Problems"
+                value={formData.problem_title}
+                onChange={e => setFormData({ ...formData, problem_title: e.target.value })}
+                className="font-light"
               />
             </div>
 
             <div>
-              <label className="text-sm font-light text-slate-700">Beschreibung</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Detaillierte Beschreibung"
-                rows={4}
-                className="w-full mt-1 p-2 border border-slate-200 rounded-lg font-light text-sm"
+              <label className="block text-sm font-light text-slate-700 mb-1">Beschreibung *</label>
+              <Textarea
+                placeholder="Was ist genau passiert?"
+                value={formData.problem_description}
+                onChange={e => setFormData({ ...formData, problem_description: e.target.value })}
+                className="font-light h-24"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-light text-slate-700 mb-1">Erwartet</label>
+                <Input
+                  placeholder="Was sollte passieren?"
+                  value={formData.expected_behavior}
+                  onChange={e => setFormData({ ...formData, expected_behavior: e.target.value })}
+                  className="font-light"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-light text-slate-700 mb-1">Tatsächlich</label>
+                <Input
+                  placeholder="Was passiert stattdessen?"
+                  value={formData.actual_behavior}
+                  onChange={e => setFormData({ ...formData, actual_behavior: e.target.value })}
+                  className="font-light"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-light text-slate-700 mb-1">Schritte zum Reproduzieren</label>
+              <Textarea
+                placeholder="1. Schritt 1&#10;2. Schritt 2&#10;3. Schritt 3"
+                value={formData.steps_to_reproduce}
+                onChange={e => setFormData({ ...formData, steps_to_reproduce: e.target.value })}
+                className="font-light h-20"
               />
             </div>
 
             <div>
-              <label className="text-sm font-light text-slate-700">Schweregrad</label>
-              <div className="flex gap-2 mt-2">
-                {['minor_bug', 'medium', 'high', 'app_breaking'].map(sev => (
-                  <Button
-                    key={sev}
-                    onClick={() => setSeverity(sev)}
-                    variant={severity === sev ? 'default' : 'outline'}
-                    size="sm"
-                    className="flex-1"
+              <label className="block text-sm font-light text-slate-700 mb-2">Schweregrad</label>
+              <div className="grid grid-cols-2 gap-2">
+                {SEVERITY_LEVELS.map(level => (
+                  <button
+                    key={level.value}
+                    onClick={() => setFormData({ ...formData, severity: level.value })}
+                    className={`p-2 rounded-lg border text-xs font-light transition-all ${
+                      formData.severity === level.value
+                        ? 'border-slate-700 bg-slate-50'
+                        : 'border-slate-200 bg-white hover:border-slate-300'
+                    }`}
                   >
-                    {sev === 'minor_bug' ? '😐' : sev === 'medium' ? '😕' : sev === 'high' ? '😠' : '🔥'}
-                  </Button>
+                    {level.emoji} {level.label}
+                  </button>
                 ))}
               </div>
             </div>
 
-            <div className="flex gap-2">
-              <Button 
-                onClick={() => setStep('type')}
-                variant="outline"
-                className="flex-1"
-              >
-                Zurück
-              </Button>
-              <Button 
-                onClick={() => setStep('review')}
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
-              >
-                Überprüfen
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {step === 'review' && (
-          <div className="space-y-4">
-            <Card className="p-4 bg-slate-50 border border-slate-200">
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-slate-700">TITEL</p>
-                <p className="text-sm font-light text-slate-800">{title}</p>
-              </div>
-              <div className="space-y-2 mt-3">
-                <p className="text-xs font-medium text-slate-700">BESCHREIBUNG</p>
-                <p className="text-sm font-light text-slate-800">{description}</p>
-              </div>
-              <div className="flex gap-4 mt-3">
-                <div>
-                  <p className="text-xs font-medium text-slate-700">SEITE</p>
-                  <p className="text-xs font-light text-slate-600">{window.location.pathname}</p>
+            {/* Screenshot Section */}
+            <Card className="p-3 bg-slate-50 border border-dashed border-slate-300">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Image className="w-4 h-4 text-slate-500" />
+                  <span className="text-sm font-light text-slate-600">
+                    {screenshot ? 'Screenshot erstellt ✅' : 'Kein Screenshot'}
+                  </span>
                 </div>
-                <div>
-                  <p className="text-xs font-medium text-slate-700">SCHWEREGRAD</p>
-                  <p className="text-xs font-light text-slate-600">{severity}</p>
-                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleCaptureScreenshot}
+                  disabled={loading}
+                  className="text-xs h-8"
+                >
+                  {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : '📸 Machen'}
+                </Button>
               </div>
             </Card>
 
-            {priorityScore !== null && (
-              <Card className="p-4 bg-yellow-50 border border-yellow-200">
-                <div className="flex items-start gap-3">
-                  <Zap className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-1" />
-                  <div>
-                    <p className="font-light text-yellow-900">Priority Score: {Math.round(priorityScore)}/1000</p>
-                    <p className="text-xs font-light text-yellow-800">
-                      Dieses Problem hat hohe Priorität für unser Team
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            )}
-
             <div className="flex gap-2">
-              <Button 
-                onClick={() => setStep('details')}
+              <Button
                 variant="outline"
-                className="flex-1"
+                onClick={() => setStep(1)}
+                className="flex-1 font-light"
               >
-                Bearbeiten
+                Zurück
               </Button>
-              <Button 
+              <Button
                 onClick={handleSubmit}
-                disabled={submitting}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white gap-2"
+                disabled={loading}
+                className="flex-1 bg-slate-700 hover:bg-slate-800 font-light"
               >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Wird gesendet...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4" />
-                    Problem melden
-                  </>
-                )}
+                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+                Absenden
               </Button>
             </div>
           </div>
         )}
 
-        {step === 'submitted' && (
-          <div className="text-center py-8">
-            <div className="text-5xl mb-3">✅</div>
-            <p className="font-light text-slate-800 mb-2">Danke für dein Feedback!</p>
-            <p className="text-sm font-light text-slate-600">
-              Dein Problem wurde gemeldet und an das Team weitergeleitet.
+        {/* Step 3: Confirmation */}
+        {step === 3 && (
+          <div className="text-center py-6">
+            <CheckCircle2 className="w-12 h-12 text-green-600 mx-auto mb-4" />
+            <h3 className="text-lg font-light text-slate-900 mb-2">Problem gemeldet! ✅</h3>
+            <p className="text-sm font-light text-slate-600 mb-6">
+              Dein Report wurde an Alexander gesendet. Du bekommst Updates über den Status.
             </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleReset}
+                className="flex-1 font-light"
+              >
+                Dashboard
+              </Button>
+              <Button
+                onClick={handleReset}
+                className="flex-1 bg-slate-700 hover:bg-slate-800 font-light"
+              >
+                Weiter testen
+              </Button>
+            </div>
           </div>
         )}
       </DialogContent>
