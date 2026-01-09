@@ -64,13 +64,39 @@ export default function CSVImportDialog({ open, onOpenChange, onImport, isLoadin
     const brokerMapping = BROKER_MAPPINGS[selectedBroker];
     const reader = new FileReader();
     
-    reader.onload = (event) => {
-      onImport({
-        file_content: event.target.result,
-        broker_key: selectedBroker,
-        broker_mapping: brokerMapping,
-        column_mapping: columnMapping
-      });
+    reader.onload = async (event) => {
+      try {
+        const importData = {
+          file_content: event.target.result,
+          broker_key: selectedBroker,
+          broker_mapping: brokerMapping,
+          column_mapping: columnMapping
+        };
+
+        // Call backend import function
+        const response = await fetch('/api/functions/importAssetPortfolioCSV', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(importData)
+        });
+
+        const result = await response.json();
+        
+        setResults({
+          success_count: result.success_count || 0,
+          errors: result.errors || [],
+          batch_id: result.batch_id
+        });
+        
+        setSelectedTab('import-results');
+      } catch (error) {
+        setResults({
+          success_count: 0,
+          errors: [{ row: 'system', message: error.message }],
+          batch_id: null
+        });
+        setSelectedTab('import-results');
+      }
     };
     
     reader.readAsText(csvFile);
