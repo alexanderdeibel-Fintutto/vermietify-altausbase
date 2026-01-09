@@ -9,6 +9,10 @@ import RevenueWidget from '@/components/dashboard/widgets/RevenueWidget';
 import UpcomingTasksWidget from '@/components/dashboard/widgets/UpcomingTasksWidget';
 import CustomizableDashboard from '@/components/dashboard/CustomizableDashboard';
 import DocumentInboxDashboardWidget from '@/components/documentInbox/DocumentInboxDashboardWidget';
+import TenantsWidget from '@/components/dashboard/widgets/TenantsWidget';
+import WealthWidget from '@/components/dashboard/widgets/WealthWidget';
+import BusinessWidget from '@/components/dashboard/widgets/BusinessWidget';
+import PrivateWidget from '@/components/dashboard/widgets/PrivateWidget';
 
 export default function Dashboard() {
   const [editMode, setEditMode] = useState(false);
@@ -55,7 +59,7 @@ export default function Dashboard() {
 
       {/* Category Tabs */}
       <div className="flex gap-2 border-b border-slate-200 pb-4">
-        {['real_estate', 'tenants', 'private'].map(cat => (
+        {['real_estate', 'tenants', 'private', 'wealth', 'business'].map(cat => (
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
@@ -68,6 +72,8 @@ export default function Dashboard() {
             {cat === 'real_estate' && '🏢 Immobilien'}
             {cat === 'tenants' && '👥 Mieter'}
             {cat === 'private' && '👤 Privat'}
+            {cat === 'wealth' && '💰 Vermögen'}
+            {cat === 'business' && '💼 Firma'}
           </button>
         ))}
       </div>
@@ -86,17 +92,38 @@ export default function Dashboard() {
         
         {activeCategory === 'tenants' && (
           <>
-            <div className="col-span-3 bg-slate-100 rounded-lg p-8 text-center text-slate-600">
-              <p>Mieter-Dashboard wird noch vorbereitet...</p>
+            <TenantsWidget />
+            <div className="col-span-2">
+              <DocumentInboxDashboardWidget />
             </div>
+            <UpcomingTasksWidget />
           </>
         )}
         
         {activeCategory === 'private' && (
           <>
-            <div className="col-span-3 bg-slate-100 rounded-lg p-8 text-center text-slate-600">
-              <p>Privates Dashboard wird noch vorbereitet...</p>
+            <div className="col-span-2">
+              <PrivateWidget />
             </div>
+            <UpcomingTasksWidget />
+          </>
+        )}
+        
+        {activeCategory === 'wealth' && (
+          <>
+            <div className="col-span-2">
+              <WealthWidget />
+            </div>
+            <UpcomingTasksWidget />
+          </>
+        )}
+        
+        {activeCategory === 'business' && (
+          <>
+            <div className="col-span-2">
+              <BusinessWidget />
+            </div>
+            <UpcomingTasksWidget />
           </>
         )}
       </div>
