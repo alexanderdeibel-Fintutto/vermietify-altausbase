@@ -12,87 +12,77 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { AlertTriangle, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import {
+  BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
+import { CheckCircle2, AlertTriangle, Clock, TrendingUp } from 'lucide-react';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
+const COLORS = {
+  completed: '#10b981',
+  pending: '#f59e0b',
+  at_risk: '#ef4444'
+};
+
 export default function TaxComplianceTracker() {
   const [country, setCountry] = useState('DE');
-  const [taxYear, setTaxYear] = useState(CURRENT_YEAR - 1);
+  const [taxYear, setTaxYear] = useState(CURRENT_YEAR);
 
+  // Fetch compliance report
   const { data: report = {}, isLoading } = useQuery({
     queryKey: ['complianceReport', country, taxYear],
     queryFn: async () => {
-      const { data } = await base44.functions.invoke('generateComplianceReport', {
+      const response = await base44.functions.invoke('generateComplianceReport', {
         country,
         taxYear
       });
-      return data;
-    },
-    enabled: !!country && !!taxYear
+      return response.data?.report || {};
+    }
   });
 
-  const items = report.compliance_items || [];
-  const stats = report.statistics || {};
-
-  const statusIcons = {
-    completed: <CheckCircle2 className="w-5 h-5 text-green-600" />,
-    in_progress: <Clock className="w-5 h-5 text-blue-600" />,
-    pending: <AlertCircle className="w-5 h-5 text-slate-600" />,
-    at_risk: <AlertTriangle className="w-5 h-5 text-orange-600" />,
-    overdue: <AlertTriangle className="w-5 h-5 text-red-600" />
-  };
-
-  const statusColors = {
-    completed: 'bg-green-100 text-green-800',
-    in_progress: 'bg-blue-100 text-blue-800',
-    pending: 'bg-slate-100 text-slate-800',
-    at_risk: 'bg-orange-100 text-orange-800',
-    overdue: 'bg-red-100 text-red-800'
-  };
-
-  const priorityColors = {
-    low: 'bg-blue-100 text-blue-800',
-    medium: 'bg-yellow-100 text-yellow-800',
-    high: 'bg-orange-100 text-orange-800',
-    critical: 'bg-red-100 text-red-800'
-  };
-
-  const complianceByType = {
-    'filing_deadline': items.filter(i => i.compliance_type === 'filing_deadline').length,
-    'documentation': items.filter(i => i.compliance_type === 'documentation').length,
-    'audit_readiness': items.filter(i => i.compliance_type === 'audit_readiness').length,
-    'tax_law_change': items.filter(i => i.compliance_type === 'tax_law_change').length,
-    'record_retention': items.filter(i => i.compliance_type === 'record_retention').length
-  };
-
-  const typeChartData = [
-    { name: 'Einreichungsfristen', value: complianceByType['filing_deadline'], fill: '#ef4444' },
-    { name: 'Dokumentation', value: complianceByType['documentation'], fill: '#f59e0b' },
-    { name: 'Audit-Readiness', value: complianceByType['audit_readiness'], fill: '#3b82f6' },
-    { name: 'Rechtl. Änderungen', value: complianceByType['tax_law_change'], fill: '#10b981' },
-    { name: 'Archivierung', value: complianceByType['record_retention'], fill: '#8b5cf6' }
+  const complianceData = [
+    { name: 'Completed', value: report.requirements_breakdown?.completed || 0, fill: COLORS.completed },
+    { name: 'Pending', value: report.requirements_breakdown?.pending || 0, fill: COLORS.pending },
+    { name: 'At Risk', value: report.requirements_breakdown?.at_risk || 0, fill: COLORS.at_risk }
   ];
 
-  const statusChartData = [
-    { name: 'Abgeschlossen', value: items.filter(i => i.status === 'completed').length, fill: '#10b981' },
-    { name: 'Laufend', value: items.filter(i => i.status === 'in_progress').length, fill: '#3b82f6' },
-    { name: 'Offen', value: items.filter(i => i.status === 'pending').length, fill: '#94a3b8' },
-    { name: 'Risiko', value: items.filter(i => i.status === 'at_risk').length, fill: '#f59e0b' },
-    { name: 'Überfällig', value: items.filter(i => i.status === 'overdue').length, fill: '#ef4444' }
-  ];
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'at_risk':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-slate-100 text-slate-800';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'completed':
+        return '✓';
+      case 'pending':
+        return '⏳';
+      case 'at_risk':
+        return '⚠️';
+      default:
+        return '?';
+    }
+  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">📋 Tax Compliance Tracker</h1>
-        <p className="text-slate-500 mt-1">Vollständiger Überblick über alle Compliance-Anforderungen</p>
+        <p className="text-slate-500 mt-1">Verfolgen Sie Ihren Compliance-Status</p>
       </div>
 
-      {/* Country & Year Selection */}
-      <div className="flex gap-4">
+      {/* Controls */}
+      <div className="flex gap-4 flex-wrap">
         <div className="flex-1 max-w-xs">
           <label className="text-sm font-medium">Land</label>
           <Select value={country} onValueChange={setCountry}>
@@ -106,115 +96,96 @@ export default function TaxComplianceTracker() {
             </SelectContent>
           </Select>
         </div>
-
         <div className="flex-1 max-w-xs">
           <label className="text-sm font-medium">Steuerjahr</label>
-          <Select value={taxYear.toString()} onValueChange={(v) => setTaxYear(parseInt(v))}>
+          <Select value={String(taxYear)} onValueChange={(v) => setTaxYear(parseInt(v))}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[CURRENT_YEAR - 2, CURRENT_YEAR - 1, CURRENT_YEAR].map(y => (
-                <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-              ))}
+              <SelectItem value={String(CURRENT_YEAR - 1)}>{CURRENT_YEAR - 1}</SelectItem>
+              <SelectItem value={String(CURRENT_YEAR)}>{CURRENT_YEAR}</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
       {isLoading ? (
-        <div className="text-center py-8 text-slate-500">⏳ Lade Compliance-Daten...</div>
+        <div className="text-center py-8">⏳ Lade Compliance-Report...</div>
       ) : (
         <>
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          {/* Overall Status Card */}
+          <Card className="border-blue-300 bg-blue-50">
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-semibold">Gesamt-Compliance-Status</h3>
+                  <Badge className="bg-blue-200 text-blue-800 text-lg px-3 py-1">
+                    {report.compliance_score || 0}/100
+                  </Badge>
+                </div>
+                <Progress value={report.compliance_score || 0} />
+                <p className="text-sm text-slate-700">{report.overall_status}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Key Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>
               <CardContent className="pt-6 text-center">
-                <p className="text-sm text-slate-600">Anforderungen</p>
-                <p className="text-3xl font-bold">{stats.total || 0}</p>
+                <CheckCircle2 className="w-6 h-6 text-green-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold">{report.metrics?.compliance_rate || 0}%</p>
+                <p className="text-xs text-slate-600 mt-1">Compliance-Rate</p>
               </CardContent>
             </Card>
-            <Card className="border-green-300">
+            <Card>
               <CardContent className="pt-6 text-center">
-                <CheckCircle2 className="w-6 h-6 text-green-600 mx-auto mb-1" />
-                <p className="text-sm text-slate-600">Abgeschlossen</p>
-                <p className="text-3xl font-bold text-green-600">{stats.completed || 0}</p>
+                <TrendingUp className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold">{Math.round(report.metrics?.documentation_completeness || 0)}%</p>
+                <p className="text-xs text-slate-600 mt-1">Dokumentation</p>
               </CardContent>
             </Card>
-            <Card className="border-orange-300">
+            <Card>
               <CardContent className="pt-6 text-center">
-                <AlertTriangle className="w-6 h-6 text-orange-600 mx-auto mb-1" />
-                <p className="text-sm text-slate-600">Risiko</p>
-                <p className="text-3xl font-bold text-orange-600">{stats.at_risk || 0}</p>
+                <Clock className="w-6 h-6 text-yellow-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold">{report.requirements_breakdown?.pending || 0}</p>
+                <p className="text-xs text-slate-600 mt-1">Ausstehend</p>
               </CardContent>
             </Card>
-            <Card className="border-red-300">
+            <Card>
               <CardContent className="pt-6 text-center">
-                <AlertTriangle className="w-6 h-6 text-red-600 mx-auto mb-1" />
-                <p className="text-sm text-slate-600">Überfällig</p>
-                <p className="text-3xl font-bold text-red-600">{stats.overdue || 0}</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
-              <CardContent className="pt-6 text-center">
-                <p className="text-sm text-blue-600 font-semibold">Compliance Score</p>
-                <p className="text-3xl font-bold text-blue-700">{stats.overall_compliance_score || 0}%</p>
+                <AlertTriangle className="w-6 h-6 text-red-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold">{report.metrics?.critical_alerts || 0}</p>
+                <p className="text-xs text-slate-600 mt-1">Kritische Issues</p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Progress Bar */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-semibold">Gesamtfortschritt</p>
-                <span className="text-sm">{stats.overall_compliance_score || 0}%</span>
-              </div>
-              <Progress value={stats.overall_compliance_score || 0} className="h-3" />
-            </CardContent>
-          </Card>
-
-          {/* Alerts */}
-          {stats.overdue > 0 && (
-            <Alert className="border-red-500 bg-red-50">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800">
-                🚨 <strong>{stats.overdue} überfällige Anforderung(en)</strong> - Sofortiges Handeln erforderlich!
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {stats.at_risk > 0 && (
-            <Alert className="border-orange-300 bg-orange-50">
-              <AlertTriangle className="h-4 w-4 text-orange-600" />
-              <AlertDescription className="text-orange-800">
-                ⚠️ <strong>{stats.at_risk} Anforderung(en) im Risiko</strong> - Priorisieren Sie diese Aufgaben
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Charts */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Compliance Chart */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader>
-                <CardTitle>Compliance nach Typ</CardTitle>
+                <CardTitle className="text-sm">📊 Anforderungen-Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
                     <Pie
-                      data={typeChartData.filter(d => d.value > 0)}
+                      data={complianceData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
-                      paddingAngle={2}
+                      labelLine={false}
+                      label={({ name, value }) => `${name}: ${value}`}
+                      outerRadius={80}
+                      fill="#8884d8"
                       dataKey="value"
                     >
-                      {typeChartData.map((entry, idx) => (
-                        <Cell key={`cell-${idx}`} fill={entry.fill} />
+                      {complianceData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
                       ))}
                     </Pie>
+                    <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -222,82 +193,118 @@ export default function TaxComplianceTracker() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Status-Übersicht</CardTitle>
+                <CardTitle className="text-sm">📈 Erfüllungsgrad</CardTitle>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={statusChartData.filter(d => d.value > 0)}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} interval={0} />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                      {statusChartData.map((entry, idx) => (
-                        <Cell key={`cell-${idx}`} fill={entry.fill} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+              <CardContent className="space-y-3">
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="text-sm font-medium">Compliance-Anforderungen</p>
+                    <p className="text-sm font-bold">
+                      {report.requirements_breakdown?.completed}/{report.requirements_breakdown?.total}
+                    </p>
+                  </div>
+                  <Progress
+                    value={
+                      (report.requirements_breakdown?.completed / report.requirements_breakdown?.total) * 100 || 0
+                    }
+                  />
+                </div>
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="text-sm font-medium">Dokumentation</p>
+                    <p className="text-sm font-bold">{Math.round(report.metrics?.documentation_completeness || 0)}%</p>
+                  </div>
+                  <Progress value={report.metrics?.documentation_completeness || 0} />
+                </div>
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="text-sm font-medium">Einreichung</p>
+                    <p className="text-sm font-bold">{Math.round(report.metrics?.filing_status || 0)}%</p>
+                  </div>
+                  <Progress value={report.metrics?.filing_status || 0} />
+                </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Detailed List */}
+          {/* Requirements List */}
           <Card>
             <CardHeader>
-              <CardTitle>Detaillierte Anforderungen</CardTitle>
+              <CardTitle className="text-sm">🎯 Compliance-Anforderungen</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {items.sort((a, b) => {
-                  const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-                  return priorityOrder[a.priority] - priorityOrder[b.priority];
-                }).map((item, idx) => {
-                  const daysUntil = Math.ceil((new Date(item.deadline) - new Date()) / (1000 * 60 * 60 * 24));
-                  
-                  return (
-                    <div key={idx} className={`p-4 border rounded-lg ${item.status === 'overdue' ? 'border-red-300 bg-red-50' : item.status === 'at_risk' ? 'border-orange-300 bg-orange-50' : 'border-slate-200'}`}>
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 flex items-start gap-3">
-                          <div className="mt-1">{statusIcons[item.status]}</div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold">{item.requirement}</h4>
-                            <p className="text-sm text-slate-600 mt-1">{item.description}</p>
-                            {item.risk_flags.length > 0 && (
-                              <div className="flex gap-2 mt-2 flex-wrap">
-                                {item.risk_flags.map((flag, idx) => (
-                                  <Badge key={idx} className="bg-red-100 text-red-800 text-xs">
-                                    {flag}
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex gap-2 flex-col items-end">
-                          <Badge className={statusColors[item.status]}>{item.status}</Badge>
-                          <Badge className={priorityColors[item.priority]}>{item.priority}</Badge>
-                          <div className="text-xs text-slate-600 text-right">
-                            Deadline: {new Date(item.deadline).toLocaleDateString('de-DE')}
-                            {daysUntil >= 0 && <p>in {daysUntil} Tagen</p>}
-                          </div>
-                        </div>
-                      </div>
+            <CardContent className="space-y-2 max-h-96 overflow-y-auto">
+              {(report.requirements_details || []).map((req, i) => (
+                <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 rounded border border-slate-200">
+                  <span className="text-lg">{getStatusIcon(req.status)}</span>
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{req.requirement}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Progress value={req.completion} className="flex-1 h-1.5" />
+                      <span className="text-xs text-slate-600">{Math.round(req.completion)}%</span>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                  <Badge className={getStatusColor(req.status)}>{req.status?.toUpperCase()}</Badge>
+                </div>
+              ))}
             </CardContent>
           </Card>
 
-          {/* Tips */}
-          <Alert className="bg-blue-50 border-blue-300">
-            <AlertDescription className="text-sm">
-              💡 <strong>Tipp:</strong> Aktualisieren Sie regelmäßig den Status Ihrer Compliance-Anforderungen. 
-              Ein Compliance Score von 100% stellt sicher, dass Sie audit-ready sind.
-            </AlertDescription>
-          </Alert>
+          {/* Achievements */}
+          {(report.key_achievements || []).length > 0 && (
+            <Card className="border-green-300 bg-green-50">
+              <CardHeader>
+                <CardTitle className="text-sm">✅ Erfolge</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {report.key_achievements.map((achievement, i) => (
+                    <li key={i} className="flex gap-2 text-sm">
+                      <span className="text-green-600">✓</span> {achievement}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Priority Actions */}
+          {(report.priority_actions || []).length > 0 && (
+            <Card className="border-orange-300 bg-orange-50">
+              <CardHeader>
+                <CardTitle className="text-sm">🎯 Prioritäre Aktionen</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {report.priority_actions.map((action, i) => (
+                    <li key={i} className="flex gap-2 text-sm">
+                      <Badge className="flex-shrink-0 bg-orange-200 text-orange-800 text-xs mt-0.5">
+                        {i + 1}
+                      </Badge>
+                      {action}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Recommendations */}
+          {(report.recommendations || []).length > 0 && (
+            <Card className="border-blue-300 bg-blue-50">
+              <CardHeader>
+                <CardTitle className="text-sm">💡 Empfehlungen</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {report.recommendations.map((rec, i) => (
+                    <li key={i} className="text-sm flex gap-2">
+                      <span>→</span> {rec}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
         </>
       )}
     </div>
