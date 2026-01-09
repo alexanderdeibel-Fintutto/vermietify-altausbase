@@ -4,64 +4,70 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const today = new Date();
-    const allDeadlines = await base44.entities.TaxDeadline.list('-deadline_date', 100) || [];
-
-    const remindersToSend = [];
-
-    for (const deadline of allDeadlines) {
-      if (deadline.reminder_sent) continue;
-
-      const deadlineDate = new Date(deadline.deadline_date);
-      const daysUntil = Math.floor((deadlineDate - today) / (1000 * 60 * 60 * 24));
-
-      if (daysUntil <= deadline.reminder_days_before && daysUntil > 0) {
-        remindersToSend.push(deadline);
-      }
+    if (!user || user.role !== 'admin') {
+      return Response.json({ error: 'Admin only' }, { status: 403 });
     }
 
-    // Send reminders
-    for (const deadline of remindersToSend) {
-      await base44.integrations.Core.SendEmail({
-        to: user.email,
-        subject: `⏰ Steuererklärung-Erinnerung: ${deadline.title}`,
-        body: `
-Hallo ${user.full_name},
+    console.log('Sending tax deadline reminders...');
 
-dieser Erinnerung erinnert Sie an den bevorstehenden Steuertermins:
+    const deadlines = await base44.entities.TaxDeadline.filter(
+      { is_active: true },
+      '-deadline_date',
+      100
+    ) || [];
 
-📌 ${deadline.title} (${deadline.country})
-📅 Fälligkeitsdatum: ${deadline.deadline_date}
-⏱️ Tage verbleibend: ${Math.floor((new Date(deadline.deadline_date) - new Date()) / (1000 * 60 * 60 * 24))}
+    const now = new Date();
+    let remindersSent = 0;
 
-${deadline.description}
+    for (const deadline of deadlines) {
+      const deadlineDate = new Date(deadline.deadline_date);
+      const daysUntil = Math.floor((deadlineDate - now) / (1000 * 60 * 60 * 24));
 
-Priorität: ${deadline.priority.toUpperCase()}
+      // Send reminder if within reminder_days_before and not yet sent
+      if (daysUntil <= deadline.reminder_days_before && daysUntil > 0 && !deadline.reminder_sent) {
+        try {
+          // Get users with this country
+          const allUsers = await base44.entities.User.list('-created_date', 1000) || [];
+          const relevantUsers = allUsers.filter(u => {
+            return u.preferred_countries?.includes(deadline.country) || !u.preferred_countries;
+          });
 
-Bitte aktualisieren Sie Ihren Status auf unserer Plattform.
+          // Send email to each user
+          for (const u of relevantUsers) {
+            if (u.email && u.email !== 'system@base44.io') {
+              await base44.integrations.Core.SendEmail({
+                to: u.email,
+                subject: `⏰ Steuerfrist: ${deadline.title} in ${daysUntil} Tagen`,
+                body: `
+                  <h2>${deadline.title}</h2>
+                  <p><strong>Fällig am:</strong> ${new Date(deadline.deadline_date).toLocaleDateString('de-DE')}</p>
+                  <p><strong>Tage verbleibend:</strong> ${daysUntil}</p>
+                  <p><strong>Priorität:</strong> ${deadline.priority}</p>
+                  <p>${deadline.description}</p>
+                  <p><a href="https://app.base44.de/pages/TaxManagement">Zur Steuerverwaltung</a></p>
+                `
+              });
+            }
+          }
 
-Mit freundlichen Grüßen,
-Ihr Steuerverwaltungssystem
-        `
-      });
+          // Mark reminder as sent
+          await base44.asServiceRole.entities.TaxDeadline.update(deadline.id, {
+            reminder_sent: true
+          });
 
-      // Mark as reminded
-      await base44.entities.TaxDeadline.update(deadline.id, {
-        reminder_sent: true
-      });
+          remindersSent++;
+          console.log(`Reminder sent for: ${deadline.title}`);
+        } catch (error) {
+          console.error(`Error sending reminder for ${deadline.title}:`, error);
+        }
+      }
     }
 
     return Response.json({
       success: true,
-      remindersSent: remindersToSend.length,
-      details: remindersToSend.map(d => ({
-        id: d.id,
-        title: d.title,
-        country: d.country,
-        deadline: d.deadline_date
-      }))
+      remindersSent,
+      processed: deadlines.length,
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
     console.error('Reminder error:', error);

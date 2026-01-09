@@ -4,99 +4,120 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (!user || user.role !== 'admin') return Response.json({ error: 'Admin only' }, { status: 403 });
+    if (!user || user.role !== 'admin') {
+      return Response.json({ error: 'Admin only' }, { status: 403 });
+    }
 
-    const currentYear = new Date().getFullYear();
-    
+    const taxYear = new Date().getFullYear();
+    console.log(`Seeding tax deadlines for ${taxYear}`);
+
     const deadlines = [
-      // Germany 2026
+      // Austria
       {
-        country: 'DE',
-        title: 'Einkommensteuererklärung 2025',
-        description: 'Frist für Einreichung der Steuererklärung',
-        deadline_date: '2026-05-31',
-        tax_year: 2025,
+        country: 'AT',
+        title: 'Einkommensteuer-Erklärung Frist',
+        description: 'Steuererklärung muss bis 30. Juni eingereicht werden',
+        deadline_date: `${taxYear + 1}-06-30`,
+        tax_year: taxYear,
+        deadline_type: 'submission',
+        priority: 'high',
+        reminder_days_before: 30
+      },
+      {
+        country: 'AT',
+        title: 'Kapitalertragsteuer-Abrechnung',
+        description: 'KESt-Jahresabrechnung durch die Kreditinstitute',
+        deadline_date: `${taxYear + 1}-01-31`,
+        tax_year: taxYear,
+        deadline_type: 'documentation',
+        priority: 'medium',
+        reminder_days_before: 15
+      },
+      {
+        country: 'AT',
+        title: 'Vorauszahlung Einkommensteuer',
+        description: 'Zahlung der Vorauszahlung für das Folgejahr',
+        deadline_date: `${taxYear + 1}-01-15`,
+        tax_year: taxYear,
+        deadline_type: 'payment',
+        priority: 'high',
+        reminder_days_before: 7
+      },
+
+      // Switzerland
+      {
+        country: 'CH',
+        title: 'Steuererklärung (Bund)',
+        description: 'Bundessteuer-Erklärung einreichen',
+        deadline_date: `${taxYear + 1}-03-31`,
+        tax_year: taxYear,
         deadline_type: 'submission',
         priority: 'critical',
         reminder_days_before: 30
       },
       {
-        country: 'DE',
-        title: 'Anlage KAP einreichen',
-        description: 'Kapitalvermögen-Anlage',
-        deadline_date: '2026-05-31',
-        tax_year: 2025,
-        deadline_type: 'documentation',
+        country: 'CH',
+        title: 'Kantonale Steuererklärung',
+        description: 'Kantonale und Gemeinde-Steuererklärung',
+        deadline_date: `${taxYear + 1}-04-15`,
+        tax_year: taxYear,
+        deadline_type: 'submission',
         priority: 'high',
-        reminder_days_before: 21
+        reminder_days_before: 30
       },
       {
-        country: 'DE',
-        title: 'Steuerzahlung 2025',
-        description: 'Zahlung der Einkommensteuer',
-        deadline_date: '2026-06-15',
-        tax_year: 2025,
-        deadline_type: 'payment',
-        priority: 'critical',
+        country: 'CH',
+        title: 'Verrechnungssteuer-Gutschrift',
+        description: 'Einreichung für Verrechnungssteuer-Gutschrift',
+        deadline_date: `${taxYear + 1}-05-01`,
+        tax_year: taxYear,
+        deadline_type: 'claim',
+        priority: 'medium',
         reminder_days_before: 14
       },
-      // Austria 2026
+
+      // Germany
       {
-        country: 'AT',
-        title: 'Steuererklärung Österreich 2025',
-        description: 'Frist für Einreichung der E1kv',
-        deadline_date: '2026-05-31',
-        tax_year: 2025,
+        country: 'DE',
+        title: 'Einkommensteuer-Erklärung',
+        description: 'Steuererklärung zum Finanzamt einreichen',
+        deadline_date: `${taxYear + 1}-10-02`,
+        tax_year: taxYear,
         deadline_type: 'submission',
         priority: 'critical',
         reminder_days_before: 30
       },
       {
-        country: 'AT',
-        title: 'E1kv Kapitalvermögen',
-        description: 'Beilage E1kv einreichen',
-        deadline_date: '2026-05-31',
-        tax_year: 2025,
-        deadline_type: 'documentation',
+        country: 'DE',
+        title: 'Vorauszahlung Einkommensteuer',
+        description: 'Quartalsweise Vorauszahlungen',
+        deadline_date: `${taxYear + 1}-01-15`,
+        tax_year: taxYear,
+        deadline_type: 'payment',
         priority: 'high',
-        reminder_days_before: 21
-      },
-      // Switzerland 2026
-      {
-        country: 'CH',
-        title: 'Steuererklärung Schweiz 2025 - Zürich',
-        description: 'Steuerdeklaration Kanton Zürich',
-        deadline_date: '2026-03-31',
-        tax_year: 2025,
-        deadline_type: 'submission',
-        priority: 'critical',
-        reminder_days_before: 45
-      },
-      {
-        country: 'CH',
-        title: 'Vermögenssteuer Erklärung',
-        description: 'Vermögenssteuer einreichen',
-        deadline_date: '2026-03-31',
-        tax_year: 2025,
-        deadline_type: 'documentation',
-        priority: 'high',
-        reminder_days_before: 60
+        reminder_days_before: 7
       }
     ];
 
     const created = [];
     for (const deadline of deadlines) {
-      const result = await base44.entities.TaxDeadline.create(deadline);
-      created.push(result);
+      try {
+        const result = await base44.asServiceRole.entities.TaxDeadline.create(deadline);
+        created.push(result.id);
+        console.log(`Created deadline: ${deadline.title}`);
+      } catch (error) {
+        console.error(`Error creating deadline ${deadline.title}:`, error);
+      }
     }
 
     return Response.json({
       success: true,
       created: created.length,
-      deadlines: created
+      total: deadlines.length,
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Seed error:', error);
+    console.error('Seeding error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

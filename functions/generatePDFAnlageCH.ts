@@ -1,90 +1,126 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { jsPDF } from 'npm:jspdf@2.5.2';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { userId, taxYear, canton } = await req.json();
-
-    console.log(`Generating Swiss PDF for canton ${canton}, year ${taxYear}`);
-
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    // Get tax calculation
-    const calculation = await base44.functions.invoke('calculateTaxCH', {
-      userId,
-      taxYear,
-      canton
+    const { taxYear, canton, formType } = await req.json();
+
+    console.log(`Generating ${formType} PDF for ${canton} / ${taxYear}`);
+
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
     });
 
-    const CANTONS = { ZH: 'Zürich', BE: 'Bern', LU: 'Luzern', AG: 'Aargau', SG: 'Sankt Gallen', VS: 'Wallis', VD: 'Waadt', TI: 'Tessin', GE: 'Genf', BS: 'Basel-Stadt' };
+    // Fetch data based on type
+    let data = [];
+    let formTitle = '';
 
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html lang="de">
-      <head>
-        <meta charset="UTF-8">
-        <title>Schweiz ${CANTONS[canton]} ${taxYear}</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
-          h1 { color: #1e40af; text-align: center; border-bottom: 2px solid #1e40af; padding-bottom: 10px; }
-          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-          td, th { padding: 8px; border: 1px solid #ddd; text-align: right; }
-          th { background-color: #f3f4f6; font-weight: bold; text-align: left; }
-          td:first-child, th:first-child { text-align: left; }
-          .summary { background-color: #eff6ff; padding: 15px; border-radius: 5px; margin: 20px 0; }
-          .total { font-weight: bold; color: #dc2626; }
-        </style>
-      </head>
-      <body>
-        <h1>Schweiz - Kanton ${CANTONS[canton]} - Steuerjahr ${taxYear}</h1>
-        <p><strong>Name:</strong> ${user.full_name}</p>
+    if (formType === 'securities') {
+      data = await base44.entities.InvestmentCH.filter({ tax_year: taxYear, canton }) || [];
+      formTitle = 'Wertschriften & Dividenden';
+    } else if (formType === 'real_estate') {
+      data = await base44.entities.RealEstateCH.filter({ tax_year: taxYear, canton }) || [];
+      formTitle = 'Liegenschaften & Vermögen';
+    }
 
-        <div class="summary">
-          <h2>Vermögensübersicht</h2>
-          <table>
-            <tr><td>Wertschriften</td><td>CHF ${calculation.wealth.land.toFixed(0)}</td></tr>
-            <tr><td>Liegenschaften</td><td>CHF ${calculation.wealth.buildings.toFixed(0)}</td></tr>
-            <tr><td>Gesamtvermögen</td><td class="total">CHF ${calculation.wealth.total.toFixed(0)}</td></tr>
-          </table>
-        </div>
+    // Header
+    doc.setFontSize(14);
+    doc.text(formTitle, 20, 20);
+    doc.setFontSize(10);
+    doc.text(`Steuerjahr ${taxYear} • Kanton ${canton}`, 20, 28);
+    doc.text(`Erstellt: ${new Date().toLocaleDateString('de-CH')}`, 20, 34);
 
-        <div class="summary">
-          <h2>Steuern</h2>
-          <table>
-            <tr><td>Bundessteuer</td><td>CHF ${calculation.taxes.federalIncomeTax.toFixed(2)}</td></tr>
-            <tr><td>Kantonssteuer</td><td>CHF ${calculation.taxes.cantonalIncomeTax.toFixed(2)}</td></tr>
-            <tr><td>Vermögenssteuer</td><td>CHF ${(calculation.taxes.federalWealthTax + calculation.taxes.cantonalWealthTax).toFixed(2)}</td></tr>
-            <tr><td>Einbehaltene Steuern</td><td>CHF -${calculation.taxes.withholdingTaxPaid.toFixed(2)}</td></tr>
-            <tr><td class="total">Gesamtsteuer</td><td class="total">CHF ${calculation.taxes.totalDue.toFixed(2)}</td></tr>
-          </table>
-        </div>
+    // Table header
+    doc.setFontSize(9);
+    let yPos = 45;
+    const pageHeight = doc.internal.pageSize.height;
+    const lineHeight = 7;
 
-        <p style="margin-top: 40px; color: #666; font-size: 12px;">
-          Generiert am ${new Date().toLocaleDateString('de-CH')} - Steuerdeklaration Kanton ${CANTONS[canton]}
-        </p>
-      </body>
-      </html>
-    `;
+    doc.setFillColor(200, 200, 200);
+    doc.rect(15, yPos - 5, 180, 6, 'F');
 
-    // Generate PDF using integration
-    const pdfRes = await base44.integrations.Core.GenerateImage({
-      prompt: `Convert this HTML to PDF: ${htmlContent}`,
+    if (formType === 'securities') {
+      doc.text('Wertschrift', 20, yPos);
+      doc.text('Dividenden CHF', 90, yPos);
+      doc.text('Aktueller Wert', 140, yPos);
+    } else if (formType === 'real_estate') {
+      doc.text('Liegenschaft', 20, yPos);
+      doc.text('Marktwert CHF', 100, yPos);
+      doc.text('Hypothekarschuld CHF', 160, yPos);
+    }
+
+    yPos += 8;
+
+    // Add data rows
+    let totals = { value: 0, debt: 0 };
+    data.forEach(item => {
+      if (yPos > pageHeight - 20) {
+        doc.addPage();
+        yPos = 20;
+      }
+
+      doc.setFontSize(8);
+      if (formType === 'securities') {
+        const itemValue = (item.current_value || 0) * (item.quantity || 1);
+        doc.text(item.title || '', 20, yPos);
+        doc.text((item.dividend_income || 0).toFixed(2), 90, yPos);
+        doc.text(itemValue.toFixed(2), 140, yPos);
+        totals.value += itemValue;
+      } else if (formType === 'real_estate') {
+        doc.text(item.title || '', 20, yPos);
+        doc.text((item.current_market_value || 0).toFixed(2), 100, yPos);
+        doc.text((item.mortgage_debt || 0).toFixed(2), 160, yPos);
+        totals.value += item.current_market_value || 0;
+        totals.debt += item.mortgage_debt || 0;
+      }
+
+      yPos += lineHeight;
     });
 
-    // Upload PDF
-    const uploadRes = await base44.integrations.Core.UploadFile({
-      file: pdfRes.url
+    // Totals
+    yPos += 3;
+    doc.setFillColor(220, 220, 220);
+    doc.rect(15, yPos - 5, 180, 6, 'F');
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'bold');
+
+    if (formType === 'securities') {
+      doc.text('GESAMTWERT', 20, yPos);
+      doc.text('', 90, yPos);
+      doc.text(totals.value.toFixed(2), 140, yPos);
+    } else if (formType === 'real_estate') {
+      doc.text('SUMMEN', 20, yPos);
+      doc.text(totals.value.toFixed(2), 100, yPos);
+      doc.text(totals.debt.toFixed(2), 160, yPos);
+    }
+
+    // Footer
+    doc.setFontSize(7);
+    doc.setTextColor(128, 128, 128);
+    doc.text('Dieses Dokument wurde automatisch erstellt. Bitte überprüfen Sie alle Angaben.', 20, pageHeight - 10);
+
+    const pdfBytes = doc.output('arraybuffer');
+    const { file_url } = await base44.integrations.Core.UploadFile({
+      file: pdfBytes
     });
 
     return Response.json({
       success: true,
-      filename: `Steuerjahr_${CANTONS[canton]}_${taxYear}.pdf`,
-      file_url: uploadRes.file_url
+      formType,
+      canton,
+      taxYear,
+      file_url,
+      filename: `${formType}_${canton}_${taxYear}.pdf`,
+      dataCount: data.length
     });
-
   } catch (error) {
-    console.error('Swiss PDF generation error:', error);
+    console.error('PDF generation error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
