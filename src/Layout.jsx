@@ -104,29 +104,20 @@ export default function Layout({ children, currentPageName }) {
                                         </div>
 
                         {/* Right Actions */}
-                        <div className="flex items-center gap-3">
-                            <Button variant="ghost" size="sm" className="gap-2 font-extralight text-slate-600 hover:text-slate-900 hover:bg-slate-50">
-                                <Plus className="w-4 h-4" />
-                                Neu
-                            </Button>
-                            <NotificationCenter />
-                            <SuiteSwitcher />
-                            <Link to={createPageUrl('MyAccount')}>
-                                <Button variant="ghost" size="icon" title="Mein Account" className="text-slate-400 hover:text-slate-700">
-                                    <Users className="w-5 h-5" />
-                                </Button>
-                            </Link>
-                            <Link to={createPageUrl('TesterManagement')}>
-                                <Button variant="ghost" size="icon" title="Tester-Admin" className="text-slate-400 hover:text-slate-700">
-                                    <Zap className="w-5 h-5" />
-                                </Button>
-                            </Link>
-                            <Link to={createPageUrl('UserSettings')}>
-                                <Button variant="ghost" size="icon" title="Einstellungen" className="text-slate-400 hover:text-slate-700">
-                                    <Settings className="w-5 h-5" />
-                                </Button>
-                            </Link>
-                            </div>
+                                        <div className="flex items-center gap-3">
+                                            <NotificationCenter />
+                                            <SuiteSwitcher />
+                                            <Link to={createPageUrl('MyAccount')}>
+                                                <Button variant="ghost" size="icon" title="Mein Account" className="text-slate-400 hover:text-slate-700">
+                                                    <Users className="w-5 h-5" />
+                                                </Button>
+                                            </Link>
+                                            <Link to={createPageUrl('UserSettings')}>
+                                                <Button variant="ghost" size="icon" title="Einstellungen" className="text-slate-400 hover:text-slate-700">
+                                                    <Settings className="w-5 h-5" />
+                                                </Button>
+                                            </Link>
+                                        </div>
                             </div>
 
                             {/* Document Inbox Quick Link */}
