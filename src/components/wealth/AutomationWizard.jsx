@@ -1,57 +1,118 @@
 import React, { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { Save } from 'lucide-react';
+import { Loader2, Save } from 'lucide-react';
 
-export default function AutomationWizard({ open, onOpenChange }) {
+export default function AutomationWizard({ open, onOpenChange, userId }) {
+  const queryClient = useQueryClient();
+
   const [settings, setSettings] = useState({
+    // Price Updates
     stocks_enabled: true,
     crypto_enabled: true,
     critical_frequency: 'daily',
+
+    // Alerts
     portfolio_changes: true,
     portfolio_threshold: 5,
     position_changes: true,
+    position_threshold: 20,
     tax_optimizations: true,
     dividend_reminders: true,
-    analysis_frequency: 'weekly'
+
+    // Analysis
+    analysis_frequency: 'weekly',
+    performance_tracking: true,
+    diversification_analysis: true
   });
 
-  const queryClient = useQueryClient();
-  const user = base44.auth.me();
+  const saveAutomationMutation = useMutation({
+    mutationFn: async () => {
+      // Erstelle Automatisierungen basierend auf Settings
+      const configs = [];
 
-  const saveMutation = useMutation({
-    mutationFn: async (automationSettings) => {
-      // Erstelle oder aktualisiere Automationen
-      const automationTypes = {
-        stocks_enabled: 'price_updates',
-        crypto_enabled: 'price_updates',
-        portfolio_changes: 'alerts',
-        position_changes: 'alerts',
-        tax_optimizations: 'analysis',
-        analysis_frequency: 'analysis'
-      };
+      if (settings.stocks_enabled) {
+        const existing = await base44.entities.AutomationConfig.filter({
+          user_id: userId,
+          automation_type: 'price_updates'
+        });
 
-      for (const [key, value] of Object.entries(automationSettings)) {
-        if (['stocks_enabled', 'crypto_enabled'].includes(key) && value) {
-          await base44.entities.AutomationConfig.create({
-            user_id: (await user).id,
-            automation_type: 'price_updates',
-            is_enabled: true,
-            schedule: key === 'stocks_enabled' ? '0 18 * * MON-FRI' : '0 19 * * *',
-            configuration: { [key]: value }
-          });
+        if (existing.length === 0) {
+          configs.push(
+            base44.entities.AutomationConfig.create({
+              user_id: userId,
+              automation_type: 'price_updates',
+              schedule: '0 18 * * MON-FRI',
+              is_enabled: true,
+              configuration: { assets: 'stocks', frequency: 'daily' }
+            })
+          );
         }
       }
 
-      return automationSettings;
+      if (settings.crypto_enabled) {
+        const existing = await base44.entities.AutomationConfig.filter({
+          user_id: userId,
+          automation_type: 'price_updates'
+        });
+
+        if (existing.filter(c => c.configuration.assets === 'crypto').length === 0) {
+          configs.push(
+            base44.entities.AutomationConfig.create({
+              user_id: userId,
+              automation_type: 'price_updates',
+              schedule: '0 19 * * *',
+              is_enabled: true,
+              configuration: { assets: 'crypto', frequency: 'daily' }
+            })
+          );
+        }
+      }
+
+      if (settings.portfolio_changes || settings.position_changes) {
+        configs.push(
+          base44.entities.AutomationConfig.create({
+            user_id: userId,
+            automation_type: 'alerts',
+            schedule: '*/30 * * * *',
+            is_enabled: true,
+            configuration: {
+              portfolio_threshold: settings.portfolio_threshold,
+              position_threshold: settings.position_threshold,
+              dividend_reminders: settings.dividend_reminders
+            }
+          })
+        );
+      }
+
+      if (settings.performance_tracking || settings.diversification_analysis) {
+        configs.push(
+          base44.entities.AutomationConfig.create({
+            user_id: userId,
+            automation_type: 'analysis',
+            schedule: '0 9 * * MON',
+            is_enabled: true,
+            configuration: {
+              analysis_type: settings.analysis_frequency,
+              performance: settings.performance_tracking,
+              diversification: settings.diversification_analysis
+            }
+          })
+        );
+      }
+
+      await Promise.all(configs);
+
+      return { success: true, count: configs.length };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['automationConfigs'] });
@@ -59,8 +120,8 @@ export default function AutomationWizard({ open, onOpenChange }) {
     }
   });
 
-  const handleSave = () => {
-    saveMutation.mutate(settings);
+  const updateSetting = (key, value) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
   };
 
   return (
@@ -70,84 +131,79 @@ export default function AutomationWizard({ open, onOpenChange }) {
           <DialogTitle>Automatisierung einrichten</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="price-updates">
+        <Tabs defaultValue="price-updates" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="price-updates">Kursupdates</TabsTrigger>
+            <TabsTrigger value="price-updates">Kurse</TabsTrigger>
             <TabsTrigger value="alerts">Alerts</TabsTrigger>
             <TabsTrigger value="analysis">Analysen</TabsTrigger>
           </TabsList>
 
           {/* Price Updates */}
-          <TabsContent value="price-updates" className="space-y-4">
-            <p className="text-sm font-light text-slate-600 mb-4">
-              Automatische Kursupdates für Ihr Portfolio einrichten
-            </p>
-
-            <Card className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base">Aktien & ETFs</Label>
-                  <p className="text-sm text-slate-500 mt-1">Via Yahoo Finance • Werktags 18:00</p>
-                </div>
-                <Switch
+          <TabsContent value="price-updates" className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 border rounded-lg">
+                <Checkbox 
+                  id="stocks"
                   checked={settings.stocks_enabled}
-                  onCheckedChange={(checked) => setSettings({ ...settings, stocks_enabled: checked })}
+                  onCheckedChange={(checked) => updateSetting('stocks_enabled', checked)}
                 />
+                <Label htmlFor="stocks" className="flex-1 cursor-pointer">
+                  <div>
+                    <div className="font-medium">Aktien & ETFs</div>
+                    <div className="text-sm text-slate-500">Via Yahoo Finance • Werktags 18:00</div>
+                  </div>
+                </Label>
               </div>
-            </Card>
 
-            <Card className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base">Kryptowährungen</Label>
-                  <p className="text-sm text-slate-500 mt-1">Via CoinGecko • Täglich 19:00</p>
-                </div>
-                <Switch
+              <div className="flex items-center gap-3 p-4 border rounded-lg">
+                <Checkbox 
+                  id="crypto"
                   checked={settings.crypto_enabled}
-                  onCheckedChange={(checked) => setSettings({ ...settings, crypto_enabled: checked })}
+                  onCheckedChange={(checked) => updateSetting('crypto_enabled', checked)}
                 />
+                <Label htmlFor="crypto" className="flex-1 cursor-pointer">
+                  <div>
+                    <div className="font-medium">Kryptowährungen</div>
+                    <div className="text-sm text-slate-500">Via CoinGecko • Täglich 19:00</div>
+                  </div>
+                </Label>
               </div>
-            </Card>
 
-            <div>
-              <Label className="text-sm">Update-Häufigkeit für kritische Positionen (>10%)</Label>
-              <Select value={settings.critical_frequency} onValueChange={(value) => setSettings({ ...settings, critical_frequency: value })}>
-                <SelectTrigger className="mt-2">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="hourly">Stündlich (Marktzeiten)</SelectItem>
-                  <SelectItem value="daily">Täglich</SelectItem>
-                  <SelectItem value="manual">Nur manuell</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="p-4 bg-slate-50 rounded-lg">
+                <Label className="text-sm font-medium mb-2 block">
+                  Häufigkeit für kritische Positionen (>10% Portfolio)
+                </Label>
+                <Select value={settings.critical_frequency} onValueChange={(value) => updateSetting('critical_frequency', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="hourly">Stündlich (Marktzeiten)</SelectItem>
+                    <SelectItem value="daily">Täglich</SelectItem>
+                    <SelectItem value="manual">Nur manuell</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </TabsContent>
 
           {/* Alerts */}
           <TabsContent value="alerts" className="space-y-4">
-            <p className="text-sm font-light text-slate-600 mb-4">
-              Konfigurieren Sie Portfolio-Benachrichtigungen
-            </p>
-
             <Card className="p-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base">Portfolio-Wert Änderungen</Label>
-                  <p className="text-sm text-slate-500 mt-1">Benachrichtigung bei größeren Bewegungen</p>
-                </div>
-                <Switch
+                <Label className="text-base font-medium">Portfolio-Wert Änderungen</Label>
+                <Switch 
                   checked={settings.portfolio_changes}
-                  onCheckedChange={(checked) => setSettings({ ...settings, portfolio_changes: checked })}
+                  onCheckedChange={(checked) => updateSetting('portfolio_changes', checked)}
                 />
               </div>
               {settings.portfolio_changes && (
                 <div className="mt-3 flex items-center gap-2">
-                  <Label className="text-sm">Schwellwert:</Label>
-                  <Input
-                    type="number"
+                  <span className="text-sm">Schwellwert:</span>
+                  <Input 
+                    type="number" 
                     value={settings.portfolio_threshold}
-                    onChange={(e) => setSettings({ ...settings, portfolio_threshold: parseInt(e.target.value) })}
+                    onChange={(e) => updateSetting('portfolio_threshold', parseInt(e.target.value))}
                     className="w-20"
                   />
                   <span className="text-sm">%</span>
@@ -157,39 +213,42 @@ export default function AutomationWizard({ open, onOpenChange }) {
 
             <Card className="p-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base">Einzelposition-Alerts</Label>
-                  <p className="text-sm text-slate-500 mt-1">Bei starken Bewegungen (±20%)</p>
-                </div>
-                <Switch
+                <Label className="text-base font-medium">Einzelposition-Alerts</Label>
+                <Switch 
                   checked={settings.position_changes}
-                  onCheckedChange={(checked) => setSettings({ ...settings, position_changes: checked })}
+                  onCheckedChange={(checked) => updateSetting('position_changes', checked)}
                 />
               </div>
+              {settings.position_changes && (
+                <div className="mt-3 flex items-center gap-2">
+                  <span className="text-sm">Schwellwert:</span>
+                  <Input 
+                    type="number" 
+                    value={settings.position_threshold}
+                    onChange={(e) => updateSetting('position_threshold', parseInt(e.target.value))}
+                    className="w-20"
+                  />
+                  <span className="text-sm">%</span>
+                </div>
+              )}
             </Card>
 
             <Card className="p-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base">Steuer-Optimierungen</Label>
-                  <p className="text-sm text-slate-500 mt-1">Hinweise zu Verlustverrechnung</p>
-                </div>
-                <Switch
-                  checked={settings.tax_optimizations}
-                  onCheckedChange={(checked) => setSettings({ ...settings, tax_optimizations: checked })}
-                />
-              </div>
-            </Card>
-
-            <Card className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base">Dividenden-Termine</Label>
-                  <p className="text-sm text-slate-500 mt-1">Erinnerung 2 Tage vor Zahlungen</p>
-                </div>
-                <Switch
+                <Label className="text-base font-medium">Dividenden-Termine</Label>
+                <Switch 
                   checked={settings.dividend_reminders}
-                  onCheckedChange={(checked) => setSettings({ ...settings, dividend_reminders: checked })}
+                  onCheckedChange={(checked) => updateSetting('dividend_reminders', checked)}
+                />
+              </div>
+            </Card>
+
+            <Card className="p-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-medium">Steuer-Optimierungen</Label>
+                <Switch 
+                  checked={settings.tax_optimizations}
+                  onCheckedChange={(checked) => updateSetting('tax_optimizations', checked)}
                 />
               </div>
             </Card>
@@ -197,14 +256,10 @@ export default function AutomationWizard({ open, onOpenChange }) {
 
           {/* Analysis */}
           <TabsContent value="analysis" className="space-y-4">
-            <p className="text-sm font-light text-slate-600 mb-4">
-              Automatische Portfolio-Analysen
-            </p>
-
-            <div>
-              <Label className="text-sm">Analysehäufigkeit</Label>
-              <Select value={settings.analysis_frequency} onValueChange={(value) => setSettings({ ...settings, analysis_frequency: value })}>
-                <SelectTrigger className="mt-2">
+            <Card className="p-4">
+              <Label className="text-sm font-medium mb-2 block">Analysehäufigkeit</Label>
+              <Select value={settings.analysis_frequency} onValueChange={(value) => updateSetting('analysis_frequency', value)}>
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -213,6 +268,28 @@ export default function AutomationWizard({ open, onOpenChange }) {
                   <SelectItem value="monthly">Monatlich</SelectItem>
                 </SelectContent>
               </Select>
+            </Card>
+
+            <div className="space-y-3">
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-medium">Performance-Tracking</Label>
+                  <Switch 
+                    checked={settings.performance_tracking}
+                    onCheckedChange={(checked) => updateSetting('performance_tracking', checked)}
+                  />
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-medium">Diversifikations-Check</Label>
+                  <Switch 
+                    checked={settings.diversification_analysis}
+                    onCheckedChange={(checked) => updateSetting('diversification_analysis', checked)}
+                  />
+                </div>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>
@@ -221,8 +298,12 @@ export default function AutomationWizard({ open, onOpenChange }) {
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Abbrechen
           </Button>
-          <Button onClick={handleSave} disabled={saveMutation.isPending} className="bg-slate-900 hover:bg-slate-800">
-            <Save className="h-4 w-4 mr-2" />
+          <Button 
+            onClick={() => saveAutomationMutation.mutate()}
+            disabled={saveAutomationMutation.isPending}
+            className="bg-slate-900 hover:bg-slate-800"
+          >
+            {saveAutomationMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Automatisierung aktivieren
           </Button>
         </div>

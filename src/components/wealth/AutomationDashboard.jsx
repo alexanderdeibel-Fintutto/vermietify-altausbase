@@ -1,47 +1,47 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { RefreshCw, Clock, Activity, Bell, AlertTriangle, CheckCircle2, Play, Download } from 'lucide-react';
-import AutomationWizard from './AutomationWizard';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { 
+  RefreshCw, Clock, Activity, Bell, Play, Settings, AlertTriangle, 
+  CheckCircle2, AlertCircle, Download, Lightbulb 
+} from 'lucide-react';
+import { formatRelativeTime } from '@/utils';
 
-export default function AutomationDashboard({ portfolio = [] }) {
-  const [wizardOpen, setWizardOpen] = useState(false);
+export default function AutomationDashboard({ userId }) {
   const queryClient = useQueryClient();
 
   const { data: automationConfigs = [] } = useQuery({
-    queryKey: ['automationConfigs'],
+    queryKey: ['automationConfigs', userId],
     queryFn: async () => {
-      const user = await base44.auth.me();
-      if (!user) return [];
-      const results = await base44.entities.AutomationConfig.filter({ user_id: user.id });
+      const results = await base44.entities.AutomationConfig.filter({
+        user_id: userId
+      });
       return results || [];
     }
   });
 
-  const { data: alerts = [] } = useQuery({
-    queryKey: ['portfolioAlerts'],
+  const { data: portfolioAlerts = [] } = useQuery({
+    queryKey: ['portfolioAlerts', userId],
     queryFn: async () => {
-      const user = await base44.auth.me();
-      if (!user) return [];
-      const results = await base44.entities.PortfolioAlert.filter(
-        { user_id: user.id, is_resolved: false },
-        '-triggered_at',
-        50
-      );
+      const results = await base44.entities.PortfolioAlert.filter({
+        user_id: userId,
+        is_resolved: false
+      });
       return results || [];
     },
-    refetchInterval: 5 * 60 * 1000
+    refetchInterval: 30000
   });
 
   const toggleAutomationMutation = useMutation({
     mutationFn: async (configId) => {
       const config = automationConfigs.find(c => c.id === configId);
-      await base44.entities.AutomationConfig.update(configId, {
+      return await base44.entities.AutomationConfig.update(configId, {
         is_enabled: !config.is_enabled
       });
     },
@@ -51,24 +51,18 @@ export default function AutomationDashboard({ portfolio = [] }) {
   });
 
   const markAlertReadMutation = useMutation({
-    mutationFn: (alertId) => base44.entities.PortfolioAlert.update(alertId, { is_read: true }),
+    mutationFn: async (alertId) => {
+      return await base44.entities.PortfolioAlert.update(alertId, {
+        is_read: true
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['portfolioAlerts'] });
     }
   });
 
-  const runNowMutation = useMutation({
-    mutationFn: async (functionName) => {
-      return await base44.functions.invoke(functionName, {});
-    }
-  });
-
-  const stats = {
-    activeUpdates: automationConfigs.filter(c => c.is_enabled).length,
-    totalConfigs: automationConfigs.length,
-    openAlerts: alerts.filter(a => !a.is_read).length,
-    criticalAlerts: alerts.filter(a => a.severity === 'critical' && !a.is_read).length
-  };
+  const activeAutomations = automationConfigs.filter(c => c.is_enabled).length;
+  const criticalAlerts = portfolioAlerts.filter(a => a.severity === 'critical').length;
 
   const getAutomationTitle = (type) => {
     const titles = {
@@ -80,155 +74,154 @@ export default function AutomationDashboard({ portfolio = [] }) {
     return titles[type] || type;
   };
 
-  const getAutomationSchedule = (type) => {
-    const schedules = {
-      price_updates: 'Werktags 18:00 MEZ',
-      alerts: 'Alle 30 Minuten',
-      analysis: 'Montags 09:00 MEZ',
-      tax_calc: '1. des Monats 10:00 MEZ'
-    };
-    return schedules[type] || 'Benutzerdefiniert';
-  };
-
   return (
     <div className="space-y-6">
-      {/* KPI Cards */}
+      {/* Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
-            <div className="text-sm font-light text-slate-600">Automatisierung aktiv</div>
-            <div className="text-2xl font-light text-slate-900 mt-2">
-              {stats.activeUpdates}/{stats.totalConfigs}
+            <div className="flex items-center gap-2 mb-2">
+              <RefreshCw className="h-4 w-4 text-slate-400" />
+              <p className="text-xs text-slate-600">Automatisierungen aktiv</p>
             </div>
-            <div className="text-xs text-slate-500 mt-1">Konfigurationen</div>
+            <p className="text-3xl font-bold">{activeAutomations}/{automationConfigs.length}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="pt-6">
-            <div className="text-sm font-light text-slate-600">Letzte Updates</div>
-            <div className="text-2xl font-light text-green-600 mt-2">
-              {portfolio.filter(p => {
-                const lastUpdate = new Date(p.last_price_update);
-                const today = new Date();
-                return lastUpdate.toDateString() === today.toDateString();
-              }).length}
+            <div className="flex items-center gap-2 mb-2">
+              <Clock className="h-4 w-4 text-slate-400" />
+              <p className="text-xs text-slate-600">Letzte Aktualisierung</p>
             </div>
-            <div className="text-xs text-slate-500 mt-1">heute aktualisiert</div>
+            {automationConfigs.length > 0 && automationConfigs[0].last_run ? (
+              <p className="text-lg font-medium">{formatRelativeTime(automationConfigs[0].last_run)}</p>
+            ) : (
+              <p className="text-lg font-medium">—</p>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="pt-6">
-            <div className="text-sm font-light text-slate-600">Offene Alerts</div>
-            <div className={`text-2xl font-light ${stats.openAlerts > 0 ? 'text-orange-600' : 'text-slate-900'} mt-2`}>
-              {stats.openAlerts}
+            <div className="flex items-center gap-2 mb-2">
+              <Activity className="h-4 w-4 text-slate-400" />
+              <p className="text-xs text-slate-600">Läufe heute</p>
             </div>
-            <div className={`text-xs ${stats.criticalAlerts > 0 ? 'text-red-600' : 'text-slate-500'} mt-1`}>
-              {stats.criticalAlerts} kritisch
-            </div>
+            <p className="text-3xl font-bold">
+              {automationConfigs.reduce((sum, c) => sum + (c.run_count || 0), 0)}
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="pt-6">
-            <div className="text-sm font-light text-slate-600">Portfolio-Wert</div>
-            <div className="text-2xl font-light text-slate-900 mt-2">
-              {(portfolio.reduce((sum, a) => sum + (a.quantity * a.current_value), 0) / 1000).toFixed(0)}k€
+            <div className="flex items-center gap-2 mb-2">
+              <Bell className="h-4 w-4 text-orange-400" />
+              <p className="text-xs text-slate-600">Offene Alerts</p>
             </div>
-            <div className="text-xs text-slate-500 mt-1">Gesamt</div>
+            <p className="text-3xl font-bold">
+              {portfolioAlerts.length}
+              {criticalAlerts > 0 && <span className="text-sm text-red-600 ml-2">({criticalAlerts} kritisch)</span>}
+            </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Automation Settings */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Automatisierung-Einstellungen</CardTitle>
-          <Button onClick={() => setWizardOpen(true)} className="bg-slate-900 hover:bg-slate-800">
-            Konfigurieren
-          </Button>
+        <CardHeader>
+          <CardTitle>Automatisierung-Status</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           {automationConfigs.length === 0 ? (
-            <p className="text-sm font-light text-slate-600">Noch keine Automatisierung aktiv</p>
+            <p className="text-sm text-slate-600 font-light">Keine Automatisierungen konfiguriert</p>
           ) : (
-            <div className="space-y-3">
-              {automationConfigs.map(config => (
-                <div key={config.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
-                  <div className="flex items-center gap-4 flex-1">
-                    <Switch
-                      checked={config.is_enabled}
-                      onCheckedChange={() => toggleAutomationMutation.mutate(config.id)}
-                    />
-                    <div>
-                      <h4 className="text-sm font-medium text-slate-900">{getAutomationTitle(config.automation_type)}</h4>
-                      <p className="text-xs text-slate-500 mt-1">{getAutomationSchedule(config.automation_type)}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">{config.run_count} Läufe</Badge>
-                    {config.last_run && (
-                      <span className="text-xs text-slate-500">
-                        vor {Math.floor((Date.now() - new Date(config.last_run)) / 60000)}m
-                      </span>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => runNowMutation.mutate(config.automation_type)}
-                      disabled={runNowMutation.isPending}
-                    >
-                      <Play className="h-3 w-3" />
-                    </Button>
+            automationConfigs.map(config => (
+              <div key={config.id} className="flex items-center justify-between p-4 border rounded-lg bg-slate-50">
+                <div className="flex items-center gap-4 flex-1">
+                  <Switch 
+                    checked={config.is_enabled}
+                    onCheckedChange={() => toggleAutomationMutation.mutate(config.id)}
+                  />
+                  <div className="flex-1">
+                    <h4 className="font-medium text-slate-900">{getAutomationTitle(config.automation_type)}</h4>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {config.schedule} • {config.run_count || 0} Läufe
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
+
+                <div className="flex items-center gap-2">
+                  {config.error_count > 0 && (
+                    <Badge variant="destructive" className="text-xs">
+                      {config.error_count} Fehler
+                    </Badge>
+                  )}
+                  {config.last_run && (
+                    <span className="text-xs text-slate-500">
+                      vor {formatRelativeTime(config.last_run)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))
           )}
         </CardContent>
       </Card>
 
-      {/* Alerts */}
-      {alerts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Portfolio-Alerts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {alerts.map(alert => (
-                <Alert key={alert.id} className={alert.severity === 'critical' ? 'border-red-300 bg-red-50' : ''}>
-                  {alert.severity === 'critical' && <AlertTriangle className="h-4 w-4 text-red-600" />}
-                  {alert.severity === 'warning' && <AlertTriangle className="h-4 w-4 text-orange-600" />}
-                  {alert.severity === 'info' && <Bell className="h-4 w-4 text-blue-600" />}
-                  <AlertTitle className="flex justify-between">
-                    <span>{alert.title}</span>
-                    <span className="text-xs font-light text-slate-500">
-                      vor {Math.floor((Date.now() - new Date(alert.triggered_at)) / 60000)}m
-                    </span>
-                  </AlertTitle>
-                  <AlertDescription className="mt-2">
-                    <p className="text-sm font-light">{alert.message}</p>
-                    <div className="flex justify-end mt-2 gap-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => markAlertReadMutation.mutate(alert.id)}
-                      >
-                        Als gelesen markieren
-                      </Button>
-                    </div>
-                  </AlertDescription>
-                </Alert>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Portfolio Alerts */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Portfolio-Alerts</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {portfolioAlerts.length === 0 ? (
+            <p className="text-sm text-slate-600 font-light">Keine aktiven Alerts</p>
+          ) : (
+            portfolioAlerts.map(alert => (
+              <Alert 
+                key={alert.id} 
+                className={
+                  alert.severity === 'critical' 
+                    ? 'border-red-200 bg-red-50' 
+                    : alert.severity === 'warning'
+                    ? 'border-orange-200 bg-orange-50'
+                    : 'border-blue-200 bg-blue-50'
+                }
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    {alert.severity === 'critical' && <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5" />}
+                    {alert.severity === 'warning' && <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5" />}
+                    {alert.severity === 'info' && <Lightbulb className="h-4 w-4 text-blue-600 mt-0.5" />}
+                    <AlertTitle className="ml-2">{alert.title}</AlertTitle>
+                    <AlertDescription className="ml-6 mt-1 text-sm">
+                      {alert.message}
+                    </AlertDescription>
+                  </div>
+                  <span className="text-xs text-slate-500 ml-2">
+                    {formatRelativeTime(alert.triggered_at)}
+                  </span>
+                </div>
 
-      <AutomationWizard open={wizardOpen} onOpenChange={setWizardOpen} />
+                <div className="flex gap-2 mt-3 ml-6">
+                  {!alert.is_read && (
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => markAlertReadMutation.mutate(alert.id)}
+                      className="text-xs"
+                    >
+                      Als gelesen markieren
+                    </Button>
+                  )}
+                </div>
+              </Alert>
+            ))
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

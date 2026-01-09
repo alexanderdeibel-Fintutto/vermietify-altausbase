@@ -5,53 +5,64 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const { asset_id } = await req.json();
 
-    const asset = await base44.entities.AssetPortfolio.get(asset_id);
+    const asset = await base44.asServiceRole.entities.AssetPortfolio.get(asset_id);
 
     if (!asset.isin) {
-      return Response.json({ success: false, message: 'No ISIN provided' }, { status: 400 });
+      return Response.json({ success: false, message: "No ISIN provided" });
     }
 
     try {
-      // OpenFIGI API für ISIN-Lookup (kostenlos)
-      const response = await fetch('https://api.openfigi.com/v3/mapping', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify([{ idType: 'ID_ISIN', idValue: asset.isin }])
+      // OpenFIGI API für ISIN-Lookup
+      const figiResponse = await fetch("https://api.openfigi.com/v3/mapping", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify([{
+          idType: "ID_ISIN",
+          idValue: asset.isin
+        }])
       });
 
-      const result = await response.json();
-      const securityInfo = result[0]?.data?.[0];
+      const figiData = await figiResponse.json();
 
-      if (securityInfo) {
+      if (figiData[0]?.data?.[0]) {
+        const securityInfo = figiData[0].data[0];
+
+        // Asset Details anreichern
         const enrichedDetails = {
           ...asset.asset_details,
           security_type: securityInfo.securityType,
           market_sector: securityInfo.marketSector,
           security_description: securityInfo.securityDescription,
+          composite_figi: securityInfo.compositeFIGI,
           exchange_code: securityInfo.exchCode
         };
 
         // Automatische Kategorisierung
         let autoCategory = asset.asset_category;
-        if (securityInfo.securityType === 'Common Stock') {
-          autoCategory = 'stocks';
-        } else if (securityInfo.securityType === 'ETF') {
-          autoCategory = 'funds';
-        } else if (securityInfo.securityType?.includes('Bond')) {
-          autoCategory = 'bonds';
+        if (securityInfo.securityType === "Common Stock") {
+          autoCategory = "STOCKS";
+        } else if (securityInfo.securityType === "ETF") {
+          autoCategory = "FUNDS";
+        } else if (securityInfo.securityType?.includes("Bond")) {
+          autoCategory = "BONDS";
         }
 
         // API-Symbol bestimmen
         let apiSymbol = asset.api_symbol;
-        if (securityInfo.ticker) {
-          if (securityInfo.exchCode === 'GY') {
-            apiSymbol = securityInfo.ticker + '.DE';
-          } else if (securityInfo.exchCode === 'US') {
+        if (securityInfo.ticker && securityInfo.exchCode) {
+          if (securityInfo.exchCode === "GY") {
+            apiSymbol = securityInfo.ticker + ".DE";
+          } else if (securityInfo.exchCode === "US") {
+            apiSymbol = securityInfo.ticker;
+          } else {
             apiSymbol = securityInfo.ticker;
           }
         }
 
-        await base44.entities.AssetPortfolio.update(asset_id, {
+        // Asset aktualisieren
+        await base44.asServiceRole.entities.AssetPortfolio.update(asset.id, {
           asset_category: autoCategory,
           asset_details: enrichedDetails,
           api_symbol: apiSymbol,
@@ -62,17 +73,22 @@ Deno.serve(async (req) => {
 
         return Response.json({
           success: true,
+          message: "Asset enriched successfully",
           category: autoCategory,
           api_symbol: apiSymbol
         });
       }
 
-      return Response.json({ success: false, message: 'ISIN not found' });
+      return Response.json({
+        success: false,
+        message: "ISIN not found in FIGI database"
+      });
     } catch (error) {
-      return Response.json({ success: false, message: error.message }, { status: 400 });
+      console.error("ISIN enrichment failed:", error);
+      return Response.json({ success: false, message: error.message }, { status: 500 });
     }
   } catch (error) {
-    console.error('enrichAssetWithISIN error:', error);
+    console.error("enrichAssetWithISIN error:", error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

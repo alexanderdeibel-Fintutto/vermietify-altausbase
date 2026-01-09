@@ -4,67 +4,76 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Offene ungelesene Alerts
-    const unreadAlerts = await base44.asServiceRole.entities.PortfolioAlert.filter({
-      is_read: false
+    console.log("Checking portfolio alerts...");
+
+    // Ungelöste Alerts laden
+    const openAlerts = await base44.asServiceRole.entities.PortfolioAlert.filter({
+      is_resolved: false
     });
 
-    // Abgelaufene Alerts archivieren
-    const now = new Date();
-    for (const alert of unreadAlerts) {
-      if (alert.expires_at && new Date(alert.expires_at) < now) {
-        await base44.asServiceRole.entities.PortfolioAlert.update(alert.id, {
-          is_resolved: true
-        });
-      }
-    }
+    let checkedCount = 0;
+    let resolvedCount = 0;
 
-    // Portfolio-Wert Alerts prüfen
-    const users = await base44.asServiceRole.entities.User.list();
-
-    for (const user of users) {
-      const portfolio = await base44.asServiceRole.entities.AssetPortfolio.filter({
-        user_id: user.id,
-        status: 'active'
-      });
-
-      if (portfolio.length === 0) continue;
-
-      const totalValue = portfolio.reduce((sum, a) => sum + (a.quantity * a.current_value), 0);
-      const totalInvested = portfolio.reduce((sum, a) => sum + (a.quantity * a.purchase_price), 0);
-      const portfolioChange = ((totalValue - totalInvested) / totalInvested) * 100;
-
-      // Portfolio-Wert Alert erstellen wenn >5% Änderung
-      if (Math.abs(portfolioChange) > 5) {
-        const existingAlert = await base44.asServiceRole.entities.PortfolioAlert.filter({
-          user_id: user.id,
-          asset_portfolio_id: null,
-          alert_type: 'portfolio_change',
-          is_resolved: false
-        });
-
-        if (existingAlert.length === 0) {
-          await base44.asServiceRole.entities.PortfolioAlert.create({
-            user_id: user.id,
-            alert_type: 'portfolio_change',
-            severity: Math.abs(portfolioChange) > 10 ? 'warning' : 'info',
-            title: `Portfolio: ${portfolioChange > 0 ? '+' : ''}${portfolioChange.toFixed(1)}%`,
-            message: `Ihr Portfolio hat sich um ${portfolioChange.toFixed(1)}% ${portfolioChange > 0 ? 'erhöht' : 'verringert'}.`,
-            trigger_value: Math.abs(portfolioChange),
-            current_value: totalValue,
-            triggered_at: new Date().toISOString(),
-            expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    for (const alert of openAlerts) {
+      try {
+        // Prüfen ob Alert abgelaufen ist
+        if (new Date(alert.expires_at) < new Date()) {
+          await base44.asServiceRole.entities.PortfolioAlert.update(alert.id, {
+            is_resolved: true
           });
+          resolvedCount++;
+          continue;
         }
+
+        // Für Price-Change Alerts: Aktuelle Preise prüfen
+        if (alert.alert_type === "price_change" && alert.asset_portfolio_id) {
+          const asset = await base44.asServiceRole.entities.AssetPortfolio.get(
+            alert.asset_portfolio_id
+          );
+
+          if (asset) {
+            const currentGain = asset.quantity * (asset.current_value - asset.purchase_price);
+            const gainPercent = ((asset.current_value - asset.purchase_price) / asset.purchase_price) * 100;
+
+            // Wenn Preis sich wieder normalisiert hat: Alert auflösen
+            if (Math.abs(gainPercent) < 10) {
+              await base44.asServiceRole.entities.PortfolioAlert.update(alert.id, {
+                is_resolved: true
+              });
+              resolvedCount++;
+            }
+          }
+        }
+
+        // Für Tax-Optimization Alerts: Nur gegen Jahresende relevant
+        if (alert.alert_type === "tax_optimization") {
+          const now = new Date();
+          const monthsUntilYearEnd = 12 - now.getMonth();
+
+          if (monthsUntilYearEnd > 3 && !alert.action_required) {
+            // Not relevant anymore, resolve it
+            await base44.asServiceRole.entities.PortfolioAlert.update(alert.id, {
+              is_resolved: true
+            });
+            resolvedCount++;
+          }
+        }
+
+        checkedCount++;
+      } catch (error) {
+        console.error(`Error checking alert ${alert.id}:`, error);
       }
     }
+
+    console.log(`Alert check completed: ${checkedCount} checked, ${resolvedCount} resolved`);
 
     return Response.json({
       success: true,
-      checked_at: new Date().toISOString()
+      checked_count: checkedCount,
+      resolved_count: resolvedCount
     });
   } catch (error) {
-    console.error('checkPortfolioAlerts error:', error);
+    console.error("checkPortfolioAlerts error:", error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
