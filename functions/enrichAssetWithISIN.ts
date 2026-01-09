@@ -3,16 +3,27 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { asset_id } = await req.json();
+    const { assetId, isin } = await req.json();
 
-    const asset = await base44.asServiceRole.entities.AssetPortfolio.get(asset_id);
+    console.log(`Enriching asset ${assetId} with ISIN ${isin}`);
 
-    if (!asset.isin) {
-      return Response.json({ success: false, message: "No ISIN provided" });
+    if (!isin) {
+      return Response.json({ error: 'ISIN required' }, { status: 400 });
     }
 
+    // Get asset
+    const assets = await base44.asServiceRole.entities.AssetPortfolio.filter({
+      id: assetId
+    });
+
+    if (!assets || assets.length === 0) {
+      return Response.json({ error: 'Asset not found' }, { status: 404 });
+    }
+
+    const asset = assets[0];
+
     try {
-      // OpenFIGI API für ISIN-Lookup
+      // OpenFIGI API for ISIN lookup (free)
       const figiResponse = await fetch("https://api.openfigi.com/v3/mapping", {
         method: "POST",
         headers: {
@@ -20,7 +31,7 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify([{
           idType: "ID_ISIN",
-          idValue: asset.isin
+          idValue: isin
         }])
       });
 
@@ -29,7 +40,7 @@ Deno.serve(async (req) => {
       if (figiData[0]?.data?.[0]) {
         const securityInfo = figiData[0].data[0];
 
-        // Asset Details anreichern
+        // Enrich asset details
         const enrichedDetails = {
           ...asset.asset_details,
           security_type: securityInfo.securityType,
@@ -39,7 +50,7 @@ Deno.serve(async (req) => {
           exchange_code: securityInfo.exchCode
         };
 
-        // Automatische Kategorisierung
+        // Auto-categorize
         let autoCategory = asset.asset_category;
         if (securityInfo.securityType === "Common Stock") {
           autoCategory = "STOCKS";
@@ -49,20 +60,18 @@ Deno.serve(async (req) => {
           autoCategory = "BONDS";
         }
 
-        // API-Symbol bestimmen
+        // Determine API symbol
         let apiSymbol = asset.api_symbol;
         if (securityInfo.ticker && securityInfo.exchCode) {
           if (securityInfo.exchCode === "GY") {
             apiSymbol = securityInfo.ticker + ".DE";
           } else if (securityInfo.exchCode === "US") {
             apiSymbol = securityInfo.ticker;
-          } else {
-            apiSymbol = securityInfo.ticker;
           }
         }
 
-        // Asset aktualisieren
-        await base44.asServiceRole.entities.AssetPortfolio.update(asset.id, {
+        // Update asset
+        await base44.asServiceRole.entities.AssetPortfolio.update(assetId, {
           asset_category: autoCategory,
           asset_details: enrichedDetails,
           api_symbol: apiSymbol,
@@ -71,24 +80,23 @@ Deno.serve(async (req) => {
           last_analysis_date: new Date().toISOString()
         });
 
+        console.log(`Asset enriched: category=${autoCategory}, symbol=${apiSymbol}`);
+
         return Response.json({
           success: true,
-          message: "Asset enriched successfully",
           category: autoCategory,
-          api_symbol: apiSymbol
+          api_symbol: apiSymbol,
+          details: enrichedDetails
         });
       }
 
-      return Response.json({
-        success: false,
-        message: "ISIN not found in FIGI database"
-      });
+      return Response.json({ error: 'ISIN not found in database' }, { status: 404 });
     } catch (error) {
-      console.error("ISIN enrichment failed:", error);
-      return Response.json({ success: false, message: error.message }, { status: 500 });
+      console.error("ISIN enrichment error:", error);
+      return Response.json({ error: error.message }, { status: 500 });
     }
   } catch (error) {
-    console.error("enrichAssetWithISIN error:", error);
+    console.error('Function error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

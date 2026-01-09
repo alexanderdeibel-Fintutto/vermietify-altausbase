@@ -4,118 +4,105 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    console.log("Starting weekly portfolio analysis...");
+    console.log('Starting weekly portfolio analysis...');
 
-    // 1. Alle Portfolios mit aktiven Positionen
-    const allAssets = await base44.asServiceRole.entities.AssetPortfolio.filter({
-      status: "active"
-    });
+    // Get all active users with portfolios
+    const users = await base44.asServiceRole.entities.User.list();
+    let analyzed = 0;
+    let errors = 0;
 
-    // 2. Nach User gruppieren
-    const assetsByUser = {};
-    for (const asset of allAssets) {
-      if (!assetsByUser[asset.user_id]) {
-        assetsByUser[asset.user_id] = [];
-      }
-      assetsByUser[asset.user_id].push(asset);
-    }
-
-    console.log(`Analyzing ${Object.keys(assetsByUser).length} user portfolios`);
-
-    // 3. Pro User: Analyse durchführen
-    for (const [userId, userAssets] of Object.entries(assetsByUser)) {
+    for (const user of users) {
       try {
-        const totalValue = userAssets.reduce((sum, a) => sum + (a.quantity * a.current_value), 0);
-        const totalInvested = userAssets.reduce((sum, a) => sum + (a.quantity * a.purchase_price), 0);
-        const totalGain = totalValue - totalInvested;
-        const gainPercent = (totalGain / totalInvested) * 100;
+        // Get user's portfolio
+        const assets = await base44.asServiceRole.entities.AssetPortfolio.filter({
+          user_id: user.id,
+          status: 'active'
+        });
 
-        // Kategorie-Verteilung
-        const categoryDistribution = {};
-        for (const asset of userAssets) {
-          const cat = asset.asset_category;
-          if (!categoryDistribution[cat]) {
-            categoryDistribution[cat] = 0;
-          }
-          categoryDistribution[cat] += (asset.quantity * asset.current_value) / totalValue;
+        if (assets.length === 0) continue;
+
+        // Calculate metrics
+        const totalValue = assets.reduce((sum, a) => sum + (a.quantity * a.current_value), 0);
+        const totalInvested = assets.reduce((sum, a) => sum + (a.quantity * a.purchase_price), 0);
+        const totalGains = totalValue - totalInvested;
+        const gainPercent = (totalGains / totalInvested) * 100;
+
+        // Category breakdown
+        const allocation = {};
+        assets.forEach(asset => {
+          allocation[asset.asset_category] = (allocation[asset.asset_category] || 0) + (asset.quantity * asset.current_value);
+        });
+
+        // Diversification check
+        const categoryCount = Object.keys(allocation).length;
+        const diversificationScore = Math.min(100, (categoryCount / 10) * 100);
+
+        // Get recent performance data
+        const priceHistory = await base44.asServiceRole.entities.PriceHistory.filter({
+          asset_portfolio_id: assets[0].id
+        }, '-recorded_at', 5);
+
+        let weeklyChange = 0;
+        if (priceHistory.length >= 2) {
+          const oldPrice = priceHistory[priceHistory.length - 1].price;
+          const newPrice = priceHistory[0].price;
+          weeklyChange = ((newPrice - oldPrice) / oldPrice) * 100;
         }
 
-        // Diversifikations-Score
-        const diversificationScore = Math.min(
-          100,
-          (Object.keys(categoryDistribution).length / 9) * 100
-        );
+        // Create insights
+        const insights = [];
 
-        // Top/Flop Positionen
-        const sortedAssets = [...userAssets].sort(
-          (a, b) => (((b.current_value - b.purchase_price) / b.purchase_price) * 100) -
-                    (((a.current_value - a.purchase_price) / a.purchase_price) * 100)
-        );
-
-        const topPerformers = sortedAssets.slice(0, 3);
-        const worstPerformers = sortedAssets.slice(-3);
-
-        // Alerts für Rebalancing-Empfehlungen
-        if (diversificationScore < 50) {
-          await base44.asServiceRole.entities.PortfolioAlert.create({
-            user_id: userId,
-            alert_type: "rebalancing",
-            severity: "info",
-            title: "Portfolio-Diversifikation niedrig",
-            message: `Ihr Diversifikations-Score liegt bei ${diversificationScore.toFixed(0)}%. Erwägen Sie eine stärkere Verteilung über verschiedene Kategorien.`,
-            trigger_value: diversificationScore,
-            current_value: diversificationScore,
-            triggered_at: new Date().toISOString(),
-            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        if (gainPercent > 20) {
+          insights.push({
+            type: 'positive',
+            title: 'Starke Performance',
+            message: `Portfolio mit +${gainPercent.toFixed(1)}% im Plus`
+          });
+        } else if (gainPercent < -10) {
+          insights.push({
+            type: 'warning',
+            title: 'Portfolio im Minus',
+            message: `Aktuell ${gainPercent.toFixed(1)}% im Minus - Rebalancing erwägen`
           });
         }
 
-        // Alert für hohe Konzentration (>30% in einer Position)
-        for (const asset of userAssets) {
-          const concentration = (asset.quantity * asset.current_value) / totalValue * 100;
-          if (concentration > 30) {
-            await base44.asServiceRole.entities.PortfolioAlert.create({
-              user_id: userId,
-              asset_portfolio_id: asset.id,
-              alert_type: "portfolio_change",
-              severity: "warning",
-              title: `Hohe Konzentration: ${asset.name}`,
-              message: `${asset.name} macht ${concentration.toFixed(1)}% Ihres Portfolios aus. Überprüfen Sie das Risiko.`,
-              trigger_value: concentration,
-              current_value: concentration,
-              triggered_at: new Date().toISOString(),
-              expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-            });
-          }
+        if (diversificationScore < 40) {
+          insights.push({
+            type: 'warning',
+            title: 'Schwache Diversifikation',
+            message: `Nur ${categoryCount} Kategorien - mehr Streuung empfohlen`
+          });
         }
 
-        // Log Analytics
-        await base44.asServiceRole.entities.ActivityLog.create({
-          user_id: userId,
-          action: "weekly_portfolio_analysis_completed",
-          entity_type: "AssetPortfolio",
-          details: {
-            total_value: totalValue,
-            total_gain: totalGain,
-            gain_percent: gainPercent,
-            diversification_score: diversificationScore,
-            position_count: userAssets.length,
-            category_count: Object.keys(categoryDistribution).length
-          }
-        });
+        // Send notifications for insights
+        for (const insight of insights) {
+          await base44.functions.invoke('sendPortfolioNotification', {
+            userId: user.id,
+            type: 'portfolio_update',
+            title: insight.title,
+            message: insight.message,
+            severity: insight.type === 'warning' ? 'warning' : 'info',
+            channels: ['in_app', 'email']
+          });
+        }
 
-        console.log(`Portfolio analysis for ${userId}: Total €${totalValue.toFixed(2)}, Gain ${gainPercent.toFixed(1)}%`);
-      } catch (error) {
-        console.error(`Error analyzing portfolio for ${userId}:`, error);
+        analyzed++;
+      } catch (userError) {
+        console.error(`Error analyzing portfolio for user ${user.id}:`, userError);
+        errors++;
       }
     }
 
+    console.log(`Weekly analysis completed: ${analyzed} analyzed, ${errors} errors`);
+
     return Response.json({
       success: true,
-      analyzed_users: Object.keys(assetsByUser).length
+      analyzed,
+      errors,
+      message: `Wöchentliche Analyse für ${analyzed} Portfolios durchgeführt`
     });
   } catch (error) {
-    console.error("weeklyPortfolioAnalysis error:", error);
+    console.error('Weekly portfolio analysis error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
