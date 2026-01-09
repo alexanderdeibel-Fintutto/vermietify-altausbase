@@ -181,7 +181,7 @@ function TemplateDialog({ template, onClose, onCreate, onUpdate }) {
               className="min-h-48"
             />
             <p className="text-xs text-slate-500 mt-2">
-              Verfügbare Variablen: {{'{'}}{'{'}tenant_name{'}'}}{'}''}, {{'{'}}{'{'}amount{'}'}}{'}''}, {{'{'}}{'{'}date{'}'}}{'}''}, {{'{'}}{'{'}property_address{'}'}}{'}'}}
+              Verfügbare Variablen: {`{{tenant_name}}, {{amount}}, {{date}}, {{property_address}}`}
             </p>
           </div>
           <div className="flex justify-end gap-2">
