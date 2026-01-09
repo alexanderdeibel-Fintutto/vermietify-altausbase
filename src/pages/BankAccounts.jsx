@@ -457,7 +457,7 @@ export default function BankAccounts() {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex-1 mb-6"
             >
-                <h1 className="text-2xl font-extralight text-slate-600 tracking-wide">Bank/Kasse</h1>
+                <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Bank/Kasse</h1>
                 <p className="text-sm font-extralight text-slate-400 mt-1">Konten und Transaktionen verwalten</p>
             </motion.div>
 

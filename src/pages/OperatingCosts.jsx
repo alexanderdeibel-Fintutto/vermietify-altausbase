@@ -36,7 +36,7 @@ export default function OperatingCosts() {
                 animate={{ opacity: 1, y: 0 }}
             >
             <div>
-                <h1 className="text-2xl font-extralight text-slate-600 tracking-wide">Betriebskosten</h1>
+                <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Betriebskosten</h1>
                 <p className="text-sm font-extralight text-slate-400 mt-1">{statements.length} Abrechnungen</p>
             </div>
             </motion.div>

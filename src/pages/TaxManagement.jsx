@@ -33,9 +33,9 @@ export default function TaxManagementPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-extralight text-slate-600 tracking-wide">Steuern & ELSTER</h1>
+        <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Steuern & ELSTER</h1>
         <p className="text-sm font-extralight text-slate-400 mt-1">Verwalten Sie Ihre Steuererklärungen und ELSTER-Übermittlungen</p>
       </div>
       <QuickStats stats={stats} />
