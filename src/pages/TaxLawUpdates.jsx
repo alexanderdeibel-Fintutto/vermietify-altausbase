@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -12,54 +12,80 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, TrendingUp, ExternalLink, CheckCircle2, Clock } from 'lucide-react';
+import { AlertTriangle, TrendingUp, ExternalLink } from 'lucide-react';
 
 export default function TaxLawUpdates() {
   const [selectedCountry, setSelectedCountry] = useState('DE');
-  const [filterImpact, setFilterImpact] = useState('all');
+  const [selectedImpact, setSelectedImpact] = useState('all');
 
   // Fetch tax law updates
   const { data: updates = [] } = useQuery({
     queryKey: ['taxLawUpdates', selectedCountry],
     queryFn: async () => {
-      return await base44.entities.TaxLawUpdate.filter({
-        country: selectedCountry,
-        is_active: true
-      }, '-effective_date') || [];
+      return await base44.entities.TaxLawUpdate.filter(
+        { country: selectedCountry, is_active: true },
+        '-effective_date'
+      ) || [];
     }
   });
 
-  const filteredUpdates = updates.filter(u => {
-    if (filterImpact === 'all') return true;
-    return u.impact_level === filterImpact;
-  });
-
-  const impactColors = {
-    low: 'bg-blue-100 text-blue-800 border-blue-300',
-    medium: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    high: 'bg-red-100 text-red-800 border-red-300'
+  const getImpactColor = (impact) => {
+    switch (impact?.toLowerCase()) {
+      case 'high':
+        return 'bg-red-100 text-red-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'low':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-slate-100 text-slate-800';
+    }
   };
 
-  const categoryEmojis = {
-    income_tax: '💰',
-    capital_gains: '📈',
-    wealth_tax: '🏦',
-    property_tax: '🏠',
-    deduction: '📉',
-    credit: '✨',
-    deadline: '⏰'
+  const getCategoryIcon = (category) => {
+    switch (category?.toLowerCase()) {
+      case 'income_tax':
+        return '💰';
+      case 'capital_gains':
+        return '📈';
+      case 'wealth_tax':
+        return '💎';
+      case 'property_tax':
+        return '🏠';
+      case 'deduction':
+        return '📉';
+      case 'credit':
+        return '✓';
+      case 'deadline':
+        return '📅';
+      default:
+        return '📋';
+    }
   };
 
-  const countryNames = { AT: '🇦🇹 Österreich', CH: '🇨🇭 Schweiz', DE: '🇩🇪 Deutschland' };
+  const filteredUpdates = selectedImpact === 'all'
+    ? updates
+    : updates.filter(u => u.impact_level?.toLowerCase() === selectedImpact.toLowerCase());
+
+  const highImpactCount = updates.filter(u => u.impact_level?.toLowerCase() === 'high').length;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">📋 Tax Law Updates & Changes</h1>
-        <p className="text-slate-500 mt-1">Aktualisierungen der Steuergesetzgebung in Deutschland, Österreich & Schweiz</p>
+        <h1 className="text-3xl font-bold">⚖️ Tax Law Updates</h1>
+        <p className="text-slate-500 mt-1">Aktuelle Steuergesetzänderungen in AT, CH & DE</p>
       </div>
+
+      {/* High Impact Alert */}
+      {highImpactCount > 0 && (
+        <Alert className="border-red-300 bg-red-50">
+          <AlertTriangle className="h-4 w-4 text-red-600" />
+          <AlertDescription className="text-red-900">
+            <strong>{highImpactCount} wichtige Änderung(en)</strong> - Bitte überprüfen Sie diese
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Controls */}
       <div className="flex gap-4 flex-wrap">
@@ -76,174 +102,95 @@ export default function TaxLawUpdates() {
             </SelectContent>
           </Select>
         </div>
-
         <div className="flex-1 max-w-xs">
-          <label className="text-sm font-medium">Impact Level</label>
-          <Select value={filterImpact} onValueChange={setFilterImpact}>
+          <label className="text-sm font-medium">Auswirkungsgrad</label>
+          <Select value={selectedImpact} onValueChange={setSelectedImpact}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Alle ({updates.length})</SelectItem>
-              <SelectItem value="low">🟢 Niedrig ({updates.filter(u => u.impact_level === 'low').length})</SelectItem>
-              <SelectItem value="medium">🟡 Mittel ({updates.filter(u => u.impact_level === 'medium').length})</SelectItem>
-              <SelectItem value="high">🔴 Hoch ({updates.filter(u => u.impact_level === 'high').length})</SelectItem>
+              <SelectItem value="all">Alle</SelectItem>
+              <SelectItem value="high">🔴 Hoch</SelectItem>
+              <SelectItem value="medium">🟡 Mittel</SelectItem>
+              <SelectItem value="low">🟢 Niedrig</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className={impactColors['high']}>
-          <CardContent className="pt-6 text-center">
-            <AlertTriangle className="w-6 h-6 mx-auto mb-2" />
-            <p className="text-sm font-medium">Hohe Auswirkung</p>
-            <p className="text-2xl font-bold mt-2">{updates.filter(u => u.impact_level === 'high').length}</p>
-          </CardContent>
-        </Card>
-        <Card className={impactColors['medium']}>
-          <CardContent className="pt-6 text-center">
-            <TrendingUp className="w-6 h-6 mx-auto mb-2" />
-            <p className="text-sm font-medium">Mittlere Auswirkung</p>
-            <p className="text-2xl font-bold mt-2">{updates.filter(u => u.impact_level === 'medium').length}</p>
-          </CardContent>
-        </Card>
-        <Card className={impactColors['low']}>
-          <CardContent className="pt-6 text-center">
-            <CheckCircle2 className="w-6 h-6 mx-auto mb-2" />
-            <p className="text-sm font-medium">Niedrige Auswirkung</p>
-            <p className="text-2xl font-bold mt-2">{updates.filter(u => u.impact_level === 'low').length}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Important Alert */}
-      {updates.filter(u => u.impact_level === 'high').length > 0 && (
-        <Alert className="border-red-300 bg-red-50">
-          <AlertTriangle className="h-4 w-4 text-red-600" />
-          <AlertDescription className="text-red-900">
-            <strong>Wichtig:</strong> Es gibt {updates.filter(u => u.impact_level === 'high').length} Änderung(en) mit hoher Auswirkung. 
-            Bitte überprüfen Sie diese sorgfältig und passen Sie Ihre Steuerplanung entsprechend an.
-          </AlertDescription>
-        </Alert>
-      )}
-
       {/* Updates List */}
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="all">Alle ({filteredUpdates.length})</TabsTrigger>
-          <TabsTrigger value="high">Hoch ({filteredUpdates.filter(u => u.impact_level === 'high').length})</TabsTrigger>
-          <TabsTrigger value="medium">Mittel ({filteredUpdates.filter(u => u.impact_level === 'medium').length})</TabsTrigger>
-          <TabsTrigger value="low">Niedrig ({filteredUpdates.filter(u => u.impact_level === 'low').length})</TabsTrigger>
-        </TabsList>
-
-        {['all', 'high', 'medium', 'low'].map(tab => (
-          <TabsContent key={tab} value={tab} className="space-y-3 mt-4">
-            {(tab === 'all' ? filteredUpdates : filteredUpdates.filter(u => u.impact_level === tab)).map(update => (
-              <Card key={update.id} className={`border-l-4 ${
-                update.impact_level === 'high' ? 'border-l-red-500 bg-red-50' :
-                update.impact_level === 'medium' ? 'border-l-yellow-500 bg-yellow-50' :
-                'border-l-blue-500 bg-blue-50'
-              }`}>
-                <CardContent className="pt-6">
-                  <div className="space-y-3">
-                    {/* Title & Badges */}
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-2xl">{categoryEmojis[update.category] || '📋'}</span>
-                          <h3 className="font-bold text-lg">{update.title}</h3>
-                        </div>
-                        <p className="text-sm text-slate-700">{update.description}</p>
-                      </div>
-                      <Badge className={impactColors[update.impact_level]}>
-                        {update.impact_level.toUpperCase()}
+      {filteredUpdates.length === 0 ? (
+        <Card className="text-center py-8 text-slate-500">
+          Keine Updates für diese Filter
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {filteredUpdates.map(update => (
+            <Card key={update.id} className="border-l-4 border-l-blue-500">
+              <CardContent className="pt-6">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-lg">{getCategoryIcon(update.category)}</span>
+                      <h3 className="font-semibold">{update.title}</h3>
+                      <Badge className={getImpactColor(update.impact_level)}>
+                        {update.impact_level?.toUpperCase()}
                       </Badge>
                     </div>
+                    <p className="text-sm text-slate-700 mb-3">{update.description}</p>
 
-                    {/* Details */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                       <div>
-                        <p className="text-slate-600 text-xs">Kategorie</p>
-                        <p className="font-semibold capitalize">{update.category.replace(/_/g, ' ')}</p>
+                        <p className="text-slate-600">Gültig ab</p>
+                        <p className="font-medium">
+                          {new Date(update.effective_date).toLocaleDateString('de-DE')}
+                        </p>
                       </div>
                       <div>
-                        <p className="text-slate-600 text-xs">Gültig ab</p>
-                        <p className="font-semibold">{new Date(update.effective_date).toLocaleDateString('de-DE')}</p>
+                        <p className="text-slate-600">Kategorie</p>
+                        <p className="font-medium">{update.category?.replace('_', ' ')}</p>
                       </div>
                       <div>
-                        <p className="text-slate-600 text-xs">Quelle</p>
-                        <p className="font-semibold text-blue-600">{update.source}</p>
+                        <p className="text-slate-600">Betroffen</p>
+                        <p className="font-medium">
+                          {(update.affected_entities || []).join(', ') || 'Alle'}
+                        </p>
                       </div>
                       <div>
-                        <p className="text-slate-600 text-xs">Betroffen</p>
-                        <p className="font-semibold">{(update.affected_entities || []).length} Bereiche</p>
+                        <p className="text-slate-600">Quelle</p>
+                        <p className="font-medium">{update.source}</p>
                       </div>
                     </div>
-
-                    {/* Affected Entities */}
-                    {update.affected_entities?.length > 0 && (
-                      <div className="pt-2 border-t">
-                        <p className="text-xs text-slate-600 mb-2">🎯 Betroffene Bereiche:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {update.affected_entities.map(entity => (
-                            <Badge key={entity} variant="outline" className="text-xs">
-                              {entity}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Change Details */}
-                    {update.change_details && (
-                      <div className="pt-2 border-t">
-                        <p className="text-xs text-slate-600 mb-2">📊 Details der Änderung:</p>
-                        <div className="bg-white p-2 rounded text-xs space-y-1 font-mono">
-                          {Object.entries(update.change_details).map(([key, value]) => (
-                            <div key={key} className="flex justify-between">
-                              <span className="text-slate-600">{key}:</span>
-                              <span className="font-semibold">{JSON.stringify(value)}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Action Button */}
-                    {update.source_url && (
-                      <Button
-                        className="w-full gap-2 mt-3 bg-blue-600 hover:bg-blue-700"
-                        onClick={() => window.open(update.source_url, '_blank')}
-                      >
-                        <ExternalLink className="w-4 h-4" /> Offizielle Quelle
-                      </Button>
-                    )}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
 
-            {(tab === 'all' ? filteredUpdates : filteredUpdates.filter(u => u.impact_level === tab)).length === 0 && (
-              <Card className="text-center py-8 text-slate-500">
-                Keine Updates für diese Filter
-              </Card>
-            )}
-          </TabsContent>
-        ))}
-      </Tabs>
+                  {update.source_url && (
+                    <a
+                      href={update.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-shrink-0 p-2 hover:bg-slate-100 rounded"
+                      title="Zur Quelle"
+                    >
+                      <ExternalLink className="w-5 h-5 text-blue-600" />
+                    </a>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
-      {/* Info Card */}
+      {/* Help Section */}
       <Card className="border-blue-300 bg-blue-50">
         <CardHeader>
-          <CardTitle className="text-sm">💡 Informationen zu Tax Law Updates</CardTitle>
+          <CardTitle className="text-sm">💡 Tipps</CardTitle>
         </CardHeader>
         <CardContent className="text-sm space-y-2 text-slate-700">
-          <p>✓ Alle Änderungen sind mit ihrem offiziellen Gültigkeitsdatum gekennzeichnet</p>
-          <p>✓ "Impact Level" zeigt die Auswirkung auf Ihr Steuerergebnis</p>
-          <p>✓ "Betroffene Bereiche" listet relevante Steuerkategorien auf</p>
-          <p>✓ Consulten Sie einen Steuerberater für detaillierte Auswirkungen auf Ihre Situation</p>
+          <p>✓ Überprüfen Sie regelmäßig Updates für Ihr Land</p>
+          <p>✓ Fokussieren Sie auf Updates mit hohem Auswirkungsgrad</p>
+          <p>✓ Konsultieren Sie Ihren Steuerberater bei größeren Änderungen</p>
+          <p>✓ Passen Sie Ihre Steuerstrategie an neue Gesetze an</p>
         </CardContent>
       </Card>
     </div>
