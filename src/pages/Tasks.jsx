@@ -123,14 +123,14 @@ export default function Tasks() {
                 className="flex items-center justify-between"
             >
                 <div>
-                    <h1 className="text-2xl font-light text-slate-800">Aufgaben</h1>
-                    <p className="text-slate-500">Verwalten Sie alle Tasks und Workflows</p>
+                    <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Aufgaben</h1>
+                    <p className="text-sm font-extralight text-slate-400 mt-1">Verwalten Sie alle Tasks und Workflows</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <HelpButton context="dashboard_overview" />
                     <Button 
                         onClick={handleAddNew}
-                        className="bg-emerald-600 hover:bg-emerald-700"
+                        className="bg-slate-700 hover:bg-slate-800 font-extralight"
                     >
                         <Plus className="w-4 h-4 mr-2" />
                         Neuer Task

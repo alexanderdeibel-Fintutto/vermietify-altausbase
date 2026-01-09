@@ -474,10 +474,10 @@ export default function Invoices() {
                 className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
             >
                 <div>
-                    <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 tracking-tight">
+                    <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">
                         Rechnungen & Belege
                     </h1>
-                    <p className="text-slate-500 mt-1">
+                    <p className="text-sm font-extralight text-slate-400 mt-1">
                         {activeTab === 'invoices' && `${filteredInvoices.length} ${filteredInvoices.length === 1 ? 'Beleg' : 'Belege'}`}
                         {activeTab === 'cost-types' && `${filteredCostTypes.length} ${filteredCostTypes.length === 1 ? 'Kostenart' : 'Kostenarten'}`}
                         {activeTab === 'recipients' && `${filteredRecipients.length} ${filteredRecipients.length === 1 ? 'Empfänger' : 'Empfänger'}`}
@@ -490,7 +490,7 @@ export default function Invoices() {
                                 setEditingInvoice(null);
                                 setIntelligentWizardOpen(true);
                             }}
-                            className="bg-purple-600 hover:bg-purple-700 gap-2"
+                            className="bg-slate-700 hover:bg-slate-800 gap-2 font-extralight"
                         >
                             <Sparkles className="w-4 h-4" />
                             Smart-Erfassung
@@ -509,7 +509,7 @@ export default function Invoices() {
                                 setRecipientFormOpen(true);
                             }
                         }}
-                        className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+                        className="bg-slate-700 hover:bg-slate-800 gap-2 font-extralight"
                     >
                         <Plus className="w-4 h-4" />
                         {activeTab === 'invoices' && 'Neue Rechnung'}

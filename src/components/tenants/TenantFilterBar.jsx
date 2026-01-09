@@ -38,7 +38,7 @@ export default function TenantFilterBar({ onSearchChange, onStatusChange, onNewT
         </Select>
       </div>
 
-      <Button onClick={onNewTenant} className="bg-green-600 hover:bg-green-700">
+      <Button onClick={onNewTenant} className="bg-slate-700 hover:bg-slate-800 font-extralight">
         <Plus className="w-4 h-4 mr-2" />
         Neuer Mieter
       </Button>
