@@ -124,6 +124,7 @@ import Equipment from './pages/Equipment';
 import MaintenanceTasks from './pages/MaintenanceTasks';
 import ReportingDashboard from './pages/ReportingDashboard';
 import FinanceManagement from './pages/FinanceManagement';
+import TenantCommunicationCenter from './pages/TenantCommunicationCenter';
 import __Layout from './Layout.jsx';
 
 
@@ -254,6 +255,7 @@ export const PAGES = {
     "MaintenanceTasks": MaintenanceTasks,
     "ReportingDashboard": ReportingDashboard,
     "FinanceManagement": FinanceManagement,
+    "TenantCommunicationCenter": TenantCommunicationCenter,
 }
 
 export const pagesConfig = {
