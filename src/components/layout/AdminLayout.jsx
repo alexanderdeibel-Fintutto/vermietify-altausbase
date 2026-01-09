@@ -1,63 +1,61 @@
 import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Settings, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 export default function AdminLayout({ children, currentPageName }) {
   return (
-    <div className="min-h-screen bg-slate-50" style={{ fontFamily: 'Roboto Mono, monospace' }}>
-      {/* Admin Header */}
-      <header className="sticky top-0 z-50 bg-white border-b border-slate-300">
-        <div className="flex items-center justify-between h-14 px-6">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-light text-slate-900">ADMIN</span>
-            <span className="text-xs text-slate-500">/</span>
-            <span className="text-xs font-light text-slate-600">{currentPageName || 'Dashboard'}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link to={createPageUrl('UserSettings')}>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-slate-600 hover:text-slate-900 h-8"
-              >
-                <Settings className="w-4 h-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* Admin Content */}
-      <main className="p-6 max-w-[1600px] mx-auto">
-        <div className="space-y-6">
-          {children}
-        </div>
-      </main>
-
+    <>
       <style>{`
         * {
           font-family: 'Roboto Mono', monospace !important;
-        }
-        body {
-          font-weight: 300;
-          font-size: 13px;
-          line-height: 1.5;
-          color: #1a1a1a;
-        }
-        h1, h2, h3, h4, h5, h6 {
           font-weight: 300;
           letter-spacing: 0.5px;
         }
+        
+        body {
+          background-color: #fafafa;
+          color: #1a1a1a;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+          font-weight: 300;
+          letter-spacing: 1px;
+        }
+        
         button {
           font-weight: 300;
+          letter-spacing: 0.5px;
         }
+        
         input, textarea, select {
           font-family: 'Roboto Mono', monospace;
           font-weight: 300;
         }
       `}</style>
-    </div>
+
+      <div className="min-h-screen bg-slate-50">
+        {/* Admin Header */}
+        <header className="sticky top-16 z-40 bg-white border-b border-slate-200">
+          <div className="max-w-7xl mx-auto px-8 py-4 flex items-center justify-between">
+            <div>
+              <span className="text-xs font-light tracking-widest text-slate-500">ADMIN PANEL</span>
+              <h2 className="text-lg font-light text-slate-900 mt-1">{currentPageName}</h2>
+            </div>
+            <Link to={createPageUrl('UserSettings')}>
+              <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-700">
+                <Settings className="w-5 h-5" />
+              </Button>
+            </Link>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="max-w-7xl mx-auto px-8 py-8">
+          {children}
+        </main>
+      </div>
+    </>
   );
 }
