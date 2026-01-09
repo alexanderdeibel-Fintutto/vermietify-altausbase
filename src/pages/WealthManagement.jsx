@@ -122,8 +122,8 @@ export default function WealthManagementPage() {
         open={showImportDialog}
         onOpenChange={setShowImportDialog}
         onImport={(data) => {
-          console.log('CSV Import:', data);
-          // TODO: Implement CSV import backend function
+          // Import wird direkt in CSVImportDialog via Backend-Function aufgerufen
+          queryClient.invalidateQueries({ queryKey: ['assetPortfolio'] });
         }}
         isLoading={false}
       />
