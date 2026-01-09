@@ -133,6 +133,8 @@ import WealthAnalytics from './pages/WealthAnalytics';
 import WealthIntegrations from './pages/WealthIntegrations';
 import WealthTeam from './pages/WealthTeam';
 import TaxDashboard from './pages/TaxDashboard';
+import AnlageKAP from './pages/AnlageKAP';
+import AnlageSO from './pages/AnlageSO';
 import __Layout from './Layout.jsx';
 
 
@@ -272,6 +274,8 @@ export const PAGES = {
     "WealthIntegrations": WealthIntegrations,
     "WealthTeam": WealthTeam,
     "TaxDashboard": TaxDashboard,
+    "AnlageKAP": AnlageKAP,
+    "AnlageSO": AnlageSO,
 }
 
 export const pagesConfig = {
