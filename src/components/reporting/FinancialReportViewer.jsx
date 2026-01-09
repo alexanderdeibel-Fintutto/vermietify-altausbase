@@ -5,15 +5,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Download, Share2, Printer, Zap } from 'lucide-react';
+import { Download, Share2, Printer, Zap, Brain } from 'lucide-react';
 import { toast } from 'sonner';
 import CostOptimizationPanel from './CostOptimizationPanel';
+import AIInsightsPanel from './AIInsightsPanel';
 
 const COLORS = ['#0f172a', '#64748b', '#94a3b8', '#cbd5e1', '#e2e8f0'];
 
 export default function FinancialReportViewer({ report }) {
   const [activeTab, setActiveTab] = useState('summary');
   const [costAnalysis, setCostAnalysis] = useState(null);
+  const [aiInsights, setAiInsights] = useState(null);
+  const [generatingInsights, setGeneratingInsights] = useState(false);
 
   if (!report) {
     return <div className="text-center text-slate-500">Kein Bericht vorhanden</div>;
@@ -46,12 +49,56 @@ export default function FinancialReportViewer({ report }) {
         metrics: report.metrics,
         period_start: report.period_start,
         period_end: report.period_end,
-        historical_data: report.metrics // Simplified - in production, fetch actual historical data
+        historical_data: report.metrics
       });
       setCostAnalysis(response.data.analysis);
       toast.success('Kostenanalyse abgeschlossen');
     } catch (error) {
       toast.error(`Fehler: ${error.message}`);
+    }
+  };
+
+  const handleGenerateAIInsights = async () => {
+    try {
+      setGeneratingInsights(true);
+      
+      // Generate predictive analytics
+      const forecastResponse = await base44.functions.invoke('generatePredictiveAnalytics', {
+        metrics: report.metrics,
+        historical_data: report.metrics,
+        forecast_periods: 6
+      });
+
+      // Detect anomalies
+      const anomalyResponse = await base44.functions.invoke('detectAnomalies', {
+        transactions: report.transactions || [],
+        metrics: report.metrics,
+        historical_patterns: report.metrics.expense_analysis?.categories || {}
+      });
+
+      // Generate executive summary
+      const summaryResponse = await base44.functions.invoke('generateExecutiveSummary', {
+        metrics: report.metrics,
+        analysis: report.analysis,
+        cost_opportunities: costAnalysis?.cost_reduction_opportunities || [],
+        anomalies: anomalyResponse.data.anomalies || [],
+        forecast: forecastResponse.data.forecast,
+        period_start: report.period_start,
+        period_end: report.period_end
+      });
+
+      setAiInsights({
+        executive_summary: summaryResponse.data.executive_summary,
+        key_takeaways: summaryResponse.data.key_takeaways,
+        forecast: forecastResponse.data.forecast,
+        ai_analysis: anomalyResponse.data.ai_analysis
+      });
+
+      toast.success('AI-Insights generiert');
+    } catch (error) {
+      toast.error(`Fehler: ${error.message}`);
+    } finally {
+      setGeneratingInsights(false);
     }
   };
 
@@ -104,11 +151,12 @@ export default function FinancialReportViewer({ report }) {
 
       {/* Detailed Analysis */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="summary">Übersicht</TabsTrigger>
           <TabsTrigger value="income">Einkommen</TabsTrigger>
           <TabsTrigger value="expenses">Ausgaben</TabsTrigger>
           <TabsTrigger value="optimization">Optimierung</TabsTrigger>
+          <TabsTrigger value="ai">AI-Insights</TabsTrigger>
           <TabsTrigger value="insights">Insights</TabsTrigger>
         </TabsList>
 
@@ -212,6 +260,61 @@ export default function FinancialReportViewer({ report }) {
                 </ul>
               </CardContent>
             </Card>
+          )}
+        </TabsContent>
+
+        {/* AI Insights Tab */}
+        <TabsContent value="ai" className="space-y-4">
+          {!aiInsights ? (
+            <Card>
+              <CardContent className="pt-4">
+                <div className="text-center space-y-4">
+                  <Brain className="w-12 h-12 text-purple-500 mx-auto" />
+                  <div>
+                    <p className="font-semibold mb-1">AI-gestützte Analyse</p>
+                    <p className="text-xs text-slate-600 mb-4">
+                      Prognosen, Anomalieerkennung und Executive Summary
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleGenerateAIInsights}
+                    disabled={generatingInsights}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    {generatingInsights ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Analysiere...
+                      </>
+                    ) : (
+                      <>
+                        <Brain className="w-4 h-4 mr-2" />
+                        AI-Insights generieren
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <Button
+                onClick={handleGenerateAIInsights}
+                disabled={generatingInsights}
+                variant="outline"
+                size="sm"
+              >
+                {generatingInsights ? (
+                  <>
+                    <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                    Neu analysieren...
+                  </>
+                ) : (
+                  'Neu analysieren'
+                )}
+              </Button>
+              <AIInsightsPanel insights={aiInsights} />
+            </>
           )}
         </TabsContent>
 

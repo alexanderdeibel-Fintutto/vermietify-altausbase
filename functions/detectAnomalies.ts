@@ -1,107 +1,123 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+/**
+ * Detects anomalies in financial transactions and patterns
+ */
 Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    try {
+        const base44 = createClientFromRequest(req);
+        const user = await base44.auth.me();
 
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!user) {
+            return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { transactions, metrics, historical_patterns } = await req.json();
+
+        console.log('Detecting financial anomalies');
+
+        // Analyze transactions for anomalies
+        const anomalies = detectTransactionAnomalies(
+            transactions,
+            metrics,
+            historical_patterns
+        );
+
+        // Use AI for deeper pattern analysis
+        const aiAnalysis = await base44.integrations.Core.InvokeLLM({
+            prompt: `
+Analyze the following financial anomalies and provide insights on potential causes and recommended actions:
+
+Detected Anomalies:
+${JSON.stringify(anomalies, null, 2)}
+
+Metrics:
+${JSON.stringify(metrics, null, 2)}
+
+Provide:
+1. Severity assessment (low/medium/high) for each anomaly
+2. Likely causes
+3. Recommended actions
+4. If it's a concern or normal variance
+
+Format as JSON.
+            `,
+            add_context_from_internet: false,
+            response_json_schema: {
+                type: 'object',
+                properties: {
+                    analysis: {
+                        type: 'array',
+                        items: {
+                            type: 'object',
+                            properties: {
+                                anomaly_type: { type: 'string' },
+                                severity: { type: 'string' },
+                                likely_causes: { type: 'array', items: { type: 'string' } },
+                                recommended_actions: { type: 'array', items: { type: 'string' } },
+                                is_concern: { type: 'boolean' }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        return Response.json({
+            success: true,
+            anomalies,
+            ai_analysis: aiAnalysis,
+            total_anomalies: anomalies.length,
+            high_severity: anomalies.filter(a => a.severity === 'high').length,
+            detected_at: new Date().toISOString()
+        });
+
+    } catch (error) {
+        console.error('Error detecting anomalies:', error);
+        return Response.json({ error: error.message }, { status: 500 });
     }
+});
 
-    const { submission_id } = await req.json();
-
-    if (!submission_id) {
-      return Response.json({ error: 'submission_id required' }, { status: 400 });
-    }
-
-    console.log(`[ANOMALY-DETECTION] Analyzing ${submission_id}`);
-
-    const submission = await base44.entities.ElsterSubmission.filter({ id: submission_id });
-    
-    if (submission.length === 0) {
-      return Response.json({ error: 'Submission not found' }, { status: 404 });
-    }
-
-    const sub = submission[0];
-    const formData = sub.form_data || {};
+function detectTransactionAnomalies(transactions, metrics, historicalPatterns) {
     const anomalies = [];
 
-    // Hole historische Daten für Vergleich
-    const historical = await base44.entities.ElsterSubmission.filter({
-      building_id: sub.building_id,
-      tax_form_type: sub.tax_form_type,
-      status: { $in: ['ACCEPTED', 'SUBMITTED'] }
-    });
+    if (!transactions || transactions.length === 0) return anomalies;
 
-    if (historical.length > 0) {
-      // Berechne Durchschnittswerte
-      const avgValues = {};
-      historical.forEach(hist => {
-        Object.entries(hist.form_data || {}).forEach(([key, value]) => {
-          const num = parseFloat(value);
-          if (!isNaN(num)) {
-            if (!avgValues[key]) avgValues[key] = [];
-            avgValues[key].push(num);
-          }
-        });
-      });
-
-      Object.keys(avgValues).forEach(key => {
-        const values = avgValues[key];
-        const avg = values.reduce((a, b) => a + b, 0) / values.length;
-        const stdDev = Math.sqrt(values.reduce((sq, n) => sq + Math.pow(n - avg, 2), 0) / values.length);
-
-        const currentValue = parseFloat(formData[key]);
-        if (!isNaN(currentValue)) {
-          const deviation = Math.abs(currentValue - avg);
-          const zScore = stdDev > 0 ? deviation / stdDev : 0;
-
-          if (zScore > 2) {
+    transactions.forEach(tx => {
+        // Check for unusually large transactions
+        if (tx.amount > metrics.avg_transaction * 3) {
             anomalies.push({
-              field: key,
-              current_value: currentValue,
-              historical_avg: Math.round(avg),
-              deviation: Math.round(deviation),
-              z_score: Math.round(zScore * 100) / 100,
-              severity: zScore > 3 ? 'HIGH' : 'MEDIUM',
-              message: `${key}: ${currentValue} weicht ${Math.round((deviation / avg) * 100)}% vom Durchschnitt ab`
+                type: 'unusual_amount',
+                severity: tx.amount > metrics.avg_transaction * 5 ? 'high' : 'medium',
+                description: `Unusually large transaction: ${tx.amount.toLocaleString('de-DE')} €`,
+                transaction_id: tx.id,
+                amount: tx.amount
             });
-          }
         }
-      });
-    }
 
-    // Business Rule Anomalies
-    const einnahmen = parseFloat(formData.einnahmen_gesamt || 0);
-    const ausgaben = parseFloat(formData.ausgaben_gesamt || 0);
+        // Check for unusual category spending
+        const categoryAvg = historicalPatterns?.[tx.category] || 0;
+        if (categoryAvg > 0 && tx.amount > categoryAvg * 2.5) {
+            anomalies.push({
+                type: 'category_anomaly',
+                severity: 'medium',
+                description: `${tx.category}: ${tx.amount.toLocaleString('de-DE')} € (avg: ${categoryAvg.toLocaleString('de-DE')} €)`,
+                category: tx.category,
+                amount: tx.amount,
+                average: categoryAvg
+            });
+        }
 
-    if (ausgaben > einnahmen * 1.5) {
-      anomalies.push({
-        field: 'ausgaben_gesamt',
-        severity: 'HIGH',
-        message: 'Ausgaben sind > 150% der Einnahmen. Ungewöhnlich hoch.'
-      });
-    }
-
-    if (einnahmen > 0 && ausgaben === 0) {
-      anomalies.push({
-        field: 'ausgaben_gesamt',
-        severity: 'MEDIUM',
-        message: 'Keine Ausgaben trotz Einnahmen erfasst.'
-      });
-    }
-
-    console.log(`[ANOMALY-DETECTION] Found ${anomalies.length} anomalies`);
-
-    return Response.json({
-      success: true,
-      anomalies,
-      has_anomalies: anomalies.length > 0
+        // Check for duplicate or suspicious patterns
+        if (tx.description?.includes('test') || tx.description?.includes('duplicate')) {
+            anomalies.push({
+                type: 'suspicious_pattern',
+                severity: 'low',
+                description: `Potentially suspicious transaction: ${tx.description}`,
+                transaction_id: tx.id
+            });
+        }
     });
 
-  } catch (error) {
-    console.error('[ERROR]', error);
-    return Response.json({ error: error.message }, { status: 500 });
-  }
-});
+    return anomalies;
+}
