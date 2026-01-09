@@ -125,6 +125,7 @@ import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
+import WealthManagement from './pages/WealthManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -256,6 +257,7 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
+    "WealthManagement": WealthManagement,
 }
 
 export const pagesConfig = {
