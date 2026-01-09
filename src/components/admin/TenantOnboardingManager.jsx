@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { CheckCircle, XCircle, UserPlus, Clock, AlertCircle } from 'lucide-react';
+import { CheckCircle, XCircle, UserPlus, Clock, AlertCircle, Workflow } from 'lucide-react';
 import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import OnboardingWorkflowBuilder from '@/components/admin/OnboardingWorkflowBuilder';
 import {
   Select,
   SelectContent,
@@ -26,7 +28,13 @@ export default function TenantOnboardingManager({ tenantId, tenant }) {
   const [showApprovalDialog, setShowApprovalDialog] = useState(false);
   const [actionType, setActionType] = useState('approve');
   const [notes, setNotes] = useState('');
+  const [selectedWorkflow, setSelectedWorkflow] = useState('');
   const queryClient = useQueryClient();
+
+  const { data: workflows = [] } = useQuery({
+    queryKey: ['workflows'],
+    queryFn: () => base44.entities.OnboardingWorkflow.filter({ is_active: true })
+  });
 
   const { data: locks = [] } = useQuery({
     queryKey: ['adminLocks', tenantId],
@@ -75,6 +83,22 @@ export default function TenantOnboardingManager({ tenantId, tenant }) {
     }
   });
 
+  const generateTasksMutation = useMutation({
+    mutationFn: async () => {
+      const contract = await base44.entities.LeaseContract.filter({ tenant_id: tenantId }, '-start_date', 1);
+      return await base44.functions.invoke('generateOnboardingTasks', {
+        tenant_id: tenantId,
+        lease_contract_id: contract[0]?.id,
+        workflow_id: selectedWorkflow || undefined
+      });
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ['adminLocks', tenantId] });
+      toast.success(`${response.data.tasks_created} Aufgaben aus Workflow erstellt`);
+      setSelectedWorkflow('');
+    }
+  });
+
   const handleAction = (lock, type) => {
     setSelectedLock(lock);
     setActionType(type);
@@ -105,8 +129,45 @@ export default function TenantOnboardingManager({ tenantId, tenant }) {
   }, {});
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <Tabs defaultValue="tasks" className="space-y-6">
+      <TabsList>
+        <TabsTrigger value="tasks">Aufgaben</TabsTrigger>
+        <TabsTrigger value="workflows">Workflows</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="tasks" className="space-y-6">
+        {/* Workflow Generator */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Workflow className="w-5 h-5" />
+              Aufgaben aus Workflow generieren
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex gap-2">
+            <Select value={selectedWorkflow} onValueChange={setSelectedWorkflow}>
+              <SelectTrigger className="flex-1">
+                <SelectValue placeholder="Workflow wählen..." />
+              </SelectTrigger>
+              <SelectContent>
+                {workflows.map(wf => (
+                  <SelectItem key={wf.id} value={wf.id}>
+                    {wf.workflow_name} ({wf.steps?.length || 0} Schritte)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              onClick={() => generateTasksMutation.mutate()}
+              disabled={generateTasksMutation.isPending || !selectedWorkflow}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Generieren
+            </Button>
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-amber-200 bg-amber-50">
           <CardContent className="pt-6">
             <p className="text-sm text-amber-900 mb-2">Ausstehend</p>
@@ -229,6 +290,11 @@ export default function TenantOnboardingManager({ tenantId, tenant }) {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+      </TabsContent>
+
+      <TabsContent value="workflows">
+        <OnboardingWorkflowBuilder />
+      </TabsContent>
+    </Tabs>
   );
 }
