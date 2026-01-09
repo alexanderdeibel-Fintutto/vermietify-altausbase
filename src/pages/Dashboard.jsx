@@ -1,4 +1,6 @@
 import React from 'react';
+import SmartHints from '@/components/navigation/SmartHints';
+import OnboardingProgress from '@/components/navigation/OnboardingProgress';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import QuickStats from '@/components/shared/QuickStats';
@@ -31,6 +33,8 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      <OnboardingProgress />
+      <SmartHints />
       <div>
         <h1 className="text-3xl font-bold text-slate-900">📈 Dashboard</h1>
         <p className="text-slate-600 mt-1">Übersicht Ihrer Immobilienportfolios</p>

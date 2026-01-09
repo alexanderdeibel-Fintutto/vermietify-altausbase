@@ -1,16 +1,25 @@
 import APIKeyManagement from './pages/APIKeyManagement';
+import APILogs from './pages/APILogs';
 import ActivityLogs from './pages/ActivityLogs';
 import AdminDashboard from './pages/AdminDashboard';
 import AdvancedAnalytics from './pages/AdvancedAnalytics';
 import AdvancedReportBuilder from './pages/AdvancedReportBuilder';
 import AdvancedSearch from './pages/AdvancedSearch';
+import AlertManagement from './pages/AlertManagement';
 import Analytics from './pages/Analytics';
+import AnalyticsPage from './pages/AnalyticsPage';
+import AuditLog from './pages/AuditLog';
 import AuditReports from './pages/AuditReports';
+import AutomationRules from './pages/AutomationRules';
+import BackupRecovery from './pages/BackupRecovery';
 import BankAccounts from './pages/BankAccounts';
 import BankReconciliation from './pages/BankReconciliation';
+import BankingManagement from './pages/BankingManagement';
 import BuildingDetail from './pages/BuildingDetail';
 import Buildings from './pages/Buildings';
 import BulkOperations from './pages/BulkOperations';
+import CommunicationCenter from './pages/CommunicationCenter';
+import ComplianceAudit from './pages/ComplianceAudit';
 import ComplianceCenter from './pages/ComplianceCenter';
 import ContractDetail from './pages/ContractDetail';
 import Contracts from './pages/Contracts';
@@ -18,42 +27,72 @@ import CostTypes from './pages/CostTypes';
 import CustomDashboard from './pages/CustomDashboard';
 import Dashboard from './pages/Dashboard';
 import DataImportExport from './pages/DataImportExport';
+import DataImportExportHub from './pages/DataImportExportHub';
 import DeveloperDocumentation from './pages/DeveloperDocumentation';
+import DocumentGeneration from './pages/DocumentGeneration';
+import DocumentLibrary from './pages/DocumentLibrary';
+import DocumentManagement from './pages/DocumentManagement';
 import Documents from './pages/Documents';
 import ElsterIntegration from './pages/ElsterIntegration';
 import EmailTemplates from './pages/EmailTemplates';
 import FinAPICallback from './pages/FinAPICallback';
+import FinancialForecasting from './pages/FinancialForecasting';
 import FinancialItems from './pages/FinancialItems';
 import Finanzen from './pages/Finanzen';
 import GeneratedBookings from './pages/GeneratedBookings';
+import GlobalSettings from './pages/GlobalSettings';
+import HelpCenter from './pages/HelpCenter';
 import HilfeCenter from './pages/HilfeCenter';
+import InsuranceManagement from './pages/InsuranceManagement';
+import IntegrationHub from './pages/IntegrationHub';
+import IntegrationMarketplace from './pages/IntegrationMarketplace';
+import InvoiceManagement from './pages/InvoiceManagement';
 import Invoices from './pages/Invoices';
 import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
 import Kommunikation from './pages/Kommunikation';
+import LeaseContracts from './pages/LeaseContracts';
+import MaintenanceManager from './pages/MaintenanceManager';
+import MarketAnalytics from './pages/MarketAnalytics';
+import MieterSelfServicePortal from './pages/MieterSelfServicePortal';
 import ModuleManagement from './pages/ModuleManagement';
 import MyAccount from './pages/MyAccount';
 import NotificationManagement from './pages/NotificationManagement';
 import Onboarding from './pages/Onboarding';
 import OperatingCosts from './pages/OperatingCosts';
+import OperatingCostsManagement from './pages/OperatingCostsManagement';
 import PackageManager from './pages/PackageManager';
 import Payments from './pages/Payments';
+import PerformanceMonitor from './pages/PerformanceMonitor';
 import PermissionDashboard from './pages/PermissionDashboard';
 import ProjectManagement from './pages/ProjectManagement';
 import PropertyPortfolio from './pages/PropertyPortfolio';
+import PropertyValuation from './pages/PropertyValuation';
+import ROIDashboard from './pages/ROIDashboard';
 import ReportGenerator from './pages/ReportGenerator';
 import ReportScheduling from './pages/ReportScheduling';
+import ReportsPage from './pages/ReportsPage';
 import RoleManagement from './pages/RoleManagement';
+import ScheduledTasks from './pages/ScheduledTasks';
+import SettingsPage from './pages/SettingsPage';
 import SuiteManagement from './pages/SuiteManagement';
+import SuppliersManagement from './pages/SuppliersManagement';
 import SupportCenter from './pages/SupportCenter';
+import SystemConfiguration from './pages/SystemConfiguration';
 import SystemHealth from './pages/SystemHealth';
+import TaskManagement from './pages/TaskManagement';
 import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
 import TaxForms from './pages/TaxForms';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
+import TaxManagement from './pages/TaxManagement';
+import TenantCommunication from './pages/TenantCommunication';
 import TenantPortal from './pages/TenantPortal';
+import Tenants from './pages/Tenants';
 import TesterOnboarding from './pages/TesterOnboarding';
 import TestingDashboard from './pages/TestingDashboard';
 import UnitDetail from './pages/UnitDetail';
+import UnitsManagement from './pages/UnitsManagement';
+import UserAudit from './pages/UserAudit';
 import UserDetail from './pages/UserDetail';
 import UserManagement from './pages/UserManagement';
 import UserSettings from './pages/UserSettings';
@@ -61,64 +100,34 @@ import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
-import Tenants from './pages/Tenants';
-import LeaseContracts from './pages/LeaseContracts';
-import InvoiceManagement from './pages/InvoiceManagement';
-import TaskManagement from './pages/TaskManagement';
-import DocumentManagement from './pages/DocumentManagement';
-import BankingManagement from './pages/BankingManagement';
-import OperatingCostsManagement from './pages/OperatingCostsManagement';
-import TaxManagement from './pages/TaxManagement';
-import AnalyticsPage from './pages/AnalyticsPage';
-import ReportsPage from './pages/ReportsPage';
-import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import UnitsManagement from './pages/UnitsManagement';
-import SuppliersManagement from './pages/SuppliersManagement';
-import SettingsPage from './pages/SettingsPage';
-import SystemConfiguration from './pages/SystemConfiguration';
-import IntegrationHub from './pages/IntegrationHub';
-import UserAudit from './pages/UserAudit';
-import PerformanceMonitor from './pages/PerformanceMonitor';
-import AutomationRules from './pages/AutomationRules';
-import ScheduledTasks from './pages/ScheduledTasks';
-import APILogs from './pages/APILogs';
-import AlertManagement from './pages/AlertManagement';
-import DocumentLibrary from './pages/DocumentLibrary';
-import CommunicationCenter from './pages/CommunicationCenter';
-import ComplianceAudit from './pages/ComplianceAudit';
-import ROIDashboard from './pages/ROIDashboard';
-import MarketAnalytics from './pages/MarketAnalytics';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
-import FinancialForecasting from './pages/FinancialForecasting';
-import TenantCommunication from './pages/TenantCommunication';
-import DocumentGeneration from './pages/DocumentGeneration';
-import InsuranceManagement from './pages/InsuranceManagement';
-import PropertyValuation from './pages/PropertyValuation';
-import MaintenanceManager from './pages/MaintenanceManager';
-import MieterSelfServicePortal from './pages/MieterSelfServicePortal';
-import GlobalSettings from './pages/GlobalSettings';
-import HelpCenter from './pages/HelpCenter';
-import DataImportExportHub from './pages/DataImportExportHub';
-import BackupRecovery from './pages/BackupRecovery';
-import IntegrationMarketplace from './pages/IntegrationMarketplace';
-import AuditLog from './pages/AuditLog';
+import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "APIKeyManagement": APIKeyManagement,
+    "APILogs": APILogs,
     "ActivityLogs": ActivityLogs,
     "AdminDashboard": AdminDashboard,
     "AdvancedAnalytics": AdvancedAnalytics,
     "AdvancedReportBuilder": AdvancedReportBuilder,
     "AdvancedSearch": AdvancedSearch,
+    "AlertManagement": AlertManagement,
     "Analytics": Analytics,
+    "AnalyticsPage": AnalyticsPage,
+    "AuditLog": AuditLog,
     "AuditReports": AuditReports,
+    "AutomationRules": AutomationRules,
+    "BackupRecovery": BackupRecovery,
     "BankAccounts": BankAccounts,
     "BankReconciliation": BankReconciliation,
+    "BankingManagement": BankingManagement,
     "BuildingDetail": BuildingDetail,
     "Buildings": Buildings,
     "BulkOperations": BulkOperations,
+    "CommunicationCenter": CommunicationCenter,
+    "ComplianceAudit": ComplianceAudit,
     "ComplianceCenter": ComplianceCenter,
     "ContractDetail": ContractDetail,
     "Contracts": Contracts,
@@ -126,42 +135,72 @@ export const PAGES = {
     "CustomDashboard": CustomDashboard,
     "Dashboard": Dashboard,
     "DataImportExport": DataImportExport,
+    "DataImportExportHub": DataImportExportHub,
     "DeveloperDocumentation": DeveloperDocumentation,
+    "DocumentGeneration": DocumentGeneration,
+    "DocumentLibrary": DocumentLibrary,
+    "DocumentManagement": DocumentManagement,
     "Documents": Documents,
     "ElsterIntegration": ElsterIntegration,
     "EmailTemplates": EmailTemplates,
     "FinAPICallback": FinAPICallback,
+    "FinancialForecasting": FinancialForecasting,
     "FinancialItems": FinancialItems,
     "Finanzen": Finanzen,
     "GeneratedBookings": GeneratedBookings,
+    "GlobalSettings": GlobalSettings,
+    "HelpCenter": HelpCenter,
     "HilfeCenter": HilfeCenter,
+    "InsuranceManagement": InsuranceManagement,
+    "IntegrationHub": IntegrationHub,
+    "IntegrationMarketplace": IntegrationMarketplace,
+    "InvoiceManagement": InvoiceManagement,
     "Invoices": Invoices,
     "KnowledgeManagementDashboard": KnowledgeManagementDashboard,
     "Kommunikation": Kommunikation,
+    "LeaseContracts": LeaseContracts,
+    "MaintenanceManager": MaintenanceManager,
+    "MarketAnalytics": MarketAnalytics,
+    "MieterSelfServicePortal": MieterSelfServicePortal,
     "ModuleManagement": ModuleManagement,
     "MyAccount": MyAccount,
     "NotificationManagement": NotificationManagement,
     "Onboarding": Onboarding,
     "OperatingCosts": OperatingCosts,
+    "OperatingCostsManagement": OperatingCostsManagement,
     "PackageManager": PackageManager,
     "Payments": Payments,
+    "PerformanceMonitor": PerformanceMonitor,
     "PermissionDashboard": PermissionDashboard,
     "ProjectManagement": ProjectManagement,
     "PropertyPortfolio": PropertyPortfolio,
+    "PropertyValuation": PropertyValuation,
+    "ROIDashboard": ROIDashboard,
     "ReportGenerator": ReportGenerator,
     "ReportScheduling": ReportScheduling,
+    "ReportsPage": ReportsPage,
     "RoleManagement": RoleManagement,
+    "ScheduledTasks": ScheduledTasks,
+    "SettingsPage": SettingsPage,
     "SuiteManagement": SuiteManagement,
+    "SuppliersManagement": SuppliersManagement,
     "SupportCenter": SupportCenter,
+    "SystemConfiguration": SystemConfiguration,
     "SystemHealth": SystemHealth,
+    "TaskManagement": TaskManagement,
     "Tasks": Tasks,
     "Tax": Tax,
     "TaxForms": TaxForms,
     "TaxLibraryManagement": TaxLibraryManagement,
+    "TaxManagement": TaxManagement,
+    "TenantCommunication": TenantCommunication,
     "TenantPortal": TenantPortal,
+    "Tenants": Tenants,
     "TesterOnboarding": TesterOnboarding,
     "TestingDashboard": TestingDashboard,
     "UnitDetail": UnitDetail,
+    "UnitsManagement": UnitsManagement,
+    "UserAudit": UserAudit,
     "UserDetail": UserDetail,
     "UserManagement": UserManagement,
     "UserSettings": UserSettings,
@@ -169,47 +208,8 @@ export const PAGES = {
     "WhatsAppSettings": WhatsAppSettings,
     "WhatsAppSetup": WhatsAppSetup,
     "WorkflowAutomation": WorkflowAutomation,
-    "Tenants": Tenants,
-    "LeaseContracts": LeaseContracts,
-    "InvoiceManagement": InvoiceManagement,
-    "TaskManagement": TaskManagement,
-    "DocumentManagement": DocumentManagement,
-    "BankingManagement": BankingManagement,
-    "OperatingCostsManagement": OperatingCostsManagement,
-    "TaxManagement": TaxManagement,
-    "AnalyticsPage": AnalyticsPage,
-    "ReportsPage": ReportsPage,
-    "WorkflowAutomationPage": WorkflowAutomationPage,
-    "UnitsManagement": UnitsManagement,
-    "SuppliersManagement": SuppliersManagement,
-    "SettingsPage": SettingsPage,
-    "SystemConfiguration": SystemConfiguration,
-    "IntegrationHub": IntegrationHub,
-    "UserAudit": UserAudit,
-    "PerformanceMonitor": PerformanceMonitor,
-    "AutomationRules": AutomationRules,
-    "ScheduledTasks": ScheduledTasks,
-    "APILogs": APILogs,
-    "AlertManagement": AlertManagement,
-    "DocumentLibrary": DocumentLibrary,
-    "CommunicationCenter": CommunicationCenter,
-    "ComplianceAudit": ComplianceAudit,
-    "ROIDashboard": ROIDashboard,
-    "MarketAnalytics": MarketAnalytics,
     "WorkflowAutomationHub": WorkflowAutomationHub,
-    "FinancialForecasting": FinancialForecasting,
-    "TenantCommunication": TenantCommunication,
-    "DocumentGeneration": DocumentGeneration,
-    "InsuranceManagement": InsuranceManagement,
-    "PropertyValuation": PropertyValuation,
-    "MaintenanceManager": MaintenanceManager,
-    "MieterSelfServicePortal": MieterSelfServicePortal,
-    "GlobalSettings": GlobalSettings,
-    "HelpCenter": HelpCenter,
-    "DataImportExportHub": DataImportExportHub,
-    "BackupRecovery": BackupRecovery,
-    "IntegrationMarketplace": IntegrationMarketplace,
-    "AuditLog": AuditLog,
+    "WorkflowAutomationPage": WorkflowAutomationPage,
 }
 
 export const pagesConfig = {
