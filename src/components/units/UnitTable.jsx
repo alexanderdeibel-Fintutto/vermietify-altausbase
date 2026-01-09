@@ -19,11 +19,11 @@ export default function UnitTable({ units, onEdit, onDelete }) {
         <tbody>
           {units?.map((unit, idx) => (
             <tr key={idx} className="border-b border-slate-100 hover:bg-sky-50 transition-colors cursor-pointer" onClick={() => onEdit?.(unit)}>
-              <td className="px-6 py-4 text-sm font-medium text-slate-900 flex items-center gap-2"><Home className="w-4 h-4 text-sky-600" />{unit.name || `Wohnung ${idx + 1}`}</td>
+              <td className="px-6 py-4 text-sm font-medium text-slate-900 flex items-center gap-2"><Home className="w-4 h-4 text-sky-600" />{unit.unit_number || unit.name || `Wohnung ${idx + 1}`}</td>
               <td className="px-6 py-4 text-sm text-slate-700">{unit.building_name || '—'}</td>
-              <td className="px-6 py-4 text-sm text-slate-700">{unit.area || '—'} m²</td>
-              <td className="px-6 py-4 text-sm"><span className={`px-2 py-1 rounded-full text-xs font-medium ${unit.status === 'occupied' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{unit.status === 'occupied' ? 'Vermietet' : 'Leer'}</span></td>
-              <td className="px-6 py-4 text-sm font-medium text-slate-900">€{(unit.rent || 0).toFixed(2)}</td>
+              <td className="px-6 py-4 text-sm text-slate-700">{unit.sqm || unit.area || '—'} m² / {unit.rooms || '—'} Zi.</td>
+              <td className="px-6 py-4 text-sm"><span className={`px-2 py-1 rounded-full text-xs font-medium ${unit.status === 'occupied' ? 'bg-green-100 text-green-700' : unit.status === 'renovation' ? 'bg-orange-100 text-orange-700' : 'bg-yellow-100 text-yellow-700'}`}>{unit.status === 'occupied' ? 'Vermietet' : unit.status === 'renovation' ? 'Renovierung' : 'Verfügbar'}</span></td>
+              <td className="px-6 py-4 text-sm font-medium text-slate-900">€{(unit.base_rent || unit.rent || 0).toFixed(2)}</td>
               <td className="px-6 py-4 text-right flex gap-2 justify-end">
                 <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onEdit?.(unit); }}><Edit className="w-4 h-4 text-slate-600" /></Button>
                 <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onDelete?.(unit); }}><Trash2 className="w-4 h-4 text-red-600" /></Button>
