@@ -1,3 +1,4 @@
+import AITaxAdvisor from './pages/AITaxAdvisor';
 import AITaxRecommendations from './pages/AITaxRecommendations';
 import APIKeyManagement from './pages/APIKeyManagement';
 import APILogs from './pages/APILogs';
@@ -17,6 +18,7 @@ import AdvancedAnalytics from './pages/AdvancedAnalytics';
 import AdvancedReportBuilder from './pages/AdvancedReportBuilder';
 import AdvancedReporting from './pages/AdvancedReporting';
 import AdvancedSearch from './pages/AdvancedSearch';
+import AdvancedTaxReporting from './pages/AdvancedTaxReporting';
 import AlertManagement from './pages/AlertManagement';
 import Analytics from './pages/Analytics';
 import AnalyticsPage from './pages/AnalyticsPage';
@@ -34,6 +36,7 @@ import AnnualTaxReview from './pages/AnnualTaxReview';
 import AuditLog from './pages/AuditLog';
 import AuditReadinessAssessment from './pages/AuditReadinessAssessment';
 import AuditReports from './pages/AuditReports';
+import AutomatedTaxFormGenerator from './pages/AutomatedTaxFormGenerator';
 import AutomationRules from './pages/AutomationRules';
 import BackupRecovery from './pages/BackupRecovery';
 import BankAccounts from './pages/BankAccounts';
@@ -57,6 +60,7 @@ import ConsolidatedTaxSummary from './pages/ConsolidatedTaxSummary';
 import ContractDetail from './pages/ContractDetail';
 import Contracts from './pages/Contracts';
 import CostTypes from './pages/CostTypes';
+import CrossBorderTaxDashboard from './pages/CrossBorderTaxDashboard';
 import CustomDashboard from './pages/CustomDashboard';
 import DACHComplianceChecklist from './pages/DACHComplianceChecklist';
 import DACHTaxComparison from './pages/DACHTaxComparison';
@@ -125,6 +129,7 @@ import PackageTestPage from './pages/PackageTestPage';
 import Payments from './pages/Payments';
 import PerformanceMonitor from './pages/PerformanceMonitor';
 import PermissionDashboard from './pages/PermissionDashboard';
+import PersonalizedTaxCockpit from './pages/PersonalizedTaxCockpit';
 import ProjectManagement from './pages/ProjectManagement';
 import PropertyPortfolio from './pages/PropertyPortfolio';
 import PropertyValuation from './pages/PropertyValuation';
@@ -164,6 +169,7 @@ import TaxAutomationCenter from './pages/TaxAutomationCenter';
 import TaxBracketCalculator from './pages/TaxBracketCalculator';
 import TaxCalendarAndTimeline from './pages/TaxCalendarAndTimeline';
 import TaxComplianceChecker from './pages/TaxComplianceChecker';
+import TaxComplianceDashboard from './pages/TaxComplianceDashboard';
 import TaxComplianceTracker from './pages/TaxComplianceTracker';
 import TaxCreditsAndIncentives from './pages/TaxCreditsAndIncentives';
 import TaxDashboard from './pages/TaxDashboard';
@@ -206,6 +212,7 @@ import TaxScenarioSimulator from './pages/TaxScenarioSimulator';
 import TaxSetup from './pages/TaxSetup';
 import TaxSetupWizard from './pages/TaxSetupWizard';
 import TaxStrategyAdvisor from './pages/TaxStrategyAdvisor';
+import TaxTreatyExplorer from './pages/TaxTreatyExplorer';
 import TaxYearClosingChecklist from './pages/TaxYearClosingChecklist';
 import TaxYearPlannerPage from './pages/TaxYearPlannerPage';
 import TenantCommunication from './pages/TenantCommunication';
@@ -242,17 +249,12 @@ import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import TaxComplianceDashboard from './pages/TaxComplianceDashboard';
-import TaxTreatyExplorer from './pages/TaxTreatyExplorer';
-import AdvancedTaxReporting from './pages/AdvancedTaxReporting';
-import CrossBorderTaxDashboard from './pages/CrossBorderTaxDashboard';
-import PersonalizedTaxCockpit from './pages/PersonalizedTaxCockpit';
-import AITaxAdvisor from './pages/AITaxAdvisor';
-import AutomatedTaxFormGenerator from './pages/AutomatedTaxFormGenerator';
+import TaxRuleAdmin from './pages/TaxRuleAdmin';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AITaxAdvisor": AITaxAdvisor,
     "AITaxRecommendations": AITaxRecommendations,
     "APIKeyManagement": APIKeyManagement,
     "APILogs": APILogs,
@@ -272,6 +274,7 @@ export const PAGES = {
     "AdvancedReportBuilder": AdvancedReportBuilder,
     "AdvancedReporting": AdvancedReporting,
     "AdvancedSearch": AdvancedSearch,
+    "AdvancedTaxReporting": AdvancedTaxReporting,
     "AlertManagement": AlertManagement,
     "Analytics": Analytics,
     "AnalyticsPage": AnalyticsPage,
@@ -289,6 +292,7 @@ export const PAGES = {
     "AuditLog": AuditLog,
     "AuditReadinessAssessment": AuditReadinessAssessment,
     "AuditReports": AuditReports,
+    "AutomatedTaxFormGenerator": AutomatedTaxFormGenerator,
     "AutomationRules": AutomationRules,
     "BackupRecovery": BackupRecovery,
     "BankAccounts": BankAccounts,
@@ -312,6 +316,7 @@ export const PAGES = {
     "ContractDetail": ContractDetail,
     "Contracts": Contracts,
     "CostTypes": CostTypes,
+    "CrossBorderTaxDashboard": CrossBorderTaxDashboard,
     "CustomDashboard": CustomDashboard,
     "DACHComplianceChecklist": DACHComplianceChecklist,
     "DACHTaxComparison": DACHTaxComparison,
@@ -380,6 +385,7 @@ export const PAGES = {
     "Payments": Payments,
     "PerformanceMonitor": PerformanceMonitor,
     "PermissionDashboard": PermissionDashboard,
+    "PersonalizedTaxCockpit": PersonalizedTaxCockpit,
     "ProjectManagement": ProjectManagement,
     "PropertyPortfolio": PropertyPortfolio,
     "PropertyValuation": PropertyValuation,
@@ -419,6 +425,7 @@ export const PAGES = {
     "TaxBracketCalculator": TaxBracketCalculator,
     "TaxCalendarAndTimeline": TaxCalendarAndTimeline,
     "TaxComplianceChecker": TaxComplianceChecker,
+    "TaxComplianceDashboard": TaxComplianceDashboard,
     "TaxComplianceTracker": TaxComplianceTracker,
     "TaxCreditsAndIncentives": TaxCreditsAndIncentives,
     "TaxDashboard": TaxDashboard,
@@ -461,6 +468,7 @@ export const PAGES = {
     "TaxSetup": TaxSetup,
     "TaxSetupWizard": TaxSetupWizard,
     "TaxStrategyAdvisor": TaxStrategyAdvisor,
+    "TaxTreatyExplorer": TaxTreatyExplorer,
     "TaxYearClosingChecklist": TaxYearClosingChecklist,
     "TaxYearPlannerPage": TaxYearPlannerPage,
     "TenantCommunication": TenantCommunication,
@@ -497,13 +505,7 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "TaxComplianceDashboard": TaxComplianceDashboard,
-    "TaxTreatyExplorer": TaxTreatyExplorer,
-    "AdvancedTaxReporting": AdvancedTaxReporting,
-    "CrossBorderTaxDashboard": CrossBorderTaxDashboard,
-    "PersonalizedTaxCockpit": PersonalizedTaxCockpit,
-    "AITaxAdvisor": AITaxAdvisor,
-    "AutomatedTaxFormGenerator": AutomatedTaxFormGenerator,
+    "TaxRuleAdmin": TaxRuleAdmin,
 }
 
 export const pagesConfig = {
