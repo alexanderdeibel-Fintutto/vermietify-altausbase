@@ -264,6 +264,7 @@ import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import BudgetAnalysis from './pages/BudgetAnalysis';
 import TenantPortalDashboard from './pages/TenantPortalDashboard';
 import TenantDetail from './pages/TenantDetail';
+import TenantOnboarding from './pages/TenantOnboarding';
 import __Layout from './Layout.jsx';
 
 
@@ -534,6 +535,7 @@ export const PAGES = {
     "BudgetAnalysis": BudgetAnalysis,
     "TenantPortalDashboard": TenantPortalDashboard,
     "TenantDetail": TenantDetail,
+    "TenantOnboarding": TenantOnboarding,
 }
 
 export const pagesConfig = {
