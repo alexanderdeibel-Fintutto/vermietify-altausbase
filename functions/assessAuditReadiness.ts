@@ -9,62 +9,80 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { country, taxYear } = await req.json();
+    const { tax_year } = await req.json();
 
-    if (!country || !taxYear) {
-      return Response.json({ error: 'Missing parameters' }, { status: 400 });
-    }
+    const profile = (await base44.entities.TaxProfile.filter({ user_email: user.email }, '-updated_date', 1))[0];
+    const documents = await base44.entities.TaxDocument.filter({ user_email: user.email, tax_year });
+    const filings = await base44.entities.TaxFiling.filter({ user_email: user.email, tax_year });
+    const compliance = await base44.entities.TaxCompliance.filter({ user_email: user.email, tax_year });
 
-    // Fetch all relevant data
-    const [filings, documents, compliance, calculations, alerts] = await Promise.all([
-      base44.entities.TaxFiling.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
-      base44.entities.TaxDocument.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
-      base44.entities.TaxCompliance.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
-      base44.entities.TaxCalculation.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
-      base44.entities.TaxAlert.filter({ user_email: user.email, country }).catch(() => [])
-    ]);
-
+    // KI-basierte Audit-Readiness-Bewertung
     const assessment = await base44.integrations.Core.InvokeLLM({
-      prompt: `Assess audit readiness for ${country}, year ${taxYear}.
+      prompt: `Bewerte die Audit-Bereitschaft für ${user.email} (${tax_year}):
 
-Data:
-- Filings: ${filings.length}
-- Documents: ${documents.length}
-- Compliance items: ${compliance.length} (${compliance.filter(c => c.status === 'completed').length} completed)
-- Calculations filed: ${calculations.length}
-- Open alerts: ${alerts.filter(a => !a.is_resolved).length}
+PROFIL:
+- Typ: ${profile.profile_type}
+- Länder: ${profile.tax_jurisdictions.join(', ')}
+- Kryptowährungen: ${profile.has_crypto_assets}
+- Grenzüberschreitend: ${profile.cross_border_transactions}
 
-Provide comprehensive audit readiness assessment:
-1. Overall readiness score (0-100)
-2. Documentation completeness
-3. Record retention compliance
-4. Red flags and risk areas
-5. Critical gaps
-6. Preparation recommendations
-7. Timeline for improvement`,
+DOKUMENTATION:
+- Dokumente: ${documents.length}
+- Eingaben: ${filings.length}
+- Compliance-Items: ${compliance.length}
+
+PRÜFE AUF:
+1. Dokumentenvollständigkeit (90%+ = gut)
+2. Fehlerhafte/Widersprüchliche Daten
+3. Risikobereiche (Krypto, Beteiligungen, Grenzüberschreitend)
+4. Fehlende Begründungen
+5. Timing-Probleme
+6. Reportable Thresholds überschritten?
+
+GEBE ZURÜCK:
+- Audit Readiness Score (0-100)
+- Critical Issues (müssen vor Prüfung gelöst werden)
+- Dokumentenlücken (prioritätsgeordnet)
+- Rekommendierte Maßnahmen
+- Estimated Audit Risk (low/medium/high)`,
       response_json_schema: {
-        type: 'object',
+        type: "object",
         properties: {
-          readiness_score: { type: 'number' },
-          status: { type: 'string' },
-          documentation_score: { type: 'number' },
-          compliance_score: { type: 'number' },
-          record_retention_score: { type: 'number' },
-          red_flags: { type: 'array', items: { type: 'string' } },
-          critical_gaps: { type: 'array', items: { type: 'string' } },
-          audit_risk_level: { type: 'string' },
-          recommendations: { type: 'array', items: { type: 'string' } },
-          weeks_to_prepare: { type: 'number' }
+          readiness_score: { type: "number" },
+          risk_level: { type: "string", enum: ["low", "medium", "high"] },
+          critical_issues: { type: "array", items: { type: "string" } },
+          document_gaps: { type: "array", items: { type: "string" } },
+          high_risk_areas: { type: "array", items: { type: "string" } },
+          recommended_actions: { type: "array", items: { type: "string" } },
+          estimated_audit_probability: { type: "number" }
         }
       }
     });
 
+    // Als TaxAuditFile speichern
+    await base44.asServiceRole.entities.TaxAuditFile.create({
+      user_email: user.email,
+      country: profile.tax_jurisdictions[0],
+      tax_year,
+      audit_type: 'standard_audit',
+      audit_notice_date: new Date().toISOString().split('T')[0],
+      audit_scope: assessment.high_risk_areas || [],
+      supporting_documents: documents.map(d => ({
+        document_type: d.document_type,
+        file_url: d.file_url,
+        uploaded_date: d.uploaded_at
+      })),
+      readiness_score: assessment.readiness_score,
+      status: 'notice_received'
+    });
+
     return Response.json({
-      status: 'success',
+      user_email: user.email,
+      tax_year,
       assessment
     });
+
   } catch (error) {
-    console.error('Audit readiness error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

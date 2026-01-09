@@ -9,56 +9,56 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { country, income, deductions, payments, filingStatus } = await req.json();
+    const { country, year_to_date_income, capital_gains, crypto_gains } = await req.json();
 
-    if (!country || income === undefined) {
-      return Response.json({ error: 'Missing parameters' }, { status: 400 });
-    }
-
+    // KI-basierte Real-time Steuerberechnung
     const estimate = await base44.integrations.Core.InvokeLLM({
-      prompt: `Calculate real-time tax estimate for ${country}.
+      prompt: `Berechne die Steuerschuld für ${country} mit aktuellen ${new Date().getFullYear()} Daten:
 
-Current Situation:
-- Gross Income: €${Math.round(income)}
-- Deductions: €${Math.round(deductions || 0)}
-- Tax Payments Made: €${Math.round(payments || 0)}
-- Filing Status: ${filingStatus || 'Individual'}
+EINKOMMEN:
+- Laufendes Einkommen (YTD): $${year_to_date_income}
+- Kapitalerträge: $${capital_gains}
+- Kryptowährungen-Gewinne: $${crypto_gains}
 
-Provide:
-1. Current year tax liability estimate
-2. Remaining tax owed or refund due
-3. Quarterly payment requirement
-4. Safe harbor analysis
-5. Estimated vs actual comparison
-6. Withholding adjustment recommendations
-7. Refund/payment timeline
-8. Action items needed`,
+Länder-Spezifisch für ${country}:
+- Aktuelle Steuersätze
+- Sozialversicherung
+- Withholding-Taxes
+- Abzüge & Freibeträge
+- Estimated Quarterly Payments (falls relevant)
+
+Berechne:
+1. Federal/National Tax
+2. Lokale/Kantonal Taxes (falls zutreffend)
+3. Geschätzte Steuerschuld
+4. Empfohlene Q-Payments
+5. Eventuell fällige Strafzinsen
+6. Optimierungsmöglichkeiten`,
       response_json_schema: {
-        type: 'object',
+        type: "object",
         properties: {
-          estimated_tax_liability: { type: 'number' },
-          taxable_income: { type: 'number' },
-          effective_tax_rate: { type: 'number' },
-          taxes_paid_to_date: { type: 'number' },
-          remaining_liability: { type: 'number' },
-          quarterly_requirement: { type: 'number' },
-          estimated_refund: { type: 'number' },
-          action_items: { type: 'array', items: { type: 'string' } },
-          payment_schedule: { type: 'array', items: { type: 'string' } }
+          country: { type: "string" },
+          year_to_date_income: { type: "number" },
+          federal_tax: { type: "number" },
+          local_tax: { type: "number" },
+          total_estimated_tax: { type: "number" },
+          quarterly_payment_due: { type: "number" },
+          next_payment_date: { type: "string" },
+          penalty_if_underpaid: { type: "number" },
+          optimization_tips: { type: "array", items: { type: "string" } },
+          confidence_score: { type: "number" }
         }
       }
     });
 
     return Response.json({
-      status: 'success',
-      estimate: {
-        country,
-        generated_at: new Date().toISOString(),
-        content: estimate
-      }
+      user_email: user.email,
+      country,
+      calculated_at: new Date().toISOString(),
+      ...estimate
     });
+
   } catch (error) {
-    console.error('Calculate real-time tax estimate error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
