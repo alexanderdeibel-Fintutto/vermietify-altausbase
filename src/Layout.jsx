@@ -32,6 +32,7 @@ import { ThemeProvider } from '@/components/theme/ThemeProvider';
 export default function Layout({ children, currentPageName }) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const { hasModuleAccess, packageConfig } = usePackageAccess();
+    useActivityTracker(); // Track user activity for testers
     
     const { data: navigationState } = useQuery({
         queryKey: ['navigationState'],
