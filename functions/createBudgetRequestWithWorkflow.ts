@@ -19,6 +19,7 @@ Deno.serve(async (req) => {
             justification,
             start_date,
             end_date,
+            priority = 'medium',
             approver_emails
         } = await req.json();
 
@@ -33,6 +34,7 @@ Deno.serve(async (req) => {
             justification,
             start_date,
             end_date,
+            priority,
             status: 'submitted',
             created_at: new Date().toISOString()
         });
@@ -55,7 +57,7 @@ Deno.serve(async (req) => {
                 period: `${start_date} - ${end_date}`
             },
             status: 'pending',
-            priority: requested_amount > 10000 ? 'high' : 'medium',
+            priority: priority,
             created_at: new Date().toISOString(),
             deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
         });

@@ -21,7 +21,8 @@ export default function BudgetRequestForm({ onSuccess }) {
     requested_amount: '',
     justification: '',
     start_date: '',
-    end_date: ''
+    end_date: '',
+    priority: 'medium'
   });
 
   const handleAddApprover = () => {
@@ -53,6 +54,7 @@ export default function BudgetRequestForm({ onSuccess }) {
         justification: formData.justification,
         start_date: formData.start_date,
         end_date: formData.end_date,
+        priority: formData.priority,
         approver_emails: approvers
       });
 
@@ -64,7 +66,8 @@ export default function BudgetRequestForm({ onSuccess }) {
         requested_amount: '',
         justification: '',
         start_date: '',
-        end_date: ''
+        end_date: '',
+        priority: 'medium'
       });
       setApprovers([]);
       onSuccess?.();
@@ -100,8 +103,8 @@ export default function BudgetRequestForm({ onSuccess }) {
               />
             </div>
 
-            {/* Category & Amount */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Category, Amount & Priority */}
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label className="text-sm">Kategorie *</Label>
                 <select
@@ -125,6 +128,18 @@ export default function BudgetRequestForm({ onSuccess }) {
                   placeholder="0.00"
                   className="mt-1"
                 />
+              </div>
+              <div>
+                <Label className="text-sm">Priorität</Label>
+                <select
+                  value={formData.priority}
+                  onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                  className="w-full mt-1 border border-slate-200 rounded px-3 py-2 text-sm"
+                >
+                  <option value="low">Niedrig</option>
+                  <option value="medium">Mittel</option>
+                  <option value="high">Hoch</option>
+                </select>
               </div>
             </div>
 
