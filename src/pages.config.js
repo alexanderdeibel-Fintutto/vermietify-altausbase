@@ -247,6 +247,8 @@ import TaxTreatyExplorer from './pages/TaxTreatyExplorer';
 import AdvancedTaxReporting from './pages/AdvancedTaxReporting';
 import CrossBorderTaxDashboard from './pages/CrossBorderTaxDashboard';
 import PersonalizedTaxCockpit from './pages/PersonalizedTaxCockpit';
+import AITaxAdvisor from './pages/AITaxAdvisor';
+import AutomatedTaxFormGenerator from './pages/AutomatedTaxFormGenerator';
 import __Layout from './Layout.jsx';
 
 
@@ -500,6 +502,8 @@ export const PAGES = {
     "AdvancedTaxReporting": AdvancedTaxReporting,
     "CrossBorderTaxDashboard": CrossBorderTaxDashboard,
     "PersonalizedTaxCockpit": PersonalizedTaxCockpit,
+    "AITaxAdvisor": AITaxAdvisor,
+    "AutomatedTaxFormGenerator": AutomatedTaxFormGenerator,
 }
 
 export const pagesConfig = {
