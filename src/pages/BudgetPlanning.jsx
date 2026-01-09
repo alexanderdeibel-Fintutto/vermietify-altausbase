@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import RollingBudgetManager from '@/components/budget/RollingBudgetManager';
 import BudgetScenarioBuilder from '@/components/budget/BudgetScenarioBuilder';
+import ScenarioComparison from '@/components/budget/ScenarioComparison';
 
 export default function BudgetPlanning() {
   const [selectedBudgetId, setSelectedBudgetId] = useState(null);
@@ -17,9 +18,10 @@ export default function BudgetPlanning() {
       </div>
 
       <Tabs defaultValue="budgets" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="budgets">Rollierende Budgets</TabsTrigger>
           <TabsTrigger value="scenarios" disabled={!selectedBudgetId}>Szenarien</TabsTrigger>
+          <TabsTrigger value="comparison" disabled={!selectedBudgetId}>Vergleich</TabsTrigger>
         </TabsList>
 
         <TabsContent value="budgets" className="mt-4">
@@ -48,6 +50,20 @@ export default function BudgetPlanning() {
               <CardContent className="pt-4 text-center">
                 <p className="text-sm text-slate-600">
                   Wählen Sie ein Budget, um Szenarien zu erstellen
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="comparison" className="mt-4">
+          {selectedBudgetId ? (
+            <ScenarioComparison budgetId={selectedBudgetId} />
+          ) : (
+            <Card className="bg-slate-50">
+              <CardContent className="pt-4 text-center">
+                <p className="text-sm text-slate-600">
+                  Wählen Sie ein Budget, um Szenarien zu vergleichen
                 </p>
               </CardContent>
             </Card>

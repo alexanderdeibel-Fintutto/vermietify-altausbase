@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Loader2, Plus, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function RollingBudgetManager() {
+export default function RollingBudgetManager({ onBudgetSelect }) {
   const [showDialog, setShowDialog] = useState(false);
   const [editingBudget, setEditingBudget] = useState(null);
   const [formData, setFormData] = useState({
@@ -200,7 +200,11 @@ export default function RollingBudgetManager() {
       ) : budgets && budgets.length > 0 ? (
         <div className="space-y-3">
           {budgets.map(budget => (
-            <Card key={budget.id}>
+            <Card
+              key={budget.id}
+              className="cursor-pointer hover:border-blue-400 transition"
+              onClick={() => onBudgetSelect?.(budget.id)}
+            >
               <CardContent className="pt-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
