@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import UserRoleManager from '@/components/admin/UserRoleManager';
 import DepartmentManager from '@/components/admin/DepartmentManager';
 import UserAuditLogViewer from '@/components/admin/UserAuditLogViewer';
+import UserPermissionsMatrix from '@/components/admin/UserPermissionsMatrix';
 
 export default function AdminUserManagement() {
   return (
@@ -16,9 +17,10 @@ export default function AdminUserManagement() {
       </div>
 
       <Tabs defaultValue="roles" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="roles">Rollen & Berechtigungen</TabsTrigger>
           <TabsTrigger value="departments">Teams & Abteilungen</TabsTrigger>
+          <TabsTrigger value="matrix">Berechtigungsmatrix</TabsTrigger>
           <TabsTrigger value="audit">Audit-Log</TabsTrigger>
         </TabsList>
 
@@ -40,6 +42,17 @@ export default function AdminUserManagement() {
             </CardHeader>
             <CardContent>
               <DepartmentManager />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="matrix" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Benutzer-Rollen-Berechtigungen Matrix</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <UserPermissionsMatrix />
             </CardContent>
           </Card>
         </TabsContent>
