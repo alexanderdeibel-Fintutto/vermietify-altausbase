@@ -188,6 +188,8 @@ import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import AnlageE1cPage from './pages/AnlageE1cPage';
+import TaxExportHub from './pages/TaxExportHub';
+import AITaxRecommendations from './pages/AITaxRecommendations';
 import __Layout from './Layout.jsx';
 
 
@@ -382,6 +384,8 @@ export const PAGES = {
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "AnlageE1cPage": AnlageE1cPage,
+    "TaxExportHub": TaxExportHub,
+    "AITaxRecommendations": AITaxRecommendations,
 }
 
 export const pagesConfig = {
