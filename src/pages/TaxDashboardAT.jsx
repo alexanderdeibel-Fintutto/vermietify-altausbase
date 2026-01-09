@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import TaxOptimizationPanel from '@/components/tax/TaxOptimizationPanel';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -96,6 +97,8 @@ export default function TaxDashboardAT() {
           </div>
         </CardContent>
       </Card>
+
+      <TaxOptimizationPanel country="AT" taxYear={taxYear} />
 
       <div className="flex gap-2">
         <Button 

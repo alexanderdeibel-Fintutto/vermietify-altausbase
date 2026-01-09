@@ -7,6 +7,7 @@ import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { toast } from 'sonner';
+import TaxOptimizationPanel from '@/components/tax/TaxOptimizationPanel';
 
 const CURRENT_YEAR = new Date().getFullYear();
 const SWISS_CANTONS = { ZH: 'Zürich', BE: 'Bern', LU: 'Luzern', AG: 'Aargau', SG: 'Sankt Gallen', VS: 'Wallis', VD: 'Waadt', TI: 'Tessin', GE: 'Genf', BS: 'Basel-Stadt' };
@@ -96,6 +97,8 @@ export default function TaxDashboardCH() {
               </div>
             </CardContent>
           </Card>
+
+          <TaxOptimizationPanel country="CH" taxYear={taxYear} canton={canton} />
 
           <div className="flex gap-2">
             <Button 
