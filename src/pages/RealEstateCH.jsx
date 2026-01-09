@@ -1,148 +1,171 @@
 import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Plus, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Plus, Trash2, Edit2 } from 'lucide-react';
 
 const CURRENT_YEAR = new Date().getFullYear();
-const SWISS_CANTONS = { ZH: 'Zürich', BE: 'Bern', LU: 'Luzern', AG: 'Aargau', SG: 'Sankt Gallen', VS: 'Wallis', VD: 'Waadt', TI: 'Tessin', GE: 'Genf', BS: 'Basel-Stadt' };
+const CANTONS = ['ZH', 'BE', 'LU', 'AG', 'SG', 'BS', 'BL', 'VD', 'GE', 'VS', 'NE', 'JU', 'SO', 'SH', 'TG', 'TI', 'GR', 'AR', 'AI', 'GL', 'OW', 'NW', 'UR', 'ZG'];
 
 export default function RealEstateCH() {
   const [taxYear, setTaxYear] = useState(CURRENT_YEAR);
-  const [canton, setCanton] = useState('');
+  const [canton, setCanton] = useState('ZH');
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    property_type: 'eigenheim',
-    address: '',
-    municipality: '',
-    acquisition_price: 0,
-    current_market_value: 0,
-    rental_income: 0,
-    is_primary_residence: true
-  });
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState({});
 
   const queryClient = useQueryClient();
 
   const { data: properties = [] } = useQuery({
-    queryKey: ['realEstateCH', taxYear, canton],
-    queryFn: () => canton ? base44.entities.RealEstateCH.filter({ tax_year: taxYear, canton }) || [] : [],
+    queryKey: ['realEstatesCH', taxYear, canton],
+    queryFn: () => base44.entities.RealEstateCH.filter({ tax_year: taxYear, canton }) || [],
     enabled: !!canton
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.RealEstateCH.create({
-      ...data,
-      tax_year: taxYear,
-      canton: canton,
-      acquisition_price: Number(data.acquisition_price),
-      current_market_value: Number(data.current_market_value),
-      rental_income: Number(data.rental_income)
-    }),
+    mutationFn: (data) => base44.entities.RealEstateCH.create({ ...data, tax_year: taxYear, canton }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['realEstateCH'] });
+      queryClient.invalidateQueries({ queryKey: ['realEstatesCH', taxYear, canton] });
+      setFormData({});
       setShowForm(false);
-      toast.success('Liegenschaft hinzugefügt');
     }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.RealEstateCH.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['realEstateCH'] })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['realEstatesCH', taxYear, canton] })
   });
 
-  const totalValue = properties.reduce((sum, p) => sum + p.current_market_value, 0);
-  const totalRental = properties.reduce((sum, p) => sum + (p.rental_income || 0), 0);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    createMutation.mutate(formData);
+  };
+
+  const totalValue = properties.reduce((s, p) => s + (p.current_market_value || 0), 0);
+  const totalMortgage = properties.reduce((s, p) => s + (p.mortgage_debt || 0), 0);
+  const totalRental = properties.reduce((s, p) => s + (p.rental_income || 0), 0);
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">🏠 Liegenschaften {taxYear}</h1>
-        <div className="w-40">
+        <div>
+          <h1 className="text-3xl font-bold">🏠 Liegenschaften Schweiz</h1>
+          <p className="text-slate-500 mt-1">Immobilien und Mieteinnahmen</p>
+        </div>
+        <div className="flex gap-2">
           <Select value={canton} onValueChange={setCanton}>
-            <SelectTrigger>
-              <SelectValue placeholder="Kanton..." />
+            <SelectTrigger className="w-32">
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {Object.entries(SWISS_CANTONS).map(([code, name]) => (
-                <SelectItem key={code} value={code}>{name}</SelectItem>
+              {CANTONS.map(c => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+          <Button onClick={() => { setShowForm(!showForm); setEditingId(null); setFormData({}); }} className="gap-2 bg-blue-600">
+            <Plus className="w-4 h-4" /> Hinzufügen
+          </Button>
         </div>
       </div>
 
-      {canton && (
-        <>
-          {showForm && (
-            <Card className="bg-blue-50 border-blue-200">
-              <CardContent className="pt-6 space-y-4">
-                <Input placeholder="Adresse" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
-                <Input placeholder="Gemeinde" value={formData.municipality} onChange={(e) => setFormData({ ...formData, municipality: e.target.value })} />
-                <Input placeholder="Kaufpreis CHF" type="number" value={formData.acquisition_price} onChange={(e) => setFormData({ ...formData, acquisition_price: e.target.value })} />
-                <Input placeholder="Marktwert CHF" type="number" value={formData.current_market_value} onChange={(e) => setFormData({ ...formData, current_market_value: e.target.value })} />
-                <Input placeholder="Mieteinnahmen CHF" type="number" value={formData.rental_income} onChange={(e) => setFormData({ ...formData, rental_income: e.target.value })} />
-                <div className="flex gap-2 justify-end pt-4 border-t">
-                  <Button variant="outline" onClick={() => setShowForm(false)}>Abbrechen</Button>
-                  <Button onClick={() => createMutation.mutate(formData)}>Speichern</Button>
+      {/* Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-slate-600">Marktwert</p>
+            <p className="text-3xl font-bold mt-2 text-blue-600">CHF {totalValue.toLocaleString('de-CH')}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-slate-600">Hypothekarschuld</p>
+            <p className="text-3xl font-bold mt-2 text-red-600">CHF {totalMortgage.toLocaleString('de-CH')}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-slate-600">Mieteinnahmen</p>
+            <p className="text-3xl font-bold mt-2 text-green-600">CHF {totalRental.toLocaleString('de-CH')}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Form */}
+      {showForm && (
+        <Card className="bg-blue-50 border-2 border-blue-300">
+          <CardHeader>
+            <CardTitle>Neue Liegenschaft hinzufügen</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  placeholder="Objektbezeichnung"
+                  value={formData.title || ''}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  required
+                />
+                <Input placeholder="Adresse" value={formData.address || ''} onChange={(e) => setFormData({ ...formData, address: e.target.value })} required />
+                <Input placeholder="Gemeinde" value={formData.municipality || ''} onChange={(e) => setFormData({ ...formData, municipality: e.target.value })} />
+                <Input type="number" placeholder="Marktwert CHF" value={formData.current_market_value || ''} onChange={(e) => setFormData({ ...formData, current_market_value: Number(e.target.value) })} required />
+                <Input type="number" placeholder="Hypothekarschuld CHF" value={formData.mortgage_debt || ''} onChange={(e) => setFormData({ ...formData, mortgage_debt: Number(e.target.value) })} />
+                <Input type="number" placeholder="Mieteinnahmen CHF" value={formData.rental_income || ''} onChange={(e) => setFormData({ ...formData, rental_income: Number(e.target.value) })} />
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={formData.is_primary_residence || false}
+                  onChange={(e) => setFormData({ ...formData, is_primary_residence: e.target.checked })}
+                />
+                <label className="text-sm">Hauptwohnsitz (Eigennutzung)</label>
+              </div>
+              <div className="flex gap-2">
+                <Button type="submit" className="flex-1 bg-green-600">Speichern</Button>
+                <Button type="button" variant="outline" className="flex-1" onClick={() => { setShowForm(false); setFormData({}); }}>Abbrechen</Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* List */}
+      <div className="space-y-2">
+        {properties.length > 0 ? (
+          properties.map(prop => (
+            <Card key={prop.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="pt-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-bold">{prop.title}</h3>
+                    <p className="text-sm text-slate-600">{prop.address} • {prop.municipality}</p>
+                    {prop.is_primary_residence && <Badge className="mt-2 bg-blue-100 text-blue-800">Hauptwohnsitz</Badge>}
+                  </div>
+                  <div className="text-right mr-4">
+                    <p className="text-sm text-slate-600">Marktwert</p>
+                    <p className="text-lg font-bold">CHF {(prop.current_market_value || 0).toLocaleString('de-CH')}</p>
+                    <p className="text-xs text-slate-500">Schuld: CHF {(prop.mortgage_debt || 0).toLocaleString('de-CH')}</p>
+                  </div>
+                  <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(prop.id)} className="text-red-600">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
-          )}
-
-          <div className="flex gap-2">
-            <Card className="flex-1 bg-gradient-to-br from-slate-50 to-blue-50">
-              <CardContent className="pt-6">
-                <p className="text-sm text-slate-600">Gesamtwert</p>
-                <p className="text-2xl font-bold">CHF {totalValue.toFixed(0)}</p>
-              </CardContent>
-            </Card>
-            <Card className="flex-1 bg-gradient-to-br from-slate-50 to-green-50">
-              <CardContent className="pt-6">
-                <p className="text-sm text-slate-600">Mieteinnahmen</p>
-                <p className="text-2xl font-bold">CHF {totalRental.toFixed(0)}</p>
-              </CardContent>
-            </Card>
-            <Button onClick={() => setShowForm(!showForm)} className="gap-2">
-              <Plus className="w-4 h-4" /> Hinzufügen
-            </Button>
-          </div>
-
+          ))
+        ) : (
           <Card>
-            <CardHeader>
-              <CardTitle>Liegenschaften ({properties.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {properties.length === 0 ? (
-                <p className="text-sm text-slate-500">Keine Liegenschaften</p>
-              ) : (
-                <div className="space-y-2">
-                  {properties.map(p => (
-                    <div key={p.id} className="flex items-center justify-between p-3 border rounded">
-                      <div className="flex-1">
-                        <p className="font-medium">{p.title}</p>
-                        <p className="text-xs text-slate-500">{p.address}</p>
-                      </div>
-                      <div className="text-right mr-4">
-                        <p className="font-bold">CHF {p.current_market_value.toFixed(0)}</p>
-                        <p className="text-xs text-slate-500">Miete: CHF {(p.rental_income || 0).toFixed(0)}</p>
-                      </div>
-                      <Button size="sm" variant="ghost" onClick={() => deleteMutation.mutate(p.id)} className="text-red-600">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <CardContent className="pt-6 text-center text-slate-600">
+              Keine Liegenschaften erfasst
             </CardContent>
           </Card>
-        </>
-      )}
+        )}
+      </div>
     </div>
   );
 }
