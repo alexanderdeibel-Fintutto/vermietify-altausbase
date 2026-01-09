@@ -4,6 +4,8 @@ import OnboardingProgress from '@/components/navigation/OnboardingProgress';
 import TesterDashboardWidget from '@/components/testing/TesterDashboardWidget';
 import UnlockProgressTracker from '@/components/navigation/UnlockProgressTracker';
 import FeatureDiscoveryPanel from '@/components/navigation/FeatureDiscoveryPanel';
+import NewFeaturesWidget from '@/components/dashboard/NewFeaturesWidget';
+import NavigationRoadmap from '@/components/navigation/NavigationRoadmap';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import QuickStats from '@/components/shared/QuickStats';
