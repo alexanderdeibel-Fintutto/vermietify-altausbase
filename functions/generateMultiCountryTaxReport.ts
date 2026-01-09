@@ -9,64 +9,137 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { countries = ['AT', 'CH', 'DE'], taxYear } = await req.json();
+    const { tax_year, jurisdictions } = await req.json();
 
-    if (!taxYear) {
-      return Response.json({ error: 'Missing taxYear' }, { status: 400 });
+    // Profil laden
+    const profiles = await base44.entities.TaxProfile.filter({
+      user_email: user.email
+    }, '-updated_date', 1);
+
+    if (!profiles.length) {
+      return Response.json({ error: 'Steuerprofil nicht gefunden' }, { status: 404 });
     }
 
-    // Fetch data for each country
-    const countryData = await Promise.all(
-      countries.map(async (country) => {
-        const filings = await base44.entities.TaxFiling.filter({ country, tax_year: taxYear }).catch(() => []);
-        const calculations = await base44.entities.TaxCalculation.filter({ country, tax_year: taxYear }).catch(() => []);
-        
-        return {
-          country,
-          filing_count: filings.length,
-          total_tax: calculations.reduce((sum, c) => sum + (c.total_tax || 0), 0)
-        };
-      })
-    );
+    const profile = profiles[0];
+    const countries = jurisdictions || profile.tax_jurisdictions;
 
-    const report = await base44.integrations.Core.InvokeLLM({
-      prompt: `Create comprehensive multi-country tax report for ${countries.join(', ')}, year ${taxYear}.
+    // Pro Land Daten aggregieren
+    const countryReports = {};
 
-Data per country:
-${JSON.stringify(countryData, null, 2)}
+    for (const country of countries) {
+      // Einkünfte pro Land
+      const incomes = await base44.asServiceRole.entities.OtherIncome.filter({
+        user_email: user.email,
+        tax_year: tax_year
+      });
 
-Generate report with:
-1. Summary by country
-2. Comparative analysis
-3. Optimization opportunities across countries
-4. Compliance status per jurisdiction
-5. Action items
-6. Risk assessment`,
+      // Vermögen pro Land
+      const assets = await base44.asServiceRole.entities.Investment.filter({
+        user_email: user.email
+      });
+
+      // Grenzüberschreitende Transaktionen
+      const crossBorder = await base44.asServiceRole.entities.CrossBorderTransaction.filter({
+        user_email: user.email,
+        tax_year: tax_year
+      });
+
+      const countryTransactions = crossBorder.filter(
+        tx => tx.destination_country === country || tx.source_country === country
+      );
+
+      // Berechnung pro Land
+      const totalIncome = incomes.reduce((sum, inc) => sum + (inc.amount || 0), 0);
+      const totalAssets = assets.reduce((sum, ast) => sum + (ast.current_value || 0), 0);
+      const crossBorderIncome = countryTransactions
+        .filter(tx => tx.destination_country === country)
+        .reduce((sum, tx) => sum + (tx.amount || 0), 0);
+
+      countryReports[country] = {
+        country,
+        tax_year,
+        total_income: totalIncome,
+        cross_border_income: crossBorderIncome,
+        total_assets: totalAssets,
+        estimated_tax: totalIncome * 0.25, // Vereinfachte Schätzung
+        filing_deadline: getFilingDeadline(country, tax_year),
+        required_forms: getRequiredForms(country, profile),
+        withholding_requirements: checkWithholdingRequirements(country, profile)
+      };
+    }
+
+    // KI-gestützte Multi-Country Optimierung
+    const optimization = await base44.integrations.Core.InvokeLLM({
+      prompt: `Du bist ein internationaler Steuerplaner. Analysiere folgende Multi-Country Steuersituation und identifiziere Optimierungspotenziale:
+
+Länder: ${countries.join(', ')}
+Steuerjahr: ${tax_year}
+Profil: ${profile.profile_type}
+Geschäftsanteile: ${profile.number_of_companies}
+Immobilien: ${profile.number_of_properties}
+
+Länderreports:
+${JSON.stringify(countryReports, null, 2)}
+
+Gib konkrete, grenzüberschreitende Optimierungsvorschläge mit Sparquoten an.`,
       response_json_schema: {
-        type: 'object',
+        type: "object",
         properties: {
-          report_title: { type: 'string' },
-          summary_by_country: { type: 'array', items: { type: 'object', additionalProperties: true } },
-          comparative_analysis: { type: 'string' },
-          optimization_opportunities: { type: 'array', items: { type: 'string' } },
-          compliance_summary: { type: 'object', additionalProperties: { type: 'string' } },
-          action_items: { type: 'array', items: { type: 'string' } },
-          risk_assessment: { type: 'string' }
+          treaty_opportunities: {
+            type: "array",
+            items: { type: "string" }
+          },
+          structural_recommendations: {
+            type: "array",
+            items: { type: "string" }
+          },
+          estimated_total_savings: {
+            type: "number"
+          }
         }
       }
     });
 
     return Response.json({
-      status: 'success',
-      report: {
-        countries,
-        tax_year: taxYear,
-        generated_at: new Date().toISOString(),
-        analysis: report
-      }
+      user_email: user.email,
+      tax_year,
+      countries: countries,
+      country_reports: countryReports,
+      optimization_recommendations: optimization,
+      generated_at: new Date().toISOString()
     });
+
   } catch (error) {
-    console.error('Generate multi-country report error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
+
+function getFilingDeadline(country, taxYear) {
+  const deadlines = {
+    'CH': `${taxYear + 1}-03-15`,
+    'DE': `${taxYear + 1}-05-31`,
+    'AT': `${taxYear + 1}-06-02`
+  };
+  return deadlines[country] || `${taxYear + 1}-12-31`;
+}
+
+function getRequiredForms(country, profile) {
+  const forms = {
+    'CH': ['Steuererklärung', 'Anlage Kapitalerträge', profile.number_of_companies > 0 ? 'Anlage Beteiligungen' : null],
+    'DE': ['Anlage V', 'Anlage KAP', 'Anlage SO', profile.number_of_companies > 0 ? 'Anlage G' : null],
+    'AT': ['Einkommensteuer', 'Anlage E', profile.number_of_companies > 0 ? 'Anlage G' : null]
+  };
+  return (forms[country] || []).filter(Boolean);
+}
+
+function checkWithholdingRequirements(country, profile) {
+  if (!profile.cross_border_transactions) return null;
+  
+  return {
+    country,
+    crs_required: true,
+    fatca_required: country !== 'AT' && country !== 'CH',
+    treaty_reduction: true,
+    documentation_required: true
+  };
+}
