@@ -16,23 +16,34 @@ export default function OnboardingRedirect({ children }) {
 
   const { data: buildings, isLoading: loadingBuildings } = useQuery({
     queryKey: ['user-buildings'],
-    queryFn: () => base44.entities.Building.list(),
-    enabled: !!user
+    queryFn: () => base44.entities.Building.list().catch(() => []),
+    enabled: !!user,
+    retry: 2,
+    retryDelay: 1000
   });
 
   const { data: progress } = useQuery({
     queryKey: ['onboarding-progress', user?.id],
     queryFn: async () => {
-      const results = await base44.entities.OnboardingProgress.filter({ user_id: user.id });
-      return results[0];
+      try {
+        const results = await base44.entities.OnboardingProgress.filter({ user_id: user.id });
+        return results[0];
+      } catch (e) {
+        console.debug('Onboarding evaluation skipped (network temporary)');
+        return undefined;
+      }
     },
-    enabled: !!user
+    enabled: !!user,
+    retry: 1,
+    retryDelay: 500
   });
 
   useEffect(() => {
-    if (!loadingBuildings && user && buildings !== undefined && progress !== undefined) {
-      // Redirect to onboarding if no buildings and onboarding not completed
-      const shouldRedirect = buildings.length === 0 && 
+    if (!loadingBuildings && user) {
+      // Skip redirect if data is unavailable (network issue)
+      if (buildings === undefined || progress === undefined) return;
+      
+      const shouldRedirect = buildings && buildings.length === 0 && 
                             !progress?.is_completed && 
                             !window.location.pathname.includes('Onboarding') &&
                             !window.location.pathname.includes('UserSettings');

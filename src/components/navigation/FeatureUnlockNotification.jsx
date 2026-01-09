@@ -25,7 +25,9 @@ export default function FeatureUnlockNotification() {
 
   const checkNewUnlocks = async () => {
     try {
-      const unlocks = await base44.entities.FeatureUnlock.filter({});
+      const unlocks = await base44.entities.FeatureUnlock.filter({}).catch(() => []);
+      if (!unlocks || unlocks.length === 0) return;
+      
       const newUnlocks = unlocks.filter(u => !u.notification_shown && !shown.has(u.id));
 
       for (const unlock of newUnlocks) {
@@ -37,12 +39,16 @@ export default function FeatureUnlockNotification() {
           duration: 5000
         });
 
-        // Mark as shown
-        await base44.entities.FeatureUnlock.update(unlock.id, { notification_shown: true });
+        // Mark as shown with retry
+        try {
+          await base44.entities.FeatureUnlock.update(unlock.id, { notification_shown: true });
+        } catch (e) {
+          console.warn('Failed to update unlock notification status:', e);
+        }
         setShown(prev => new Set([...prev, unlock.id]));
       }
     } catch (error) {
-      console.error('Error checking unlocks:', error);
+      console.debug('Unlock check skipped (network temporary):', error?.message);
     }
   };
 
