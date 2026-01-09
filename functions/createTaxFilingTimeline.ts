@@ -15,28 +15,29 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
-    // Fetch deadlines
-    const deadlines = await base44.entities.TaxDeadline.filter({
-      country,
-      tax_year: taxYear,
-      is_active: true
-    }, '-deadline_date') || [];
+    // Fetch filing and compliance data
+    const [filing, compliance, documents, deadlines] = await Promise.all([
+      base44.entities.TaxFiling.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
+      base44.entities.TaxCompliance.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
+      base44.entities.TaxDocument.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
+      base44.entities.TaxDeadline.filter({ country }).catch(() => [])
+    ]);
 
     const timeline = await base44.integrations.Core.InvokeLLM({
-      prompt: `Create a filing timeline for ${country} taxpayer, tax year ${taxYear}.
+      prompt: `Create a detailed filing timeline for ${country} tax year ${taxYear}.
 
-Deadlines Found: ${deadlines.length}
-${deadlines.slice(0, 5).map(d => `- ${d.title}: ${d.deadline_date}`).join('\n')}
+Current Status:
+- Filing Status: ${filing.length > 0 ? filing[0].status : 'Not started'}
+- Compliance Items: ${compliance.length}
+- Documents: ${documents.length}
 
-Generate:
-1. Chronological filing schedule
-2. Preparation phases with timelines
-3. Document collection milestones
-4. Filing coordination steps
+Generate timeline with:
+1. Key filing milestones
+2. Document preparation phases
+3. Review & correction periods
+4. Submission deadlines
 5. Post-filing actions
-6. Buffer time recommendations
-7. Critical dates highlighting
-8. Contingency dates if missed`,
+6. Estimated timeline in weeks`,
       response_json_schema: {
         type: 'object',
         properties: {
@@ -46,16 +47,17 @@ Generate:
               type: 'object',
               properties: {
                 phase: { type: 'string' },
-                start_date: { type: 'string' },
-                end_date: { type: 'string' },
+                start_week: { type: 'number' },
+                end_week: { type: 'number' },
                 tasks: { type: 'array', items: { type: 'string' } },
-                priority: { type: 'string' }
+                critical: { type: 'boolean' }
               }
             }
           },
-          critical_dates: { type: 'array', items: { type: 'string' } },
-          buffer_days: { type: 'number' },
-          contingencies: { type: 'array', items: { type: 'string' } }
+          total_weeks: { type: 'number' },
+          current_phase: { type: 'string' },
+          progress_percentage: { type: 'number' },
+          milestones: { type: 'array', items: { type: 'string' } }
         }
       }
     });
@@ -65,13 +67,14 @@ Generate:
       timeline: {
         country,
         tax_year: taxYear,
-        generated_at: new Date().toISOString(),
-        deadlines_count: deadlines.length,
-        schedule: timeline
+        filing_data: filing,
+        compliance_items: compliance.length,
+        documents_collected: documents.length,
+        phases: timeline
       }
     });
   } catch (error) {
-    console.error('Create timeline error:', error);
+    console.error('Create filing timeline error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
