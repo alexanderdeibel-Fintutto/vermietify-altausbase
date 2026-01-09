@@ -7,6 +7,50 @@ import { Badge } from "@/components/ui/badge";
 
 export default function SubNavigation({ mainSection, visibleFeatures = [] }) {
   const location = useLocation();
+  const scrollRef = useRef(null);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  // Swipe detection
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => setTouchEnd(e.targetTouches[0].clientX);
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (scrollRef.current) {
+      if (isLeftSwipe) {
+        scrollRef.current.scrollLeft += 200;
+      }
+      if (isRightSwipe) {
+        scrollRef.current.scrollLeft -= 200;
+      }
+    }
+  };
+
+  useEffect(() => {
+    const ref = scrollRef.current;
+    if (ref) {
+      ref.addEventListener('touchstart', onTouchStart);
+      ref.addEventListener('touchmove', onTouchMove);
+      ref.addEventListener('touchend', onTouchEnd);
+      
+      return () => {
+        ref.removeEventListener('touchstart', onTouchStart);
+        ref.removeEventListener('touchmove', onTouchMove);
+        ref.removeEventListener('touchend', onTouchEnd);
+      };
+    }
+  }, [touchStart, touchEnd]);
   const [expandedSections, setExpandedSections] = useState(new Set());
 
   const toggleSection = (key) => {

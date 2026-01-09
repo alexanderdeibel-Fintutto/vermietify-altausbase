@@ -34,7 +34,9 @@ export default function Layout({ children, currentPageName }) {
         queryFn: async () => {
             const states = await base44.entities.NavigationState.list('-updated_date', 1);
             return states[0];
-        }
+        },
+        staleTime: 5 * 60 * 1000, // 5 minutes cache
+        cacheTime: 10 * 60 * 1000
     });
 
     const visibleFeatures = navigationState?.visible_features || [];
