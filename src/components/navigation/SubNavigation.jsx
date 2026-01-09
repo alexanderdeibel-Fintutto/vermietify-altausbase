@@ -122,7 +122,7 @@ export default function SubNavigation({ mainSection, visibleFeatures = [] }) {
               key={item.key}
               to={createPageUrl(item.key)}
               className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
+                "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-light whitespace-nowrap transition-colors",
                 isActive ? "bg-indigo-100 text-indigo-700" : "text-slate-600 hover:bg-slate-100",
                 isLocked && "opacity-50 cursor-not-allowed"
               )}

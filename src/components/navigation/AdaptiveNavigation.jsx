@@ -79,7 +79,7 @@ export default function AdaptiveNavigation({ currentPageName }) {
             key={item.key}
             to={createPageUrl(item.page)}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative",
+              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-light transition-all duration-200 relative",
               isActive 
                 ? "bg-emerald-50 text-emerald-700" 
                 : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
