@@ -3,76 +3,77 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    const { test_account_id } = await req.json();
 
-    if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Unauthorized: Admin required' }, { status: 403 });
+    if (!test_account_id) {
+      return Response.json({ error: 'Missing test_account_id' }, { status: 400 });
     }
 
-    // Alle Einladungen holen
-    const invitations = await base44.asServiceRole.entities.TesterInvitation.list('-created_date', 100);
+    // Fetch test account
+    const testAccount = await base44.asServiceRole.entities.TestAccount.read(test_account_id);
 
-    // Alle TestAccounts holen
-    const testAccounts = await base44.asServiceRole.entities.TestAccount.list('-created_at_timestamp', 100);
+    // Fetch active session
+    const sessions = await base44.asServiceRole.entities.TestSession.filter(
+      { test_account_id, status: 'active' },
+      '-started_at',
+      1
+    );
+    const activeSession = sessions[0];
 
-    // Statistiken zusammenstellen
-    const stats = {
-      total_invited: invitations.length,
-      pending_invitations: invitations.filter(i => i.status === 'pending').length,
-      active_testers: testAccounts.filter(t => t.is_active && t.last_login).length,
-      all_testers: testAccounts.length,
-      total_sessions: testAccounts.reduce((sum, t) => sum + (t.total_sessions || 0), 0),
-      total_pages_visited: testAccounts.reduce((sum, t) => sum + (t.pages_visited || 0), 0),
-      total_problems_reported: testAccounts.reduce((sum, t) => sum + (t.problems_reported || 0), 0),
-      total_session_minutes: testAccounts.reduce((sum, t) => sum + (t.total_session_minutes || 0), 0)
+    // Fetch assignments
+    const assignments = await base44.asServiceRole.entities.TestAssignment.filter(
+      { test_account_id },
+      '-created_date'
+    );
+
+    // Fetch recent problems (max 10)
+    const problems = await base44.asServiceRole.entities.UserProblem.filter(
+      { test_account_id },
+      '-created_date',
+      10
+    );
+
+    // Fetch recent activities (max 20)
+    const activities = await base44.asServiceRole.entities.TesterActivity.filter(
+      { test_account_id },
+      '-timestamp',
+      20
+    );
+
+    // Calculate completion percentage
+    const completedAssignments = assignments.filter(a => a.status === 'completed').length;
+    const completionPercentage = assignments.length > 0 ? Math.round((completedAssignments / assignments.length) * 100) : 0;
+
+    // Calculate session stats
+    const sessionStats = {
+      pages_visited: testAccount.pages_visited || 0,
+      problems_reported: testAccount.problems_reported || 0,
+      total_sessions: testAccount.total_sessions || 0,
+      total_minutes: testAccount.total_session_minutes || 0,
+      last_activity: testAccount.last_activity,
+      session_started: activeSession?.started_at || null
     };
-
-    // Zusammengefasste Tester-Liste
-    const testersList = testAccounts.map(account => {
-      const invitation = invitations.find(i => i.id === account.invitation_id);
-      return {
-        id: account.id,
-        name: account.tester_name,
-        email: account.test_email,
-        status: account.is_active ? 'active' : 'inactive',
-        invitation_status: invitation?.status || 'unknown',
-        last_activity: account.last_activity,
-        last_login: account.last_login,
-        first_login: account.first_login,
-        sessions: account.total_sessions,
-        pages: account.pages_visited,
-        problems: account.problems_reported,
-        invited_at: invitation?.created_date,
-        accepted_at: invitation?.accepted_at
-      };
-    });
-
-    // Ausstehende Einladungen
-    const pendingInvitations = invitations
-      .filter(i => i.status === 'pending')
-      .map(i => ({
-        id: i.id,
-        name: i.tester_name,
-        email: i.invited_email,
-        invited_at: i.created_date,
-        expires_at: i.expires_at,
-        invited_by: i.invited_by,
-        resend_count: i.resend_count || 0
-      }));
-
-    // Kürzliche Aktivitäten (letzte 50)
-    const recentActivities = await base44.asServiceRole.entities.TesterActivity.list('-timestamp', 50);
 
     return Response.json({
       success: true,
-      stats,
-      testers: testersList,
-      pending_invitations: pendingInvitations,
-      recent_activities: recentActivities,
-      generated_at: new Date().toISOString()
+      test_account: {
+        id: testAccount.id,
+        tester_name: testAccount.tester_name,
+        simulated_role: testAccount.simulated_role
+      },
+      session_stats: sessionStats,
+      assignments,
+      problems,
+      activities,
+      completion_percentage: completionPercentage,
+      active_session: activeSession ? {
+        id: activeSession.id,
+        session_id: activeSession.session_id,
+        started_at: activeSession.started_at
+      } : null
     });
   } catch (error) {
-    console.error('Error getting dashboard data:', error);
+    console.error('Dashboard data error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
