@@ -19,7 +19,6 @@ export default function PendingInvitationsTable({ invitations = [], onRefresh })
 
   const handleResend = async (invitation) => {
     try {
-      // Zähler erhöhen und E-Mail erneut versenden
       await base44.functions.invoke('sendTesterInvitation', {
         tester_name: invitation.name,
         invited_email: invitation.email,
