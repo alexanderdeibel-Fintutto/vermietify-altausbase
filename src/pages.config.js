@@ -121,6 +121,7 @@ import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import Equipment from './pages/Equipment';
+import MaintenanceTasks from './pages/MaintenanceTasks';
 import __Layout from './Layout.jsx';
 
 
@@ -248,6 +249,7 @@ export const PAGES = {
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "Equipment": Equipment,
+    "MaintenanceTasks": MaintenanceTasks,
 }
 
 export const pagesConfig = {
