@@ -27,6 +27,7 @@ export default function DocumentUploadDialog({ open, onOpenChange, buildings = [
     entity_id: ''
   });
   const [uploading, setUploading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
   const [errors, setErrors] = useState({});
 
   const handleFileChange = (e) => {

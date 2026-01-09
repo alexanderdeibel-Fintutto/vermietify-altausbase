@@ -14,6 +14,8 @@ import OriginalsList from '../components/documents/OriginalsList';
 import PDFTemplateImporter from '../components/documents/PDFTemplateImporter';
 import ModuleGuard from '@/components/package/ModuleGuard';
 import AdvancedDocumentSearch from '../components/documents/AdvancedDocumentSearch';
+import DocumentTemplateManager from '../components/documents/DocumentTemplateManager';
+import DocumentArchivePanel from '../components/documents/DocumentArchivePanel';
 
 export default function DocumentsPage() {
     const [importerOpen, setImporterOpen] = useState(false);
@@ -140,7 +142,7 @@ export default function DocumentsPage() {
                         <AdvancedDocumentSearch onSearch={setSearchFilters} />
                     </div>
                 )}
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="documents">
                         <FileText className="w-4 h-4 mr-2" />
                         Dokumente
@@ -157,6 +159,10 @@ export default function DocumentsPage() {
                         <FolderOpen className="w-4 h-4 mr-2" />
                         Originale
                     </TabsTrigger>
+                    <TabsTrigger value="archive">
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Archiv
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="documents" className="mt-6">
@@ -167,17 +173,7 @@ export default function DocumentsPage() {
                 </TabsContent>
 
                 <TabsContent value="templates" className="mt-6">
-                    <div className="flex justify-end mb-4">
-                        <button 
-                            onClick={() => setImporterOpen(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                        >
-                            <Sparkles className="w-4 h-4" />
-                            Aus PDF importieren
-                        </button>
-                    </div>
-                    <TemplatesList />
-                    <PDFTemplateImporter open={importerOpen} onOpenChange={setImporterOpen} />
+                    <DocumentTemplateManager />
                 </TabsContent>
 
                 <TabsContent value="textblocks" className="mt-6">
@@ -186,6 +182,10 @@ export default function DocumentsPage() {
 
                 <TabsContent value="originals" className="mt-6">
                     <OriginalsList />
+                </TabsContent>
+
+                <TabsContent value="archive" className="mt-6">
+                    <DocumentArchivePanel />
                 </TabsContent>
                 </Tabs>
                 </motion.div>
