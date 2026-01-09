@@ -223,6 +223,8 @@ import RealTimeTaxCalculator from './pages/RealTimeTaxCalculator';
 import TaxAutomationCenter from './pages/TaxAutomationCenter';
 import TaxForecastPlanner from './pages/TaxForecastPlanner';
 import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
+import BusinessStructureOptimizer from './pages/BusinessStructureOptimizer';
+import RetirementIncomeTaxOptimizer from './pages/RetirementIncomeTaxOptimizer';
 import __Layout from './Layout.jsx';
 
 
@@ -452,6 +454,8 @@ export const PAGES = {
     "TaxAutomationCenter": TaxAutomationCenter,
     "TaxForecastPlanner": TaxForecastPlanner,
     "WithholdingTaxCalculator": WithholdingTaxCalculator,
+    "BusinessStructureOptimizer": BusinessStructureOptimizer,
+    "RetirementIncomeTaxOptimizer": RetirementIncomeTaxOptimizer,
 }
 
 export const pagesConfig = {
