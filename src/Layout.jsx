@@ -25,9 +25,11 @@ import DeepSubNavigation from '@/components/navigation/DeepSubNavigation';
 import QuickActions from '@/components/navigation/QuickActions';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { usePackageAccess } from '@/components/hooks/usePackageAccess';
 
 export default function Layout({ children, currentPageName }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const { hasModuleAccess, packageConfig } = usePackageAccess();
     
     const { data: navigationState } = useQuery({
         queryKey: ['navigationState'],
@@ -39,7 +41,16 @@ export default function Layout({ children, currentPageName }) {
         cacheTime: 10 * 60 * 1000
     });
 
-    const visibleFeatures = navigationState?.visible_features || [];
+    // Filtere Features basierend auf Paket
+    let visibleFeatures = navigationState?.visible_features || [];
+    if (packageConfig && hasModuleAccess) {
+        visibleFeatures = visibleFeatures.filter(feature => {
+            // Always show core features
+            if (['dashboard', 'account', 'finanzen'].includes(feature)) return true;
+            // Check module access for other features
+            return hasModuleAccess(feature);
+        });
+    }
     
     const getCurrentMainSection = () => {
         const path = window.location.pathname.toLowerCase();

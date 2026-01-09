@@ -4,68 +4,71 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-
+    
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { module_name, action = 'access' } = await req.json();
+    const { moduleName, action } = await req.json();
 
-    console.log(`[VALIDATION] Checking access for user ${user.id} to module ${module_name}`);
-
-    // 1. Hole User's Package Configuration
+    // Hole User's Package Config
     const configs = await base44.entities.UserPackageConfiguration.filter({
       user_id: user.id,
       is_active: true
     });
 
     if (configs.length === 0) {
-      return Response.json({
-        allowed: false,
+      return Response.json({ 
+        hasAccess: false, 
         reason: 'NO_PACKAGE_CONFIG',
-        message: 'Keine Paket-Konfiguration gefunden'
+        message: 'Keine aktive Paket-Konfiguration gefunden'
       });
     }
 
-    const config = configs[0];
+    const packageConfig = configs[0];
 
-    // 2. Hole Package Template für Validierung
+    // Hole Package Template
     const templates = await base44.asServiceRole.entities.PackageTemplate.filter({
-      package_type: config.package_type,
+      package_type: packageConfig.package_type,
       is_active: true
     });
 
     if (templates.length === 0) {
-      return Response.json({
-        allowed: false,
-        reason: 'INVALID_PACKAGE',
-        message: 'Paket-Definition nicht gefunden'
+      return Response.json({ 
+        hasAccess: false, 
+        reason: 'NO_TEMPLATE',
+        message: 'Paket-Template nicht gefunden'
       });
     }
 
     const template = templates[0];
+    const includedModules = template.included_modules || [];
+    const additionalModules = packageConfig.additional_modules || [];
+    
+    const hasAccess = includedModules.includes(moduleName) || additionalModules.includes(moduleName);
 
-    // 3. Prüfe ob Modul im Paket enthalten ist
-    const isIncluded = template.included_modules.includes(module_name);
-    const isAddon = config.additional_modules.includes(module_name);
-
-    const allowed = isIncluded || isAddon;
+    // Wenn kein Zugriff: Gebe Upgrade-Optionen zurück
+    let upgradeSuggestions = [];
+    if (!hasAccess) {
+      const allTemplates = await base44.asServiceRole.entities.PackageTemplate.filter({ is_active: true });
+      upgradeSuggestions = allTemplates
+        .filter(t => t.included_modules?.includes(moduleName))
+        .map(t => ({
+          package_name: t.package_name,
+          package_type: t.package_type,
+          price: t.base_price,
+          description: t.description
+        }));
+    }
 
     return Response.json({
-      allowed,
-      package_type: config.package_type,
-      module_name,
-      is_included: isIncluded,
-      is_addon: isAddon,
-      reason: allowed ? 'ALLOWED' : 'NOT_IN_PACKAGE',
-      upgrade_suggestion: !allowed ? {
-        module: module_name,
-        addon_price: 10 + Math.random() * 20 // Placeholder
-      } : null
+      hasAccess,
+      currentPackage: packageConfig.package_type,
+      moduleName,
+      upgradeSuggestions,
+      message: hasAccess ? 'Zugriff gewährt' : 'Upgrade erforderlich'
     });
-
   } catch (error) {
-    console.error('[ERROR]', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
