@@ -9,74 +9,50 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { country, taxYear } = await req.json();
+    const { tax_year } = await req.json();
 
-    if (!country || !taxYear) {
-      return Response.json({ error: 'Missing parameters' }, { status: 400 });
-    }
+    // Multi-year Tax Performance Analyse
+    const calculations = await base44.entities.TaxCalculation.filter({
+      user_email: user.email,
+      tax_year: { $gte: tax_year - 2 }
+    }, '-tax_year');
 
-    // Fetch all relevant data
-    const [filings, calculations, compliance, documents, alerts, scenarios] = await Promise.all([
-      base44.entities.TaxFiling.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
-      base44.entities.TaxCalculation.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
-      base44.entities.TaxCompliance.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
-      base44.entities.TaxDocument.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
-      base44.entities.TaxAlert.filter({ user_email: user.email, country }).catch(() => []),
-      base44.entities.TaxScenario.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => [])
-    ]);
+    const performance = await base44.integrations.Core.InvokeLLM({
+      prompt: `Analysiere Tax Performance für ${user.email} über letzte 3 Jahre:
 
-    const totalTax = calculations.reduce((sum, c) => sum + (c.total_tax || 0), 0);
-    const complianceRate = compliance.length > 0 
-      ? (compliance.filter(c => c.status === 'completed').length / compliance.length * 100)
-      : 0;
+HISTORISCHE DATEN:
+${JSON.stringify(calculations, null, 2)}
 
-    const dashboard = await base44.integrations.Core.InvokeLLM({
-      prompt: `Generate comprehensive tax performance dashboard for ${country}, year ${taxYear}.
-
-Metrics:
-- Total Tax: €${Math.round(totalTax)}
-- Documents: ${documents.length}
-- Compliance: ${Math.round(complianceRate)}%
-- Filing Status: ${filings.length > 0 ? filings[0].status : 'not started'}
-- Open Alerts: ${alerts.filter(a => !a.is_resolved).length}
-- Scenarios: ${scenarios.length}
-
-Provide:
-1. Key performance indicators (KPIs)
-2. Progress metrics
-3. Risk indicators
-4. Compliance status
-5. Document completeness
-6. Next critical actions
-7. Performance trend analysis`,
+BERECHNE:
+1. Tax burden trend (steigt/sinkt/stabil)
+2. Effective tax rate Entwicklung
+3. Year-over-year Vergleich
+4. Optimierungspotential identifiziert
+5. Benchmark vs. Profile-Durchschnitt
+6. Prediction für nächstes Jahr
+7. Key performance indicators`,
       response_json_schema: {
-        type: 'object',
+        type: "object",
         properties: {
-          kpis: { type: 'object', additionalProperties: true },
-          progress_metrics: { type: 'object', additionalProperties: true },
-          risk_indicators: { type: 'array', items: { type: 'object', additionalProperties: true } },
-          completion_status: { type: 'object', additionalProperties: true },
-          next_actions: { type: 'array', items: { type: 'string' } }
+          tax_burden_trend: { type: "string" },
+          average_effective_rate: { type: "number" },
+          current_year_burden: { type: "number" },
+          improvement_opportunities: { type: "array", items: { type: "string" } },
+          forecast_next_year: { type: "number" },
+          benchmark_comparison: { type: "string" },
+          kpis: { type: "object", additionalProperties: { type: "number" } }
         }
       }
     });
 
     return Response.json({
-      status: 'success',
-      dashboard: {
-        country,
-        tax_year: taxYear,
-        generated_at: new Date().toISOString(),
-        metrics: {
-          total_tax: totalTax,
-          documents_count: documents.length,
-          compliance_rate: Math.round(complianceRate)
-        },
-        content: dashboard
-      }
+      user_email: user.email,
+      tax_year,
+      performance_analysis: performance,
+      historical_data: calculations
     });
+
   } catch (error) {
-    console.error('Dashboard generation error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

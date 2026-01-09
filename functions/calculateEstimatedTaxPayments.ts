@@ -9,57 +9,72 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { country, taxYear, estimatedIncome, estimatedTax } = await req.json();
+    const { country, year_to_date_income, expected_annual_income } = await req.json();
 
-    if (!country || !taxYear || !estimatedTax) {
-      return Response.json({ error: 'Missing parameters' }, { status: 400 });
-    }
+    // KI-basierte Q-Payment Berechnung
+    const qPayments = await base44.integrations.Core.InvokeLLM({
+      prompt: `Berechne Quarterly Estimated Tax Payments für ${country}:
 
-    const schedule = await base44.integrations.Core.InvokeLLM({
-      prompt: `Create quarterly estimated tax payment schedule for ${country}, year ${taxYear}.
+EINKOMMEN:
+- YTD: $${year_to_date_income}
+- Erwartet annual: $${expected_annual_income}
 
-Tax Information:
-- Estimated Annual Income: €${Math.round(estimatedIncome || 0)}
-- Estimated Total Tax: €${Math.round(estimatedTax)}
+ANFORDERUNGEN nach ${country} Gesetz:
+- Safe Harbor Regeln
+- Penalty-Vermeidung
+- Q1/Q2/Q3/Q4 Fristen
+- Underpayment Interest Rates
+- Installment Agreements
 
-Provide:
-1. Quarterly payment amounts
-2. Payment due dates for each quarter
-3. Safe harbor rules (90% current/100% prior year)
-4. Penalty calculation for underpayment
-5. Payment methods available
-6. Extension options
-7. Tracking and record keeping
-8. Adjustment strategies if income changes`,
+GEBE ZURÜCK:
+- Q1-Q4 Payment amounts
+- Payment dates (Fristen)
+- Safe harbor percentage
+- Penalty calculation falls underpaid
+- Total annual tax liability
+- Monthly breakdown`,
       response_json_schema: {
-        type: 'object',
+        type: "object",
         properties: {
-          quarterly_payments: { type: 'array', items: { type: 'object', additionalProperties: true } },
-          payment_schedule: { type: 'array', items: { type: 'string' } },
-          safe_harbor_analysis: { type: 'object', additionalProperties: true },
-          penalty_risk: { type: 'object', additionalProperties: true },
-          payment_methods: { type: 'array', items: { type: 'string' } },
-          tracking_checklist: { type: 'array', items: { type: 'string' } }
+          country: { type: "string" },
+          annual_tax_estimate: { type: "number" },
+          quarterly_payments: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                quarter: { type: "string" },
+                amount: { type: "number" },
+                due_date: { type: "string" }
+              }
+            }
+          },
+          total_due: { type: "number" },
+          safe_harbor_method: { type: "string" },
+          underpayment_penalty: { type: "number" }
         }
       }
     });
 
+    // Speichern für Tracking
+    for (const payment of qPayments.quarterly_payments || []) {
+      await base44.asServiceRole.entities.Notification.create({
+        user_email: user.email,
+        type: 'tax_payment_reminder',
+        title: `${payment.quarter}: ${payment.amount}`,
+        description: `Estimated Tax Payment fällig`,
+        scheduled_date: payment.due_date,
+        status: 'pending'
+      });
+    }
+
     return Response.json({
-      status: 'success',
-      schedule: {
-        country,
-        tax_year: taxYear,
-        generated_at: new Date().toISOString(),
-        metrics: {
-          estimated_income: estimatedIncome,
-          estimated_tax: estimatedTax,
-          quarterly_amount: estimatedTax / 4
-        },
-        content: schedule
-      }
+      user_email: user.email,
+      country,
+      ...qPayments
     });
+
   } catch (error) {
-    console.error('Calculate estimated tax payments error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

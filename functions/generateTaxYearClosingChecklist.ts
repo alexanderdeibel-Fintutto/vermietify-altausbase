@@ -9,54 +9,63 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { country, taxYear } = await req.json();
+    const { tax_year } = await req.json();
+    const profile = (await base44.entities.TaxProfile.filter({ user_email: user.email }, '-updated_date', 1))[0];
 
-    if (!country || !taxYear) {
-      return Response.json({ error: 'Missing parameters' }, { status: 400 });
-    }
-
+    // KI-generierte Year-End Checklist
     const checklist = await base44.integrations.Core.InvokeLLM({
-      prompt: `Generate comprehensive year-end tax closing checklist for ${country}, year ${taxYear}.
+      prompt: `Erstelle eine umfassende Year-End Tax Checklist für ${user.email} (${tax_year}):
 
-Create detailed checklist covering:
-1. Income documentation (all sources)
-2. Expense documentation
-3. Asset/investment reconciliation
-4. Deduction verification
-5. Estimated tax payment settlements
-6. Form preparation
-7. Filing deadline tracking
-8. Record retention
-9. Planning for next year
-10. Professional review`,
+SITUATION:
+- Länder: ${profile.tax_jurisdictions.join(', ')}
+- Profil: ${profile.profile_type}
+- Kryptowährungen: ${profile.has_crypto_assets}
+- Grenzüberschreitend: ${profile.cross_border_transactions}
+- Immobilien: ${profile.number_of_properties}
+- Firmen: ${profile.number_of_companies}
+
+MUST-HAVES:
+1. Dokumentensammlung & Archivierung
+2. Datenvalidierung & Reconciliation
+3. Formularfüllung & Review
+4. Tax Planning für nächstes Jahr
+5. Compliance-Checks
+6. Electronic filing Setup
+
+GEBE STRUKTURIERT FÜR JEDES LAND:
+- Pre-filing Checklist (bis 31.12)
+- Filing Period Checklist (01.01-Deadline)
+- Post-filing Tasks
+- Mit Prioritäten und Verantwortlichen`,
       response_json_schema: {
-        type: 'object',
+        type: "object",
         properties: {
-          checklist_title: { type: 'string' },
-          sections: {
-            type: 'array',
+          year_end_checklist: {
+            type: "array",
             items: {
-              type: 'object',
+              type: "object",
               properties: {
-                section_name: { type: 'string' },
-                priority: { type: 'string' },
-                deadline: { type: 'string' },
-                items: { type: 'array', items: { type: 'string' } }
+                category: { type: "string" },
+                items: { type: "array", items: { type: "string" } },
+                deadline: { type: "string" },
+                priority: { type: "string" }
               }
             }
           },
-          critical_items: { type: 'array', items: { type: 'string' } },
-          timeline: { type: 'object', additionalProperties: { type: 'array', items: { type: 'string' } } }
+          country_specific: { type: "object", additionalProperties: { type: "array" } },
+          estimated_timeline_days: { type: "number" },
+          critical_deadlines: { type: "array", items: { type: "string" } }
         }
       }
     });
 
     return Response.json({
-      status: 'success',
+      user_email: user.email,
+      tax_year,
       checklist
     });
+
   } catch (error) {
-    console.error('Generate checklist error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
