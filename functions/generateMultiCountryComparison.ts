@@ -9,46 +9,43 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { taxYear, income, countries = ['AT', 'CH', 'DE'] } = await req.json();
+    const { countries, taxYear, income } = await req.json();
 
-    if (!taxYear || !income) {
+    if (!countries || !taxYear || !income) {
       return Response.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
-    const comparison = await base44.integrations.Core.InvokeLLM({
-      prompt: `Compare tax burden for income of €${income} across countries: ${countries.join(', ')} for tax year ${taxYear}.
+    // Fetch data for each country
+    const comparisons = await Promise.all(
+      countries.map(country =>
+        base44.entities.TaxFiling.filter({ user_email: user.email, country, tax_year: taxYear })
+          .catch(() => [])
+      )
+    );
 
-Analyze:
-1. Income tax rates and brackets
-2. Wealth tax/asset tax considerations
-3. Deduction opportunities
-4. Social contributions
-5. Total effective tax rates
-6. Advantages/disadvantages per country
-7. Relocation considerations`,
+    const comparison = await base44.integrations.Core.InvokeLLM({
+      prompt: `Compare tax implications across ${countries.join(', ')} for income of €${Math.round(income)}.
+
+Create detailed comparison:
+1. Effective tax rates
+2. Tax brackets and marginal rates
+3. Deductible expenses allowed
+4. Social security contributions
+5. Wealth tax implications
+6. Filing deadlines and complexity
+7. Recommended jurisdiction
+
+Format as comparative analysis with tables and recommendations.`,
       response_json_schema: {
         type: 'object',
         properties: {
-          countries: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                country: { type: 'string' },
-                income_tax: { type: 'number' },
-                wealth_tax: { type: 'number' },
-                social_contributions: { type: 'number' },
-                deductions: { type: 'number' },
-                effective_rate: { type: 'number' },
-                net_income: { type: 'number' },
-                advantages: { type: 'array', items: { type: 'string' } },
-                disadvantages: { type: 'array', items: { type: 'string' } }
-              }
-            }
-          },
-          most_favorable: { type: 'string' },
-          savings_potential: { type: 'number' },
-          recommendations: { type: 'array', items: { type: 'string' } }
+          comparison_table: { type: 'object', additionalProperties: true },
+          effective_rates: { type: 'object', additionalProperties: { type: 'number' } },
+          tax_liabilities: { type: 'object', additionalProperties: { type: 'number' } },
+          deduction_opportunities: { type: 'object', additionalProperties: { type: 'array', items: { type: 'string' } } },
+          filing_complexity: { type: 'object', additionalProperties: { type: 'string' } },
+          optimization_recommendations: { type: 'array', items: { type: 'string' } },
+          best_jurisdiction: { type: 'string' }
         }
       }
     });
@@ -56,14 +53,14 @@ Analyze:
     return Response.json({
       status: 'success',
       comparison: {
+        countries,
         tax_year: taxYear,
-        annual_income: income,
-        countries: countries,
+        income,
         analysis: comparison
       }
     });
   } catch (error) {
-    console.error('Generate comparison error:', error);
+    console.error('Multi-country comparison error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
