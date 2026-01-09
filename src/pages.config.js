@@ -107,7 +107,6 @@ import AdaptiveNavigationAdmin from './pages/AdaptiveNavigationAdmin';
 import FeatureCatalog from './pages/FeatureCatalog';
 import NavigationDemo from './pages/NavigationDemo';
 import AdminPackageSetup from './pages/AdminPackageSetup';
-import packageSystemCompletion from './pages/PACKAGE_SYSTEM_COMPLETION';
 import __Layout from './Layout.jsx';
 
 
@@ -221,7 +220,6 @@ export const PAGES = {
     "FeatureCatalog": FeatureCatalog,
     "NavigationDemo": NavigationDemo,
     "AdminPackageSetup": AdminPackageSetup,
-    "PACKAGE_SYSTEM_COMPLETION": packageSystemCompletion,
 }
 
 export const pagesConfig = {
