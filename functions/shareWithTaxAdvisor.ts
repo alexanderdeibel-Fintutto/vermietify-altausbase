@@ -9,37 +9,55 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { advisor_email, tax_year, country, data_types } = await req.json();
+    const { advisor_email, tax_year, countries, data_types = ['all'] } = await req.json();
+    // data_types: ['income', 'assets', 'transactions', 'calculations', 'all']
 
-    if (!advisor_email || !tax_year) {
-      return Response.json({ error: 'Missing required parameters' }, { status: 400 });
-    }
-
-    const shareRecord = await base44.entities.PortfolioShare.create({
-      portfolio_id: `tax_${country}_${tax_year}`,
-      shared_by_user_id: user.id,
-      shared_with_email: advisor_email,
-      permission_level: 'view',
-      share_type: 'advisor',
-      advisor_role: 'tax_advisor'
+    // Create secure share with Tax Advisor
+    const share = await base44.asServiceRole.entities.AdvisorPortal.create({
+      user_email: user.email,
+      advisor_email,
+      access_level: 'view',
+      tax_year,
+      countries,
+      data_types,
+      shared_at: new Date().toISOString(),
+      expires_in_days: 90,
+      status: 'active'
     });
 
+    // Send notification to advisor
     await base44.integrations.Core.SendEmail({
       to: advisor_email,
-      subject: `Tax Data Sharing Request from ${user.full_name}`,
-      body: `You have been invited to view tax data for ${tax_year} in ${country}. 
+      subject: `${user.full_name} hat dir Steuerdaten freigegeben (${tax_year})`,
+      body: `Du hast Zugriff auf die Steuerdaten von ${user.full_name} für ${tax_year}.
       
-Please log in to the platform to access the shared information.
+Länder: ${countries.join(', ')}
+Datentypes: ${data_types.join(', ')}
+Zugriff bis: 90 Tage
+      
+Melde dich an um die Daten zu sehen.`
+    });
 
-Shared data types: ${(data_types || []).join(', ')}`
+    // Log activity
+    await base44.asServiceRole.entities.ActivityLog.create({
+      user_email: user.email,
+      action: 'share_with_advisor',
+      details: JSON.stringify({
+        advisor_email,
+        tax_year,
+        countries
+      }),
+      timestamp: new Date().toISOString()
     });
 
     return Response.json({
-      success: true,
-      share_id: shareRecord.id,
+      user_email: user.email,
+      share_id: share.id,
       advisor_email,
-      message: 'Tax advisor invitation sent successfully'
+      expires_days: 90,
+      status: 'shared'
     });
+
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

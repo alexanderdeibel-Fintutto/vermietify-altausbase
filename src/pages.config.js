@@ -244,6 +244,7 @@ import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import TaxComplianceDashboard from './pages/TaxComplianceDashboard';
 import TaxTreatyExplorer from './pages/TaxTreatyExplorer';
+import AdvancedTaxReporting from './pages/AdvancedTaxReporting';
 import __Layout from './Layout.jsx';
 
 
@@ -494,6 +495,7 @@ export const PAGES = {
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "TaxComplianceDashboard": TaxComplianceDashboard,
     "TaxTreatyExplorer": TaxTreatyExplorer,
+    "AdvancedTaxReporting": AdvancedTaxReporting,
 }
 
 export const pagesConfig = {

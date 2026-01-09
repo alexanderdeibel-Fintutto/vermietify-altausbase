@@ -5,69 +5,97 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user?.role || user.role !== 'admin') {
+      return Response.json({ error: 'Admin only' }, { status: 403 });
     }
 
-    const { country } = await req.json();
+    const { countries = ['DE', 'CH', 'AT'] } = await req.json();
 
-    if (!country) {
-      return Response.json({ error: 'Missing parameters' }, { status: 400 });
-    }
+    // Monitor Tax Law Changes
+    const updates = await base44.integrations.Core.InvokeLLM({
+      prompt: `Überwache aktuelle Steuergesetzes-Änderungen für ${countries.join(', ')} (2024-2025):
 
-    // Fetch recent tax law updates
-    const updates = await base44.entities.TaxLawUpdate.filter({ 
-      country, 
-      is_active: true 
-    }, '-published_date', 20).catch(() => []);
+LÄNDER: ${countries.join(', ')}
 
-    const analysis = await base44.integrations.Core.InvokeLLM({
-      prompt: `Analyze tax law changes for ${country} and their impact.
+RELEVANTE BEREICHE:
+1. Income Tax Changes
+2. Capital Gains Treatment
+3. Crypto Regulations
+4. International Reporting (FATCA, CRS, AEoI)
+5. Business Entity Changes
+6. Withholding Tax Adjustments
+7. Deduction Limits
+8. Filing Deadline Changes
 
-Recent Updates: ${updates.length}
+GEBE:
+- Neuerungen pro Land
+- Gültig ab Datum
+- Impact auf User
+- Required Actions
+- Deadline zum Handeln
 
-For each update, provide:
-1. Change summary
-2. Impact on individual taxpayers
-3. Impact on businesses
-4. Effective date
-5. Action required
-6. Risk if not compliant
-7. Opportunities`,
+FOKUS: DACH-Region + International`,
+      add_context_from_internet: true,
       response_json_schema: {
-        type: 'object',
+        type: "object",
         properties: {
-          recent_changes: {
-            type: 'array',
+          updates: {
+            type: "array",
             items: {
-              type: 'object',
+              type: "object",
               properties: {
-                title: { type: 'string' },
-                impact: { type: 'string' },
-                individual_impact: { type: 'string' },
-                business_impact: { type: 'string' },
-                action_required: { type: 'array', items: { type: 'string' } },
-                effective_date: { type: 'string' }
+                country: { type: "string" },
+                law_title: { type: "string" },
+                effective_date: { type: "string" },
+                impact_type: { type: "string" },
+                user_impact: { type: "string" },
+                action_required: { type: "boolean" },
+                severity: { type: "string", enum: ["low", "medium", "high", "critical"] }
               }
             }
-          },
-          critical_changes: { type: 'array', items: { type: 'string' } },
-          opportunities: { type: 'array', items: { type: 'string' } },
-          compliance_checklist: { type: 'array', items: { type: 'string' } }
+          }
         }
       }
     });
 
-    return Response.json({
-      status: 'success',
-      monitoring: {
-        country,
-        total_updates: updates.length,
-        analysis
+    // Erstelle Alerts für relevante User
+    const profiles = await base44.asServiceRole.entities.TaxProfile.list();
+    
+    for (const update of updates.updates || []) {
+      for (const profile of profiles) {
+        if (profile.tax_jurisdictions.includes(update.country)) {
+          await base44.asServiceRole.entities.TaxLawUpdate.create({
+            user_email: profile.user_email,
+            country: update.country,
+            title: update.law_title,
+            description: update.user_impact,
+            effective_date: update.effective_date,
+            severity: update.severity,
+            action_required: update.action_required
+          });
+
+          if (update.action_required || update.severity === 'critical') {
+            await base44.asServiceRole.entities.TaxAlert.create({
+              user_email: profile.user_email,
+              country: update.country,
+              alert_type: 'tax_law_change',
+              title: `Neue Steuergesetz: ${update.law_title}`,
+              message: update.user_impact,
+              severity: update.severity === 'critical' ? 'critical' : 'warning',
+              priority: update.severity === 'critical' ? 'critical' : 'high'
+            });
+          }
+        }
       }
+    }
+
+    return Response.json({
+      updates_found: updates.updates?.length || 0,
+      users_affected: profiles.length,
+      updates: updates.updates
     });
+
   } catch (error) {
-    console.error('Monitor tax law changes error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
