@@ -120,6 +120,7 @@ import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
+import Equipment from './pages/Equipment';
 import __Layout from './Layout.jsx';
 
 
@@ -246,6 +247,7 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
+    "Equipment": Equipment,
 }
 
 export const pagesConfig = {
