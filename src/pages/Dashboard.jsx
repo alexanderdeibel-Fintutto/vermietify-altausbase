@@ -47,41 +47,47 @@ export default function DashboardPage() {
       <UnlockProgressTracker />
       <ExtendedSmartHints />
       <SmartHints />
-      <div>
-        <h1 className="text-3xl font-light text-slate-900">Dashboard</h1>
-        <p className="text-slate-600 mt-1">Übersicht Ihrer Immobilienportfolios</p>
+      <div className="mb-8">
+        <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Dashboard</h1>
+        <p className="text-sm font-extralight text-slate-400 mt-1">Übersicht Ihrer Immobilienportfolios</p>
       </div>
 
-      <QuickStats stats={stats} accentColor="emerald" />
+      <QuickStats stats={stats} />
 
-      <div className="grid grid-cols-2 gap-6">
-        <Card className="border border-slate-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg"><TrendingUp className="w-5 h-5 text-emerald-600" /> Einnahmen vs. Ausgaben</CardTitle>
+      <div className="grid grid-cols-2 gap-8">
+        <Card className="border border-slate-100 shadow-none">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-3 text-sm font-light text-slate-600">
+              <TrendingUp className="w-4 h-4 text-slate-400" /> 
+              Einnahmen vs. Ausgaben
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} />
                 <Tooltip />
-                <Bar dataKey="revenue" fill="#10b981" />
-                <Bar dataKey="expenses" fill="#ef4444" />
+                <Bar dataKey="revenue" fill="#cbd5e1" />
+                <Bar dataKey="expenses" fill="#e2e8f0" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        <Card className="border border-slate-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg"><Home className="w-5 h-5 text-blue-600" /> Belegungsquote</CardTitle>
+        <Card className="border border-slate-100 shadow-none">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-3 text-sm font-light text-slate-600">
+              <Home className="w-4 h-4 text-slate-400" /> 
+              Belegungsquote
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
-                <Pie data={occupancyData} cx="50%" cy="50%" labelLine={false} label={({ name, value }) => `${name} ${value}%`} outerRadius={80} fill="#3b82f6" dataKey="value">
-                  {occupancyData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                <Pie data={occupancyData} cx="50%" cy="50%" labelLine={false} label={({ name, value }) => `${name} ${value}%`} outerRadius={80} fill="#cbd5e1" dataKey="value">
+                  {occupancyData.map((entry, index) => <Cell key={`cell-${index}`} fill={['#cbd5e1', '#e2e8f0', '#f1f5f9'][index % 3]} />)}
                 </Pie>
                 <Tooltip />
               </PieChart>
@@ -90,34 +96,43 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
-        <Card className="border border-slate-200 bg-blue-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base"><FileText className="w-5 h-5 text-blue-600" /> Offene Verträge</CardTitle>
+      <div className="grid grid-cols-3 gap-8">
+        <Card className="border border-slate-100 bg-white shadow-none">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-3 text-xs font-extralight text-slate-500">
+              <FileText className="w-4 h-4 text-slate-300" /> 
+              Offene Verträge
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-light text-blue-700">12</p>
-            <p className="text-sm text-blue-600 mt-2">Zur Überprüfung ausstehend</p>
+            <p className="text-3xl font-extralight text-slate-700">12</p>
+            <p className="text-xs font-extralight text-slate-400 mt-3">Zur Überprüfung ausstehend</p>
           </CardContent>
         </Card>
 
-        <Card className="border border-slate-200 bg-yellow-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base"><AlertCircle className="w-5 h-5 text-yellow-600" /> Ausstehende Zahlungen</CardTitle>
+        <Card className="border border-slate-100 bg-white shadow-none">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-3 text-xs font-extralight text-slate-500">
+              <AlertCircle className="w-4 h-4 text-slate-300" /> 
+              Ausstehende Zahlungen
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-light text-yellow-700">5</p>
-            <p className="text-sm text-yellow-600 mt-2">Erfordert Aufmerksamkeit</p>
+            <p className="text-3xl font-extralight text-slate-700">5</p>
+            <p className="text-xs font-extralight text-slate-400 mt-3">Erfordert Aufmerksamkeit</p>
           </CardContent>
         </Card>
 
-        <Card className="border border-slate-200 bg-green-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base"><Users className="w-5 h-5 text-green-600" /> Aktive Mieter</CardTitle>
+        <Card className="border border-slate-100 bg-white shadow-none">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-3 text-xs font-extralight text-slate-500">
+              <Users className="w-4 h-4 text-slate-300" /> 
+              Aktive Mieter
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-light text-green-700">47</p>
-            <p className="text-sm text-green-600 mt-2">In Ihren Gebäuden</p>
+            <p className="text-3xl font-extralight text-slate-700">47</p>
+            <p className="text-xs font-extralight text-slate-400 mt-3">In Ihren Gebäuden</p>
           </CardContent>
         </Card>
       </div>
