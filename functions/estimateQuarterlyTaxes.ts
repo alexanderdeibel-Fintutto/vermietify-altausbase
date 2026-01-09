@@ -11,55 +11,50 @@ Deno.serve(async (req) => {
 
     const { country, taxYear, projectedIncome } = await req.json();
 
-    if (!country || !taxYear || !projectedIncome) {
+    if (!country || !taxYear) {
       return Response.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
-    // Fetch previous tax data
-    const prevYearCalcs = await base44.entities.TaxCalculation.filter({
-      user_email: user.email,
-      country,
-      tax_year: taxYear - 1
-    }) || [];
+    // Fetch base calculation
+    const calcs = await base44.entities.TaxCalculation.filter(
+      { user_email: user.email, country, tax_year: taxYear },
+      '-updated_date',
+      1
+    ).catch(() => []);
 
-    const prevTotalTax = prevYearCalcs.reduce((sum, c) => sum + (c.total_tax || 0), 0);
+    const estimation = await base44.integrations.Core.InvokeLLM({
+      prompt: `Estimate quarterly tax payments for ${country} taxpayer, tax year ${taxYear}.
 
-    const estimates = await base44.integrations.Core.InvokeLLM({
-      prompt: `Calculate quarterly tax payment estimates for ${country} taxpayer.
+Current Data:
+- Base Total Tax: €${calcs[0]?.total_tax || 0}
+- Projected Income: €${projectedIncome || 'not specified'}
 
-Parameters:
-- Tax Year: ${taxYear}
-- Projected Annual Income: €${Math.round(projectedIncome)}
-- Previous Year Total Tax: €${Math.round(prevTotalTax)}
+Calculate quarterly breakdown:
+1. Q1 (Jan-Mar): estimate
+2. Q2 (Apr-Jun): estimate
+3. Q3 (Jul-Sep): estimate
+4. Q4 (Oct-Dec): estimate
 
-Provide:
-1. Quarterly payment schedule
-2. Payment amounts per quarter
-3. Cumulative payments
-4. Due dates per jurisdiction
-5. Late payment penalties if missed
-6. Adjustment recommendations mid-year
-7. Extension options
-8. Risk of overpayment/underpayment`,
+Include:
+- Quarterly payment amounts
+- Tax rate applied
+- Accumulated tax through year
+- Payment due dates
+- Safe harbor rules
+- Penalty avoidance
+- Adjustment recommendations`,
       response_json_schema: {
         type: 'object',
         properties: {
-          quarterly_payments: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                quarter: { type: 'number' },
-                period: { type: 'string' },
-                payment_amount: { type: 'number' },
-                due_date: { type: 'string' },
-                cumulative_amount: { type: 'number' }
-              }
-            }
-          },
+          q1_payment: { type: 'number' },
+          q2_payment: { type: 'number' },
+          q3_payment: { type: 'number' },
+          q4_payment: { type: 'number' },
           total_estimated_tax: { type: 'number' },
-          estimated_effective_rate: { type: 'number' },
-          adjustment_scenarios: { type: 'array', items: { type: 'string' } },
+          effective_tax_rate: { type: 'number' },
+          payment_dates: { type: 'object', additionalProperties: { type: 'string' } },
+          safe_harbor_notes: { type: 'array', items: { type: 'string' } },
+          risk_alerts: { type: 'array', items: { type: 'string' } },
           recommendations: { type: 'array', items: { type: 'string' } }
         }
       }
@@ -67,12 +62,11 @@ Provide:
 
     return Response.json({
       status: 'success',
-      estimates: {
+      estimation: {
         country,
         tax_year: taxYear,
         projected_income: projectedIncome,
-        generated_at: new Date().toISOString(),
-        schedule: estimates
+        forecast: estimation
       }
     });
   } catch (error) {
