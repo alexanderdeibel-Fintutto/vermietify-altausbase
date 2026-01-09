@@ -220,6 +220,8 @@ import TaxAnalyticsReporting from './pages/TaxAnalyticsReporting';
 import MultiYearTaxComparison from './pages/MultiYearTaxComparison';
 import SmartExpenseTracker from './pages/SmartExpenseTracker';
 import RealTimeTaxCalculator from './pages/RealTimeTaxCalculator';
+import TaxAutomationCenter from './pages/TaxAutomationCenter';
+import TaxForecastPlanner from './pages/TaxForecastPlanner';
 import __Layout from './Layout.jsx';
 
 
@@ -446,6 +448,8 @@ export const PAGES = {
     "MultiYearTaxComparison": MultiYearTaxComparison,
     "SmartExpenseTracker": SmartExpenseTracker,
     "RealTimeTaxCalculator": RealTimeTaxCalculator,
+    "TaxAutomationCenter": TaxAutomationCenter,
+    "TaxForecastPlanner": TaxForecastPlanner,
 }
 
 export const pagesConfig = {
