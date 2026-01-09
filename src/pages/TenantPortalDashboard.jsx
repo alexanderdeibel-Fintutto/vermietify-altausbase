@@ -19,6 +19,7 @@ import OutstandingTasksWidget from '@/components/tenant-portal/OutstandingTasksW
 import TenantDocumentsManager from '@/components/tenant-portal/TenantDocumentsManager';
 import TenantFeedbackForm from '@/components/tenant-portal/TenantFeedbackForm';
 import TenantAIChatbot from '@/components/tenant-portal/TenantAIChatbot';
+import TenantFinancialOverview from '@/components/tenant-portal/TenantFinancialOverview';
 
 export default function TenantPortalDashboard() {
   const [tenantId] = useState(new URLSearchParams(window.location.search).get('id'));
@@ -143,9 +144,10 @@ export default function TenantPortalDashboard() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6 mb-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-7 mb-6">
             <TabsTrigger value="overview">Übersicht</TabsTrigger>
             <TabsTrigger value="contracts">Verträge</TabsTrigger>
+            <TabsTrigger value="finances">Finanzen</TabsTrigger>
             <TabsTrigger value="maintenance">Anfragen</TabsTrigger>
             <TabsTrigger value="messages">Nachrichten</TabsTrigger>
             <TabsTrigger value="documents">Dokumente</TabsTrigger>
@@ -229,6 +231,11 @@ export default function TenantPortalDashboard() {
 
               <TenantAIChatbot tenantId={tenantId} />
             </div>
+          </TabsContent>
+
+          {/* Finances Tab */}
+          <TabsContent value="finances">
+            <TenantFinancialOverview tenantEmail={tenant?.email} tenantId={tenantId} />
           </TabsContent>
 
           {/* Contracts Tab */}
