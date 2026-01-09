@@ -3,6 +3,9 @@ import { usePackageAccess } from '@/components/hooks/usePackageAccess';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
 export default function LimitGuard({ 
   limitType, // 'buildings' | 'units'
@@ -12,14 +15,23 @@ export default function LimitGuard({
 }) {
   const { packageConfig, canCreateBuilding, canCreateUnit } = usePackageAccess();
   const [showDialog, setShowDialog] = useState(false);
+  const navigate = useNavigate();
 
   const checkLimit = async () => {
     let canCreate = false;
     
-    if (limitType === 'buildings') {
-      canCreate = await canCreateBuilding(currentCount);
-    } else if (limitType === 'units') {
-      canCreate = await canCreateUnit(currentCount);
+    // Backend-Validierung
+    try {
+      if (limitType === 'buildings') {
+        const response = await base44.functions.invoke('validateBuildingCreation');
+        canCreate = response.data.allowed;
+      } else if (limitType === 'units') {
+        const response = await base44.functions.invoke('validateUnitCreation');
+        canCreate = response.data.allowed;
+      }
+    } catch (error) {
+      console.error('Limit validation error:', error);
+      canCreate = false;
     }
 
     if (!canCreate) {
@@ -70,7 +82,13 @@ export default function LimitGuard({
               <Button variant="outline" onClick={() => setShowDialog(false)} className="flex-1">
                 Schließen
               </Button>
-              <Button className="flex-1 bg-orange-600 hover:bg-orange-700">
+              <Button 
+                onClick={() => {
+                  setShowDialog(false);
+                  navigate(createPageUrl('MyAccount'));
+                }}
+                className="flex-1 bg-orange-600 hover:bg-orange-700"
+              >
                 Paket upgraden
               </Button>
             </div>
