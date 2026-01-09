@@ -15,10 +15,10 @@ export default function InsuranceManagementPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">🛡️ Versicherungsverwaltung</h1>
-          <p className="text-slate-600 mt-1">Verwaltung aller Versicherungspolicen</p>
+          <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Versicherungsverwaltung</h1>
+          <p className="text-sm font-extralight text-slate-400 mt-1">Verwaltung aller Versicherungspolicen</p>
         </div>
-        <Button className="bg-emerald-600 hover:bg-emerald-700"><Plus className="w-4 h-4 mr-2" />Neue Police</Button>
+        <Button className="bg-slate-700 hover:bg-slate-800 font-extralight"><Plus className="w-4 h-4 mr-2" />Neue Police</Button>
       </div>
 
       <div className="space-y-3">

@@ -30,8 +30,8 @@ export default function TaxLibraryManagement() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-bold text-slate-800">Steuerbibliothek</h1>
-                <p className="text-slate-600">Verwalten Sie steuerliche Kategorien und Kontenzuordnungen pro Gebäude</p>
+                <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Steuerbibliothek</h1>
+                <p className="text-sm font-extralight text-slate-400 mt-1">Verwalten Sie steuerliche Kategorien und Kontenzuordnungen pro Gebäude</p>
             </div>
 
             {/* Buildings Overview */}

@@ -28,10 +28,10 @@ export default function BankReconciliationPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">🏦 Bankabstimmung</h1>
-          <p className="text-slate-600 mt-1">Abstimmung von Banktransaktionen und Buchungen</p>
+          <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Bankabstimmung</h1>
+          <p className="text-sm font-extralight text-slate-400 mt-1">Abstimmung von Banktransaktionen und Buchungen</p>
         </div>
-        <Button className="bg-cyan-600 hover:bg-cyan-700"><RefreshCw className="w-4 h-4 mr-2" />Konten synchronisieren</Button>
+        <Button className="bg-slate-700 hover:bg-slate-800 font-extralight"><RefreshCw className="w-4 h-4 mr-2" />Konten synchronisieren</Button>
       </div>
 
       <QuickStats stats={stats} accentColor="cyan" />
@@ -63,7 +63,7 @@ export default function BankReconciliationPage() {
                     </div>
                   </div>
                   {tx.status === 'unmatched' && (
-                    <Button size="sm" className="bg-cyan-600 hover:bg-cyan-700">
+                    <Button size="sm" className="bg-slate-700 hover:bg-slate-800 font-extralight">
                       <Check className="w-4 h-4 mr-1" /> Zuordnen
                     </Button>
                   )}
@@ -101,7 +101,7 @@ export default function BankReconciliationPage() {
                       <p className="text-sm text-slate-600">{tx.date} • {tx.amount.toLocaleString('de-DE')} €</p>
                     </div>
                   </div>
-                  <Button size="sm" className="bg-cyan-600 hover:bg-cyan-700">Zuordnen</Button>
+                  <Button size="sm" className="bg-slate-700 hover:bg-slate-800 font-extralight">Zuordnen</Button>
                 </div>
               </CardContent>
             </Card>

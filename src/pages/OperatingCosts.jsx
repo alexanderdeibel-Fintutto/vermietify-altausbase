@@ -49,7 +49,7 @@ export default function OperatingCosts() {
             >
                 <Button 
                     onClick={() => setFormOpen(true)}
-                    className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+                    className="bg-slate-700 hover:bg-slate-800 font-extralight gap-2"
                 >
                     <Plus className="w-4 h-4" />
                     Neue Betriebskostenabrechnung
