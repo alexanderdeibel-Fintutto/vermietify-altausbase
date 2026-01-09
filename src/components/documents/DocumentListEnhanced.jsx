@@ -10,10 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Eye, Trash2, FileText, Image as ImageIcon, FileCode } from 'lucide-react';
+import { Eye, Trash2, FileText, Image as ImageIcon, FileCode, History, Pen } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import DocumentPreviewDialog from './DocumentPreviewDialog';
+import DocumentVersionHistory from './DocumentVersionHistory';
+import SignatureWorkflow from './SignatureWorkflow';
 
 const getFileIcon = (fileType) => {
   if (fileType === 'image') return <ImageIcon className="w-4 h-4 text-blue-500" />;
@@ -53,6 +55,8 @@ export default function DocumentListEnhanced({ documents = [], onDelete, isLoadi
   const [filterCategory, setFilterCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [previewDoc, setPreviewDoc] = useState(null);
+  const [versionHistoryDoc, setVersionHistoryDoc] = useState(null);
+  const [signatureWorkflowDoc, setSignatureWorkflowDoc] = useState(null);
 
   const filtered = useMemo(() => {
     return documents.filter(doc => {
@@ -167,6 +171,24 @@ export default function DocumentListEnhanced({ documents = [], onDelete, isLoadi
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setVersionHistoryDoc(doc)}
+                  title="Versionsverlauf"
+                  className="text-blue-400 hover:text-blue-600"
+                >
+                  <History className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSignatureWorkflowDoc(doc)}
+                  title="Signatur-Workflow"
+                  className="text-purple-400 hover:text-purple-600"
+                >
+                  <Pen className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => onDelete?.(doc.id)}
                   title="Löschen"
                   className="text-red-400 hover:text-red-600"
@@ -184,6 +206,20 @@ export default function DocumentListEnhanced({ documents = [], onDelete, isLoadi
           open={!!previewDoc}
           onOpenChange={() => setPreviewDoc(null)}
           document={previewDoc}
+        />
+      )}
+
+      {versionHistoryDoc && (
+        <DocumentVersionHistory
+          documentId={versionHistoryDoc.id}
+          onClose={() => setVersionHistoryDoc(null)}
+        />
+      )}
+
+      {signatureWorkflowDoc && (
+        <SignatureWorkflow
+          documentId={signatureWorkflowDoc.id}
+          onClose={() => setSignatureWorkflowDoc(null)}
         />
       )}
     </>
