@@ -125,7 +125,7 @@ export default function TenantsPage() {
               <Button variant="outline" onClick={() => setShowDialog(false)}>Abbrechen</Button>
               <Button 
                 onClick={handleSave}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-slate-700 hover:bg-slate-800 font-extralight"
                 disabled={createMutation.isPending || updateMutation.isPending}
               >
                 Speichern

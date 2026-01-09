@@ -104,7 +104,7 @@ export default function BuildingsPage() {
             <Button
               onClick={handleNewBuilding}
               size="sm"
-              className="bg-violet-600 hover:bg-violet-700 h-9 whitespace-nowrap"
+              className="bg-slate-700 hover:bg-slate-800 font-extralight h-9 whitespace-nowrap"
             >
               <Plus className="w-4 h-4 mr-1" />
               Neu
