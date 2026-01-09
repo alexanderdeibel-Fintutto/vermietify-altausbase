@@ -15,8 +15,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Sparkles } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 
 export default function DocumentUploadDialog({ open, onOpenChange, buildings = [], tenants = [], contracts = [], equipment = [], onSuccess }) {
   const [file, setFile] = useState(null);
@@ -107,7 +108,23 @@ export default function DocumentUploadDialog({ open, onOpenChange, buildings = [
         [formData.entity_type + '_id']: formData.entity_id
       };
 
-      await base44.entities.Document.create(docData);
+      const newDoc = await base44.entities.Document.create(docData);
+
+      // Automatically analyze with AI
+      if (newDoc?.id) {
+        setAnalyzing(true);
+        try {
+          await base44.functions.invoke('analyzeDocument', {
+            document_id: newDoc.id,
+            file_url: fileUrl,
+            content: formData.name
+          });
+          toast.success('Dokument hochgeladen und analysiert');
+        } catch (error) {
+          toast.success('Dokument hochgeladen (KI-Analyse fehlgeschlagen)');
+        }
+        setAnalyzing(false);
+      }
 
       // Reset
       setFile(null);
@@ -242,10 +259,15 @@ export default function DocumentUploadDialog({ open, onOpenChange, buildings = [
             </Button>
             <Button
               type="submit"
-              disabled={uploading}
+              disabled={uploading || analyzing}
               className="flex-1 bg-blue-600 hover:bg-blue-700 font-light"
             >
-              {uploading ? 'Wird hochgeladen...' : 'Hochladen'}
+              {uploading ? 'Wird hochgeladen...' : analyzing ? (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2 animate-pulse" />
+                  KI analysiert...
+                </>
+              ) : 'Hochladen'}
             </Button>
           </div>
         </form>
