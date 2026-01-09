@@ -9,28 +9,39 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data } = await req.json();
-    const { operationType, duration, success, metadata } = data;
-
-    // Store performance metric
-    await base44.entities.UserActivity.create({
+    const { metrics } = await req.json();
+    
+    // Log performance metrics
+    const performanceData = {
       user_id: user.id,
-      activity_type: 'navigation_performance',
-      details: {
-        operation: operationType,
-        duration_ms: duration,
-        success: success || true,
-        metadata: metadata || {},
-        timestamp: new Date().toISOString()
-      }
-    });
+      timestamp: new Date().toISOString(),
+      navigation_calc_time: metrics.navigationCalcTime,
+      feature_check_time: metrics.featureCheckTime,
+      total_render_time: metrics.totalRenderTime,
+      cache_hit: metrics.cacheHit,
+      user_agent: req.headers.get('user-agent')
+    };
 
-    // If duration is too high, log for investigation
-    if (duration > 1000) {
-      console.warn(`Slow navigation operation for user ${user.id}: ${operationType} took ${duration}ms`);
+    // Check if performance is within acceptable range (<100ms)
+    const isWithinTarget = metrics.navigationCalcTime < 100;
+    
+    if (!isWithinTarget) {
+      console.warn(`Navigation performance degraded: ${metrics.navigationCalcTime}ms (target: <100ms)`);
+      
+      // Log to system for monitoring
+      await base44.asServiceRole.entities.ActivityLog.create({
+        user_id: user.id,
+        action: 'NAVIGATION_PERFORMANCE_DEGRADED',
+        details: performanceData,
+        severity: 'warning'
+      });
     }
 
-    return Response.json({ success: true });
+    return Response.json({ 
+      success: true, 
+      withinTarget: isWithinTarget,
+      recommendation: isWithinTarget ? null : 'Consider clearing cache or checking system load'
+    });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
