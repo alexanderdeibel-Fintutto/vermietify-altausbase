@@ -196,6 +196,9 @@ import TaxYearPlannerPage from './pages/TaxYearPlannerPage';
 import CapitalGainsOptimizer from './pages/CapitalGainsOptimizer';
 import TaxPerformanceDashboard from './pages/TaxPerformanceDashboard';
 import AnnualTaxReview from './pages/AnnualTaxReview';
+import TaxStrategyAdvisor from './pages/TaxStrategyAdvisor';
+import DividendOptimization from './pages/DividendOptimization';
+import WealthTaxIntegration from './pages/WealthTaxIntegration';
 import __Layout from './Layout.jsx';
 
 
@@ -398,6 +401,9 @@ export const PAGES = {
     "CapitalGainsOptimizer": CapitalGainsOptimizer,
     "TaxPerformanceDashboard": TaxPerformanceDashboard,
     "AnnualTaxReview": AnnualTaxReview,
+    "TaxStrategyAdvisor": TaxStrategyAdvisor,
+    "DividendOptimization": DividendOptimization,
+    "WealthTaxIntegration": WealthTaxIntegration,
 }
 
 export const pagesConfig = {
