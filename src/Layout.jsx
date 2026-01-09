@@ -27,6 +27,7 @@ import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import DocumentInboxNavItem from '@/components/navigation/DocumentInboxNavItem';
 import MainCategoryTabs from '@/components/navigation/MainCategoryTabs';
 import CategorySubNavigation from '@/components/navigation/CategorySubNavigation';
+import PWAInstallPrompt from '@/components/mobile/PWAInstallPrompt';
 
 // Lazy load heavy components
 const TesterTracker = lazy(() => import('@/components/testing/TesterTracker'));
@@ -41,6 +42,14 @@ const TesterManagement = lazy(() => import('@/pages/TesterManagement'));
 const LoadingFallback = () => null;
 
 export default function Layout({ children, currentPageName }) {
+  // Register service worker for PWA
+  React.useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(registration => console.log('SW registered:', registration))
+        .catch(error => console.log('SW registration failed:', error));
+    }
+  }, []);
           const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
           const [activeCategory, setActiveCategory] = useState('real_estate');
           const { hasModuleAccess, packageConfig } = usePackageAccess();
@@ -164,6 +173,9 @@ export default function Layout({ children, currentPageName }) {
 
                 {/* Intelligent Onboarding Wizard Button */}
                 <IntelligentOnboardingWizardButton />
+
+                {/* PWA Install Prompt */}
+                <PWAInstallPrompt />
 
                 {/* Mobile Bottom Navigation */}
                 <MobileBottomNav visibleFeatures={visibleFeatures} />

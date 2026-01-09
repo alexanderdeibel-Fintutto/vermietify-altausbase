@@ -9,11 +9,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Bell, Mail, Smartphone, Moon, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePushNotifications } from '@/components/mobile/usePushNotifications';
 
 export default function NotificationSettings() {
   const [preferences, setPreferences] = useState(null);
-  const [pushSupported, setPushSupported] = useState(false);
   const queryClient = useQueryClient();
+  const { isSupported: pushSupported, permission, requestPermission } = usePushNotifications();
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -50,9 +51,6 @@ export default function NotificationSettings() {
         quiet_hours_end: '08:00'
       });
     }
-
-    // Check push notification support
-    setPushSupported('Notification' in window && 'serviceWorker' in navigator);
   }, [existingPreferences, user]);
 
   const saveMutation = useMutation({
@@ -69,18 +67,10 @@ export default function NotificationSettings() {
     }
   });
 
-  const requestPushPermission = async () => {
-    if (!pushSupported) {
-      toast.error('Push-Benachrichtigungen werden nicht unterstützt');
-      return;
-    }
-
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
+  const handlePushToggle = async () => {
+    const success = await requestPermission();
+    if (success) {
       setPreferences({ ...preferences, push_enabled: true });
-      toast.success('Push-Benachrichtigungen aktiviert');
-    } else {
-      toast.error('Push-Benachrichtigungen abgelehnt');
     }
   };
 
@@ -144,8 +134,8 @@ export default function NotificationSettings() {
                 onCheckedChange={(v) => setPreferences({ ...preferences, push_enabled: v })}
               />
             ) : (
-              <Button size="sm" onClick={requestPushPermission} disabled={!pushSupported}>
-                Aktivieren
+              <Button size="sm" onClick={handlePushToggle} disabled={!pushSupported || permission === 'denied'}>
+                {permission === 'denied' ? 'Blockiert' : 'Aktivieren'}
               </Button>
             )}
           </div>
