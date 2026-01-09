@@ -14,13 +14,18 @@ export default function ModuleGuard({ moduleName, children, fallback = null }) {
     }
 
     // Backend-Validierung + Upgrade-Optionen
-    const response = await base44.functions.invoke('validatePackageAccess', {
-      moduleName,
-      action: 'access'
-    });
+    try {
+      const response = await base44.functions.invoke('validateModuleAccess', {
+        moduleName
+      });
 
-    if (!response.data.hasAccess) {
-      setUpgradeSuggestions(response.data.upgradeSuggestions || []);
+      if (!response.data.hasAccess) {
+        setUpgradeSuggestions(response.data.upgradeOptions || []);
+        setShowUpgrade(true);
+        return false;
+      }
+    } catch (error) {
+      console.error('Module validation error:', error);
       setShowUpgrade(true);
       return false;
     }
