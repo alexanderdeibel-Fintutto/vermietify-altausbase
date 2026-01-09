@@ -3,110 +3,91 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { userId, taxYear, canton } = await req.json();
-
     const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    console.log(`Calculating CH taxes for ${canton} in ${taxYear}`);
-
-    // Fetch all CH tax data
-    const [investments, realEstate] = await Promise.all([
-      base44.entities.InvestmentCH.filter({ tax_year: taxYear, canton }) || [],
-      base44.entities.RealEstateCH.filter({ tax_year: taxYear, canton }) || []
-    ]);
-
-    // Canton tax rates (simplified example for Zurich/ZH)
-    const CANTONAL_RATES = {
-      ZH: { federal: 0.077, cantonal: 0.082, communal: 0.038 },
-      BE: { federal: 0.077, cantonal: 0.075, communal: 0.035 },
-      // ... add other cantons as needed
-    };
-
-    const rates = CANTONAL_RATES[canton] || CANTONAL_RATES.ZH;
-
-    // Calculate investment income (Wertschriften)
-    let dividendIncome = 0;
-    let interestIncome = 0;
-    let capitalGains = 0;
-
-    for (const inv of investments) {
-      dividendIncome += inv.dividend_income || 0;
-      interestIncome += inv.interest_income || 0;
-      capitalGains += inv.capital_gains || 0;
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Calculate real estate income (Liegenschaften)
-    let rentalIncome = 0;
-    let rentalExpenses = 0;
-    let mortgageInterest = 0;
-    let propertyTax = 0;
-    let realEstateValue = 0;
+    const { taxYear, canton } = await req.json();
 
-    for (const re of realEstate) {
-      rentalIncome += re.rental_income || 0;
-      rentalExpenses += (re.maintenance_costs || 0) + (re.insurance_costs || 0);
-      mortgageInterest += re.mortgage_interest_deductible || 0;
-      propertyTax += re.property_tax || 0;
-      realEstateValue += re.current_market_value || 0;
+    if (!taxYear || !canton) {
+      return Response.json({ error: 'Missing taxYear or canton' }, { status: 400 });
     }
 
-    const netRentalIncome = rentalIncome - rentalExpenses - mortgageInterest - propertyTax;
+    const investments = await base44.entities.InvestmentCH.filter({ tax_year: taxYear, canton }) || [];
+    const realEstates = await base44.entities.RealEstateCH.filter({ tax_year: taxYear, canton }) || [];
+    const otherIncomes = await base44.entities.OtherIncomeCH.filter({ tax_year: taxYear, canton }) || [];
+    const cantonConfig = (await base44.entities.CantonConfig.filter({ canton_code: canton }) || [])[0];
 
-    // Total income
-    const totalIncome = dividendIncome + interestIncome + capitalGains + Math.max(0, netRentalIncome);
+    // Calculate income components
+    const dividendIncome = investments.reduce((s, i) => s + (i.dividend_income || 0), 0);
+    const interestIncome = investments.reduce((s, i) => s + (i.interest_income || 0), 0);
+    const realizedGains = investments.reduce((s, i) => s + Math.max(0, i.capital_gains || 0), 0);
+    const realizedLosses = investments.reduce((s, i) => s + Math.max(0, i.capital_losses || 0), 0);
+    const rentalIncome = realEstates.reduce((s, r) => s + (r.rental_income || 0), 0);
+    const otherIncome = otherIncomes.reduce((s, o) => s + (o.amount || 0), 0);
 
-    // Wealth tax (Vermögenssteuer) - Swiss federal level
-    const totalWealth = investments.reduce((sum, inv) => sum + (inv.quantity * inv.current_value || 0), 0) + realEstateValue;
-    const WEALTH_TAX_THRESHOLD = 100000;
-    const WEALTH_TAX_RATE = 0.001; // 0.1%
-    const wealthTax = totalWealth > WEALTH_TAX_THRESHOLD ? (totalWealth - WEALTH_TAX_THRESHOLD) * WEALTH_TAX_RATE : 0;
+    const totalIncome = dividendIncome + interestIncome + realizedGains + rentalIncome + otherIncome;
+    const deductions = realEstates.reduce((s, r) => s + (r.maintenance_costs || 0) + (r.property_tax || 0) + (r.insurance_costs || 0) + (r.mortgage_interest_deductible || 0), 0);
+    const taxableIncome = Math.max(0, totalIncome - deductions - realizedLosses);
 
-    // Income tax calculation (simplified)
-    const federalTax = totalIncome * rates.federal;
-    const cantonalTax = totalIncome * rates.cantonal;
-    const communalTax = totalIncome * rates.communal;
+    // Get canton tax rates
+    const federalRate = cantonConfig?.federal_income_tax_rate || 0.05;
+    const cantonalRate = cantonConfig?.cantonal_income_tax_rate || 0.08;
+    const communalRate = cantonConfig?.communal_income_tax_rate || 0.02;
+
+    // Calculate taxes
+    const federalTax = taxableIncome * federalRate;
+    const cantonalTax = taxableIncome * cantonalRate;
+    const communalTax = taxableIncome * communalRate;
     const totalIncomeTax = federalTax + cantonalTax + communalTax;
 
-    // Withholding tax credit
-    const withholdingTaxPaid = investments.reduce((sum, inv) => sum + (inv.withholding_tax_paid || 0), 0);
+    // Wealth tax (simplified)
+    const totalWealth = investments.reduce((s, i) => s + ((i.current_value || 0) * (i.quantity || 0)), 0) + realEstates.reduce((s, r) => s + (r.current_market_value || 0), 0);
+    const wealthThreshold = cantonConfig?.wealth_tax_threshold || 500000;
+    const wealthTax = Math.max(0, (totalWealth - wealthThreshold) * (cantonConfig?.wealth_tax_rate || 0.001));
 
-    const result = {
-      taxYear,
-      canton,
+    // Withholding taxes paid
+    const withholdingTaxPaid = investments.reduce((s, i) => s + (i.withholding_tax_paid || 0), 0) + otherIncomes.reduce((s, o) => s + (o.withholding_tax_paid || 0), 0);
+
+    // Calculate refund or payment due
+    const totalTaxDue = totalIncomeTax + wealthTax;
+    const taxRefundOrPayment = withholdingTaxPaid - totalTaxDue;
+
+    return Response.json({
       summary: {
-        dividendIncome: Math.round(dividendIncome),
-        interestIncome: Math.round(interestIncome),
-        capitalGains: Math.round(capitalGains),
-        rentalIncome: Math.round(rentalIncome),
-        rentalExpenses: Math.round(rentalExpenses),
-        mortgageInterest: Math.round(mortgageInterest),
-        propertyTax: Math.round(propertyTax),
-        totalIncome: Math.round(totalIncome),
-        totalWealth: Math.round(totalWealth)
+        taxable_income: taxableIncome,
+        total_tax: totalTaxDue,
+        withholding_tax_paid: withholdingTaxPaid,
+        tax_refund_or_payment: taxRefundOrPayment
       },
-      taxes: {
-        federalIncomeTax: Math.round(federalTax),
-        cantonalIncomeTax: Math.round(cantonalTax),
-        communalIncomeTax: Math.round(communalTax),
-        totalIncomeTax: Math.round(totalIncomeTax),
-        wealthTax: Math.round(wealthTax),
-        withholdingTaxPaid: Math.round(withholdingTaxPaid),
-        withholdingTaxCredit: Math.round(withholdingTaxPaid),
-        totalTaxDue: Math.round(totalIncomeTax + wealthTax - withholdingTaxPaid)
+      breakdown: {
+        federal_tax: federalTax,
+        cantonal_tax: cantonalTax,
+        communal_tax: communalTax,
+        wealth_tax: wealthTax,
+        total_income_tax: totalIncomeTax
       },
-      rates,
-      details: {
-        investmentsCount: investments.length,
-        realEstateCount: realEstate.length,
-        rentalPropertiesCount: realEstate.filter(re => !re.is_primary_residence).length
+      income_components: {
+        dividend_income: dividendIncome,
+        interest_income: interestIncome,
+        realized_gains: realizedGains,
+        realized_losses: realizedLosses,
+        rental_income: rentalIncome,
+        other_income: otherIncome,
+        total_income: totalIncome
       },
-      timestamp: new Date().toISOString()
-    };
-
-    return Response.json(result);
+      deductions,
+      wealth: {
+        total_wealth: totalWealth,
+        wealth_threshold: wealthThreshold,
+        wealth_tax: wealthTax
+      },
+      canton,
+      tax_year: taxYear
+    });
   } catch (error) {
-    console.error('Tax calculation error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

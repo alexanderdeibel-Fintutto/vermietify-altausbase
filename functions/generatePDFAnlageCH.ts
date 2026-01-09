@@ -1,126 +1,104 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { jsPDF } from 'npm:jspdf@2.5.2';
+import { jsPDF } from 'npm:jspdf@2.5.1';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const { taxYear, canton, formType } = await req.json();
 
-    console.log(`Generating ${formType} PDF for ${canton} / ${taxYear}`);
+    if (!taxYear || !canton || !formType) {
+      return Response.json({ error: 'Missing parameters' }, { status: 400 });
+    }
 
-    const doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    });
-
-    // Fetch data based on type
     let data = [];
-    let formTitle = '';
+    let title = '';
+    let columns = [];
 
+    // Fetch data based on form type
     if (formType === 'securities') {
       data = await base44.entities.InvestmentCH.filter({ tax_year: taxYear, canton }) || [];
-      formTitle = 'Wertschriften & Dividenden';
+      title = 'Wertschriften-Aufstellung';
+      columns = ['Titel', 'Typ', 'Menge', 'Aktueller Wert CHF', 'Gesamtwert CHF', 'Dividenden CHF'];
     } else if (formType === 'real_estate') {
       data = await base44.entities.RealEstateCH.filter({ tax_year: taxYear, canton }) || [];
-      formTitle = 'Liegenschaften & Vermögen';
+      title = 'Liegenschaften-Aufstellung';
+      columns = ['Adresse', 'Gemeinde', 'Marktwert CHF', 'Hypothek CHF', 'Mieteinnahmen CHF'];
     }
+
+    // Generate PDF
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text(title, 14, 20);
+    doc.setFontSize(10);
+    doc.text(`Steuerjahr: ${taxYear} | Kanton: ${canton}`, 14, 30);
+    doc.text(`Erstellt am: ${new Date().toLocaleDateString('de-CH')}`, 14, 37);
+
+    // Create table
+    let yPosition = 45;
+    const colWidth = 180 / columns.length;
 
     // Header
-    doc.setFontSize(14);
-    doc.text(formTitle, 20, 20);
-    doc.setFontSize(10);
-    doc.text(`Steuerjahr ${taxYear} • Kanton ${canton}`, 20, 28);
-    doc.text(`Erstellt: ${new Date().toLocaleDateString('de-CH')}`, 20, 34);
-
-    // Table header
-    doc.setFontSize(9);
-    let yPos = 45;
-    const pageHeight = doc.internal.pageSize.height;
-    const lineHeight = 7;
-
     doc.setFillColor(200, 200, 200);
-    doc.rect(15, yPos - 5, 180, 6, 'F');
-
-    if (formType === 'securities') {
-      doc.text('Wertschrift', 20, yPos);
-      doc.text('Dividenden CHF', 90, yPos);
-      doc.text('Aktueller Wert', 140, yPos);
-    } else if (formType === 'real_estate') {
-      doc.text('Liegenschaft', 20, yPos);
-      doc.text('Marktwert CHF', 100, yPos);
-      doc.text('Hypothekarschuld CHF', 160, yPos);
-    }
-
-    yPos += 8;
-
-    // Add data rows
-    let totals = { value: 0, debt: 0 };
-    data.forEach(item => {
-      if (yPos > pageHeight - 20) {
-        doc.addPage();
-        yPos = 20;
-      }
-
-      doc.setFontSize(8);
-      if (formType === 'securities') {
-        const itemValue = (item.current_value || 0) * (item.quantity || 1);
-        doc.text(item.title || '', 20, yPos);
-        doc.text((item.dividend_income || 0).toFixed(2), 90, yPos);
-        doc.text(itemValue.toFixed(2), 140, yPos);
-        totals.value += itemValue;
-      } else if (formType === 'real_estate') {
-        doc.text(item.title || '', 20, yPos);
-        doc.text((item.current_market_value || 0).toFixed(2), 100, yPos);
-        doc.text((item.mortgage_debt || 0).toFixed(2), 160, yPos);
-        totals.value += item.current_market_value || 0;
-        totals.debt += item.mortgage_debt || 0;
-      }
-
-      yPos += lineHeight;
+    columns.forEach((col, i) => {
+      doc.rect(14 + i * colWidth, yPosition, colWidth, 10, 'F');
+      doc.setFontSize(9);
+      doc.text(col, 14 + i * colWidth + 2, yPosition + 6);
     });
 
-    // Totals
-    yPos += 3;
-    doc.setFillColor(220, 220, 220);
-    doc.rect(15, yPos - 5, 180, 6, 'F');
-    doc.setFontSize(9);
-    doc.setFont(undefined, 'bold');
+    yPosition += 10;
 
-    if (formType === 'securities') {
-      doc.text('GESAMTWERT', 20, yPos);
-      doc.text('', 90, yPos);
-      doc.text(totals.value.toFixed(2), 140, yPos);
-    } else if (formType === 'real_estate') {
-      doc.text('SUMMEN', 20, yPos);
-      doc.text(totals.value.toFixed(2), 100, yPos);
-      doc.text(totals.debt.toFixed(2), 160, yPos);
-    }
+    // Data rows
+    doc.setFontSize(9);
+    data.forEach((row) => {
+      if (yPosition > 270) {
+        doc.addPage();
+        yPosition = 14;
+      }
+
+      let rowData = [];
+      if (formType === 'securities') {
+        rowData = [
+          row.title || '',
+          row.investment_type || '',
+          row.quantity || 0,
+          (row.current_value || 0).toFixed(2),
+          ((row.current_value || 0) * (row.quantity || 0)).toFixed(2),
+          (row.dividend_income || 0).toFixed(2)
+        ];
+      } else if (formType === 'real_estate') {
+        rowData = [
+          row.address || '',
+          row.municipality || '',
+          (row.current_market_value || 0).toFixed(2),
+          (row.mortgage_debt || 0).toFixed(2),
+          (row.rental_income || 0).toFixed(2)
+        ];
+      }
+
+      rowData.forEach((cell, i) => {
+        doc.text(String(cell), 14 + i * colWidth + 2, yPosition + 6);
+      });
+
+      doc.rect(14, yPosition, 180, 10);
+      yPosition += 10;
+    });
 
     // Footer
-    doc.setFontSize(7);
-    doc.setTextColor(128, 128, 128);
-    doc.text('Dieses Dokument wurde automatisch erstellt. Bitte überprüfen Sie alle Angaben.', 20, pageHeight - 10);
+    doc.setFontSize(8);
+    doc.text('Dieses Dokument dient nur zur Information und ist nicht für die Steuererklärung gültig.', 14, 290);
 
+    // Upload PDF
     const pdfBytes = doc.output('arraybuffer');
-    const { file_url } = await base44.integrations.Core.UploadFile({
-      file: pdfBytes
-    });
+    const { file_url } = await base44.integrations.Core.UploadFile({ file: new Uint8Array(pdfBytes) });
 
-    return Response.json({
-      success: true,
-      formType,
-      canton,
-      taxYear,
-      file_url,
-      filename: `${formType}_${canton}_${taxYear}.pdf`,
-      dataCount: data.length
-    });
+    return Response.json({ file_url, status: 'success' });
   } catch (error) {
-    console.error('PDF generation error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
