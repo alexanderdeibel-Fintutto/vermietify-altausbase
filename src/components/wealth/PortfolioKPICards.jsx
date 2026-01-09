@@ -2,6 +2,9 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { TrendingUp, Banknote, Target, AlertCircle } from 'lucide-react';
 
+// Fallback asset categories constant for when import might fail
+const ASSET_CATEGORIES_FALLBACK = {};
+
 export default function PortfolioKPICards({ portfolio = [] }) {
   const totalValue = portfolio.reduce((sum, asset) => {
     return sum + (asset.quantity * asset.current_value);
