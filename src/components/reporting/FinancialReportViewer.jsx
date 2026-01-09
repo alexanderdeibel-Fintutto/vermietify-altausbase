@@ -9,6 +9,7 @@ import { Download, Share2, Printer, Zap, Brain } from 'lucide-react';
 import { toast } from 'sonner';
 import CostOptimizationPanel from './CostOptimizationPanel';
 import AIInsightsPanel from './AIInsightsPanel';
+import ExportButton from './ExportButton';
 
 const COLORS = ['#0f172a', '#64748b', '#94a3b8', '#cbd5e1', '#e2e8f0'];
 
@@ -376,33 +377,18 @@ export default function FinancialReportViewer({ report }) {
       </Tabs>
 
       {/* Export Actions */}
-      <div className="flex gap-2 pt-4 border-t border-slate-200">
-        <Button
-          onClick={() => handleExport('pdf')}
-          variant="outline"
-          size="sm"
-          className="flex-1"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          PDF exportieren
-        </Button>
-        <Button
-          onClick={() => handleExport('excel')}
-          variant="outline"
-          size="sm"
-          className="flex-1"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Excel exportieren
-        </Button>
-        <Button
-          onClick={() => toast.success('Report gedruckt')}
-          variant="outline"
-          size="sm"
-        >
-          <Printer className="w-4 h-4" />
-        </Button>
-      </div>
+          <div className="flex gap-2 pt-4 border-t border-slate-200">
+            <ExportButton reportType="financial_trends" />
+            <Button
+              onClick={() => toast.success('Report gedruckt')}
+              variant="outline"
+              size="sm"
+              className="flex-1"
+            >
+              <Printer className="w-4 h-4 mr-2" />
+              Drucken
+            </Button>
+          </div>
     </div>
   );
 }
