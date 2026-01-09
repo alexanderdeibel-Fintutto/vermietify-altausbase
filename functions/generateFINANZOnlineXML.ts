@@ -3,111 +3,71 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { taxYear, formData } = await req.json();
-
     const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    console.log(`Generating FINANZOnline XML for ${taxYear}`);
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    // Fetch user data
-    const [investments, otherIncomes, capitalGains] = await Promise.all([
-      base44.entities.InvestmentAT.filter({ tax_year: taxYear }) || [],
-      base44.entities.OtherIncomeAT.filter({ tax_year: taxYear }) || [],
-      base44.entities.CapitalGainAT.filter({ tax_year: taxYear }) || []
-    ]);
+    const { taxYear, filingData } = await req.json();
 
-    // Build FINANZOnline XML structure (simplified)
-    const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
-<Steuererklarung xmlns="http://www.bmf.gv.at/steuererklarung">
-  <Kopfdaten>
-    <TaxYear>${taxYear}</TaxYear>
-    <Steuernummer>${user.tax_id || 'PENDING'}</Steuernummer>
-    <Name>${user.full_name}</Name>
-    <Submission>
-      <Timestamp>${new Date().toISOString()}</Timestamp>
-      <Version>2026.01</Version>
-    </Submission>
-  </Kopfdaten>
-  
-  <Anlagen>
-    <!-- Anlage KAP (Kapitalvermögen) -->
-    <AnlageKAP>
-      <Positionen>
-        ${investments.map((inv, idx) => `
-        <Position id="${idx + 1}">
-          <Beschreibung>${inv.title}</Beschreibung>
-          <InvestmentTyp>${inv.investment_type}</InvestmentTyp>
-          <Ertrag>${(inv.gross_income || 0).toFixed(2)}</Ertrag>
-          <KESt>${(inv.withheld_tax_kest || 0).toFixed(2)}</KESt>
-          <Kirchensteuer>${(inv.church_tax || 0).toFixed(2)}</Kirchensteuer>
-          <AuslaendischeQuellensteuer>${(inv.foreign_tax || 0).toFixed(2)}</AuslaendischeQuellensteuer>
-        </Position>
-        `).join('')}
-      </Positionen>
-      <Summen>
-        <GesamtErtrag>${investments.reduce((s, i) => s + (i.gross_income || 0), 0).toFixed(2)}</GesamtErtrag>
-        <GesamtKESt>${investments.reduce((s, i) => s + (i.withheld_tax_kest || 0), 0).toFixed(2)}</GesamtKESt>
-      </Summen>
-    </AnlageKAP>
+    if (!taxYear || !filingData) {
+      return Response.json({ error: 'Missing parameters' }, { status: 400 });
+    }
 
-    <!-- Anlage SO (Sonstige Einkünfte) -->
-    <AnlageSO>
-      <Positionen>
-        ${otherIncomes.map((oi, idx) => `
-        <Position id="${idx + 1}">
-          <Beschreibung>${oi.description}</Beschreibung>
-          <Einkunftsart>${oi.income_type}</Einkunftsart>
-          <Betrag>${(oi.amount || 0).toFixed(2)}</Betrag>
-          <Einbehaltenesteuer>${(oi.withheld_tax || 0).toFixed(2)}</Einbehaltenesteuer>
-          <AbzugsfaehigeAusgaben>${(oi.deductible_expenses || 0).toFixed(2)}</AbzugsfaehigeAusgaben>
-        </Position>
-        `).join('')}
-      </Positionen>
-      <Summen>
-        <GesamtBetrag>${otherIncomes.reduce((s, oi) => s + (oi.amount || 0), 0).toFixed(2)}</GesamtBetrag>
-      </Summen>
-    </AnlageSO>
-
-    <!-- Anlage VG (Veräußerungsgeschäfte) -->
-    <AnlageVG>
-      <Positionen>
-        ${capitalGains.filter(cg => !cg.is_tax_exempt).map((cg, idx) => `
-        <Position id="${idx + 1}">
-          <Beschreibung>${cg.description}</Beschreibung>
-          <VerkaeuferDatum>${cg.sale_date}</VerkaeuferDatum>
-          <Kaufpreis>${(cg.acquisition_cost || 0).toFixed(2)}</Kaufpreis>
-          <Verkaeuferspreis>${(cg.sale_price || 0).toFixed(2)}</Verkaeuferspreis>
-          <Gewinn>${(cg.gain_loss || 0).toFixed(2)}</Gewinn>
-        </Position>
-        `).join('')}
-      </Positionen>
-      <Summen>
-        <GesamtGewinn>${capitalGains.filter(cg => !cg.is_tax_exempt).reduce((s, cg) => s + (cg.gain_loss || 0), 0).toFixed(2)}</GesamtGewinn>
-      </Summen>
-    </AnlageVG>
-  </Anlagen>
-</Steuererklarung>`;
-
-    // Upload XML file
-    const { file_url } = await base44.integrations.Core.UploadFile({
-      file: xmlContent
-    });
+    // Generiere FINANZ Online XML Format für Österreich
+    const xmlContent = generateXML(user, taxYear, filingData);
 
     return Response.json({
-      success: true,
-      file_url,
-      fileName: `Steuererklarung_${taxYear}.xml`,
-      taxYear,
-      dataCount: {
-        investments: investments.length,
-        otherIncomes: otherIncomes.length,
-        capitalGains: capitalGains.filter(cg => !cg.is_tax_exempt).length
-      },
-      timestamp: new Date().toISOString()
+      status: 'success',
+      xml: xmlContent,
+      filename: `E1_${taxYear}_${user.email.split('@')[0]}.xml`,
+      format: 'FINANZ_Online'
     });
   } catch (error) {
-    console.error('XML generation error:', error);
+    console.error('Generate FINANZ Online XML error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
+
+function generateXML(user, taxYear, filingData) {
+  const declaration = `<?xml version="1.0" encoding="UTF-8"?>
+<declaration>
+  <metadata>
+    <tax_year>${taxYear}</tax_year>
+    <taxpayer>
+      <name>${user.full_name}</name>
+      <email>${user.email}</email>
+      <generated_at>${new Date().toISOString()}</generated_at>
+    </taxpayer>
+  </metadata>
+  <form_e1>
+    <income>
+      <wages>${filingData.wages || 0}</wages>
+      <capital_gains>${filingData.capital_gains || 0}</capital_gains>
+      <rental_income>${filingData.rental_income || 0}</rental_income>
+      <other_income>${filingData.other_income || 0}</other_income>
+    </income>
+    <deductions>
+      <special_expenses>${filingData.special_expenses || 0}</special_expenses>
+      <extraordinary_income>${filingData.extraordinary_income || 0}</extraordinary_income>
+      <church_tax>${filingData.church_tax || 0}</church_tax>
+      <insurance_contributions>${filingData.insurance_contributions || 0}</insurance_contributions>
+    </deductions>
+    <attachments>
+      ${generateAttachmentXML(filingData.attachments || [])}
+    </attachments>
+  </form_e1>
+</declaration>`;
+
+  return declaration;
+}
+
+function generateAttachmentXML(attachments) {
+  return attachments.map((att, i) => `
+    <attachment id="att_${i}">
+      <type>${att.type || 'other'}</type>
+      <reference>${att.reference || ''}</reference>
+      <amount>${att.amount || 0}</amount>
+    </attachment>`).join('\n');
+}

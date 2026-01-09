@@ -3,101 +3,104 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { taxYear } = await req.json();
-
     const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    console.log(`Calculating AT E1c (Vermietung) taxes for ${taxYear}`);
-
-    // Fetch all real estate and rental data
-    const realEstates = await base44.entities.RealEstate.filter({ tax_year: taxYear }) || [];
-
-    // Calculate rental income (E1c - Einkünfte aus Vermietung und Verpachtung)
-    let rentalIncome = 0;
-    let rentalExpenses = 0;
-    let depreciation = 0;
-    let mortgageInterest = 0;
-    let propertyTax = 0;
-    let maintenanceCosts = 0;
-    let insuranceCosts = 0;
-
-    for (const property of realEstates) {
-      // Rental income
-      rentalIncome += property.annual_rental_income || 0;
-
-      // Deductible expenses
-      mortgageInterest += property.mortgage_interest || 0;
-      propertyTax += property.property_tax || 0;
-      maintenanceCosts += property.maintenance_costs || 0;
-      insuranceCosts += property.insurance_costs || 0;
-
-      // Depreciation (AfA) - simplified: 2% per year for building
-      if (property.acquisition_cost && property.acquisition_date) {
-        const acquisitionYear = new Date(property.acquisition_date).getFullYear();
-        const yearsHeld = taxYear - acquisitionYear;
-        if (yearsHeld >= 0) {
-          const buildingValue = property.acquisition_cost * 0.8; // Assume 80% is building
-          depreciation += buildingValue * 0.02; // 2% depreciation
-        }
-      }
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    rentalExpenses = mortgageInterest + propertyTax + maintenanceCosts + insuranceCosts + depreciation;
+    const { taxYear, properties = [] } = await req.json();
 
-    // Net rental income (E1c taxable)
-    const netRentalIncome = Math.max(0, rentalIncome - rentalExpenses);
-
-    // Austrian tax calculation for E1c
-    // E1c income is added to other income and taxed progressively
-    // Tax brackets 2026 (simplified)
-    const TAX_BRACKETS = [
-      { limit: 25000, rate: 0.20 },
-      { limit: 60000, rate: 0.30 },
-      { limit: 90000, rate: 0.42 },
-      { limit: Infinity, rate: 0.50 }
-    ];
-
-    let incomeTax = 0;
-    let remaining = netRentalIncome;
-    let previousLimit = 0;
-
-    for (const bracket of TAX_BRACKETS) {
-      if (remaining <= 0) break;
-      const taxableInBracket = Math.min(remaining, bracket.limit - previousLimit);
-      incomeTax += taxableInBracket * bracket.rate;
-      remaining -= taxableInBracket;
-      previousLimit = bracket.limit;
+    if (!taxYear) {
+      return Response.json({ error: 'Missing taxYear' }, { status: 400 });
     }
 
-    const result = {
-      taxYear,
-      summary: {
-        rentalIncome,
-        mortgageInterest,
-        propertyTax,
-        maintenanceCosts,
-        insuranceCosts,
-        depreciation,
-        totalExpenses: rentalExpenses,
-        netRentalIncome
-      },
-      taxes: {
-        estimatedIncomeTax: Math.round(incomeTax),
-        surtax: Math.round(incomeTax * 0.05), // 5% Zuschlag
-        churchTax: Math.round(incomeTax * 0.03), // 3% Kirchensteuer (Oberösterreich)
-        totalTax: Math.round(incomeTax * 1.08)
-      },
+    let totalRentalIncome = 0;
+    let totalExpenses = 0;
+    let totalDividedExpenses = 0;
+
+    // Verarbeite jede Immobilie
+    for (const prop of properties) {
+      const rentalIncome = prop.rental_income || 0;
+      const operatingCosts = prop.operating_costs || 0;
+      const maintenance = prop.maintenance || 0;
+      const insurance = prop.insurance || 0;
+      const mortgage_interest = prop.mortgage_interest || 0;
+      const depreciation = prop.depreciation || 0;
+      const repairs = prop.repairs || 0;
+      const other_expenses = prop.other_expenses || 0;
+
+      totalRentalIncome += rentalIncome;
+      
+      const propExpenses = operatingCosts + maintenance + insurance + mortgage_interest + depreciation + repairs + other_expenses;
+      totalExpenses += propExpenses;
+      totalDividedExpenses += propExpenses;
+    }
+
+    // Grundfreibetrag & Abzüge
+    const basicDeduction = 730; // EUR pro Jahr Grundfreibetrag
+    const expenseAllowance = Math.max(0, totalRentalIncome * 0.20); // 20% Werbungskosten oder tatsächliche
+
+    const deductibleExpenses = Math.max(expenseAllowance, totalDividedExpenses);
+    const taxableIncome = Math.max(0, totalRentalIncome - basicDeduction - deductibleExpenses);
+
+    // Steuersätze AT (2024)
+    const progressiveTaxRate = calculateProgressiveTaxAT(taxableIncome);
+
+    const calculation = {
+      tax_year: taxYear,
+      total_rental_income: totalRentalIncome,
+      basic_deduction: basicDeduction,
+      deductible_expenses: deductibleExpenses,
+      taxable_income: taxableIncome,
+      tax_rate: progressiveTaxRate.rate,
+      tax_amount: progressiveTaxRate.tax,
+      solidarity_surcharge: progressiveTaxRate.tax * 0.055,
+      total_tax: progressiveTaxRate.tax + (progressiveTaxRate.tax * 0.055),
+      properties_count: properties.length,
+      calculation_method: 'anlage_e1c',
       details: {
-        propertiesCount: realEstates.length,
-        depreciationMethod: 'linear 2% per year'
-      },
-      timestamp: new Date().toISOString()
+        rental_income_details: properties.map((p, i) => ({
+          property_id: p.id || `Property ${i + 1}`,
+          rental_income: p.rental_income || 0,
+          expenses: (p.operating_costs || 0) + (p.maintenance || 0) + (p.insurance || 0) + (p.mortgage_interest || 0) + (p.depreciation || 0) + (p.repairs || 0) + (p.other_expenses || 0)
+        }))
+      }
     };
 
-    return Response.json(result);
+    return Response.json({
+      status: 'success',
+      calculation
+    });
   } catch (error) {
-    console.error('Tax calculation error:', error);
+    console.error('Calculate tax AT E1c error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
+
+function calculateProgressiveTaxAT(income) {
+  // Progressive Einkommensteuer AT 2024
+  let tax = 0;
+  
+  if (income <= 11000) {
+    tax = income * 0.0;
+  } else if (income <= 18000) {
+    tax = (income - 11000) * 0.20;
+  } else if (income <= 31000) {
+    tax = 1400 + (income - 18000) * 0.325;
+  } else if (income <= 60000) {
+    tax = 1400 + 4225 + (income - 31000) * 0.42;
+  } else if (income <= 90000) {
+    tax = 1400 + 4225 + 12180 + (income - 60000) * 0.48;
+  } else if (income <= 1000000) {
+    tax = 1400 + 4225 + 12180 + 14400 + (income - 90000) * 0.50;
+  } else {
+    tax = 1400 + 4225 + 12180 + 14400 + 455000 + (income - 1000000) * 0.55;
+  }
+
+  return {
+    income,
+    tax: Math.round(tax),
+    rate: income > 0 ? (tax / income * 100).toFixed(2) : 0
+  };
+}
