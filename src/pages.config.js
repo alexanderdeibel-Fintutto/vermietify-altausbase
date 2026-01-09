@@ -272,6 +272,7 @@ import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import SmartTaskDashboard from './pages/SmartTaskDashboard';
 import MobileApp from './pages/MobileApp';
+import StaffMobileApp from './pages/StaffMobileApp';
 import __Layout from './Layout.jsx';
 
 
@@ -550,6 +551,7 @@ export const PAGES = {
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "SmartTaskDashboard": SmartTaskDashboard,
     "MobileApp": MobileApp,
+    "StaffMobileApp": StaffMobileApp,
 }
 
 export const pagesConfig = {

@@ -10,11 +10,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Plus, Wrench, User, Calendar, CheckCircle } from 'lucide-react';
+import { Plus, Wrench, User, Calendar, CheckCircle, GitBranch, List } from 'lucide-react';
 import { toast } from 'sonner';
+import TaskCalendarView from '@/components/tasks/TaskCalendarView';
+import TaskDependencyManager from '@/components/tasks/TaskDependencyManager';
+import SubtaskManager from '@/components/tasks/SubtaskManager';
+import AIAssignmentSuggestion from '@/components/tasks/AIAssignmentSuggestion';
 
 export default function BuildingTasksManager({ buildingId }) {
   const [showForm, setShowForm] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'calendar'
   const [formData, setFormData] = useState({
     task_title: '',
     description: '',
@@ -95,10 +101,28 @@ export default function BuildingTasksManager({ buildingId }) {
 
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-light text-slate-900">Aufgabenverwaltung</h2>
-        <Button onClick={() => setShowForm(!showForm)} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Neue Aufgabe
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant={viewMode === 'list' ? 'default' : 'outline'}
+            onClick={() => setViewMode('list')}
+            size="sm"
+          >
+            <List className="w-4 h-4 mr-2" />
+            Liste
+          </Button>
+          <Button 
+            variant={viewMode === 'calendar' ? 'default' : 'outline'}
+            onClick={() => setViewMode('calendar')}
+            size="sm"
+          >
+            <Calendar className="w-4 h-4 mr-2" />
+            Kalender
+          </Button>
+          <Button onClick={() => setShowForm(!showForm)} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="w-4 h-4 mr-2" />
+            Neue Aufgabe
+          </Button>
+        </div>
       </div>
 
       {showForm && (
@@ -195,13 +219,35 @@ export default function BuildingTasksManager({ buildingId }) {
         </Card>
       )}
 
+      {viewMode === 'calendar' ? (
+        <TaskCalendarView buildingId={buildingId} />
+      ) : (
+        <>
+      {selectedTask && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+          <SubtaskManager taskId={selectedTask.id} buildingId={buildingId} />
+          <TaskDependencyManager taskId={selectedTask.id} buildingId={buildingId} />
+          <AIAssignmentSuggestion taskId={selectedTask.id} buildingId={buildingId} />
+        </div>
+      )}
+
       <div className="space-y-3">
         {tasks.map(task => (
-          <Card key={task.id}>
+          <Card 
+            key={task.id}
+            className={`cursor-pointer transition-shadow ${selectedTask?.id === task.id ? 'ring-2 ring-blue-600' : ''}`}
+            onClick={() => setSelectedTask(task)}
+          >
             <CardContent className="pt-4">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-slate-900">{task.task_title}</h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-slate-900">{task.task_title}</h3>
+                    {task.is_subtask && <Badge variant="outline" className="text-xs">Sub</Badge>}
+                    {task.depends_on?.length > 0 && (
+                      <GitBranch className="w-3 h-3 text-amber-600" />
+                    )}
+                  </div>
                   <p className="text-sm text-slate-600 mt-1">{task.description}</p>
                 </div>
                 <div className="flex gap-2">
@@ -239,6 +285,8 @@ export default function BuildingTasksManager({ buildingId }) {
           </Card>
         ))}
       </div>
+      </>
+      )}
     </div>
   );
 }
