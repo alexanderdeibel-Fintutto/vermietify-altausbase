@@ -3,19 +3,30 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Upload } from 'lucide-react';
+import { Plus, Upload, Trash2 } from 'lucide-react';
 import PortfolioKPICards from '@/components/wealth/PortfolioKPICards';
 import AssetPortfolioTable from '@/components/wealth/AssetPortfolioTable';
 import AssetWizard from '@/components/wealth/AssetWizard';
 import CSVImportDialog from '@/components/wealth/CSVImportDialog';
 import AssetDetailModal from '@/components/wealth/AssetDetailModal';
 import ImportHistoryPanel from '@/components/wealth/ImportHistoryPanel';
+import PortfolioErrorBoundary from '@/components/wealth/PortfolioErrorBoundary';
+import { useBatchOperations } from '@/components/wealth/useBatchOperations';
 
 export default function WealthManagementPage() {
   const [showWizard, setShowWizard] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState(null);
   const queryClient = useQueryClient();
+  
+  const {
+    selectedAssets,
+    toggleAssetSelection,
+    selectAllAssets,
+    clearSelection,
+    batchDelete,
+    isLoading: batchLoading
+  } = useBatchOperations();
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
@@ -70,38 +81,55 @@ export default function WealthManagementPage() {
   }
 
   return (
-    <div className="space-y-4 lg:space-y-6">
-      <div>
-        <h1 className="text-2xl lg:text-3xl font-light text-slate-900">Mein Vermögen</h1>
-        <p className="text-xs lg:text-sm font-light text-slate-600 mt-1">
-          Verwalten Sie alle Ihre Vermögenswerte für eine ganzheitliche Übersicht
-        </p>
-      </div>
-
-      <PortfolioKPICards portfolio={portfolio} />
-
-      <Card>
-        <div className="p-4 lg:p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-          <h2 className="text-base lg:text-lg font-light text-slate-900">Portfolio Übersicht</h2>
-          <div className="flex gap-2 flex-col sm:flex-row">
-            <Button
-              onClick={() => setShowImportDialog(true)}
-              variant="outline"
-              className="font-light gap-2 text-sm w-full sm:w-auto"
-            >
-              <Upload className="w-4 h-4" />
-              <span className="hidden sm:inline">Importieren</span>
-              <span className="sm:hidden">Import</span>
-            </Button>
-            <Button
-              onClick={() => setShowWizard(true)}
-              className="bg-slate-900 hover:bg-slate-800 font-light gap-2 text-sm w-full sm:w-auto"
-            >
-              <Plus className="w-4 h-4" />
-              Hinzufügen
-            </Button>
-          </div>
+    <PortfolioErrorBoundary>
+      <div className="space-y-4 lg:space-y-6">
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-light text-slate-900">Mein Vermögen</h1>
+          <p className="text-xs lg:text-sm font-light text-slate-600 mt-1">
+            Verwalten Sie alle Ihre Vermögenswerte für eine ganzheitliche Übersicht
+          </p>
         </div>
+
+        <PortfolioKPICards portfolio={portfolio} />
+
+        <Card>
+          <div className="p-4 lg:p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            <h2 className="text-base lg:text-lg font-light text-slate-900">Portfolio Übersicht</h2>
+            <div className="flex gap-2 flex-col sm:flex-row">
+              {selectedAssets.size > 0 && (
+                <Button
+                  onClick={batchDelete}
+                  disabled={batchLoading}
+                  variant="destructive"
+                  className="font-light gap-2 text-sm w-full sm:w-auto"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">
+                    Löschen ({selectedAssets.size})
+                  </span>
+                  <span className="sm:hidden">
+                    ({selectedAssets.size})
+                  </span>
+                </Button>
+              )}
+              <Button
+                onClick={() => setShowImportDialog(true)}
+                variant="outline"
+                className="font-light gap-2 text-sm w-full sm:w-auto"
+              >
+                <Upload className="w-4 h-4" />
+                <span className="hidden sm:inline">Importieren</span>
+                <span className="sm:hidden">Import</span>
+              </Button>
+              <Button
+                onClick={() => setShowWizard(true)}
+                className="bg-slate-900 hover:bg-slate-800 font-light gap-2 text-sm w-full sm:w-auto"
+              >
+                <Plus className="w-4 h-4" />
+                Hinzufügen
+              </Button>
+            </div>
+          </div>
         <div className="p-4 lg:p-6 overflow-x-hidden">
           {isLoading ? (
             <p className="text-sm font-light text-slate-600">Lädt...</p>
@@ -143,9 +171,10 @@ export default function WealthManagementPage() {
         }}
       />
 
-      <div className="mt-6 lg:mt-8">
-        <ImportHistoryPanel />
+        <div className="mt-6 lg:mt-8">
+          <ImportHistoryPanel />
+        </div>
       </div>
-    </div>
+    </PortfolioErrorBoundary>
   );
 }
