@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Select,
   SelectContent,
@@ -12,77 +11,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
-} from 'recharts';
-import { TrendingDown, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle, TrendingDown, DollarSign } from 'lucide-react';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
 export default function TaxLossHarvesting() {
   const [country, setCountry] = useState('DE');
   const [taxYear, setTaxYear] = useState(CURRENT_YEAR);
-  const queryClient = useQueryClient();
+  const [analyze, setAnalyze] = useState(false);
 
-  // Fetch suggestions
-  const { data: suggestions = {}, isLoading } = useQuery({
+  const { data: analysis = {}, isLoading } = useQuery({
     queryKey: ['taxLossHarvesting', country, taxYear],
     queryFn: async () => {
       const response = await base44.functions.invoke('suggestTaxLossHarvesting', {
         country,
         taxYear
       });
-      return response.data?.suggestions || {};
-    }
+      return response.data?.analysis || {};
+    },
+    enabled: analyze
   });
-
-  // Implement harvesting
-  const { mutate: implementHarvesting, isLoading: isImplementing } = useMutation({
-    mutationFn: (opportunity) =>
-      base44.entities.TaxLossCarryforward.create({
-        user_email: user.email,
-        country,
-        loss_year: taxYear,
-        loss_type: 'investment_loss',
-        loss_amount: opportunity.unrealized_loss,
-        loss_description: `${opportunity.asset_name} - Harvested loss`,
-        carryforward_period: country === 'AT' ? 'unlimited' : '10_years',
-        status: 'pending',
-        notes: `Harvested: ${opportunity.alternative_investment}`
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['taxLossHarvesting'] });
-    }
-  });
-
-  const opportunityData = (suggestions.opportunities || []).map(opp => ({
-    asset: opp.asset_name,
-    loss: Math.round(opp.unrealized_loss),
-    savings: Math.round(opp.tax_savings)
-  }));
-
-  const getPriorityColor = (priority) => {
-    switch (priority?.toLowerCase()) {
-      case 'high':
-        return 'bg-red-100 text-red-800';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-green-100 text-green-800';
-    }
-  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">🌱 Tax Loss Harvesting</h1>
-        <p className="text-slate-500 mt-1">Identifizieren und nutzen Sie Verluste zur Steueroptimierung</p>
+        <h1 className="text-3xl font-bold">🔄 Tax Loss Harvesting</h1>
+        <p className="text-slate-500 mt-1">Verlustoptimierung zur Steuereinsparung</p>
       </div>
 
       {/* Controls */}
-      <div className="flex gap-4 flex-wrap">
-        <div className="flex-1 max-w-xs">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
           <label className="text-sm font-medium">Land</label>
           <Select value={country} onValueChange={setCountry}>
             <SelectTrigger>
@@ -95,7 +56,7 @@ export default function TaxLossHarvesting() {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex-1 max-w-xs">
+        <div>
           <label className="text-sm font-medium">Steuerjahr</label>
           <Select value={String(taxYear)} onValueChange={(v) => setTaxYear(parseInt(v))}>
             <SelectTrigger>
@@ -107,174 +68,127 @@ export default function TaxLossHarvesting() {
             </SelectContent>
           </Select>
         </div>
+        <div className="flex items-end">
+          <Button
+            onClick={() => setAnalyze(true)}
+            className="w-full bg-blue-600 hover:bg-blue-700"
+          >
+            Analyse Starten
+          </Button>
+        </div>
       </div>
 
-      {isLoading ? (
-        <div className="text-center py-8">⏳ Analysiere Verlust-Möglichkeiten...</div>
-      ) : (
+      {isLoading && analyze && (
+        <div className="text-center py-8">⏳ Analyse läuft...</div>
+      )}
+
+      {analyze && analysis.suggestions && (
         <>
-          {/* Summary Cards */}
+          {/* Summary Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <TrendingDown className="w-8 h-8 text-red-600 mx-auto mb-2" />
-                  <p className="text-sm text-slate-600">Harvestbare Verluste</p>
-                  <p className="text-3xl font-bold mt-2 text-red-600">
-                    €{Math.round(suggestions.total_harvestable_losses || 0).toLocaleString()}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
             <Card className="border-green-300 bg-green-50">
               <CardContent className="pt-6">
-                <div className="text-center">
-                  <CheckCircle2 className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                  <p className="text-sm text-slate-600">Geschätzte Steuereinsparungen</p>
-                  <p className="text-3xl font-bold mt-2 text-green-600">
-                    €{Math.round(suggestions.estimated_tax_savings || 0).toLocaleString()}
-                  </p>
-                </div>
+                <p className="text-sm text-slate-600">Potenzielle Ersparnis</p>
+                <p className="text-3xl font-bold text-green-600 mt-2">
+                  €{Math.round(analysis.suggestions?.total_potential_savings || 0).toLocaleString()}
+                </p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border-red-300 bg-red-50">
               <CardContent className="pt-6">
-                <div className="text-center">
-                  <Clock className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                  <p className="text-sm text-slate-600">Opportunities</p>
-                  <p className="text-3xl font-bold mt-2">{(suggestions.opportunities || []).length}</p>
-                </div>
+                <p className="text-sm text-slate-600">Aktuelle Gewinne</p>
+                <p className="text-3xl font-bold text-red-600 mt-2">
+                  €{Math.round(analysis.current_gains || 0).toLocaleString()}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-blue-300 bg-blue-50">
+              <CardContent className="pt-6">
+                <p className="text-sm text-slate-600">Verfügbare Verluste</p>
+                <p className="text-3xl font-bold text-blue-600 mt-2">
+                  €{Math.round(analysis.available_losses || 0).toLocaleString()}
+                </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Implementation Plan */}
-          {suggestions.implementation_plan && (
-            <Alert className="border-blue-300 bg-blue-50">
-              <AlertDescription className="text-blue-900 text-sm">
-                <strong>Implementierungsplan:</strong> {suggestions.implementation_plan}
+          {/* Wash Sale Warnings */}
+          {(analysis.suggestions?.wash_sale_risks || []).length > 0 && (
+            <Alert className="border-yellow-300 bg-yellow-50">
+              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <AlertDescription className="text-yellow-800">
+                <p className="font-bold mb-2">⚠️ Wash Sale Risiken:</p>
+                <ul className="space-y-1 text-sm">
+                  {analysis.suggestions.wash_sale_risks.map((risk, i) => (
+                    <li key={i}>• {risk}</li>
+                  ))}
+                </ul>
               </AlertDescription>
             </Alert>
           )}
 
-          {/* Risk Assessment */}
-          {suggestions.risk_assessment && (
-            <Alert className="border-orange-300 bg-orange-50">
-              <AlertTriangle className="h-4 w-4 text-orange-600 inline mr-2" />
-              <AlertDescription className="text-orange-900 text-sm inline">
-                <strong>Risiko:</strong> {suggestions.risk_assessment}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Opportunities Chart */}
-          {opportunityData.length > 0 && (
+          {/* Harvest Recommendations */}
+          {(analysis.suggestions?.harvest_recommendations || []).length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">📊 Verlust-Möglichkeiten</CardTitle>
+                <CardTitle className="text-sm">📋 Realisierungs-Empfehlungen</CardTitle>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={opportunityData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="asset" angle={-45} textAnchor="end" height={100} />
-                    <YAxis />
-                    <Tooltip formatter={(value) => `€${value.toLocaleString()}`} />
-                    <Legend />
-                    <Bar dataKey="loss" fill="#ef4444" name="Unrealisierter Verlust" />
-                    <Bar dataKey="savings" fill="#10b981" name="Steuereinsparungen" />
-                  </BarChart>
-                </ResponsiveContainer>
+              <CardContent className="space-y-3">
+                {analysis.suggestions.harvest_recommendations.map((rec, i) => (
+                  <div key={i} className="p-4 rounded-lg border border-slate-200 bg-slate-50">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-bold">{rec.asset || rec.name || `Empfehlung ${i + 1}`}</h4>
+                      {rec.estimated_loss && (
+                        <Badge className="bg-red-100 text-red-800">
+                          -{rec.estimated_loss.toLocaleString()} €
+                        </Badge>
+                      )}
+                    </div>
+                    {rec.reason && <p className="text-sm text-slate-600 mb-2">{rec.reason}</p>}
+                    {rec.timing && <p className="text-xs text-slate-500">⏱️ {rec.timing}</p>}
+                  </div>
+                ))}
               </CardContent>
             </Card>
           )}
 
-          {/* Opportunities List */}
-          {(suggestions.opportunities || []).length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold">🎯 Top Opportunities</h2>
-              {suggestions.opportunities.map((opp, i) => (
-                <Card key={i} className="border-l-4 border-l-red-500">
-                  <CardContent className="pt-6 space-y-3">
-                    <div className="flex justify-between items-start gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold">{opp.asset_name}</h3>
-                          <Badge className={getPriorityColor(opp.priority)}>
-                            {opp.priority?.toUpperCase() || 'MEDIUM'}
-                          </Badge>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p className="text-slate-600">Unrealisierter Verlust</p>
-                            <p className="text-lg font-bold text-red-600">
-                              €{Math.round(opp.unrealized_loss).toLocaleString()}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-slate-600">Steuereinsparungen</p>
-                            <p className="text-lg font-bold text-green-600">
-                              €{Math.round(opp.tax_savings).toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-50 p-3 rounded text-sm">
-                      <div>
-                        <p className="text-slate-600">⚠️ Wash-Sale Risiko</p>
-                        <p className="font-medium mt-1">{opp.wash_sale_risk || 'Low'}</p>
-                      </div>
-                      <div>
-                        <p className="text-slate-600">🔄 Alternative Investment</p>
-                        <p className="font-medium mt-1">{opp.alternative_investment || 'None'}</p>
-                      </div>
-                      <div>
-                        <p className="text-slate-600">⏱️ Timeline</p>
-                        <p className="font-medium mt-1">{opp.timeline || 'Immediate'}</p>
-                      </div>
-                    </div>
-
-                    <Button
-                      onClick={() => implementHarvesting(opp)}
-                      className="w-full bg-green-600 hover:bg-green-700"
-                      disabled={isImplementing}
-                    >
-                      {isImplementing ? '⏳ Implementiere...' : '✓ Harvesting durchführen'}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {/* Carryforward Utilization */}
-          {(suggestions.carryforward_utilization || []).length > 0 && (
-            <Card className="border-blue-300 bg-blue-50">
+          {/* Implementation Steps */}
+          {(analysis.suggestions?.implementation_steps || []).length > 0 && (
+            <Card>
               <CardHeader>
-                <CardTitle className="text-sm">📈 Verlustvortrag-Verwertung</CardTitle>
+                <CardTitle className="text-sm">✅ Umsetzungsschritte</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {suggestions.carryforward_utilization.map((cf, i) => (
-                    <div key={i} className="flex justify-between items-center p-3 bg-white rounded border border-blue-200">
-                      <div>
-                        <p className="font-semibold">Verlustvortrag {cf.loss_year}</p>
-                        <p className="text-sm text-slate-600">€{Math.round(cf.amount).toLocaleString()} verfügbar</p>
-                        {cf.expiration_date && (
-                          <p className="text-xs text-slate-500 mt-1">Verfällt: {cf.expiration_date}</p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-slate-600">Empfohlene Verrechnung</p>
-                        <p className="font-bold text-blue-600">€{Math.round(cf.suggested_offset_gain).toLocaleString()}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              <CardContent className="space-y-2">
+                {analysis.suggestions.implementation_steps.map((step, i) => (
+                  <div key={i} className="flex gap-3 p-2 bg-blue-50 rounded">
+                    <span className="font-bold text-blue-600 flex-shrink-0">{i + 1}.</span>
+                    <span className="text-sm">{step}</span>
+                  </div>
+                ))}
               </CardContent>
             </Card>
+          )}
+
+          {/* Carryforward Strategy */}
+          {analysis.suggestions?.carryforward_strategy && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">🔄 Verlustvortrag-Strategie</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm leading-relaxed">{analysis.suggestions.carryforward_strategy}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Timeline */}
+          {analysis.suggestions?.timeline && (
+            <Alert className="border-blue-300 bg-blue-50">
+              <AlertDescription className="text-slate-700">
+                <p className="font-bold mb-2">📅 Zeitrahmen:</p>
+                <p className="text-sm">{analysis.suggestions.timeline}</p>
+              </AlertDescription>
+            </Alert>
           )}
         </>
       )}
