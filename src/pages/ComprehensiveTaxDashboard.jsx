@@ -2,9 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -12,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { FileText, CheckCircle2, AlertTriangle, Download } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock, TrendingUp } from 'lucide-react';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -20,36 +18,18 @@ export default function ComprehensiveTaxDashboard() {
   const [country, setCountry] = useState('DE');
   const [taxYear, setTaxYear] = useState(CURRENT_YEAR);
 
-  // Fetch all tax data
-  const { data: allData = {}, isLoading } = useQuery({
-    queryKey: ['comprehensiveTaxData', country, taxYear],
+  const { data: result = {}, isLoading } = useQuery({
+    queryKey: ['taxDashboard', country, taxYear],
     queryFn: async () => {
-      const [filings, calculations, documents, compliance, alerts] = await Promise.all([
-        base44.entities.TaxFiling.filter({ country, tax_year: taxYear }).catch(() => []),
-        base44.entities.TaxCalculation.filter({ country, tax_year: taxYear }).catch(() => []),
-        base44.entities.TaxDocument.filter({ country, tax_year: taxYear }).catch(() => []),
-        base44.entities.TaxCompliance.filter({ country, tax_year: taxYear }).catch(() => []),
-        base44.entities.TaxAlert.filter({ country }).catch(() => [])
-      ]);
-
-      return {
-        filings,
-        calculations,
-        documents,
-        compliance,
-        alerts
-      };
+      const response = await base44.functions.invoke('generateComprehensiveTaxDashboard', {
+        country,
+        taxYear
+      });
+      return response.data?.dashboard || {};
     }
   });
 
-  const { filings = [], calculations = [], documents = [], compliance = [], alerts = [] } = allData;
-  
-  const totalTax = calculations.reduce((sum, c) => sum + (c.total_tax || 0), 0);
-  const filingStatus = filings.length > 0 ? filings[0].status : 'draft';
-  const compliancePercentage = compliance.length > 0 
-    ? (compliance.filter(c => c.status === 'completed').length / compliance.length * 100)
-    : 0;
-  const activeAlerts = alerts.filter(a => !a.is_resolved).length;
+  const completionPercentage = result.content?.completion_percentage || 0;
 
   return (
     <div className="space-y-6">
@@ -59,21 +39,9 @@ export default function ComprehensiveTaxDashboard() {
           <h1 className="text-3xl font-bold">📊 Steuer-Dashboard</h1>
           <p className="text-slate-500 mt-1">Vollständiger Überblick über Ihre Steuersituation</p>
         </div>
-        <Button 
-          onClick={() => base44.functions.invoke('generateAutomatedTaxReport', { country, taxYear })}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Bericht
-        </Button>
-      </div>
-
-      {/* Controls */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="text-sm font-medium">Land</label>
+        <div className="flex gap-3">
           <Select value={country} onValueChange={setCountry}>
-            <SelectTrigger>
+            <SelectTrigger className="w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -82,11 +50,8 @@ export default function ComprehensiveTaxDashboard() {
               <SelectItem value="DE">🇩🇪 Deutschland</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-        <div>
-          <label className="text-sm font-medium">Steuerjahr</label>
           <Select value={String(taxYear)} onValueChange={(v) => setTaxYear(parseInt(v))}>
-            <SelectTrigger>
+            <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -99,119 +64,113 @@ export default function ComprehensiveTaxDashboard() {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-12">⏳ Daten werden geladen...</div>
-      ) : (
+        <div className="text-center py-12">⏳ Dashboard wird geladen...</div>
+      ) : result.content ? (
         <>
-          {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="border-red-300 bg-red-50">
-              <CardContent className="pt-6">
-                <p className="text-xs text-slate-600">Geschätzte Steuer</p>
-                <p className="text-2xl font-bold text-red-600 mt-2">€{Math.round(totalTax).toLocaleString()}</p>
-              </CardContent>
-            </Card>
-            <Card className={
-              filingStatus === 'completed' ? 'border-green-300 bg-green-50' :
-              filingStatus === 'submitted' ? 'border-blue-300 bg-blue-50' :
-              'border-yellow-300 bg-yellow-50'
-            }>
-              <CardContent className="pt-6">
-                <p className="text-xs text-slate-600">Einreichungsstatus</p>
-                <p className="text-lg font-bold mt-2 capitalize">{filingStatus.replace('_', ' ')}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-xs text-slate-600">Dokumente</p>
-                <p className="text-2xl font-bold mt-2">{documents.length}</p>
-              </CardContent>
-            </Card>
-            <Card className={activeAlerts > 0 ? 'border-orange-300 bg-orange-50' : 'border-green-300 bg-green-50'}>
-              <CardContent className="pt-6">
-                <p className="text-xs text-slate-600">Aktive Alerts</p>
-                <p className={`text-2xl font-bold mt-2 ${activeAlerts > 0 ? 'text-orange-600' : 'text-green-600'}`}>
-                  {activeAlerts}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Compliance Progress */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Compliance-Fortschritt</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium">Gesamtfortschritt</span>
-                  <span className="text-sm font-bold">{Math.round(compliancePercentage)}%</span>
-                </div>
-                <Progress value={compliancePercentage} className="h-2" />
+          {/* Progress Card */}
+          <Card className="border-blue-300 bg-gradient-to-r from-blue-50 to-blue-100">
+            <CardContent className="pt-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-bold">Gesamtfortschritt</h2>
+                <p className="text-3xl font-bold text-blue-600">{Math.round(completionPercentage)}%</p>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  <span>{compliance.filter(c => c.status === 'completed').length} abgeschlossen</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                  <span>{compliance.filter(c => c.status === 'in_progress').length} in Bearbeitung</span>
-                </div>
-              </div>
+              <Progress value={completionPercentage} className="h-3" />
             </CardContent>
           </Card>
 
-          {/* Recent Filings */}
-          {filings.length > 0 && (
-            <Card>
+          {/* KPIs */}
+          {(result.content?.kpis || []).length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {result.content.kpis.slice(0, 4).map((kpi, i) => (
+                <Card key={i}>
+                  <CardContent className="pt-6 text-center">
+                    <p className="text-xs text-slate-600">{kpi.name}</p>
+                    <p className="text-2xl font-bold text-blue-600 mt-2">
+                      {typeof kpi.value === 'number' ? `€${Math.round(kpi.value).toLocaleString()}` : kpi.value}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Critical Actions */}
+          {(result.content?.critical_actions || []).length > 0 && (
+            <Card className="border-red-300 bg-red-50">
               <CardHeader>
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <FileText className="w-4 h-4" />
-                  Erklärungen
+                  <AlertTriangle className="w-4 h-4" />
+                  🚨 Kritische Maßnahmen
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {filings.map(filing => (
-                  <div key={filing.id} className="flex justify-between items-center p-2 bg-slate-50 rounded">
-                    <div>
-                      <p className="text-sm font-medium">{filing.filing_type}</p>
-                      <p className="text-xs text-slate-600">Jahr: {filing.tax_year}</p>
-                    </div>
-                    <Badge className={
-                      filing.status === 'completed' ? 'bg-green-100 text-green-800' :
-                      filing.status === 'submitted' ? 'bg-blue-100 text-blue-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }>
-                      {filing.status}
-                    </Badge>
+                {result.content.critical_actions.map((action, i) => (
+                  <div key={i} className="text-sm p-2 bg-white rounded flex gap-2">
+                    <span className="text-red-600 font-bold flex-shrink-0">{i + 1}.</span>
+                    {action}
                   </div>
                 ))}
               </CardContent>
             </Card>
           )}
 
-          {/* Active Alerts */}
-          {activeAlerts > 0 && (
-            <Card className="border-orange-300 bg-orange-50">
+          {/* Upcoming Deadlines */}
+          {(result.content?.upcoming_deadlines || []).length > 0 && (
+            <Card>
               <CardHeader>
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-orange-600" />
-                  Aktive Warnungen
+                  <Clock className="w-4 h-4" />
+                  📅 Anstehende Termine
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {alerts.filter(a => !a.is_resolved).slice(0, 5).map(alert => (
-                  <div key={alert.id} className="text-sm p-2 bg-white rounded">
-                    <p className="font-medium">{alert.title}</p>
-                    <p className="text-xs text-slate-600">{alert.message}</p>
+                {result.content.upcoming_deadlines.slice(0, 5).map((deadline, i) => (
+                  <div key={i} className="text-sm p-2 bg-slate-50 rounded">
+                    • {deadline}
                   </div>
                 ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Recommended Optimizations */}
+          {(result.content?.optimizations || []).length > 0 && (
+            <Card className="border-green-300 bg-green-50">
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4" />
+                  ✓ Optimierungsempfehlungen
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {result.content.optimizations.map((opt, i) => (
+                  <div key={i} className="text-sm p-2 bg-white rounded">
+                    • {opt}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Risk Assessment */}
+          {result.content?.risk_level && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">🛡️ Risikobewertung</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm">
+                  <span className="font-bold">Gesamtrisikoniveau: </span>
+                  <span className={
+                    result.content.risk_level === 'low' ? 'text-green-600' :
+                    result.content.risk_level === 'medium' ? 'text-yellow-600' : 'text-red-600'
+                  }>{result.content.risk_level}</span>
+                </p>
               </CardContent>
             </Card>
           )}
         </>
-      )}
+      ) : null}
     </div>
   );
 }
