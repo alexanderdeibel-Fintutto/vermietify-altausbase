@@ -6,8 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Mail, Phone, Calendar, Home } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, Calendar } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
+import ContractsList from '@/components/tenant-detail/ContractsList';
+import PaymentsList from '@/components/tenant-detail/PaymentsList';
+import CommunicationsList from '@/components/tenant-detail/CommunicationsList';
 
 export default function TenantDetail() {
   const [searchParams] = useSearchParams();
@@ -155,90 +158,18 @@ export default function TenantDetail() {
         </TabsList>
 
         {/* Contracts Tab */}
-        <TabsContent value="contracts" className="space-y-4">
-          {contracts.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-slate-500">Keine Verträge vorhanden</p>
-              </CardContent>
-            </Card>
-          ) : (
-            contracts.map(contract => (
-              <Card key={contract.id}>
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold text-slate-900">{contract.contract_number}</h3>
-                      <p className="text-sm text-slate-600 mt-1">
-                        {contract.start_date && contract.end_date
-                          ? `${new Date(contract.start_date).toLocaleDateString('de-DE')} - ${new Date(contract.end_date).toLocaleDateString('de-DE')}`
-                          : '-'}
-                      </p>
-                    </div>
-                    <Badge variant={contract.status === 'active' ? 'default' : 'outline'}>
-                      {contract.status || 'active'}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+        <TabsContent value="contracts">
+          <ContractsList contracts={contracts} />
         </TabsContent>
 
         {/* Payments Tab */}
-        <TabsContent value="payments" className="space-y-4">
-          {payments.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-slate-500">Keine Zahlungen vorhanden</p>
-              </CardContent>
-            </Card>
-          ) : (
-            payments.slice(0, 10).map(payment => (
-              <Card key={payment.id}>
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-semibold text-slate-900">
-                        €{(payment.amount || 0).toLocaleString('de-DE')}
-                      </p>
-                      <p className="text-sm text-slate-600 mt-1">
-                        {new Date(payment.created_date).toLocaleDateString('de-DE')}
-                      </p>
-                    </div>
-                    <Badge variant="outline" className="bg-green-50 text-green-800">
-                      {payment.status || 'completed'}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+        <TabsContent value="payments">
+          <PaymentsList payments={payments} />
         </TabsContent>
 
         {/* Communications Tab */}
-        <TabsContent value="communications" className="space-y-4">
-          {communications.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-slate-500">Keine Kommunikation vorhanden</p>
-              </CardContent>
-            </Card>
-          ) : (
-            communications.slice(0, 10).map(comm => (
-              <Card key={comm.id}>
-                <CardContent className="pt-6">
-                  <div className="space-y-2">
-                    <p className="font-semibold text-slate-900 text-sm">{comm.subject}</p>
-                    <p className="text-sm text-slate-600">{comm.message}</p>
-                    <p className="text-xs text-slate-500">
-                      {new Date(comm.created_date).toLocaleDateString('de-DE')}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+        <TabsContent value="communications">
+          <CommunicationsList communications={communications} />
         </TabsContent>
       </Tabs>
     </div>
