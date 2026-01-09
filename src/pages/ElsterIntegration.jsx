@@ -24,10 +24,10 @@ export default function ElsterIntegrationPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">🏛️ ELSTER Integration</h1>
-          <p className="text-slate-600 mt-1">Direktes Einreichen von Steuerformularen an ELSTER</p>
+          <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">ELSTER Integration</h1>
+          <p className="text-sm font-extralight text-slate-400 mt-1">Direktes Einreichen von Steuerformularen an ELSTER</p>
         </div>
-        <Button className="bg-red-600 hover:bg-red-700"><Upload className="w-4 h-4 mr-2" />Zum ELSTER einreichen</Button>
+        <Button className="bg-slate-700 hover:bg-slate-800 font-extralight"><Upload className="w-4 h-4 mr-2" />Zum ELSTER einreichen</Button>
       </div>
 
       <Alert className="border-amber-200 bg-amber-50">

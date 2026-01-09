@@ -72,8 +72,8 @@ export default function MyAccount() {
       <LimitWarningBanner />
       
       <div>
-        <h1 className="text-3xl font-light">Mein Account</h1>
-        <p className="text-slate-600 mt-1">Verwalten Sie Ihr Paket und Zusatzmodule</p>
+        <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Mein Account</h1>
+        <p className="text-sm font-extralight text-slate-400 mt-1">Verwalten Sie Ihr Paket und Zusatzmodule</p>
       </div>
 
       <Tabs defaultValue="package">
