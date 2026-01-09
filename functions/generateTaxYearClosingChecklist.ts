@@ -15,47 +15,45 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
-    // Fetch tax data
-    const [filings, docs, compliance] = await Promise.all([
-      base44.entities.TaxFiling.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
-      base44.entities.TaxDocument.filter({ user_email: user.email, country, tax_year: taxYear }, '-updated_date', 5).catch(() => []),
-      base44.entities.TaxCompliance.filter({ user_email: user.email, country, tax_year: taxYear }, '-updated_date', 5).catch(() => [])
-    ]);
-
     const checklist = await base44.integrations.Core.InvokeLLM({
-      prompt: `Generate tax year closing checklist for ${country}, year ${taxYear}.
+      prompt: `Generate comprehensive year-end tax closing checklist for ${country}, year ${taxYear}.
 
-Current data:
-- Filings: ${filings.length}
-- Documents: ${docs.length}
-- Compliance items: ${compliance.length}
-
-Create checklist with:
-1. Critical final tasks
-2. Documentation gathering
-3. Filing preparations
-4. Record retention
-5. Archiving steps
-6. Year-end review items`,
+Create detailed checklist covering:
+1. Income documentation (all sources)
+2. Expense documentation
+3. Asset/investment reconciliation
+4. Deduction verification
+5. Estimated tax payment settlements
+6. Form preparation
+7. Filing deadline tracking
+8. Record retention
+9. Planning for next year
+10. Professional review`,
       response_json_schema: {
         type: 'object',
         properties: {
-          critical_tasks: { type: 'array', items: { type: 'object', properties: { task: { type: 'string' }, deadline: { type: 'string' }, priority: { type: 'string' } }, additionalProperties: true } },
-          documentation: { type: 'array', items: { type: 'string' } },
-          filings: { type: 'array', items: { type: 'string' } },
-          review_items: { type: 'array', items: { type: 'string' } },
-          retention_guidelines: { type: 'array', items: { type: 'string' } }
+          checklist_title: { type: 'string' },
+          sections: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                section_name: { type: 'string' },
+                priority: { type: 'string' },
+                deadline: { type: 'string' },
+                items: { type: 'array', items: { type: 'string' } }
+              }
+            }
+          },
+          critical_items: { type: 'array', items: { type: 'string' } },
+          timeline: { type: 'object', additionalProperties: { type: 'array', items: { type: 'string' } } }
         }
       }
     });
 
     return Response.json({
       status: 'success',
-      checklist: {
-        country,
-        tax_year: taxYear,
-        items: checklist
-      }
+      checklist
     });
   } catch (error) {
     console.error('Generate checklist error:', error);

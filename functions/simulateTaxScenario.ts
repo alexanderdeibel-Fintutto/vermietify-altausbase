@@ -9,69 +9,47 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { country, taxYear, scenarioType, parameters } = await req.json();
+    const { country, taxYear, scenarioName, changes } = await req.json();
 
-    if (!country || !taxYear || !scenarioType) {
+    if (!country || !taxYear || !scenarioName) {
       return Response.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
-    // Fetch base calculation
-    const baseCalc = await base44.entities.TaxCalculation.filter(
-      { user_email: user.email, country, tax_year: taxYear },
-      '-updated_date',
-      1
-    ).catch(() => [])[0];
-
     const simulation = await base44.integrations.Core.InvokeLLM({
-      prompt: `Simulate tax scenario for ${country}, scenario type: ${scenarioType}, tax year ${taxYear}.
+      prompt: `Simulate tax scenario for ${country}, year ${taxYear}.
 
-Base Data:
-- Current Total Tax: €${baseCalc?.total_tax || 0}
-- Current Parameters: ${JSON.stringify(parameters || {})}
+Scenario: ${scenarioName}
+Changes: ${JSON.stringify(changes, null, 2)}
 
-Scenario Type: ${scenarioType}
-- income_increase: What if income increases by X%?
-- deduction_increase: What if deductions increase by X%?
-- business_expansion: What if business expands?
-- investment_change: What if investment portfolio changes?
-
-Provide:
-1. Scenario description
-2. Projected tax impact
-3. Tax savings/increase percentage
-4. Monthly payment impact
-5. Risk assessment
-6. Implementation feasibility
-7. Timeline
-8. Alternative strategies`,
+Analyze:
+1. Impact on total tax liability
+2. Effective tax rate change
+3. Marginal tax implications
+4. Compliance considerations
+5. Feasibility assessment
+6. Risk factors
+7. Recommended adjustments`,
       response_json_schema: {
         type: 'object',
         properties: {
           scenario_name: { type: 'string' },
-          description: { type: 'string' },
-          projected_tax: { type: 'number' },
-          tax_change: { type: 'number' },
-          percentage_change: { type: 'number' },
-          monthly_impact: { type: 'number' },
+          base_tax: { type: 'number' },
+          scenario_tax: { type: 'number' },
+          tax_savings: { type: 'number' },
+          tax_savings_percentage: { type: 'number' },
+          effective_rate_before: { type: 'number' },
+          effective_rate_after: { type: 'number' },
+          compliance_impact: { type: 'array', items: { type: 'string' } },
+          risks: { type: 'array', items: { type: 'string' } },
           feasibility: { type: 'string' },
-          risk_level: { type: 'string' },
-          advantages: { type: 'array', items: { type: 'string' } },
-          disadvantages: { type: 'array', items: { type: 'string' } },
-          implementation_steps: { type: 'array', items: { type: 'string' } }
+          recommendation: { type: 'string' }
         }
       }
     });
 
     return Response.json({
       status: 'success',
-      simulation: {
-        country,
-        tax_year: taxYear,
-        scenario_type: scenarioType,
-        created_at: new Date().toISOString(),
-        base_tax: baseCalc?.total_tax || 0,
-        result: simulation
-      }
+      simulation
     });
   } catch (error) {
     console.error('Simulate tax scenario error:', error);
