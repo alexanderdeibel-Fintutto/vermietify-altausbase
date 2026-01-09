@@ -87,7 +87,7 @@ export default function BuildingsPage() {
     <div className="space-y-0 bg-white rounded-lg border border-slate-200 shadow-sm">
       {/* Header */}
       <div className="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-violet-50/30">
-        <h1 className="text-lg font-normal text-slate-900">🏢 Gebäude-Übersicht</h1>
+        <h1 className="text-lg font-medium text-slate-900">Gebäude</h1>
         <p className="text-sm text-slate-600 mt-0.5">{filteredStats.length} von {totalBuildings} Gebäuden</p>
       </div>
 

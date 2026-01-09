@@ -48,7 +48,7 @@ export default function DashboardPage() {
       <ExtendedSmartHints />
       <SmartHints />
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">📈 Dashboard</h1>
+        <h1 className="text-3xl font-medium text-slate-900">Dashboard</h1>
         <p className="text-slate-600 mt-1">Übersicht Ihrer Immobilienportfolios</p>
       </div>
 
@@ -96,7 +96,7 @@ export default function DashboardPage() {
             <CardTitle className="flex items-center gap-2 text-base"><FileText className="w-5 h-5 text-blue-600" /> Offene Verträge</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-blue-700">12</p>
+            <p className="text-2xl font-medium text-blue-700">12</p>
             <p className="text-sm text-blue-600 mt-2">Zur Überprüfung ausstehend</p>
           </CardContent>
         </Card>
@@ -106,7 +106,7 @@ export default function DashboardPage() {
             <CardTitle className="flex items-center gap-2 text-base"><AlertCircle className="w-5 h-5 text-yellow-600" /> Ausstehende Zahlungen</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-yellow-700">5</p>
+            <p className="text-2xl font-medium text-yellow-700">5</p>
             <p className="text-sm text-yellow-600 mt-2">Erfordert Aufmerksamkeit</p>
           </CardContent>
         </Card>
@@ -116,7 +116,7 @@ export default function DashboardPage() {
             <CardTitle className="flex items-center gap-2 text-base"><Users className="w-5 h-5 text-green-600" /> Aktive Mieter</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-green-700">47</p>
+            <p className="text-2xl font-medium text-green-700">47</p>
             <p className="text-sm text-green-600 mt-2">In Ihren Gebäuden</p>
           </CardContent>
         </Card>
