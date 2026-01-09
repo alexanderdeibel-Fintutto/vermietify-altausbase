@@ -17,9 +17,13 @@ import AdvancedSearch from './pages/AdvancedSearch';
 import AlertManagement from './pages/AlertManagement';
 import Analytics from './pages/Analytics';
 import AnalyticsPage from './pages/AnalyticsPage';
+import AnlageE1cAT from './pages/AnlageE1cAT';
 import AnlageKAP from './pages/AnlageKAP';
+import AnlageKAPAT from './pages/AnlageKAPAT';
 import AnlageSO from './pages/AnlageSO';
+import AnlageSOAT from './pages/AnlageSOAT';
 import AnlageVG from './pages/AnlageVG';
+import AnlageVGAT from './pages/AnlageVGAT';
 import AuditLog from './pages/AuditLog';
 import AuditReports from './pages/AuditReports';
 import AutomationRules from './pages/AutomationRules';
@@ -30,6 +34,7 @@ import BankingManagement from './pages/BankingManagement';
 import BuildingDetail from './pages/BuildingDetail';
 import Buildings from './pages/Buildings';
 import BulkOperations from './pages/BulkOperations';
+import CapitalGainCH from './pages/CapitalGainCH';
 import CommunicationCenter from './pages/CommunicationCenter';
 import ComplianceAudit from './pages/ComplianceAudit';
 import ComplianceCenter from './pages/ComplianceCenter';
@@ -37,6 +42,8 @@ import ContractDetail from './pages/ContractDetail';
 import Contracts from './pages/Contracts';
 import CostTypes from './pages/CostTypes';
 import CustomDashboard from './pages/CustomDashboard';
+import DACHComplianceChecklist from './pages/DACHComplianceChecklist';
+import DACHTaxComparison from './pages/DACHTaxComparison';
 import Dashboard from './pages/Dashboard';
 import DataImportExport from './pages/DataImportExport';
 import DataImportExportHub from './pages/DataImportExportHub';
@@ -56,11 +63,13 @@ import FinancialItems from './pages/FinancialItems';
 import Finanzen from './pages/Finanzen';
 import GeneratedBookings from './pages/GeneratedBookings';
 import GlobalSettings from './pages/GlobalSettings';
+import GlobalWealthDashboard from './pages/GlobalWealthDashboard';
 import HelpCenter from './pages/HelpCenter';
 import HilfeCenter from './pages/HilfeCenter';
 import InsuranceManagement from './pages/InsuranceManagement';
 import IntegrationHub from './pages/IntegrationHub';
 import IntegrationMarketplace from './pages/IntegrationMarketplace';
+import InvestmentsCH from './pages/InvestmentsCH';
 import InvoiceManagement from './pages/InvoiceManagement';
 import Invoices from './pages/Invoices';
 import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
@@ -77,6 +86,7 @@ import NotificationManagement from './pages/NotificationManagement';
 import Onboarding from './pages/Onboarding';
 import OperatingCosts from './pages/OperatingCosts';
 import OperatingCostsManagement from './pages/OperatingCostsManagement';
+import OtherIncomeCH from './pages/OtherIncomeCH';
 import PackageManager from './pages/PackageManager';
 import PackageTestPage from './pages/PackageTestPage';
 import Payments from './pages/Payments';
@@ -86,6 +96,7 @@ import ProjectManagement from './pages/ProjectManagement';
 import PropertyPortfolio from './pages/PropertyPortfolio';
 import PropertyValuation from './pages/PropertyValuation';
 import ROIDashboard from './pages/ROIDashboard';
+import RealEstateCH from './pages/RealEstateCH';
 import ReportGenerator from './pages/ReportGenerator';
 import ReportScheduling from './pages/ReportScheduling';
 import ReportingDashboard from './pages/ReportingDashboard';
@@ -101,12 +112,17 @@ import SystemHealth from './pages/SystemHealth';
 import TaskManagement from './pages/TaskManagement';
 import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
+import TaxAdminPanel from './pages/TaxAdminPanel';
 import TaxDashboard from './pages/TaxDashboard';
+import TaxDashboardAT from './pages/TaxDashboardAT';
+import TaxDashboardCH from './pages/TaxDashboardCH';
 import TaxDashboardGlobal from './pages/TaxDashboardGlobal';
+import TaxDeadlines from './pages/TaxDeadlines';
 import TaxForms from './pages/TaxForms';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import TaxManagement from './pages/TaxManagement';
 import TaxSetup from './pages/TaxSetup';
+import TaxSetupWizard from './pages/TaxSetupWizard';
 import TenantCommunication from './pages/TenantCommunication';
 import TenantCommunicationCenter from './pages/TenantCommunicationCenter';
 import TenantPortal from './pages/TenantPortal';
@@ -138,22 +154,7 @@ import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import AnlageKAPAT from './pages/AnlageKAPAT';
-import AnlageSOAT from './pages/AnlageSOAT';
-import TaxDashboardAT from './pages/TaxDashboardAT';
-import InvestmentsCH from './pages/InvestmentsCH';
-import RealEstateCH from './pages/RealEstateCH';
-import TaxDashboardCH from './pages/TaxDashboardCH';
-import DACHTaxComparison from './pages/DACHTaxComparison';
-import DACHComplianceChecklist from './pages/DACHComplianceChecklist';
-import TaxDeadlines from './pages/TaxDeadlines';
-import GlobalWealthDashboard from './pages/GlobalWealthDashboard';
-import TaxSetupWizard from './pages/TaxSetupWizard';
-import AnlageE1cAT from './pages/AnlageE1cAT';
-import TaxAdminPanel from './pages/TaxAdminPanel';
-import AnlageVGAT from './pages/AnlageVGAT';
-import OtherIncomeCH from './pages/OtherIncomeCH';
-import CapitalGainCH from './pages/CapitalGainCH';
+import TaxDashboardDE from './pages/TaxDashboardDE';
 import __Layout from './Layout.jsx';
 
 
@@ -177,9 +178,13 @@ export const PAGES = {
     "AlertManagement": AlertManagement,
     "Analytics": Analytics,
     "AnalyticsPage": AnalyticsPage,
+    "AnlageE1cAT": AnlageE1cAT,
     "AnlageKAP": AnlageKAP,
+    "AnlageKAPAT": AnlageKAPAT,
     "AnlageSO": AnlageSO,
+    "AnlageSOAT": AnlageSOAT,
     "AnlageVG": AnlageVG,
+    "AnlageVGAT": AnlageVGAT,
     "AuditLog": AuditLog,
     "AuditReports": AuditReports,
     "AutomationRules": AutomationRules,
@@ -190,6 +195,7 @@ export const PAGES = {
     "BuildingDetail": BuildingDetail,
     "Buildings": Buildings,
     "BulkOperations": BulkOperations,
+    "CapitalGainCH": CapitalGainCH,
     "CommunicationCenter": CommunicationCenter,
     "ComplianceAudit": ComplianceAudit,
     "ComplianceCenter": ComplianceCenter,
@@ -197,6 +203,8 @@ export const PAGES = {
     "Contracts": Contracts,
     "CostTypes": CostTypes,
     "CustomDashboard": CustomDashboard,
+    "DACHComplianceChecklist": DACHComplianceChecklist,
+    "DACHTaxComparison": DACHTaxComparison,
     "Dashboard": Dashboard,
     "DataImportExport": DataImportExport,
     "DataImportExportHub": DataImportExportHub,
@@ -216,11 +224,13 @@ export const PAGES = {
     "Finanzen": Finanzen,
     "GeneratedBookings": GeneratedBookings,
     "GlobalSettings": GlobalSettings,
+    "GlobalWealthDashboard": GlobalWealthDashboard,
     "HelpCenter": HelpCenter,
     "HilfeCenter": HilfeCenter,
     "InsuranceManagement": InsuranceManagement,
     "IntegrationHub": IntegrationHub,
     "IntegrationMarketplace": IntegrationMarketplace,
+    "InvestmentsCH": InvestmentsCH,
     "InvoiceManagement": InvoiceManagement,
     "Invoices": Invoices,
     "KnowledgeManagementDashboard": KnowledgeManagementDashboard,
@@ -237,6 +247,7 @@ export const PAGES = {
     "Onboarding": Onboarding,
     "OperatingCosts": OperatingCosts,
     "OperatingCostsManagement": OperatingCostsManagement,
+    "OtherIncomeCH": OtherIncomeCH,
     "PackageManager": PackageManager,
     "PackageTestPage": PackageTestPage,
     "Payments": Payments,
@@ -246,6 +257,7 @@ export const PAGES = {
     "PropertyPortfolio": PropertyPortfolio,
     "PropertyValuation": PropertyValuation,
     "ROIDashboard": ROIDashboard,
+    "RealEstateCH": RealEstateCH,
     "ReportGenerator": ReportGenerator,
     "ReportScheduling": ReportScheduling,
     "ReportingDashboard": ReportingDashboard,
@@ -261,12 +273,17 @@ export const PAGES = {
     "TaskManagement": TaskManagement,
     "Tasks": Tasks,
     "Tax": Tax,
+    "TaxAdminPanel": TaxAdminPanel,
     "TaxDashboard": TaxDashboard,
+    "TaxDashboardAT": TaxDashboardAT,
+    "TaxDashboardCH": TaxDashboardCH,
     "TaxDashboardGlobal": TaxDashboardGlobal,
+    "TaxDeadlines": TaxDeadlines,
     "TaxForms": TaxForms,
     "TaxLibraryManagement": TaxLibraryManagement,
     "TaxManagement": TaxManagement,
     "TaxSetup": TaxSetup,
+    "TaxSetupWizard": TaxSetupWizard,
     "TenantCommunication": TenantCommunication,
     "TenantCommunicationCenter": TenantCommunicationCenter,
     "TenantPortal": TenantPortal,
@@ -298,22 +315,7 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "AnlageKAPAT": AnlageKAPAT,
-    "AnlageSOAT": AnlageSOAT,
-    "TaxDashboardAT": TaxDashboardAT,
-    "InvestmentsCH": InvestmentsCH,
-    "RealEstateCH": RealEstateCH,
-    "TaxDashboardCH": TaxDashboardCH,
-    "DACHTaxComparison": DACHTaxComparison,
-    "DACHComplianceChecklist": DACHComplianceChecklist,
-    "TaxDeadlines": TaxDeadlines,
-    "GlobalWealthDashboard": GlobalWealthDashboard,
-    "TaxSetupWizard": TaxSetupWizard,
-    "AnlageE1cAT": AnlageE1cAT,
-    "TaxAdminPanel": TaxAdminPanel,
-    "AnlageVGAT": AnlageVGAT,
-    "OtherIncomeCH": OtherIncomeCH,
-    "CapitalGainCH": CapitalGainCH,
+    "TaxDashboardDE": TaxDashboardDE,
 }
 
 export const pagesConfig = {
