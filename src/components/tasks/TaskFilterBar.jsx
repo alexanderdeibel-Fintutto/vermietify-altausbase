@@ -24,7 +24,7 @@ export default function TaskFilterBar({ onSearchChange, onStatusChange, onNewTas
           </SelectContent>
         </Select>
       </div>
-      <Button onClick={onNewTask} className="bg-red-600 hover:bg-red-700"><Plus className="w-4 h-4 mr-2" />Neue Aufgabe</Button>
+      <Button onClick={onNewTask} className="bg-slate-700 hover:bg-slate-800 font-extralight"><Plus className="w-4 h-4 mr-2" />Neue Aufgabe</Button>
     </div>
   );
 }
