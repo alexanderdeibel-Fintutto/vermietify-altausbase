@@ -24,6 +24,24 @@ Deno.serve(async (req) => {
       offset = 0
     } = body;
 
+    // Helper function to sort results
+    const sortResults = (items, sortField, order = -1) => {
+      return items.sort((a, b) => {
+        const aVal = a[sortField];
+        const bVal = b[sortField];
+        
+        if (typeof aVal === 'string') {
+          return order === -1 
+            ? bVal?.localeCompare(aVal) || 0
+            : aVal?.localeCompare(bVal) || 0;
+        }
+        
+        return order === -1 
+          ? (bVal || 0) - (aVal || 0)
+          : (aVal || 0) - (bVal || 0);
+      });
+    };
+
     console.log(`Advanced search: query="${query}", entities=${entity_types.join(',')}`);
 
     const results = {
@@ -57,7 +75,8 @@ Deno.serve(async (req) => {
           return true;
         });
 
-        results.buildings = filtered.slice(offset, offset + limit);
+        const sorted = sortResults(filtered, sort_by === 'name' ? 'name' : 'updated_date', sort_order);
+        results.buildings = sorted.slice(offset, offset + limit);
         results.total += filtered.length;
       } catch (err) {
         console.warn('Error searching buildings:', err.message);
@@ -82,7 +101,8 @@ Deno.serve(async (req) => {
           return true;
         });
 
-        results.tenants = filtered.slice(offset, offset + limit);
+        const sorted = sortResults(filtered, sort_by === 'name' ? 'name' : 'updated_date', sort_order);
+        results.tenants = sorted.slice(offset, offset + limit);
         results.total += filtered.length;
       } catch (err) {
         console.warn('Error searching tenants:', err.message);
@@ -114,7 +134,8 @@ Deno.serve(async (req) => {
           return true;
         });
 
-        results.contracts = filtered.slice(offset, offset + limit);
+        const sorted = sortResults(filtered, sort_by === 'date' ? 'start_date' : 'updated_date', sort_order);
+        results.contracts = sorted.slice(offset, offset + limit);
         results.total += filtered.length;
       } catch (err) {
         console.warn('Error searching contracts:', err.message);
@@ -146,7 +167,8 @@ Deno.serve(async (req) => {
           return true;
         });
 
-        results.documents = filtered.slice(offset, offset + limit);
+        const sorted = sortResults(filtered, sort_by === 'date' ? 'created_date' : 'updated_date', sort_order);
+        results.documents = sorted.slice(offset, offset + limit);
         results.total += filtered.length;
       } catch (err) {
         console.warn('Error searching documents:', err.message);
@@ -172,7 +194,8 @@ Deno.serve(async (req) => {
           return true;
         });
 
-        results.invoices = filtered.slice(offset, offset + limit);
+        const sorted = sortResults(filtered, sort_by === 'date' ? 'created_date' : sort_by === 'amount' ? 'total' : 'updated_date', sort_order);
+        results.invoices = sorted.slice(offset, offset + limit);
         results.total += filtered.length;
       } catch (err) {
         console.warn('Error searching invoices:', err.message);

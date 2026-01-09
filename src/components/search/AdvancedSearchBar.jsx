@@ -13,7 +13,10 @@ export default function AdvancedSearchBar({
   entityTypes = ['buildings', 'tenants', 'contracts', 'documents', 'invoices'],
   loading = false,
   showFilters = false,
-  onFiltersToggle
+  onFiltersToggle,
+  sortBy = 'updated_date',
+  sortOrder = -1,
+  onSortChange
 }) {
   const [query, setQuery] = useState('');
   const [selectedTypes, setSelectedTypes] = useState(new Set(entityTypes));
@@ -21,9 +24,11 @@ export default function AdvancedSearchBar({
   const handleSearch = useCallback(() => {
     onSearch({
       query,
-      entity_types: Array.from(selectedTypes)
+      entity_types: Array.from(selectedTypes),
+      sort_by: sortBy,
+      sort_order: sortOrder
     });
-  }, [query, selectedTypes, onSearch]);
+  }, [query, selectedTypes, sortBy, sortOrder, onSearch]);
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
@@ -54,8 +59,45 @@ export default function AdvancedSearchBar({
     invoices: '💰 Rechnungen'
   };
 
+  const sortOptions = [
+    { value: 'updated_date', label: 'Zuletzt aktualisiert' },
+    { value: 'name', label: 'Name (A-Z)' },
+    { value: 'date', label: 'Datum' },
+    { value: 'amount', label: 'Betrag' }
+  ];
+
   return (
     <div className="space-y-3">
+      {/* Sort Options */}
+      <div className="flex gap-2 items-center">
+        <span className="text-sm font-light text-slate-600">Sortierung:</span>
+        <div className="flex gap-1">
+          {sortOptions.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => onSortChange?.(opt.value, sortOrder)}
+              className={cn(
+                'px-3 py-1 rounded-lg text-xs font-light transition-colors',
+                sortBy === opt.value
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+          <button
+            onClick={() => onSortChange?.(sortBy, sortOrder === -1 ? 1 : -1)}
+            className={cn(
+              'px-3 py-1 rounded-lg text-xs font-light transition-colors',
+              'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            )}
+          >
+            {sortOrder === -1 ? '↓' : '↑'}
+          </button>
+        </div>
+      </div>
+
       <div className="flex gap-2">
         <div className="flex-1 relative">
           <Input

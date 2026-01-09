@@ -13,6 +13,8 @@ export default function AdvancedSearch() {
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [currentFilters, setCurrentFilters] = useState({});
+  const [sortBy, setSortBy] = useState('updated_date');
+  const [sortOrder, setSortOrder] = useState(-1);
 
   const handleSearch = async (searchParams) => {
     setLoading(true);
@@ -21,6 +23,8 @@ export default function AdvancedSearch() {
         query: searchParams.query,
         entity_types: searchParams.entity_types,
         filters: currentFilters,
+        sort_by: searchParams.sort_by || sortBy,
+        sort_order: searchParams.sort_order !== undefined ? searchParams.sort_order : sortOrder,
         limit: 50,
         offset: 0
       });
@@ -61,6 +65,12 @@ export default function AdvancedSearch() {
           loading={loading}
           showFilters={showFilters}
           onFiltersToggle={() => setShowFilters(!showFilters)}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={(newSort, newOrder) => {
+            setSortBy(newSort);
+            setSortOrder(newOrder);
+          }}
         />
       </Card>
 
