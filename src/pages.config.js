@@ -259,6 +259,7 @@ import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import SyncManagement from './pages/SyncManagement';
 import AdminUserManagement from './pages/AdminUserManagement';
+import BudgetPlanning from './pages/BudgetPlanning';
 import __Layout from './Layout.jsx';
 
 
@@ -524,6 +525,7 @@ export const PAGES = {
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "SyncManagement": SyncManagement,
     "AdminUserManagement": AdminUserManagement,
+    "BudgetPlanning": BudgetPlanning,
 }
 
 export const pagesConfig = {
