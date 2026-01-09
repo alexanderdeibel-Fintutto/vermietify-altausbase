@@ -72,6 +72,7 @@ Deno.serve(async (req) => {
       }
 
       // Step 5: Create initial lease contract and payments
+      let leaseContractId = null;
       if (rent_amount && start_date) {
         try {
           const contractResult = await base44.asServiceRole.functions.invoke('createInitialLeaseContract', {
@@ -82,6 +83,7 @@ Deno.serve(async (req) => {
             start_date,
             end_date
           });
+          leaseContractId = contractResult.data.lease_contract?.id;
           onboardingSteps.push({ step: 'lease_contract', status: 'completed', data: contractResult.data });
         } catch (contractError) {
           console.warn('Lease contract creation failed:', contractError);
@@ -89,7 +91,22 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Step 6: Create onboarding progress record
+      // Step 6: Create tenant administration locks
+      if (leaseContractId) {
+        try {
+          const locksResult = await base44.asServiceRole.functions.invoke('createTenantAdministrationLocks', {
+            tenant_id,
+            lease_contract_id: leaseContractId,
+            tenant_type: 'residential'
+          });
+          onboardingSteps.push({ step: 'administration_locks', status: 'completed', data: locksResult.data });
+        } catch (locksError) {
+          console.warn('Administration locks creation failed:', locksError);
+          onboardingSteps.push({ step: 'administration_locks', status: 'warning', error: locksError.message });
+        }
+      }
+
+      // Step 7: Create onboarding progress record
       try {
         const progressRecord = await base44.asServiceRole.entities.OnboardingProgress.create({
           tenant_id,

@@ -265,6 +265,7 @@ import BudgetAnalysis from './pages/BudgetAnalysis';
 import TenantPortalDashboard from './pages/TenantPortalDashboard';
 import TenantDetail from './pages/TenantDetail';
 import TenantOnboarding from './pages/TenantOnboarding';
+import TenantPortalAdminDashboard from './pages/TenantPortalAdminDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -536,6 +537,7 @@ export const PAGES = {
     "TenantPortalDashboard": TenantPortalDashboard,
     "TenantDetail": TenantDetail,
     "TenantOnboarding": TenantOnboarding,
+    "TenantPortalAdminDashboard": TenantPortalAdminDashboard,
 }
 
 export const pagesConfig = {
