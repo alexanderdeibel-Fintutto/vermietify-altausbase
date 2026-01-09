@@ -15,6 +15,10 @@ import WealthWidget from '@/components/dashboard/widgets/WealthWidget';
 import BusinessWidget from '@/components/dashboard/widgets/BusinessWidget';
 import PrivateWidget from '@/components/dashboard/widgets/PrivateWidget';
 import DashboardBookmarks from '@/components/dashboard/DashboardBookmarks';
+import FinancialTrendsWidget from '@/components/dashboard/FinancialTrendsWidget';
+import RollingBudgetWidget from '@/components/dashboard/RollingBudgetWidget';
+import AnomalyDetectionWidget from '@/components/dashboard/AnomalyDetectionWidget';
+import CostOptimizationWidget from '@/components/dashboard/CostOptimizationWidget';
 
 export default function Dashboard() {
   const [editMode, setEditMode] = useState(false);
@@ -100,6 +104,12 @@ export default function Dashboard() {
               <RevenueWidget />
               <UpcomingTasksWidget />
               <DocumentInboxDashboardWidget />
+              <div className="col-span-3">
+                <FinancialTrendsWidget />
+              </div>
+              <RollingBudgetWidget />
+              <AnomalyDetectionWidget />
+              <CostOptimizationWidget />
             </>
           )}
           
@@ -115,7 +125,13 @@ export default function Dashboard() {
           
           {activeCategory === 'private' && (
             <>
-              <div className="col-span-2">
+              <div className="col-span-3">
+                <FinancialTrendsWidget />
+              </div>
+              <RollingBudgetWidget />
+              <AnomalyDetectionWidget />
+              <CostOptimizationWidget />
+              <div className="col-span-3">
                 <PrivateWidget />
               </div>
               <UpcomingTasksWidget />
@@ -124,7 +140,13 @@ export default function Dashboard() {
           
           {activeCategory === 'wealth' && (
             <>
-              <div className="col-span-2">
+              <div className="col-span-3">
+                <FinancialTrendsWidget />
+              </div>
+              <RollingBudgetWidget />
+              <AnomalyDetectionWidget />
+              <CostOptimizationWidget />
+              <div className="col-span-3">
                 <WealthWidget />
               </div>
               <UpcomingTasksWidget />
