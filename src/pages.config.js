@@ -44,8 +44,10 @@ import DocumentManagement from './pages/DocumentManagement';
 import Documents from './pages/Documents';
 import ElsterIntegration from './pages/ElsterIntegration';
 import EmailTemplates from './pages/EmailTemplates';
+import Equipment from './pages/Equipment';
 import FeatureCatalog from './pages/FeatureCatalog';
 import FinAPICallback from './pages/FinAPICallback';
+import FinanceManagement from './pages/FinanceManagement';
 import FinancialForecasting from './pages/FinancialForecasting';
 import FinancialItems from './pages/FinancialItems';
 import Finanzen from './pages/Finanzen';
@@ -62,6 +64,7 @@ import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
 import Kommunikation from './pages/Kommunikation';
 import LeaseContracts from './pages/LeaseContracts';
 import MaintenanceManager from './pages/MaintenanceManager';
+import MaintenanceTasks from './pages/MaintenanceTasks';
 import MarketAnalytics from './pages/MarketAnalytics';
 import MieterSelfServicePortal from './pages/MieterSelfServicePortal';
 import ModuleManagement from './pages/ModuleManagement';
@@ -82,6 +85,7 @@ import PropertyValuation from './pages/PropertyValuation';
 import ROIDashboard from './pages/ROIDashboard';
 import ReportGenerator from './pages/ReportGenerator';
 import ReportScheduling from './pages/ReportScheduling';
+import ReportingDashboard from './pages/ReportingDashboard';
 import ReportsPage from './pages/ReportsPage';
 import RoleManagement from './pages/RoleManagement';
 import ScheduledTasks from './pages/ScheduledTasks';
@@ -98,6 +102,7 @@ import TaxForms from './pages/TaxForms';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import TaxManagement from './pages/TaxManagement';
 import TenantCommunication from './pages/TenantCommunication';
+import TenantCommunicationCenter from './pages/TenantCommunicationCenter';
 import TenantPortal from './pages/TenantPortal';
 import Tenants from './pages/Tenants';
 import TesterAcceptInvitation from './pages/TesterAcceptInvitation';
@@ -120,11 +125,6 @@ import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import Equipment from './pages/Equipment';
-import MaintenanceTasks from './pages/MaintenanceTasks';
-import ReportingDashboard from './pages/ReportingDashboard';
-import FinanceManagement from './pages/FinanceManagement';
-import TenantCommunicationCenter from './pages/TenantCommunicationCenter';
 import __Layout from './Layout.jsx';
 
 
@@ -175,8 +175,10 @@ export const PAGES = {
     "Documents": Documents,
     "ElsterIntegration": ElsterIntegration,
     "EmailTemplates": EmailTemplates,
+    "Equipment": Equipment,
     "FeatureCatalog": FeatureCatalog,
     "FinAPICallback": FinAPICallback,
+    "FinanceManagement": FinanceManagement,
     "FinancialForecasting": FinancialForecasting,
     "FinancialItems": FinancialItems,
     "Finanzen": Finanzen,
@@ -193,6 +195,7 @@ export const PAGES = {
     "Kommunikation": Kommunikation,
     "LeaseContracts": LeaseContracts,
     "MaintenanceManager": MaintenanceManager,
+    "MaintenanceTasks": MaintenanceTasks,
     "MarketAnalytics": MarketAnalytics,
     "MieterSelfServicePortal": MieterSelfServicePortal,
     "ModuleManagement": ModuleManagement,
@@ -213,6 +216,7 @@ export const PAGES = {
     "ROIDashboard": ROIDashboard,
     "ReportGenerator": ReportGenerator,
     "ReportScheduling": ReportScheduling,
+    "ReportingDashboard": ReportingDashboard,
     "ReportsPage": ReportsPage,
     "RoleManagement": RoleManagement,
     "ScheduledTasks": ScheduledTasks,
@@ -229,6 +233,7 @@ export const PAGES = {
     "TaxLibraryManagement": TaxLibraryManagement,
     "TaxManagement": TaxManagement,
     "TenantCommunication": TenantCommunication,
+    "TenantCommunicationCenter": TenantCommunicationCenter,
     "TenantPortal": TenantPortal,
     "Tenants": Tenants,
     "TesterAcceptInvitation": TesterAcceptInvitation,
@@ -251,11 +256,6 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "Equipment": Equipment,
-    "MaintenanceTasks": MaintenanceTasks,
-    "ReportingDashboard": ReportingDashboard,
-    "FinanceManagement": FinanceManagement,
-    "TenantCommunicationCenter": TenantCommunicationCenter,
 }
 
 export const pagesConfig = {
