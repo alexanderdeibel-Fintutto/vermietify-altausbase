@@ -226,6 +226,7 @@ import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import BusinessStructureOptimizer from './pages/BusinessStructureOptimizer';
 import RetirementIncomeTaxOptimizer from './pages/RetirementIncomeTaxOptimizer';
 import TaxSavingsOpportunities from './pages/TaxSavingsOpportunities';
+import TaxCalendarAndTimeline from './pages/TaxCalendarAndTimeline';
 import __Layout from './Layout.jsx';
 
 
@@ -458,6 +459,7 @@ export const PAGES = {
     "BusinessStructureOptimizer": BusinessStructureOptimizer,
     "RetirementIncomeTaxOptimizer": RetirementIncomeTaxOptimizer,
     "TaxSavingsOpportunities": TaxSavingsOpportunities,
+    "TaxCalendarAndTimeline": TaxCalendarAndTimeline,
 }
 
 export const pagesConfig = {

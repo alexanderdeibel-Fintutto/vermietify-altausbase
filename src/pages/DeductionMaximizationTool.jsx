@@ -10,44 +10,51 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { TrendingDown, CheckCircle2, BarChart3 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { Target, TrendingDown } from 'lucide-react';
 
-const CURRENT_YEAR = new Date().getFullYear();
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export default function DeductionMaximizationTool() {
   const [country, setCountry] = useState('DE');
-  const [taxYear, setTaxYear] = useState(CURRENT_YEAR);
-  const [grossIncome, setGrossIncome] = useState(100000);
+  const [income, setIncome] = useState(80000);
+  const [status, setStatus] = useState('single');
   const [maximizing, setMaximizing] = useState(false);
 
-  const { data: strategy = {}, isLoading } = useQuery({
-    queryKey: ['deductionMaximization', country, taxYear, grossIncome],
+  const { data: result = {}, isLoading } = useQuery({
+    queryKey: ['deductionMaximization', country, income, status],
     queryFn: async () => {
       const response = await base44.functions.invoke('generateDeductionMaximization', {
         country,
-        taxYear,
-        grossIncome
+        income,
+        filing_status: status
       });
-      return response.data?.strategy || {};
+      return response.data || {};
     },
     enabled: maximizing
   });
+
+  const chartData = (result.optimization?.deduction_breakdown || []).map((item, i) => ({
+    name: item.category,
+    value: item.amount
+  }));
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">📋 Abzug-Maximierungs-Tool</h1>
-        <p className="text-slate-500 mt-1">Maximieren Sie Ihre Steuerabzüge</p>
+        <h1 className="text-3xl font-bold">🎯 Abzugs-Maximierer</h1>
+        <p className="text-slate-500 mt-1">Optimieren Sie Ihre Steuerabzüge</p>
       </div>
 
-      {/* Controls */}
+      {/* Configuration */}
       <Card className="border-blue-300 bg-blue-50">
         <CardHeader>
-          <CardTitle className="text-sm">Einkommensprofil</CardTitle>
+          <CardTitle className="text-sm">Eingaben</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="text-sm font-medium">Land</label>
               <Select value={country} onValueChange={setCountry} disabled={maximizing}>
@@ -62,140 +69,119 @@ export default function DeductionMaximizationTool() {
               </Select>
             </div>
             <div>
-              <label className="text-sm font-medium">Steuerjahr</label>
-              <Select value={String(taxYear)} onValueChange={(v) => setTaxYear(parseInt(v))} disabled={maximizing}>
+              <label className="text-sm font-medium">Familienstand</label>
+              <Select value={status} onValueChange={setStatus} disabled={maximizing}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {[CURRENT_YEAR - 1, CURRENT_YEAR].map(year => (
-                    <SelectItem key={year} value={String(year)}>{year}</SelectItem>
-                  ))}
+                  <SelectItem value="single">Ledig</SelectItem>
+                  <SelectItem value="married">Verheiratet</SelectItem>
+                  <SelectItem value="divorced">Geschieden</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <label className="text-sm font-medium">Einkommen (€)</label>
+              <Input
+                type="number"
+                value={income}
+                onChange={(e) => setIncome(parseInt(e.target.value) || 0)}
+                disabled={maximizing}
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="text-sm font-medium">Bruttoeinkommen (€)</label>
-            <Input
-              type="number"
-              value={grossIncome}
-              onChange={(e) => setGrossIncome(parseInt(e.target.value))}
-              disabled={maximizing}
-            />
-          </div>
-
-          <button
+          <Button
             onClick={() => setMaximizing(true)}
-            className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium disabled:opacity-50"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
             disabled={maximizing}
           >
-            {maximizing ? '⏳ Wird analysiert...' : 'Analyse durchführen'}
-          </button>
+            {maximizing ? '⏳ Wird optimiert...' : 'Abzüge maximieren'}
+          </Button>
         </CardContent>
       </Card>
 
       {isLoading ? (
-        <div className="text-center py-8">⏳ Analyse läuft...</div>
-      ) : maximizing && strategy.content ? (
+        <div className="text-center py-8">⏳ Wird optimiert...</div>
+      ) : maximizing && result.optimization ? (
         <>
-          {/* Key Metrics */}
+          {/* Summary */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardContent className="pt-6 text-center">
-                <p className="text-xs text-slate-600">Geschätzte Gesamtabzüge</p>
+                <p className="text-xs text-slate-600">Gesamtabzüge</p>
                 <p className="text-2xl font-bold text-blue-600 mt-2">
-                  €{Math.round(strategy.content?.estimated_total_deductions || 0).toLocaleString()}
+                  €{Math.round(result.optimization.total_deductions || 0).toLocaleString()}
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6 text-center">
-                <p className="text-xs text-slate-600">Steuereinsparungen</p>
+                <p className="text-xs text-slate-600">Geschätzte Steuereinsparungen</p>
                 <p className="text-2xl font-bold text-green-600 mt-2">
-                  €{Math.round(strategy.content?.estimated_tax_savings || 0).toLocaleString()}
+                  €{Math.round(result.optimization.estimated_savings || 0).toLocaleString()}
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6 text-center">
-                <p className="text-xs text-slate-600">Verfügbare Abzüge</p>
-                <p className="text-2xl font-bold text-purple-600 mt-2">
-                  {(strategy.content?.available_deductions || []).length}
+                <p className="text-xs text-slate-600">Zu versteuerndes Einkommen</p>
+                <p className="text-2xl font-bold text-slate-600 mt-2">
+                  €{Math.round((income - (result.optimization.total_deductions || 0))).toLocaleString()}
                 </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Standard vs Itemized */}
-          {strategy.content?.standard_vs_itemized && (
-            <Card className="border-purple-300 bg-purple-50">
-              <CardHeader>
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4" />
-                  📊 Standard vs. Aufgelistet
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {Object.entries(strategy.content.standard_vs_itemized).map(([key, value]) => (
-                  <div key={key} className="flex justify-between py-2 border-b last:border-b-0">
-                    <span className="capitalize">{key.replace(/_/g, ' ')}</span>
-                    <span className="font-bold">€{Math.round(value).toLocaleString()}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Available Deductions */}
-          {(strategy.content?.available_deductions || []).length > 0 && (
+          {/* Breakdown Chart */}
+          {chartData.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">💡 Verfügbare Abzüge</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {strategy.content.available_deductions.map((deduction, i) => (
-                  <div key={i} className="border-l-4 border-blue-300 pl-3 py-2 bg-blue-50 p-3 rounded">
-                    <p className="font-medium text-sm">{deduction.name}</p>
-                    <p className="text-xs text-slate-600 mt-1">{deduction.description}</p>
-                    {deduction.estimated_amount && (
-                      <p className="text-xs font-bold text-blue-600 mt-1">
-                        Geschätzt: €{Math.round(deduction.estimated_amount).toLocaleString()}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Recommended Approach */}
-          {strategy.content?.recommended_deduction_approach && (
-            <Card className="border-green-300 bg-green-50">
-              <CardHeader>
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4" />
-                  ✓ Empfohlener Ansatz
-                </CardTitle>
+                <CardTitle className="text-sm">📊 Abzüge nach Kategorie</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm leading-relaxed">{strategy.content.recommended_deduction_approach}</p>
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie data={chartData} cx="50%" cy="50%" labelLine={false} label label={({name, value}) => `${name}: €${Math.round(value)}`} outerRadius={80} fill="#8884d8" dataKey="value">
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => `€${Math.round(value)}`} />
+                  </PieChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
           )}
 
-          {/* Documentation Checklist */}
-          {(strategy.content?.documentation_checklist || []).length > 0 && (
+          {/* Deductions List */}
+          {(result.optimization?.deduction_breakdown || []).length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">✓ Dokumentationscheckliste</CardTitle>
+                <CardTitle className="text-sm">💰 Verfügbare Abzüge</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {strategy.content.documentation_checklist.map((doc, i) => (
-                  <div key={i} className="text-sm p-2 bg-slate-50 rounded flex gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                    {doc}
+                {result.optimization.deduction_breakdown.map((ded, i) => (
+                  <div key={i} className="p-3 bg-slate-50 rounded flex justify-between">
+                    <span className="font-medium">{ded.category}</span>
+                    <span className="text-blue-600 font-bold">€{Math.round(ded.amount).toLocaleString()}</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Recommendations */}
+          {(result.optimization?.recommendations || []).length > 0 && (
+            <Card className="border-green-300 bg-green-50">
+              <CardHeader>
+                <CardTitle className="text-sm">✓ Empfehlungen</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {result.optimization.recommendations.map((rec, i) => (
+                  <div key={i} className="text-sm p-2 bg-white rounded">
+                    • {rec}
                   </div>
                 ))}
               </CardContent>
@@ -204,7 +190,7 @@ export default function DeductionMaximizationTool() {
         </>
       ) : (
         <div className="text-center py-8 text-slate-500">
-          Füllen Sie Ihre Daten aus und klicken Sie "Analyse durchführen"
+          Geben Sie Ihre Daten ein und klicken Sie "Abzüge maximieren"
         </div>
       )}
     </div>
