@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,332 +12,371 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TrendingDown, TrendingUp, Zap, Save, Trash2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { AlertTriangle, TrendingDown, TrendingUp, CheckCircle2 } from 'lucide-react';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
-const SCENARIO_CONFIG = {
-  AT: [
-    { value: 'income_adjustment', label: '📈 Einkommen anpassen', params: ['income_change'] },
-    { value: 'deduction_optimization', label: '📝 Werbungskosten optimieren', params: ['additional_deductions'] },
-    { value: 'capital_gain_planning', label: '💰 Kapitalgewinne planen', params: ['capital_gain', 'holding_period_years', 'private_asset'] },
-    { value: 'tax_loss_harvesting', label: '📉 Steuerverluste ernten', params: ['losses'] }
-  ],
-  CH: [
-    { value: 'income_adjustment', label: '📈 Einkommen anpassen', params: ['income_change', 'cantonal_rate', 'communal_rate'] },
-    { value: 'wealth_tax_reduction', label: '💎 Vermögenssteuer reduzieren', params: ['wealth_reduction', 'wealth_tax_rate'] },
-    { value: 'mortgage_optimization', label: '🏠 Hypothekarzinsen optimieren', params: ['mortgage_interest', 'combined_tax_rate'] },
-    { value: 'canton_change', label: '🗺️ Kantonwechsel simulieren', params: ['old_combined_rate', 'new_combined_rate'] }
-  ],
-  DE: [
-    { value: 'income_adjustment', label: '📈 Einkommen anpassen', params: ['income_change', 'church_tax_rate'] },
-    { value: 'deduction_strategy', label: '📝 Werbungskosten & Sonderausgaben', params: ['additional_deductions'] },
-    { value: 'capital_gains_timing', label: '💰 Kapitalgewinne zeitlich verschieben', params: ['capital_gain', 'holding_period_years'] },
-    { value: 'loss_harvesting', label: '📉 Verluste nutzen', params: ['losses'] }
-  ]
-};
-
 export default function TaxScenarioSimulator() {
   const [country, setCountry] = useState('DE');
-  const [taxYear, setTaxYear] = useState(CURRENT_YEAR - 1);
-  const [scenarioType, setScenarioType] = useState(SCENARIO_CONFIG.DE[0].value);
-  const [scenarioName, setScenarioName] = useState('');
-  const [baseIncome, setBaseIncome] = useState(75000);
-  const [baseTax, setBaseTax] = useState(25000);
-  const [params, setParams] = useState({});
-  const [scenarios, setScenarios] = useState([]);
+  const [taxYear, setTaxYear] = useState(CURRENT_YEAR);
+  const [scenarios, setScenarios] = useState([
+    {
+      name: 'Basis-Szenario',
+      base_income: 80000,
+      base_investments: 10000,
+      adjusted_income: 80000,
+      adjusted_investments: 10000,
+      wealth: 200000
+    },
+    {
+      name: 'Optimiert',
+      base_income: 80000,
+      base_investments: 10000,
+      adjusted_income: 70000,
+      adjusted_investments: 15000,
+      wealth: 200000
+    }
+  ]);
+  const [activeScenarioIndex, setActiveScenarioIndex] = useState(0);
+  const [results, setResults] = useState({});
 
-  const queryClient = useQueryClient();
+  const { mutate: simulateScenario, isLoading } = useMutation({
+    mutationFn: (scenarioData) =>
+      base44.functions.invoke('simulateTaxScenario', { scenario: scenarioData })
+  });
 
-  // Run scenario
-  const runMutation = useMutation({
-    mutationFn: async () => {
-      const { data } = await base44.functions.invoke('runTaxScenario', {
+  const handleSimulate = (index) => {
+    const scenario = scenarios[index];
+    simulateScenario(
+      {
         country,
         taxYear,
-        scenarioType,
         parameters: {
-          base_income: baseIncome,
-          base_total_tax: baseTax,
-          ...params
+          base_income: scenario.base_income,
+          base_investments: scenario.base_investments,
+          adjusted_income: scenario.adjusted_income,
+          adjusted_investments: scenario.adjusted_investments,
+          wealth: scenario.wealth
         }
-      });
-      return data;
-    }
-  });
-
-  const saveMutation = useMutation({
-    mutationFn: async (result) => {
-      const user = await base44.auth.me();
-      return await base44.entities.TaxScenario.create({
-        user_email: user.email,
-        country,
-        tax_year: taxYear,
-        scenario_name: scenarioName || `Szenario ${new Date().toLocaleDateString()}`,
-        scenario_type: scenarioType,
-        description: result.description,
-        scenario_parameters: params,
-        calculation_results: result,
-        tax_savings: result.summary.tax_savings,
-        tax_impact: result.summary.tax_savings,
-        feasibility: result.feasibility,
-        risk_level: result.risk_level,
-        implementation_effort: result.implementation_effort,
-        created_at: new Date().toISOString()
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['taxScenarios'] });
-      setScenarioName('');
-    }
-  });
-
-  const handleRunScenario = async () => {
-    const result = await runMutation.mutateAsync();
-    setScenarios([...scenarios, result]);
+      },
+      {
+        onSuccess: (response) => {
+          setResults(prev => ({
+            ...prev,
+            [index]: response.data
+          }));
+        }
+      }
+    );
   };
 
-  const currentConfig = SCENARIO_CONFIG[country];
-  const selectedConfig = currentConfig.find(c => c.value === scenarioType);
+  const handleAddScenario = () => {
+    setScenarios([
+      ...scenarios,
+      {
+        name: `Szenario ${scenarios.length + 1}`,
+        base_income: 80000,
+        base_investments: 10000,
+        adjusted_income: 80000,
+        adjusted_investments: 10000,
+        wealth: 200000
+      }
+    ]);
+  };
 
-  const chartData = scenarios.map((s, idx) => ({
-    name: `Szenario ${idx + 1}`,
-    before: s.summary.total_tax_before,
-    after: s.summary.total_tax_after,
-    savings: s.summary.tax_savings
+  const handleUpdateScenario = (index, field, value) => {
+    const newScenarios = [...scenarios];
+    newScenarios[index] = { ...newScenarios[index], [field]: value };
+    setScenarios(newScenarios);
+  };
+
+  const currentResult = results[activeScenarioIndex];
+  const allResults = scenarios.map((_, i) => results[i]).filter(Boolean);
+
+  const comparisonData = allResults.map((result, i) => ({
+    scenario: scenarios[i].name,
+    tax: Math.round(result.adjusted_calculation.total),
+    savings: Math.round(result.base_calculation.total - result.adjusted_calculation.total)
   }));
-
-  const comparisonData = [
-    { label: 'Steuern vorher', value: baseTax, color: '#ef4444' },
-    ...scenarios.map((s, idx) => ({ 
-      label: `Szenario ${idx + 1}`, 
-      value: s.summary.total_tax_after, 
-      color: ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'][idx % 4] 
-    }))
-  ];
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">🎯 Tax Scenario Simulator</h1>
-        <p className="text-slate-500 mt-1">Simulieren Sie verschiedene Steuerszenarios und finden Sie optimale Strategien</p>
+        <p className="text-slate-500 mt-1">Modellieren Sie verschiedene Steueroptimierungsszenarien</p>
       </div>
 
-      {/* Configuration Panel */}
+      {/* Controls */}
+      <div className="flex gap-4 flex-wrap">
+        <div className="flex-1 max-w-xs">
+          <label className="text-sm font-medium">Land</label>
+          <Select value={country} onValueChange={setCountry}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="AT">🇦🇹 Österreich</SelectItem>
+              <SelectItem value="CH">🇨🇭 Schweiz</SelectItem>
+              <SelectItem value="DE">🇩🇪 Deutschland</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex-1 max-w-xs">
+          <label className="text-sm font-medium">Steuerjahr</label>
+          <Select value={String(taxYear)} onValueChange={(v) => setTaxYear(parseInt(v))}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={String(CURRENT_YEAR - 1)}>{CURRENT_YEAR - 1}</SelectItem>
+              <SelectItem value={String(CURRENT_YEAR)}>{CURRENT_YEAR}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="pt-6">
+          <Button onClick={handleAddScenario} className="bg-blue-600 hover:bg-blue-700 gap-2">
+            + Szenario hinzufügen
+          </Button>
+        </div>
+      </div>
+
+      {/* Scenario Tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-2">
+        {scenarios.map((scenario, idx) => (
+          <button
+            key={idx}
+            onClick={() => setActiveScenarioIndex(idx)}
+            className={`px-4 py-2 rounded whitespace-nowrap transition-all ${
+              idx === activeScenarioIndex
+                ? 'bg-blue-600 text-white'
+                : 'bg-slate-200 hover:bg-slate-300'
+            }`}
+          >
+            {scenario.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Scenario Editor */}
       <Card className="border-blue-300 bg-blue-50">
         <CardHeader>
-          <CardTitle>Szenario konfigurieren</CardTitle>
+          <CardTitle className="text-sm">⚙️ Szenario konfigurieren: {scenarios[activeScenarioIndex].name}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Basic Settings */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium">Land</label>
-              <Select value={country} onValueChange={setCountry}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="AT">🇦🇹 Österreich</SelectItem>
-                  <SelectItem value="CH">🇨🇭 Schweiz</SelectItem>
-                  <SelectItem value="DE">🇩🇪 Deutschland</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Steuerjahr</label>
-              <Select value={taxYear.toString()} onValueChange={(v) => setTaxYear(parseInt(v))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[CURRENT_YEAR - 2, CURRENT_YEAR - 1, CURRENT_YEAR].map(y => (
-                    <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Szenariotyp</label>
-              <Select value={scenarioType} onValueChange={setScenarioType}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SCENARIO_CONFIG[country].map(s => (
-                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Base Values */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
-            <div>
-              <label className="text-sm font-medium">Basis-Einkommen (€/CHF)</label>
-              <Input
-                type="number"
-                value={baseIncome}
-                onChange={(e) => setBaseIncome(parseFloat(e.target.value))}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Basis-Steuern (€/CHF)</label>
-              <Input
-                type="number"
-                value={baseTax}
-                onChange={(e) => setBaseTax(parseFloat(e.target.value))}
-              />
-            </div>
-          </div>
-
-          {/* Scenario-specific Parameters */}
-          {selectedConfig && (
-            <div className="pt-4 border-t space-y-3">
-              {selectedConfig.params.map(paramKey => (
-                <div key={paramKey}>
-                  <label className="text-sm font-medium capitalize">{paramKey.replace(/_/g, ' ')}</label>
-                  <Input
-                    type={paramKey.includes('rate') ? 'number' : 'number'}
-                    step={paramKey.includes('rate') ? '0.01' : '1'}
-                    placeholder={`Geben Sie ${paramKey} ein`}
-                    value={params[paramKey] || ''}
-                    onChange={(e) => setParams({ ...params, [paramKey]: parseFloat(e.target.value) })}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Save Name */}
-          <div className="pt-4 border-t">
-            <label className="text-sm font-medium">Szenarioname (optional)</label>
+          <div>
+            <label className="text-sm font-medium">Szenario Name</label>
             <Input
-              placeholder="z.B. 'Erhöhtes Einkommen 2024'"
-              value={scenarioName}
-              onChange={(e) => setScenarioName(e.target.value)}
+              value={scenarios[activeScenarioIndex].name}
+              onChange={(e) => handleUpdateScenario(activeScenarioIndex, 'name', e.target.value)}
+              className="mt-2"
             />
           </div>
 
-          {/* Run Button */}
-          <Button onClick={handleRunScenario} className="w-full bg-blue-600 hover:bg-blue-700 gap-2">
-            <Zap className="w-4 h-4" /> Szenario ausführen
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="text-sm font-medium">Basis-Einkommen (€)</label>
+              <Input
+                type="number"
+                value={scenarios[activeScenarioIndex].base_income}
+                onChange={(e) => handleUpdateScenario(activeScenarioIndex, 'base_income', parseFloat(e.target.value))}
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Basis-Investitionen (€)</label>
+              <Input
+                type="number"
+                value={scenarios[activeScenarioIndex].base_investments}
+                onChange={(e) => handleUpdateScenario(activeScenarioIndex, 'base_investments', parseFloat(e.target.value))}
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Vermögen (€)</label>
+              <Input
+                type="number"
+                value={scenarios[activeScenarioIndex].wealth}
+                onChange={(e) => handleUpdateScenario(activeScenarioIndex, 'wealth', parseFloat(e.target.value))}
+                className="mt-2"
+              />
+            </div>
+          </div>
+
+          <div className="border-t pt-4">
+            <p className="font-semibold mb-3">Nach Optimierung</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Optimiertes Einkommen (€)</label>
+                <Input
+                  type="number"
+                  value={scenarios[activeScenarioIndex].adjusted_income}
+                  onChange={(e) => handleUpdateScenario(activeScenarioIndex, 'adjusted_income', parseFloat(e.target.value))}
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Optimierte Investitionen (€)</label>
+                <Input
+                  type="number"
+                  value={scenarios[activeScenarioIndex].adjusted_investments}
+                  onChange={(e) => handleUpdateScenario(activeScenarioIndex, 'adjusted_investments', parseFloat(e.target.value))}
+                  className="mt-2"
+                />
+              </div>
+            </div>
+          </div>
+
+          <Button
+            onClick={() => handleSimulate(activeScenarioIndex)}
+            className="w-full bg-green-600 hover:bg-green-700 gap-2"
+            disabled={isLoading}
+          >
+            {isLoading ? '⏳ Simuliere...' : '🚀 Szenario simulieren'}
           </Button>
         </CardContent>
       </Card>
 
       {/* Results */}
-      {scenarios.length > 0 && (
+      {currentResult && (
         <>
-          {/* Summary Cards */}
-          <div className="space-y-4">
-            {scenarios.map((scenario, idx) => (
-              <Card key={idx} className={scenario.summary.tax_savings > 0 ? 'border-green-300 bg-green-50' : ''}>
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h4 className="font-semibold mb-3">Szenario {idx + 1}</h4>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div>
-                          <p className="text-xs text-slate-600">Steuern vorher</p>
-                          <p className="text-lg font-bold">{scenario.summary.total_tax_before.toLocaleString()}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-600">Steuern nachher</p>
-                          <p className="text-lg font-bold text-blue-600">{Math.round(scenario.summary.total_tax_after).toLocaleString()}</p>
-                        </div>
-                        <div className={scenario.summary.tax_savings > 0 ? 'bg-green-100 p-2 rounded' : ''}>
-                          <p className="text-xs text-slate-600">Ersparnisse</p>
-                          <p className={`text-lg font-bold ${scenario.summary.tax_savings > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {scenario.summary.tax_savings > 0 ? '+' : ''}{scenario.summary.tax_savings.toLocaleString()}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-600">Effektiv-Quote</p>
-                          <p className="text-lg font-bold">{scenario.summary.effective_rate_after}%</p>
-                        </div>
-                      </div>
+          {/* Risk Alert */}
+          {currentResult.risk_level !== 'low' && (
+            <Alert className={`border-${currentResult.risk_level === 'high' ? 'red' : 'yellow'}-300 bg-${currentResult.risk_level === 'high' ? 'red' : 'yellow'}-50`}>
+              <AlertTriangle className={`h-4 w-4 text-${currentResult.risk_level === 'high' ? 'red' : 'yellow'}-600`} />
+              <AlertDescription className={`text-${currentResult.risk_level === 'high' ? 'red' : 'yellow'}-900`}>
+                <strong>Risiko-Warnung:</strong> {currentResult.risk_level === 'high' ? 'Hohes' : 'Mittleres'} Revisionsrisiko erkannt
+              </AlertDescription>
+            </Alert>
+          )}
 
-                      <div className="flex gap-2 mt-4 flex-wrap">
-                        <Badge className={
-                          scenario.feasibility === 'highly_feasible' ? 'bg-green-100 text-green-800' :
-                          scenario.feasibility === 'feasible' ? 'bg-blue-100 text-blue-800' :
-                          'bg-orange-100 text-orange-800'
-                        }>
-                          {scenario.feasibility}
-                        </Badge>
-                        <Badge className={
-                          scenario.risk_level === 'low' ? 'bg-green-100 text-green-800' :
-                          scenario.risk_level === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }>
-                          Risk: {scenario.risk_level}
-                        </Badge>
-                      </div>
+          {/* Impact Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <p className="text-sm text-slate-600">Basis-Steuerlast</p>
+                <p className="text-2xl font-bold mt-2">€{Math.round(currentResult.base_calculation.total).toLocaleString()}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <p className="text-sm text-slate-600">Optimierte Steuerlast</p>
+                <p className="text-2xl font-bold mt-2">€{Math.round(currentResult.adjusted_calculation.total).toLocaleString()}</p>
+              </CardContent>
+            </Card>
+            <Card className="border-green-300 bg-green-50">
+              <CardContent className="pt-6 text-center">
+                <p className="text-sm text-slate-600">💰 Einsparungen</p>
+                <p className="text-2xl font-bold text-green-600 mt-2">€{Math.round(currentResult.impact.tax_change).toLocaleString()}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <p className="text-sm text-slate-600">Machbarkeits-Score</p>
+                <p className="text-2xl font-bold mt-2">{currentResult.feasibility_score}%</p>
+                <Badge className="mt-2 w-full justify-center">
+                  {currentResult.risk_level === 'low' ? '✅ Niedrig' : currentResult.risk_level === 'medium' ? '⚠️ Mittel' : '🔴 Hoch'}
+                </Badge>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Detailed Breakdown */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">📊 Steuer-Aufschlüsselung</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="font-semibold mb-2">Basis-Szenario</p>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>Einkommensteuer:</span>
+                      <span>€{Math.round(currentResult.base_calculation.income_tax).toLocaleString()}</span>
                     </div>
-
-                    <Button
-                      onClick={() => saveMutation.mutate(scenario)}
-                      className="gap-2"
-                    >
-                      <Save className="w-4 h-4" /> Speichern
-                    </Button>
+                    <div className="flex justify-between">
+                      <span>Kapitalertragsteuer:</span>
+                      <span>€{Math.round(currentResult.base_calculation.capital_gains_tax).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Vermögenssteuer:</span>
+                      <span>€{Math.round(currentResult.base_calculation.wealth_tax).toLocaleString()}</span>
+                    </div>
+                    <div className="border-t pt-1 font-bold flex justify-between">
+                      <span>Summe:</span>
+                      <span>€{Math.round(currentResult.base_calculation.total).toLocaleString()}</span>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                </div>
+                <div>
+                  <p className="font-semibold mb-2">Optimiertes Szenario</p>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>Einkommensteuer:</span>
+                      <span>€{Math.round(currentResult.adjusted_calculation.income_tax).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Kapitalertragsteuer:</span>
+                      <span>€{Math.round(currentResult.adjusted_calculation.capital_gains_tax).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Vermögenssteuer:</span>
+                      <span>€{Math.round(currentResult.adjusted_calculation.wealth_tax).toLocaleString()}</span>
+                    </div>
+                    <div className="border-t pt-1 font-bold flex justify-between text-green-600">
+                      <span>Summe:</span>
+                      <span>€{Math.round(currentResult.adjusted_calculation.total).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Charts */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
+          {/* Recommendations */}
+          {currentResult.recommendations?.length > 0 && (
+            <Card className="border-blue-300 bg-blue-50">
               <CardHeader>
-                <CardTitle>Steuervergleich</CardTitle>
+                <CardTitle className="text-sm">💡 Empfehlungen</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="before" fill="#ef4444" name="Steuern vorher" />
-                    <Bar dataKey="after" fill="#3b82f6" name="Steuern nachher" />
-                  </BarChart>
-                </ResponsiveContainer>
+                <ul className="space-y-2">
+                  {currentResult.recommendations.map((rec, i) => (
+                    <li key={i} className="text-sm flex gap-2">
+                      <span>→</span> {rec}
+                    </li>
+                  ))}
+                </ul>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Ersparnisse</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="savings" fill="#10b981" name="Ersparnisse" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
+          )}
         </>
       )}
 
-      {scenarios.length === 0 && (
-        <Card className="text-center py-12 text-slate-500">
-          <p>Konfigurieren Sie ein Szenario und klicken Sie "Szenario ausführen" um zu sehen, wie verschiedene Strategien Ihre Steuerlast auswirken.</p>
+      {/* Comparison Chart */}
+      {comparisonData.length > 1 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">📈 Szenario-Vergleich</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={comparisonData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="scenario" />
+                <YAxis />
+                <Tooltip formatter={(value) => `€${value.toLocaleString()}`} />
+                <Legend />
+                <Bar dataKey="tax" fill="#ef4444" name="Steuerlast" />
+                <Bar dataKey="savings" fill="#10b981" name="Einsparungen" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
         </Card>
       )}
     </div>
