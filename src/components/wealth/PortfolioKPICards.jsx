@@ -1,73 +1,72 @@
 import React from 'react';
-import { Card } from '@/components/ui/card';
-import { TrendingUp, Banknote, Target, AlertCircle } from 'lucide-react';
-
-// Fallback asset categories constant for when import might fail
-const ASSET_CATEGORIES_FALLBACK = {};
+import { Card, CardContent } from '@/components/ui/card';
+import { TrendingUp, TrendingDown, Coins, Package } from 'lucide-react';
 
 export default function PortfolioKPICards({ portfolio = [] }) {
-  const totalValue = portfolio.reduce((sum, asset) => {
-    return sum + (asset.quantity * asset.current_value);
-  }, 0);
+  const calculateMetrics = () => {
+    const totalValue = portfolio.reduce((sum, asset) => sum + (asset.quantity * asset.current_value), 0);
+    const totalInvested = portfolio.reduce((sum, asset) => sum + (asset.quantity * asset.purchase_price), 0);
+    const totalGain = totalValue - totalInvested;
+    const totalGainPercent = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
 
-  const totalInvested = portfolio.reduce((sum, asset) => {
-    return sum + (asset.quantity * asset.purchase_price);
-  }, 0);
+    return {
+      totalValue,
+      totalInvested,
+      totalGain,
+      totalGainPercent,
+      positionCount: portfolio.length
+    };
+  };
 
-  const totalGain = totalValue - totalInvested;
-  const gainPercent = totalInvested > 0 ? (totalGain / totalInvested * 100) : 0;
+  const metrics = calculateMetrics();
 
-  const kpis = [
-    {
-      label: 'Gesamtwert Portfolio',
-      value: `€${totalValue.toLocaleString('de-DE', { maximumFractionDigits: 0 })}`,
-      icon: Banknote,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50'
-    },
-    {
-      label: 'Gewinn/Verlust',
-      value: `€${totalGain.toLocaleString('de-DE', { maximumFractionDigits: 0 })}`,
-      icon: TrendingUp,
-      color: gainPercent >= 0 ? 'text-green-600' : 'text-red-600',
-      bgColor: gainPercent >= 0 ? 'bg-green-50' : 'bg-red-50'
-    },
-    {
-      label: 'Rendite',
-      value: `${gainPercent.toFixed(2)}%`,
-      icon: Target,
-      color: gainPercent >= 0 ? 'text-green-600' : 'text-red-600',
-      bgColor: gainPercent >= 0 ? 'bg-green-50' : 'bg-red-50'
-    },
-    {
-      label: 'Positionen',
-      value: portfolio.length,
-      icon: AlertCircle,
-      color: 'text-slate-600',
-      bgColor: 'bg-slate-50'
-    }
-  ];
+  const formatCurrency = (value, decimals = 0) => {
+    return new Intl.NumberFormat('de-DE', {
+      style: 'currency',
+      currency: 'EUR',
+      maximumFractionDigits: decimals
+    }).format(value);
+  };
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-      {kpis.map((kpi, idx) => {
-        const Icon = kpi.icon;
-        return (
-          <Card key={idx} className={`p-4 lg:p-6 ${kpi.bgColor}`}>
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-light text-slate-600 uppercase tracking-wider line-clamp-1">
-                  {kpi.label}
-                </p>
-                <p className={`text-lg lg:text-2xl font-light mt-1 lg:mt-2 break-words ${kpi.color}`}>
-                  {kpi.value}
-                </p>
-              </div>
-              <Icon className={`w-6 lg:w-8 h-6 lg:h-8 ${kpi.color} opacity-20 flex-shrink-0`} />
-            </div>
-          </Card>
-        );
-      })}
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-sm font-light text-slate-600">Gesamtwert Portfolio</div>
+          <div className="text-2xl font-light text-slate-900 mt-2">{formatCurrency(metrics.totalValue)}</div>
+          <div className="text-xs text-slate-500 mt-1">€ {metrics.totalInvested.toLocaleString('de-DE')} investiert</div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-sm font-light text-slate-600">Gewinn/Verlust</div>
+          <div className={`text-2xl font-light mt-2 ${metrics.totalGain >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {metrics.totalGain >= 0 ? '+' : ''}{formatCurrency(metrics.totalGain)}
+          </div>
+          <div className={`text-xs mt-1 ${metrics.totalGain >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {metrics.totalGainPercent >= 0 ? '+' : ''}{metrics.totalGainPercent.toFixed(2)}%
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-sm font-light text-slate-600">Anzahl Positionen</div>
+          <div className="text-2xl font-light text-slate-900 mt-2">{metrics.positionCount}</div>
+          <div className="text-xs text-slate-500 mt-1">
+            {new Set(portfolio.map(a => a.asset_category)).size} Kategorien
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-sm font-light text-slate-600">YTD Rendite</div>
+          <div className="text-2xl font-light text-slate-900 mt-2">{metrics.totalGainPercent.toFixed(2)}%</div>
+          <div className="text-xs text-slate-500 mt-1">Dieses Jahr</div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
