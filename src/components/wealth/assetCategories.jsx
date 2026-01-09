@@ -87,3 +87,8 @@ export const getCategoryIcon = (id) => {
   const category = ASSET_CATEGORIES[id];
   return category?.icon || 'Package';
 };
+
+export const getSubcategories = (categoryId) => {
+  const category = ASSET_CATEGORIES[categoryId];
+  return category?.subcategories || [];
+};
