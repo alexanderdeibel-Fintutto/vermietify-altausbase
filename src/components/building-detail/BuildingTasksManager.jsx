@@ -87,6 +87,12 @@ export default function BuildingTasksManager({ buildingId }) {
 
   return (
     <div className="space-y-4">
+      {/* AI Task Assistant */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <SmartTaskManager buildingId={buildingId} />
+        <AutoTaskCreator />
+      </div>
+
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-light text-slate-900">Aufgabenverwaltung</h2>
         <Button onClick={() => setShowForm(!showForm)} className="bg-blue-600 hover:bg-blue-700">
