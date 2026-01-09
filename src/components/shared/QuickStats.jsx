@@ -13,8 +13,8 @@ export default function QuickStats({ stats, accentColor = 'purple' }) {
     <div className="grid grid-cols-4 gap-4 mb-6">
       {stats.map((stat, idx) => (
         <Card key={idx} className={`p-4 border ${colorMap[accentColor]}`}>
-          <p className="text-sm font-medium opacity-75">{stat.label}</p>
-          <p className="text-2xl font-bold mt-1">{stat.value}</p>
+          <p className="text-sm font-normal opacity-75">{stat.label}</p>
+          <p className="text-2xl font-light mt-1">{stat.value}</p>
         </Card>
       ))}
     </div>
