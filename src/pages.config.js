@@ -233,6 +233,10 @@ import TaxComplianceChecker from './pages/TaxComplianceChecker';
 import WealthTaxCalculator from './pages/WealthTaxCalculator';
 import TaxFormGuide from './pages/TaxFormGuide';
 import MultiYearTaxStrategy from './pages/MultiYearTaxStrategy';
+import TaxReportingHub from './pages/TaxReportingHub';
+import TaxMonitoringDashboard from './pages/TaxMonitoringDashboard';
+import TaxAdvisorCollaborationHub from './pages/TaxAdvisorCollaborationHub';
+import TaxDataImportHub from './pages/TaxDataImportHub';
 import __Layout from './Layout.jsx';
 
 
@@ -472,6 +476,10 @@ export const PAGES = {
     "WealthTaxCalculator": WealthTaxCalculator,
     "TaxFormGuide": TaxFormGuide,
     "MultiYearTaxStrategy": MultiYearTaxStrategy,
+    "TaxReportingHub": TaxReportingHub,
+    "TaxMonitoringDashboard": TaxMonitoringDashboard,
+    "TaxAdvisorCollaborationHub": TaxAdvisorCollaborationHub,
+    "TaxDataImportHub": TaxDataImportHub,
 }
 
 export const pagesConfig = {

@@ -9,82 +9,38 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { submission_id, advisor_email, message } = await req.json();
+    const { advisor_email, tax_year, country, data_types } = await req.json();
 
-    if (!submission_id || !advisor_email) {
-      return Response.json({ 
-        error: 'submission_id and advisor_email required' 
-      }, { status: 400 });
+    if (!advisor_email || !tax_year) {
+      return Response.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
-    console.log(`[SHARE] Sharing ${submission_id} with ${advisor_email}`);
-
-    const submission = await base44.entities.ElsterSubmission.filter({ id: submission_id });
-    
-    if (submission.length === 0) {
-      return Response.json({ error: 'Submission not found' }, { status: 404 });
-    }
-
-    const sub = submission[0];
-
-    // Generiere PDF wenn noch nicht vorhanden
-    let pdfUrl = sub.pdf_url;
-    if (!pdfUrl) {
-      const pdfResponse = await base44.functions.invoke('generateSubmissionPDF', {
-        submission_id: sub.id
-      });
-      pdfUrl = pdfResponse.data?.pdf_url;
-    }
-
-    // Erstelle Share-Link mit Token
-    const shareToken = crypto.randomUUID();
-    
-    await base44.asServiceRole.entities.ActivityLog.create({
-      entity_type: 'ElsterSubmission',
-      entity_id: submission_id,
-      action: 'shared_with_advisor',
-      user_id: user.id,
-      metadata: {
-        advisor_email,
-        share_token: shareToken,
-        shared_at: new Date().toISOString()
-      }
+    const shareRecord = await base44.entities.PortfolioShare.create({
+      portfolio_id: `tax_${country}_${tax_year}`,
+      shared_by_user_id: user.id,
+      shared_with_email: advisor_email,
+      permission_level: 'view',
+      share_type: 'advisor',
+      advisor_role: 'tax_advisor'
     });
 
-    // Sende E-Mail an Steuerberater
-    const emailBody = `
-Hallo,
-
-${user.full_name} (${user.email}) hat eine ELSTER-Einreichung mit Ihnen geteilt:
-
-Formular: ${sub.tax_form_type}
-Steuerjahr: ${sub.tax_year}
-Status: ${sub.status}
-
-${message ? `Nachricht: ${message}` : ''}
-
-${pdfUrl ? `PDF: ${pdfUrl}` : ''}
-
-Mit freundlichen Grüßen,
-Ihr ELSTER-Integrations-Team
-    `;
-
-    await base44.asServiceRole.integrations.Core.SendEmail({
+    await base44.integrations.Core.SendEmail({
       to: advisor_email,
-      subject: `ELSTER-Einreichung von ${user.full_name}`,
-      body: emailBody
-    });
+      subject: `Tax Data Sharing Request from ${user.full_name}`,
+      body: `You have been invited to view tax data for ${tax_year} in ${country}. 
+      
+Please log in to the platform to access the shared information.
 
-    console.log(`[SHARE] Sent to ${advisor_email}`);
+Shared data types: ${(data_types || []).join(', ')}`
+    });
 
     return Response.json({
       success: true,
-      share_token: shareToken,
-      shared_with: advisor_email
+      share_id: shareRecord.id,
+      advisor_email,
+      message: 'Tax advisor invitation sent successfully'
     });
-
   } catch (error) {
-    console.error('[ERROR]', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
