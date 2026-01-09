@@ -1,84 +1,80 @@
 import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
 export default function FinAPICallback() {
-    const [status, setStatus] = useState('loading');
-    const [message, setMessage] = useState('Konten werden importiert...');
+  const [status, setStatus] = useState('processing');
+  const [message, setMessage] = useState('Verbindung wird hergestellt...');
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        importAccounts();
-    }, []);
+  useEffect(() => {
+    const handleCallback = async () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        const state = params.get('state');
 
-    const importAccounts = async () => {
-        try {
-            const response = await base44.functions.invoke('finapiImportAccounts', {});
-            
-            if (response.data.success) {
-                setStatus('success');
-                setMessage(response.data.message);
-                
-                // Close window after 2 seconds
-                setTimeout(() => {
-                    window.close();
-                }, 2000);
-            } else {
-                setStatus('error');
-                setMessage(response.data.error || 'Import fehlgeschlagen');
-            }
-        } catch (error) {
-            console.error('Import error:', error);
-            setStatus('error');
-            setMessage('Konten konnten nicht importiert werden');
+        if (!code) {
+          setStatus('error');
+          setMessage('Authentifizierung abgebrochen');
+          setTimeout(() => navigate(createPageUrl('UserSettings')), 3000);
+          return;
         }
+
+        // Call backend to exchange code for tokens
+        const response = await base44.functions.invoke('connectFINANZOnlineAT', {
+          action: 'oauth_callback',
+          code,
+          state
+        });
+
+        if (response.data.success) {
+          setStatus('success');
+          setMessage('FINANZOnline erfolgreich verbunden!');
+          setTimeout(() => navigate(createPageUrl('TaxAuthoritySubmissions')), 2000);
+        } else {
+          setStatus('error');
+          setMessage('Verbindung fehlgeschlagen');
+        }
+      } catch (error) {
+        setStatus('error');
+        setMessage(`Fehler: ${error.message}`);
+      }
     };
 
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-                {status === 'loading' && (
-                    <>
-                        <Loader2 className="w-16 h-16 text-emerald-600 mx-auto mb-4 animate-spin" />
-                        <h2 className="text-2xl font-bold text-slate-800 mb-2">
-                            Einen Moment bitte...
-                        </h2>
-                        <p className="text-slate-600">{message}</p>
-                    </>
-                )}
+    handleCallback();
+  }, [navigate]);
 
-                {status === 'success' && (
-                    <>
-                        <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <CheckCircle2 className="w-10 h-10 text-emerald-600" />
-                        </div>
-                        <h2 className="text-2xl font-bold text-slate-800 mb-2">
-                            Erfolgreich!
-                        </h2>
-                        <p className="text-slate-600 mb-4">{message}</p>
-                        <p className="text-sm text-slate-400">
-                            Dieses Fenster schließt sich automatisch...
-                        </p>
-                    </>
-                )}
-
-                {status === 'error' && (
-                    <>
-                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <AlertCircle className="w-10 h-10 text-red-600" />
-                        </div>
-                        <h2 className="text-2xl font-bold text-slate-800 mb-2">
-                            Fehler
-                        </h2>
-                        <p className="text-slate-600 mb-4">{message}</p>
-                        <button
-                            onClick={() => window.close()}
-                            className="px-6 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg"
-                        >
-                            Schließen
-                        </button>
-                    </>
-                )}
-            </div>
-        </div>
-    );
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Authentifizierung</CardTitle>
+        </CardHeader>
+        <CardContent className="text-center space-y-4">
+          {status === 'processing' && (
+            <>
+              <Loader2 className="w-12 h-12 animate-spin mx-auto text-blue-600" />
+              <p className="text-slate-600">{message}</p>
+            </>
+          )}
+          {status === 'success' && (
+            <>
+              <CheckCircle2 className="w-12 h-12 mx-auto text-green-600" />
+              <p className="text-slate-600">{message}</p>
+            </>
+          )}
+          {status === 'error' && (
+            <>
+              <AlertCircle className="w-12 h-12 mx-auto text-red-600" />
+              <p className="text-slate-600">{message}</p>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
