@@ -43,10 +43,31 @@ export default function IntelligentOnboardingWizardButton() {
     }
   };
 
-  const handleSkip = (e) => {
+  const handleSkip = async (e) => {
     e.stopPropagation();
     setIsSkipped(true);
     setDialogOpen(false);
+    
+    try {
+      // Save skip to DB with 24h expiration
+      const onboardingRecords = await base44.entities.UserOnboarding.filter(
+        { user_id: onboardingState.user_id },
+        null,
+        1
+      );
+      
+      if (onboardingRecords[0]) {
+        const skipUntil = new Date();
+        skipUntil.setHours(skipUntil.getHours() + 24);
+        
+        await base44.entities.UserOnboarding.update(
+          onboardingRecords[0].id,
+          { skip_until: skipUntil.toISOString() }
+        );
+      }
+    } catch (err) {
+      console.error('Skip save failed:', err);
+    }
     
     // Reset skip after 24 hours
     setTimeout(() => setIsSkipped(false), 24 * 60 * 60 * 1000);

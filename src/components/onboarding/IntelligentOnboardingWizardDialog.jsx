@@ -37,6 +37,25 @@ export default function IntelligentOnboardingWizardDialog({
   const handleStepComplete = async () => {
     setIsSubmitting(true);
     try {
+      const stepId = nextStep?.id;
+
+      // Step-specific data saving
+      if (stepId === 'add_building' && formData.building_name) {
+        await base44.entities.Building.create({
+          name: formData.building_name,
+          street: formData.building_address,
+          zip: formData.building_zip,
+          type: 'residential'
+        });
+      }
+
+      if (stepId === 'add_tenant' && formData.tenant_name) {
+        await base44.entities.Tenant.create({
+          name: formData.tenant_name,
+          email: formData.tenant_email
+        });
+      }
+
       // Update onboarding progress
       const onboardingRecords = await base44.entities.UserOnboarding.filter(
         { user_id: onboardingState.user_id },
@@ -45,17 +64,17 @@ export default function IntelligentOnboardingWizardDialog({
       );
       
       if (onboardingRecords[0]) {
-        const updated = await base44.entities.UserOnboarding.update(
+        await base44.entities.UserOnboarding.update(
           onboardingRecords[0].id,
           {
             completed_steps: [
               ...(onboardingRecords[0].completed_steps || []),
-              nextStep.id
+              stepId
             ],
-            onboarding_progress: progress + (100 / allSteps.length)
+            onboarding_progress: progress + (100 / allSteps.length),
+            current_step: null
           }
         );
-        console.log('Step completed:', nextStep.id);
       }
 
       toast.success(`✅ ${nextStep.title} abgeschlossen!`);
