@@ -239,6 +239,7 @@ import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import DocumentInboxSettings from './pages/DocumentInboxSettings';
+import AdminSettings from './pages/AdminSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -484,6 +485,7 @@ export const PAGES = {
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "DocumentInboxSettings": DocumentInboxSettings,
+    "AdminSettings": AdminSettings,
 }
 
 export const pagesConfig = {
