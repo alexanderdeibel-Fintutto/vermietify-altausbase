@@ -19,6 +19,7 @@ import FinancialTrendsWidget from '@/components/dashboard/FinancialTrendsWidget'
 import RollingBudgetWidget from '@/components/dashboard/RollingBudgetWidget';
 import AnomalyDetectionWidget from '@/components/dashboard/AnomalyDetectionWidget';
 import CostOptimizationWidget from '@/components/dashboard/CostOptimizationWidget';
+import BudgetRequestsWidget from '@/components/dashboard/BudgetRequestsWidget';
 
 export default function Dashboard() {
   const [editMode, setEditMode] = useState(false);
@@ -102,6 +103,7 @@ export default function Dashboard() {
               <PortfolioOverviewWidget />
               <OccupancyWidget />
               <RevenueWidget />
+              <BudgetRequestsWidget />
               <UpcomingTasksWidget />
               <DocumentInboxDashboardWidget />
               <div className="col-span-3">
@@ -158,7 +160,14 @@ export default function Dashboard() {
               <div className="col-span-2">
                 <BusinessWidget />
               </div>
+              <BudgetRequestsWidget />
               <UpcomingTasksWidget />
+              <div className="col-span-3">
+                <FinancialTrendsWidget />
+              </div>
+              <RollingBudgetWidget />
+              <AnomalyDetectionWidget />
+              <CostOptimizationWidget />
             </>
           )}
         </motion.div>
