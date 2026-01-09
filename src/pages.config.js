@@ -162,6 +162,7 @@ import TaxAdminDashboard from './pages/TaxAdminDashboard';
 import TaxPlanningAdvisor from './pages/TaxPlanningAdvisor';
 import TaxFilingWizard from './pages/TaxFilingWizard';
 import MultiCountryTaxComparison from './pages/MultiCountryTaxComparison';
+import TaxComplianceTracker from './pages/TaxComplianceTracker';
 import __Layout from './Layout.jsx';
 
 
@@ -330,6 +331,7 @@ export const PAGES = {
     "TaxPlanningAdvisor": TaxPlanningAdvisor,
     "TaxFilingWizard": TaxFilingWizard,
     "MultiCountryTaxComparison": MultiCountryTaxComparison,
+    "TaxComplianceTracker": TaxComplianceTracker,
 }
 
 export const pagesConfig = {

@@ -9,82 +9,106 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { year, format = 'pdf' } = await req.json();
+    const { country, taxYear } = await req.json();
 
-    console.log('[COMPLIANCE] Generating report for year:', year);
+    if (!country || !taxYear) {
+      return Response.json({ error: 'Missing parameters' }, { status: 400 });
+    }
 
-    const submissions = await base44.entities.ElsterSubmission.filter();
-    const yearSubmissions = submissions.filter(s => s.tax_year === year);
-
-    // Berechne Compliance-Metriken
-    const metrics = {
-      total_submissions: yearSubmissions.length,
-      accepted: yearSubmissions.filter(s => s.status === 'ACCEPTED').length,
-      rejected: yearSubmissions.filter(s => s.status === 'REJECTED').length,
-      pending: yearSubmissions.filter(s => ['DRAFT', 'VALIDATED'].includes(s.status)).length,
-      avg_ai_confidence: Math.round(
-        yearSubmissions.reduce((sum, s) => sum + (s.ai_confidence_score || 0), 0) / yearSubmissions.length
-      ),
-      error_rate: Math.round(
-        (yearSubmissions.filter(s => s.validation_errors?.length > 0).length / yearSubmissions.length) * 100
-      ),
-      on_time_rate: 95, // Beispiel
-      compliance_score: 0
+    const requirements = {
+      AT: [
+        { type: 'filing_deadline', requirement: 'Steuererklärung einreichen', deadline_offset: 180 },
+        { type: 'documentation', requirement: 'Anlage KAP vorbereiten', deadline_offset: 120 },
+        { type: 'documentation', requirement: 'Rechnungen sammeln', deadline_offset: 90 },
+        { type: 'record_retention', requirement: 'Belege 7 Jahre aufbewahren', deadline_offset: -2555 },
+        { type: 'audit_readiness', requirement: 'Bankkontoauszüge archivieren', deadline_offset: 60 },
+        { type: 'tax_law_change', requirement: 'KESt-Regelung aktualisieren', deadline_offset: 30 }
+      ],
+      CH: [
+        { type: 'filing_deadline', requirement: 'Steuererklärung (Bund) einreichen', deadline_offset: 74 },
+        { type: 'filing_deadline', requirement: 'Kantonale Steuererklärung einreichen', deadline_offset: 90 },
+        { type: 'documentation', requirement: 'Wertschriftenverzeichnis', deadline_offset: 60 },
+        { type: 'documentation', requirement: 'Liegenschaftenverzeichnis', deadline_offset: 60 },
+        { type: 'record_retention', requirement: 'Steuerunterlagen 10 Jahre aufbewahren', deadline_offset: -3650 },
+        { type: 'audit_readiness', requirement: 'Vermögensaufstellung', deadline_offset: 30 }
+      ],
+      DE: [
+        { type: 'filing_deadline', requirement: 'Einkommensteuer-Erklärung', deadline_offset: 152 },
+        { type: 'filing_deadline', requirement: 'ELSTER-Submission', deadline_offset: 152 },
+        { type: 'documentation', requirement: 'Kontoauszüge für Abgeltungssteuer', deadline_offset: 90 },
+        { type: 'documentation', requirement: 'Anlage U (Überschusseinkünfte)', deadline_offset: 120 },
+        { type: 'record_retention', requirement: 'Geschäftsunterlagen 10 Jahre archivieren', deadline_offset: -3650 },
+        { type: 'audit_readiness', requirement: 'Kassenführung prüfen', deadline_offset: 30 }
+      ]
     };
 
-    // Berechne Compliance Score
-    metrics.compliance_score = Math.round(
-      (metrics.accepted / metrics.total_submissions * 50) +
-      (metrics.avg_ai_confidence) +
-      ((100 - metrics.error_rate) * 0.2)
-    );
+    const countryReqs = requirements[country] || [];
+    const currentYear = new Date().getFullYear();
+    const taxYearStart = new Date(taxYear, 0, 1);
 
-    // GoBD Compliance Check
-    const gobdCompliance = {
-      archiving_compliant: yearSubmissions.filter(s => s.status === 'ARCHIVED').length > 0,
-      audit_trail_complete: true,
-      data_integrity_verified: true,
-      encryption_enabled: true,
-      retention_period_met: true,
-      overall_compliant: true
-    };
+    const compliance = [];
 
-    // Generate PDF-ready content
-    const reportData = {
-      year,
-      generated_at: new Date().toISOString(),
-      metrics,
-      gobdCompliance,
-      summary: `
-        Compliance Report ${year}
-        
-        Übermittlungen: ${metrics.total_submissions}
-        Akzeptanzquote: ${Math.round((metrics.accepted / metrics.total_submissions) * 100)}%
-        Compliance Score: ${metrics.compliance_score}/100
-        
-        GoBD konform: ${gobdCompliance.overall_compliant ? 'JA' : 'NEIN'}
-      `,
-      recommendations: [
-        metrics.error_rate > 10 ? 'Erhöhen Sie die KI-Validierung vor Einreichung' : null,
-        metrics.avg_ai_confidence < 85 ? 'Verbessern Sie die Dateneingabe-Qualität' : null,
-        'Regelmäßige Schulungen für Benutzer durchführen'
-      ].filter(Boolean)
-    };
+    for (const req of countryReqs) {
+      const deadline = new Date(taxYearStart);
+      deadline.setDate(deadline.getDate() + req.deadline_offset);
 
-    if (format === 'pdf') {
-      // Würde normalerweise PDF generieren
-      return new Response(JSON.stringify(reportData), {
-        headers: {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="compliance_report_${year}.pdf"`
-        }
+      const daysUntil = Math.ceil((deadline - new Date()) / (1000 * 60 * 60 * 24));
+      let status = 'pending';
+      let priority = 'medium';
+
+      if (daysUntil < 0) {
+        status = 'overdue';
+        priority = 'critical';
+      } else if (daysUntil < 7) {
+        status = 'at_risk';
+        priority = 'critical';
+      } else if (daysUntil < 30) {
+        priority = 'high';
+      }
+
+      const riskFlags = [];
+      if (daysUntil < 0) riskFlags.push('Überfällig');
+      if (daysUntil < 7 && daysUntil >= 0) riskFlags.push('Kurzfristig');
+      if (req.type === 'record_retention') riskFlags.push('Langfristige Aufbewahrung');
+
+      compliance.push({
+        user_email: user.email,
+        country,
+        tax_year: taxYear,
+        compliance_type: req.type,
+        requirement: req.requirement,
+        description: `${req.requirement} für Steuerjahr ${taxYear}`,
+        status,
+        priority,
+        deadline: deadline.toISOString().split('T')[0],
+        completion_percentage: status === 'completed' ? 100 : 0,
+        risk_flags: riskFlags,
+        required_documents: [],
+        documents_collected: []
       });
     }
 
-    return Response.json(reportData);
+    // Calculate statistics
+    const stats = {
+      total: compliance.length,
+      completed: compliance.filter(c => c.status === 'completed').length,
+      at_risk: compliance.filter(c => c.status === 'at_risk').length,
+      overdue: compliance.filter(c => c.status === 'overdue').length,
+      overall_compliance_score: Math.round(
+        (compliance.filter(c => c.status === 'completed').length / compliance.length) * 100
+      )
+    };
 
+    return Response.json({
+      status: 'success',
+      country,
+      tax_year: taxYear,
+      generated_at: new Date().toISOString(),
+      compliance_items: compliance,
+      statistics: stats
+    });
   } catch (error) {
-    console.error('[ERROR]', error);
+    console.error('Compliance report error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
