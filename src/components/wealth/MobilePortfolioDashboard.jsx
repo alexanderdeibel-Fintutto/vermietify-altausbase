@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Filter, Download, MoreVertical } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { Filter, Download } from 'lucide-react';
+
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(amount);
+};
 
 export default function MobilePortfolioDashboard({ portfolio, onExport }) {
   const [expanded, setExpanded] = useState(null);
