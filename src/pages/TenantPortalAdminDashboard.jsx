@@ -13,6 +13,8 @@ import TenantAdministrationPanel from '@/components/tenant-portal-admin/TenantAd
 import AdminMessagingInterface from '@/components/messaging/AdminMessagingInterface';
 import TenantFeedbackManager from '@/components/admin/TenantFeedbackManager';
 import MaintenanceNotificationSender from '@/components/admin/MaintenanceNotificationSender';
+import EmailTemplateManager from '@/components/communication/EmailTemplateManager';
+import SupportTicketManager from '@/components/communication/SupportTicketManager';
 
 export default function TenantPortalAdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -69,6 +71,8 @@ export default function TenantPortalAdminDashboard() {
           <TabsTrigger value="communication">Kommunikation</TabsTrigger>
           <TabsTrigger value="feedback">Feedback</TabsTrigger>
           <TabsTrigger value="notifications">Benachrichtigungen</TabsTrigger>
+          <TabsTrigger value="templates">E-Mail-Vorlagen</TabsTrigger>
+          <TabsTrigger value="tickets">Tickets</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -196,6 +200,16 @@ export default function TenantPortalAdminDashboard() {
         {/* Notifications Tab */}
         <TabsContent value="notifications">
           <MaintenanceNotificationSender />
+        </TabsContent>
+
+        {/* Email Templates Tab */}
+        <TabsContent value="templates">
+          <EmailTemplateManager />
+        </TabsContent>
+
+        {/* Tickets Tab */}
+        <TabsContent value="tickets">
+          <SupportTicketManager />
         </TabsContent>
         </Tabs>
     </div>

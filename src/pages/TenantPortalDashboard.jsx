@@ -20,6 +20,7 @@ import TenantDocumentsManager from '@/components/tenant-portal/TenantDocumentsMa
 import TenantFeedbackForm from '@/components/tenant-portal/TenantFeedbackForm';
 import TenantAIChatbot from '@/components/tenant-portal/TenantAIChatbot';
 import TenantFinancialOverview from '@/components/tenant-portal/TenantFinancialOverview';
+import SupportTicketManager from '@/components/communication/SupportTicketManager';
 
 export default function TenantPortalDashboard() {
   const [tenantId] = useState(new URLSearchParams(window.location.search).get('id'));
@@ -322,8 +323,9 @@ export default function TenantPortalDashboard() {
           </TabsContent>
 
           {/* Messages Tab */}
-          <TabsContent value="messages">
+          <TabsContent value="messages" className="space-y-6">
             <TenantMessagingInterface tenantId={tenantId} tenantEmail={tenant?.email} />
+            <SupportTicketManager tenantView={true} tenantId={tenantId} />
           </TabsContent>
 
           {/* Documents Tab */}
