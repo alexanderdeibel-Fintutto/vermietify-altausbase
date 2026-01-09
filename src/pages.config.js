@@ -10,11 +10,13 @@ import AdminAIAnalyticsLazy from './pages/AdminAIAnalyticsLazy';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminMasterDashboard from './pages/AdminMasterDashboard';
 import AdminPackageSetup from './pages/AdminPackageSetup';
+import AdminRoleManagement from './pages/AdminRoleManagement';
 import AdminSettings from './pages/AdminSettings';
 import AdminSetupGuide from './pages/AdminSetupGuide';
 import AdminTestCleanup from './pages/AdminTestCleanup';
 import AdminTesterAnalytics from './pages/AdminTesterAnalytics';
 import AdminTesterAnalyticsLazy from './pages/AdminTesterAnalyticsLazy';
+import AdminUserManagement from './pages/AdminUserManagement';
 import AdvancedAnalytics from './pages/AdvancedAnalytics';
 import AdvancedReportBuilder from './pages/AdvancedReportBuilder';
 import AdvancedReporting from './pages/AdvancedReporting';
@@ -43,6 +45,7 @@ import BackupRecovery from './pages/BackupRecovery';
 import BankAccounts from './pages/BankAccounts';
 import BankReconciliation from './pages/BankReconciliation';
 import BankingManagement from './pages/BankingManagement';
+import BudgetPlanning from './pages/BudgetPlanning';
 import BuildingDetail from './pages/BuildingDetail';
 import Buildings from './pages/Buildings';
 import BulkOperations from './pages/BulkOperations';
@@ -108,8 +111,8 @@ import InvestmentTaxTracking from './pages/InvestmentTaxTracking';
 import InvestmentsCH from './pages/InvestmentsCH';
 import InvoiceManagement from './pages/InvoiceManagement';
 import Invoices from './pages/Invoices';
-import Kommunikation from './pages/Kommunikation';
 import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
+import Kommunikation from './pages/Kommunikation';
 import LeaseContracts from './pages/LeaseContracts';
 import MaintenanceManager from './pages/MaintenanceManager';
 import MaintenanceTasks from './pages/MaintenanceTasks';
@@ -157,6 +160,7 @@ import SubmissionDashboard from './pages/SubmissionDashboard';
 import SuiteManagement from './pages/SuiteManagement';
 import SuppliersManagement from './pages/SuppliersManagement';
 import SupportCenter from './pages/SupportCenter';
+import SyncManagement from './pages/SyncManagement';
 import SystemConfiguration from './pages/SystemConfiguration';
 import SystemHealth from './pages/SystemHealth';
 import TaskManagement from './pages/TaskManagement';
@@ -214,10 +218,10 @@ import TaxReturnFilingManager from './pages/TaxReturnFilingManager';
 import TaxRiskAssessment from './pages/TaxRiskAssessment';
 import TaxRiskAssessmentPanel from './pages/TaxRiskAssessmentPanel';
 import TaxRuleAdmin from './pages/TaxRuleAdmin';
+import TaxSetup from './pages/TaxSetup';
 import TaxSavingsOpportunities from './pages/TaxSavingsOpportunities';
 import TaxScenarioComparison from './pages/TaxScenarioComparison';
 import TaxScenarioSimulator from './pages/TaxScenarioSimulator';
-import TaxSetup from './pages/TaxSetup';
 import TaxSetupWizard from './pages/TaxSetupWizard';
 import TaxStrategyAdvisor from './pages/TaxStrategyAdvisor';
 import TaxTreatyExplorer from './pages/TaxTreatyExplorer';
@@ -257,10 +261,7 @@ import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import SyncManagement from './pages/SyncManagement';
-import AdminUserManagement from './pages/AdminUserManagement';
-import BudgetPlanning from './pages/BudgetPlanning';
-import AdminRoleManagement from './pages/AdminRoleManagement';
+import BudgetAnalysis from './pages/BudgetAnalysis';
 import __Layout from './Layout.jsx';
 
 
@@ -277,11 +278,13 @@ export const PAGES = {
     "AdminDashboard": AdminDashboard,
     "AdminMasterDashboard": AdminMasterDashboard,
     "AdminPackageSetup": AdminPackageSetup,
+    "AdminRoleManagement": AdminRoleManagement,
     "AdminSettings": AdminSettings,
     "AdminSetupGuide": AdminSetupGuide,
     "AdminTestCleanup": AdminTestCleanup,
     "AdminTesterAnalytics": AdminTesterAnalytics,
     "AdminTesterAnalyticsLazy": AdminTesterAnalyticsLazy,
+    "AdminUserManagement": AdminUserManagement,
     "AdvancedAnalytics": AdvancedAnalytics,
     "AdvancedReportBuilder": AdvancedReportBuilder,
     "AdvancedReporting": AdvancedReporting,
@@ -310,6 +313,7 @@ export const PAGES = {
     "BankAccounts": BankAccounts,
     "BankReconciliation": BankReconciliation,
     "BankingManagement": BankingManagement,
+    "BudgetPlanning": BudgetPlanning,
     "BuildingDetail": BuildingDetail,
     "Buildings": Buildings,
     "BulkOperations": BulkOperations,
@@ -375,8 +379,8 @@ export const PAGES = {
     "InvestmentsCH": InvestmentsCH,
     "InvoiceManagement": InvoiceManagement,
     "Invoices": Invoices,
-    "Kommunikation": Kommunikation,
     "KnowledgeManagementDashboard": KnowledgeManagementDashboard,
+    "Kommunikation": Kommunikation,
     "LeaseContracts": LeaseContracts,
     "MaintenanceManager": MaintenanceManager,
     "MaintenanceTasks": MaintenanceTasks,
@@ -424,6 +428,7 @@ export const PAGES = {
     "SuiteManagement": SuiteManagement,
     "SuppliersManagement": SuppliersManagement,
     "SupportCenter": SupportCenter,
+    "SyncManagement": SyncManagement,
     "SystemConfiguration": SystemConfiguration,
     "SystemHealth": SystemHealth,
     "TaskManagement": TaskManagement,
@@ -481,10 +486,10 @@ export const PAGES = {
     "TaxRiskAssessment": TaxRiskAssessment,
     "TaxRiskAssessmentPanel": TaxRiskAssessmentPanel,
     "TaxRuleAdmin": TaxRuleAdmin,
+    "TaxSetup": TaxSetup,
     "TaxSavingsOpportunities": TaxSavingsOpportunities,
     "TaxScenarioComparison": TaxScenarioComparison,
     "TaxScenarioSimulator": TaxScenarioSimulator,
-    "TaxSetup": TaxSetup,
     "TaxSetupWizard": TaxSetupWizard,
     "TaxStrategyAdvisor": TaxStrategyAdvisor,
     "TaxTreatyExplorer": TaxTreatyExplorer,
@@ -524,10 +529,7 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "SyncManagement": SyncManagement,
-    "AdminUserManagement": AdminUserManagement,
-    "BudgetPlanning": BudgetPlanning,
-    "AdminRoleManagement": AdminRoleManagement,
+    "BudgetAnalysis": BudgetAnalysis,
 }
 
 export const pagesConfig = {
