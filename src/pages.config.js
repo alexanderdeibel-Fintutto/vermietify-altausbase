@@ -135,6 +135,7 @@ import WealthTeam from './pages/WealthTeam';
 import TaxDashboard from './pages/TaxDashboard';
 import AnlageKAP from './pages/AnlageKAP';
 import AnlageSO from './pages/AnlageSO';
+import AnlageVG from './pages/AnlageVG';
 import __Layout from './Layout.jsx';
 
 
@@ -276,6 +277,7 @@ export const PAGES = {
     "TaxDashboard": TaxDashboard,
     "AnlageKAP": AnlageKAP,
     "AnlageSO": AnlageSO,
+    "AnlageVG": AnlageVG,
 }
 
 export const pagesConfig = {
