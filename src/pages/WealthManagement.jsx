@@ -12,6 +12,8 @@ import AssetDetailModal from '@/components/wealth/AssetDetailModal';
 import ImportHistoryPanel from '@/components/wealth/ImportHistoryPanel';
 import PortfolioErrorBoundary from '@/components/wealth/PortfolioErrorBoundary';
 import { useBatchOperations } from '@/components/wealth/useBatchOperations';
+import DataValidationPanel from '@/components/wealth/DataValidationPanel';
+import PerformanceChart from '@/components/wealth/PerformanceChart';
 
 export default function WealthManagementPage() {
   const [showWizard, setShowWizard] = useState(false);
@@ -134,12 +136,18 @@ export default function WealthManagementPage() {
           {isLoading ? (
             <p className="text-sm font-light text-slate-600">Lädt...</p>
           ) : (
-            <AssetPortfolioTable
-              portfolio={portfolio}
-              onSelectAsset={setSelectedAsset}
-              onDelete={(id) => deleteMutation.mutate(id)}
-            />
+            <>
+              <AssetPortfolioTable
+                portfolio={portfolio}
+                onSelectAsset={setSelectedAsset}
+                onDelete={(id) => deleteMutation.mutate(id)}
+              />
+            </>
           )}
+        </div>
+
+        <div className="p-4 lg:p-6 border-t border-slate-200">
+          <DataValidationPanel userId={currentUser?.id} />
         </div>
       </Card>
 
@@ -171,8 +179,11 @@ export default function WealthManagementPage() {
         }}
       />
 
-        <div className="mt-6 lg:mt-8">
+        <div className="mt-6 lg:mt-8 space-y-6">
           <ImportHistoryPanel />
+          {selectedAsset && (
+            <PerformanceChart assetId={selectedAsset.id} days={90} />
+          )}
         </div>
       </div>
     </PortfolioErrorBoundary>

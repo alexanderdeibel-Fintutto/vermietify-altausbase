@@ -119,13 +119,13 @@ import UserAudit from './pages/UserAudit';
 import UserDetail from './pages/UserDetail';
 import UserManagement from './pages/UserManagement';
 import UserSettings from './pages/UserSettings';
+import WealthManagement from './pages/WealthManagement';
 import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import WealthManagement from './pages/WealthManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -251,13 +251,13 @@ export const PAGES = {
     "UserDetail": UserDetail,
     "UserManagement": UserManagement,
     "UserSettings": UserSettings,
+    "WealthManagement": WealthManagement,
     "WhatsAppCommunication": WhatsAppCommunication,
     "WhatsAppSettings": WhatsAppSettings,
     "WhatsAppSetup": WhatsAppSetup,
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "WealthManagement": WealthManagement,
 }
 
 export const pagesConfig = {
