@@ -199,6 +199,9 @@ import AnnualTaxReview from './pages/AnnualTaxReview';
 import TaxStrategyAdvisor from './pages/TaxStrategyAdvisor';
 import DividendOptimization from './pages/DividendOptimization';
 import WealthTaxIntegration from './pages/WealthTaxIntegration';
+import RealEstateTaxPlanning from './pages/RealEstateTaxPlanning';
+import SelfEmploymentTaxPlanning from './pages/SelfEmploymentTaxPlanning';
+import TaxFormLibrary from './pages/TaxFormLibrary';
 import __Layout from './Layout.jsx';
 
 
@@ -404,6 +407,9 @@ export const PAGES = {
     "TaxStrategyAdvisor": TaxStrategyAdvisor,
     "DividendOptimization": DividendOptimization,
     "WealthTaxIntegration": WealthTaxIntegration,
+    "RealEstateTaxPlanning": RealEstateTaxPlanning,
+    "SelfEmploymentTaxPlanning": SelfEmploymentTaxPlanning,
+    "TaxFormLibrary": TaxFormLibrary,
 }
 
 export const pagesConfig = {
