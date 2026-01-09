@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from "@/components/ui/card";
@@ -8,14 +8,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Users } from 'lucide-react';
 import TenantFilterBar from '@/components/tenants/TenantFilterBar';
 import TenantTable from '@/components/tenants/TenantTable';
+import TenantBulkActionsBar from '@/components/tenants/TenantBulkActionsBar';
 import QuickStats from '@/components/shared/QuickStats';
 
 export default function TenantsPage() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
+  const [portalAccess, setPortalAccess] = useState('all');
+  const [sortBy, setSortBy] = useState('name_asc');
   const [showDialog, setShowDialog] = useState(false);
   const [editingTenant, setEditingTenant] = useState(null);
   const [formData, setFormData] = useState({});
+  const [selectedIds, setSelectedIds] = useState(new Set());
   const queryClient = useQueryClient();
 
   const { data: tenants = [] } = useQuery({
@@ -49,9 +53,34 @@ export default function TenantsPage() {
     }
   });
 
-  const filteredTenants = tenants.filter(t => 
-    (t.full_name || '').toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredTenants = useMemo(() => {
+    let filtered = tenants.filter(t => {
+      const nameMatch = (t.full_name || '').toLowerCase().includes(search.toLowerCase());
+      const emailMatch = (t.email || '').toLowerCase().includes(search.toLowerCase());
+      const statusMatch = status === 'all' || (t.status || 'active') === status;
+      const portalMatch = portalAccess === 'all' || 
+        (portalAccess === 'with_access' ? t.portal_enabled : !t.portal_enabled);
+      return (nameMatch || emailMatch) && statusMatch && portalMatch;
+    });
+
+    // Sort
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'name_asc':
+          return (a.full_name || '').localeCompare(b.full_name || '');
+        case 'name_desc':
+          return (b.full_name || '').localeCompare(a.full_name || '');
+        case 'created_recent':
+          return new Date(b.created_date) - new Date(a.created_date);
+        case 'created_oldest':
+          return new Date(a.created_date) - new Date(b.created_date);
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }, [tenants, search, status, portalAccess, sortBy]);
 
   const handleSave = () => {
     if (editingTenant) {
@@ -86,6 +115,8 @@ export default function TenantsPage() {
       <TenantFilterBar 
         onSearchChange={setSearch}
         onStatusChange={setStatus}
+        onPortalAccessChange={setPortalAccess}
+        onSortChange={setSortBy}
         onNewTenant={() => {
           setEditingTenant(null);
           setFormData({});
@@ -97,6 +128,13 @@ export default function TenantsPage() {
         tenants={filteredTenants}
         onEdit={handleEdit}
         onDelete={(tenant) => deleteMutation.mutate(tenant.id)}
+        onSelectionChange={setSelectedIds}
+      />
+
+      <TenantBulkActionsBar
+        selectedIds={selectedIds}
+        tenants={filteredTenants}
+        onClose={() => setSelectedIds(new Set())}
       />
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>

@@ -263,6 +263,7 @@ import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import BudgetAnalysis from './pages/BudgetAnalysis';
 import TenantPortalDashboard from './pages/TenantPortalDashboard';
+import TenantDetail from './pages/TenantDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -532,6 +533,7 @@ export const PAGES = {
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "BudgetAnalysis": BudgetAnalysis,
     "TenantPortalDashboard": TenantPortalDashboard,
+    "TenantDetail": TenantDetail,
 }
 
 export const pagesConfig = {

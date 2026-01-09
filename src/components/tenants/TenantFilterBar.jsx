@@ -1,47 +1,103 @@
-import React from 'react';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, Plus, Filter } from 'lucide-react';
+import React, { useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { Search, Filter, SortAsc } from 'lucide-react';
 
-export default function TenantFilterBar({ onSearchChange, onStatusChange, onNewTenant }) {
+export default function TenantFilterBar({
+  onSearchChange,
+  onStatusChange,
+  onPortalAccessChange,
+  onSortChange,
+  onNewTenant,
+}) {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const handleSearch = (value) => {
+    setSearchTerm(value);
+    onSearchChange?.(value);
+  };
+
   return (
-    <div className="flex gap-4 flex-wrap items-center mb-6">
-      <div className="flex-1 min-w-64">
-        <div className="relative">
-          <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-          <Input
-            placeholder="Mieter suchen..."
-            onChange={(e) => onSearchChange?.(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex-1 relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Input
+          placeholder="Nach Name oder Email suchen..."
+          value={searchTerm}
+          onChange={(e) => handleSearch(e.target.value)}
+          className="pl-10"
+        />
       </div>
 
-      <div className="flex items-center gap-2">
-        <Filter className="w-4 h-4 text-slate-400" />
-        <Select onValueChange={(value) => onStatusChange?.(value)}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Status</SelectItem>
-            <SelectItem value="active">Aktiv</SelectItem>
-            <SelectItem value="inactive">Inaktiv</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <div className="flex gap-2">
+        {/* Status Filter */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Filter className="w-4 h-4" />
+              Status
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onStatusChange?.('all')}>
+              Alle
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onStatusChange?.('active')}>
+              Aktiv
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onStatusChange?.('inactive')}>
+              Inaktiv
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => onPortalAccessChange?.('with_access')}>
+              Mit Portal-Zugang
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onPortalAccessChange?.('without_access')}>
+              Ohne Portal-Zugang
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-      <Button onClick={onNewTenant} className="bg-slate-700 hover:bg-slate-800 font-extralight">
-        <Plus className="w-4 h-4 mr-2" />
-        Neuer Mieter
-      </Button>
+        {/* Sort */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <SortAsc className="w-4 h-4" />
+              Sortieren
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onSortChange?.('name_asc')}>
+              Name (A-Z)
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onSortChange?.('name_desc')}>
+              Name (Z-A)
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => onSortChange?.('created_recent')}>
+              Neueste zuerst
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onSortChange?.('created_oldest')}>
+              Älteste zuerst
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Button
+          onClick={onNewTenant}
+          className="bg-slate-700 hover:bg-slate-800 gap-2"
+          size="sm"
+        >
+          + Neuer Mieter
+        </Button>
+      </div>
     </div>
   );
 }
