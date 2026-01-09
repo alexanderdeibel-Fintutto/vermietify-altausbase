@@ -96,12 +96,12 @@ export default function Layout({ children, currentPageName }) {
                 <header className="sticky top-0 z-50 bg-white border-b border-slate-100">
                     <div className="flex items-center justify-between h-16 px-8">
                         {/* Logo */}
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
-                                <Building2 className="w-4 h-4 text-white" />
-                            </div>
-                            <span className="font-light text-slate-800 text-base tracking-wide">ImmoVerwalter</span>
-                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
+                                                <Building2 className="w-4 h-4 text-white" />
+                                            </div>
+                                            <span className="font-light text-slate-800 text-base tracking-wide">{getAppName()}</span>
+                                        </div>
 
                         {/* Right Actions */}
                         <div className="flex items-center gap-3">
