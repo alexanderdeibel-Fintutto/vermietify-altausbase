@@ -4,15 +4,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Loader2, Upload, CheckCircle2, AlertCircle, AlertTriangle, Info } from 'lucide-react';
+import { Loader2, Upload, CheckCircle2, AlertCircle, AlertTriangle } from 'lucide-react';
 import { BROKER_MAPPINGS, detectBrokerFromCSVHeaders } from './brokerMappings';
 
 export default function CSVImportDialog({ open, onOpenChange, onImport, isLoading }) {
@@ -21,7 +15,6 @@ export default function CSVImportDialog({ open, onOpenChange, onImport, isLoadin
   const [csvFile, setCSVFile] = useState(null);
   const [csvPreview, setCSVPreview] = useState(null);
   const [columnMapping, setColumnMapping] = useState({});
-  const [importProgress, setImportProgress] = useState(0);
   const [results, setResults] = useState(null);
 
   const handleBrokerSelect = (brokerKey) => {
@@ -39,7 +32,6 @@ export default function CSVImportDialog({ open, onOpenChange, onImport, isLoadin
       const content = event.target.result;
       const lines = content.split('\n').map(line => line.split(','));
       
-      // Auto-detect broker if not selected
       if (!selectedBroker) {
         const detected = detectBrokerFromCSVHeaders(lines[0]);
         if (detected) {
@@ -61,23 +53,17 @@ export default function CSVImportDialog({ open, onOpenChange, onImport, isLoadin
   const handleImportSubmit = async () => {
     if (!csvFile || !selectedBroker) return;
     
-    const brokerMapping = BROKER_MAPPINGS[selectedBroker];
     const reader = new FileReader();
-    
     reader.onload = async (event) => {
       try {
-        const importData = {
-          file_content: event.target.result,
-          broker_key: selectedBroker,
-          broker_mapping: brokerMapping,
-          column_mapping: columnMapping
-        };
-
-        // Call backend import function
         const response = await fetch('/api/functions/importAssetPortfolioCSV', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(importData)
+          body: JSON.stringify({
+            file_content: event.target.result,
+            broker_key: selectedBroker,
+            column_mapping: columnMapping
+          })
         });
 
         const result = await response.json();
@@ -93,6 +79,7 @@ export default function CSVImportDialog({ open, onOpenChange, onImport, isLoadin
         });
         
         setSelectedTab('import-results');
+        onImport?.(result);
       } catch (error) {
         setResults({
           success_count: 0,
@@ -112,7 +99,6 @@ export default function CSVImportDialog({ open, onOpenChange, onImport, isLoadin
   }));
 
   const brokerMapping = selectedBroker ? BROKER_MAPPINGS[selectedBroker] : null;
-  const requiredFields = brokerMapping?.validation_rules?.required_fields || [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -120,7 +106,7 @@ export default function CSVImportDialog({ open, onOpenChange, onImport, isLoadin
         <DialogHeader>
           <DialogTitle>Depot-Auszug importieren</DialogTitle>
           <DialogDescription>
-            Importieren Sie Ihre Wertpapiere automatisch aus einer CSV-Datei
+            CSV-Datei von Ihrem Broker automatisch importieren
           </DialogDescription>
         </DialogHeader>
 
@@ -132,25 +118,19 @@ export default function CSVImportDialog({ open, onOpenChange, onImport, isLoadin
             <TabsTrigger value="import-results" disabled={results === null}>Ergebnis</TabsTrigger>
           </TabsList>
 
-          {/* Tab 1: Broker Selection */}
-          <TabsContent value="broker-select" className="space-y-4">
+          <TabsContent value="broker-select" className="space-y-4 py-6">
             <p className="text-sm text-slate-600">Wählen Sie Ihren Broker:</p>
             <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
               {brokerOptions.map(broker => (
                 <Card
                   key={broker.key}
-                  className={`cursor-pointer transition-all ${
-                    selectedBroker === broker.key
-                      ? 'ring-2 ring-blue-500 bg-blue-50'
-                      : 'hover:ring-2 hover:ring-slate-300'
-                  }`}
+                  className={`cursor-pointer transition-all ${selectedBroker === broker.key ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:ring-2 hover:ring-slate-300'}`}
                   onClick={() => handleBrokerSelect(broker.key)}
                 >
                   <CardContent className="p-4">
-                    <h4 className="font-light text-slate-900 mb-2">{broker.display_name}</h4>
-                    <p className="text-xs text-slate-500">
-                      Format: {broker.date_format}
-                      <br />
+                    <h4 className="font-light text-slate-900">{broker.display_name}</h4>
+                    <p className="text-xs text-slate-500 mt-2">
+                      Format: {broker.date_format}<br/>
                       Trenner: {broker.decimal_separator === ',' ? 'Komma' : 'Punkt'}
                     </p>
                   </CardContent>
@@ -159,26 +139,22 @@ export default function CSVImportDialog({ open, onOpenChange, onImport, isLoadin
             </div>
           </TabsContent>
 
-          {/* Tab 2: File Upload */}
-          <TabsContent value="file-upload" className="space-y-4">
-            <div>
-              <Label className="text-sm font-light">CSV-Datei hochladen</Label>
-              <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center mt-2">
-                <Input
-                  type="file"
-                  accept=".csv"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="csv-upload"
-                />
-                <label htmlFor="csv-upload" className="cursor-pointer block">
-                  <Upload className="w-8 h-8 mx-auto mb-2 text-slate-400" />
-                  <p className="text-sm font-light text-slate-600">
-                    CSV-Datei von {brokerMapping?.display_name} hochladen
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">oder hierher ziehen</p>
-                </label>
-              </div>
+          <TabsContent value="file-upload" className="space-y-4 py-6">
+            <Label className="text-sm font-light">CSV-Datei hochladen</Label>
+            <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center">
+              <Input
+                type="file"
+                accept=".csv"
+                onChange={handleFileUpload}
+                className="hidden"
+                id="csv-upload"
+              />
+              <label htmlFor="csv-upload" className="cursor-pointer block">
+                <Upload className="w-8 h-8 mx-auto mb-2 text-slate-400" />
+                <p className="text-sm font-light text-slate-600">
+                  CSV-Datei von {brokerMapping?.display_name || 'Ihrem Broker'} hochladen
+                </p>
+              </label>
             </div>
 
             {csvPreview && (
@@ -189,8 +165,8 @@ export default function CSVImportDialog({ open, onOpenChange, onImport, isLoadin
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                  <div className="overflow-x-auto text-xs">
+                    <table className="w-full">
                       <thead>
                         <tr className="border-b">
                           {csvPreview.headers.map((header, idx) => (
@@ -218,11 +194,10 @@ export default function CSVImportDialog({ open, onOpenChange, onImport, isLoadin
             )}
           </TabsContent>
 
-          {/* Tab 3: Column Mapping */}
-          <TabsContent value="column-mapping" className="space-y-4">
+          <TabsContent value="column-mapping" className="space-y-4 py-6">
             <p className="text-sm text-slate-600">Spalten-Zuordnung:</p>
             <div className="space-y-3 max-h-96 overflow-y-auto">
-              {requiredFields.map(field => (
+              {['asset_name', 'isin', 'date', 'quantity', 'price'].map(field => (
                 <div key={field} className="flex items-center gap-4">
                   <Label className="w-40 text-sm font-light">{field}</Label>
                   <Select
@@ -247,11 +222,9 @@ export default function CSVImportDialog({ open, onOpenChange, onImport, isLoadin
             </div>
           </TabsContent>
 
-          {/* Tab 4: Results */}
-          <TabsContent value="import-results" className="space-y-4">
+          <TabsContent value="import-results" className="space-y-4 py-6">
             {results && (
               <>
-                {/* Success Summary */}
                 {results.success_count > 0 && (
                   <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
                     <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
@@ -266,89 +239,31 @@ export default function CSVImportDialog({ open, onOpenChange, onImport, isLoadin
                   </div>
                 )}
 
-                {results.success_count === 0 && (
-                  <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                    <p className="font-light text-red-900">
-                      Kein Import möglich - siehe Fehler unten
-                    </p>
-                  </div>
-                )}
-
-                {/* Errors & Warnings */}
                 {results.error_count > 0 && (
-                  <Card className={results.warning_count > 0 ? 'border-yellow-200 bg-yellow-50' : 'border-red-200 bg-red-50'}>
+                  <Card className="border-red-200 bg-red-50">
                     <CardHeader>
-                      <CardTitle className={`text-sm flex items-center gap-2 ${results.warning_count > 0 ? 'text-yellow-700' : 'text-red-700'}`}>
-                        {results.warning_count > 0 ? (
-                          <>
-                            <AlertTriangle className="w-4 h-4" />
-                            {results.warning_count} Warnung(en), {results.error_count - results.warning_count} Fehler
-                          </>
-                        ) : (
-                          <>
-                            <AlertCircle className="w-4 h-4" />
-                            {results.error_count} Fehler beim Import
-                          </>
-                        )}
+                      <CardTitle className="text-sm text-red-700 flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4" />
+                        {results.error_count} Fehler beim Import
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                      <div className="space-y-2 max-h-64 overflow-y-auto text-xs">
                         {results.errors.map((error, idx) => (
-                          <div
-                            key={idx}
-                            className={`text-xs font-light p-2 rounded flex items-start gap-2 ${
-                              error.severity === 'warning'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            {error.severity === 'warning' ? (
-                              <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" />
-                            ) : (
-                              <AlertCircle className="w-3 h-3 flex-shrink-0 mt-0.5" />
-                            )}
-                            <div>
-                              <span className="font-medium">
-                                {error.row === 0 || error.row === 'system' || error.row === 'batch_create'
-                                  ? 'Import-Fehler'
-                                  : `Zeile ${error.row}`}
-                              </span>
-                              : {error.message}
-                            </div>
+                          <div key={idx} className="text-red-600 p-2 bg-red-100 rounded">
+                            {error.row === 'system' ? 'Import-Fehler' : `Zeile ${error.row}`}: {error.message}
                           </div>
                         ))}
                       </div>
                     </CardContent>
                   </Card>
                 )}
-
-                {/* Summary Stats */}
-                <Card className="bg-slate-50">
-                  <CardContent className="pt-6">
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                      <div>
-                        <p className="text-2xl font-light text-green-600">{results.success_count}</p>
-                        <p className="text-xs text-slate-600 font-light">Erfolgreich</p>
-                      </div>
-                      <div>
-                        <p className="text-2xl font-light text-yellow-600">{results.warning_count || 0}</p>
-                        <p className="text-xs text-slate-600 font-light">Warnungen</p>
-                      </div>
-                      <div>
-                        <p className="text-2xl font-light text-red-600">{(results.error_count || 0) - (results.warning_count || 0)}</p>
-                        <p className="text-xs text-slate-600 font-light">Fehler</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
               </>
             )}
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-between pt-6">
+        <div className="flex justify-between pt-6 border-t">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
@@ -365,24 +280,11 @@ export default function CSVImportDialog({ open, onOpenChange, onImport, isLoadin
                   handleImportSubmit();
                 }
               }}
-              disabled={
-                !selectedBroker ||
-                (selectedTab === 'column-mapping' && !csvFile) ||
-                isLoading
-              }
+              disabled={!selectedBroker || (selectedTab === 'column-mapping' && !csvFile) || isLoading}
               className="bg-slate-900 hover:bg-slate-800 font-light"
             >
               {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {selectedTab === 'column-mapping' ? 'Importieren' : 'Weiter'}
-            </Button>
-          )}
-
-          {selectedTab === 'import-results' && (
-            <Button
-              onClick={() => onOpenChange(false)}
-              className="bg-slate-900 hover:bg-slate-800 font-light"
-            >
-              Fertig
             </Button>
           )}
         </div>
