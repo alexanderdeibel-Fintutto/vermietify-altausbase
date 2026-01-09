@@ -8,6 +8,7 @@ import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import DeleteConfirmDialog from '@/components/buildings/DeleteConfirmDialog';
+import LimitGuard from '@/components/package/LimitGuard';
 
 export default function BuildingsPage() {
   const [filters, setFilters] = useState({ status: 'all', city: 'all', search: '' });
@@ -95,7 +96,14 @@ export default function BuildingsPage() {
         onStatusChange={(status) => setFilters({ ...filters, status })}
         onCityChange={(city) => setFilters({ ...filters, city })}
         onSearchChange={(search) => setFilters({ ...filters, search })}
-        onNewBuilding={handleNewBuilding}
+        onNewBuilding={() => {}}
+        renderNewButton={(onClick) => (
+          <LimitGuard limitType="buildings" currentCount={totalBuildings}>
+            <button onClick={() => { onClick(); handleNewBuilding(); }}>
+              Neues Gebäude
+            </button>
+          </LimitGuard>
+        )}
       />
 
       {/* Tabelle */}
