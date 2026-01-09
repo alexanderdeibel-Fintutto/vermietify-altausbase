@@ -123,6 +123,7 @@ import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import Equipment from './pages/Equipment';
 import MaintenanceTasks from './pages/MaintenanceTasks';
 import ReportingDashboard from './pages/ReportingDashboard';
+import FinanceManagement from './pages/FinanceManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -252,6 +253,7 @@ export const PAGES = {
     "Equipment": Equipment,
     "MaintenanceTasks": MaintenanceTasks,
     "ReportingDashboard": ReportingDashboard,
+    "FinanceManagement": FinanceManagement,
 }
 
 export const pagesConfig = {
