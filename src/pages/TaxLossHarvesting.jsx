@@ -11,8 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, TrendingDown, DollarSign } from 'lucide-react';
+import { AlertTriangle, TrendingDown, Check } from 'lucide-react';
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -37,8 +36,8 @@ export default function TaxLossHarvesting() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">🔄 Tax Loss Harvesting</h1>
-        <p className="text-slate-500 mt-1">Verlustoptimierung zur Steuereinsparung</p>
+        <h1 className="text-3xl font-bold">📉 Tax Loss Harvesting</h1>
+        <p className="text-slate-500 mt-1">Optimieren Sie Ihre Vermögenssteuer durch strategische Verlustverrechnungen</p>
       </div>
 
       {/* Controls */}
@@ -63,8 +62,9 @@ export default function TaxLossHarvesting() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={String(CURRENT_YEAR - 1)}>{CURRENT_YEAR - 1}</SelectItem>
-              <SelectItem value={String(CURRENT_YEAR)}>{CURRENT_YEAR}</SelectItem>
+              {[CURRENT_YEAR - 1, CURRENT_YEAR, CURRENT_YEAR + 1].map(year => (
+                <SelectItem key={year} value={String(year)}>{year}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -73,79 +73,94 @@ export default function TaxLossHarvesting() {
             onClick={() => setAnalyze(true)}
             className="w-full bg-blue-600 hover:bg-blue-700"
           >
-            Analyse Starten
+            Analysieren
           </Button>
         </div>
       </div>
 
-      {isLoading && analyze && (
+      {isLoading ? (
         <div className="text-center py-8">⏳ Analyse läuft...</div>
-      )}
-
-      {analyze && analysis.suggestions && (
+      ) : analyze && Object.keys(analysis).length > 0 ? (
         <>
-          {/* Summary Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="border-green-300 bg-green-50">
-              <CardContent className="pt-6">
-                <p className="text-sm text-slate-600">Potenzielle Ersparnis</p>
-                <p className="text-3xl font-bold text-green-600 mt-2">
-                  €{Math.round(analysis.suggestions?.total_potential_savings || 0).toLocaleString()}
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-red-300 bg-red-50">
-              <CardContent className="pt-6">
-                <p className="text-sm text-slate-600">Aktuelle Gewinne</p>
-                <p className="text-3xl font-bold text-red-600 mt-2">
-                  €{Math.round(analysis.current_gains || 0).toLocaleString()}
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-blue-300 bg-blue-50">
-              <CardContent className="pt-6">
-                <p className="text-sm text-slate-600">Verfügbare Verluste</p>
-                <p className="text-3xl font-bold text-blue-600 mt-2">
-                  €{Math.round(analysis.available_losses || 0).toLocaleString()}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Wash Sale Warnings */}
-          {(analysis.suggestions?.wash_sale_risks || []).length > 0 && (
-            <Alert className="border-yellow-300 bg-yellow-50">
-              <AlertTriangle className="h-4 w-4 text-yellow-600" />
-              <AlertDescription className="text-yellow-800">
-                <p className="font-bold mb-2">⚠️ Wash Sale Risiken:</p>
-                <ul className="space-y-1 text-sm">
-                  {analysis.suggestions.wash_sale_risks.map((risk, i) => (
-                    <li key={i}>• {risk}</li>
-                  ))}
-                </ul>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Harvest Recommendations */}
-          {(analysis.suggestions?.harvest_recommendations || []).length > 0 && (
+          {/* Current Position */}
+          {analysis.current_position && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">📋 Realisierungs-Empfehlungen</CardTitle>
+                <CardTitle className="text-sm">📊 Aktuelle Position</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="border-l-4 border-green-300 pl-3">
+                  <p className="text-xs text-slate-600">Realisierte Gewinne</p>
+                  <p className="text-2xl font-bold text-green-600">€{Math.round(analysis.current_position.realized_gains || 0).toLocaleString()}</p>
+                </div>
+                <div className="border-l-4 border-red-300 pl-3">
+                  <p className="text-xs text-slate-600">Realisierte Verluste</p>
+                  <p className="text-2xl font-bold text-red-600">€{Math.round(analysis.current_position.realized_losses || 0).toLocaleString()}</p>
+                </div>
+                <div className="border-l-4 border-blue-300 pl-3">
+                  <p className="text-xs text-slate-600">Unverrechnete Verluste</p>
+                  <p className="text-2xl font-bold text-blue-600">€{Math.round(analysis.current_position.unused_losses || 0).toLocaleString()}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Expected Tax Savings */}
+          {analysis.expected_tax_savings && (
+            <Card className="border-green-300 bg-green-50">
+              <CardContent className="pt-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm text-slate-600">Erwartete Steuereinsparungen</p>
+                    <p className="text-3xl font-bold text-green-600 mt-1">
+                      €{Math.round(analysis.expected_tax_savings).toLocaleString()}
+                    </p>
+                  </div>
+                  <TrendingDown className="w-12 h-12 text-green-600 opacity-20" />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Harvesting Opportunities */}
+          {(analysis.harvesting_opportunities || []).length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">🎯 Harvest-Möglichkeiten</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {analysis.suggestions.harvest_recommendations.map((rec, i) => (
-                  <div key={i} className="p-4 rounded-lg border border-slate-200 bg-slate-50">
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-bold">{rec.asset || rec.name || `Empfehlung ${i + 1}`}</h4>
-                      {rec.estimated_loss && (
-                        <Badge className="bg-red-100 text-red-800">
-                          -{rec.estimated_loss.toLocaleString()} €
-                        </Badge>
-                      )}
+                {analysis.harvesting_opportunities.map((opp, i) => (
+                  <div key={i} className="border-l-4 border-blue-300 pl-3 py-2">
+                    <p className="font-medium text-sm">{opp.asset}</p>
+                    <div className="grid grid-cols-2 gap-2 text-xs mt-1">
+                      <div>
+                        <p className="text-slate-600">Potential Loss</p>
+                        <p className="font-bold">€{Math.round(opp.potential_loss || 0).toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-600">Tax Benefit</p>
+                        <p className="font-bold text-green-600">€{Math.round(opp.tax_benefit || 0).toLocaleString()}</p>
+                      </div>
                     </div>
-                    {rec.reason && <p className="text-sm text-slate-600 mb-2">{rec.reason}</p>}
-                    {rec.timing && <p className="text-xs text-slate-500">⏱️ {rec.timing}</p>}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Wash Sale Warnings */}
+          {(analysis.wash_sale_warnings || []).length > 0 && (
+            <Card className="border-orange-300 bg-orange-50">
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-orange-600" />
+                  ⚠️ Wash-Sale Risiken
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {analysis.wash_sale_warnings.map((warning, i) => (
+                  <div key={i} className="text-sm p-2 bg-white rounded">
+                    {warning}
                   </div>
                 ))}
               </CardContent>
@@ -153,44 +168,45 @@ export default function TaxLossHarvesting() {
           )}
 
           {/* Implementation Steps */}
-          {(analysis.suggestions?.implementation_steps || []).length > 0 && (
+          {(analysis.implementation_steps || []).length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">✅ Umsetzungsschritte</CardTitle>
+                <CardTitle className="text-sm">📋 Umsetzungsschritte</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {analysis.suggestions.implementation_steps.map((step, i) => (
-                  <div key={i} className="flex gap-3 p-2 bg-blue-50 rounded">
+                {analysis.implementation_steps.map((step, i) => (
+                  <div key={i} className="flex gap-3 p-2 bg-slate-50 rounded text-sm">
                     <span className="font-bold text-blue-600 flex-shrink-0">{i + 1}.</span>
-                    <span className="text-sm">{step}</span>
+                    {step}
                   </div>
                 ))}
               </CardContent>
             </Card>
           )}
 
-          {/* Carryforward Strategy */}
-          {analysis.suggestions?.carryforward_strategy && (
+          {/* Compliance Notes */}
+          {(analysis.compliance_notes || []).length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">🔄 Verlustvortrag-Strategie</CardTitle>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Check className="w-4 h-4" />
+                  ✓ Compliance
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm leading-relaxed">{analysis.suggestions.carryforward_strategy}</p>
+              <CardContent className="space-y-2">
+                {analysis.compliance_notes.map((note, i) => (
+                  <div key={i} className="text-sm p-2 bg-slate-50 rounded">
+                    {note}
+                  </div>
+                ))}
               </CardContent>
             </Card>
           )}
-
-          {/* Timeline */}
-          {analysis.suggestions?.timeline && (
-            <Alert className="border-blue-300 bg-blue-50">
-              <AlertDescription className="text-slate-700">
-                <p className="font-bold mb-2">📅 Zeitrahmen:</p>
-                <p className="text-sm">{analysis.suggestions.timeline}</p>
-              </AlertDescription>
-            </Alert>
-          )}
         </>
+      ) : (
+        <div className="text-center py-8 text-slate-500">
+          Klicken Sie "Analysieren", um Tax Loss Harvesting Möglichkeiten zu erkunden
+        </div>
       )}
     </div>
   );

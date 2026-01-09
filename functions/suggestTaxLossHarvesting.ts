@@ -16,48 +16,48 @@ Deno.serve(async (req) => {
     }
 
     // Fetch capital gains and losses
-    const [gains, losses] = await Promise.all([
+    const [capitalGains, losses] = await Promise.all([
       base44.entities.CapitalGain.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
-      base44.entities.TaxLossCarryforward.filter({ user_email: user.email, country, status: 'pending' }).catch(() => [])
+      base44.entities.TaxLossCarryforward.filter({ user_email: user.email, country }).catch(() => [])
     ]);
 
-    const suggestions = await base44.integrations.Core.InvokeLLM({
-      prompt: `Analyze tax loss harvesting opportunities for ${country} taxpayer, tax year ${taxYear}.
+    const totalGains = capitalGains.reduce((sum, g) => sum + (g.capital_gain || 0), 0);
+    const totalLosses = capitalGains.reduce((sum, g) => sum + Math.min(g.capital_gain || 0, 0), 0);
+    const unusedLosses = losses.reduce((sum, l) => sum + (l.remaining_amount || 0), 0);
 
-Current Situation:
-- Capital Gains: €${gains.reduce((sum, g) => sum + (g.capital_gain || 0), 0)}
-- Available Loss Carryforwards: €${losses.reduce((sum, l) => sum + (l.remaining_amount || 0), 0)}
-- Gains Count: ${gains.length}
-- Loss Items: ${losses.length}
+    const suggestion = await base44.integrations.Core.InvokeLLM({
+      prompt: `Analyze tax loss harvesting opportunities for ${country}, year ${taxYear}.
+
+Portfolio Summary:
+- Realized Gains: €${Math.round(totalGains)}
+- Realized Losses: €${Math.round(totalLosses)}
+- Unused Loss Carryforward: €${Math.round(unusedLosses)}
 
 Provide:
-1. Recommended asset realizations (with estimated losses)
-2. Timing optimization
-3. Tax savings potential
-4. Wash sale warnings
-5. Implementation strategy`,
+1. Current tax loss position
+2. Tax loss harvesting opportunities (upcoming assets to consider)
+3. Wash sale risk analysis
+4. Optimal realization timing
+5. Expected tax savings
+6. Implementation steps
+7. Risk/compliance considerations`,
       response_json_schema: {
         type: 'object',
         properties: {
-          total_potential_savings: { type: 'number' },
-          harvest_recommendations: { type: 'array', items: { type: 'object', additionalProperties: true } },
-          carryforward_strategy: { type: 'string' },
-          wash_sale_risks: { type: 'array', items: { type: 'string' } },
+          current_position: { type: 'object', additionalProperties: true },
+          harvesting_opportunities: { type: 'array', items: { type: 'object', additionalProperties: true } },
+          wash_sale_warnings: { type: 'array', items: { type: 'string' } },
+          optimal_timing: { type: 'string' },
+          expected_tax_savings: { type: 'number' },
           implementation_steps: { type: 'array', items: { type: 'string' } },
-          timeline: { type: 'string' }
+          compliance_notes: { type: 'array', items: { type: 'string' } }
         }
       }
     });
 
     return Response.json({
       status: 'success',
-      analysis: {
-        country,
-        tax_year: taxYear,
-        current_gains: gains.reduce((sum, g) => sum + (g.capital_gain || 0), 0),
-        available_losses: losses.reduce((sum, l) => sum + (l.remaining_amount || 0), 0),
-        suggestions
-      }
+      analysis: suggestion
     });
   } catch (error) {
     console.error('Tax loss harvesting error:', error);
