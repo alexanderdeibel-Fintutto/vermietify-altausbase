@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Loader2, TrendingDown } from 'lucide-react';
 
 export default function RollingBudgetWidget() {
@@ -110,10 +109,12 @@ export default function RollingBudgetWidget() {
                     <span className="text-xs font-semibold">{category}</span>
                     <span className="text-xs text-slate-600">{amount.toLocaleString('de-DE')} €</span>
                   </div>
-                  <Progress
-                    value={(amount / totalBudget) * 100}
-                    className="h-1.5"
-                  />
+                  <div className="h-1.5 bg-slate-200 rounded overflow-hidden">
+                    <div
+                      className="h-full bg-green-600 transition-all"
+                      style={{ width: `${(amount / totalBudget) * 100}%` }}
+                    />
+                  </div>
                 </div>
               ))}
             </div>

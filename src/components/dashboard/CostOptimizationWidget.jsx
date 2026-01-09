@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Zap, Loader2 } from 'lucide-react';
 
 export default function CostOptimizationWidget() {
@@ -78,10 +77,12 @@ export default function CostOptimizationWidget() {
                   </Badge>
                 </div>
                 <p className="text-xs text-slate-600 mb-2">{opp.opportunity_description}</p>
-                <Progress
-                  value={Math.min(100, opp.savings_percentage)}
-                  className="h-1.5"
-                />
+                <div className="h-1.5 bg-slate-200 rounded overflow-hidden">
+                  <div
+                    className="h-full bg-green-500 transition-all"
+                    style={{ width: `${Math.min(100, opp.savings_percentage)}%` }}
+                  />
+                </div>
               </div>
             ))
           ) : (
