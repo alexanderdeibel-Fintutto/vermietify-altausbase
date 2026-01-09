@@ -14,6 +14,11 @@ import MeterConsumptionChart from '@/components/meters/MeterConsumptionChart';
 import MeterReadingSchedule from '@/components/meters/MeterReadingSchedule';
 import BuildingMeterComparison from '@/components/meters/BuildingMeterComparison';
 import MobileMeterScanner from '@/components/meters/MobileMeterScanner';
+import MeterQRCodeGenerator from '@/components/meters/MeterQRCodeGenerator';
+import BatchMeterScanner from '@/components/meters/BatchMeterScanner';
+import TeamMeterCoordination from '@/components/meters/TeamMeterCoordination';
+import ConsumptionAnomalyDetector from '@/components/meters/ConsumptionAnomalyDetector';
+import OfflineMeterQueue from '@/components/meters/OfflineMeterQueue';
 
 export default function MeterDashboard() {
   const [selectedBuilding, setSelectedBuilding] = useState(null);
@@ -189,12 +194,14 @@ export default function MeterDashboard() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="scan">Erfassen</TabsTrigger>
+          <TabsTrigger value="batch">Batch</TabsTrigger>
+          <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="consumption">Verbrauch</TabsTrigger>
           <TabsTrigger value="schedule">Terminplan</TabsTrigger>
-          <TabsTrigger value="comparison">Vergleich</TabsTrigger>
+          <TabsTrigger value="qr">QR-Labels</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -206,7 +213,12 @@ export default function MeterDashboard() {
 
         <TabsContent value="scan">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <MobileMeterScanner buildingId={selectedBuilding} />
+            <div className="space-y-4">
+              <OfflineMeterQueue onSync={(reading) => {
+                // Sync function
+              }} />
+              <MobileMeterScanner buildingId={selectedBuilding} />
+            </div>
             
             <Card>
               <CardHeader>
@@ -237,11 +249,25 @@ export default function MeterDashboard() {
           </div>
         </TabsContent>
 
-        <TabsContent value="consumption">
-          <MeterConsumptionChart 
+        <TabsContent value="batch">
+          <BatchMeterScanner 
             meters={filteredMeters}
-            selectedBuilding={selectedBuilding}
+            routeId={null}
           />
+        </TabsContent>
+
+        <TabsContent value="team">
+          <TeamMeterCoordination />
+        </TabsContent>
+
+        <TabsContent value="consumption">
+          <div className="space-y-6">
+            <ConsumptionAnomalyDetector buildingId={selectedBuilding} />
+            <MeterConsumptionChart 
+              meters={filteredMeters}
+              selectedBuilding={selectedBuilding}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="schedule">
@@ -251,11 +277,8 @@ export default function MeterDashboard() {
           />
         </TabsContent>
 
-        <TabsContent value="comparison">
-          <BuildingMeterComparison 
-            buildings={buildings}
-            allMeters={allMeters}
-          />
+        <TabsContent value="qr">
+          <MeterQRCodeGenerator buildingId={selectedBuilding} />
         </TabsContent>
       </Tabs>
     </div>

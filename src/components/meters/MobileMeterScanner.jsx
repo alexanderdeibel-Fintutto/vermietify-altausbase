@@ -5,15 +5,19 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Camera, Scan, CheckCircle, Upload, X } from 'lucide-react';
+import { Camera, Scan, CheckCircle, Upload, X, Mic } from 'lucide-react';
 import { toast } from 'sonner';
 import MeterImageAnnotation from './MeterImageAnnotation';
+import VoiceNoteRecorder from './VoiceNoteRecorder';
+import { addOfflineReading } from './OfflineMeterQueue';
 
 export default function MobileMeterScanner({ buildingId, onComplete }) {
   const [capturedImage, setCapturedImage] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
   const [manualEdit, setManualEdit] = useState(false);
+  const [voiceNotes, setVoiceNotes] = useState('');
+  const [validationResult, setValidationResult] = useState(null);
   const fileInputRef = useRef(null);
   const queryClient = useQueryClient();
 
@@ -40,22 +44,71 @@ export default function MobileMeterScanner({ buildingId, onComplete }) {
     }
   });
 
+  const validateMutation = useMutation({
+    mutationFn: async (data) => {
+      const response = await base44.functions.invoke('validateMeterReading', {
+        meter_id: data.meter_id,
+        new_reading: data.reading_value,
+        reading_date: data.reading_date
+      });
+      return response.data;
+    },
+    onSuccess: (validationData) => {
+      setValidationResult(validationData);
+      if (validationData.can_proceed) {
+        toast.success('Plausibilitätsprüfung bestanden');
+      } else {
+        toast.warning('Bitte Ablesung überprüfen');
+      }
+    }
+  });
+
   const saveMutation = useMutation({
     mutationFn: async (data) => {
+      // Check if online
+      if (!navigator.onLine) {
+        addOfflineReading({
+          meter_id: data.meter_id,
+          reading_value: data.reading_value,
+          reading_date: data.reading_date,
+          meter_number: result.meter_number,
+          image_url: capturedImage,
+          voice_notes: voiceNotes
+        });
+        throw new Error('offline_saved');
+      }
+
       const response = await base44.functions.invoke('saveMeterReading', {
         meter_id: data.meter_id,
         reading_value: data.reading_value,
         reading_date: data.reading_date,
         image_url: capturedImage,
-        auto_detected: !manualEdit
+        auto_detected: !manualEdit,
+        voice_notes: voiceNotes
       });
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: async (savedReading) => {
+      // Auto-link to operating costs
+      try {
+        await base44.functions.invoke('linkMeterToOperatingCosts', {
+          reading_id: savedReading.id,
+          auto_create_cost_items: true
+        });
+      } catch (error) {
+        console.error('Auto-link failed:', error);
+      }
+
       queryClient.invalidateQueries({ queryKey: ['meters'] });
-      toast.success('Zählerstand gespeichert');
+      toast.success('Zählerstand gespeichert & verknüpft');
       resetScanner();
       if (onComplete) onComplete();
+    },
+    onError: (error) => {
+      if (error.message === 'offline_saved') {
+        toast.success('Offline gespeichert - wird später synchronisiert');
+        resetScanner();
+      }
     }
   });
 
@@ -83,6 +136,8 @@ export default function MobileMeterScanner({ buildingId, onComplete }) {
     setResult(null);
     setManualEdit(false);
     setAnalyzing(false);
+    setVoiceNotes('');
+    setValidationResult(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -93,7 +148,15 @@ export default function MobileMeterScanner({ buildingId, onComplete }) {
       toast.error('Bitte alle Felder ausfüllen');
       return;
     }
-    saveMutation.mutate(result);
+    
+    // First validate, then save
+    validateMutation.mutate(result, {
+      onSuccess: (validationData) => {
+        if (validationData.can_proceed || confirm('Trotz Warnungen fortfahren?')) {
+          saveMutation.mutate(result);
+        }
+      }
+    });
   };
 
   return (
@@ -234,17 +297,59 @@ export default function MobileMeterScanner({ buildingId, onComplete }) {
                       <Badge variant="outline">{result.meter_type}</Badge>
                     </div>
                   )}
+
+                  {/* Voice Notes */}
+                  <div>
+                    <label className="text-sm font-semibold block mb-2">
+                      Notizen
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={voiceNotes}
+                        onChange={(e) => setVoiceNotes(e.target.value)}
+                        placeholder="Notizen hinzufügen..."
+                        className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                      />
+                      <VoiceNoteRecorder 
+                        onTranscriptionComplete={(text) => setVoiceNotes(voiceNotes + ' ' + text)}
+                      />
+                    </div>
+                  </div>
                 </div>
+
+                {/* Validation Results */}
+                {validationResult && (
+                  <Card className={
+                    validationResult.can_proceed 
+                      ? 'bg-green-50 border-green-200' 
+                      : 'bg-red-50 border-red-200'
+                  }>
+                    <CardContent className="pt-4">
+                      <p className="text-sm font-semibold mb-2">
+                        {validationResult.can_proceed ? '✓ Plausibel' : '⚠️ Warnung'}
+                      </p>
+                      {validationResult.plausibility_check?.warnings?.map((warning, idx) => (
+                        <p key={idx} className="text-xs text-slate-700">• {warning}</p>
+                      ))}
+                      {validationResult.consumption && (
+                        <p className="text-sm font-semibold mt-2">
+                          Verbrauch: {validationResult.consumption.toFixed(2)} {meter?.unit}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Action Buttons */}
                 <div className="flex gap-2">
                   <Button
                     onClick={handleSave}
-                    disabled={saveMutation.isPending || !result.meter_id}
+                    disabled={saveMutation.isPending || validateMutation.isPending || !result.meter_id}
                     className="flex-1 bg-green-600 hover:bg-green-700"
                   >
                     <CheckCircle className="w-4 h-4 mr-2" />
-                    Speichern
+                    {saveMutation.isPending ? 'Speichere...' : 'Speichern'}
                   </Button>
                   <Button
                     variant="outline"
