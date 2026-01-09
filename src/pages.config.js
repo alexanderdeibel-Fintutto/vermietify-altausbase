@@ -260,6 +260,7 @@ import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import SyncManagement from './pages/SyncManagement';
 import AdminUserManagement from './pages/AdminUserManagement';
 import BudgetPlanning from './pages/BudgetPlanning';
+import AdminRoleManagement from './pages/AdminRoleManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -526,6 +527,7 @@ export const PAGES = {
     "SyncManagement": SyncManagement,
     "AdminUserManagement": AdminUserManagement,
     "BudgetPlanning": BudgetPlanning,
+    "AdminRoleManagement": AdminRoleManagement,
 }
 
 export const pagesConfig = {
