@@ -1,200 +1,377 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { TestTube, CheckCircle, AlertCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
+import { CheckCircle2, AlertCircle, Loader2, ArrowRight } from 'lucide-react';
 
-export default function TesterOnboardingPage() {
-  const [token, setToken] = useState('');
-  const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [validInvite, setValidInvite] = useState(false);
-  const [error, setError] = useState('');
-  const [step, setStep] = useState('verify'); // verify, register, complete
+export default function TesterOnboarding() {
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const token = searchParams.get('token');
 
+  // States
+  const [step, setStep] = useState(1); // 1: validate, 2: welcome, 3: setup, 4: activating
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [invitation, setInvitation] = useState(null);
+
+  // Form states
+  const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [agreeTracking, setAgreeTracking] = useState(false);
+  const [activating, setActivating] = useState(false);
+  const [activationSteps, setActivationSteps] = useState([]);
+
+  // Validate token on mount
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const inviteToken = params.get('token');
-    
-    if (inviteToken) {
-      setToken(inviteToken);
-      verifyInvitation(inviteToken);
-    } else {
-      setError('Kein Einladungstoken gefunden');
-      setLoading(false);
-    }
-  }, []);
+    const validateToken = async () => {
+      if (!token) {
+        setError({
+          title: 'Ungültiger Link 🤔',
+          message: 'Bitte prüfe, ob der Link vollständig kopiert wurde.',
+          action: 'Startseite'
+        });
+        setStep(1);
+        setLoading(false);
+        return;
+      }
 
-  const verifyInvitation = async (inviteToken) => {
+      try {
+        const response = await base44.functions.invoke('validateTesterToken', { token });
+        
+        if (response.data.valid) {
+          setInvitation(response.data.invitation);
+          setName(response.data.invitation.tester_name || '');
+          setStep(2); // Go to welcome
+        } else {
+          const errorMap = {
+            expired: {
+              title: 'Einladung abgelaufen ⏰',
+              message: 'Der Link ist 2 Wochen gültig. Kontaktiere Alexander für einen neuen Link.'
+            },
+            already_accepted: {
+              title: 'Schon dabei! 🎉',
+              message: 'Dein Test-Account ist bereits aktiviert.',
+              action: 'Zum Dashboard'
+            },
+            revoked: {
+              title: 'Einladung zurückgezogen',
+              message: 'Diese Einladung wurde widerrufen. Kontaktiere Alexander.'
+            },
+            invalid: {
+              title: 'Ungültiger Link',
+              message: 'Der Einladungslink ist nicht mehr gültig.'
+            }
+          };
+
+          setError(errorMap[response.data.status] || errorMap.invalid);
+          setStep(1);
+        }
+      } catch (err) {
+        setError({
+          title: 'Technisches Problem 🔧',
+          message: 'Etwas ist schiefgelaufen. Alexander behebt das gerne.',
+          action: 'Problem melden'
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    validateToken();
+  }, [token]);
+
+  // Handle account activation
+  const handleActivate = async () => {
+    // Validation
+    if (!name.trim()) {
+      toast.error('Bitte gib deinen Namen ein');
+      return;
+    }
+    if (password.length < 8) {
+      toast.error('Passwort muss mindestens 8 Zeichen lang sein');
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error('Passwörter stimmen nicht überein');
+      return;
+    }
+    if (!agreeTracking) {
+      toast.error('Bitte akzeptiere die Datenschutzerklärung');
+      return;
+    }
+
+    setActivating(true);
+    setStep(4);
+    setActivationSteps([]);
+
     try {
-      const invitations = await base44.entities.TesterInvitation.filter({ 
-        invitation_token: inviteToken 
+      // Step 1: Create account
+      setActivationSteps(prev => [...prev, { text: 'Test-Account wird erstellt...', done: false }]);
+
+      const response = await base44.functions.invoke('activateTesterAccount', {
+        token,
+        name: name.trim(),
+        password,
+        agreed_to_tracking: true
       });
 
-      if (invitations.length === 0) {
-        setError('Ungültiger Einladungslink');
-        setLoading(false);
-        return;
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Account-Erstellung fehlgeschlagen');
       }
 
-      const invitation = invitations[0];
+      // Update step tracker
+      setActivationSteps(prev => {
+        const updated = [...prev];
+        updated[0].done = true;
+        return [...updated, { text: 'Administrator-Rechte aktiviert...', done: false }];
+      });
 
-      if (invitation.status !== 'pending') {
-        setError('Diese Einladung wurde bereits verwendet');
-        setLoading(false);
-        return;
-      }
+      // Step 2: Load test environment
+      setActivationSteps(prev => {
+        const updated = [...prev];
+        updated[1].done = true;
+        return [...updated, { text: 'Module freigeschaltet...', done: false }];
+      });
 
-      if (new Date(invitation.expires_at) < new Date()) {
-        setError('Diese Einladung ist abgelaufen');
-        setLoading(false);
-        return;
-      }
+      // Step 3: Final
+      setActivationSteps(prev => {
+        const updated = [...prev];
+        updated[2].done = true;
+        return [...updated, { text: 'Weiterleitung wird vorbereitet...', done: false }];
+      });
 
-      setEmail(invitation.invited_email);
-      setValidInvite(true);
-      setLoading(false);
+      // Wait a moment for visual feedback
+      await new Promise(r => setTimeout(r, 1500));
+
+      setActivationSteps(prev => {
+        const updated = [...prev];
+        updated[3].done = true;
+        return updated;
+      });
+
+      // Redirect to dashboard
+      toast.success('Account aktiviert! 🎉');
+      setTimeout(() => {
+        navigate('/tester-dashboard');
+      }, 1000);
     } catch (err) {
-      setError('Fehler beim Überprüfen der Einladung');
-      setLoading(false);
+      setActivating(false);
+      setStep(2);
+      toast.error('Fehler: ' + err.message);
     }
   };
 
-  const handleAccept = async () => {
-    try {
-      setLoading(true);
-      
-      await base44.functions.invoke('createTesterAccount', {
-        invitationToken: token,
-        testerEmail: email
-      });
-
-      setStep('complete');
-    } catch (err) {
-      setError(err.message || 'Fehler beim Erstellen des Accounts');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading && step === 'verify') {
+  // Error screen
+  if (error && step === 1) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-6">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6 text-center">
-            <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4" />
-            <p className="text-slate-600">Einladung wird überprüft...</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center p-6">
-        <Card className="w-full max-w-md border-red-200">
-          <CardContent className="pt-6 text-center">
-            <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-slate-900 mb-2">Fehler</h2>
-            <p className="text-slate-600">{error}</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (step === 'complete') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center p-6">
-        <Card className="w-full max-w-md border-green-200">
-          <CardContent className="pt-6 text-center">
-            <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-slate-900 mb-2">Willkommen im Beta-Test!</h2>
-            <p className="text-slate-600 mb-6">
-              Dein Tester-Account wurde erfolgreich erstellt. Du erhältst gleich eine Email mit deinen Zugangsdaten.
-            </p>
-            <Button 
-              className="w-full bg-green-600 hover:bg-green-700"
-              onClick={() => window.location.href = '/'}
-            >
-              Zum Login
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-6">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <TestTube className="w-6 h-6 text-white" />
-            </div>
-            <CardTitle>Beta-Tester Einladung</CardTitle>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+        <Card className="p-8 max-w-md w-full">
+          <div className="flex justify-center mb-4">
+            <AlertCircle className="w-12 h-12 text-red-500" />
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <p className="text-slate-600 mb-4">
-              Du wurdest eingeladen, unsere Immobilienverwaltungs-App zu testen!
+          <h1 className="text-xl font-light text-slate-800 text-center mb-2">{error.title}</h1>
+          <p className="text-center font-light text-slate-600 mb-6">{error.message}</p>
+          <Button 
+            onClick={() => navigate('/')}
+            className="w-full bg-slate-700 hover:bg-slate-800"
+          >
+            {error.action || 'Startseite'}
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
+  // Loading
+  if (loading || !invitation) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+        <Card className="p-8 max-w-md w-full text-center">
+          <Loader2 className="w-8 h-8 text-slate-600 animate-spin mx-auto mb-4" />
+          <p className="font-light text-slate-600">Einladung wird überprüft...</p>
+        </Card>
+      </div>
+    );
+  }
+
+  // Welcome step
+  if (step === 2) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+        <Card className="p-8 max-w-md w-full">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-light text-slate-800">Willkommen! 👋</h1>
+            <p className="text-sm font-light text-slate-600 mt-2">
+              Hallo <strong>{invitation.tester_name}</strong>, schön dass du dabei bist!
             </p>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-              <p className="text-sm text-slate-600 mb-2">
-                <strong>Email:</strong> {email}
-              </p>
-              <p className="text-sm text-slate-600">
-                <strong>Account-Typ:</strong> Beta-Tester (Admin-Rechte, volle Module)
-              </p>
-            </div>
           </div>
 
-          <div className="space-y-3">
-            <h3 className="font-semibold text-slate-900">Als Beta-Tester erhältst du:</h3>
-            <ul className="space-y-2 text-sm text-slate-600">
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                Kostenloser Admin-Zugang
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                Alle Module freigeschaltet
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                Unbegrenzte Objekte & Mieter
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                Bug-Report Tool integriert
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                Direkter Kontakt zum Entwickler-Team
-              </li>
-            </ul>
+          <div className="space-y-4 mb-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm font-medium text-blue-900 mb-2">🎯 Das wirst du testen:</p>
+              <ul className="text-xs font-light text-blue-800 space-y-1">
+                <li>✓ Komplett funktionsfähige Immobilienverwaltung</li>
+                <li>✓ Alle Features sind freigeschaltet</li>
+                <li>✓ Beispiel-Daten sind bereits angelegt</li>
+                <li>✓ Du bist als Administrator angemeldet</li>
+              </ul>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <p className="text-sm font-medium text-amber-900 mb-2">⚡ So funktioniert's:</p>
+              <ul className="text-xs font-light text-amber-800 space-y-1">
+                <li>✓ Einfach die App normal verwenden</li>
+                <li>✓ Probleme? → Klick auf "🐛 Problem melden"</li>
+                <li>✓ Deine Aktivitäten werden aufgezeichnet</li>
+                <li>✓ Test dauert ca. 30-45 Minuten</li>
+              </ul>
+            </div>
           </div>
 
           <Button 
-            className="w-full bg-blue-600 hover:bg-blue-700"
-            onClick={handleAccept}
-            disabled={loading}
+            onClick={() => setStep(3)}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
           >
-            {loading ? 'Account wird erstellt...' : 'Einladung annehmen'}
+            Account erstellen
+            <ArrowRight className="w-4 h-4" />
           </Button>
+        </Card>
+      </div>
+    );
+  }
 
-          <p className="text-xs text-slate-500 text-center">
-            Mit dem Akzeptieren stimmst du zu, aktiv am Beta-Test teilzunehmen und Feedback zu geben.
+  // Setup step
+  if (step === 3) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+        <Card className="p-8 max-w-md w-full">
+          <h2 className="text-xl font-light text-slate-800 mb-6">Dein Account</h2>
+
+          <div className="space-y-4 mb-6">
+            <div>
+              <label className="text-xs font-medium text-slate-700">E-Mail</label>
+              <Input 
+                type="email"
+                value={invitation.invited_email}
+                disabled
+                className="mt-1 bg-slate-100 text-slate-600"
+              />
+              <p className="text-xs font-light text-slate-500 mt-1">Diese E-Mail kannst du nicht ändern</p>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-slate-700">Name</label>
+              <Input 
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Dein Name"
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-slate-700">Passwort (mind. 8 Zeichen)</label>
+              <Input 
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-slate-700">Passwort bestätigen</label>
+              <Input 
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                className="mt-1"
+              />
+            </div>
+
+            <div className="flex items-start gap-2 pt-2">
+              <input 
+                type="checkbox"
+                id="tracking"
+                checked={agreeTracking}
+                onChange={(e) => setAgreeTracking(e.target.checked)}
+                className="mt-1"
+              />
+              <label htmlFor="tracking" className="text-xs font-light text-slate-600">
+                Ich verstehe, dass meine Test-Aktivitäten anonymisiert aufgezeichnet werden, um die App zu verbessern.
+              </label>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <Button 
+              onClick={() => setStep(2)}
+              variant="outline"
+              className="flex-1"
+            >
+              Zurück
+            </Button>
+            <Button 
+              onClick={handleActivate}
+              disabled={activating}
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+            >
+              {activating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Wird aktiviert...
+                </>
+              ) : (
+                <>
+                  Test starten
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // Activating step
+  if (step === 4) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+        <Card className="p-8 max-w-md w-full">
+          <div className="text-center mb-6">
+            <Loader2 className="w-8 h-8 text-emerald-600 animate-spin mx-auto mb-3" />
+            <h2 className="text-lg font-light text-slate-800">Account wird eingerichtet...</h2>
+          </div>
+
+          <div className="space-y-2">
+            {activationSteps.map((step, idx) => (
+              <div key={idx} className="flex items-center gap-3">
+                {step.done ? (
+                  <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                ) : (
+                  <Loader2 className="w-5 h-5 text-slate-400 animate-spin flex-shrink-0" />
+                )}
+                <span className={`text-sm font-light ${step.done ? 'text-slate-600' : 'text-slate-500'}`}>
+                  {step.text}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-xs font-light text-slate-400 text-center mt-6">
+            Dauert nur einen Moment...
           </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
+        </Card>
+      </div>
+    );
+  }
 }
