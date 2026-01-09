@@ -254,6 +254,7 @@ import TaxAuthoritySubmissions from './pages/TaxAuthoritySubmissions';
 import SubmissionDashboard from './pages/SubmissionDashboard';
 import TaxAIChatbot from './pages/TaxAIChatbot';
 import OnboardingWizard from './pages/OnboardingWizard';
+import AIRuleApprovalDashboard from './pages/AIRuleApprovalDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -514,6 +515,7 @@ export const PAGES = {
     "SubmissionDashboard": SubmissionDashboard,
     "TaxAIChatbot": TaxAIChatbot,
     "OnboardingWizard": OnboardingWizard,
+    "AIRuleApprovalDashboard": AIRuleApprovalDashboard,
 }
 
 export const pagesConfig = {
