@@ -182,6 +182,8 @@ import TaxRiskAssessment from './pages/TaxRiskAssessment';
 import AdvancedReporting from './pages/AdvancedReporting';
 import TaxDeductionOptimizer from './pages/TaxDeductionOptimizer';
 import QuarterlyTaxEstimator from './pages/QuarterlyTaxEstimator';
+import ConsolidatedTaxSummary from './pages/ConsolidatedTaxSummary';
+import InvestmentTaxTracking from './pages/InvestmentTaxTracking';
 import __Layout from './Layout.jsx';
 
 
@@ -370,6 +372,8 @@ export const PAGES = {
     "AdvancedReporting": AdvancedReporting,
     "TaxDeductionOptimizer": TaxDeductionOptimizer,
     "QuarterlyTaxEstimator": QuarterlyTaxEstimator,
+    "ConsolidatedTaxSummary": ConsolidatedTaxSummary,
+    "InvestmentTaxTracking": InvestmentTaxTracking,
 }
 
 export const pagesConfig = {
