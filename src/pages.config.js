@@ -113,6 +113,7 @@ import TesterAcceptInvitation from './pages/TesterAcceptInvitation';
 import TesterDashboard from './pages/TesterDashboard';
 import TesterActivityAnalytics from './pages/TesterActivityAnalytics';
 import AdminTesterAnalytics from './pages/AdminTesterAnalytics';
+import AdminTestCleanup from './pages/AdminTestCleanup';
 import __Layout from './Layout.jsx';
 
 
@@ -232,6 +233,7 @@ export const PAGES = {
     "TesterDashboard": TesterDashboard,
     "TesterActivityAnalytics": TesterActivityAnalytics,
     "AdminTesterAnalytics": AdminTesterAnalytics,
+    "AdminTestCleanup": AdminTestCleanup,
 }
 
 export const pagesConfig = {
