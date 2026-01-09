@@ -241,6 +241,7 @@ import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import ComplexTaxSetupWizard from './pages/ComplexTaxSetupWizard';
+import TaxDashboardMultiCountry from './pages/TaxDashboardMultiCountry';
 import __Layout from './Layout.jsx';
 
 
@@ -488,6 +489,7 @@ export const PAGES = {
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "ComplexTaxSetupWizard": ComplexTaxSetupWizard,
+    "TaxDashboardMultiCountry": TaxDashboardMultiCountry,
 }
 
 export const pagesConfig = {
