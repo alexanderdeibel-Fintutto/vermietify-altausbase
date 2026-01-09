@@ -12,6 +12,11 @@ import MaintenanceRequestForm from '@/components/tenant-portal/MaintenanceReques
 import TenantMessagingInterface from '@/components/messaging/TenantMessagingInterface';
 import TenantDocumentsViewer from '@/components/tenant-portal/TenantDocumentsViewer';
 import TenantNotificationCenter from '@/components/tenant-portal/TenantNotificationCenter';
+import UpcomingPaymentsWidget from '@/components/tenant-portal/UpcomingPaymentsWidget';
+import LeaseExpiryWidget from '@/components/tenant-portal/LeaseExpiryWidget';
+import RecentCommunicationsWidget from '@/components/tenant-portal/RecentCommunicationsWidget';
+import OutstandingTasksWidget from '@/components/tenant-portal/OutstandingTasksWidget';
+import TenantDocumentsManager from '@/components/tenant-portal/TenantDocumentsManager';
 
 export default function TenantPortalDashboard() {
   const [tenantId] = useState(new URLSearchParams(window.location.search).get('id'));
@@ -113,40 +118,12 @@ export default function TenantPortalDashboard() {
         {/* Welcome Section */}
         <TenantPortalWelcome tenant={tenant} />
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-sm text-slate-600 mb-2">Aktive Verträge</p>
-                <p className="text-3xl font-bold text-blue-600">{activeContracts.length}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-sm text-slate-600 mb-2">Ausstehende Anfragen</p>
-                <p className="text-3xl font-bold text-amber-600">{pendingMaintenance.length}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-sm text-slate-600 mb-2">Neue Nachrichten</p>
-                <p className="text-3xl font-bold text-purple-600">{unreadMessages.length}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-sm text-slate-600 mb-2">Dokumente</p>
-                <p className="text-3xl font-bold text-green-600">{documents.length}</p>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Dashboard Widgets */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <UpcomingPaymentsWidget tenantEmail={tenant.email} />
+          <LeaseExpiryWidget tenantId={tenantId} />
+          <RecentCommunicationsWidget tenantId={tenantId} />
+          <OutstandingTasksWidget tenantId={tenantId} />
         </div>
 
         {/* Search Bar */}
@@ -337,7 +314,7 @@ export default function TenantPortalDashboard() {
 
           {/* Documents Tab */}
           <TabsContent value="documents">
-            <TenantDocumentsViewer documents={documents} searchQuery={searchQuery} />
+            <TenantDocumentsManager tenantId={tenantId} />
           </TabsContent>
         </Tabs>
       </main>
