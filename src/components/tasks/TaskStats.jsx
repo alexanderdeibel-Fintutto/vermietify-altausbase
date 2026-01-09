@@ -35,44 +35,44 @@ export default function TaskStats({ tasks }) {
             title: "Offene Tasks",
             value: openTasks,
             icon: ListTodo,
-            color: "bg-blue-50 text-blue-600",
-            iconBg: "bg-blue-100"
+            color: "bg-white text-slate-700",
+            iconBg: "bg-slate-50"
         },
         {
             title: "Heute fällig",
             value: dueToday,
             icon: Clock,
-            color: "bg-orange-50 text-orange-600",
-            iconBg: "bg-orange-100"
+            color: "bg-white text-slate-700",
+            iconBg: "bg-slate-50"
         },
         {
             title: "Überfällig",
             value: overdue,
             icon: AlertTriangle,
-            color: "bg-red-50 text-red-600",
-            iconBg: "bg-red-100"
+            color: "bg-white text-slate-700",
+            iconBg: "bg-slate-50"
         },
         {
             title: "Diese Woche erledigt",
             value: completedThisWeek,
             icon: CheckCircle2,
-            color: "bg-green-50 text-green-600",
-            iconBg: "bg-green-100"
+            color: "bg-white text-slate-700",
+            iconBg: "bg-slate-50"
         }
     ];
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat, index) => (
-                <Card key={index} className={stat.color}>
+                <Card key={index} className={`${stat.color} border-slate-100 shadow-none`}>
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium opacity-80">{stat.title}</p>
-                                <p className="text-3xl font-bold mt-2">{stat.value}</p>
+                                <p className="text-xs font-extralight text-slate-400">{stat.title}</p>
+                                <p className="text-3xl font-extralight mt-3">{stat.value}</p>
                             </div>
                             <div className={`p-3 rounded-lg ${stat.iconBg}`}>
-                                <stat.icon className="w-6 h-6" />
+                                <stat.icon className="w-5 h-5 text-slate-400" />
                             </div>
                         </div>
                     </CardContent>
