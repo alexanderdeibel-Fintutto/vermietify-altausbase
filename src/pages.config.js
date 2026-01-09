@@ -29,6 +29,7 @@ import AnlageSODE from './pages/AnlageSODE';
 import AnlageVG from './pages/AnlageVG';
 import AnlageVGAT from './pages/AnlageVGAT';
 import AnlageVGDE from './pages/AnlageVGDE';
+import AnnualTaxReview from './pages/AnnualTaxReview';
 import AuditLog from './pages/AuditLog';
 import AuditReadinessAssessment from './pages/AuditReadinessAssessment';
 import AuditReports from './pages/AuditReports';
@@ -41,6 +42,9 @@ import BuildingDetail from './pages/BuildingDetail';
 import Buildings from './pages/Buildings';
 import BulkOperations from './pages/BulkOperations';
 import CapitalGainCH from './pages/CapitalGainCH';
+import CapitalGainsManagement from './pages/CapitalGainsManagement';
+import CapitalGainsOptimizer from './pages/CapitalGainsOptimizer';
+import CharitableDonationPlanner from './pages/CharitableDonationPlanner';
 import CommunicationCenter from './pages/CommunicationCenter';
 import ComplianceAudit from './pages/ComplianceAudit';
 import ComplianceCenter from './pages/ComplianceCenter';
@@ -55,14 +59,19 @@ import DACHTaxComparison from './pages/DACHTaxComparison';
 import Dashboard from './pages/Dashboard';
 import DataImportExport from './pages/DataImportExport';
 import DataImportExportHub from './pages/DataImportExportHub';
+import DeductionMaximizationTool from './pages/DeductionMaximizationTool';
 import DeveloperDocumentation from './pages/DeveloperDocumentation';
+import DividendOptimization from './pages/DividendOptimization';
 import DocumentGeneration from './pages/DocumentGeneration';
 import DocumentLibrary from './pages/DocumentLibrary';
 import DocumentManagement from './pages/DocumentManagement';
 import Documents from './pages/Documents';
 import ElsterIntegration from './pages/ElsterIntegration';
 import EmailTemplates from './pages/EmailTemplates';
+import EntityTaxPlanning from './pages/EntityTaxPlanning';
 import Equipment from './pages/Equipment';
+import EstateTaxPlanning from './pages/EstateTaxPlanning';
+import EstimatedTaxScheduler from './pages/EstimatedTaxScheduler';
 import FeatureCatalog from './pages/FeatureCatalog';
 import FinAPICallback from './pages/FinAPICallback';
 import FinanceManagement from './pages/FinanceManagement';
@@ -76,10 +85,12 @@ import GlobalTaxOverview from './pages/GlobalTaxOverview';
 import GlobalWealthDashboard from './pages/GlobalWealthDashboard';
 import HelpCenter from './pages/HelpCenter';
 import HilfeCenter from './pages/HilfeCenter';
+import IncomeOptimizationTool from './pages/IncomeOptimizationTool';
 import InsuranceManagement from './pages/InsuranceManagement';
 import IntegrationHub from './pages/IntegrationHub';
 import IntegrationMarketplace from './pages/IntegrationMarketplace';
 import InternationalTaxComparison from './pages/InternationalTaxComparison';
+import InternationalTaxPlanning from './pages/InternationalTaxPlanning';
 import InternationalTaxStrategy from './pages/InternationalTaxStrategy';
 import InvestmentTaxTracking from './pages/InvestmentTaxTracking';
 import InvestmentsCH from './pages/InvestmentsCH';
@@ -111,14 +122,16 @@ import PropertyPortfolio from './pages/PropertyPortfolio';
 import PropertyValuation from './pages/PropertyValuation';
 import QuarterlyTaxEstimator from './pages/QuarterlyTaxEstimator';
 import ROIDashboard from './pages/ROIDashboard';
-import Tasks from './pages/Tasks';
 import RealEstateCH from './pages/RealEstateCH';
+import RealEstateTaxPlanning from './pages/RealEstateTaxPlanning';
 import ReportGenerator from './pages/ReportGenerator';
 import ReportScheduling from './pages/ReportScheduling';
 import ReportingDashboard from './pages/ReportingDashboard';
 import ReportsPage from './pages/ReportsPage';
+import RetirementTaxPlanning from './pages/RetirementTaxPlanning';
 import RoleManagement from './pages/RoleManagement';
 import ScheduledTasks from './pages/ScheduledTasks';
+import SelfEmploymentTaxPlanning from './pages/SelfEmploymentTaxPlanning';
 import SettingsPage from './pages/SettingsPage';
 import SuiteManagement from './pages/SuiteManagement';
 import SuppliersManagement from './pages/SuppliersManagement';
@@ -126,12 +139,16 @@ import SupportCenter from './pages/SupportCenter';
 import SystemConfiguration from './pages/SystemConfiguration';
 import SystemHealth from './pages/SystemHealth';
 import TaskManagement from './pages/TaskManagement';
+import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
 import TaxAdminDashboard from './pages/TaxAdminDashboard';
 import TaxAdminPanel from './pages/TaxAdminPanel';
 import TaxAdvisorPortal from './pages/TaxAdvisorPortal';
+import TaxAdvisorPortalPage from './pages/TaxAdvisorPortalPage';
 import TaxAuditPreparation from './pages/TaxAuditPreparation';
+import TaxBracketCalculator from './pages/TaxBracketCalculator';
 import TaxComplianceTracker from './pages/TaxComplianceTracker';
+import TaxCreditsAndIncentives from './pages/TaxCreditsAndIncentives';
 import TaxDashboard from './pages/TaxDashboard';
 import TaxDashboardAT from './pages/TaxDashboardAT';
 import TaxDashboardCH from './pages/TaxDashboardCH';
@@ -144,22 +161,28 @@ import TaxDocumentProcessor from './pages/TaxDocumentProcessor';
 import TaxExportHub from './pages/TaxExportHub';
 import TaxFilingTimeline from './pages/TaxFilingTimeline';
 import TaxFilingWizard from './pages/TaxFilingWizard';
+import TaxFormLibrary from './pages/TaxFormLibrary';
 import TaxForms from './pages/TaxForms';
 import TaxLawUpdates from './pages/TaxLawUpdates';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import TaxLossHarvesting from './pages/TaxLossHarvesting';
 import TaxManagement from './pages/TaxManagement';
 import TaxOptimizationAnalyzer from './pages/TaxOptimizationAnalyzer';
+import TaxPerformanceDashboard from './pages/TaxPerformanceDashboard';
 import TaxPlanningAdvisor from './pages/TaxPlanningAdvisor';
 import TaxRemindersCenter from './pages/TaxRemindersCenter';
 import TaxReportExport from './pages/TaxReportExport';
 import TaxReportGeneration from './pages/TaxReportGeneration';
 import TaxReturnFilingManager from './pages/TaxReturnFilingManager';
 import TaxRiskAssessment from './pages/TaxRiskAssessment';
+import TaxRiskAssessmentPanel from './pages/TaxRiskAssessmentPanel';
+import TaxScenarioComparison from './pages/TaxScenarioComparison';
 import TaxScenarioSimulator from './pages/TaxScenarioSimulator';
 import TaxSetup from './pages/TaxSetup';
 import TaxSetupWizard from './pages/TaxSetupWizard';
+import TaxStrategyAdvisor from './pages/TaxStrategyAdvisor';
 import TaxYearClosingChecklist from './pages/TaxYearClosingChecklist';
+import TaxYearPlannerPage from './pages/TaxYearPlannerPage';
 import TenantCommunication from './pages/TenantCommunication';
 import TenantCommunicationCenter from './pages/TenantCommunicationCenter';
 import TenantPortal from './pages/TenantPortal';
@@ -184,6 +207,7 @@ import WealthAutomation from './pages/WealthAutomation';
 import WealthIntegrations from './pages/WealthIntegrations';
 import WealthManagement from './pages/WealthManagement';
 import WealthMobile from './pages/WealthMobile';
+import WealthTaxIntegration from './pages/WealthTaxIntegration';
 import WealthTeam from './pages/WealthTeam';
 import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
@@ -191,33 +215,11 @@ import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import TaxAdvisorPortalPage from './pages/TaxAdvisorPortalPage';
-import TaxYearPlannerPage from './pages/TaxYearPlannerPage';
-import CapitalGainsOptimizer from './pages/CapitalGainsOptimizer';
-import TaxPerformanceDashboard from './pages/TaxPerformanceDashboard';
-import AnnualTaxReview from './pages/AnnualTaxReview';
-import TaxStrategyAdvisor from './pages/TaxStrategyAdvisor';
-import DividendOptimization from './pages/DividendOptimization';
-import WealthTaxIntegration from './pages/WealthTaxIntegration';
-import RealEstateTaxPlanning from './pages/RealEstateTaxPlanning';
-import SelfEmploymentTaxPlanning from './pages/SelfEmploymentTaxPlanning';
-import TaxFormLibrary from './pages/TaxFormLibrary';
-import RetirementTaxPlanning from './pages/RetirementTaxPlanning';
-import CharitableDonationPlanner from './pages/CharitableDonationPlanner';
-import TaxBracketCalculator from './pages/TaxBracketCalculator';
-import EstimatedTaxScheduler from './pages/EstimatedTaxScheduler';
-import TaxScenarioComparison from './pages/TaxScenarioComparison';
-import TaxRiskAssessmentPanel from './pages/TaxRiskAssessmentPanel';
-import IncomeOptimizationTool from './pages/IncomeOptimizationTool';
-import CapitalGainsManagement from './pages/CapitalGainsManagement';
-import DeductionMaximizationTool from './pages/DeductionMaximizationTool';
-import InternationalTaxPlanning from './pages/InternationalTaxPlanning';
-import EntityTaxPlanning from './pages/EntityTaxPlanning';
-import EstateTaxPlanning from './pages/EstateTaxPlanning';
-import TaxCreditsAndIncentives from './pages/TaxCreditsAndIncentives';
 import ComplianceMonitoringDashboard from './pages/ComplianceMonitoringDashboard';
 import TaxAnalyticsReporting from './pages/TaxAnalyticsReporting';
 import MultiYearTaxComparison from './pages/MultiYearTaxComparison';
+import SmartExpenseTracker from './pages/SmartExpenseTracker';
+import RealTimeTaxCalculator from './pages/RealTimeTaxCalculator';
 import __Layout from './Layout.jsx';
 
 
@@ -253,6 +255,7 @@ export const PAGES = {
     "AnlageVG": AnlageVG,
     "AnlageVGAT": AnlageVGAT,
     "AnlageVGDE": AnlageVGDE,
+    "AnnualTaxReview": AnnualTaxReview,
     "AuditLog": AuditLog,
     "AuditReadinessAssessment": AuditReadinessAssessment,
     "AuditReports": AuditReports,
@@ -265,6 +268,9 @@ export const PAGES = {
     "Buildings": Buildings,
     "BulkOperations": BulkOperations,
     "CapitalGainCH": CapitalGainCH,
+    "CapitalGainsManagement": CapitalGainsManagement,
+    "CapitalGainsOptimizer": CapitalGainsOptimizer,
+    "CharitableDonationPlanner": CharitableDonationPlanner,
     "CommunicationCenter": CommunicationCenter,
     "ComplianceAudit": ComplianceAudit,
     "ComplianceCenter": ComplianceCenter,
@@ -279,14 +285,19 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "DataImportExport": DataImportExport,
     "DataImportExportHub": DataImportExportHub,
+    "DeductionMaximizationTool": DeductionMaximizationTool,
     "DeveloperDocumentation": DeveloperDocumentation,
+    "DividendOptimization": DividendOptimization,
     "DocumentGeneration": DocumentGeneration,
     "DocumentLibrary": DocumentLibrary,
     "DocumentManagement": DocumentManagement,
     "Documents": Documents,
     "ElsterIntegration": ElsterIntegration,
     "EmailTemplates": EmailTemplates,
+    "EntityTaxPlanning": EntityTaxPlanning,
     "Equipment": Equipment,
+    "EstateTaxPlanning": EstateTaxPlanning,
+    "EstimatedTaxScheduler": EstimatedTaxScheduler,
     "FeatureCatalog": FeatureCatalog,
     "FinAPICallback": FinAPICallback,
     "FinanceManagement": FinanceManagement,
@@ -300,10 +311,12 @@ export const PAGES = {
     "GlobalWealthDashboard": GlobalWealthDashboard,
     "HelpCenter": HelpCenter,
     "HilfeCenter": HilfeCenter,
+    "IncomeOptimizationTool": IncomeOptimizationTool,
     "InsuranceManagement": InsuranceManagement,
     "IntegrationHub": IntegrationHub,
     "IntegrationMarketplace": IntegrationMarketplace,
     "InternationalTaxComparison": InternationalTaxComparison,
+    "InternationalTaxPlanning": InternationalTaxPlanning,
     "InternationalTaxStrategy": InternationalTaxStrategy,
     "InvestmentTaxTracking": InvestmentTaxTracking,
     "InvestmentsCH": InvestmentsCH,
@@ -335,14 +348,16 @@ export const PAGES = {
     "PropertyValuation": PropertyValuation,
     "QuarterlyTaxEstimator": QuarterlyTaxEstimator,
     "ROIDashboard": ROIDashboard,
-    "Tasks": Tasks,
     "RealEstateCH": RealEstateCH,
+    "RealEstateTaxPlanning": RealEstateTaxPlanning,
     "ReportGenerator": ReportGenerator,
     "ReportScheduling": ReportScheduling,
     "ReportingDashboard": ReportingDashboard,
     "ReportsPage": ReportsPage,
+    "RetirementTaxPlanning": RetirementTaxPlanning,
     "RoleManagement": RoleManagement,
     "ScheduledTasks": ScheduledTasks,
+    "SelfEmploymentTaxPlanning": SelfEmploymentTaxPlanning,
     "SettingsPage": SettingsPage,
     "SuiteManagement": SuiteManagement,
     "SuppliersManagement": SuppliersManagement,
@@ -350,12 +365,16 @@ export const PAGES = {
     "SystemConfiguration": SystemConfiguration,
     "SystemHealth": SystemHealth,
     "TaskManagement": TaskManagement,
+    "Tasks": Tasks,
     "Tax": Tax,
     "TaxAdminDashboard": TaxAdminDashboard,
     "TaxAdminPanel": TaxAdminPanel,
     "TaxAdvisorPortal": TaxAdvisorPortal,
+    "TaxAdvisorPortalPage": TaxAdvisorPortalPage,
     "TaxAuditPreparation": TaxAuditPreparation,
+    "TaxBracketCalculator": TaxBracketCalculator,
     "TaxComplianceTracker": TaxComplianceTracker,
+    "TaxCreditsAndIncentives": TaxCreditsAndIncentives,
     "TaxDashboard": TaxDashboard,
     "TaxDashboardAT": TaxDashboardAT,
     "TaxDashboardCH": TaxDashboardCH,
@@ -368,22 +387,28 @@ export const PAGES = {
     "TaxExportHub": TaxExportHub,
     "TaxFilingTimeline": TaxFilingTimeline,
     "TaxFilingWizard": TaxFilingWizard,
+    "TaxFormLibrary": TaxFormLibrary,
     "TaxForms": TaxForms,
     "TaxLawUpdates": TaxLawUpdates,
     "TaxLibraryManagement": TaxLibraryManagement,
     "TaxLossHarvesting": TaxLossHarvesting,
     "TaxManagement": TaxManagement,
     "TaxOptimizationAnalyzer": TaxOptimizationAnalyzer,
+    "TaxPerformanceDashboard": TaxPerformanceDashboard,
     "TaxPlanningAdvisor": TaxPlanningAdvisor,
     "TaxRemindersCenter": TaxRemindersCenter,
     "TaxReportExport": TaxReportExport,
     "TaxReportGeneration": TaxReportGeneration,
     "TaxReturnFilingManager": TaxReturnFilingManager,
     "TaxRiskAssessment": TaxRiskAssessment,
+    "TaxRiskAssessmentPanel": TaxRiskAssessmentPanel,
+    "TaxScenarioComparison": TaxScenarioComparison,
     "TaxScenarioSimulator": TaxScenarioSimulator,
     "TaxSetup": TaxSetup,
     "TaxSetupWizard": TaxSetupWizard,
+    "TaxStrategyAdvisor": TaxStrategyAdvisor,
     "TaxYearClosingChecklist": TaxYearClosingChecklist,
+    "TaxYearPlannerPage": TaxYearPlannerPage,
     "TenantCommunication": TenantCommunication,
     "TenantCommunicationCenter": TenantCommunicationCenter,
     "TenantPortal": TenantPortal,
@@ -408,6 +433,7 @@ export const PAGES = {
     "WealthIntegrations": WealthIntegrations,
     "WealthManagement": WealthManagement,
     "WealthMobile": WealthMobile,
+    "WealthTaxIntegration": WealthTaxIntegration,
     "WealthTeam": WealthTeam,
     "WhatsAppCommunication": WhatsAppCommunication,
     "WhatsAppSettings": WhatsAppSettings,
@@ -415,33 +441,11 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "TaxAdvisorPortalPage": TaxAdvisorPortalPage,
-    "TaxYearPlannerPage": TaxYearPlannerPage,
-    "CapitalGainsOptimizer": CapitalGainsOptimizer,
-    "TaxPerformanceDashboard": TaxPerformanceDashboard,
-    "AnnualTaxReview": AnnualTaxReview,
-    "TaxStrategyAdvisor": TaxStrategyAdvisor,
-    "DividendOptimization": DividendOptimization,
-    "WealthTaxIntegration": WealthTaxIntegration,
-    "RealEstateTaxPlanning": RealEstateTaxPlanning,
-    "SelfEmploymentTaxPlanning": SelfEmploymentTaxPlanning,
-    "TaxFormLibrary": TaxFormLibrary,
-    "RetirementTaxPlanning": RetirementTaxPlanning,
-    "CharitableDonationPlanner": CharitableDonationPlanner,
-    "TaxBracketCalculator": TaxBracketCalculator,
-    "EstimatedTaxScheduler": EstimatedTaxScheduler,
-    "TaxScenarioComparison": TaxScenarioComparison,
-    "TaxRiskAssessmentPanel": TaxRiskAssessmentPanel,
-    "IncomeOptimizationTool": IncomeOptimizationTool,
-    "CapitalGainsManagement": CapitalGainsManagement,
-    "DeductionMaximizationTool": DeductionMaximizationTool,
-    "InternationalTaxPlanning": InternationalTaxPlanning,
-    "EntityTaxPlanning": EntityTaxPlanning,
-    "EstateTaxPlanning": EstateTaxPlanning,
-    "TaxCreditsAndIncentives": TaxCreditsAndIncentives,
     "ComplianceMonitoringDashboard": ComplianceMonitoringDashboard,
     "TaxAnalyticsReporting": TaxAnalyticsReporting,
     "MultiYearTaxComparison": MultiYearTaxComparison,
+    "SmartExpenseTracker": SmartExpenseTracker,
+    "RealTimeTaxCalculator": RealTimeTaxCalculator,
 }
 
 export const pagesConfig = {
