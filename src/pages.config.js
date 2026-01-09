@@ -205,6 +205,9 @@ import TaxFormLibrary from './pages/TaxFormLibrary';
 import RetirementTaxPlanning from './pages/RetirementTaxPlanning';
 import CharitableDonationPlanner from './pages/CharitableDonationPlanner';
 import TaxBracketCalculator from './pages/TaxBracketCalculator';
+import EstimatedTaxScheduler from './pages/EstimatedTaxScheduler';
+import TaxScenarioComparison from './pages/TaxScenarioComparison';
+import TaxRiskAssessmentPanel from './pages/TaxRiskAssessmentPanel';
 import __Layout from './Layout.jsx';
 
 
@@ -416,6 +419,9 @@ export const PAGES = {
     "RetirementTaxPlanning": RetirementTaxPlanning,
     "CharitableDonationPlanner": CharitableDonationPlanner,
     "TaxBracketCalculator": TaxBracketCalculator,
+    "EstimatedTaxScheduler": EstimatedTaxScheduler,
+    "TaxScenarioComparison": TaxScenarioComparison,
+    "TaxRiskAssessmentPanel": TaxRiskAssessmentPanel,
 }
 
 export const pagesConfig = {
