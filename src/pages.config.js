@@ -2,8 +2,13 @@ import APIKeyManagement from './pages/APIKeyManagement';
 import APILogs from './pages/APILogs';
 import ActivityLogs from './pages/ActivityLogs';
 import AdaptiveNavigationAdmin from './pages/AdaptiveNavigationAdmin';
+import AdminAIAnalytics from './pages/AdminAIAnalytics';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminMasterDashboard from './pages/AdminMasterDashboard';
 import AdminPackageSetup from './pages/AdminPackageSetup';
+import AdminSetupGuide from './pages/AdminSetupGuide';
+import AdminTestCleanup from './pages/AdminTestCleanup';
+import AdminTesterAnalytics from './pages/AdminTesterAnalytics';
 import AdvancedAnalytics from './pages/AdvancedAnalytics';
 import AdvancedReportBuilder from './pages/AdvancedReportBuilder';
 import AdvancedSearch from './pages/AdvancedSearch';
@@ -93,6 +98,9 @@ import TaxManagement from './pages/TaxManagement';
 import TenantCommunication from './pages/TenantCommunication';
 import TenantPortal from './pages/TenantPortal';
 import Tenants from './pages/Tenants';
+import TesterAcceptInvitation from './pages/TesterAcceptInvitation';
+import TesterActivityAnalytics from './pages/TesterActivityAnalytics';
+import TesterDashboard from './pages/TesterDashboard';
 import TesterManagement from './pages/TesterManagement';
 import TesterOnboarding from './pages/TesterOnboarding';
 import TestingDashboard from './pages/TestingDashboard';
@@ -109,14 +117,6 @@ import WhatsAppSetup from './pages/WhatsAppSetup';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import TesterAcceptInvitation from './pages/TesterAcceptInvitation';
-import TesterDashboard from './pages/TesterDashboard';
-import TesterActivityAnalytics from './pages/TesterActivityAnalytics';
-import AdminTesterAnalytics from './pages/AdminTesterAnalytics';
-import AdminTestCleanup from './pages/AdminTestCleanup';
-import AdminAIAnalytics from './pages/AdminAIAnalytics';
-import AdminMasterDashboard from './pages/AdminMasterDashboard';
-import AdminSetupGuide from './pages/AdminSetupGuide';
 import __Layout from './Layout.jsx';
 
 
@@ -125,8 +125,13 @@ export const PAGES = {
     "APILogs": APILogs,
     "ActivityLogs": ActivityLogs,
     "AdaptiveNavigationAdmin": AdaptiveNavigationAdmin,
+    "AdminAIAnalytics": AdminAIAnalytics,
     "AdminDashboard": AdminDashboard,
+    "AdminMasterDashboard": AdminMasterDashboard,
     "AdminPackageSetup": AdminPackageSetup,
+    "AdminSetupGuide": AdminSetupGuide,
+    "AdminTestCleanup": AdminTestCleanup,
+    "AdminTesterAnalytics": AdminTesterAnalytics,
     "AdvancedAnalytics": AdvancedAnalytics,
     "AdvancedReportBuilder": AdvancedReportBuilder,
     "AdvancedSearch": AdvancedSearch,
@@ -216,6 +221,9 @@ export const PAGES = {
     "TenantCommunication": TenantCommunication,
     "TenantPortal": TenantPortal,
     "Tenants": Tenants,
+    "TesterAcceptInvitation": TesterAcceptInvitation,
+    "TesterActivityAnalytics": TesterActivityAnalytics,
+    "TesterDashboard": TesterDashboard,
     "TesterManagement": TesterManagement,
     "TesterOnboarding": TesterOnboarding,
     "TestingDashboard": TestingDashboard,
@@ -232,14 +240,6 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "TesterAcceptInvitation": TesterAcceptInvitation,
-    "TesterDashboard": TesterDashboard,
-    "TesterActivityAnalytics": TesterActivityAnalytics,
-    "AdminTesterAnalytics": AdminTesterAnalytics,
-    "AdminTestCleanup": AdminTestCleanup,
-    "AdminAIAnalytics": AdminAIAnalytics,
-    "AdminMasterDashboard": AdminMasterDashboard,
-    "AdminSetupGuide": AdminSetupGuide,
 }
 
 export const pagesConfig = {

@@ -24,6 +24,7 @@ import SubNavigation from '@/components/navigation/SubNavigation';
 import MobileBottomNav from '@/components/navigation/MobileBottomNav';
 import DeepSubNavigation from '@/components/navigation/DeepSubNavigation';
 import QuickActions from '@/components/navigation/QuickActions';
+import IntelligentOnboardingWizardButton from '@/components/onboarding/IntelligentOnboardingWizardButton';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { usePackageAccess } from '@/components/hooks/usePackageAccess';
@@ -130,6 +131,9 @@ export default function Layout({ children, currentPageName }) {
 
                 {/* Smart Problem Report Button */}
                 <SmartProblemReportButton />
+
+                {/* Intelligent Onboarding Wizard Button */}
+                <IntelligentOnboardingWizardButton />
 
                 {/* Mobile Bottom Navigation */}
                 <MobileBottomNav visibleFeatures={visibleFeatures} />
