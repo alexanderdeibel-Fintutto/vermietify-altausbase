@@ -11,31 +11,38 @@ export default function OnboardingRedirect({ children }) {
 
   const { data: user } = useQuery({
     queryKey: ['current-user'],
-    queryFn: () => base44.auth.me()
+    queryFn: () => base44.auth.me(),
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000
   });
 
   const { data: buildings, isLoading: loadingBuildings } = useQuery({
     queryKey: ['user-buildings'],
     queryFn: () => base44.entities.Building.list().catch(() => []),
     enabled: !!user,
-    retry: 2,
-    retryDelay: 1000
+    retry: 1,
+    retryDelay: 2000,
+    staleTime: 10 * 60 * 1000,
+    cacheTime: 15 * 60 * 1000
   });
 
   const { data: progress } = useQuery({
     queryKey: ['onboarding-progress', user?.id],
     queryFn: async () => {
+      if (!user?.id) return undefined;
       try {
-        const results = await base44.entities.OnboardingProgress.filter({ user_id: user.id });
+        const results = await base44.entities.OnboardingProgress.filter({ user_id: user.id }, null, 1);
         return results[0];
       } catch (e) {
-        console.debug('Onboarding evaluation skipped (network temporary)');
+        console.debug('Onboarding progress skipped');
         return undefined;
       }
     },
-    enabled: !!user,
+    enabled: !!user?.id,
     retry: 1,
-    retryDelay: 500
+    retryDelay: 2000,
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000
   });
 
   useEffect(() => {

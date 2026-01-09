@@ -4,80 +4,71 @@ import { base44 } from '@/api/base44Client';
 export function useActivityTracker() {
   const sessionIdRef = useRef(null);
   const pageStartTimeRef = useRef(Date.now());
+  const userCacheRef = useRef(null);
+  const testAccountCacheRef = useRef(null);
+  const lastClickTimeRef = useRef(0);
+  const clickDebounceRef = useRef(null);
 
   useEffect(() => {
-    const trackPageVisit = async () => {
+    let isMounted = true;
+    const MIN_CLICK_INTERVAL = 1000;
+
+    // Lazy load user and test account
+    const initializeTracking = async () => {
       try {
-        const user = await base44.auth.me();
-        if (!user) return;
-
-        // Generiere Session-ID wenn nicht vorhanden
-        if (!sessionIdRef.current) {
-          sessionIdRef.current = `session_${Date.now()}_${Math.random()}`;
+        if (!userCacheRef.current) {
+          userCacheRef.current = await base44.auth.me();
         }
+        if (!userCacheRef.current || testAccountCacheRef.current) return;
 
-        // Track Page Visit
-        const testAccount = await base44.entities.TestAccount.filter(
-          { user_email: user.email },
+        const testAccounts = await base44.entities.TestAccount.filter(
+          { user_email: userCacheRef.current.email },
           '-created_date',
           1
         );
-        
-        if (testAccount[0]) {
-          await base44.functions.invoke('trackTesterActivity', {
-            test_account_id: testAccount[0].id,
-            activity_type: 'page_visit',
-            page_url: window.location.pathname,
-            page_title: document.title,
-            viewport_width: window.innerWidth,
-            viewport_height: window.innerHeight,
-            time_spent_seconds: Math.round((Date.now() - pageStartTimeRef.current) / 1000)
-          });
+        if (isMounted && testAccounts[0]) {
+          testAccountCacheRef.current = testAccounts[0];
         }
       } catch (error) {
-        console.error('Activity tracking error:', error);
+        console.debug('Activity tracking initialization skipped');
       }
     };
 
     const handleClick = async (e) => {
-      try {
-        const user = await base44.auth.me();
-        if (!user) return;
+      const now = Date.now();
+      if (now - lastClickTimeRef.current < MIN_CLICK_INTERVAL) return;
 
-        const testAccount = await base44.entities.TestAccount.filter(
-          { user_email: user.email },
-          '-created_date',
-          1
-        );
+      if (clickDebounceRef.current) clearTimeout(clickDebounceRef.current);
+      
+      clickDebounceRef.current = setTimeout(async () => {
+        if (!isMounted || !testAccountCacheRef.current) return;
         
-        if (!testAccount[0]) return;
-
-        const target = e.target;
-        await base44.functions.invoke('trackTesterActivity', {
-          test_account_id: testAccount[0].id,
-          activity_type: 'click',
-          page_url: window.location.pathname,
-          page_title: document.title,
-          element_data: {
-            selector: target.className || target.id || target.tagName,
-            text: target.textContent?.substring(0, 100),
-            type: target.tagName.toLowerCase()
-          },
-          viewport_width: window.innerWidth,
-          viewport_height: window.innerHeight
-        });
-      } catch (error) {
-        console.error('Click tracking error:', error);
-      }
+        try {
+          const target = e.target;
+          await base44.functions.invoke('trackTesterActivity', {
+            test_account_id: testAccountCacheRef.current.id,
+            activity_type: 'click',
+            page_url: window.location.pathname,
+            page_title: document.title,
+            element_data: {
+              selector: target.className || target.id || target.tagName,
+              text: target.textContent?.substring(0, 100),
+              type: target.tagName.toLowerCase()
+            }
+          });
+          lastClickTimeRef.current = now;
+        } catch (error) {
+          console.debug('Click tracking skipped');
+        }
+      }, 500);
     };
 
-    // Track page visit on mount
-    trackPageVisit();
-
-    // Track clicks
+    initializeTracking();
     document.addEventListener('click', handleClick);
 
     return () => {
+      isMounted = false;
+      if (clickDebounceRef.current) clearTimeout(clickDebounceRef.current);
       document.removeEventListener('click', handleClick);
     };
   }, []);

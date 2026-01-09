@@ -16,11 +16,12 @@ export default function TesterTracker({ children }) {
   const startTimeRef = useRef(null);
   const lastTrackRef = useRef(null);
   const debounceRef = useRef(null);
+  const hasInitializedRef = useRef(false);
   
-  // Session starten
+  // Session starten - nur einmal
   useEffect(() => {
-    if (isTester && !sessionIdRef.current) {
-      // Wiederherstellen aus SessionStorage
+    if (isTester && !hasInitializedRef.current) {
+      hasInitializedRef.current = true;
       const savedSession = sessionStorage.getItem('tester_session_id');
       if (savedSession) {
         sessionIdRef.current = savedSession;
@@ -33,10 +34,9 @@ export default function TesterTracker({ children }) {
     return () => {
       if (sessionIdRef.current && debounceRef.current) {
         clearTimeout(debounceRef.current);
-        endTestSession();
       }
     };
-  }, [isTester]);
+  }, []);
   
   // Seiten-Tracking mit Debounce
   useEffect(() => {
