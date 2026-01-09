@@ -222,6 +222,7 @@ import SmartExpenseTracker from './pages/SmartExpenseTracker';
 import RealTimeTaxCalculator from './pages/RealTimeTaxCalculator';
 import TaxAutomationCenter from './pages/TaxAutomationCenter';
 import TaxForecastPlanner from './pages/TaxForecastPlanner';
+import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import __Layout from './Layout.jsx';
 
 
@@ -450,6 +451,7 @@ export const PAGES = {
     "RealTimeTaxCalculator": RealTimeTaxCalculator,
     "TaxAutomationCenter": TaxAutomationCenter,
     "TaxForecastPlanner": TaxForecastPlanner,
+    "WithholdingTaxCalculator": WithholdingTaxCalculator,
 }
 
 export const pagesConfig = {
