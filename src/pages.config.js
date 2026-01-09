@@ -215,6 +215,9 @@ import InternationalTaxPlanning from './pages/InternationalTaxPlanning';
 import EntityTaxPlanning from './pages/EntityTaxPlanning';
 import EstateTaxPlanning from './pages/EstateTaxPlanning';
 import TaxCreditsAndIncentives from './pages/TaxCreditsAndIncentives';
+import ComplianceMonitoringDashboard from './pages/ComplianceMonitoringDashboard';
+import TaxAnalyticsReporting from './pages/TaxAnalyticsReporting';
+import MultiYearTaxComparison from './pages/MultiYearTaxComparison';
 import __Layout from './Layout.jsx';
 
 
@@ -436,6 +439,9 @@ export const PAGES = {
     "EntityTaxPlanning": EntityTaxPlanning,
     "EstateTaxPlanning": EstateTaxPlanning,
     "TaxCreditsAndIncentives": TaxCreditsAndIncentives,
+    "ComplianceMonitoringDashboard": ComplianceMonitoringDashboard,
+    "TaxAnalyticsReporting": TaxAnalyticsReporting,
+    "MultiYearTaxComparison": MultiYearTaxComparison,
 }
 
 export const pagesConfig = {
