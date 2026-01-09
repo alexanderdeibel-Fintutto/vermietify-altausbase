@@ -26,6 +26,7 @@ import FinancialSnapshotWidget from '@/components/tenant-portal/FinancialSnapsho
 import MaintenanceOverviewWidget from '@/components/tenant-portal/MaintenanceOverviewWidget';
 import NotificationOverview from '@/components/notifications/NotificationOverview';
 import NotificationSettings from '@/components/notifications/NotificationSettings';
+import TenantBuildingBoard from '@/components/building-board/TenantBuildingBoard';
 
 export default function TenantPortalDashboard() {
   const [tenantId] = useState(new URLSearchParams(window.location.search).get('id'));
@@ -157,8 +158,9 @@ export default function TenantPortalDashboard() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-8 mb-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-9 mb-6">
             <TabsTrigger value="overview">Übersicht</TabsTrigger>
+            <TabsTrigger value="board">Pinnwand</TabsTrigger>
             <TabsTrigger value="contracts">Verträge</TabsTrigger>
             <TabsTrigger value="finances">Finanzen</TabsTrigger>
             <TabsTrigger value="maintenance">Anfragen</TabsTrigger>
@@ -170,6 +172,7 @@ export default function TenantPortalDashboard() {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
+            {/* ... existing overview content ... */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Recent Contracts */}
               <Card className="lg:col-span-2">
@@ -245,6 +248,11 @@ export default function TenantPortalDashboard() {
 
               <TenantAIChatbot tenantId={tenantId} />
             </div>
+          </TabsContent>
+
+          {/* Building Board Tab */}
+          <TabsContent value="board">
+            <TenantBuildingBoard tenantId={tenantId} />
           </TabsContent>
 
           {/* Finances Tab */}

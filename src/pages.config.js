@@ -267,6 +267,7 @@ import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import NotificationCenter from './pages/NotificationCenter';
+import BuildingBoard from './pages/BuildingBoard';
 import __Layout from './Layout.jsx';
 
 
@@ -540,6 +541,7 @@ export const PAGES = {
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "NotificationCenter": NotificationCenter,
+    "BuildingBoard": BuildingBoard,
 }
 
 export const pagesConfig = {
