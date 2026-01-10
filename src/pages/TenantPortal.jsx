@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
-import { AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { AlertCircle, Bot } from 'lucide-react';
 import LeaseDetailsCard from '@/components/tenant-portal/LeaseDetailsCard';
 import PaymentHistoryWidget from '@/components/tenant-portal/PaymentHistoryWidget';
 import MaintenanceRequestForm from '@/components/tenant-portal/MaintenanceRequestForm';
@@ -74,12 +75,28 @@ export default function TenantPortal() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-light text-slate-900">Mieterportal</h1>
-        <p className="text-sm font-light text-slate-600 mt-1">
-          Verwalten Sie Ihren Mietvertrag, Zahlungen und Wartungsanfragen
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-light text-slate-900">Mieterportal</h1>
+          <p className="text-sm font-light text-slate-600 mt-1">
+            Verwalten Sie Ihren Mietvertrag, Zahlungen und Wartungsanfragen
+          </p>
+        </div>
+        <Button 
+          onClick={() => setShowChatbot(!showChatbot)}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          <Bot className="w-5 h-5 mr-2" />
+          KI-Assistent {showChatbot ? 'schließen' : 'öffnen'}
+        </Button>
       </div>
+
+      {showChatbot && (
+        <TenantAIChatbot 
+          tenantId={tenantRecord?.id} 
+          onClose={() => setShowChatbot(false)}
+        />
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
