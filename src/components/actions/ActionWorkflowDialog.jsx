@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { base44 } from '@/api/base44Client';
 import { CheckCircle2, Loader2, Mail, Send, Phone } from 'lucide-react';
 import { toast } from 'sonner';
+import TenantOnboardingWizard from '@/components/onboarding/TenantOnboardingWizard';
 
 export default function ActionWorkflowDialog({ isOpen, onClose, workflowData, onComplete }) {
   const [step, setStep] = useState(0);
@@ -19,6 +20,19 @@ export default function ActionWorkflowDialog({ isOpen, onClose, workflowData, on
     jobcenterEmail: '',
     sendToJobcenter: false
   });
+
+  // Check if this is a tenant onboarding workflow
+  if (workflowData?.workflow?.name?.toLowerCase().includes('mieter') || 
+      workflowData?.workflow?.name?.toLowerCase().includes('vertrag')) {
+    return (
+      <TenantOnboardingWizard
+        isOpen={isOpen}
+        onClose={onClose}
+        preselectedUnit={workflowData?.extracted_data?.unit_id}
+        preselectedBuilding={workflowData?.extracted_data?.building_id}
+      />
+    );
+  }
 
   const steps = [
     {

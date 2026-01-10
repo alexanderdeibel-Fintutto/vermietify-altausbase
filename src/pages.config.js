@@ -298,6 +298,7 @@ import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import DocumentAnalysisDashboard from './pages/DocumentAnalysisDashboard';
+import TenantOnboardingManager from './pages/TenantOnboardingManager';
 import __Layout from './Layout.jsx';
 
 
@@ -602,6 +603,7 @@ export const PAGES = {
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "DocumentAnalysisDashboard": DocumentAnalysisDashboard,
+    "TenantOnboardingManager": TenantOnboardingManager,
 }
 
 export const pagesConfig = {
