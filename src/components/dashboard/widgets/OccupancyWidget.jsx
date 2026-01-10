@@ -1,42 +1,36 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Home } from 'lucide-react';
 
-const COLORS = ['#10b981', '#f59e0b', '#ef4444'];
-
 export default function OccupancyWidget() {
-  const data = [
-    { name: 'Vermietet', value: 28 },
-    { name: 'Geplant', value: 2 },
-    { name: 'Leer', value: 2 }
-  ];
+  const { data: units = [] } = useQuery({
+    queryKey: ['units-occupancy'],
+    queryFn: () => base44.entities.Unit.list()
+  });
+
+  const { data: contracts = [] } = useQuery({
+    queryKey: ['contracts-occupancy'],
+    queryFn: () => base44.entities.LeaseContract.filter({ status: 'active' })
+  });
+
+  const occupiedUnits = contracts.filter(c => c.unit_id).length;
+  const totalUnits = units.length;
+  const occupancyRate = totalUnits > 0 ? ((occupiedUnits / totalUnits) * 100).toFixed(1) : 0;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm flex items-center gap-2">
-          <Home className="w-4 h-4" />
-          Belegung
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Home className="w-5 h-5" />
+          Vermietungsstand
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={150}>
-          <PieChart>
-            <Pie data={data} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={2} dataKey="value">
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index]} />
-              ))}
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="mt-3 space-y-1 text-xs">
-          {data.map((item, i) => (
-            <div key={i} className="flex justify-between">
-              <span className="text-slate-600">{item.name}</span>
-              <span className="font-medium">{item.value}</span>
-            </div>
-          ))}
+        <div className="text-center">
+          <p className="text-4xl font-bold text-blue-600">{occupancyRate}%</p>
+          <p className="text-sm text-slate-600 mt-1">{occupiedUnits} / {totalUnits} Einheiten</p>
         </div>
       </CardContent>
     </Card>

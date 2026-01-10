@@ -1,36 +1,34 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
-import { BarChart3 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Euro } from 'lucide-react';
 
 export default function RevenueWidget() {
-  const data = [
-    { month: 'Jan', income: 12000, expenses: 4200 },
-    { month: 'Feb', income: 13200, expenses: 4400 },
-    { month: 'Mär', income: 12800, expenses: 4300 },
-    { month: 'Apr', income: 14100, expenses: 4600 },
-    { month: 'Mai', income: 15200, expenses: 4800 },
-    { month: 'Jun', income: 15800, expenses: 5000 }
-  ];
+  const { data: payments = [] } = useQuery({
+    queryKey: ['revenue-widget'],
+    queryFn: async () => {
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      const all = await base44.entities.Payment.list();
+      return all.filter(p => p.payment_date && p.payment_date.startsWith(currentMonth));
+    }
+  });
+
+  const totalRevenue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
 
   return (
-    <Card className="col-span-2">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-sm flex items-center gap-2">
-          <BarChart3 className="w-4 h-4" />
-          Einnahmen vs. Ausgaben
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Euro className="w-5 h-5" />
+          Einnahmen (Monat)
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis dataKey="month" fontSize={12} stroke="#94a3b8" />
-            <YAxis fontSize={12} stroke="#94a3b8" />
-            <Line type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="expenses" stroke="#f59e0b" strokeWidth={2} dot={false} />
-          </LineChart>
-        </ResponsiveContainer>
+        <div className="text-center">
+          <p className="text-4xl font-bold text-green-600">{totalRevenue.toFixed(2)}€</p>
+          <p className="text-sm text-slate-600 mt-1">{payments.length} Zahlungen</p>
+        </div>
       </CardContent>
     </Card>
   );

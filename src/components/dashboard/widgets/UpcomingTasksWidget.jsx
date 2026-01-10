@@ -1,37 +1,43 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, AlertCircle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CalendarClock } from 'lucide-react';
+import { format } from 'date-fns';
 
 export default function UpcomingTasksWidget() {
-  const tasks = [
-    { title: 'Wartung Gebäude A', date: 'Heute', priority: 'high' },
-    { title: 'Mietzahlung einziehen', date: 'Morgen', priority: 'high' },
-    { title: 'Versicherung prüfen', date: 'In 3 Tagen', priority: 'medium' },
-    { title: 'Wartungsbericht', date: 'In 5 Tagen', priority: 'low' }
-  ];
+  const { data: tasks = [] } = useQuery({
+    queryKey: ['upcoming-tasks'],
+    queryFn: async () => {
+      const all = await base44.entities.BuildingTask.list();
+      const upcoming = all.filter(t => 
+        t.due_date && 
+        new Date(t.due_date) > new Date() &&
+        t.status !== 'completed'
+      );
+      return upcoming.sort((a, b) => new Date(a.due_date) - new Date(b.due_date)).slice(0, 5);
+    }
+  });
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4" />
+        <CardTitle className="text-lg flex items-center gap-2">
+          <CalendarClock className="w-5 h-5" />
           Anstehende Aufgaben
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {tasks.map((task, i) => (
-            <div key={i} className="flex items-center justify-between p-2 rounded bg-slate-50">
-              <div>
-                <p className="text-xs font-medium text-slate-900">{task.title}</p>
-                <p className="text-xs text-slate-500">{task.date}</p>
-              </div>
-              <Badge className={task.priority === 'high' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}>
-                {task.priority}
-              </Badge>
+          {tasks.map(task => (
+            <div key={task.id} className="p-2 border rounded">
+              <p className="text-sm font-semibold">{task.task_title}</p>
+              <p className="text-xs text-slate-600">{format(new Date(task.due_date), 'dd.MM.yyyy')}</p>
             </div>
           ))}
+          {tasks.length === 0 && (
+            <p className="text-sm text-slate-500 text-center py-4">Keine anstehenden Aufgaben</p>
+          )}
         </div>
       </CardContent>
     </Card>

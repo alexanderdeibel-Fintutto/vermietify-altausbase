@@ -1,35 +1,38 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Home, DollarSign, AlertCircle } from 'lucide-react';
-import { Badge } from "@/components/ui/badge";
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
 export default function TenantsWidget() {
-  const tenantStats = [
-    { label: 'Aktive Mieter', value: '24', icon: Users, color: 'text-blue-600' },
-    { label: 'Vermietete Einheiten', value: '28', icon: Home, color: 'text-green-600' },
-    { label: 'Monatliche Miete', value: '€18.500', icon: DollarSign, color: 'text-emerald-600' },
-    { label: 'Verspätete Zahlungen', value: '2', icon: AlertCircle, color: 'text-red-600' }
-  ];
+  const { data: tenants = [] } = useQuery({
+    queryKey: ['tenants-widget'],
+    queryFn: () => base44.entities.Tenant.list('-updated_date', 10)
+  });
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base font-light">Mieterverwaltung</CardTitle>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Users className="w-5 h-5" />
+          Mieter
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-4">
-          {tenantStats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <div key={stat.label} className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <Icon className={`w-4 h-4 ${stat.color}`} />
-                  <span className="text-xs text-slate-600">{stat.label}</span>
-                </div>
-                <div className="text-lg font-extralight text-slate-900">{stat.value}</div>
+        <div className="space-y-2">
+          {tenants.slice(0, 5).map(tenant => (
+            <Link key={tenant.id} to={createPageUrl('TenantDetail') + `?id=${tenant.id}`}>
+              <div className="p-2 border rounded hover:bg-slate-50">
+                <p className="text-sm font-semibold">{tenant.first_name} {tenant.last_name}</p>
+                <p className="text-xs text-slate-600">{tenant.email}</p>
               </div>
-            );
-          })}
+            </Link>
+          ))}
+          {tenants.length === 0 && (
+            <p className="text-sm text-slate-500 text-center py-4">Keine Mieter</p>
+          )}
         </div>
       </CardContent>
     </Card>
