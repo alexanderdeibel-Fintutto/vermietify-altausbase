@@ -1,100 +1,141 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
-  const user = await base44.auth.me();
-  
-  if (!user) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
 
-  const { name, entity, fields, filters, groupBy, sortBy, format } = await req.json();
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-  // Fetch data
-  let data = await base44.entities[entity].list();
+    const { title, entity, metrics, groupBy, period, startDate, endDate } = await req.json();
 
-  // Apply filters
-  if (filters && filters.length > 0) {
-    data = data.filter(item => {
-      return filters.every(filter => {
-        const value = item[filter.field];
-        const filterValue = filter.value;
+    if (!entity || !metrics || metrics.length === 0) {
+      return Response.json({ error: 'Missing required parameters' }, { status: 400 });
+    }
 
-        switch (filter.operator) {
-          case 'equals':
-            return String(value) === String(filterValue);
-          case 'contains':
-            return String(value || '').toLowerCase().includes(String(filterValue).toLowerCase());
-          case 'greater_than':
-            return Number(value) > Number(filterValue);
-          default:
-            return true;
+    // Fetch data based on entity type
+    let rawData = [];
+    
+    if (entity === 'FinancialItem') {
+      rawData = await base44.entities.FinancialItem.list('-created_date', 1000);
+    } else if (entity === 'BuildingTask') {
+      rawData = await base44.entities.BuildingTask.list('-created_date', 1000);
+    } else if (entity === 'Unit') {
+      rawData = await base44.entities.Unit.list('-created_date', 1000);
+    } else if (entity === 'Tenant') {
+      rawData = await base44.entities.Tenant.list('-created_date', 1000);
+    } else if (entity === 'Payment') {
+      rawData = await base44.entities.Payment.list('-created_date', 1000);
+    } else if (entity === 'Building') {
+      rawData = await base44.entities.Building.list('-created_date', 1000);
+    } else if (entity === 'LeaseContract') {
+      rawData = await base44.entities.LeaseContract.list('-created_date', 1000);
+    }
+
+    // Filter by date range if provided
+    if (startDate) {
+      const start = new Date(startDate);
+      rawData = rawData.filter(item => new Date(item.created_date || item.date) >= start);
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      rawData = rawData.filter(item => new Date(item.created_date || item.date) <= end);
+    }
+
+    // Group data
+    const grouped = {};
+    rawData.forEach(item => {
+      let key = 'Other';
+      
+      if (groupBy === 'date') {
+        const date = new Date(item.created_date || item.date || new Date());
+        if (period === 'monthly') {
+          key = date.toLocaleDateString('de-DE', { year: 'numeric', month: 'long' });
+        } else if (period === 'yearly') {
+          key = date.getFullYear().toString();
+        } else {
+          key = date.toLocaleDateString('de-DE');
+        }
+      } else if (groupBy === 'category') {
+        key = item.category || 'Uncategorized';
+      } else if (groupBy === 'status') {
+        key = item.status || 'Unknown';
+      } else if (groupBy === 'building') {
+        key = item.building_id || 'Unknown';
+      }
+
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+      grouped[key].push(item);
+    });
+
+    // Calculate metrics for each group
+    const chartData = Object.entries(grouped).map(([name, items]) => {
+      const result = { name };
+      
+      metrics.forEach(metric => {
+        if (metric === 'amount') {
+          result[metric] = items.reduce((sum, item) => sum + (item.amount || 0), 0);
+        } else if (metric === 'count') {
+          result[metric] = items.length;
+        } else if (metric === 'total_income') {
+          result[metric] = items.filter(i => i.amount > 0).reduce((sum, i) => sum + i.amount, 0);
+        } else if (metric === 'total_expenses') {
+          result[metric] = Math.abs(items.filter(i => i.amount < 0).reduce((sum, i) => sum + i.amount, 0));
+        } else if (metric === 'occupancy_rate') {
+          const occupied = items.filter(i => i.occupancy_status === 'occupied').length;
+          result[metric] = items.length > 0 ? Math.round((occupied / items.length) * 100) : 0;
+        } else if (metric === 'vacancy_rate') {
+          const vacant = items.filter(i => i.occupancy_status === 'vacant').length;
+          result[metric] = items.length > 0 ? Math.round((vacant / items.length) * 100) : 0;
+        } else if (metric === 'avg_rent') {
+          const rents = items.map(i => i.monthly_rent || i.rent_amount || 0);
+          result[metric] = rents.length > 0 ? Math.round(rents.reduce((a, b) => a + b) / rents.length) : 0;
+        } else {
+          // Generic aggregation
+          result[metric] = items.length;
         }
       });
+      
+      return result;
+    }).sort((a, b) => {
+      // Sort by date if name looks like a date
+      if (!isNaN(Date.parse(a.name))) {
+        return new Date(a.name) - new Date(b.name);
+      }
+      return a.name.localeCompare(b.name);
     });
-  }
 
-  // Apply sorting
-  if (sortBy) {
-    data.sort((a, b) => {
-      const aVal = a[sortBy];
-      const bVal = b[sortBy];
-      if (aVal < bVal) return -1;
-      if (aVal > bVal) return 1;
-      return 0;
+    // Calculate summary
+    const summary = {};
+    metrics.forEach(metric => {
+      const values = chartData.map(item => item[metric] || 0);
+      if (metric.includes('rate')) {
+        summary[metric] = Math.round(values.reduce((a, b) => a + b) / values.length || 0) + '%';
+      } else if (metric.includes('total') || metric === 'amount' || metric === 'avg_rent') {
+        summary[metric] = '€' + values.reduce((a, b) => a + b, 0).toLocaleString('de-DE');
+      } else {
+        summary[metric] = values.reduce((a, b) => a + b, 0);
+      }
     });
-  }
 
-  // Extract only selected fields
-  const reportData = data.map(item => {
-    const row = {};
-    fields.forEach(field => {
-      row[field] = item[field];
-    });
-    return row;
-  });
-
-  // Generate report based on format
-  if (format === 'pdf') {
-    // Generate PDF
-    const pdfContent = generatePDFContent(name, reportData, fields);
     return Response.json({
-      url: 'data:application/pdf;base64,' + btoa(pdfContent),
-      count: reportData.length
+      title,
+      entity,
+      metrics,
+      groupBy,
+      period,
+      data: chartData,
+      summary,
+      detailedData: rawData.slice(0, 50),
+      chartType: metrics.length === 1 ? 'pie' : 'bar',
+      recordCount: rawData.length
     });
-  } else if (format === 'csv') {
-    const csv = generateCSV(reportData, fields);
-    return Response.json({
-      url: 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv),
-      count: reportData.length
-    });
-  } else {
-    // Excel format
-    return Response.json({
-      data: reportData,
-      count: reportData.length
-    });
+  } catch (error) {
+    console.error('Report generation error:', error);
+    return Response.json({ error: error.message }, { status: 500 });
   }
 });
-
-function generatePDFContent(title, data, fields) {
-  let content = `Report: ${title}\n`;
-  content += `Generiert: ${new Date().toLocaleDateString()}\n\n`;
-  content += `Anzahl Datensätze: ${data.length}\n\n`;
-  content += fields.join(' | ') + '\n';
-  content += '-'.repeat(80) + '\n';
-  
-  data.forEach(row => {
-    content += fields.map(f => row[f] || '').join(' | ') + '\n';
-  });
-
-  return content;
-}
-
-function generateCSV(data, fields) {
-  let csv = fields.join(',') + '\n';
-  data.forEach(row => {
-    csv += fields.map(f => `"${row[f] || ''}"`).join(',') + '\n';
-  });
-  return csv;
-}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   LineChart,
   Line,
@@ -7,85 +7,173 @@ import {
   Bar,
   PieChart,
   Pie,
-  AreaChart,
-  Area,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
-  Cell
+  ResponsiveContainer
 } from 'recharts';
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+const chartColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
-export default function ReportChartDisplay({ type, data = [], title }) {
-  if (!data || data.length === 0) {
-    return (
-      <Card className="p-6 text-center">
-        <p className="text-slate-600 font-light">Keine Daten verfügbar</p>
-      </Card>
-    );
+export default function ReportChartDisplay({ reportData }) {
+  if (!reportData || !reportData.data) {
+    return null;
   }
 
-  return (
-    <Card className="p-6">
-      {title && <h3 className="text-lg font-light text-slate-900 mb-4">{title}</h3>}
-      
-      <ResponsiveContainer width="100%" height={300}>
-        {type === 'line' && (
+  const renderChart = (chartType, data, title) => {
+    if (!data || data.length === 0) {
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{title}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-slate-600 text-center py-8">Keine Daten verfügbar</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    let chart = null;
+
+    if (chartType === 'line') {
+      chart = (
+        <ResponsiveContainer width="100%" height={300}>
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis />
             <Tooltip />
             <Legend />
-            <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} />
+            {reportData.metrics?.map((metric, idx) => (
+              <Line
+                key={metric}
+                type="monotone"
+                dataKey={metric}
+                stroke={chartColors[idx % chartColors.length]}
+                strokeWidth={2}
+              />
+            ))}
           </LineChart>
-        )}
-
-        {type === 'bar' && (
+        </ResponsiveContainer>
+      );
+    } else if (chartType === 'bar') {
+      chart = (
+        <ResponsiveContainer width="100%" height={300}>
           <BarChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey="value" fill="#3b82f6" />
+            {reportData.metrics?.map((metric, idx) => (
+              <Bar
+                key={metric}
+                dataKey={metric}
+                fill={chartColors[idx % chartColors.length]}
+              />
+            ))}
           </BarChart>
-        )}
-
-        {type === 'pie' && (
+        </ResponsiveContainer>
+      );
+    } else if (chartType === 'pie' && reportData.metrics?.length === 1) {
+      chart = (
+        <ResponsiveContainer width="100%" height={300}>
           <PieChart>
             <Pie
               data={data}
+              dataKey={reportData.metrics[0]}
+              nameKey="name"
               cx="50%"
               cy="50%"
-              labelLine={false}
-              label={({ name, value }) => `${name}: ${value}`}
-              outerRadius={80}
-              fill="#8884d8"
-              dataKey="value"
+              outerRadius={100}
+              label
             >
               {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
               ))}
             </Pie>
             <Tooltip />
+            <Legend />
           </PieChart>
-        )}
+        </ResponsiveContainer>
+      );
+    }
 
-        {type === 'area' && (
-          <AreaChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <Area type="monotone" dataKey="value" fill="#3b82f6" stroke="#3b82f6" />
-          </AreaChart>
-        )}
-      </ResponsiveContainer>
-    </Card>
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{title}</CardTitle>
+        </CardHeader>
+        <CardContent>{chart}</CardContent>
+      </Card>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Summary Stats */}
+      {reportData.summary && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {Object.entries(reportData.summary).map(([key, value]) => (
+            <Card key={key}>
+              <CardContent className="pt-6">
+                <p className="text-sm text-slate-600">{key}</p>
+                <p className="text-2xl font-bold text-slate-900 mt-2">
+                  {typeof value === 'number' ? value.toLocaleString('de-DE') : value}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Line Chart - Trends */}
+      {reportData.chartType !== 'pie' && renderChart('line', reportData.data, 'Entwicklung über Zeit')}
+
+      {/* Bar Chart - Comparison */}
+      {reportData.data && renderChart('bar', reportData.data, 'Vergleichswerte')}
+
+      {/* Pie Chart - Distribution */}
+      {reportData.chartType === 'pie' && reportData.data && renderChart('pie', reportData.data, 'Verteilung')}
+
+      {/* Detailed Table */}
+      {reportData.detailedData && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Detaillierte Daten</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    {Object.keys(reportData.detailedData[0] || {}).map(key => (
+                      <th key={key} className="text-left py-2 px-4 font-semibold text-slate-700">
+                        {key}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {reportData.detailedData.map((row, idx) => (
+                    <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
+                      {Object.values(row).map((value, cellIdx) => (
+                        <td key={cellIdx} className="py-2 px-4">
+                          {typeof value === 'number' ? value.toLocaleString('de-DE') : String(value)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
