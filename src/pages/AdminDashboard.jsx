@@ -75,6 +75,13 @@ export default function AdminDashboard() {
       icon: TrendingUp,
       color: 'indigo',
       link: 'IoTSensorManagement'
+    },
+    {
+      title: 'Detaillierte Analysen',
+      description: 'Statistiken',
+      icon: BarChart3,
+      color: 'blue',
+      link: 'AdminAnalyticsDashboard'
     }
   ];
 
@@ -104,7 +111,7 @@ export default function AdminDashboard() {
         <UrgentNotificationPanel />
 
         {/* Quick Links */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
           {quickLinks.map((link, idx) => (
             <Link key={idx} to={createPageUrl(link.link)}>
               <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
