@@ -16,6 +16,8 @@ import TenantCommunicationHub from '@/components/tenant-portal/TenantCommunicati
 import TenantDocumentUpload from '@/components/tenant-portal/TenantDocumentUpload';
 import UpcomingMaintenanceView from '@/components/tenant-portal/UpcomingMaintenanceView';
 import TenantPaymentManagement from '@/components/tenant-portal/TenantPaymentManagement';
+import KnowledgeBaseViewer from '@/components/tenant-portal/KnowledgeBaseViewer';
+import TenantIssueReporter from '@/components/tenant-portal/TenantIssueReporter';
 
 export default function TenantPortal() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -119,7 +121,11 @@ export default function TenantPortal() {
         </TabsContent>
 
         <TabsContent value="maintenance" className="space-y-6">
-          <MaintenanceRequestForm tenantId={tenantRecord?.id} unitId={tenantRecord?.unit_id} />
+          <TenantIssueReporter 
+            tenantId={tenantRecord?.id}
+            unitId={tenantRecord?.unit_id}
+            buildingId={tenantRecord?.building_id}
+          />
           <MaintenanceRequestTracker />
         </TabsContent>
 
@@ -128,7 +134,7 @@ export default function TenantPortal() {
         </TabsContent>
 
         <TabsContent value="help">
-          <KnowledgeBaseWidget />
+          <KnowledgeBaseViewer />
         </TabsContent>
       </Tabs>
     </div>
