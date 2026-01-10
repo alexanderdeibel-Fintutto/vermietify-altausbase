@@ -3,89 +3,74 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { issue_id, issue_type, location, building_id } = await req.json();
-
-    // Get available vendors/technicians
-    const allVendors = await base44.asServiceRole.entities.Vendor.list();
+    const user = await base44.auth.me();
     
-    // Filter vendors by specialty matching the issue type
-    const specialtyMap = {
-      heating: ['heating', 'general'],
-      plumbing: ['plumbing', 'general'],
-      electrical: ['electrical', 'general'],
-      appliance: ['general'],
-      temperature: ['heating', 'general'],
-      humidity: ['plumbing', 'general'],
-      noise: ['general'],
-      other: ['general']
-    };
+    if (!user || user.role !== 'admin') {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
-    const requiredSpecialties = specialtyMap[issue_type] || ['general'];
-    
-    const suitableVendors = allVendors.filter(v => 
-      v.is_active && 
-      v.specialties?.some(s => requiredSpecialties.includes(s))
-    );
+    const { task_id, building_id } = await req.json();
 
-    if (suitableVendors.length === 0) {
+    if (!task_id) {
+      return Response.json({ error: 'Missing task_id' }, { status: 400 });
+    }
+
+    // Get task
+    const tasks = await base44.asServiceRole.entities.BuildingTask.filter({ id: task_id });
+    const task = tasks[0];
+
+    if (!task) {
+      return Response.json({ error: 'Task not found' }, { status: 404 });
+    }
+
+    // Get building managers
+    const managers = await base44.asServiceRole.entities.BuildingManager.filter({ 
+      building_id: task.building_id || building_id 
+    });
+
+    // Find best manager based on task type and specialization
+    let bestManager = null;
+    if (managers.length > 0) {
+      // Sort by priority/rating
+      bestManager = managers.sort((a, b) => (b.rating || 0) - (a.rating || 0))[0];
+    }
+
+    if (!bestManager && managers.length > 0) {
+      bestManager = managers[0];
+    }
+
+    // Assign task
+    if (bestManager) {
+      await base44.asServiceRole.entities.BuildingTask.update(task_id, {
+        assigned_to: bestManager.email,
+        assigned_role: 'building_manager',
+        status: 'assigned'
+      });
+
+      // Notify manager
+      await base44.asServiceRole.entities.Notification.create({
+        user_email: bestManager.email,
+        title: 'Neue Aufgabe zugewiesen',
+        message: `Aufgabe "${task.task_title}" wurde Ihnen zugewiesen`,
+        type: 'task_assignment',
+        action_type: 'task',
+        action_id: task_id,
+        priority: task.priority,
+        is_read: false
+      });
+
       return Response.json({ 
-        success: false, 
-        message: 'Keine passenden Techniker gefunden'
+        message: 'Task assigned',
+        manager: bestManager.email,
+        task_id
       });
     }
 
-    // Score vendors based on multiple factors
-    const scoredVendors = await Promise.all(suitableVendors.map(async (vendor) => {
-      let score = 0;
-
-      // Priority: Preferred vendors
-      if (vendor.preferred) score += 50;
-
-      // Rating
-      if (vendor.rating) score += vendor.rating * 10;
-
-      // Check recent tasks (workload)
-      const recentTasks = await base44.asServiceRole.entities.VendorTask.filter({
-        vendor_id: vendor.id,
-        status: 'in_progress'
-      });
-      score -= recentTasks.length * 5; // Penalty for high workload
-
-      // Emergency contact bonus
-      if (vendor.emergency_contact) score += 20;
-
-      return { vendor, score };
-    }));
-
-    // Sort by score (highest first)
-    scoredVendors.sort((a, b) => b.score - a.score);
-    const selectedVendor = scoredVendors[0].vendor;
-
-    // Create maintenance task
-    const task = await base44.asServiceRole.entities.MaintenanceTask.create({
-      title: `Störung: ${issue_type}`,
-      category: issue_type === 'electrical' ? 'electrical' : 
-                issue_type === 'plumbing' ? 'plumbing' :
-                issue_type === 'heating' || issue_type === 'temperature' ? 'heating' : 'general',
-      building_id,
-      assigned_to: selectedVendor.email,
-      status: 'assigned',
-      priority: 'medium',
-      auto_task_created: true
-    });
-
-    return Response.json({
-      success: true,
-      assigned_to: selectedVendor.company_name,
-      task_id: task.id,
-      vendor
-    });
-
-  } catch (error) {
-    console.error('Auto-assignment error:', error);
     return Response.json({ 
-      success: false, 
-      error: error.message 
-    }, { status: 500 });
+      message: 'No manager available',
+      task_id
+    });
+  } catch (error) {
+    return Response.json({ error: error.message }, { status: 500 });
   }
 });
