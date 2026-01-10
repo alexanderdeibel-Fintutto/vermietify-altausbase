@@ -120,7 +120,7 @@ export default function TemplateUploadDialog({ isOpen, onClose, legalForm }) {
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
             <p className="text-xs text-blue-900">
-              💡 Tipp: Verwenden Sie Platzhalter in Ihrer Vorlage (z.B. {{'{company_name}'}}, {{'{address}'}}) die automatisch ausgefüllt werden.
+              💡 Tipp: Verwenden Sie Platzhalter in Ihrer Vorlage (z.B. {"{company_name}"}, {"{address}"}) die automatisch ausgefüllt werden.
             </p>
           </div>
 
