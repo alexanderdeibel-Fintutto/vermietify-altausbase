@@ -8,12 +8,12 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const key = `sk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const { name, filters } = await req.json();
 
-  await base44.entities.APIKey.create({
-    key,
-    created_at: new Date().toISOString()
-  });
+  const savedSearches = user.saved_searches || [];
+  savedSearches.push({ id: Date.now().toString(), name, filters });
 
-  return Response.json({ key });
+  await base44.auth.updateMe({ saved_searches: savedSearches });
+
+  return Response.json({ success: true });
 });

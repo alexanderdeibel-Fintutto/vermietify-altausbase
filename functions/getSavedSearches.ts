@@ -8,12 +8,10 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const key = `sk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const searches = user.saved_searches || [
+    { id: '1', name: 'Offene Rechnungen', filters: { status: 'open' } },
+    { id: '2', name: 'Steuer-Dokumente 2025', filters: { category: 'tax', year: 2025 } }
+  ];
 
-  await base44.entities.APIKey.create({
-    key,
-    created_at: new Date().toISOString()
-  });
-
-  return Response.json({ key });
+  return Response.json({ searches });
 });

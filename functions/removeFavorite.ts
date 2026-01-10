@@ -8,12 +8,10 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const key = `sk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const { favorite_id } = await req.json();
 
-  await base44.entities.APIKey.create({
-    key,
-    created_at: new Date().toISOString()
-  });
+  const favorites = (user.favorites || []).filter(f => f.id !== favorite_id);
+  await base44.auth.updateMe({ favorites });
 
-  return Response.json({ key });
+  return Response.json({ success: true });
 });

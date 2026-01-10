@@ -8,12 +8,10 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const key = `sk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const webhooks = [
+    { id: '1', url: 'https://example.com/webhook', events: ['transaction.created'], active: true },
+    { id: '2', url: 'https://zapier.com/hooks/abc', events: ['document.uploaded'], active: true }
+  ];
 
-  await base44.entities.APIKey.create({
-    key,
-    created_at: new Date().toISOString()
-  });
-
-  return Response.json({ key });
+  return Response.json({ webhooks });
 });

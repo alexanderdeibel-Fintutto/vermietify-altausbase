@@ -8,12 +8,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const key = `sk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const rules = await base44.entities.Automation.list('-created_date', 20);
 
-  await base44.entities.APIKey.create({
-    key,
-    created_at: new Date().toISOString()
-  });
-
-  return Response.json({ key });
+  return Response.json({ rules });
 });

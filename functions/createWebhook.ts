@@ -8,12 +8,17 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const key = `sk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const { url, events } = await req.json();
 
-  await base44.entities.APIKey.create({
-    key,
-    created_at: new Date().toISOString()
+  const webhooks = user.webhooks || [];
+  webhooks.push({
+    id: Date.now().toString(),
+    url,
+    events,
+    active: true
   });
 
-  return Response.json({ key });
+  await base44.auth.updateMe({ webhooks });
+
+  return Response.json({ success: true });
 });

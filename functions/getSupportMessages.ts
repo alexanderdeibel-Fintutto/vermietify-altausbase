@@ -8,12 +8,9 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const key = `sk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const messages = [
+    { text: 'Hallo! Wie kann ich Ihnen helfen?', is_user: false, timestamp: new Date(Date.now() - 60000).toISOString() }
+  ];
 
-  await base44.entities.APIKey.create({
-    key,
-    created_at: new Date().toISOString()
-  });
-
-  return Response.json({ key });
+  return Response.json({ messages });
 });
