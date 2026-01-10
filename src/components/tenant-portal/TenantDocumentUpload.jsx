@@ -14,6 +14,9 @@ const documentCategories = [
   { value: 'damage_report', label: 'Schadenmeldung' },
   { value: 'rent_receipt', label: 'Mietbescheinigung' },
   { value: 'deposit_confirmation', label: 'Kautionsbestätigung' },
+  { value: 'termination', label: 'Kündigung' },
+  { value: 'repair_request', label: 'Reparaturanfrage' },
+  { value: 'insurance', label: 'Versicherung' },
   { value: 'other', label: 'Sonstiges' }
 ];
 
@@ -21,6 +24,7 @@ export default function TenantDocumentUpload({ tenantId, contractId }) {
   const [uploading, setUploading] = useState(false);
   const [category, setCategory] = useState('other');
   const [description, setDescription] = useState('');
+  const [filterCategory, setFilterCategory] = useState('all');
   const queryClient = useQueryClient();
 
   const { data: documents = [] } = useQuery({
@@ -31,6 +35,20 @@ export default function TenantDocumentUpload({ tenantId, contractId }) {
     },
     enabled: !!tenantId
   });
+
+  const { data: contract } = useQuery({
+    queryKey: ['tenant-contract', contractId],
+    queryFn: async () => {
+      if (!contractId) return null;
+      const contracts = await base44.entities.LeaseContract.filter({ id: contractId });
+      return contracts[0];
+    },
+    enabled: !!contractId
+  });
+
+  const filteredDocuments = filterCategory === 'all' 
+    ? documents 
+    : documents.filter(d => d.category === filterCategory);
 
   const handleUpload = async (e) => {
     const file = e.target.files[0];
@@ -133,17 +151,41 @@ export default function TenantDocumentUpload({ tenantId, contractId }) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Meine Dokumente</CardTitle>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Meine Dokumente</CardTitle>
+              {contract && (
+                <p className="text-xs text-slate-600 mt-1">
+                  Verknüpft mit Mietvertrag: {contract.unit_id}
+                </p>
+              )}
+            </div>
+            <Select value={filterCategory} onValueChange={setFilterCategory}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Kategorien</SelectItem>
+                {documentCategories.map(cat => (
+                  <SelectItem key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
-          {documents.length === 0 ? (
+          {filteredDocuments.length === 0 ? (
             <div className="text-center py-8">
               <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-600">Noch keine Dokumente hochgeladen</p>
+              <p className="text-slate-600">
+                {documents.length === 0 ? 'Noch keine Dokumente hochgeladen' : 'Keine Dokumente in dieser Kategorie'}
+              </p>
             </div>
           ) : (
             <div className="space-y-2">
-              {documents.map(doc => (
+              {filteredDocuments.map(doc => (
                 <div
                   key={doc.id}
                   className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50"
@@ -156,28 +198,47 @@ export default function TenantDocumentUpload({ tenantId, contractId }) {
                         <span>{new Date(doc.created_date).toLocaleDateString('de-DE')}</span>
                         {doc.category && (
                           <Badge variant="outline" className="text-xs">
-                            {doc.category}
+                            {documentCategories.find(c => c.value === doc.category)?.label || doc.category}
                           </Badge>
                         )}
+                        {doc.file_size && (
+                          <span className="text-slate-500">
+                            {(doc.file_size / 1024).toFixed(0)} KB
+                          </span>
+                        )}
                       </div>
+                      {doc.notes && (
+                        <p className="text-xs text-slate-600 mt-1 italic">{doc.notes}</p>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-1">
                     {doc.file_url && (
-                      <a
-                        href={doc.file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Button size="icon" variant="ghost">
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      </a>
+                      <>
+                        <a
+                          href={doc.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Button size="icon" variant="ghost" title="Ansehen">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </a>
+                        <a
+                          href={doc.file_url}
+                          download={doc.name}
+                        >
+                          <Button size="icon" variant="ghost" title="Herunterladen">
+                            <Download className="w-4 h-4" />
+                          </Button>
+                        </a>
+                      </>
                     )}
                     <Button
                       size="icon"
                       variant="ghost"
                       onClick={() => deleteMutation.mutate(doc.id)}
+                      title="Löschen"
                     >
                       <Trash2 className="w-4 h-4 text-red-500" />
                     </Button>
