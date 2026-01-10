@@ -304,6 +304,8 @@ import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import ReportBuilder from './pages/ReportBuilder';
 import BuildingDetailEnhanced from './pages/BuildingDetailEnhanced';
 import CompanyDetailEnhanced from './pages/CompanyDetailEnhanced';
+import Companies from './pages/Companies';
+import EmployeeManagement from './pages/EmployeeManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -614,6 +616,8 @@ export const PAGES = {
     "ReportBuilder": ReportBuilder,
     "BuildingDetailEnhanced": BuildingDetailEnhanced,
     "CompanyDetailEnhanced": CompanyDetailEnhanced,
+    "Companies": Companies,
+    "EmployeeManagement": EmployeeManagement,
 }
 
 export const pagesConfig = {
