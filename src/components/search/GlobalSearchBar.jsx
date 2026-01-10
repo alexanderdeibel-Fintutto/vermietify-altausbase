@@ -1,181 +1,160 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Search, Building2, User, FileText, Wrench, CreditCard, Home, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
-
-const entityIcons = {
-  Building: Building2,
-  Unit: Home,
-  Tenant: User,
-  LeaseContract: FileText,
-  Payment: CreditCard,
-  MaintenanceTask: Wrench,
-  Document: FileText,
-  BuildingTask: Wrench
-};
-
-const entityLabels = {
-  Building: 'Gebäude',
-  Unit: 'Einheit',
-  Tenant: 'Mieter',
-  LeaseContract: 'Vertrag',
-  Payment: 'Zahlung',
-  MaintenanceTask: 'Wartung',
-  Document: 'Dokument',
-  BuildingTask: 'Aufgabe'
-};
-
-const entityColors = {
-  Building: 'bg-blue-100 text-blue-800',
-  Unit: 'bg-purple-100 text-purple-800',
-  Tenant: 'bg-green-100 text-green-800',
-  LeaseContract: 'bg-orange-100 text-orange-800',
-  Payment: 'bg-yellow-100 text-yellow-800',
-  MaintenanceTask: 'bg-red-100 text-red-800',
-  Document: 'bg-slate-100 text-slate-800',
-  BuildingTask: 'bg-indigo-100 text-indigo-800'
-};
+import { Input } from '@/components/ui/input';
+import { Search, FileText, CheckCircle2, Settings2 } from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 
 export default function GlobalSearchBar({ compact = false }) {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
+  const [filters, setFilters] = useState({});
   const [isOpen, setIsOpen] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
-  const searchRef = useRef(null);
-  const navigate = useNavigate();
+
+  const searchMutation = useMutation({
+    mutationFn: () =>
+      base44.functions.invoke('advancedSearch', {
+        query,
+        filters,
+        entity_types: ['Document', 'DocumentTask', 'DocumentWorkflowRule'],
+        limit: 20
+      })
+  });
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
+    if (query || Object.keys(filters).length > 0) {
+      searchMutation.mutate();
+    }
+  }, [query, filters]);
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const results = searchMutation.data?.data?.results || {};
 
-  useEffect(() => {
-    const searchEntities = async () => {
-      if (query.length < 2) {
-        setResults([]);
-        setIsOpen(false);
-        return;
-      }
-
-      setIsSearching(true);
-      try {
-        const response = await base44.functions.invoke('globalSearchEntities', { query, limit: 20 });
-        setResults(response.data.results || []);
-        setIsOpen(true);
-      } catch (error) {
-        console.error('Search error:', error);
-        setResults([]);
-      } finally {
-        setIsSearching(false);
-      }
-    };
-
-    const debounceTimer = setTimeout(searchEntities, 300);
-    return () => clearTimeout(debounceTimer);
-  }, [query]);
-
-  const handleResultClick = (result) => {
-    setIsOpen(false);
-    setQuery('');
-    
-    // Navigate based on entity type
-    if (result.type === 'Building') {
-      navigate(createPageUrl('BuildingDetail') + `?id=${result.id}`);
-    } else if (result.type === 'Tenant') {
-      navigate(createPageUrl('TenantDetail') + `?id=${result.id}`);
-    } else if (result.type === 'LeaseContract') {
-      navigate(createPageUrl('ContractDetail') + `?id=${result.id}`);
-    } else if (result.type === 'Unit') {
-      navigate(createPageUrl('UnitDetail') + `?id=${result.id}`);
-    } else {
-      // For other types, navigate to their list pages
-      const pageMap = {
-        Payment: 'Payments',
-        MaintenanceTask: 'MaintenanceTasks',
-        Document: 'Documents',
-        BuildingTask: 'SmartTaskDashboard'
-      };
-      const page = pageMap[result.type];
-      if (page) navigate(createPageUrl(page));
+  const getIcon = (type) => {
+    switch (type) {
+      case 'document':
+        return <FileText className="w-4 h-4 text-blue-600" />;
+      case 'task':
+        return <CheckCircle2 className="w-4 h-4 text-green-600" />;
+      case 'rule':
+        return <Settings2 className="w-4 h-4 text-purple-600" />;
+      default:
+        return <Search className="w-4 h-4" />;
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Escape') {
-      setIsOpen(false);
-      setQuery('');
-    }
-  };
+  const totalResults = (results.documents?.length || 0) + (results.tasks?.length || 0) + (results.rules?.length || 0);
 
   return (
-    <div ref={searchRef} className="relative w-full">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <Input
-          type="text"
-          placeholder="Suche nach Gebäuden, Mietern, Verträgen..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className={`pl-10 ${compact ? '' : 'w-full'}`}
-        />
-        {isSearching && (
-          <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 animate-spin" />
-        )}
-      </div>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <div className={`relative ${compact ? 'w-full max-w-xs' : 'w-full'}`}>
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Input
+            placeholder="Global suchen..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onClick={() => setIsOpen(true)}
+            className={`pl-10 ${compact ? '' : ''}`}
+          />
+        </div>
+      </PopoverTrigger>
+      <PopoverContent className="w-96 p-0" align={compact ? 'end' : 'start'}>
+        <div className="p-4 border-b border-slate-200">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input
+              placeholder="Dokumente, Aufgaben, Regeln suchen..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="pl-10"
+              autoFocus
+            />
+          </div>
+        </div>
 
-      {isOpen && results.length > 0 && (
-        <Card className="absolute top-full mt-2 w-full max-h-96 overflow-y-auto z-50 shadow-lg">
-          <div className="p-2">
-            <div className="text-xs text-slate-600 px-2 py-1 mb-1">
-              {results.length} Ergebnis{results.length !== 1 ? 'se' : ''} gefunden
+        <div className="max-h-96 overflow-y-auto">
+          {searchMutation.isPending ? (
+            <div className="p-6 text-center">
+              <div className="animate-spin inline-block w-6 h-6 border-2 border-slate-300 border-t-slate-700 rounded-full"></div>
             </div>
-            {results.map((result, index) => {
-              const Icon = entityIcons[result.type] || FileText;
-              return (
-                <div
-                  key={`${result.type}-${result.id}-${index}`}
-                  onClick={() => handleResultClick(result)}
-                  className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-4 h-4 text-slate-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm truncate">{result.title}</span>
-                      <Badge className={`${entityColors[result.type]} text-xs`} variant="outline">
-                        {entityLabels[result.type]}
-                      </Badge>
-                    </div>
-                    {result.subtitle && (
-                      <p className="text-xs text-slate-600 truncate">{result.subtitle}</p>
-                    )}
+          ) : totalResults === 0 && query ? (
+            <div className="p-6 text-center">
+              <Search className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+              <p className="text-sm text-slate-500">Keine Ergebnisse gefunden</p>
+            </div>
+          ) : (
+            <>
+              {/* Documents */}
+              {results.documents?.length > 0 && (
+                <div className="p-3 border-b">
+                  <p className="text-xs font-medium text-slate-600 mb-2">DOKUMENTE</p>
+                  <div className="space-y-1">
+                    {results.documents.map(doc => (
+                      <div
+                        key={doc.id}
+                        className="p-2 rounded hover:bg-slate-100 cursor-pointer text-sm flex items-start gap-2"
+                      >
+                        {getIcon('document')}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-slate-900 font-medium truncate">{doc.name}</p>
+                          <p className="text-xs text-slate-500">{doc.document_type}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </Card>
-      )}
+              )}
 
-      {isOpen && query.length >= 2 && results.length === 0 && !isSearching && (
-        <Card className="absolute top-full mt-2 w-full z-50 shadow-lg">
-          <div className="p-4 text-center text-sm text-slate-600">
-            Keine Ergebnisse für "{query}"
-          </div>
-        </Card>
-      )}
-    </div>
+              {/* Tasks */}
+              {results.tasks?.length > 0 && (
+                <div className="p-3 border-b">
+                  <p className="text-xs font-medium text-slate-600 mb-2">AUFGABEN</p>
+                  <div className="space-y-1">
+                    {results.tasks.map(task => (
+                      <div
+                        key={task.id}
+                        className="p-2 rounded hover:bg-slate-100 cursor-pointer text-sm flex items-start gap-2"
+                      >
+                        {getIcon('task')}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-slate-900 font-medium truncate">{task.title}</p>
+                          <p className="text-xs text-slate-500">{task.status}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Rules */}
+              {results.rules?.length > 0 && (
+                <div className="p-3">
+                  <p className="text-xs font-medium text-slate-600 mb-2">REGELN</p>
+                  <div className="space-y-1">
+                    {results.rules.map(rule => (
+                      <div
+                        key={rule.id}
+                        className="p-2 rounded hover:bg-slate-100 cursor-pointer text-sm flex items-start gap-2"
+                      >
+                        {getIcon('rule')}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-slate-900 font-medium truncate">{rule.name}</p>
+                          <p className="text-xs text-slate-500">{rule.trigger_type}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
