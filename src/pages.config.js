@@ -315,6 +315,7 @@ import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowAI from './pages/WorkflowAI';
+import AdvancedWorkflowAnalytics from './pages/AdvancedWorkflowAnalytics';
 import __Layout from './Layout.jsx';
 
 
@@ -636,6 +637,7 @@ export const PAGES = {
     "WorkflowExecutionCenter": WorkflowExecutionCenter,
     "WorkflowReporting": WorkflowReporting,
     "WorkflowAI": WorkflowAI,
+    "AdvancedWorkflowAnalytics": AdvancedWorkflowAnalytics,
 }
 
 export const pagesConfig = {
