@@ -8,16 +8,13 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { entity } = await req.json();
+  const { search_id } = await req.json();
 
   try {
-    const searches = await base44.entities.SavedSearch.filter({
-      user_email: user.email,
-      entity: entity
-    });
-    return Response.json(searches);
+    await base44.entities.SavedSearch.delete(search_id);
   } catch (error) {
-    // Entity might not exist
-    return Response.json([]);
+    console.error('Error deleting search:', error);
   }
+
+  return Response.json({ success: true });
 });

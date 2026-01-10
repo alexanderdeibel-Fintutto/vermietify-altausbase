@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import SuiteSwitcher from '@/components/suite/SuiteSwitcher';
 import { Button } from "@/components/ui/button";
+import GlobalSearchBar from '@/components/search/GlobalSearchBar';
 import OnboardingRedirect from '@/components/onboarding/OnboardingRedirect';
 import HorizontalMainNavigation from '@/components/navigation/HorizontalMainNavigation';
 import DynamicSubNavigation from '@/components/navigation/DynamicSubNavigation';
@@ -113,7 +114,12 @@ export default function Layout({ children, currentPageName }) {
                                             <span className="font-light text-slate-800 text-base tracking-wide">{getAppName()}</span>
                                         </div>
 
-                        {/* Right Actions */}
+                                        {/* Global Search */}
+                                        <div className="hidden lg:block flex-1 max-w-2xl mx-8">
+                                            <GlobalSearchBar compact />
+                                        </div>
+
+                                        {/* Right Actions */}
                                         <div className="flex items-center gap-3">
                                             <NotificationCenter />
                                             <SuiteSwitcher />
