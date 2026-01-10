@@ -79,8 +79,10 @@ import RecurringBookings from '@/components/tax-property/RecurringBookings';
 import SmartAlerts from '@/components/tax-property/SmartAlerts';
 import BatchImport from '@/components/tax-property/BatchImport';
 import DocumentUploadManager from '@/components/tax-property/DocumentUploadManager';
+import BulkDocumentUpload from '@/components/tax-property/BulkDocumentUpload';
 import DocumentSearchEngine from '@/components/tax-property/DocumentSearchEngine';
 import TaxDocumentGallery from '@/components/tax-property/TaxDocumentGallery';
+import SmartFilingAssistant from '@/components/tax-property/SmartFilingAssistant';
 import QuickActionsPanel from '@/components/tax-property/QuickActionsPanel';
 import TaxYearOverview from '@/components/tax-property/TaxYearOverview';
 import FinancialSummaryCards from '@/components/tax-property/FinancialSummaryCards';
@@ -384,11 +386,17 @@ export default function SteuerVermoegenApp() {
 
             <RecurringBookings />
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <DocumentUploadManager />
-              <DocumentSearchEngine />
-              <TaxDocumentGallery />
+              <BulkDocumentUpload />
             </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <DocumentSearchEngine />
+              <SmartFilingAssistant />
+            </div>
+
+            <TaxDocumentGallery />
 
             <Card>
               <CardHeader>
@@ -396,15 +404,6 @@ export default function SteuerVermoegenApp() {
               </CardHeader>
               <CardContent>
                 <FinancialItemTable />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Steuerrelevante Dokumente</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <DocumentsList />
               </CardContent>
             </Card>
           </TabsContent>
