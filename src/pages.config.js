@@ -89,12 +89,16 @@ import DeductionMaximizationTool from './pages/DeductionMaximizationTool';
 import DeveloperDocumentation from './pages/DeveloperDocumentation';
 import DividendOptimization from './pages/DividendOptimization';
 import DocumentAnalysisDashboard from './pages/DocumentAnalysisDashboard';
+import DocumentAnalytics from './pages/DocumentAnalytics';
+import DocumentArchiveManager from './pages/DocumentArchiveManager';
 import DocumentGeneration from './pages/DocumentGeneration';
 import DocumentInbox from './pages/DocumentInbox';
 import DocumentInboxSettings from './pages/DocumentInboxSettings';
 import DocumentLibrary from './pages/DocumentLibrary';
 import DocumentManagement from './pages/DocumentManagement';
 import DocumentManagementCenter from './pages/DocumentManagementCenter';
+import DocumentManagementDashboard from './pages/DocumentManagementDashboard';
+import DocumentSearch from './pages/DocumentSearch';
 import Documents from './pages/Documents';
 import ElsterIntegration from './pages/ElsterIntegration';
 import EmailTemplates from './pages/EmailTemplates';
@@ -304,13 +308,9 @@ import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
 import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import WorkflowAutomation from './pages/WorkflowAutomation';
+import WorkflowAutomationCenter from './pages/WorkflowAutomationCenter';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import DocumentAnalytics from './pages/DocumentAnalytics';
-import DocumentArchiveManager from './pages/DocumentArchiveManager';
-import DocumentSearch from './pages/DocumentSearch';
-import DocumentManagementDashboard from './pages/DocumentManagementDashboard';
-import WorkflowAutomationCenter from './pages/WorkflowAutomationCenter';
 import __Layout from './Layout.jsx';
 
 
@@ -406,12 +406,16 @@ export const PAGES = {
     "DeveloperDocumentation": DeveloperDocumentation,
     "DividendOptimization": DividendOptimization,
     "DocumentAnalysisDashboard": DocumentAnalysisDashboard,
+    "DocumentAnalytics": DocumentAnalytics,
+    "DocumentArchiveManager": DocumentArchiveManager,
     "DocumentGeneration": DocumentGeneration,
     "DocumentInbox": DocumentInbox,
     "DocumentInboxSettings": DocumentInboxSettings,
     "DocumentLibrary": DocumentLibrary,
     "DocumentManagement": DocumentManagement,
     "DocumentManagementCenter": DocumentManagementCenter,
+    "DocumentManagementDashboard": DocumentManagementDashboard,
+    "DocumentSearch": DocumentSearch,
     "Documents": Documents,
     "ElsterIntegration": ElsterIntegration,
     "EmailTemplates": EmailTemplates,
@@ -621,13 +625,9 @@ export const PAGES = {
     "WhatsAppSetup": WhatsAppSetup,
     "WithholdingTaxCalculator": WithholdingTaxCalculator,
     "WorkflowAutomation": WorkflowAutomation,
+    "WorkflowAutomationCenter": WorkflowAutomationCenter,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "DocumentAnalytics": DocumentAnalytics,
-    "DocumentArchiveManager": DocumentArchiveManager,
-    "DocumentSearch": DocumentSearch,
-    "DocumentManagementDashboard": DocumentManagementDashboard,
-    "WorkflowAutomationCenter": WorkflowAutomationCenter,
 }
 
 export const pagesConfig = {
