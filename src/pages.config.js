@@ -288,6 +288,7 @@ import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import AdminMessagingCenter from './pages/AdminMessagingCenter';
 import TechnicianManagement from './pages/TechnicianManagement';
+import BuildingWorkflowManager from './pages/BuildingWorkflowManager';
 import __Layout from './Layout.jsx';
 
 
@@ -582,6 +583,7 @@ export const PAGES = {
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "AdminMessagingCenter": AdminMessagingCenter,
     "TechnicianManagement": TechnicianManagement,
+    "BuildingWorkflowManager": BuildingWorkflowManager,
 }
 
 export const pagesConfig = {
