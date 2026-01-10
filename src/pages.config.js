@@ -303,6 +303,7 @@ import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import ReportBuilder from './pages/ReportBuilder';
 import BuildingDetailEnhanced from './pages/BuildingDetailEnhanced';
+import CompanyDetailEnhanced from './pages/CompanyDetailEnhanced';
 import __Layout from './Layout.jsx';
 
 
@@ -612,6 +613,7 @@ export const PAGES = {
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "ReportBuilder": ReportBuilder,
     "BuildingDetailEnhanced": BuildingDetailEnhanced,
+    "CompanyDetailEnhanced": CompanyDetailEnhanced,
 }
 
 export const pagesConfig = {
