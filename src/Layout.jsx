@@ -11,7 +11,7 @@ import {
                                           Zap
                                       } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import NotificationCenter from '@/components/notifications/NotificationCenter';
+import NotificationCenter from '@/components/documents/DocumentNotificationCenter';
 import SuiteSwitcher from '@/components/suite/SuiteSwitcher';
 import { Button } from "@/components/ui/button";
 import GlobalSearchBar from '@/components/search/GlobalSearchBar';
