@@ -31,7 +31,7 @@ const CONTEXT_ACTIONS = {
   ]
 };
 
-export default function SmartActionDialog({ isOpen, onClose }) {
+export default function SmartActionDialog({ isOpen, onClose, actionType, actionSubtype }) {
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -43,6 +43,24 @@ export default function SmartActionDialog({ isOpen, onClose }) {
 
   const currentPath = window.location.pathname;
   const contextActions = CONTEXT_ACTIONS[currentPath] || CONTEXT_ACTIONS.default;
+
+  // Auto-fill based on action type
+  useEffect(() => {
+    if (actionType === 'voice') {
+      startRecording();
+    } else if (actionType === 'photo') {
+      fileInputRef.current?.click();
+    } else if (actionType === 'document' && actionSubtype) {
+      const labels = {
+        income: 'Einnahme erstellen',
+        expense: 'Ausgabe erstellen',
+        contract: 'Mietvertrag erstellen',
+        protocol: 'Übergabeprotokoll erstellen',
+        invoice: 'Rechnung erstellen'
+      };
+      setInput(labels[actionSubtype] || '');
+    }
+  }, [actionType, actionSubtype]);
 
   const startRecording = async () => {
     try {
@@ -179,31 +197,31 @@ export default function SmartActionDialog({ isOpen, onClose }) {
               <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
                 <span className="text-white text-sm">⚡</span>
               </div>
-              Smart Action
+              {actionType === 'voice' ? 'Sprachbefehl' :
+               actionType === 'photo' ? 'Foto hochladen' :
+               actionSubtype ? {
+                 income: 'Einnahme',
+                 expense: 'Ausgabe',
+                 contract: 'Mietvertrag',
+                 protocol: 'Übergabeprotokoll',
+                 invoice: 'Rechnung'
+               }[actionSubtype] : 'Smart Action'}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Context Actions */}
-            <div>
-              <p className="text-sm text-slate-600 mb-2">Schnellaktionen:</p>
-              <div className="flex flex-wrap gap-2">
-                {contextActions.map(action => {
-                  const Icon = action.icon;
-                  return (
-                    <Button
-                      key={action.id}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setInput(action.label)}
-                    >
-                      <Icon className="w-4 h-4 mr-2" />
-                      {action.label}
-                    </Button>
-                  );
-                })}
+            {/* Context Info */}
+            {actionSubtype && (
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border border-blue-200">
+                <p className="text-sm font-medium text-slate-700">
+                  {actionSubtype === 'income' && '💰 Einnahme erfassen - Bitte Details angeben'}
+                  {actionSubtype === 'expense' && '💸 Ausgabe erfassen - Bitte Details angeben'}
+                  {actionSubtype === 'contract' && '📋 Mietvertrag erstellen - Mieter und Vertragsdaten'}
+                  {actionSubtype === 'protocol' && '📝 Übergabeprotokoll - Einzug oder Auszug'}
+                  {actionSubtype === 'invoice' && '🧾 Rechnung erfassen - Lieferant und Betrag'}
+                </p>
               </div>
-            </div>
+            )}
 
             {/* Text Input */}
             <div>
