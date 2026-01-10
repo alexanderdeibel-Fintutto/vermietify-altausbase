@@ -1,48 +1,36 @@
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { Loader2 } from 'lucide-react';
-import { cn } from "@/lib/utils";
+import { Button } from '@/components/ui/button';
 
 /**
- * Accessibility-optimierter Button mit:
- * - ARIA Labels
- * - Keyboard Navigation
- * - Focus States
- * - Loading States
+ * Accessible button with proper ARIA labels and keyboard support
  */
-export default function AccessibleButton({
-  children,
-  onClick,
-  disabled,
-  loading,
-  ariaLabel,
-  icon: Icon,
-  variant = "default",
-  size = "default",
-  className,
-  ...props
-}) {
+export const AccessibleButton = React.forwardRef((
+  {
+    children,
+    ariaLabel,
+    ariaDescribedBy,
+    disabled,
+    loading,
+    onClick,
+    ...props
+  },
+  ref
+) => {
   return (
     <Button
-      onClick={onClick}
+      ref={ref}
+      aria-label={ariaLabel}
+      aria-describedby={ariaDescribedBy}
+      aria-disabled={disabled || loading}
       disabled={disabled || loading}
-      variant={variant}
-      size={size}
-      className={cn(
-        "focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500",
-        "transition-all duration-200",
-        className
-      )}
-      aria-label={ariaLabel || (typeof children === 'string' ? children : undefined)}
-      aria-busy={loading}
+      onClick={onClick}
       {...props}
     >
-      {loading ? (
-        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-      ) : Icon ? (
-        <Icon className="w-4 h-4 mr-2" />
-      ) : null}
       {children}
     </Button>
   );
-}
+});
+
+AccessibleButton.displayName = 'AccessibleButton';
+
+export default AccessibleButton;
