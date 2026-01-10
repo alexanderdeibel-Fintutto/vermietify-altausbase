@@ -1,53 +1,82 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Settings, Plus } from 'lucide-react';
-import BudgetOverviewWidget from '@/components/dashboard/widgets/BudgetOverviewWidget';
-import FinancialForecastWidget from '@/components/dashboard/widgets/FinancialForecastWidget';
-import OpenTasksWidget from '@/components/dashboard/widgets/OpenTasksWidget';
-import RecentActivitiesWidget from '@/components/dashboard/widgets/RecentActivitiesWidget';
-import CriticalNotificationsWidget from '@/components/dashboard/widgets/CriticalNotificationsWidget';
-import DocumentAnalysisWidget from '@/components/dashboard/widgets/DocumentAnalysisWidget';
-import QuickStatsWidget from '@/components/dashboard/widgets/QuickStatsWidget';
-import WidgetConfigDialog from '@/components/dashboard/WidgetConfigDialog';
+import { WIDGET_COMPONENTS, AVAILABLE_WIDGETS } from '@/components/dashboard/DashboardWidgetLibrary';
+import EnhancedWidgetConfig from '@/components/dashboard/EnhancedWidgetConfig';
 
-const DEFAULT_LAYOUT = [
-  { id: 'quick-stats', component: 'QuickStatsWidget', size: 'full', order: 0, enabled: true },
-  { id: 'budget', component: 'BudgetOverviewWidget', size: 'half', order: 1, enabled: true },
-  { id: 'forecast', component: 'FinancialForecastWidget', size: 'half', order: 2, enabled: true },
-  { id: 'tasks', component: 'OpenTasksWidget', size: 'half', order: 3, enabled: true },
-  { id: 'activities', component: 'RecentActivitiesWidget', size: 'half', order: 4, enabled: true },
-  { id: 'notifications', component: 'CriticalNotificationsWidget', size: 'half', order: 5, enabled: true },
-  { id: 'documents', component: 'DocumentAnalysisWidget', size: 'half', order: 6, enabled: true }
-];
-
-const WIDGET_COMPONENTS = {
-  QuickStatsWidget,
-  BudgetOverviewWidget,
-  FinancialForecastWidget,
-  OpenTasksWidget,
-  RecentActivitiesWidget,
-  CriticalNotificationsWidget,
-  DocumentAnalysisWidget
-};
+const DEFAULT_LAYOUT = AVAILABLE_WIDGETS.slice(0, 7).map((widget, idx) => ({
+  id: widget.id,
+  component: widget.component,
+  size: widget.defaultSize,
+  order: idx,
+  enabled: true
+}));
 
 export default function Dashboard() {
-  const [layout, setLayout] = useState(() => {
-    const saved = localStorage.getItem('dashboard-layout');
-    return saved ? JSON.parse(saved) : DEFAULT_LAYOUT;
-  });
+  const [layout, setLayout] = useState(DEFAULT_LAYOUT);
   const [configOpen, setConfigOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: user } = useQuery({
     queryKey: ['current-user'],
     queryFn: () => base44.auth.me()
   });
 
+  // Load user-specific dashboard config
+  const { data: savedConfig } = useQuery({
+    queryKey: ['dashboard-config', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return null;
+      const configs = await base44.entities.DashboardConfig.filter({ 
+        user_email: user.email,
+        is_default: true 
+      });
+      return configs[0] || null;
+    },
+    enabled: !!user?.email
+  });
+
+  // Save dashboard config
+  const saveConfigMutation = useMutation({
+    mutationFn: async (newLayout) => {
+      if (!user?.email) return;
+      
+      if (savedConfig?.id) {
+        return await base44.entities.DashboardConfig.update(savedConfig.id, {
+          layout: newLayout
+        });
+      } else {
+        return await base44.asServiceRole.entities.DashboardConfig.create({
+          user_email: user.email,
+          layout: newLayout,
+          is_default: true
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['dashboard-config']);
+    }
+  });
+
+  // Load saved layout or fallback to localStorage
+  useEffect(() => {
+    if (savedConfig?.layout) {
+      setLayout(savedConfig.layout);
+    } else {
+      const saved = localStorage.getItem('dashboard-layout');
+      if (saved) {
+        setLayout(JSON.parse(saved));
+      }
+    }
+  }, [savedConfig]);
+
   const saveLayout = (newLayout) => {
     setLayout(newLayout);
     localStorage.setItem('dashboard-layout', JSON.stringify(newLayout));
+    saveConfigMutation.mutate(newLayout);
   };
 
   const enabledWidgets = layout
@@ -106,7 +135,7 @@ export default function Dashboard() {
       )}
 
       {/* Config Dialog */}
-      <WidgetConfigDialog
+      <EnhancedWidgetConfig
         isOpen={configOpen}
         onClose={() => setConfigOpen(false)}
         layout={layout}
