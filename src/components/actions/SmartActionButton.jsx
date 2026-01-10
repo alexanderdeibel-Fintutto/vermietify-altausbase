@@ -4,6 +4,7 @@ import { Plus, Mic, Camera, FileText, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import SmartActionDialog from './SmartActionDialog';
+import MobileActionSheet from './MobileActionSheet';
 
 const FIRST_LEVEL_ACTIONS = [
   { id: 'voice', icon: Mic, label: 'Sprechen', color: 'from-blue-500 to-blue-600' },
@@ -25,6 +26,7 @@ export default function SmartActionButton() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedFirstLevel, setSelectedFirstLevel] = useState(null);
   const [selectedAction, setSelectedAction] = useState(null);
+  const [showMobileSheet, setShowMobileSheet] = useState(false);
 
   const handleFirstLevelClick = (action) => {
     if (action.id === 'voice' || action.id === 'photo') {
@@ -48,6 +50,23 @@ export default function SmartActionButton() {
 
   const secondLevelActions = selectedFirstLevel ? SECOND_LEVEL_ACTIONS[selectedFirstLevel] || [] : [];
 
+  const handleMainButtonClick = () => {
+    if (window.innerWidth < 1024) {
+      setShowMobileSheet(true);
+    } else {
+      setIsExpanded(!isExpanded);
+      setSelectedFirstLevel(null);
+    }
+  };
+
+  const handleMobileSelect = (actionId) => {
+    if (actionId === 'document') {
+      setSelectedFirstLevel('document');
+    } else {
+      setSelectedAction({ type: actionId });
+    }
+  };
+
   return (
     <>
       {/* Main Button */}
@@ -55,12 +74,11 @@ export default function SmartActionButton() {
         className="fixed bottom-24 right-6 z-40"
         animate={{ rotate: isExpanded ? 45 : 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
       >
         <Button
-          onClick={() => {
-            setIsExpanded(!isExpanded);
-            setSelectedFirstLevel(null);
-          }}
+          onClick={handleMainButtonClick}
           className={cn(
             "h-16 w-16 rounded-full shadow-2xl",
             "bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600",
@@ -69,7 +87,18 @@ export default function SmartActionButton() {
           )}
           size="icon"
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <motion.div 
+            className="absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-400"
+            animate={{ 
+              opacity: [0, 0.3, 0],
+              scale: [1, 1.2, 1]
+            }}
+            transition={{ 
+              repeat: Infinity, 
+              duration: 2,
+              ease: "easeInOut"
+            }}
+          />
           <Plus className="h-8 w-8 text-white relative z-10" strokeWidth={2.5} />
         </Button>
       </motion.div>
@@ -197,6 +226,16 @@ export default function SmartActionButton() {
               );
             })}
           </>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Action Sheet */}
+      <AnimatePresence>
+        {showMobileSheet && (
+          <MobileActionSheet
+            onSelect={handleMobileSelect}
+            onClose={() => setShowMobileSheet(false)}
+          />
         )}
       </AnimatePresence>
 

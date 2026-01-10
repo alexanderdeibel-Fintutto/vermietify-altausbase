@@ -8,6 +8,7 @@ import ActivityLogs from './pages/ActivityLogs';
 import AdaptiveNavigationAdmin from './pages/AdaptiveNavigationAdmin';
 import AdminAIAnalytics from './pages/AdminAIAnalytics';
 import AdminAIAnalyticsLazy from './pages/AdminAIAnalyticsLazy';
+import AdminAnalyticsDashboard from './pages/AdminAnalyticsDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminIssueReports from './pages/AdminIssueReports';
 import AdminMasterDashboard from './pages/AdminMasterDashboard';
@@ -55,6 +56,7 @@ import BuildingBoard from './pages/BuildingBoard';
 import BuildingDetail from './pages/BuildingDetail';
 import BuildingWorkflowManager from './pages/BuildingWorkflowManager';
 import Buildings from './pages/Buildings';
+import BuildingsMap from './pages/BuildingsMap';
 import BulkOperations from './pages/BulkOperations';
 import BusinessStructureOptimizer from './pages/BusinessStructureOptimizer';
 import CapitalGainCH from './pages/CapitalGainCH';
@@ -103,6 +105,7 @@ import FinanceManagement from './pages/FinanceManagement';
 import FinancialForecasting from './pages/FinancialForecasting';
 import FinancialItems from './pages/FinancialItems';
 import FinancialReporting from './pages/FinancialReporting';
+import FinancialReports from './pages/FinancialReports';
 import Finanzen from './pages/Finanzen';
 import FullFeatureHub from './pages/FullFeatureHub';
 import GeneratedBookings from './pages/GeneratedBookings';
@@ -129,6 +132,7 @@ import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
 import Kommunikation from './pages/Kommunikation';
 import LeaseContracts from './pages/LeaseContracts';
 import MaintenanceManager from './pages/MaintenanceManager';
+import MaintenanceScheduling from './pages/MaintenanceScheduling';
 import MaintenanceTasks from './pages/MaintenanceTasks';
 import MarketAnalytics from './pages/MarketAnalytics';
 import MeterDashboard from './pages/MeterDashboard';
@@ -214,9 +218,9 @@ import TaxDashboardMultiCountry from './pages/TaxDashboardMultiCountry';
 import TaxDataImportHub from './pages/TaxDataImportHub';
 import TaxDeadlines from './pages/TaxDeadlines';
 import TaxDeductionOptimizer from './pages/TaxDeductionOptimizer';
+import TaxExportHub from './pages/TaxExportHub';
 import TaxDocumentManager from './pages/TaxDocumentManager';
 import TaxDocumentProcessor from './pages/TaxDocumentProcessor';
-import TaxExportHub from './pages/TaxExportHub';
 import TaxFilingTimeline from './pages/TaxFilingTimeline';
 import TaxFilingWizard from './pages/TaxFilingWizard';
 import TaxForecastPlanner from './pages/TaxForecastPlanner';
@@ -293,10 +297,7 @@ import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import MaintenanceScheduling from './pages/MaintenanceScheduling';
-import AdminAnalyticsDashboard from './pages/AdminAnalyticsDashboard';
-import BuildingsMap from './pages/BuildingsMap';
-import FinancialReports from './pages/FinancialReports';
+import DocumentAnalysisDashboard from './pages/DocumentAnalysisDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -311,6 +312,7 @@ export const PAGES = {
     "AdaptiveNavigationAdmin": AdaptiveNavigationAdmin,
     "AdminAIAnalytics": AdminAIAnalytics,
     "AdminAIAnalyticsLazy": AdminAIAnalyticsLazy,
+    "AdminAnalyticsDashboard": AdminAnalyticsDashboard,
     "AdminDashboard": AdminDashboard,
     "AdminIssueReports": AdminIssueReports,
     "AdminMasterDashboard": AdminMasterDashboard,
@@ -358,6 +360,7 @@ export const PAGES = {
     "BuildingDetail": BuildingDetail,
     "BuildingWorkflowManager": BuildingWorkflowManager,
     "Buildings": Buildings,
+    "BuildingsMap": BuildingsMap,
     "BulkOperations": BulkOperations,
     "BusinessStructureOptimizer": BusinessStructureOptimizer,
     "CapitalGainCH": CapitalGainCH,
@@ -406,6 +409,7 @@ export const PAGES = {
     "FinancialForecasting": FinancialForecasting,
     "FinancialItems": FinancialItems,
     "FinancialReporting": FinancialReporting,
+    "FinancialReports": FinancialReports,
     "Finanzen": Finanzen,
     "FullFeatureHub": FullFeatureHub,
     "GeneratedBookings": GeneratedBookings,
@@ -432,6 +436,7 @@ export const PAGES = {
     "Kommunikation": Kommunikation,
     "LeaseContracts": LeaseContracts,
     "MaintenanceManager": MaintenanceManager,
+    "MaintenanceScheduling": MaintenanceScheduling,
     "MaintenanceTasks": MaintenanceTasks,
     "MarketAnalytics": MarketAnalytics,
     "MeterDashboard": MeterDashboard,
@@ -517,9 +522,9 @@ export const PAGES = {
     "TaxDataImportHub": TaxDataImportHub,
     "TaxDeadlines": TaxDeadlines,
     "TaxDeductionOptimizer": TaxDeductionOptimizer,
+    "TaxExportHub": TaxExportHub,
     "TaxDocumentManager": TaxDocumentManager,
     "TaxDocumentProcessor": TaxDocumentProcessor,
-    "TaxExportHub": TaxExportHub,
     "TaxFilingTimeline": TaxFilingTimeline,
     "TaxFilingWizard": TaxFilingWizard,
     "TaxForecastPlanner": TaxForecastPlanner,
@@ -596,10 +601,7 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "MaintenanceScheduling": MaintenanceScheduling,
-    "AdminAnalyticsDashboard": AdminAnalyticsDashboard,
-    "BuildingsMap": BuildingsMap,
-    "FinancialReports": FinancialReports,
+    "DocumentAnalysisDashboard": DocumentAnalysisDashboard,
 }
 
 export const pagesConfig = {
