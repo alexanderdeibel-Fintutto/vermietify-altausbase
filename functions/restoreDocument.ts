@@ -9,44 +9,48 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { document_id, company_id, document_name, document_url, reason, notes, tags } = await req.json();
+    const { archive_id } = await req.json();
 
-    // Create archive record
-    const archive = await base44.asServiceRole.entities.DocumentArchive.create({
-      document_id,
-      company_id,
-      document_name,
-      document_url,
-      archived_date: new Date().toISOString(),
-      archived_by: user.email,
-      archive_reason: reason || 'manual',
-      archive_notes: notes,
-      tags: tags || [],
-      restored: false
+    // Get archive record
+    const archives = await base44.asServiceRole.entities.DocumentArchive.filter({
+      id: archive_id
+    });
+
+    if (archives.length === 0) {
+      return Response.json({ error: 'Archive record not found' }, { status: 404 });
+    }
+
+    const archive = archives[0];
+
+    // Update archive record
+    await base44.asServiceRole.entities.DocumentArchive.update(archive_id, {
+      restored: true,
+      restored_date: new Date().toISOString(),
+      restored_by: user.email
     });
 
     // Log metric
     await base44.asServiceRole.entities.DocumentAnalytics.create({
-      company_id,
-      metric_type: 'document_archived',
+      company_id: archive.company_id,
+      metric_type: 'document_restored',
       date: new Date().toISOString().split('T')[0],
       count: 1,
-      details: { document_id, reason }
+      details: { document_id: archive.document_id }
     });
 
     // Update signature requests if any
     const signatureRequests = await base44.asServiceRole.entities.SignatureRequest.filter({
-      document_id
+      document_id: archive.document_id
     });
 
     for (const sr of signatureRequests) {
       const updatedAuditTrail = [
         ...sr.audit_trail,
         {
-          action: 'document_archived',
+          action: 'document_restored',
           actor: user.email,
           timestamp: new Date().toISOString(),
-          details: `Dokument archiviert: ${reason || 'Manuell'}`
+          details: 'Dokument aus Archiv wiederhergestellt'
         }
       ];
       await base44.asServiceRole.entities.SignatureRequest.update(sr.id, {
@@ -65,12 +69,12 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({
           channel: '#documents',
-          text: `📦 Dokument archiviert: ${document_name}`,
+          text: `📂 Dokument wiederhergestellt: ${archive.document_name}`,
           blocks: [{
             type: 'section',
             text: {
               type: 'mrkdwn',
-              text: `*Dokument archiviert*\n*Name:* ${document_name}\n*Von:* ${user.full_name}\n*Grund:* ${reason || 'Manuell'}`
+              text: `*Dokument wiederhergestellt*\n*Name:* ${archive.document_name}\n*Von:* ${user.full_name}`
             }
           }]
         })
@@ -79,9 +83,9 @@ Deno.serve(async (req) => {
       console.log('Slack notification optional');
     }
 
-    return Response.json({ success: true, archive_id: archive.id });
+    return Response.json({ success: true });
   } catch (error) {
-    console.error('Archive error:', error);
+    console.error('Restore error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
