@@ -119,7 +119,10 @@ import LeaseContracts from './pages/LeaseContracts';
 import MaintenanceManager from './pages/MaintenanceManager';
 import MaintenanceTasks from './pages/MaintenanceTasks';
 import MarketAnalytics from './pages/MarketAnalytics';
+import MeterDashboard from './pages/MeterDashboard';
 import MieterSelfServicePortal from './pages/MieterSelfServicePortal';
+import MobileApp from './pages/MobileApp';
+import MobileMeterScanning from './pages/MobileMeterScanning';
 import ModuleManagement from './pages/ModuleManagement';
 import MultiCountryTaxComparison from './pages/MultiCountryTaxComparison';
 import MultiYearTaxComparison from './pages/MultiYearTaxComparison';
@@ -159,6 +162,8 @@ import SelfEmploymentTaxPlanner from './pages/SelfEmploymentTaxPlanner';
 import SelfEmploymentTaxPlanning from './pages/SelfEmploymentTaxPlanning';
 import SettingsPage from './pages/SettingsPage';
 import SmartExpenseTracker from './pages/SmartExpenseTracker';
+import SmartTaskDashboard from './pages/SmartTaskDashboard';
+import StaffMobileApp from './pages/StaffMobileApp';
 import SubmissionDashboard from './pages/SubmissionDashboard';
 import SuiteManagement from './pages/SuiteManagement';
 import SuppliersManagement from './pages/SuppliersManagement';
@@ -214,6 +219,7 @@ import TaxOptimizationStrategy from './pages/TaxOptimizationStrategy';
 import TaxPerformanceDashboard from './pages/TaxPerformanceDashboard';
 import TaxPlanningAdvisor from './pages/TaxPlanningAdvisor';
 import TaxRemindersCenter from './pages/TaxRemindersCenter';
+import TaxSetup from './pages/TaxSetup';
 import TaxReportExport from './pages/TaxReportExport';
 import TaxReportGeneration from './pages/TaxReportGeneration';
 import TaxReportingHub from './pages/TaxReportingHub';
@@ -224,7 +230,6 @@ import TaxRuleAdmin from './pages/TaxRuleAdmin';
 import TaxSavingsOpportunities from './pages/TaxSavingsOpportunities';
 import TaxScenarioComparison from './pages/TaxScenarioComparison';
 import TaxScenarioSimulator from './pages/TaxScenarioSimulator';
-import TaxSetup from './pages/TaxSetup';
 import TaxSetupWizard from './pages/TaxSetupWizard';
 import TaxStrategyAdvisor from './pages/TaxStrategyAdvisor';
 import TaxTreatyExplorer from './pages/TaxTreatyExplorer';
@@ -270,11 +275,6 @@ import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import SmartTaskDashboard from './pages/SmartTaskDashboard';
-import MobileApp from './pages/MobileApp';
-import StaffMobileApp from './pages/StaffMobileApp';
-import MobileMeterScanning from './pages/MobileMeterScanning';
-import MeterDashboard from './pages/MeterDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -400,7 +400,10 @@ export const PAGES = {
     "MaintenanceManager": MaintenanceManager,
     "MaintenanceTasks": MaintenanceTasks,
     "MarketAnalytics": MarketAnalytics,
+    "MeterDashboard": MeterDashboard,
     "MieterSelfServicePortal": MieterSelfServicePortal,
+    "MobileApp": MobileApp,
+    "MobileMeterScanning": MobileMeterScanning,
     "ModuleManagement": ModuleManagement,
     "MultiCountryTaxComparison": MultiCountryTaxComparison,
     "MultiYearTaxComparison": MultiYearTaxComparison,
@@ -440,6 +443,8 @@ export const PAGES = {
     "SelfEmploymentTaxPlanning": SelfEmploymentTaxPlanning,
     "SettingsPage": SettingsPage,
     "SmartExpenseTracker": SmartExpenseTracker,
+    "SmartTaskDashboard": SmartTaskDashboard,
+    "StaffMobileApp": StaffMobileApp,
     "SubmissionDashboard": SubmissionDashboard,
     "SuiteManagement": SuiteManagement,
     "SuppliersManagement": SuppliersManagement,
@@ -495,6 +500,7 @@ export const PAGES = {
     "TaxPerformanceDashboard": TaxPerformanceDashboard,
     "TaxPlanningAdvisor": TaxPlanningAdvisor,
     "TaxRemindersCenter": TaxRemindersCenter,
+    "TaxSetup": TaxSetup,
     "TaxReportExport": TaxReportExport,
     "TaxReportGeneration": TaxReportGeneration,
     "TaxReportingHub": TaxReportingHub,
@@ -505,7 +511,6 @@ export const PAGES = {
     "TaxSavingsOpportunities": TaxSavingsOpportunities,
     "TaxScenarioComparison": TaxScenarioComparison,
     "TaxScenarioSimulator": TaxScenarioSimulator,
-    "TaxSetup": TaxSetup,
     "TaxSetupWizard": TaxSetupWizard,
     "TaxStrategyAdvisor": TaxStrategyAdvisor,
     "TaxTreatyExplorer": TaxTreatyExplorer,
@@ -551,11 +556,6 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "SmartTaskDashboard": SmartTaskDashboard,
-    "MobileApp": MobileApp,
-    "StaffMobileApp": StaffMobileApp,
-    "MobileMeterScanning": MobileMeterScanning,
-    "MeterDashboard": MeterDashboard,
 }
 
 export const pagesConfig = {

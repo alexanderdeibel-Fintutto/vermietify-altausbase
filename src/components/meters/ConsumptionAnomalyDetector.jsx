@@ -5,11 +5,13 @@ import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { TrendingUp, AlertTriangle, Eye } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function ConsumptionAnomalyDetector({ buildingId }) {
   const [selectedMeter, setSelectedMeter] = useState(null);
+  const [detectionMode, setDetectionMode] = useState('automatic'); // 'automatic' or 'ai'
 
-  const { data: anomalies = [] } = useQuery({
+  const { data: anomalies = [], refetch: refetchAnomalies } = useQuery({
     queryKey: ['meterAnomalies', buildingId],
     queryFn: async () => {
       const readings = await base44.entities.MeterReading.filter(
@@ -31,6 +33,23 @@ export default function ConsumptionAnomalyDetector({ buildingId }) {
     }
   });
 
+  const runAIAnomalyDetection = async () => {
+    try {
+      const response = await base44.functions.invoke('detectMeterAnomaliesAI', {
+        building_id: buildingId
+      });
+      
+      if (response.data.anomalies?.length > 0) {
+        toast.success(`${response.data.anomalies.length} Anomalien gefunden`);
+        refetchAnomalies();
+      } else {
+        toast.success('Keine Anomalien erkannt');
+      }
+    } catch (error) {
+      toast.error('KI-Analyse fehlgeschlagen');
+    }
+  };
+
   const { data: analysis, refetch: analyzeConsumption } = useQuery({
     queryKey: ['meterAnalysis', selectedMeter],
     queryFn: async () => {
@@ -46,13 +65,24 @@ export default function ConsumptionAnomalyDetector({ buildingId }) {
   return (
     <Card className="border-orange-200">
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5 text-orange-600" />
-          Anomalie-Erkennung
-          {anomalies.length > 0 && (
-            <Badge className="bg-orange-600">{anomalies.length}</Badge>
-          )}
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-orange-600" />
+            <CardTitle className="text-base">
+              KI Anomalie-Erkennung
+            </CardTitle>
+            {anomalies.length > 0 && (
+              <Badge className="bg-orange-600">{anomalies.length}</Badge>
+            )}
+          </div>
+          <Button
+            size="sm"
+            onClick={runAIAnomalyDetection}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            KI-Scan starten
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {anomalies.length > 0 ? (

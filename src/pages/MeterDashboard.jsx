@@ -19,6 +19,8 @@ import BatchMeterScanner from '@/components/meters/BatchMeterScanner';
 import TeamMeterCoordination from '@/components/meters/TeamMeterCoordination';
 import ConsumptionAnomalyDetector from '@/components/meters/ConsumptionAnomalyDetector';
 import OfflineMeterQueue from '@/components/meters/OfflineMeterQueue';
+import AdvancedMeterComparison from '@/components/meters/AdvancedMeterComparison';
+import MeterDataExportPanel from '@/components/meters/MeterDataExportPanel';
 
 export default function MeterDashboard() {
   const [selectedBuilding, setSelectedBuilding] = useState(null);
@@ -194,12 +196,13 @@ export default function MeterDashboard() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="scan">Erfassen</TabsTrigger>
           <TabsTrigger value="batch">Batch</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="consumption">Verbrauch</TabsTrigger>
+          <TabsTrigger value="analysis">Analyse</TabsTrigger>
           <TabsTrigger value="schedule">Terminplan</TabsTrigger>
           <TabsTrigger value="qr">QR-Labels</TabsTrigger>
         </TabsList>
@@ -259,12 +262,17 @@ export default function MeterDashboard() {
         </TabsContent>
 
         <TabsContent value="consumption">
+          <MeterConsumptionChart 
+            meters={filteredMeters}
+            selectedBuilding={selectedBuilding}
+          />
+        </TabsContent>
+
+        <TabsContent value="analysis">
           <div className="space-y-6">
             <ConsumptionAnomalyDetector buildingId={selectedBuilding} />
-            <MeterConsumptionChart 
-              meters={filteredMeters}
-              selectedBuilding={selectedBuilding}
-            />
+            <AdvancedMeterComparison buildingId={selectedBuilding} />
+            <MeterDataExportPanel buildingId={selectedBuilding} />
           </div>
         </TabsContent>
 
