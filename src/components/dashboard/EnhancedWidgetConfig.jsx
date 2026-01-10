@@ -46,11 +46,14 @@ export default function EnhancedWidgetConfig({ isOpen, onClose, layout, onSave, 
     setEditedLayout(prev => {
       const existing = prev.find(w => w.id === widgetId);
       if (existing) {
+        const action = !existing.enabled ? 'enable' : 'disable';
+        trackInteraction(widgetId, action);
         return prev.map(w => 
           w.id === widgetId ? { ...w, enabled: !w.enabled } : w
         );
       } else {
         const widget = accessibleWidgets.find(w => w.id === widgetId);
+        trackInteraction(widgetId, 'enable');
         return [...prev, {
           id: widgetId,
           component: widget.component,
@@ -62,7 +65,16 @@ export default function EnhancedWidgetConfig({ isOpen, onClose, layout, onSave, 
     });
   };
 
+  const trackInteraction = (widgetId, action) => {
+    base44.functions.invoke('trackWidgetInteraction', {
+      widget_id: widgetId,
+      action,
+      engagement_score: 30
+    }).catch(console.error);
+  };
+
   const changeSize = (widgetId, size) => {
+    trackInteraction(widgetId, 'resize');
     setEditedLayout(prev =>
       prev.map(w => w.id === widgetId ? { ...w, size } : w)
     );
@@ -75,7 +87,8 @@ export default function EnhancedWidgetConfig({ isOpen, onClose, layout, onSave, 
     const [reordered] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reordered);
 
-    // Update order
+    // Update order and track
+    trackInteraction(reordered.id, 'reorder');
     const updated = items.map((item, idx) => ({ ...item, order: idx }));
     setEditedLayout(updated);
   };
