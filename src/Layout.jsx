@@ -21,6 +21,7 @@ import DynamicSubNavigation from '@/components/navigation/DynamicSubNavigation';
 import MobileBottomNav from '@/components/navigation/MobileBottomNav';
 import DeepSubNavigation from '@/components/navigation/DeepSubNavigation';
 import IntelligentOnboardingWizardButton from '@/components/onboarding/IntelligentOnboardingWizardButton';
+import SmartActionButton from '@/components/actions/SmartActionButton';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { usePackageAccess } from '@/components/hooks/usePackageAccess';
@@ -179,6 +180,9 @@ export default function Layout({ children, currentPageName }) {
 
                 {/* Intelligent Onboarding Wizard Button */}
                 <IntelligentOnboardingWizardButton />
+
+                {/* Smart Action Button */}
+                <SmartActionButton />
 
                 {/* PWA Install Prompt */}
                 <PWAInstallPrompt />
