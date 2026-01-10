@@ -87,7 +87,7 @@ export default function TenantPortal() {
 
         <TabsContent value="maintenance" className="space-y-6">
           <MaintenanceRequestForm tenantId={tenantRecord?.id} unitId={tenantRecord?.unit_id} />
-          <MaintenanceRequestList tenantId={tenantRecord?.id} />
+          <MaintenanceRequestTracker />
         </TabsContent>
 
         <TabsContent value="messages">
