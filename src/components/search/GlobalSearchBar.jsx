@@ -1,182 +1,181 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useMutation } from '@tanstack/react-query';
+import { Search, Building2, User, FileText, Wrench, CreditCard, Home, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { Search, X, Building2, Users, FileText, File } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Link } from 'react-router-dom';
+
+const entityIcons = {
+  Building: Building2,
+  Unit: Home,
+  Tenant: User,
+  LeaseContract: FileText,
+  Payment: CreditCard,
+  MaintenanceTask: Wrench,
+  Document: FileText,
+  BuildingTask: Wrench
+};
+
+const entityLabels = {
+  Building: 'Gebäude',
+  Unit: 'Einheit',
+  Tenant: 'Mieter',
+  LeaseContract: 'Vertrag',
+  Payment: 'Zahlung',
+  MaintenanceTask: 'Wartung',
+  Document: 'Dokument',
+  BuildingTask: 'Aufgabe'
+};
+
+const entityColors = {
+  Building: 'bg-blue-100 text-blue-800',
+  Unit: 'bg-purple-100 text-purple-800',
+  Tenant: 'bg-green-100 text-green-800',
+  LeaseContract: 'bg-orange-100 text-orange-800',
+  Payment: 'bg-yellow-100 text-yellow-800',
+  MaintenanceTask: 'bg-red-100 text-red-800',
+  Document: 'bg-slate-100 text-slate-800',
+  BuildingTask: 'bg-indigo-100 text-indigo-800'
+};
 
 export default function GlobalSearchBar({ compact = false }) {
   const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [results, setResults] = useState(null);
-
-  const searchMutation = useMutation({
-    mutationFn: async (searchQuery) => {
-      const response = await base44.functions.invoke('globalSearch', { query: searchQuery });
-      return response.data;
-    },
-    onSuccess: (data) => {
-      setResults(data);
-      if (!compact) setIsOpen(true);
-    }
-  });
+  const [isSearching, setIsSearching] = useState(false);
+  const searchRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (query.length >= 2) {
-      const timer = setTimeout(() => {
-        searchMutation.mutate(query);
-      }, 300);
-      return () => clearTimeout(timer);
-    } else {
-      setResults(null);
-    }
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const searchEntities = async () => {
+      if (query.length < 2) {
+        setResults([]);
+        setIsOpen(false);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const response = await base44.functions.invoke('globalSearchEntities', { query, limit: 20 });
+        setResults(response.data.results || []);
+        setIsOpen(true);
+      } catch (error) {
+        console.error('Search error:', error);
+        setResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(searchEntities, 300);
+    return () => clearTimeout(debounceTimer);
   }, [query]);
 
-  const entityIcons = {
-    Building: Building2,
-    Tenant: Users,
-    LeaseContract: FileText,
-    Document: File
+  const handleResultClick = (result) => {
+    setIsOpen(false);
+    setQuery('');
+    
+    // Navigate based on entity type
+    if (result.type === 'Building') {
+      navigate(createPageUrl('BuildingDetail') + `?id=${result.id}`);
+    } else if (result.type === 'Tenant') {
+      navigate(createPageUrl('TenantDetail') + `?id=${result.id}`);
+    } else if (result.type === 'LeaseContract') {
+      navigate(createPageUrl('ContractDetail') + `?id=${result.id}`);
+    } else if (result.type === 'Unit') {
+      navigate(createPageUrl('UnitDetail') + `?id=${result.id}`);
+    } else {
+      // For other types, navigate to their list pages
+      const pageMap = {
+        Payment: 'Payments',
+        MaintenanceTask: 'MaintenanceTasks',
+        Document: 'Documents',
+        BuildingTask: 'SmartTaskDashboard'
+      };
+      const page = pageMap[result.type];
+      if (page) navigate(createPageUrl(page));
+    }
   };
 
-  const entityLabels = {
-    Building: 'Gebäude',
-    Tenant: 'Mieter',
-    LeaseContract: 'Verträge',
-    Document: 'Dokumente'
-  };
-
-  const entityPages = {
-    Building: 'Buildings',
-    Tenant: 'Tenants',
-    LeaseContract: 'Contracts',
-    Document: 'Documents'
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      setIsOpen(false);
+      setQuery('');
+    }
   };
 
   return (
-    <>
-      <div className="relative w-full max-w-2xl">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            placeholder="Suche über alle Bereiche..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="pl-10 pr-10"
-          />
-          {query && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-              onClick={() => {
-                setQuery('');
-                setResults(null);
-              }}
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
+    <div ref={searchRef} className="relative w-full">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Input
+          type="text"
+          placeholder="Suche nach Gebäuden, Mietern, Verträgen..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className={`pl-10 ${compact ? '' : 'w-full'}`}
+        />
+        {isSearching && (
+          <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 animate-spin" />
+        )}
+      </div>
 
-        {/* Inline Results for Compact Mode */}
-        {compact && results && query && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border max-h-96 overflow-y-auto z-50">
-            {Object.entries(results).map(([entityType, items]) => {
-              if (items.length === 0) return null;
-              const Icon = entityIcons[entityType];
+      {isOpen && results.length > 0 && (
+        <Card className="absolute top-full mt-2 w-full max-h-96 overflow-y-auto z-50 shadow-lg">
+          <div className="p-2">
+            <div className="text-xs text-slate-600 px-2 py-1 mb-1">
+              {results.length} Ergebnis{results.length !== 1 ? 'se' : ''} gefunden
+            </div>
+            {results.map((result, index) => {
+              const Icon = entityIcons[result.type] || FileText;
               return (
-                <div key={entityType} className="p-3 border-b last:border-b-0">
-                  <div className="flex items-center gap-2 mb-2">
+                <div
+                  key={`${result.type}-${result.id}-${index}`}
+                  onClick={() => handleResultClick(result)}
+                  className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
                     <Icon className="w-4 h-4 text-slate-600" />
-                    <p className="font-semibold text-sm">{entityLabels[entityType]}</p>
-                    <Badge variant="outline">{items.length}</Badge>
                   </div>
-                  <div className="space-y-1">
-                    {items.slice(0, 3).map((item, idx) => (
-                      <Link
-                        key={idx}
-                        to={`${createPageUrl(entityPages[entityType])}?id=${item.id}`}
-                        className="block p-2 hover:bg-slate-50 rounded text-sm"
-                        onClick={() => {
-                          setQuery('');
-                          setResults(null);
-                        }}
-                      >
-                        <p className="font-medium">{item.name}</p>
-                        {item.description && (
-                          <p className="text-xs text-slate-600">{item.description}</p>
-                        )}
-                      </Link>
-                    ))}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm truncate">{result.title}</span>
+                      <Badge className={`${entityColors[result.type]} text-xs`} variant="outline">
+                        {entityLabels[result.type]}
+                      </Badge>
+                    </div>
+                    {result.subtitle && (
+                      <p className="text-xs text-slate-600 truncate">{result.subtitle}</p>
+                    )}
                   </div>
                 </div>
               );
             })}
-            {Object.values(results).every(items => items.length === 0) && (
-              <p className="p-4 text-sm text-slate-600 text-center">Keine Ergebnisse gefunden</p>
-            )}
           </div>
-        )}
-      </div>
+        </Card>
+      )}
 
-      {/* Dialog Results for Full Mode */}
-      <Dialog open={!compact && isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Suchergebnisse für "{query}"</DialogTitle>
-          </DialogHeader>
-
-          {results && (
-            <div className="space-y-4">
-              {Object.entries(results).map(([entityType, items]) => {
-                if (items.length === 0) return null;
-                const Icon = entityIcons[entityType];
-                return (
-                  <div key={entityType}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Icon className="w-5 h-5 text-slate-600" />
-                      <h3 className="font-semibold">{entityLabels[entityType]}</h3>
-                      <Badge>{items.length}</Badge>
-                    </div>
-                    <div className="grid gap-2">
-                      {items.map((item, idx) => (
-                        <Link
-                          key={idx}
-                          to={`${createPageUrl(entityPages[entityType])}?id=${item.id}`}
-                          className="p-3 border rounded-lg hover:bg-slate-50 transition-colors"
-                          onClick={() => setIsOpen(false)}
-                        >
-                          <p className="font-semibold">{item.name}</p>
-                          {item.description && (
-                            <p className="text-sm text-slate-600 mt-1">{item.description}</p>
-                          )}
-                          {item.metadata && (
-                            <div className="flex gap-2 mt-2">
-                              {Object.entries(item.metadata).map(([key, value]) => (
-                                <Badge key={key} variant="outline" className="text-xs">
-                                  {key}: {value}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-              {Object.values(results).every(items => items.length === 0) && (
-                <p className="text-center text-slate-600 py-8">Keine Ergebnisse gefunden</p>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
+      {isOpen && query.length >= 2 && results.length === 0 && !isSearching && (
+        <Card className="absolute top-full mt-2 w-full z-50 shadow-lg">
+          <div className="p-4 text-center text-sm text-slate-600">
+            Keine Ergebnisse für "{query}"
+          </div>
+        </Card>
+      )}
+    </div>
   );
 }
