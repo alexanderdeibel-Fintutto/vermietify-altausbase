@@ -1,88 +1,73 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent } from '@/components/ui/card';
-import { Building, Users, DollarSign, FileText } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function QuickStatsWidget() {
-  const { data: buildings = [] } = useQuery({
-    queryKey: ['buildings-count'],
-    queryFn: () => base44.entities.Building.list()
+  const { data: user } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me()
   });
 
-  const { data: tenants = [] } = useQuery({
-    queryKey: ['tenants-count'],
-    queryFn: () => base44.entities.Tenant.list()
-  });
-
-  const { data: payments = [] } = useQuery({
-    queryKey: ['payments-month'],
+  const { data: stats = {} } = useQuery({
+    queryKey: ['quick-stats', user?.email],
     queryFn: async () => {
-      const now = new Date();
-      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-      const all = await base44.entities.Payment.list('-date', 500);
-      return all.filter(p => new Date(p.date) >= firstDay);
-    }
+      if (!user?.email) return {};
+
+      const [tasks, workflows, approvals] = await Promise.all([
+        base44.asServiceRole.entities.DocumentTask.filter({ assigned_to: user.email, status: 'open' }),
+        base44.asServiceRole.entities.WorkflowExecution.filter({ status: 'running' }),
+        Promise.resolve([]) // Approvals are in workflows
+      ]);
+
+      const pendingApprovals = workflows.flatMap(w =>
+        w.pending_approvals?.filter(a => a.required_approvers.includes(user.email)) || []
+      );
+
+      return {
+        openTasks: tasks.length,
+        runningWorkflows: workflows.length,
+        pendingApprovals: pendingApprovals.length
+      };
+    },
+    enabled: !!user?.email
   });
 
-  const { data: documents = [] } = useQuery({
-    queryKey: ['documents-count'],
-    queryFn: () => base44.entities.Document.list()
-  });
-
-  const monthlyRevenue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
-
-  const stats = [
+  const statItems = [
     {
-      label: 'Gebäude',
-      value: buildings.length,
-      icon: Building,
-      color: 'text-blue-600',
-      bg: 'bg-blue-50'
+      label: 'Offene Aufgaben',
+      value: stats.openTasks || 0,
+      color: 'text-purple-600'
     },
     {
-      label: 'Mieter',
-      value: tenants.length,
-      icon: Users,
-      color: 'text-purple-600',
-      bg: 'bg-purple-50'
+      label: 'Laufende Workflows',
+      value: stats.runningWorkflows || 0,
+      color: 'text-blue-600'
     },
     {
-      label: 'Einnahmen (Monat)',
-      value: monthlyRevenue.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }),
-      icon: DollarSign,
-      color: 'text-green-600',
-      bg: 'bg-green-50'
-    },
-    {
-      label: 'Dokumente',
-      value: documents.length,
-      icon: FileText,
-      color: 'text-orange-600',
-      bg: 'bg-orange-50'
+      label: 'Ausstehende Genehmigungen',
+      value: stats.pendingApprovals || 0,
+      color: 'text-orange-600'
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      {stats.map((stat, idx) => {
-        const Icon = stat.icon;
-        return (
-          <Card key={idx}>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-600 mb-1">{stat.label}</p>
-                  <p className="text-2xl font-bold">{stat.value}</p>
-                </div>
-                <div className={`w-12 h-12 ${stat.bg} rounded-lg flex items-center justify-center`}>
-                  <Icon className={`w-6 h-6 ${stat.color}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })}
-    </div>
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Schnellstatistiken</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {statItems.map(item => (
+            <div key={item.label} className="flex items-center justify-between p-2 bg-slate-50 rounded">
+              <span className="text-sm text-slate-700">{item.label}</span>
+              <span className={`text-2xl font-bold ${item.color}`}>
+                {item.value}
+              </span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

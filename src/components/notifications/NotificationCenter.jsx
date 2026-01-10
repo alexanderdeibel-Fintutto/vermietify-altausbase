@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Bell, X, CheckCircle2, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger
 } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
+import { Bell, X, Check } from 'lucide-react';
 
 export default function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,45 +26,59 @@ export default function NotificationCenter() {
     queryKey: ['notifications', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      const all = await base44.entities.Notification.filter({
+      const result = await base44.asServiceRole.entities.Notification.filter({
         recipient_email: user.email
       });
-      return all.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      return result.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
     },
     enabled: !!user?.email,
-    refetchInterval: 30000
+    refetchInterval: 10000
   });
 
   const markAsReadMutation = useMutation({
     mutationFn: (notificationId) =>
-      base44.entities.Notification.update(notificationId, {
+      base44.asServiceRole.entities.Notification.update(notificationId, {
         is_read: true,
         read_at: new Date().toISOString()
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications', user?.email] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     }
   });
 
   const deleteNotificationMutation = useMutation({
     mutationFn: (notificationId) =>
-      base44.entities.Notification.delete(notificationId),
+      base44.asServiceRole.entities.Notification.delete(notificationId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications', user?.email] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     }
   });
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
-  const getNotificationIcon = (type) => {
+  const getTypeIcon = (type) => {
     switch (type) {
-      case 'task_overdue':
-        return <AlertCircle className="w-4 h-4 text-red-600" />;
-      case 'rule_executed':
-      case 'status_changed':
-        return <CheckCircle2 className="w-4 h-4 text-green-600" />;
+      case 'task_assigned':
+        return '📋';
+      case 'approval_required':
+        return '⏳';
+      case 'workflow_status':
+        return '⚙️';
       default:
-        return <Bell className="w-4 h-4 text-blue-600" />;
+        return '🔔';
+    }
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'urgent':
+        return 'bg-red-100 text-red-700';
+      case 'high':
+        return 'bg-orange-100 text-orange-700';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-700';
+      default:
+        return 'bg-blue-100 text-blue-700';
     }
   };
 
@@ -70,60 +86,76 @@ export default function NotificationCenter() {
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
-          <Bell className="w-5 h-5 text-slate-600" />
+          <Bell className="w-5 h-5" />
           {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
+            <Badge
+              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+              variant="destructive"
+            >
+              {unreadCount}
+            </Badge>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 p-0 max-h-96 overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="p-4 border-b border-slate-200 bg-slate-50">
-          <h3 className="font-medium text-sm text-slate-900">Benachrichtigungen</h3>
+      <PopoverContent className="w-96 p-0" align="end">
+        <div className="border-b p-3">
+          <h3 className="font-medium text-slate-900">Benachrichtigungen</h3>
+          <p className="text-xs text-slate-600 mt-0.5">
+            {unreadCount} ungelesen
+          </p>
         </div>
 
-        {/* Notifications List */}
-        <div className="overflow-y-auto flex-1">
+        <div className="max-h-96 overflow-y-auto">
           {notifications.length === 0 ? (
-            <div className="p-8 text-center">
-              <Bell className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-              <p className="text-sm text-slate-500">Keine Benachrichtigungen</p>
+            <div className="p-6 text-center text-slate-500 text-sm">
+              Keine Benachrichtigungen
             </div>
           ) : (
-            <div className="space-y-1 p-2">
-              {notifications.map((notif) => (
+            <div className="divide-y">
+              {notifications.slice(0, 10).map(notification => (
                 <div
-                  key={notif.id}
-                  className={`p-3 rounded-lg border transition-colors cursor-pointer ${
-                    notif.is_read
-                      ? 'bg-white border-slate-200'
-                      : 'bg-blue-50 border-blue-200'
+                  key={notification.id}
+                  className={`p-3 hover:bg-slate-50 transition-colors ${
+                    !notification.is_read ? 'bg-blue-50' : ''
                   }`}
-                  onClick={() => !notif.is_read && markAsReadMutation.mutate(notif.id)}
                 >
-                  <div className="flex items-start gap-2">
-                    <div className="mt-1">{getNotificationIcon(notif.notification_type)}</div>
+                  <div className="flex items-start gap-2 mb-1">
+                    <span className="text-lg">{getTypeIcon(notification.notification_type)}</span>
                     <div className="flex-1 min-w-0">
-                      <h4 className={`text-sm font-medium ${notif.is_read ? 'text-slate-600' : 'text-slate-900'}`}>
-                        {notif.title}
-                      </h4>
-                      <p className="text-xs text-slate-600 mt-1 line-clamp-2">
-                        {notif.message}
+                      <div className="flex items-start justify-between gap-1 mb-0.5">
+                        <p className="text-sm font-medium text-slate-900 truncate">
+                          {notification.title}
+                        </p>
+                        <Badge className={getPriorityColor(notification.priority)} variant="secondary" className="text-xs flex-shrink-0">
+                          {notification.priority}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-slate-600 line-clamp-2">
+                        {notification.message}
                       </p>
                       <p className="text-xs text-slate-500 mt-1">
-                        {format(new Date(notif.created_date), 'dd. MMM HH:mm', { locale: de })}
+                        {format(new Date(notification.created_date), 'dd.MM HH:mm', { locale: de })}
                       </p>
                     </div>
+                  </div>
+
+                  <div className="flex gap-1 mt-2">
+                    {!notification.is_read && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 text-xs flex-1"
+                        onClick={() => markAsReadMutation.mutate(notification.id)}
+                      >
+                        <Check className="w-3 h-3 mr-1" />
+                        Gelesen
+                      </Button>
+                    )}
                     <Button
-                      size="icon"
+                      size="sm"
                       variant="ghost"
-                      className="h-6 w-6 flex-shrink-0"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteNotificationMutation.mutate(notif.id);
-                      }}
+                      className="h-6 px-2"
+                      onClick={() => deleteNotificationMutation.mutate(notification.id)}
                     >
                       <X className="w-3 h-3" />
                     </Button>
@@ -133,6 +165,14 @@ export default function NotificationCenter() {
             </div>
           )}
         </div>
+
+        {notifications.length > 10 && (
+          <div className="border-t p-2">
+            <Button variant="ghost" className="w-full text-xs" size="sm">
+              Alle anzeigen ({notifications.length})
+            </Button>
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );
