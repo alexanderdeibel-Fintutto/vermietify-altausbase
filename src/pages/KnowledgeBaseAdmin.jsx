@@ -5,9 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { BookOpen, Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { BookOpen, Plus, Edit, Trash2, Eye, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
 const categoryOptions = [
@@ -22,12 +23,13 @@ const categoryOptions = [
 export default function KnowledgeBaseAdmin() {
   const [showForm, setShowForm] = useState(false);
   const [editingArticle, setEditingArticle] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     category: 'allgemein',
     question: '',
     answer: '',
-    tags: [],
+    tags: '',
     is_published: true,
     priority: 0
   });
@@ -35,20 +37,25 @@ export default function KnowledgeBaseAdmin() {
   const queryClient = useQueryClient();
 
   const { data: articles = [] } = useQuery({
-    queryKey: ['kb-articles'],
-    queryFn: () => base44.entities.KnowledgeBaseArticle.list()
+    queryKey: ['kb-articles-admin'],
+    queryFn: () => base44.entities.KnowledgeBaseArticle.list('-priority', 100)
   });
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      const data = {
+        ...formData,
+        tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : []
+      };
+      
       if (editingArticle) {
-        await base44.entities.KnowledgeBaseArticle.update(editingArticle.id, formData);
+        await base44.entities.KnowledgeBaseArticle.update(editingArticle.id, data);
       } else {
-        await base44.entities.KnowledgeBaseArticle.create(formData);
+        await base44.entities.KnowledgeBaseArticle.create(data);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['kb-articles']);
+      queryClient.invalidateQueries(['kb-articles-admin']);
       resetForm();
       toast.success(editingArticle ? 'Artikel aktualisiert' : 'Artikel erstellt');
     }
@@ -57,7 +64,7 @@ export default function KnowledgeBaseAdmin() {
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.KnowledgeBaseArticle.delete({ id }),
     onSuccess: () => {
-      queryClient.invalidateQueries(['kb-articles']);
+      queryClient.invalidateQueries(['kb-articles-admin']);
       toast.success('Artikel gelöscht');
     }
   });
@@ -70,7 +77,7 @@ export default function KnowledgeBaseAdmin() {
       category: 'allgemein',
       question: '',
       answer: '',
-      tags: [],
+      tags: '',
       is_published: true,
       priority: 0
     });
@@ -78,9 +85,18 @@ export default function KnowledgeBaseAdmin() {
 
   const handleEdit = (article) => {
     setEditingArticle(article);
-    setFormData(article);
+    setFormData({
+      ...article,
+      tags: article.tags?.join(', ') || ''
+    });
     setShowForm(true);
   };
+
+  const filteredArticles = articles.filter(a => 
+    searchQuery === '' ||
+    a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    a.question.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -98,6 +114,16 @@ export default function KnowledgeBaseAdmin() {
           <Plus className="w-4 h-4 mr-2" />
           Neuer Artikel
         </Button>
+      </div>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Input
+          placeholder="Artikel durchsuchen..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
       </div>
 
       {showForm && (
@@ -149,11 +175,40 @@ export default function KnowledgeBaseAdmin() {
                 value={formData.answer}
                 onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
                 rows={6}
+                placeholder="Ausführliche Antwort..."
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-semibold mb-2 block">Tags (kommagetrennt)</label>
+                <Input
+                  value={formData.tags}
+                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                  placeholder="Miete, Zahlung, Heizung"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-2 block">Priorität</label>
+                <Input
+                  type="number"
+                  value={formData.priority}
+                  onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
+                  placeholder="0-10"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+              <span className="text-sm font-semibold">Veröffentlicht</span>
+              <Switch
+                checked={formData.is_published}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_published: checked })}
               />
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={() => saveMutation.mutate()}>
+              <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
                 Speichern
               </Button>
               <Button onClick={resetForm} variant="outline">
@@ -164,15 +219,20 @@ export default function KnowledgeBaseAdmin() {
         </Card>
       )}
 
-      <div className="space-y-3">
-        {articles.map(article => (
+      <div className="grid gap-3">
+        {filteredArticles.map(article => (
           <Card key={article.id}>
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="outline">{categoryOptions.find(c => c.value === article.category)?.label}</Badge>
-                    {!article.is_published && <Badge className="bg-slate-500">Entwurf</Badge>}
+                    <Badge variant="outline">
+                      {categoryOptions.find(c => c.value === article.category)?.label}
+                    </Badge>
+                    {!article.is_published && (
+                      <Badge className="bg-slate-500">Entwurf</Badge>
+                    )}
+                    <Badge variant="outline">Priorität: {article.priority || 0}</Badge>
                   </div>
                   <CardTitle className="text-base">{article.question}</CardTitle>
                 </div>
@@ -190,7 +250,7 @@ export default function KnowledgeBaseAdmin() {
               <p className="text-sm text-slate-600 mb-3 line-clamp-2">{article.answer}</p>
               <div className="flex items-center gap-4 text-xs text-slate-600">
                 <span><Eye className="w-3 h-3 inline mr-1" />{article.view_count || 0} Aufrufe</span>
-                <span>{article.helpful_count || 0} hilfreich</span>
+                <span>{article.helpful_count || 0} als hilfreich markiert</span>
               </div>
             </CardContent>
           </Card>

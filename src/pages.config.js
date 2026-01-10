@@ -292,6 +292,7 @@ import BuildingWorkflowManager from './pages/BuildingWorkflowManager';
 import IoTSensorManagement from './pages/IoTSensorManagement';
 import KnowledgeBaseAdmin from './pages/KnowledgeBaseAdmin';
 import EnergyManagement from './pages/EnergyManagement';
+import AdminIssueReports from './pages/AdminIssueReports';
 import __Layout from './Layout.jsx';
 
 
@@ -590,6 +591,7 @@ export const PAGES = {
     "IoTSensorManagement": IoTSensorManagement,
     "KnowledgeBaseAdmin": KnowledgeBaseAdmin,
     "EnergyManagement": EnergyManagement,
+    "AdminIssueReports": AdminIssueReports,
 }
 
 export const pagesConfig = {

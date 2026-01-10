@@ -19,6 +19,8 @@ import TenantPaymentManagement from '@/components/tenant-portal/TenantPaymentMan
 import KnowledgeBaseViewer from '@/components/tenant-portal/KnowledgeBaseViewer';
 import TenantIssueReporter from '@/components/tenant-portal/TenantIssueReporter';
 import ContractDocumentsWidget from '@/components/tenant-portal/ContractDocumentsWidget';
+import TenantPortalQuickActions from '@/components/tenant-portal/TenantPortalQuickActions';
+import RecentIssuesWidget from '@/components/tenant-portal/RecentIssuesWidget';
 
 export default function TenantPortal() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -100,14 +102,16 @@ export default function TenantPortal() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
+          <TenantPortalQuickActions onTabChange={setActiveTab} />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <LeaseDetailsCard tenantId={tenantRecord?.id} />
             <PaymentHistoryWidget tenantId={tenantRecord?.id} />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ContractDocumentsWidget contractId={contract?.id} />
-            <UpcomingMaintenanceView unitId={tenantRecord?.unit_id} />
+            <RecentIssuesWidget tenantId={tenantRecord?.id} />
           </div>
+          <UpcomingMaintenanceView unitId={tenantRecord?.unit_id} />
         </TabsContent>
 
         <TabsContent value="payments" className="space-y-6">
