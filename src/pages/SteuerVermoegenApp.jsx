@@ -175,7 +175,25 @@ export default function SteuerVermoegenApp() {
           {/* Wealth Tab */}
           <TabsContent value="wealth" className="space-y-6">
             <PortfolioKPICards />
-            <PerformanceChart />
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <DiversificationScore />
+              <RiskAssessment />
+              <RebalancingAssistant />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <PerformanceChart />
+              <PerformanceAttribution />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <DividendCalendar />
+              <CompoundInterestCalculator />
+              <WealthSimulator />
+            </div>
+
+            <RetirementPlanner />
             <AssetPortfolioTable />
           </TabsContent>
 
@@ -282,10 +300,18 @@ export default function SteuerVermoegenApp() {
 
           {/* Finance Tab */}
           <TabsContent value="finance" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <FinAPISyncPanel />
+              <AICategorizationEngine />
+              <BatchImport />
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <BudgetTracker />
               <CashflowForecast />
             </div>
+
+            <RecurringBookings />
 
             <Card>
               <CardHeader>
