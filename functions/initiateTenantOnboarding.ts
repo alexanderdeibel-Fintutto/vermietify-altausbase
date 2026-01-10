@@ -3,143 +3,120 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { 
-      tenant_id, 
-      tenant_email, 
-      tenant_name,
+    const user = await base44.auth.me();
+    
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { tenant_id, unit_id, building_id, contract_data, preferred_communication } = await req.json();
+
+    // Create or get tenant
+    let tenant;
+    if (tenant_id) {
+      tenant = await base44.entities.Tenant.get(tenant_id);
+    } else if (contract_data?.tenant_info) {
+      tenant = await base44.asServiceRole.entities.Tenant.create({
+        first_name: contract_data.tenant_info.first_name,
+        last_name: contract_data.tenant_info.last_name,
+        email: contract_data.tenant_info.email,
+        phone: contract_data.tenant_info.phone,
+        unit_id: unit_id
+      });
+    }
+
+    // Get building and unit details
+    const building = await base44.entities.Building.get(building_id);
+    const unit = await base44.entities.Unit.get(unit_id);
+
+    // Create onboarding record
+    const onboarding = await base44.asServiceRole.entities.TenantOnboarding.create({
+      tenant_id: tenant.id,
       unit_id,
       building_id,
-      rent_amount,
-      start_date,
-      end_date
-    } = await req.json();
+      preferred_communication: preferred_communication || 'email',
+      status: 'initiated',
+      move_in_date: contract_data?.start_date,
+      progress_percentage: 10
+    });
 
-    if (!tenant_id || !tenant_email || !tenant_name) {
-      return Response.json({ error: 'Missing required fields' }, { status: 400 });
+    // Generate lease contract
+    const contractDoc = await base44.functions.invoke('generateLeaseContract', {
+      tenant,
+      unit,
+      building,
+      contract_data
+    });
+
+    // Generate handover protocol
+    const protocolDoc = await base44.functions.invoke('generateHandoverProtocol', {
+      tenant,
+      unit,
+      building,
+      type: 'move_in'
+    });
+
+    // Create actual contract entity
+    let contract = null;
+    if (contract_data) {
+      contract = await base44.asServiceRole.entities.LeaseContract.create({
+        tenant_id: tenant.id,
+        unit_id,
+        start_date: contract_data.start_date,
+        base_rent: contract_data.base_rent,
+        utilities: contract_data.utilities,
+        heating: contract_data.heating,
+        total_rent: (contract_data.base_rent || 0) + (contract_data.utilities || 0) + (contract_data.heating || 0),
+        deposit: contract_data.deposit,
+        is_unlimited: contract_data.is_unlimited,
+        end_date: contract_data.end_date,
+        rent_due_day: contract_data.rent_due_day || 3,
+        status: 'active'
+      });
     }
 
-    const onboardingSteps = [];
-
-    try {
-      // Step 1: Generate portal access token
-      const portalAccessToken = `pt-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-
-      // Update tenant with portal access
-      await base44.asServiceRole.entities.Tenant.update(tenant_id, {
-        portal_enabled: true,
-        portal_token: portalAccessToken,
-        portal_access_date: new Date().toISOString()
-      });
-      onboardingSteps.push({ step: 'portal_activation', status: 'completed', token: portalAccessToken });
-
-      // Step 2: Send welcome email
-      try {
-        const emailResult = await base44.asServiceRole.functions.invoke('sendTenantWelcomeEmail', {
-          tenant_id,
-          tenant_email,
-          tenant_name,
-          portal_access_token: portalAccessToken
-        });
-        onboardingSteps.push({ step: 'welcome_email', status: 'completed', data: emailResult.data });
-      } catch (emailError) {
-        console.warn('Email sending failed, continuing with other steps:', emailError);
-        onboardingSteps.push({ step: 'welcome_email', status: 'warning', error: emailError.message });
-      }
-
-      // Step 3: Create initial documents
-      try {
-        const docsResult = await base44.asServiceRole.functions.invoke('createTenantInitialDocuments', {
-          tenant_id,
-          building_id
-        });
-        onboardingSteps.push({ step: 'initial_documents', status: 'completed', data: docsResult.data });
-      } catch (docsError) {
-        console.warn('Document creation failed:', docsError);
-        onboardingSteps.push({ step: 'initial_documents', status: 'warning', error: docsError.message });
-      }
-
-      // Step 4: Setup communication channels
-      try {
-        const commResult = await base44.asServiceRole.functions.invoke('createTenantCommunicationSetup', {
-          tenant_id,
-          tenant_email,
-          tenant_name
-        });
-        onboardingSteps.push({ step: 'communication_setup', status: 'completed', data: commResult.data });
-      } catch (commError) {
-        console.warn('Communication setup failed:', commError);
-        onboardingSteps.push({ step: 'communication_setup', status: 'warning', error: commError.message });
-      }
-
-      // Step 5: Create initial lease contract and payments
-      let leaseContractId = null;
-      if (rent_amount && start_date) {
-        try {
-          const contractResult = await base44.asServiceRole.functions.invoke('createInitialLeaseContract', {
-            tenant_id,
-            unit_id,
-            building_id,
-            rent_amount,
-            start_date,
-            end_date
-          });
-          leaseContractId = contractResult.data.lease_contract?.id;
-          onboardingSteps.push({ step: 'lease_contract', status: 'completed', data: contractResult.data });
-        } catch (contractError) {
-          console.warn('Lease contract creation failed:', contractError);
-          onboardingSteps.push({ step: 'lease_contract', status: 'warning', error: contractError.message });
+    // Update onboarding with contract
+    await base44.asServiceRole.entities.TenantOnboarding.update(onboarding.id, {
+      contract_id: contract?.id,
+      status: 'documents_generated',
+      generated_documents: [
+        {
+          document_id: contractDoc.data.id,
+          document_type: 'lease_contract',
+          status: 'generated'
+        },
+        {
+          document_id: protocolDoc.data.id,
+          document_type: 'handover_protocol',
+          status: 'generated'
         }
-      }
+      ],
+      steps_completed: [
+        { step: 'initiated', completed_at: new Date().toISOString(), status: 'completed' },
+        { step: 'documents_generated', completed_at: new Date().toISOString(), status: 'completed' }
+      ],
+      progress_percentage: 40
+    });
 
-      // Step 6: Create tenant administration locks
-      if (leaseContractId) {
-        try {
-          const locksResult = await base44.asServiceRole.functions.invoke('createTenantAdministrationLocks', {
-            tenant_id,
-            lease_contract_id: leaseContractId,
-            tenant_type: 'residential'
-          });
-          onboardingSteps.push({ step: 'administration_locks', status: 'completed', data: locksResult.data });
-        } catch (locksError) {
-          console.warn('Administration locks creation failed:', locksError);
-          onboardingSteps.push({ step: 'administration_locks', status: 'warning', error: locksError.message });
-        }
-      }
+    // Send documents based on preferred communication
+    const sendResult = await base44.functions.invoke('sendOnboardingDocuments', {
+      onboarding_id: onboarding.id,
+      channel: preferred_communication || 'email'
+    });
 
-      // Step 7: Create onboarding progress record
-      try {
-        const progressRecord = await base44.asServiceRole.entities.OnboardingProgress.create({
-          tenant_id,
-          steps_completed: onboardingSteps.filter(s => s.status === 'completed').length,
-          total_steps: onboardingSteps.length,
-          is_completed: true,
-          completed_at: new Date().toISOString(),
-          workflow_data: { steps: onboardingSteps }
-        });
-        onboardingSteps.push({ step: 'progress_tracking', status: 'completed', id: progressRecord.id });
-      } catch (progressError) {
-        console.warn('Progress tracking failed:', progressError);
-      }
+    return Response.json({
+      onboarding,
+      tenant,
+      contract,
+      documents: [contractDoc.data, protocolDoc.data],
+      send_result: sendResult.data
+    });
 
-      return Response.json({
-        success: true,
-        tenant_id,
-        onboarding_steps: onboardingSteps,
-        message: 'Tenant onboarding workflow initiated successfully',
-        completion_status: 'completed'
-      });
-    } catch (error) {
-      console.error('Error during tenant onboarding:', error);
-      return Response.json({
-        success: false,
-        tenant_id,
-        onboarding_steps: onboardingSteps,
-        error: error.message,
-        completion_status: 'partial'
-      }, { status: 500 });
-    }
   } catch (error) {
-    console.error('Fatal error in onboarding:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('Onboarding error:', error);
+    return Response.json({ 
+      error: error.message,
+      stack: error.stack
+    }, { status: 500 });
   }
 });
