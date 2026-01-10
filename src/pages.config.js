@@ -283,6 +283,7 @@ import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
+import AIDocumentAnalysis from './pages/AIDocumentAnalysis';
 import __Layout from './Layout.jsx';
 
 
@@ -572,6 +573,7 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
+    "AIDocumentAnalysis": AIDocumentAnalysis,
 }
 
 export const pagesConfig = {
