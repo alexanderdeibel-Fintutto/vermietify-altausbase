@@ -4,11 +4,11 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { BarChart2 } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 
 export default function MarketBenchmarking() {
   const { data: benchmark } = useQuery({
-    queryKey: ['benchmark'],
+    queryKey: ['marketBenchmark'],
     queryFn: async () => {
       const response = await base44.functions.invoke('calculateBenchmark', {});
       return response.data;
@@ -21,26 +21,24 @@ export default function MarketBenchmarking() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <BarChart2 className="w-5 h-5" />
+          <BarChart3 className="w-5 h-5" />
           Markt-Benchmarking
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="p-3 bg-blue-50 rounded-lg text-center">
-          <p className="text-sm text-slate-600">Ihre Position</p>
-          <Badge className="bg-blue-600 text-xl">Top {benchmark.percentile}%</Badge>
-        </div>
-        <div className="space-y-3">
-          {benchmark.metrics.map((metric, idx) => (
-            <div key={idx}>
-              <div className="flex justify-between text-xs mb-1">
-                <span>{metric.name}</span>
-                <span>{metric.value} vs. {metric.market_avg} (Markt)</span>
-              </div>
-              <Progress value={metric.score} />
+      <CardContent className="space-y-3">
+        {benchmark.metrics.map((metric, idx) => (
+          <div key={idx} className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>{metric.name}</span>
+              <span className="font-semibold">{metric.value}{metric.unit}</span>
             </div>
-          ))}
-        </div>
+            <div className="flex items-center gap-2">
+              <Progress value={metric.percentile} className="flex-1" />
+              <Badge variant="outline">{metric.percentile}. Perzentil</Badge>
+            </div>
+            <p className="text-xs text-slate-600">{metric.comparison}</p>
+          </div>
+        ))}
       </CardContent>
     </Card>
   );

@@ -9,11 +9,15 @@ Deno.serve(async (req) => {
   }
 
   const data = [
-    { category: 'Mieten', plan: 120000, actual: 118500 },
-    { category: 'Wartung', plan: 15000, actual: 18200 },
-    { category: 'Verwaltung', plan: 8000, actual: 7800 },
-    { category: 'Nebenkosten', plan: 25000, actual: 26100 }
+    { category: 'Mieteinnahmen', planned: 120000, actual: 125000 },
+    { category: 'Nebenkosten', planned: 35000, actual: 33500 },
+    { category: 'Instandhaltung', planned: 25000, actual: 28000 },
+    { category: 'Verwaltung', planned: 18000, actual: 17200 }
   ];
 
-  return Response.json({ data });
+  return Response.json({
+    data,
+    variance: 2.5,
+    achievement: 103
+  });
 });

@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
   }
 
   return Response.json({
-    configured: true,
-    last_sync: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+    last_export: '2025-12-31T23:59:59Z',
+    connected: true
   });
 });

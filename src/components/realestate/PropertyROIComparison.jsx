@@ -22,11 +22,11 @@ export default function PropertyROIComparison() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="w-5 h-5" />
-          Rendite-Vergleich
+          Immobilien-ROI-Vergleich
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={250}>
+      <CardContent className="space-y-3">
+        <ResponsiveContainer width="100%" height={300}>
           <BarChart data={comparison.properties}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
@@ -35,6 +35,16 @@ export default function PropertyROIComparison() {
             <Bar dataKey="roi" fill="#3b82f6" />
           </BarChart>
         </ResponsiveContainer>
+        <div className="space-y-1">
+          {comparison.properties.slice(0, 5).map(prop => (
+            <div key={prop.id} className="flex justify-between p-2 bg-slate-50 rounded">
+              <span className="text-sm">{prop.name}</span>
+              <Badge className={prop.roi > 5 ? 'bg-green-600' : 'bg-orange-600'}>
+                {prop.roi}% ROI
+              </Badge>
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

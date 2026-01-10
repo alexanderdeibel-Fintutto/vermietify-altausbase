@@ -9,7 +9,8 @@ Deno.serve(async (req) => {
   }
 
   const messages = [
-    { text: 'Hallo! Wie kann ich Ihnen helfen?', is_user: false, timestamp: new Date(Date.now() - 60000).toISOString() }
+    { from: 'support', text: 'Hallo! Wie kann ich Ihnen helfen?' },
+    { from: 'user', text: 'Ich habe eine Frage zur Nebenkostenabrechnung' }
   ];
 
   return Response.json({ messages });

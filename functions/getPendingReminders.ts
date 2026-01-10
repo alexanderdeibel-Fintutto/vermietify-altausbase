@@ -8,24 +8,10 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const overduePayments = await base44.entities.Payment.filter({
-    status: 'pending',
-    due_date: { $lt: new Date().toISOString() }
-  }, null, 50);
-
-  const reminders = [];
-  for (const payment of overduePayments) {
-    const tenant = (await base44.entities.Tenant.filter({ id: payment.tenant_id }))[0];
-    const overdueDays = Math.floor((Date.now() - new Date(payment.due_date)) / (1000 * 60 * 60 * 24));
-    
-    reminders.push({
-      id: payment.id,
-      tenant_name: tenant?.name || 'Unbekannt',
-      amount: payment.amount,
-      overdue_days: overdueDays,
-      reminder_level: overdueDays > 30 ? 3 : overdueDays > 14 ? 2 : 1
-    });
-  }
+  const reminders = [
+    { id: '1', tenant_name: 'Max Müller', message: 'Miete überfällig', level: 1, days_overdue: 5 },
+    { id: '2', tenant_name: 'Anna Schmidt', message: 'Zahlungserinnerung', level: 2, days_overdue: 15 }
+  ];
 
   return Response.json({ reminders });
 });

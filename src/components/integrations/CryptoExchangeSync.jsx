@@ -1,15 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Bitcoin, RefreshCw } from 'lucide-react';
+import { Coins, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function CryptoExchangeSync() {
-  const [apiKey, setApiKey] = useState('');
   const queryClient = useQueryClient();
 
   const { data: holdings = [] } = useQuery({
@@ -22,11 +20,11 @@ export default function CryptoExchangeSync() {
 
   const syncMutation = useMutation({
     mutationFn: async () => {
-      await base44.functions.invoke('syncCryptoExchange', { api_key: apiKey });
+      await base44.functions.invoke('syncCryptoExchange', {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cryptoHoldings'] });
-      toast.success('Crypto-Portfolio synchronisiert');
+      toast.success('Crypto-Daten synchronisiert');
     }
   });
 
@@ -34,30 +32,26 @@ export default function CryptoExchangeSync() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Bitcoin className="w-5 h-5" />
-          Crypto Exchange
+          <Coins className="w-5 h-5" />
+          Crypto-Exchange-Sync
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <Input
-          placeholder="API Key"
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          type="password"
-        />
-        <Button onClick={() => syncMutation.mutate()} disabled={!apiKey} className="w-full">
+        <Button onClick={() => syncMutation.mutate()} className="w-full">
           <RefreshCw className="w-4 h-4 mr-2" />
-          Verbinden
+          Synchronisieren
         </Button>
-        {holdings.map(h => (
-          <div key={h.symbol} className="flex items-center justify-between p-2 bg-slate-50 rounded">
-            <span className="font-semibold text-sm">{h.symbol}</span>
-            <div className="text-right">
-              <p className="text-sm font-semibold">{h.amount}</p>
-              <Badge className="text-xs">{h.value_eur}€</Badge>
+        <div className="space-y-2">
+          {holdings.map(holding => (
+            <div key={holding.id} className="flex justify-between p-2 bg-slate-50 rounded">
+              <div>
+                <p className="text-sm font-semibold">{holding.symbol}</p>
+                <p className="text-xs text-slate-600">{holding.amount} Coins</p>
+              </div>
+              <Badge className="bg-blue-600">{holding.value}€</Badge>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

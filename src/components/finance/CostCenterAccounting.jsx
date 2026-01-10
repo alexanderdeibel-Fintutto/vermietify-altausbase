@@ -27,11 +27,11 @@ export default function CostCenterAccounting() {
           Kostenstellenrechnung
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-3">
         <ResponsiveContainer width="100%" height={250}>
           <PieChart>
-            <Pie data={costCenters.data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}>
-              {costCenters.data.map((entry, index) => (
+            <Pie data={costCenters.centers} dataKey="amount" nameKey="name" cx="50%" cy="50%" outerRadius={80}>
+              {costCenters.centers.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
@@ -39,6 +39,14 @@ export default function CostCenterAccounting() {
             <Legend />
           </PieChart>
         </ResponsiveContainer>
+        <div className="space-y-1">
+          {costCenters.centers.map((center, idx) => (
+            <div key={idx} className="flex justify-between p-2 bg-slate-50 rounded">
+              <span className="text-sm">{center.name}</span>
+              <Badge>{center.amount}€</Badge>
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

@@ -8,22 +8,14 @@ import { FileText, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function QuarterlyReportGenerator() {
-  const [quarter, setQuarter] = React.useState('Q1');
-  const [year, setYear] = React.useState('2026');
+  const [quarter, setQuarter] = React.useState('Q1-2026');
 
   const generateMutation = useMutation({
     mutationFn: async () => {
-      const response = await base44.functions.invoke('generateQuarterlyReport', { quarter, year });
-      return response.data;
+      await base44.functions.invoke('generateQuarterlyReport', { quarter });
     },
-    onSuccess: (data) => {
-      const blob = new Blob([data.pdf], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Quartalsbericht_${quarter}_${year}.pdf`;
-      a.click();
-      toast.success('Bericht erstellt');
+    onSuccess: () => {
+      toast.success('Quartalsbericht erstellt');
     }
   });
 
@@ -36,28 +28,16 @@ export default function QuarterlyReportGenerator() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="flex gap-2">
-          <Select value={quarter} onValueChange={setQuarter}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Q1">Q1</SelectItem>
-              <SelectItem value="Q2">Q2</SelectItem>
-              <SelectItem value="Q3">Q3</SelectItem>
-              <SelectItem value="Q4">Q4</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={year} onValueChange={setYear}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="2026">2026</SelectItem>
-              <SelectItem value="2025">2025</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <Select value={quarter} onValueChange={setQuarter}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Q1-2026">Q1 2026</SelectItem>
+            <SelectItem value="Q4-2025">Q4 2025</SelectItem>
+            <SelectItem value="Q3-2025">Q3 2025</SelectItem>
+          </SelectContent>
+        </Select>
         <Button onClick={() => generateMutation.mutate()} className="w-full">
           <Download className="w-4 h-4 mr-2" />
           Bericht generieren

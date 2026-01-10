@@ -8,12 +8,13 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const buildings = await base44.entities.Building.list(null, 50);
+  const buildings = await base44.entities.Building.list(null, 100);
 
-  const properties = buildings.slice(0, 5).map(b => ({
-    name: b.name || 'Objekt',
-    roi: ((b.annual_rent || 0) / (b.purchase_price || 1) * 100).toFixed(1)
-  }));
+  const properties = buildings.map(b => ({
+    id: b.id,
+    name: b.name,
+    roi: ((b.annual_income || 50000) / (b.market_value || 1000000) * 100).toFixed(1)
+  })).sort((a, b) => b.roi - a.roi);
 
   return Response.json({ properties });
 });

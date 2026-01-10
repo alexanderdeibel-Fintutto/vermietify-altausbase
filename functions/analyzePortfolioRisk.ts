@@ -9,15 +9,22 @@ Deno.serve(async (req) => {
   }
 
   const factors = [
-    { factor: 'Diversifikation', score: 75 },
-    { factor: 'Liquidität', score: 85 },
-    { factor: 'Marktrisiko', score: 60 },
-    { factor: 'Kreditrisiko', score: 90 },
-    { factor: 'Standortrisiko', score: 70 }
+    { factor: 'Liquidität', value: 85 },
+    { factor: 'Diversifikation', value: 65 },
+    { factor: 'Marktrisiko', value: 45 },
+    { factor: 'Währung', value: 90 },
+    { factor: 'Zinsänderung', value: 55 }
   ];
 
-  const avgScore = factors.reduce((sum, f) => sum + f.score, 0) / factors.length;
-  const level = avgScore > 75 ? 'low' : avgScore > 50 ? 'medium' : 'high';
+  const recommendations = [
+    'Diversifikation in weitere Anlageklassen erhöhen',
+    'Liquiditätsreserve aufstocken',
+    'Zinsrisiko durch Festzinsvereinbarungen reduzieren'
+  ];
 
-  return Response.json({ level, factors });
+  return Response.json({ 
+    total_score: 68,
+    factors,
+    recommendations
+  });
 });

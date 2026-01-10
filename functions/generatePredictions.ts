@@ -8,20 +8,19 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const insights = [
-    {
-      type: 'positive',
-      title: 'Mieteinnahmen steigen',
-      description: 'Basierend auf aktuellen Trends werden Ihre Mieteinnahmen in Q2 um 8% steigen',
-      confidence: 82
-    },
-    {
-      type: 'warning',
-      title: 'Wartungskosten erhöht',
-      description: 'Gebäude A benötigt voraussichtlich erhöhte Wartung (+15%)',
-      confidence: 75
-    }
-  ];
+  const timeline = [];
+  for (let i = 0; i < 12; i++) {
+    timeline.push({
+      month: ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'][i],
+      predicted: 10000 + Math.random() * 3000,
+      actual: i < 6 ? 9500 + Math.random() * 3500 : null
+    });
+  }
 
-  return Response.json({ insights });
+  return Response.json({
+    cashflow_q2: 31500,
+    return_2026: 6.8,
+    confidence: 82,
+    timeline
+  });
 });

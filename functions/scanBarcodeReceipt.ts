@@ -10,18 +10,17 @@ Deno.serve(async (req) => {
 
   const { file_url } = await req.json();
 
-  const result = await base44.integrations.Core.InvokeLLM({
-    prompt: 'Extrahiere den Barcode und alle relevanten Daten aus diesem Beleg',
+  const extracted = await base44.integrations.Core.InvokeLLM({
+    prompt: 'Extrahiere alle Positionen und den Gesamtbetrag aus diesem Beleg',
     file_urls: [file_url],
     response_json_schema: {
       type: 'object',
       properties: {
-        barcode: { type: 'string' },
-        amount: { type: 'number' },
-        vendor: { type: 'string' }
+        items: { type: 'array', items: { type: 'object' } },
+        total: { type: 'number' }
       }
     }
   });
 
-  return Response.json(result);
+  return Response.json(extracted);
 });

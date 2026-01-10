@@ -8,21 +8,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const signatures = await base44.entities.DocumentSignature.filter(
-    { status: 'pending' },
-    '-created_date',
-    10
-  );
+  const signatures = await base44.entities.DocumentSignature.filter({ status: 'pending' });
 
-  const enriched = await Promise.all(signatures.map(async (sig) => {
-    const doc = (await base44.entities.Document.filter({ id: sig.document_id }))[0];
-    return {
-      id: sig.id,
-      document_name: doc?.name || 'Unbekanntes Dokument',
-      signer_email: sig.signer_email,
-      signed: sig.status === 'signed'
-    };
-  }));
-
-  return Response.json({ signatures: enriched });
+  return Response.json({ signatures });
 });

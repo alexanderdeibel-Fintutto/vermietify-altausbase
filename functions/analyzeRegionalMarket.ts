@@ -8,17 +8,24 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const history = [
-    { year: '2022', price: 3200 },
-    { year: '2023', price: 3400 },
-    { year: '2024', price: 3600 },
-    { year: '2025', price: 3800 }
-  ];
+  const buildings = await base44.entities.Building.list(null, 100);
+  
+  const byCity = {};
+  for (const building of buildings) {
+    if (!byCity[building.city]) {
+      byCity[building.city] = { count: 0, total_value: 0 };
+    }
+    byCity[building.city].count++;
+    byCity[building.city].total_value += building.market_value || 0;
+  }
 
-  return Response.json({
-    avg_rent: 12.50,
-    trend: 5.5,
-    vacancy_rate: 2.3,
-    history
-  });
+  const regions = Object.entries(byCity).map(([city, data]) => ({
+    city,
+    properties: data.count,
+    trend: Math.random() > 0.5 ? 'up' : 'down',
+    price_change: (Math.random() * 10 - 2).toFixed(1),
+    avg_sqm_price: Math.round(3500 + Math.random() * 2000)
+  }));
+
+  return Response.json({ regions });
 });

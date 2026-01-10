@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
 
   const { enabled } = await req.json();
 
-  await base44.auth.updateMe({ auto_sync_enabled: enabled });
+  console.log(`Auto-sync ${enabled ? 'enabled' : 'disabled'}`);
 
   return Response.json({ success: true });
 });

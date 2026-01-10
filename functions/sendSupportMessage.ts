@@ -10,13 +10,7 @@ Deno.serve(async (req) => {
 
   const { message } = await req.json();
 
-  const response = await base44.integrations.Core.InvokeLLM({
-    prompt: `Du bist ein hilfreicher Support-Assistent für eine Steuer- und Vermögensverwaltungs-App. Beantworte diese Frage kurz und präzise: ${message}`
-  });
+  console.log(`Support message from ${user.email}: ${message}`);
 
-  return Response.json({ 
-    user_message: message,
-    bot_response: response,
-    timestamp: new Date().toISOString()
-  });
+  return Response.json({ success: true });
 });

@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const holdings = await base44.entities.CryptoHolding.list(null, 100);
+  const holdings = await base44.entities.CryptoHolding.list(null, 50);
 
   return Response.json({ holdings });
 });

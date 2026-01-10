@@ -8,20 +8,14 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const suggestions = [
-    {
-      id: '1',
-      title: 'Vorsteuerabzug optimieren',
-      description: 'Rechnung #1234 kann als Betriebsausgabe geltend gemacht werden',
-      savings: 1200
-    },
-    {
-      id: '2',
-      title: 'AfA-Satz anpassen',
-      description: 'Neue AfA-Regelung für Gebäude anwenden',
-      savings: 2400
-    }
+  const optimizations = [
+    { id: '1', title: 'AfA-Optimierung', description: 'Wechsel zu linearer AfA spart Steuern', savings: 2400 },
+    { id: '2', title: 'Vorsteuerabzug', description: 'Nicht abgerechnete Vorsteuer geltend machen', savings: 1850 },
+    { id: '3', title: 'Rückstellung', description: 'Rückstellungen für geplante Renovierung bilden', savings: 3200 }
   ];
 
-  return Response.json({ suggestions });
+  return Response.json({
+    potential_savings: 7450,
+    optimizations
+  });
 });

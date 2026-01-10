@@ -8,12 +8,13 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const data = [
-    { name: 'Verwaltung', value: 12000 },
-    { name: 'Instandhaltung', value: 8500 },
-    { name: 'Nebenkosten', value: 15000 },
-    { name: 'Finanzierung', value: 20000 }
+  const centers = [
+    { name: 'Verwaltung', amount: 12500 },
+    { name: 'Instandhaltung', amount: 18300 },
+    { name: 'Marketing', amount: 5400 },
+    { name: 'Personal', amount: 22100 },
+    { name: 'Sonstiges', amount: 3200 }
   ];
 
-  return Response.json({ data });
+  return Response.json({ centers });
 });

@@ -9,8 +9,8 @@ Deno.serve(async (req) => {
   }
 
   const alerts = [
-    { id: '1', category: 'Wartung', budget: 5000, actual: 6200, percentage: 124 },
-    { id: '2', category: 'Nebenkosten', budget: 3000, actual: 3450, percentage: 115 }
+    { id: '1', category: 'Wartung & Instandhaltung', message: 'Budget zu 85% ausgeschöpft', percentage: 85, amount: 8500 },
+    { id: '2', category: 'Verwaltungskosten', message: 'Budget überschritten', percentage: 112, amount: 5600 }
   ];
 
   return Response.json({ alerts });

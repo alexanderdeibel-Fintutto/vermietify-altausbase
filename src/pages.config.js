@@ -58,6 +58,8 @@ import CapitalGainsManagement from './pages/CapitalGainsManagement';
 import CapitalGainsOptimizer from './pages/CapitalGainsOptimizer';
 import CharitableDonationPlanner from './pages/CharitableDonationPlanner';
 import CommunicationCenter from './pages/CommunicationCenter';
+import CompleteEnterpriseHub from './pages/CompleteEnterpriseHub';
+import CompleteFeaturesHub from './pages/CompleteFeaturesHub';
 import ComplexTaxSetupWizard from './pages/ComplexTaxSetupWizard';
 import ComplianceAudit from './pages/ComplianceAudit';
 import ComplianceCenter from './pages/ComplianceCenter';
@@ -97,6 +99,7 @@ import FinancialForecasting from './pages/FinancialForecasting';
 import FinancialItems from './pages/FinancialItems';
 import FinancialReporting from './pages/FinancialReporting';
 import Finanzen from './pages/Finanzen';
+import FullFeatureHub from './pages/FullFeatureHub';
 import GeneratedBookings from './pages/GeneratedBookings';
 import GlobalSettings from './pages/GlobalSettings';
 import GlobalTaxDeadlineCalendar from './pages/GlobalTaxDeadlineCalendar';
@@ -216,10 +219,10 @@ import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import TaxLossHarvesting from './pages/TaxLossHarvesting';
 import TaxLossHarvestingAdvisor from './pages/TaxLossHarvestingAdvisor';
 import TaxManagement from './pages/TaxManagement';
+import TaxReportExport from './pages/TaxReportExport';
 import TaxMonitoringDashboard from './pages/TaxMonitoringDashboard';
 import TaxOptimizationAnalyzer from './pages/TaxOptimizationAnalyzer';
 import TaxOptimizationStrategy from './pages/TaxOptimizationStrategy';
-import TaxReportExport from './pages/TaxReportExport';
 import TaxPerformanceDashboard from './pages/TaxPerformanceDashboard';
 import TaxPlanningAdvisor from './pages/TaxPlanningAdvisor';
 import TaxRemindersCenter from './pages/TaxRemindersCenter';
@@ -255,6 +258,7 @@ import TesterManagementLazy from './pages/TesterManagementLazy';
 import TesterOnboarding from './pages/TesterOnboarding';
 import TestingDashboard from './pages/TestingDashboard';
 import ThemeManagement from './pages/ThemeManagement';
+import UltimateEnterpriseHub from './pages/UltimateEnterpriseHub';
 import UnitDetail from './pages/UnitDetail';
 import UnitsManagement from './pages/UnitsManagement';
 import UserAudit from './pages/UserAudit';
@@ -279,10 +283,6 @@ import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import FullFeatureHub from './pages/FullFeatureHub';
-import CompleteFeaturesHub from './pages/CompleteFeaturesHub';
-import CompleteEnterpriseHub from './pages/CompleteEnterpriseHub';
-import UltimateEnterpriseHub from './pages/UltimateEnterpriseHub';
 import __Layout from './Layout.jsx';
 
 
@@ -347,6 +347,8 @@ export const PAGES = {
     "CapitalGainsOptimizer": CapitalGainsOptimizer,
     "CharitableDonationPlanner": CharitableDonationPlanner,
     "CommunicationCenter": CommunicationCenter,
+    "CompleteEnterpriseHub": CompleteEnterpriseHub,
+    "CompleteFeaturesHub": CompleteFeaturesHub,
     "ComplexTaxSetupWizard": ComplexTaxSetupWizard,
     "ComplianceAudit": ComplianceAudit,
     "ComplianceCenter": ComplianceCenter,
@@ -386,6 +388,7 @@ export const PAGES = {
     "FinancialItems": FinancialItems,
     "FinancialReporting": FinancialReporting,
     "Finanzen": Finanzen,
+    "FullFeatureHub": FullFeatureHub,
     "GeneratedBookings": GeneratedBookings,
     "GlobalSettings": GlobalSettings,
     "GlobalTaxDeadlineCalendar": GlobalTaxDeadlineCalendar,
@@ -505,10 +508,10 @@ export const PAGES = {
     "TaxLossHarvesting": TaxLossHarvesting,
     "TaxLossHarvestingAdvisor": TaxLossHarvestingAdvisor,
     "TaxManagement": TaxManagement,
+    "TaxReportExport": TaxReportExport,
     "TaxMonitoringDashboard": TaxMonitoringDashboard,
     "TaxOptimizationAnalyzer": TaxOptimizationAnalyzer,
     "TaxOptimizationStrategy": TaxOptimizationStrategy,
-    "TaxReportExport": TaxReportExport,
     "TaxPerformanceDashboard": TaxPerformanceDashboard,
     "TaxPlanningAdvisor": TaxPlanningAdvisor,
     "TaxRemindersCenter": TaxRemindersCenter,
@@ -544,6 +547,7 @@ export const PAGES = {
     "TesterOnboarding": TesterOnboarding,
     "TestingDashboard": TestingDashboard,
     "ThemeManagement": ThemeManagement,
+    "UltimateEnterpriseHub": UltimateEnterpriseHub,
     "UnitDetail": UnitDetail,
     "UnitsManagement": UnitsManagement,
     "UserAudit": UserAudit,
@@ -568,10 +572,6 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "FullFeatureHub": FullFeatureHub,
-    "CompleteFeaturesHub": CompleteFeaturesHub,
-    "CompleteEnterpriseHub": CompleteEnterpriseHub,
-    "UltimateEnterpriseHub": UltimateEnterpriseHub,
 }
 
 export const pagesConfig = {

@@ -2,12 +2,14 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { PenTool, Send } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ESignaturePanel() {
+  const queryClient = useQueryClient();
+
   const { data: pending = [] } = useQuery({
     queryKey: ['pendingSignatures'],
     queryFn: async () => {
@@ -17,11 +19,12 @@ export default function ESignaturePanel() {
   });
 
   const requestMutation = useMutation({
-    mutationFn: async (docId) => {
-      await base44.functions.invoke('requestESignature', { document_id: docId });
+    mutationFn: async (documentId) => {
+      await base44.functions.invoke('requestESignature', { document_id: documentId });
     },
     onSuccess: () => {
-      toast.success('Signaturanfrage gesendet');
+      queryClient.invalidateQueries({ queryKey: ['pendingSignatures'] });
+      toast.success('Signaturanfrage versendet');
     }
   });
 
@@ -33,16 +36,12 @@ export default function ESignaturePanel() {
           E-Signatur
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-2">
         {pending.map(sig => (
-          <div key={sig.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-            <div>
-              <p className="font-semibold text-sm">{sig.document_name}</p>
-              <p className="text-xs text-slate-600">{sig.signer_email}</p>
-            </div>
-            <Badge className={sig.signed ? 'bg-green-600' : 'bg-orange-600'}>
-              {sig.signed ? 'Signiert' : 'Ausstehend'}
-            </Badge>
+          <div key={sig.id} className="p-3 bg-blue-50 rounded-lg">
+            <p className="font-semibold text-sm">{sig.document_name}</p>
+            <p className="text-xs text-slate-600">Unterzeichner: {sig.signer_email}</p>
+            <Badge className="mt-2" variant="outline">{sig.status}</Badge>
           </div>
         ))}
       </CardContent>

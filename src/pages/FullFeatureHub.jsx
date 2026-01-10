@@ -1,51 +1,110 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import DashboardBuilder from '@/components/dashboard/DashboardBuilder';
-import FavoritesManager from '@/components/dashboard/FavoritesManager';
-import QuickActionsMenu from '@/components/dashboard/QuickActionsMenu';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+import PredictiveAnalytics from '@/components/analytics/PredictiveAnalytics';
+import MarketBenchmarking from '@/components/analytics/MarketBenchmarking';
+import PortfolioRiskAnalysis from '@/components/analytics/PortfolioRiskAnalysis';
+import TaxOptimizationAutopilot from '@/components/analytics/TaxOptimizationAutopilot';
+
+import RealtimeCashflowMonitor from '@/components/finance/RealtimeCashflowMonitor';
+import BudgetAlertManager from '@/components/finance/BudgetAlertManager';
+import CostCenterAccounting from '@/components/finance/CostCenterAccounting';
+import ProfitLossForecast from '@/components/finance/ProfitLossForecast';
+
+import TenantScoring from '@/components/tenants/TenantScoring';
+import AutomatedReminderFlow from '@/components/tenants/AutomatedReminderFlow';
+import DepositManager from '@/components/tenants/DepositManager';
+import ContractRenewalAssistant from '@/components/tenants/ContractRenewalAssistant';
+
+import QuarterlyReportGenerator from '@/components/reporting/QuarterlyReportGenerator';
+import PlanVsActualComparison from '@/components/reporting/PlanVsActualComparison';
+import CustomReportDesigner from '@/components/reporting/CustomReportDesigner';
+
+import PropertyROIComparison from '@/components/realestate/PropertyROIComparison';
+import VacancyCostCalculator from '@/components/realestate/VacancyCostCalculator';
+import RegionalMarketAnalysis from '@/components/realestate/RegionalMarketAnalysis';
+
+import BarcodeReceiptScanner from '@/components/mobile/BarcodeReceiptScanner';
+import VoiceNoteCapture from '@/components/mobile/VoiceNoteCapture';
+import GPSMileageTracker from '@/components/mobile/GPSMileageTracker';
 
 import FinAPIBankingSync from '@/components/integrations/FinAPIBankingSync';
 import CryptoExchangeSync from '@/components/integrations/CryptoExchangeSync';
-import CalendarSync from '@/components/integrations/CalendarSync';
+import DATEVInterface from '@/components/integrations/DATEVInterface';
 import ESignaturePanel from '@/components/integrations/ESignaturePanel';
 
-import TeamDashboard from '@/components/team/TeamDashboard';
-import MultiMandantManager from '@/components/team/MultiMandantManager';
+import QuickActionsMenu from '@/components/dashboard/QuickActionsMenu';
+import InAppChatSupport from '@/components/support/InAppChatSupport';
 
-import PushNotificationSettings from '@/components/notifications/PushNotificationSettings';
-import EmailDigestSettings from '@/components/notifications/EmailDigestSettings';
-
-import TemplateLibrary from '@/components/templates/TemplateLibrary';
-import BulkOperationsPanel from '@/components/bulk/BulkOperationsPanel';
-import BackupRestore from '@/components/backup/BackupRestore';
-
-import GoBDCompliance from '@/components/compliance/GoBDCompliance';
-import LegalUpdatesMonitor from '@/components/compliance/LegalUpdatesMonitor';
+import TwoFactorAuth from '@/components/security/TwoFactorAuth';
+import AuditLog from '@/components/security/AuditLog';
+import GDPRDataExport from '@/components/security/GDPRDataExport';
 
 export default function FullFeatureHub() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Feature Hub</h1>
-        <ThemeToggle />
-      </div>
+      <h1 className="text-3xl font-bold">Full Feature Hub</h1>
+      <p className="text-slate-600">Alle Advanced Enterprise-Features</p>
 
-      <Tabs defaultValue="dashboard">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+      <Tabs defaultValue="analytics">
+        <TabsList className="grid w-full grid-cols-7">
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="finance">Finance</TabsTrigger>
+          <TabsTrigger value="tenants">Mieter</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="realestate">Immobilien</TabsTrigger>
+          <TabsTrigger value="mobile">Mobile</TabsTrigger>
           <TabsTrigger value="integrations">Integrationen</TabsTrigger>
-          <TabsTrigger value="team">Team</TabsTrigger>
-          <TabsTrigger value="notifications">Benachrichtigungen</TabsTrigger>
-          <TabsTrigger value="tools">Tools</TabsTrigger>
-          <TabsTrigger value="compliance">Compliance</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="dashboard" className="space-y-6">
+        <TabsContent value="analytics" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <DashboardBuilder />
-            <FavoritesManager />
+            <PredictiveAnalytics />
+            <MarketBenchmarking />
+            <PortfolioRiskAnalysis />
+            <TaxOptimizationAutopilot />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="finance" className="space-y-6">
+          <RealtimeCashflowMonitor />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <BudgetAlertManager />
+            <CostCenterAccounting />
+          </div>
+          <ProfitLossForecast />
+        </TabsContent>
+
+        <TabsContent value="tenants" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <TenantScoring tenantId="example" />
+            <AutomatedReminderFlow />
+            <DepositManager />
+            <ContractRenewalAssistant />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="reports" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <QuarterlyReportGenerator />
+            <PlanVsActualComparison />
+          </div>
+          <CustomReportDesigner />
+        </TabsContent>
+
+        <TabsContent value="realestate" className="space-y-6">
+          <PropertyROIComparison />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <VacancyCostCalculator />
+            <RegionalMarketAnalysis />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="mobile" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <BarcodeReceiptScanner />
+            <VoiceNoteCapture />
+            <GPSMileageTracker />
           </div>
           <QuickActionsMenu />
         </TabsContent>
@@ -54,37 +113,14 @@ export default function FullFeatureHub() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <FinAPIBankingSync />
             <CryptoExchangeSync />
-            <CalendarSync />
+            <DATEVInterface />
             <ESignaturePanel />
           </div>
-        </TabsContent>
-
-        <TabsContent value="team" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <TeamDashboard />
-            <MultiMandantManager />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="notifications" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <PushNotificationSettings />
-            <EmailDigestSettings />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="tools" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <TemplateLibrary />
-            <BulkOperationsPanel />
-            <BackupRestore />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="compliance" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <GoBDCompliance />
-            <LegalUpdatesMonitor />
+          <InAppChatSupport />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <TwoFactorAuth />
+            <AuditLog />
+            <GDPRDataExport />
           </div>
         </TabsContent>
       </Tabs>

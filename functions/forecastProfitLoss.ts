@@ -8,18 +8,16 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const timeline = [];
-  for (let i = 0; i < 6; i++) {
-    timeline.push({
-      month: ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun'][i],
-      profit: 5000 + Math.random() * 3000
-    });
-  }
+  const quarterly = [
+    { quarter: 'Q1', revenue: 120000, expenses: 85000 },
+    { quarter: 'Q2', revenue: 125000, expenses: 88000 },
+    { quarter: 'Q3', revenue: 130000, expenses: 90000 },
+    { quarter: 'Q4', revenue: 135000, expenses: 92000 }
+  ];
 
   return Response.json({
-    revenue: 120000,
-    costs: 85000,
-    profit: 35000,
-    timeline
+    expected_profit: 145000,
+    ebitda_margin: 28.5,
+    quarterly
   });
 });

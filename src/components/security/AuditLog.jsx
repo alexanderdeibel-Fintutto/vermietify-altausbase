@@ -1,16 +1,35 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Shield, Eye } from 'lucide-react';
+import { FileText, Download } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function AuditLog() {
   const { data: logs = [] } = useQuery({
-    queryKey: ['auditLog'],
+    queryKey: ['auditLogs'],
     queryFn: async () => {
-      const response = await base44.functions.invoke('getAuditLog', { limit: 50 });
-      return response.data.logs;
+      const activities = await base44.entities.UserActivity.list('-created_date', 100);
+      return activities;
+    }
+  });
+
+  const exportMutation = useMutation({
+    mutationFn: async () => {
+      const csv = logs.map(log => 
+        `${log.created_date},${log.created_by},${log.action}`
+      ).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'audit-log.csv';
+      a.click();
+    },
+    onSuccess: () => {
+      toast.success('Audit-Log exportiert');
     }
   });
 
@@ -18,21 +37,23 @@ export default function AuditLog() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Shield className="w-5 h-5" />
-          Audit-Protokoll
+          <FileText className="w-5 h-5" />
+          Audit-Trail
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2 max-h-96 overflow-y-auto">
-        {logs.map((log, idx) => (
-          <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 rounded text-xs">
-            <div className="flex items-center gap-2">
-              <Eye className="w-3 h-3 text-slate-600" />
-              <span className="font-semibold">{log.action}</span>
-              <span className="text-slate-600">{log.user_email}</span>
+      <CardContent className="space-y-3">
+        <Button onClick={() => exportMutation.mutate()} className="w-full">
+          <Download className="w-4 h-4 mr-2" />
+          Audit-Log exportieren
+        </Button>
+        <div className="max-h-64 overflow-y-auto space-y-1">
+          {logs.map(log => (
+            <div key={log.id} className="p-2 bg-slate-50 rounded text-xs">
+              <p className="font-semibold">{log.action}</p>
+              <p className="text-slate-600">{log.created_by} - {new Date(log.created_date).toLocaleString('de-DE')}</p>
             </div>
-            <span className="text-slate-400">{new Date(log.timestamp).toLocaleString('de-DE')}</span>
-          </div>
-        ))}
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

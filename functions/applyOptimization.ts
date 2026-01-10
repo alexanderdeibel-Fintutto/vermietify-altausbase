@@ -10,7 +10,6 @@ Deno.serve(async (req) => {
 
   const { suggestion_id } = await req.json();
 
-  // Apply the optimization
   console.log(`Applied optimization: ${suggestion_id}`);
 
   return Response.json({ success: true });

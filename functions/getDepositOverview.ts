@@ -8,23 +8,16 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const contracts = await base44.entities.LeaseContract.list(null, 100);
+  const contracts = await base44.entities.LeaseContract.filter({ status: 'active' });
   
-  const items = [];
-  let total = 0;
+  const total = contracts.reduce((sum, c) => sum + (c.deposit || 0), 0);
+  const interest = total * 0.01;
 
-  for (const contract of contracts) {
-    if (contract.deposit) {
-      const tenant = (await base44.entities.Tenant.filter({ id: contract.tenant_id }))[0];
-      items.push({
-        id: contract.id,
-        tenant_name: tenant?.name || 'Unbekannt',
-        amount: contract.deposit,
-        paid: contract.deposit_paid
-      });
-      total += contract.deposit;
-    }
-  }
+  const items = contracts.map(c => ({
+    id: c.id,
+    tenant_name: c.tenant_id,
+    amount: c.deposit || 0
+  }));
 
-  return Response.json({ total, items });
+  return Response.json({ total, interest: Math.round(interest), items });
 });

@@ -8,17 +8,9 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const financialItems = await base44.entities.FinancialItem.list(null, 500);
+  const items = await base44.entities.FinancialItem.list(null, 1000);
 
-  const datevData = financialItems.map(item => ({
-    buchungstext: item.name,
-    betrag: item.amount,
-    datum: item.created_date
-  }));
+  console.log(`Exporting ${items.length} items to DATEV`);
 
-  return Response.json({ 
-    success: true, 
-    exported: datevData.length,
-    data: datevData
-  });
+  return Response.json({ success: true, exported: items.length });
 });

@@ -1,16 +1,30 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import { AlertCircle } from 'lucide-react';
 
 export default function VacancyCostCalculator() {
-  const [rent, setRent] = useState(0);
-  const [months, setMonths] = useState(0);
+  const { data: vacancyCosts } = useQuery({
+    queryKey: ['vacancyCosts'],
+    queryFn: async () => {
+      const buildings = await base44.entities.Building.list(null, 100);
+      const units = await base44.entities.Unit.list(null, 500);
+      
+      const vacant = units.filter(u => u.status === 'vacant');
+      const totalLoss = vacant.reduce((sum, u) => sum + (u.rent || 0), 0);
+      
+      return {
+        vacant_units: vacant.length,
+        monthly_loss: totalLoss,
+        annual_loss: totalLoss * 12,
+        units: vacant.map(u => ({ name: u.name, loss: u.rent || 0 }))
+      };
+    }
+  });
 
-  const loss = rent * months;
-  const additionalCosts = months * 100;
-  const total = loss + additionalCosts;
+  if (!vacancyCosts) return null;
 
   return (
     <Card>
@@ -21,28 +35,24 @@ export default function VacancyCostCalculator() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <Input
-          type="number"
-          placeholder="Monatliche Miete"
-          value={rent}
-          onChange={(e) => setRent(parseFloat(e.target.value))}
-        />
-        <Input
-          type="number"
-          placeholder="Monate Leerstand"
-          value={months}
-          onChange={(e) => setMonths(parseFloat(e.target.value))}
-        />
-        {total > 0 && (
-          <div className="p-4 bg-red-50 rounded-lg">
-            <p className="text-sm mb-2">Gesamtkosten Leerstand:</p>
-            <Badge className="bg-red-600 text-xl">{total.toFixed(0)}€</Badge>
-            <div className="mt-2 text-xs text-slate-600">
-              <p>Mietausfall: {loss}€</p>
-              <p>Zusatzkosten: {additionalCosts}€</p>
-            </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="p-3 bg-orange-50 rounded text-center">
+            <p className="text-xs">Leerstände</p>
+            <Badge className="bg-orange-600 text-lg">{vacancyCosts.vacant_units}</Badge>
           </div>
-        )}
+          <div className="p-3 bg-red-50 rounded text-center">
+            <p className="text-xs">Jährlicher Verlust</p>
+            <Badge className="bg-red-600 text-lg">{vacancyCosts.annual_loss}€</Badge>
+          </div>
+        </div>
+        <div className="space-y-1">
+          {vacancyCosts.units.slice(0, 5).map((unit, idx) => (
+            <div key={idx} className="flex justify-between p-2 bg-slate-50 rounded">
+              <span className="text-sm">{unit.name}</span>
+              <Badge variant="outline">-{unit.loss}€/Monat</Badge>
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

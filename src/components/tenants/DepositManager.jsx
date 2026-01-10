@@ -7,7 +7,7 @@ import { Wallet } from 'lucide-react';
 
 export default function DepositManager() {
   const { data: deposits } = useQuery({
-    queryKey: ['deposits'],
+    queryKey: ['depositOverview'],
     queryFn: async () => {
       const response = await base44.functions.invoke('getDepositOverview', {});
       return response.data;
@@ -25,19 +25,21 @@ export default function DepositManager() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="p-3 bg-blue-50 rounded-lg text-center">
-          <p className="text-sm text-slate-600">Gesamt verwaltete Kautionen</p>
-          <p className="text-2xl font-bold text-blue-900">{deposits.total.toLocaleString('de-DE')}€</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="p-3 bg-blue-50 rounded text-center">
+            <p className="text-xs">Gesamt-Kautionen</p>
+            <Badge className="bg-blue-600 text-lg">{deposits.total}€</Badge>
+          </div>
+          <div className="p-3 bg-green-50 rounded text-center">
+            <p className="text-xs">Zinsen 2025</p>
+            <Badge className="bg-green-600">{deposits.interest}€</Badge>
+          </div>
         </div>
         <div className="space-y-2">
-          {deposits.items.map(dep => (
-            <div key={dep.id} className="flex justify-between p-2 bg-slate-50 rounded">
-              <span className="text-sm">{dep.tenant_name}</span>
-              <div className="flex gap-2">
-                <Badge className={dep.paid ? 'bg-green-600' : 'bg-orange-600'}>
-                  {dep.amount}€
-                </Badge>
-              </div>
+          {deposits.items.map(item => (
+            <div key={item.id} className="flex justify-between p-2 bg-slate-50 rounded">
+              <span className="text-sm">{item.tenant_name}</span>
+              <Badge variant="outline">{item.amount}€</Badge>
             </div>
           ))}
         </div>

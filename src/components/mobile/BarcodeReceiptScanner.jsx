@@ -1,14 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { ScanLine } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function BarcodeReceiptScanner() {
-  const [scannedCode, setScannedCode] = useState('');
+  const queryClient = useQueryClient();
 
   const scanMutation = useMutation({
     mutationFn: async (file) => {
@@ -17,8 +16,8 @@ export default function BarcodeReceiptScanner() {
       return response.data;
     },
     onSuccess: (data) => {
-      setScannedCode(data.barcode);
-      toast.success('Beleg gescannt');
+      queryClient.invalidateQueries({ queryKey: ['financialItems'] });
+      toast.success(`Beleg gescannt: ${data.total}€`);
     }
   });
 
@@ -27,10 +26,10 @@ export default function BarcodeReceiptScanner() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ScanLine className="w-5 h-5" />
-          Beleg-Scanner
+          Barcode-Scanner
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent>
         <input
           type="file"
           accept="image/*"
@@ -41,15 +40,12 @@ export default function BarcodeReceiptScanner() {
         />
         <label htmlFor="barcode-scan">
           <Button asChild className="w-full">
-            <span>Beleg scannen</span>
+            <span>
+              <ScanLine className="w-4 h-4 mr-2" />
+              Beleg scannen
+            </span>
           </Button>
         </label>
-        {scannedCode && (
-          <div className="p-3 bg-green-50 rounded-lg">
-            <p className="text-xs text-slate-600">Erkannter Code:</p>
-            <Badge className="bg-green-600 font-mono">{scannedCode}</Badge>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

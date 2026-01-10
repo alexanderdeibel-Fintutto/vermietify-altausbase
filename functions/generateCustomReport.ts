@@ -8,19 +8,9 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { fields } = await req.json();
+  const { sections } = await req.json();
 
-  const reportData = {};
+  console.log(`Generating custom report with sections: ${sections.join(', ')}`);
 
-  if (fields.income) {
-    const items = await base44.entities.FinancialItem.filter({ amount: { $gt: 0 } }, null, 100);
-    reportData.income = items.reduce((sum, i) => sum + i.amount, 0);
-  }
-
-  if (fields.expenses) {
-    const items = await base44.entities.FinancialItem.filter({ amount: { $lt: 0 } }, null, 100);
-    reportData.expenses = Math.abs(items.reduce((sum, i) => sum + i.amount, 0));
-  }
-
-  return Response.json({ report: reportData });
+  return Response.json({ success: true });
 });
