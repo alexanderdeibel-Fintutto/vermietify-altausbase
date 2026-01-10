@@ -109,10 +109,27 @@ export default function Dashboard() {
             Willkommen zurück, {user?.full_name || 'Benutzer'}
           </p>
         </div>
-        <Button variant="outline" onClick={() => setConfigOpen(true)}>
-          <Settings className="w-4 h-4 mr-2" />
-          Widgets anpassen
-        </Button>
+        <div className="flex gap-2">
+          {userProfiles.length > 1 && (
+            <Select value={selectedProfile || savedConfig?.id} onValueChange={switchProfile}>
+              <SelectTrigger className="w-48">
+                <LayoutDashboard className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Profil wählen" />
+              </SelectTrigger>
+              <SelectContent>
+                {userProfiles.map(p => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.profile_name || 'Standard'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Button variant="outline" onClick={() => setConfigOpen(true)}>
+            <Settings className="w-4 h-4 mr-2" />
+            Anpassen
+          </Button>
+        </div>
       </div>
 
       {/* Widgets Grid */}
