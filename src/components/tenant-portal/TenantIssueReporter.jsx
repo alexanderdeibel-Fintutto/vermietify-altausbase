@@ -29,6 +29,7 @@ export default function TenantIssueReporter({ tenantId, unitId, buildingId }) {
     severity: 'medium',
     photos: []
   });
+  const [uploading, setUploading] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -101,12 +102,34 @@ export default function TenantIssueReporter({ tenantId, unitId, buildingId }) {
 
   const handlePhotoUpload = async (e) => {
     const files = Array.from(e.target.files);
-    const uploadPromises = files.map(async (file) => {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      return file_url;
-    });
-    const uploaded = await Promise.all(uploadPromises);
-    setFormData({ ...formData, photos: [...formData.photos, ...uploaded] });
+    if (files.length === 0) return;
+
+    setUploading(true);
+    try {
+      const uploadPromises = files.map(async (file) => {
+        // Validate file type
+        const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'video/mp4', 'video/quicktime', 'video/x-msvideo'];
+        if (!validTypes.includes(file.type)) {
+          throw new Error(`Dateityp nicht unterstützt: ${file.name}`);
+        }
+        
+        // Validate size (50MB)
+        if (file.size > 50 * 1024 * 1024) {
+          throw new Error(`Datei zu groß: ${file.name}`);
+        }
+
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        return file_url;
+      });
+      
+      const uploaded = await Promise.all(uploadPromises);
+      setFormData({ ...formData, photos: [...formData.photos, ...uploaded] });
+      toast.success(`${files.length} Datei(en) hochgeladen`);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const relatedSensor = sensors.find(s => 
@@ -199,12 +222,31 @@ export default function TenantIssueReporter({ tenantId, unitId, buildingId }) {
           {formData.photos.length > 0 && (
             <div className="grid grid-cols-3 gap-2">
               {formData.photos.map((photo, idx) => (
-                <img
-                  key={idx}
-                  src={photo}
-                  alt={`Foto ${idx + 1}`}
-                  className="w-full h-24 object-cover rounded border"
-                />
+                <div key={idx} className="relative group">
+                  {photo.includes('.mp4') || photo.includes('.mov') || photo.includes('video') ? (
+                    <video
+                      src={photo}
+                      className="w-full h-24 object-cover rounded border"
+                      controls={false}
+                    />
+                  ) : (
+                    <img
+                      src={photo}
+                      alt={`Foto ${idx + 1}`}
+                      className="w-full h-24 object-cover rounded border"
+                    />
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ 
+                      ...formData, 
+                      photos: formData.photos.filter((_, i) => i !== idx) 
+                    })}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100"
+                  >
+                    ×
+                  </button>
+                </div>
               ))}
             </div>
           )}
@@ -218,12 +260,12 @@ export default function TenantIssueReporter({ tenantId, unitId, buildingId }) {
               Meldung absenden
             </Button>
             <label>
-              <Button variant="outline" asChild>
+              <Button variant="outline" disabled={uploading} asChild>
                 <div>
                   <Camera className="w-4 h-4" />
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,video/*"
                     multiple
                     onChange={handlePhotoUpload}
                     className="hidden"

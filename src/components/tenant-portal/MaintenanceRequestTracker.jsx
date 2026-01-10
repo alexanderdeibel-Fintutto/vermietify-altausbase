@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Wrench, Clock, CheckCircle, MessageSquare, Paperclip, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import MaintenanceRequestDetailDialog from './MaintenanceRequestDetailDialog';
+import MaintenanceRatingDialog from '@/components/maintenance/MaintenanceRatingDialog';
 
 const statusConfig = {
   pending: { label: 'Eingereicht', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
@@ -104,6 +105,19 @@ export default function MaintenanceRequestTracker() {
                             <span className="text-xs">{request.attachments.length}</span>
                           </div>
                         )}
+                        {request.status === 'completed' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setRatingTask(request);
+                            }}
+                            className="ml-2"
+                          >
+                            Bewerten
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -119,6 +133,14 @@ export default function MaintenanceRequestTracker() {
           request={selectedRequest}
           onClose={() => setSelectedRequest(null)}
           tenantId={tenant?.id}
+        />
+      )}
+
+      {ratingTask && (
+        <MaintenanceRatingDialog
+          task={ratingTask}
+          open={!!ratingTask}
+          onClose={() => setRatingTask(null)}
         />
       )}
     </>
