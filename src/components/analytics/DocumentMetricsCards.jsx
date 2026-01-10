@@ -1,6 +1,5 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { TrendingUp, FileText, Signature, Layers } from 'lucide-react';
 
 const MetricCard = ({ icon: Icon, label, value, trend, color = 'blue' }) => (
