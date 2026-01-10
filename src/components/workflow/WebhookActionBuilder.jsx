@@ -1,13 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Link2, Plus, X } from 'lucide-react';
+import { Link2, Plus, X, Play, CheckCircle, XCircle } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 
 export default function WebhookActionBuilder({ action, onChange }) {
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+
+  const testWebhook = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const response = await base44.functions.invoke('testWebhookAction', {
+        webhook_config: action.config,
+        test_data: { test: 'true', message: 'Test vom Workflow-Builder' }
+      });
+      setTestResult(response.data);
+      if (response.data.success) {
+        toast.success('Webhook erfolgreich getestet!');
+      } else {
+        toast.error('Webhook-Test fehlgeschlagen');
+      }
+    } catch (error) {
+      setTestResult({ success: false, error: error.message });
+      toast.error('Fehler beim Testen des Webhooks');
+    } finally {
+      setTesting(false);
+    }
+  };
+
   const addHeader = () => {
     const headers = action.config?.headers || [];
     onChange({
@@ -39,10 +66,21 @@ export default function WebhookActionBuilder({ action, onChange }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Link2 className="w-4 h-4" />
-          Webhook Konfiguration
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Link2 className="w-4 h-4" />
+            Webhook Konfiguration
+          </CardTitle>
+          <Button 
+            onClick={testWebhook} 
+            disabled={!action.config?.url || testing}
+            size="sm"
+            variant="outline"
+          >
+            <Play className="w-3 h-3 mr-1" />
+            {testing ? 'Teste...' : 'Testen'}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
@@ -231,6 +269,30 @@ export default function WebhookActionBuilder({ action, onChange }) {
                 })}
               />
             </div>
+          </div>
+        )}
+
+        {testResult && (
+          <div className={`p-3 rounded-lg border ${testResult.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+            <div className="flex items-center gap-2 mb-2">
+              {testResult.success ? (
+                <CheckCircle className="w-4 h-4 text-green-600" />
+              ) : (
+                <XCircle className="w-4 h-4 text-red-600" />
+              )}
+              <span className="font-semibold text-sm">
+                {testResult.success ? 'Test erfolgreich' : 'Test fehlgeschlagen'}
+              </span>
+              <Badge variant="outline">{testResult.status}</Badge>
+            </div>
+            {testResult.response && (
+              <pre className="text-xs bg-white p-2 rounded border mt-2 overflow-auto max-h-32">
+                {JSON.stringify(testResult.response, null, 2)}
+              </pre>
+            )}
+            {testResult.error && (
+              <p className="text-xs text-red-700 mt-1">{testResult.error}</p>
+            )}
           </div>
         )}
       </CardContent>
