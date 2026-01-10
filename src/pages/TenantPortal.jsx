@@ -23,15 +23,24 @@ import ContractDocumentsWidget from '@/components/tenant-portal/ContractDocument
 import TenantPortalQuickActions from '@/components/tenant-portal/TenantPortalQuickActions';
 import RecentIssuesWidget from '@/components/tenant-portal/RecentIssuesWidget';
 import TenantAIChatbot from '@/components/tenant-portal/TenantAIChatbot';
+import TenantOnboardingFlow from '@/components/tenant-portal/TenantOnboardingFlow';
 
 export default function TenantPortal() {
   const [activeTab, setActiveTab] = useState('overview');
   const [showChatbot, setShowChatbot] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
   });
+
+  // Check if onboarding is needed
+  React.useEffect(() => {
+    if (currentUser && !currentUser.tenant_onboarding_completed) {
+      setShowOnboarding(true);
+    }
+  }, [currentUser]);
 
   const { data: tenantRecord } = useQuery({
     queryKey: ['tenant', currentUser?.email],
@@ -74,8 +83,14 @@ export default function TenantPortal() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <>
+      <TenantOnboardingFlow 
+        open={showOnboarding} 
+        onComplete={() => setShowOnboarding(false)} 
+      />
+      
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-light text-slate-900">Mieterportal</h1>
           <p className="text-sm font-light text-slate-600 mt-1">
@@ -165,5 +180,6 @@ export default function TenantPortal() {
         </TabsContent>
       </Tabs>
     </div>
+    </>
   );
 }
