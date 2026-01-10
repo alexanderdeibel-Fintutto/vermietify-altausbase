@@ -1,106 +1,91 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
+  try {
+    const base44 = createClientFromRequest(req);
+    const { issue_id, issue_type, location, building_id } = await req.json();
 
-  const { task_id } = await req.json();
+    // Get available vendors/technicians
+    const allVendors = await base44.asServiceRole.entities.Vendor.list();
+    
+    // Filter vendors by specialty matching the issue type
+    const specialtyMap = {
+      heating: ['heating', 'general'],
+      plumbing: ['plumbing', 'general'],
+      electrical: ['electrical', 'general'],
+      appliance: ['general'],
+      temperature: ['heating', 'general'],
+      humidity: ['plumbing', 'general'],
+      noise: ['general'],
+      other: ['general']
+    };
 
-  const task = await base44.asServiceRole.entities.MaintenanceTask.filter({ 
-    id: task_id 
-  }).then(t => t[0]);
+    const requiredSpecialties = specialtyMap[issue_type] || ['general'];
+    
+    const suitableVendors = allVendors.filter(v => 
+      v.is_active && 
+      v.specialties?.some(s => requiredSpecialties.includes(s))
+    );
 
-  if (!task) {
-    return Response.json({ error: 'Task not found' }, { status: 404 });
-  }
-
-  // Get building location
-  const building = task.building_id
-    ? await base44.asServiceRole.entities.Building.filter({ id: task.building_id }).then(b => b[0])
-    : null;
-
-  // Get all available technicians
-  const allTechnicians = await base44.asServiceRole.entities.BuildingManager.filter({ 
-    is_active: true 
-  });
-
-  // Score and rank technicians
-  const scoredTechnicians = allTechnicians.map(tech => {
-    let score = 0;
-
-    // Check specialization match
-    if (tech.specializations?.includes(task.category)) {
-      score += 50;
+    if (suitableVendors.length === 0) {
+      return Response.json({ 
+        success: false, 
+        message: 'Keine passenden Techniker gefunden'
+      });
     }
 
-    // Check if technician is assigned to this building
-    if (building && tech.assigned_buildings?.includes(building.id)) {
-      score += 30;
-    }
+    // Score vendors based on multiple factors
+    const scoredVendors = await Promise.all(suitableVendors.map(async (vendor) => {
+      let score = 0;
 
-    // Check for general capability
-    if (tech.specializations?.includes('general')) {
-      score += 10;
-    }
+      // Priority: Preferred vendors
+      if (vendor.preferred) score += 50;
 
-    // Prefer technicians with fewer current tasks (load balancing)
-    // This is a simplified version - in production you'd query their current workload
-    score += Math.random() * 10; // Add some randomness for load balancing
+      // Rating
+      if (vendor.rating) score += vendor.rating * 10;
 
-    return { technician: tech, score };
-  });
+      // Check recent tasks (workload)
+      const recentTasks = await base44.asServiceRole.entities.VendorTask.filter({
+        vendor_id: vendor.id,
+        status: 'in_progress'
+      });
+      score -= recentTasks.length * 5; // Penalty for high workload
 
-  // Sort by score and get best match
-  scoredTechnicians.sort((a, b) => b.score - a.score);
-  const bestMatch = scoredTechnicians[0];
+      // Emergency contact bonus
+      if (vendor.emergency_contact) score += 20;
 
-  if (!bestMatch || bestMatch.score === 0) {
+      return { vendor, score };
+    }));
+
+    // Sort by score (highest first)
+    scoredVendors.sort((a, b) => b.score - a.score);
+    const selectedVendor = scoredVendors[0].vendor;
+
+    // Create maintenance task
+    const task = await base44.asServiceRole.entities.MaintenanceTask.create({
+      title: `Störung: ${issue_type}`,
+      category: issue_type === 'electrical' ? 'electrical' : 
+                issue_type === 'plumbing' ? 'plumbing' :
+                issue_type === 'heating' || issue_type === 'temperature' ? 'heating' : 'general',
+      building_id,
+      assigned_to: selectedVendor.email,
+      status: 'assigned',
+      priority: 'medium',
+      auto_task_created: true
+    });
+
+    return Response.json({
+      success: true,
+      assigned_to: selectedVendor.company_name,
+      task_id: task.id,
+      vendor
+    });
+
+  } catch (error) {
+    console.error('Auto-assignment error:', error);
     return Response.json({ 
       success: false, 
-      error: 'No suitable technician found',
-      available_technicians: allTechnicians.length
-    });
+      error: error.message 
+    }, { status: 500 });
   }
-
-  // Assign task
-  await base44.asServiceRole.entities.MaintenanceTask.update(task_id, {
-    assigned_to: bestMatch.technician.user_email,
-    status: 'assigned'
-  });
-
-  // Notify technician
-  await base44.asServiceRole.functions.invoke('sendNotificationWithEmail', {
-    user_email: bestMatch.technician.user_email,
-    title: 'Neuer Wartungsauftrag zugewiesen',
-    message: `Ihnen wurde ein Wartungsauftrag zugewiesen: ${task.title}\nKategorie: ${task.category}\nPriorität: ${task.priority}`,
-    type: 'maintenance',
-    priority: task.priority === 'urgent' ? 'critical' : 'normal',
-    related_entity_type: 'maintenance',
-    related_entity_id: task.id
-  });
-
-  return Response.json({ 
-    success: true,
-    assigned_to: bestMatch.technician.full_name,
-    assigned_email: bestMatch.technician.user_email,
-    match_score: bestMatch.score,
-    reason: getAssignmentReason(bestMatch.technician, task, building)
-  });
 });
-
-function getAssignmentReason(technician, task, building) {
-  const reasons = [];
-  
-  if (technician.specializations?.includes(task.category)) {
-    reasons.push('Passende Spezialisierung');
-  }
-  
-  if (building && technician.assigned_buildings?.includes(building.id)) {
-    reasons.push('Zuständig für dieses Gebäude');
-  }
-  
-  if (reasons.length === 0) {
-    reasons.push('Verfügbarer Techniker');
-  }
-  
-  return reasons.join(', ');
-}

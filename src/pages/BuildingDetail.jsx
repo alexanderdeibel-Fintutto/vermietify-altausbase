@@ -20,6 +20,7 @@ import BuildingTasksManager from '@/components/building-detail/BuildingTasksMana
 import BuildingInfoPanel from '@/components/building-detail/BuildingInfoPanel';
 import IoTSensorsPanel from '@/components/building-detail/IoTSensorsPanel';
 import InteractiveBuildingMap from '@/components/building-detail/InteractiveBuildingMap';
+import MaintenanceCalendarView from '@/components/maintenance/MaintenanceCalendarView';
 
 export default function BuildingDetailPage() {
   const buildingId = new URLSearchParams(window.location.search).get('id');
@@ -190,7 +191,10 @@ export default function BuildingDetailPage() {
         </TabsContent>
 
         <TabsContent value="tasks">
-          <BuildingTasksManager buildingId={buildingId} />
+          <div className="space-y-6">
+            <MaintenanceCalendarView buildingId={buildingId} />
+            <BuildingTasksManager buildingId={buildingId} />
+          </div>
         </TabsContent>
       </Tabs>
     </div>

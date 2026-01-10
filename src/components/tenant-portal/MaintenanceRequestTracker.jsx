@@ -19,6 +19,7 @@ const statusConfig = {
 
 export default function MaintenanceRequestTracker() {
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [ratingTask, setRatingTask] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: user } = useQuery({
