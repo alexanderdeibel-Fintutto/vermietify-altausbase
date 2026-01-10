@@ -18,6 +18,7 @@ import AdminTesterAnalytics from './pages/AdminTesterAnalytics';
 import AdminTesterAnalyticsLazy from './pages/AdminTesterAnalyticsLazy';
 import AdminUserManagement from './pages/AdminUserManagement';
 import AdvancedAnalytics from './pages/AdvancedAnalytics';
+import AdvancedFeatures from './pages/AdvancedFeatures';
 import AdvancedReportBuilder from './pages/AdvancedReportBuilder';
 import AdvancedReporting from './pages/AdvancedReporting';
 import AdvancedSearch from './pages/AdvancedSearch';
@@ -81,6 +82,7 @@ import DocumentInbox from './pages/DocumentInbox';
 import DocumentInboxSettings from './pages/DocumentInboxSettings';
 import DocumentLibrary from './pages/DocumentLibrary';
 import DocumentManagement from './pages/DocumentManagement';
+import DocumentManagementCenter from './pages/DocumentManagementCenter';
 import Documents from './pages/Documents';
 import ElsterIntegration from './pages/ElsterIntegration';
 import EmailTemplates from './pages/EmailTemplates';
@@ -108,9 +110,9 @@ import IntegrationHub from './pages/IntegrationHub';
 import IntegrationMarketplace from './pages/IntegrationMarketplace';
 import InternationalTaxComparison from './pages/InternationalTaxComparison';
 import InternationalTaxPlanning from './pages/InternationalTaxPlanning';
-import InvestmentsCH from './pages/InvestmentsCH';
 import InternationalTaxStrategy from './pages/InternationalTaxStrategy';
 import InvestmentTaxTracking from './pages/InvestmentTaxTracking';
+import InvestmentsCH from './pages/InvestmentsCH';
 import InvoiceManagement from './pages/InvoiceManagement';
 import Invoices from './pages/Invoices';
 import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
@@ -164,6 +166,7 @@ import SettingsPage from './pages/SettingsPage';
 import SmartExpenseTracker from './pages/SmartExpenseTracker';
 import SmartTaskDashboard from './pages/SmartTaskDashboard';
 import StaffMobileApp from './pages/StaffMobileApp';
+import SteuerVermoegenApp from './pages/SteuerVermoegenApp';
 import SubmissionDashboard from './pages/SubmissionDashboard';
 import SuiteManagement from './pages/SuiteManagement';
 import SuppliersManagement from './pages/SuppliersManagement';
@@ -216,11 +219,10 @@ import TaxManagement from './pages/TaxManagement';
 import TaxMonitoringDashboard from './pages/TaxMonitoringDashboard';
 import TaxOptimizationAnalyzer from './pages/TaxOptimizationAnalyzer';
 import TaxOptimizationStrategy from './pages/TaxOptimizationStrategy';
+import TaxReportExport from './pages/TaxReportExport';
 import TaxPerformanceDashboard from './pages/TaxPerformanceDashboard';
 import TaxPlanningAdvisor from './pages/TaxPlanningAdvisor';
 import TaxRemindersCenter from './pages/TaxRemindersCenter';
-import TaxSetup from './pages/TaxSetup';
-import TaxReportExport from './pages/TaxReportExport';
 import TaxReportGeneration from './pages/TaxReportGeneration';
 import TaxReportingHub from './pages/TaxReportingHub';
 import TaxReturnFilingManager from './pages/TaxReturnFilingManager';
@@ -230,6 +232,7 @@ import TaxRuleAdmin from './pages/TaxRuleAdmin';
 import TaxSavingsOpportunities from './pages/TaxSavingsOpportunities';
 import TaxScenarioComparison from './pages/TaxScenarioComparison';
 import TaxScenarioSimulator from './pages/TaxScenarioSimulator';
+import TaxSetup from './pages/TaxSetup';
 import TaxSetupWizard from './pages/TaxSetupWizard';
 import TaxStrategyAdvisor from './pages/TaxStrategyAdvisor';
 import TaxTreatyExplorer from './pages/TaxTreatyExplorer';
@@ -276,9 +279,7 @@ import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import SteuerVermoegenApp from './pages/SteuerVermoegenApp';
-import DocumentManagementCenter from './pages/DocumentManagementCenter';
-import AdvancedFeatures from './pages/AdvancedFeatures';
+import FullFeatureHub from './pages/FullFeatureHub';
 import __Layout from './Layout.jsx';
 
 
@@ -303,6 +304,7 @@ export const PAGES = {
     "AdminTesterAnalyticsLazy": AdminTesterAnalyticsLazy,
     "AdminUserManagement": AdminUserManagement,
     "AdvancedAnalytics": AdvancedAnalytics,
+    "AdvancedFeatures": AdvancedFeatures,
     "AdvancedReportBuilder": AdvancedReportBuilder,
     "AdvancedReporting": AdvancedReporting,
     "AdvancedSearch": AdvancedSearch,
@@ -366,6 +368,7 @@ export const PAGES = {
     "DocumentInboxSettings": DocumentInboxSettings,
     "DocumentLibrary": DocumentLibrary,
     "DocumentManagement": DocumentManagement,
+    "DocumentManagementCenter": DocumentManagementCenter,
     "Documents": Documents,
     "ElsterIntegration": ElsterIntegration,
     "EmailTemplates": EmailTemplates,
@@ -393,9 +396,9 @@ export const PAGES = {
     "IntegrationMarketplace": IntegrationMarketplace,
     "InternationalTaxComparison": InternationalTaxComparison,
     "InternationalTaxPlanning": InternationalTaxPlanning,
-    "InvestmentsCH": InvestmentsCH,
     "InternationalTaxStrategy": InternationalTaxStrategy,
     "InvestmentTaxTracking": InvestmentTaxTracking,
+    "InvestmentsCH": InvestmentsCH,
     "InvoiceManagement": InvoiceManagement,
     "Invoices": Invoices,
     "KnowledgeManagementDashboard": KnowledgeManagementDashboard,
@@ -449,6 +452,7 @@ export const PAGES = {
     "SmartExpenseTracker": SmartExpenseTracker,
     "SmartTaskDashboard": SmartTaskDashboard,
     "StaffMobileApp": StaffMobileApp,
+    "SteuerVermoegenApp": SteuerVermoegenApp,
     "SubmissionDashboard": SubmissionDashboard,
     "SuiteManagement": SuiteManagement,
     "SuppliersManagement": SuppliersManagement,
@@ -501,11 +505,10 @@ export const PAGES = {
     "TaxMonitoringDashboard": TaxMonitoringDashboard,
     "TaxOptimizationAnalyzer": TaxOptimizationAnalyzer,
     "TaxOptimizationStrategy": TaxOptimizationStrategy,
+    "TaxReportExport": TaxReportExport,
     "TaxPerformanceDashboard": TaxPerformanceDashboard,
     "TaxPlanningAdvisor": TaxPlanningAdvisor,
     "TaxRemindersCenter": TaxRemindersCenter,
-    "TaxSetup": TaxSetup,
-    "TaxReportExport": TaxReportExport,
     "TaxReportGeneration": TaxReportGeneration,
     "TaxReportingHub": TaxReportingHub,
     "TaxReturnFilingManager": TaxReturnFilingManager,
@@ -515,6 +518,7 @@ export const PAGES = {
     "TaxSavingsOpportunities": TaxSavingsOpportunities,
     "TaxScenarioComparison": TaxScenarioComparison,
     "TaxScenarioSimulator": TaxScenarioSimulator,
+    "TaxSetup": TaxSetup,
     "TaxSetupWizard": TaxSetupWizard,
     "TaxStrategyAdvisor": TaxStrategyAdvisor,
     "TaxTreatyExplorer": TaxTreatyExplorer,
@@ -561,9 +565,7 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "SteuerVermoegenApp": SteuerVermoegenApp,
-    "DocumentManagementCenter": DocumentManagementCenter,
-    "AdvancedFeatures": AdvancedFeatures,
+    "FullFeatureHub": FullFeatureHub,
 }
 
 export const pagesConfig = {
