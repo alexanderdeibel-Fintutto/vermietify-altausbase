@@ -10,6 +10,8 @@ import { Zap, Plus, X, Play, Calendar, AlertCircle } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import AdvancedConditionBuilder from './AdvancedConditionBuilder';
+import WebhookActionBuilder from './WebhookActionBuilder';
 
 export default function WorkflowEngineBuilder({ workflow, onClose }) {
   const queryClient = useQueryClient();
@@ -56,7 +58,20 @@ export default function WorkflowEngineBuilder({ workflow, onClose }) {
     { value: 'create_task', label: 'Aufgabe erstellen' },
     { value: 'archive_document', label: 'Dokument archivieren' },
     { value: 'update_entity', label: 'Datensatz aktualisieren' },
-    { value: 'send_notification', label: 'Benachrichtigung senden' }
+    { value: 'send_notification', label: 'Benachrichtigung senden' },
+    { value: 'webhook', label: 'Webhook aufrufen' },
+    { value: 'slack_message', label: 'Slack Nachricht' }
+  ];
+
+  const entityFieldOptions = [
+    { name: 'status', label: 'Status', type: 'text' },
+    { name: 'created_date', label: 'Erstellt am', type: 'date' },
+    { name: 'updated_date', label: 'Aktualisiert am', type: 'date' },
+    { name: 'amount', label: 'Betrag', type: 'number' },
+    { name: 'due_date', label: 'Fällig am', type: 'date' },
+    { name: 'priority', label: 'Priorität', type: 'list' },
+    { name: 'category', label: 'Kategorie', type: 'list' },
+    { name: 'deposit_paid', label: 'Kaution bezahlt', type: 'boolean' }
   ];
 
   return (
@@ -150,93 +165,11 @@ export default function WorkflowEngineBuilder({ workflow, onClose }) {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Bedingungen</CardTitle>
-            <Button onClick={addCondition} size="sm">
-              <Plus className="w-4 h-4 mr-1" />
-              Hinzufügen
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {conditions.map((cond, idx) => (
-            <div key={idx} className="flex gap-2 p-3 bg-slate-50 rounded-lg">
-              <Select
-                value={cond.entity}
-                onValueChange={(value) => {
-                  const updated = [...conditions];
-                  updated[idx].entity = value;
-                  setConditions(updated);
-                }}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Tenant">Mieter</SelectItem>
-                  <SelectItem value="LeaseContract">Vertrag</SelectItem>
-                  <SelectItem value="Payment">Zahlung</SelectItem>
-                  <SelectItem value="Document">Dokument</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Input
-                placeholder="Feldname"
-                value={cond.field}
-                onChange={(e) => {
-                  const updated = [...conditions];
-                  updated[idx].field = e.target.value;
-                  setConditions(updated);
-                }}
-                className="flex-1"
-              />
-
-              <Select
-                value={cond.operator}
-                onValueChange={(value) => {
-                  const updated = [...conditions];
-                  updated[idx].operator = value;
-                  setConditions(updated);
-                }}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="equals">Gleich</SelectItem>
-                  <SelectItem value="not_equals">Nicht gleich</SelectItem>
-                  <SelectItem value="greater_than">Größer als</SelectItem>
-                  <SelectItem value="is_empty">Ist leer</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Input
-                placeholder="Wert"
-                value={cond.value}
-                onChange={(e) => {
-                  const updated = [...conditions];
-                  updated[idx].value = e.target.value;
-                  setConditions(updated);
-                }}
-                className="flex-1"
-              />
-
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setConditions(conditions.filter((_, i) => i !== idx))}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-          {conditions.length === 0 && (
-            <p className="text-sm text-slate-600 text-center py-4">Keine Bedingungen - Workflow läuft immer</p>
-          )}
-        </CardContent>
-      </Card>
+      <AdvancedConditionBuilder 
+        conditions={conditions}
+        onChange={setConditions}
+        entityFields={entityFieldOptions}
+      />
 
       <Card>
         <CardHeader>
@@ -343,6 +276,40 @@ export default function WorkflowEngineBuilder({ workflow, onClose }) {
                     setActions(updated);
                   }}
                 />
+              )}
+
+              {action.type === 'webhook' && (
+                <WebhookActionBuilder
+                  action={action}
+                  onChange={(updated) => {
+                    const newActions = [...actions];
+                    newActions[idx] = updated;
+                    setActions(newActions);
+                  }}
+                />
+              )}
+
+              {action.type === 'slack_message' && (
+                <>
+                  <Input
+                    placeholder="Slack Channel (z.B. #general)"
+                    value={action.config?.channel || ''}
+                    onChange={(e) => {
+                      const updated = [...actions];
+                      updated[idx].config = { ...updated[idx].config, channel: e.target.value };
+                      setActions(updated);
+                    }}
+                  />
+                  <Textarea
+                    placeholder="Nachricht (verwenden Sie {{feldname}} für Platzhalter)"
+                    value={action.config?.message || ''}
+                    onChange={(e) => {
+                      const updated = [...actions];
+                      updated[idx].config = { ...updated[idx].config, message: e.target.value };
+                      setActions(updated);
+                    }}
+                  />
+                </>
               )}
             </div>
           ))}

@@ -169,9 +169,32 @@ async function executeAction(action, entityData, base44) {
         priority: config.priority || 'normal'
       });
     
+    case 'slack_message':
+      return await sendSlackMessage(config, entityData, base44);
+    
     default:
       throw new Error(`Unknown action type: ${type}`);
   }
+}
+
+async function sendSlackMessage(config, entityData, base44) {
+  const accessToken = await base44.asServiceRole.connectors.getAccessToken('slack');
+  
+  const message = replacePlaceholders(config.message, entityData);
+  
+  const response = await fetch('https://slack.com/api/chat.postMessage', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      channel: config.channel,
+      text: message
+    })
+  });
+
+  return await response.json();
 }
 
 async function executeWebhook(config, entityData) {
