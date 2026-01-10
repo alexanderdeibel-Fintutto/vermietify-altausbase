@@ -1,237 +1,137 @@
-import React, { useState, useMemo } from 'react';
-import { base44 } from '@/api/base44Client';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { Bell, X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from '@/components/ui/popover';
-import { Badge } from '@/components/ui/badge';
-import { Bell, Settings, Trash2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
-
-const typeIcons = {
-  maintenance_assigned: '🔧',
-  equipment_status_change: '⚠️',
-  task_overdue: '⏰',
-  tenant_communication: '💬',
-  report_generated: '📊',
-  system_alert: '🚨',
-  payment: '💰',
-  maintenance: '🔧',
-  contract: '📄',
-  message: '💬',
-  ticket: '🎫',
-  system: '⚙️'
-};
-
-const priorityColors = {
-  low: 'bg-blue-100 text-blue-700',
-  normal: 'bg-slate-100 text-slate-700',
-  high: 'bg-orange-100 text-orange-700',
-  critical: 'bg-red-100 text-red-700'
-};
 
 export default function NotificationCenter() {
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: currentUser } = useQuery({
-    queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me(),
+  const { data: user } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me()
   });
 
   const { data: notifications = [] } = useQuery({
-    queryKey: ['notifications', currentUser?.email],
-    queryFn: () => {
-      if (!currentUser?.email) return [];
-      return base44.entities.Notification.filter(
-        { user_email: currentUser.email },
-        '-created_date',
-        50
-      );
+    queryKey: ['notifications', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      const all = await base44.entities.Notification.filter({
+        recipient_email: user.email
+      });
+      return all.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
     },
-    enabled: !!currentUser?.email,
-    refetchInterval: 30000 // Refetch every 30 seconds
+    enabled: !!user?.email,
+    refetchInterval: 30000
   });
 
-  // Request push permission for critical notifications
-  React.useEffect(() => {
-    const checkPushPermission = async () => {
-      if ('Notification' in window && Notification.permission === 'default') {
-        const criticalUnread = notifications.filter(n => !n.is_read && n.priority === 'critical');
-        if (criticalUnread.length > 0) {
-          await Notification.requestPermission();
-        }
-      }
-    };
-    checkPushPermission();
-  }, [notifications]);
-
-  // Show browser push for critical notifications
-  React.useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      const newCritical = notifications.filter(n => !n.is_read && n.priority === 'critical' && !n.sent_via_push);
-      newCritical.forEach(notif => {
-        new Notification(notif.title, {
-          body: notif.message,
-          icon: '/favicon.ico',
-          badge: '/favicon.ico',
-          tag: notif.id
-        });
-        // Mark as sent
-        base44.entities.Notification.update(notif.id, { sent_via_push: true });
-      });
-    }
-  }, [notifications]);
-
   const markAsReadMutation = useMutation({
-    mutationFn: (notificationId) => 
+    mutationFn: (notificationId) =>
       base44.entities.Notification.update(notificationId, {
         is_read: true,
         read_at: new Date().toISOString()
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    },
+      queryClient.invalidateQueries({ queryKey: ['notifications', user?.email] });
+    }
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (notificationId) => base44.entities.Notification.delete(notificationId),
+  const deleteNotificationMutation = useMutation({
+    mutationFn: (notificationId) =>
+      base44.entities.Notification.delete(notificationId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    },
-  });
-
-  const clearAllMutation = useMutation({
-    mutationFn: async () => {
-      const unread = notifications.filter(n => !n.is_read);
-      for (const notif of unread) {
-        await base44.entities.Notification.update(notif.id, {
-          is_read: true,
-          read_at: new Date().toISOString()
-        });
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    },
+      queryClient.invalidateQueries({ queryKey: ['notifications', user?.email] });
+    }
   });
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
-  const recentNotifications = notifications.slice(0, 5);
+
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case 'task_overdue':
+        return <AlertCircle className="w-4 h-4 text-red-600" />;
+      case 'rule_executed':
+      case 'status_changed':
+        return <CheckCircle2 className="w-4 h-4 text-green-600" />;
+      default:
+        return <Bell className="w-4 h-4 text-blue-600" />;
+    }
+  };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative text-slate-600 hover:text-slate-900"
-          title="Benachrichtigungen"
-        >
-          <Bell className="w-5 h-5" />
+        <Button variant="ghost" size="icon" className="relative">
+          <Bell className="w-5 h-5 text-slate-600" />
           {unreadCount > 0 && (
-            <span className="absolute top-0 right-0 h-5 w-5 bg-red-600 text-white text-xs rounded-full flex items-center justify-center font-light">
+            <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
         </Button>
       </PopoverTrigger>
-
-      <PopoverContent className="w-96 p-0" align="end">
-        <div className="border-b border-slate-200 p-4 flex justify-between items-center">
-          <h2 className="font-light text-slate-900">Benachrichtigungen</h2>
-          {unreadCount > 0 && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => clearAllMutation.mutate()}
-              className="text-xs font-light"
-            >
-              Alle als gelesen
-            </Button>
-          )}
+      <PopoverContent align="end" className="w-80 p-0 max-h-96 overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="p-4 border-b border-slate-200 bg-slate-50">
+          <h3 className="font-medium text-sm text-slate-900">Benachrichtigungen</h3>
         </div>
 
-        <div className="max-h-96 overflow-y-auto">
-          {recentNotifications.length === 0 ? (
+        {/* Notifications List */}
+        <div className="overflow-y-auto flex-1">
+          {notifications.length === 0 ? (
             <div className="p-8 text-center">
               <Bell className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-              <p className="text-sm font-light text-slate-600">Keine Benachrichtigungen</p>
+              <p className="text-sm text-slate-500">Keine Benachrichtigungen</p>
             </div>
           ) : (
-            <div className="space-y-1">
-              {recentNotifications.map(notif => (
+            <div className="space-y-1 p-2">
+              {notifications.map((notif) => (
                 <div
                   key={notif.id}
-                  className={cn(
-                    'p-3 border-b border-slate-100 last:border-0 cursor-pointer hover:bg-slate-50 transition-colors',
-                    !notif.is_read && 'bg-blue-50'
-                  )}
-                  onClick={() => {
-                    if (!notif.is_read) {
-                      markAsReadMutation.mutate(notif.id);
-                    }
-                  }}
+                  className={`p-3 rounded-lg border transition-colors cursor-pointer ${
+                    notif.is_read
+                      ? 'bg-white border-slate-200'
+                      : 'bg-blue-50 border-blue-200'
+                  }`}
+                  onClick={() => !notif.is_read && markAsReadMutation.mutate(notif.id)}
                 >
                   <div className="flex items-start gap-2">
-                   <span className="text-lg mt-0.5">{typeIcons[notif.type] || typeIcons[notif.notification_type] || '📌'}</span>
-                    <div className="flex-1">
-                      <h4 className="font-light text-slate-900 text-sm">{notif.title}</h4>
-                      <p className="text-xs font-light text-slate-600 mt-0.5">{notif.message}</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge className={priorityColors[notif.priority]}>
-                          {notif.priority}
-                        </Badge>
-                        {!notif.is_read && (
-                          <span className="h-2 w-2 bg-blue-600 rounded-full"></span>
-                        )}
-                      </div>
+                    <div className="mt-1">{getNotificationIcon(notif.notification_type)}</div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className={`text-sm font-medium ${notif.is_read ? 'text-slate-600' : 'text-slate-900'}`}>
+                        {notif.title}
+                      </h4>
+                      <p className="text-xs text-slate-600 mt-1 line-clamp-2">
+                        {notif.message}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {format(new Date(notif.created_date), 'dd. MMM HH:mm', { locale: de })}
+                      </p>
                     </div>
                     <Button
-                      variant="ghost"
                       size="icon"
-                      className="h-6 w-6 text-slate-400 hover:text-red-600"
+                      variant="ghost"
+                      className="h-6 w-6 flex-shrink-0"
                       onClick={(e) => {
                         e.stopPropagation();
-                        deleteMutation.mutate(notif.id);
+                        deleteNotificationMutation.mutate(notif.id);
                       }}
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <X className="w-3 h-3" />
                     </Button>
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </div>
-
-        <div className="border-t border-slate-200 p-3 flex gap-2">
-          <Link to={createPageUrl('NotificationCenter')} className="flex-1">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full font-light text-xs"
-              onClick={() => setOpen(false)}
-            >
-              Alle anzeigen
-            </Button>
-          </Link>
-          <Link to={createPageUrl('NotificationCenter')}>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-slate-600"
-              title="Benachrichtigungseinstellungen"
-              onClick={() => setOpen(false)}
-            >
-              <Settings className="w-4 h-4" />
-            </Button>
-          </Link>
         </div>
       </PopoverContent>
     </Popover>
