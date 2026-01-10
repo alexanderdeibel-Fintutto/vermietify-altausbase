@@ -6,10 +6,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import DocumentFilterBar from '@/components/documents/DocumentFilterBar';
 import DocumentTable from '@/components/documents/DocumentTable';
 import QuickStats from '@/components/shared/QuickStats';
+import AIDocumentGenerator from '@/components/documents/AIDocumentGenerator';
+import { Wand2 } from 'lucide-react';
 
 export default function DocumentManagementPage() {
   const [search, setSearch] = useState('');
   const [showDialog, setShowDialog] = useState(false);
+  const [showAIGenerator, setShowAIGenerator] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: documents = [] } = useQuery({
@@ -39,6 +42,17 @@ export default function DocumentManagementPage() {
         <p className="text-slate-600 mt-1">Verwalten und organisieren Sie Ihre Dokumente</p>
       </div>
       <QuickStats stats={stats} accentColor="indigo" />
+      
+      <div className="flex gap-3">
+        <Button
+          onClick={() => setShowAIGenerator(true)}
+          className="bg-purple-600 hover:bg-purple-700"
+        >
+          <Wand2 className="w-4 h-4 mr-2" />
+          KI-Dokument generieren
+        </Button>
+      </div>
+
       <DocumentFilterBar onSearchChange={setSearch} onNewDocument={() => setShowDialog(true)} />
       <DocumentTable documents={filteredDocuments} onDownload={() => {}} onDelete={(d) => deleteMutation.mutate(d.id)} />
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
@@ -53,6 +67,14 @@ export default function DocumentManagementPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AIDocumentGenerator
+        open={showAIGenerator}
+        onClose={() => {
+          setShowAIGenerator(false);
+          queryClient.invalidateQueries({ queryKey: ['documents'] });
+        }}
+      />
     </div>
   );
 }
