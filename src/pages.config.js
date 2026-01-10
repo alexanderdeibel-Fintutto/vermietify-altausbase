@@ -259,6 +259,7 @@ import UserDetail from './pages/UserDetail';
 import UserManagement from './pages/UserManagement';
 import UserSettings from './pages/UserSettings';
 import VendorManagement from './pages/VendorManagement';
+import VermieterGo from './pages/VermieterGo';
 import WealthAdvanced from './pages/WealthAdvanced';
 import WealthAnalytics from './pages/WealthAnalytics';
 import WealthAutomation from './pages/WealthAutomation';
@@ -275,7 +276,6 @@ import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import VermieterGo from './pages/VermieterGo';
 import __Layout from './Layout.jsx';
 
 
@@ -541,6 +541,7 @@ export const PAGES = {
     "UserManagement": UserManagement,
     "UserSettings": UserSettings,
     "VendorManagement": VendorManagement,
+    "VermieterGo": VermieterGo,
     "WealthAdvanced": WealthAdvanced,
     "WealthAnalytics": WealthAnalytics,
     "WealthAutomation": WealthAutomation,
@@ -557,7 +558,6 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "VermieterGo": VermieterGo,
 }
 
 export const pagesConfig = {

@@ -38,6 +38,22 @@ import RecurringMaintenance from '@/components/vermieter-go/RecurringMaintenance
 import TourPlanner from '@/components/vermieter-go/TourPlanner';
 import PushNotifications from '@/components/vermieter-go/PushNotifications';
 import TeamUpdates from '@/components/vermieter-go/TeamUpdates';
+import DocumentScanner from '@/components/vermieter-go/DocumentScanner';
+import UnitRating from '@/components/vermieter-go/UnitRating';
+import EnergyPassportAccess from '@/components/vermieter-go/EnergyPassportAccess';
+import BuildingNotes from '@/components/vermieter-go/BuildingNotes';
+import DepositTracker from '@/components/vermieter-go/DepositTracker';
+import WarrantyTracker from '@/components/vermieter-go/WarrantyTracker';
+import InsuranceClaim from '@/components/vermieter-go/InsuranceClaim';
+import QuickVendorAssignment from '@/components/vermieter-go/QuickVendorAssignment';
+import ParkingManagement from '@/components/vermieter-go/ParkingManagement';
+import VacancyOverview from '@/components/vermieter-go/VacancyOverview';
+import FacilityManagement from '@/components/vermieter-go/FacilityManagement';
+import NeighborComplaints from '@/components/vermieter-go/NeighborComplaints';
+import QuoteCreator from '@/components/vermieter-go/QuoteCreator';
+import SeasonalChecklist from '@/components/vermieter-go/SeasonalChecklist';
+import TenantFeedbackCollector from '@/components/vermieter-go/TenantFeedbackCollector';
+import OfflineSyncStatus from '@/components/vermieter-go/OfflineSyncStatus';
 
 export default function VermieterGo() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -105,6 +121,9 @@ export default function VermieterGo() {
         {/* Weather */}
         <WeatherWidget />
 
+        {/* Offline Sync Status */}
+        <OfflineSyncStatus />
+
         {/* Quick Stats */}
         <QuickStats buildingId={selectedBuilding} />
 
@@ -134,6 +153,8 @@ export default function VermieterGo() {
           <TabsContent value="dashboard" className="space-y-4">
             <DayPlanner buildingId={selectedBuilding} />
             <RentPaymentStatus buildingId={selectedBuilding} />
+            <DepositTracker buildingId={selectedBuilding} />
+            <VacancyOverview buildingId={selectedBuilding} />
             <TourPlanner />
             <GPSNavigation buildingId={selectedBuilding} />
             <BuildingBoardMobile buildingId={selectedBuilding} />
@@ -147,9 +168,14 @@ export default function VermieterGo() {
             <QuickTaskCreator buildingId={selectedBuilding} />
             <DamageReport buildingId={selectedBuilding} />
             <MaintenanceChecklist buildingId={selectedBuilding} />
+            <SeasonalChecklist buildingId={selectedBuilding} />
             <ExpenseTracker buildingId={selectedBuilding} />
             <TimeTracker buildingId={selectedBuilding} />
+            <QuoteCreator buildingId={selectedBuilding} />
             <RecurringMaintenance buildingId={selectedBuilding} />
+            <QuickVendorAssignment />
+            <WarrantyTracker buildingId={selectedBuilding} />
+            <InsuranceClaim buildingId={selectedBuilding} />
             <BeforeAfterPhotos />
           </TabsContent>
 
@@ -157,17 +183,25 @@ export default function VermieterGo() {
             <TenantQuickView buildingId={selectedBuilding} />
             <DirectMessaging buildingId={selectedBuilding} />
             <ViewingScheduler />
+            <TenantFeedbackCollector />
+            <UnitRating />
             <DigitalSignature />
+            <NeighborComplaints buildingId={selectedBuilding} />
           </TabsContent>
 
           <TabsContent value="tools" className="space-y-4">
             <QRScanner />
+            <DocumentScanner buildingId={selectedBuilding} />
             <PhotoGallery buildingId={selectedBuilding} />
             <VoiceRecorder onSave={(text) => console.log('Voice note:', text)} />
+            <BuildingNotes buildingId={selectedBuilding} />
             <MaterialInventory />
+            <ParkingManagement buildingId={selectedBuilding} />
+            <FacilityManagement buildingId={selectedBuilding} />
             <EmergencyContacts />
             <KeyManagement buildingId={selectedBuilding} />
             <FloorPlanAccess buildingId={selectedBuilding} />
+            <EnergyPassportAccess buildingId={selectedBuilding} />
             <PushNotifications />
             <TeamUpdates />
           </TabsContent>
