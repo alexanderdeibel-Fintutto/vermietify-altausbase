@@ -9,7 +9,9 @@ import AdaptiveNavigationAdmin from './pages/AdaptiveNavigationAdmin';
 import AdminAIAnalytics from './pages/AdminAIAnalytics';
 import AdminAIAnalyticsLazy from './pages/AdminAIAnalyticsLazy';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminIssueReports from './pages/AdminIssueReports';
 import AdminMasterDashboard from './pages/AdminMasterDashboard';
+import AdminMessagingCenter from './pages/AdminMessagingCenter';
 import AdminPackageSetup from './pages/AdminPackageSetup';
 import AdminRoleManagement from './pages/AdminRoleManagement';
 import AdminSettings from './pages/AdminSettings';
@@ -51,6 +53,7 @@ import BudgetAnalysis from './pages/BudgetAnalysis';
 import BudgetPlanning from './pages/BudgetPlanning';
 import BuildingBoard from './pages/BuildingBoard';
 import BuildingDetail from './pages/BuildingDetail';
+import BuildingWorkflowManager from './pages/BuildingWorkflowManager';
 import Buildings from './pages/Buildings';
 import BulkOperations from './pages/BulkOperations';
 import BusinessStructureOptimizer from './pages/BusinessStructureOptimizer';
@@ -89,6 +92,7 @@ import DocumentManagementCenter from './pages/DocumentManagementCenter';
 import Documents from './pages/Documents';
 import ElsterIntegration from './pages/ElsterIntegration';
 import EmailTemplates from './pages/EmailTemplates';
+import EnergyManagement from './pages/EnergyManagement';
 import EntityTaxPlanning from './pages/EntityTaxPlanning';
 import Equipment from './pages/Equipment';
 import EstateTaxPlanning from './pages/EstateTaxPlanning';
@@ -119,6 +123,8 @@ import InvestmentTaxTracking from './pages/InvestmentTaxTracking';
 import InvestmentsCH from './pages/InvestmentsCH';
 import InvoiceManagement from './pages/InvoiceManagement';
 import Invoices from './pages/Invoices';
+import IoTSensorManagement from './pages/IoTSensorManagement';
+import KnowledgeBaseAdmin from './pages/KnowledgeBaseAdmin';
 import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
 import Kommunikation from './pages/Kommunikation';
 import LeaseContracts from './pages/LeaseContracts';
@@ -219,9 +225,9 @@ import TaxFormLibrary from './pages/TaxFormLibrary';
 import TaxForms from './pages/TaxForms';
 import TaxLawUpdates from './pages/TaxLawUpdates';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
-import TaxManagement from './pages/TaxManagement';
 import TaxLossHarvesting from './pages/TaxLossHarvesting';
 import TaxLossHarvestingAdvisor from './pages/TaxLossHarvestingAdvisor';
+import TaxManagement from './pages/TaxManagement';
 import TaxMonitoringDashboard from './pages/TaxMonitoringDashboard';
 import TaxOptimizationAnalyzer from './pages/TaxOptimizationAnalyzer';
 import TaxOptimizationStrategy from './pages/TaxOptimizationStrategy';
@@ -244,6 +250,7 @@ import TaxStrategyAdvisor from './pages/TaxStrategyAdvisor';
 import TaxTreatyExplorer from './pages/TaxTreatyExplorer';
 import TaxYearClosingChecklist from './pages/TaxYearClosingChecklist';
 import TaxYearPlannerPage from './pages/TaxYearPlannerPage';
+import TechnicianManagement from './pages/TechnicianManagement';
 import TenantCommunication from './pages/TenantCommunication';
 import TenantCommunicationCenter from './pages/TenantCommunicationCenter';
 import TenantCommunicationHub from './pages/TenantCommunicationHub';
@@ -286,13 +293,6 @@ import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import AdminMessagingCenter from './pages/AdminMessagingCenter';
-import TechnicianManagement from './pages/TechnicianManagement';
-import BuildingWorkflowManager from './pages/BuildingWorkflowManager';
-import IoTSensorManagement from './pages/IoTSensorManagement';
-import KnowledgeBaseAdmin from './pages/KnowledgeBaseAdmin';
-import EnergyManagement from './pages/EnergyManagement';
-import AdminIssueReports from './pages/AdminIssueReports';
 import __Layout from './Layout.jsx';
 
 
@@ -308,7 +308,9 @@ export const PAGES = {
     "AdminAIAnalytics": AdminAIAnalytics,
     "AdminAIAnalyticsLazy": AdminAIAnalyticsLazy,
     "AdminDashboard": AdminDashboard,
+    "AdminIssueReports": AdminIssueReports,
     "AdminMasterDashboard": AdminMasterDashboard,
+    "AdminMessagingCenter": AdminMessagingCenter,
     "AdminPackageSetup": AdminPackageSetup,
     "AdminRoleManagement": AdminRoleManagement,
     "AdminSettings": AdminSettings,
@@ -350,6 +352,7 @@ export const PAGES = {
     "BudgetPlanning": BudgetPlanning,
     "BuildingBoard": BuildingBoard,
     "BuildingDetail": BuildingDetail,
+    "BuildingWorkflowManager": BuildingWorkflowManager,
     "Buildings": Buildings,
     "BulkOperations": BulkOperations,
     "BusinessStructureOptimizer": BusinessStructureOptimizer,
@@ -388,6 +391,7 @@ export const PAGES = {
     "Documents": Documents,
     "ElsterIntegration": ElsterIntegration,
     "EmailTemplates": EmailTemplates,
+    "EnergyManagement": EnergyManagement,
     "EntityTaxPlanning": EntityTaxPlanning,
     "Equipment": Equipment,
     "EstateTaxPlanning": EstateTaxPlanning,
@@ -418,6 +422,8 @@ export const PAGES = {
     "InvestmentsCH": InvestmentsCH,
     "InvoiceManagement": InvoiceManagement,
     "Invoices": Invoices,
+    "IoTSensorManagement": IoTSensorManagement,
+    "KnowledgeBaseAdmin": KnowledgeBaseAdmin,
     "KnowledgeManagementDashboard": KnowledgeManagementDashboard,
     "Kommunikation": Kommunikation,
     "LeaseContracts": LeaseContracts,
@@ -518,9 +524,9 @@ export const PAGES = {
     "TaxForms": TaxForms,
     "TaxLawUpdates": TaxLawUpdates,
     "TaxLibraryManagement": TaxLibraryManagement,
-    "TaxManagement": TaxManagement,
     "TaxLossHarvesting": TaxLossHarvesting,
     "TaxLossHarvestingAdvisor": TaxLossHarvestingAdvisor,
+    "TaxManagement": TaxManagement,
     "TaxMonitoringDashboard": TaxMonitoringDashboard,
     "TaxOptimizationAnalyzer": TaxOptimizationAnalyzer,
     "TaxOptimizationStrategy": TaxOptimizationStrategy,
@@ -543,6 +549,7 @@ export const PAGES = {
     "TaxTreatyExplorer": TaxTreatyExplorer,
     "TaxYearClosingChecklist": TaxYearClosingChecklist,
     "TaxYearPlannerPage": TaxYearPlannerPage,
+    "TechnicianManagement": TechnicianManagement,
     "TenantCommunication": TenantCommunication,
     "TenantCommunicationCenter": TenantCommunicationCenter,
     "TenantCommunicationHub": TenantCommunicationHub,
@@ -585,13 +592,6 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "AdminMessagingCenter": AdminMessagingCenter,
-    "TechnicianManagement": TechnicianManagement,
-    "BuildingWorkflowManager": BuildingWorkflowManager,
-    "IoTSensorManagement": IoTSensorManagement,
-    "KnowledgeBaseAdmin": KnowledgeBaseAdmin,
-    "EnergyManagement": EnergyManagement,
-    "AdminIssueReports": AdminIssueReports,
 }
 
 export const pagesConfig = {

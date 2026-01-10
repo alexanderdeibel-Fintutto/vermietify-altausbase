@@ -21,9 +21,11 @@ import TenantIssueReporter from '@/components/tenant-portal/TenantIssueReporter'
 import ContractDocumentsWidget from '@/components/tenant-portal/ContractDocumentsWidget';
 import TenantPortalQuickActions from '@/components/tenant-portal/TenantPortalQuickActions';
 import RecentIssuesWidget from '@/components/tenant-portal/RecentIssuesWidget';
+import TenantAIChatbot from '@/components/tenant-portal/TenantAIChatbot';
 
 export default function TenantPortal() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [showChatbot, setShowChatbot] = useState(false);
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
