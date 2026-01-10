@@ -78,6 +78,15 @@ import AICategorizationEngine from '@/components/tax-property/AICategorizationEn
 import RecurringBookings from '@/components/tax-property/RecurringBookings';
 import SmartAlerts from '@/components/tax-property/SmartAlerts';
 import BatchImport from '@/components/tax-property/BatchImport';
+import DocumentUploadManager from '@/components/tax-property/DocumentUploadManager';
+import DocumentSearchEngine from '@/components/tax-property/DocumentSearchEngine';
+import TaxDocumentGallery from '@/components/tax-property/TaxDocumentGallery';
+import QuickActionsPanel from '@/components/tax-property/QuickActionsPanel';
+import TaxYearOverview from '@/components/tax-property/TaxYearOverview';
+import FinancialSummaryCards from '@/components/tax-property/FinancialSummaryCards';
+import MonthlyTaxEstimate from '@/components/tax-property/MonthlyTaxEstimate';
+import TaxSavingsTips from '@/components/tax-property/TaxSavingsTips';
+import ComplianceMonitor from '@/components/tax-property/ComplianceMonitor';
 
 export default function SteuerVermoegenApp() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -157,67 +166,22 @@ export default function SteuerVermoegenApp() {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Building2 className="w-4 h-4" />
-                    Immobilien
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-blue-600">
-                    {totalPropertyValue.toLocaleString('de-DE')} €
-                  </p>
-                  <p className="text-sm text-slate-600 mt-1">{buildings.length} Objekte</p>
-                </CardContent>
-              </Card>
+            <FinancialSummaryCards />
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4" />
-                    Wertpapiere
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-green-600">
-                    {totalAssetValue.toLocaleString('de-DE')} €
-                  </p>
-                  <p className="text-sm text-slate-600 mt-1">{assets.length} Positionen</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Receipt className="w-4 h-4" />
-                    Transaktionen
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-purple-600">
-                    {financialItems.length}
-                  </p>
-                  <p className="text-sm text-slate-600 mt-1">Dieses Jahr</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <PropertyTaxOverview />
+            <QuickActionsPanel />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <WealthAllocationChart />
-              <InvestmentAnalysis />
+              <MonthlyTaxEstimate />
             </div>
 
-            <TaxOptimizationRecommendations />
-            
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <AnlageVQuickGenerator />
-              <AfACalculator />
-              <ElsterDirectSubmit />
+              <TaxYearOverview />
+              <ComplianceMonitor />
+              <TaxSavingsTips />
             </div>
+
+            <PropertyTaxOverview />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <SmartAlerts />
@@ -405,6 +369,8 @@ export default function SteuerVermoegenApp() {
 
           {/* Finance Tab */}
           <TabsContent value="finance" className="space-y-6">
+            <FinancialSummaryCards />
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <FinAPISyncPanel />
               <AICategorizationEngine />
@@ -417,6 +383,12 @@ export default function SteuerVermoegenApp() {
             </div>
 
             <RecurringBookings />
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <DocumentUploadManager />
+              <DocumentSearchEngine />
+              <TaxDocumentGallery />
+            </div>
 
             <Card>
               <CardHeader>
