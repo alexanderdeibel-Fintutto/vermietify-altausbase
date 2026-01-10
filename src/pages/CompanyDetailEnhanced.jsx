@@ -12,6 +12,8 @@ import CompanyFinancials from '@/components/companies/CompanyFinancials';
 import CompanyRecurringTasks from '@/components/companies/CompanyRecurringTasks';
 import CompanyAnalytics from '@/components/companies/CompanyAnalytics';
 import ComplianceChecklist from '@/components/companies/ComplianceChecklist';
+import DocumentVersionControl from '@/components/companies/DocumentVersionControl';
+import TemplateLibrary from '@/components/companies/TemplateLibrary';
 
 const legalFormLabels = {
   einzelunternehmen: 'Einzelunternehmen',
@@ -114,11 +116,12 @@ export default function CompanyDetailEnhanced() {
 
       {/* Tabs */}
       <Tabs defaultValue="documents" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="documents" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
             <span className="hidden sm:inline">Dokumente</span>
           </TabsTrigger>
+          <TabsTrigger value="templates">Vorlagen</TabsTrigger>
           <TabsTrigger value="contacts" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             <span className="hidden sm:inline">Kontakte</span>
@@ -141,6 +144,21 @@ export default function CompanyDetailEnhanced() {
             legalForm={company.legal_form}
             documents={company.documents || []}
             onUpdate={handleDocumentsUpdate}
+          />
+          {company.documents?.map(doc => (
+            <DocumentVersionControl
+              key={doc.id}
+              documentId={doc.id}
+              fileName={doc.name}
+            />
+          ))}
+        </TabsContent>
+
+        <TabsContent value="templates" className="space-y-6">
+          <TemplateLibrary
+            legalForm={company.legal_form}
+            companyId={companyId}
+            companyData={company}
           />
         </TabsContent>
 
