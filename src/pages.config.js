@@ -290,6 +290,7 @@ import AdminMessagingCenter from './pages/AdminMessagingCenter';
 import TechnicianManagement from './pages/TechnicianManagement';
 import BuildingWorkflowManager from './pages/BuildingWorkflowManager';
 import IoTSensorManagement from './pages/IoTSensorManagement';
+import KnowledgeBaseAdmin from './pages/KnowledgeBaseAdmin';
 import __Layout from './Layout.jsx';
 
 
@@ -586,6 +587,7 @@ export const PAGES = {
     "TechnicianManagement": TechnicianManagement,
     "BuildingWorkflowManager": BuildingWorkflowManager,
     "IoTSensorManagement": IoTSensorManagement,
+    "KnowledgeBaseAdmin": KnowledgeBaseAdmin,
 }
 
 export const pagesConfig = {

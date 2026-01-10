@@ -18,6 +18,7 @@ import BuildingDocumentsOverview from '@/components/building-detail/BuildingDocu
 import BuildingBoardOverview from '@/components/building-detail/BuildingBoardOverview';
 import BuildingTasksManager from '@/components/building-detail/BuildingTasksManager';
 import BuildingInfoPanel from '@/components/building-detail/BuildingInfoPanel';
+import IoTSensorsPanel from '@/components/building-detail/IoTSensorsPanel';
 
 export default function BuildingDetailPage() {
   const buildingId = new URLSearchParams(window.location.search).get('id');
@@ -156,7 +157,10 @@ export default function BuildingDetailPage() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <BuildingInfoPanel building={building} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <BuildingInfoPanel building={building} />
+            <IoTSensorsPanel buildingId={buildingId} />
+          </div>
         </TabsContent>
 
         <TabsContent value="units">
