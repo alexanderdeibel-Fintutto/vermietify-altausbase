@@ -1,93 +1,152 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Sparkles } from 'lucide-react';
 
-import UniversalImporter from '@/components/import/UniversalImporter';
-import MultiFormatExporter from '@/components/export/MultiFormatExporter';
-import APIKeyManager from '@/components/api/APIKeyManager';
-import WebhookManager from '@/components/api/WebhookManager';
-import PushNotificationSettings from '@/components/notifications/PushNotificationSettings';
-import EmailDigestSettings from '@/components/notifications/EmailDigestSettings';
-import OfflineSyncManager from '@/components/mobile/OfflineSyncManager';
-import GPSLocationTracker from '@/components/mobile/GPSLocationTracker';
-import GoogleCalendarSync from '@/components/integrations/GoogleCalendarSync';
-import SlackNotifications from '@/components/integrations/SlackNotifications';
-import FullTextSearch from '@/components/search/FullTextSearch';
-import SavedSearches from '@/components/search/SavedSearches';
-import MultiMandantManager from '@/components/team/MultiMandantManager';
-import TemplateLibrary from '@/components/templates/TemplateLibrary';
-import BulkOperationsPanel from '@/components/bulk/BulkOperationsPanel';
-import BackupRestore from '@/components/backup/BackupRestore';
-import AIAssistant from '@/components/support/AIAssistant';
-import VideoTutorials from '@/components/support/VideoTutorials';
-import ContextualHelp from '@/components/support/ContextualHelp';
-import DashboardBuilder from '@/components/dashboard/DashboardBuilder';
-import FavoritesManager from '@/components/dashboard/FavoritesManager';
+import PredictiveAnalytics from '@/components/analytics/PredictiveAnalytics';
+import MarketBenchmarking from '@/components/analytics/MarketBenchmarking';
+import PortfolioRiskAnalysis from '@/components/analytics/PortfolioRiskAnalysis';
+import TaxOptimizationAutopilot from '@/components/analytics/TaxOptimizationAutopilot';
+
+import RealtimeCashflowMonitor from '@/components/finance/RealtimeCashflowMonitor';
+import BudgetAlertManager from '@/components/finance/BudgetAlertManager';
+import CostCenterAccounting from '@/components/finance/CostCenterAccounting';
+import ProfitLossForecast from '@/components/finance/ProfitLossForecast';
+
+import TenantScoring from '@/components/tenants/TenantScoring';
+import AutomatedReminderFlow from '@/components/tenants/AutomatedReminderFlow';
+import DepositManager from '@/components/tenants/DepositManager';
+import ContractRenewalAssistant from '@/components/tenants/ContractRenewalAssistant';
+
+import QuarterlyReportGenerator from '@/components/reporting/QuarterlyReportGenerator';
+import PlanVsActualComparison from '@/components/reporting/PlanVsActualComparison';
+import CustomReportDesigner from '@/components/reporting/CustomReportDesigner';
+
+import PropertyROIComparison from '@/components/realestate/PropertyROIComparison';
+import VacancyCostCalculator from '@/components/realestate/VacancyCostCalculator';
+import RegionalMarketAnalysis from '@/components/realestate/RegionalMarketAnalysis';
+
+import BarcodeReceiptScanner from '@/components/mobile/BarcodeReceiptScanner';
+import VoiceNoteCapture from '@/components/mobile/VoiceNoteCapture';
+import GPSMileageTracker from '@/components/mobile/GPSMileageTracker';
+
+import FinAPIBankingSync from '@/components/integrations/FinAPIBankingSync';
+import CryptoExchangeSync from '@/components/integrations/CryptoExchangeSync';
+import DATEVInterface from '@/components/integrations/DATEVInterface';
+import ESignaturePanel from '@/components/integrations/ESignaturePanel';
+
+import QuickActionsMenu from '@/components/dashboard/QuickActionsMenu';
+import InAppChatSupport from '@/components/support/InAppChatSupport';
+import InteractiveFeatureTour from '@/components/onboarding/InteractiveFeatureTour';
+import AdvancedSearchBuilder from '@/components/search/AdvancedSearchBuilder';
+
+import TwoFactorAuth from '@/components/security/TwoFactorAuth';
+import AuditLog from '@/components/security/AuditLog';
+import GDPRDataExport from '@/components/security/GDPRDataExport';
+import EndToEndEncryption from '@/components/security/EndToEndEncryption';
+import FieldPermissions from '@/components/security/FieldPermissions';
 
 export default function CompleteEnterpriseHub() {
+  const [showTour, setShowTour] = useState(false);
+
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Complete Enterprise Hub</h1>
-      <p className="text-slate-600">Alle Enterprise-Features an einem Ort</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Complete Enterprise Hub</h1>
+          <p className="text-slate-600">Alle Advanced Enterprise-Features</p>
+        </div>
+        <Button onClick={() => setShowTour(true)} className="bg-purple-600">
+          <Sparkles className="w-4 h-4 mr-2" />
+          Feature-Tour starten
+        </Button>
+      </div>
 
-      <Tabs defaultValue="import">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="import">Import/Export</TabsTrigger>
-          <TabsTrigger value="notifications">Benachrichtigungen</TabsTrigger>
+      {showTour && <InteractiveFeatureTour onClose={() => setShowTour(false)} />}
+
+      <Tabs defaultValue="analytics">
+        <TabsList className="grid w-full grid-cols-8">
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="finance">Finance</TabsTrigger>
+          <TabsTrigger value="tenants">Mieter</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="realestate">Immobilien</TabsTrigger>
           <TabsTrigger value="mobile">Mobile</TabsTrigger>
           <TabsTrigger value="integrations">Integrationen</TabsTrigger>
-          <TabsTrigger value="productivity">Produktivität</TabsTrigger>
-          <TabsTrigger value="support">Support</TabsTrigger>
+          <TabsTrigger value="security">Security</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="import" className="space-y-6">
+        <TabsContent value="analytics" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <UniversalImporter />
-            <MultiFormatExporter />
-            <APIKeyManager />
-            <WebhookManager />
+            <PredictiveAnalytics />
+            <MarketBenchmarking />
+            <PortfolioRiskAnalysis />
+            <TaxOptimizationAutopilot />
           </div>
         </TabsContent>
 
-        <TabsContent value="notifications" className="space-y-6">
+        <TabsContent value="finance" className="space-y-6">
+          <RealtimeCashflowMonitor />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <PushNotificationSettings />
-            <EmailDigestSettings />
+            <BudgetAlertManager />
+            <CostCenterAccounting />
+          </div>
+          <ProfitLossForecast />
+        </TabsContent>
+
+        <TabsContent value="tenants" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <TenantScoring tenantId="example" />
+            <AutomatedReminderFlow />
+            <DepositManager />
+            <ContractRenewalAssistant />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="reports" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <QuarterlyReportGenerator />
+            <PlanVsActualComparison />
+          </div>
+          <CustomReportDesigner />
+        </TabsContent>
+
+        <TabsContent value="realestate" className="space-y-6">
+          <PropertyROIComparison />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <VacancyCostCalculator />
+            <RegionalMarketAnalysis />
           </div>
         </TabsContent>
 
         <TabsContent value="mobile" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <OfflineSyncManager />
-            <GPSLocationTracker />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <BarcodeReceiptScanner />
+            <VoiceNoteCapture />
+            <GPSMileageTracker />
           </div>
+          <QuickActionsMenu />
+          <AdvancedSearchBuilder />
         </TabsContent>
 
         <TabsContent value="integrations" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <GoogleCalendarSync />
-            <SlackNotifications />
+            <FinAPIBankingSync />
+            <CryptoExchangeSync />
+            <DATEVInterface />
+            <ESignaturePanel />
           </div>
+          <InAppChatSupport />
         </TabsContent>
 
-        <TabsContent value="productivity" className="space-y-6">
+        <TabsContent value="security" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <FullTextSearch />
-            <SavedSearches />
-            <MultiMandantManager />
-            <TemplateLibrary />
-            <BulkOperationsPanel />
-            <BackupRestore />
-            <DashboardBuilder />
-            <FavoritesManager />
+            <TwoFactorAuth />
+            <EndToEndEncryption />
+            <AuditLog />
+            <GDPRDataExport />
           </div>
-        </TabsContent>
-
-        <TabsContent value="support" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <AIAssistant />
-            <VideoTutorials />
-          </div>
-          <ContextualHelp page="Buildings" />
+          <FieldPermissions />
         </TabsContent>
       </Tabs>
     </div>
