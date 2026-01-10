@@ -2,7 +2,8 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarClock } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { CalendarClock, Lock, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function UpcomingTasksWidget() {
@@ -30,9 +31,20 @@ export default function UpcomingTasksWidget() {
       <CardContent>
         <div className="space-y-2">
           {tasks.map(task => (
-            <div key={task.id} className="p-2 border rounded">
-              <p className="text-sm font-semibold">{task.task_title}</p>
-              <p className="text-xs text-slate-600">{format(new Date(task.due_date), 'dd.MM.yyyy')}</p>
+            <div key={task.id} className={`p-3 border rounded-lg ${task.status === 'blocked' ? 'bg-red-50 border-red-200' : 'hover:bg-slate-50'}`}>
+              <div className="flex items-start justify-between gap-2 mb-1">
+                <p className="text-sm font-semibold flex items-center gap-2">
+                  {task.task_title}
+                  {task.status === 'blocked' && <Lock className="w-4 h-4 text-red-600" />}
+                </p>
+                {task.priority === 'urgent' && <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />}
+              </div>
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs text-slate-600">{format(new Date(task.due_date), 'dd.MM.yyyy')}</p>
+                {task.status === 'blocked' && (
+                  <Badge className="bg-red-100 text-red-700 text-xs">Blockiert</Badge>
+                )}
+              </div>
             </div>
           ))}
           {tasks.length === 0 && (
