@@ -38,6 +38,47 @@ import CashflowForecast from '@/components/finance/CashflowForecast';
 // Document Components
 import DocumentsList from '@/components/documents/DocumentsList';
 
+// Tax-Property Components
+import PropertyTaxOverview from '@/components/tax-property/PropertyTaxOverview';
+import WealthAllocationChart from '@/components/tax-property/WealthAllocationChart';
+import TaxOptimizationRecommendations from '@/components/tax-property/TaxOptimizationRecommendations';
+import AnlageVQuickGenerator from '@/components/tax-property/AnlageVQuickGenerator';
+import AfACalculator from '@/components/tax-property/AfACalculator';
+import InvestmentAnalysis from '@/components/tax-property/InvestmentAnalysis';
+import ElsterDirectSubmit from '@/components/tax-property/ElsterDirectSubmit';
+import QuarterlyTaxCalculator from '@/components/tax-property/QuarterlyTaxCalculator';
+import LossCarryforwardTracker from '@/components/tax-property/LossCarryforwardTracker';
+import ExpenseScanner from '@/components/tax-property/ExpenseScanner';
+import MileageLogger from '@/components/tax-property/MileageLogger';
+import BusinessTripTracker from '@/components/tax-property/BusinessTripTracker';
+import DoubleTaxCalculator from '@/components/tax-property/DoubleTaxCalculator';
+import TaxAdvisorInterface from '@/components/tax-property/TaxAdvisorInterface';
+import RebalancingAssistant from '@/components/tax-property/RebalancingAssistant';
+import DiversificationScore from '@/components/tax-property/DiversificationScore';
+import RiskAssessment from '@/components/tax-property/RiskAssessment';
+import PerformanceAttribution from '@/components/tax-property/PerformanceAttribution';
+import DividendCalendar from '@/components/tax-property/DividendCalendar';
+import CompoundInterestCalculator from '@/components/tax-property/CompoundInterestCalculator';
+import RetirementPlanner from '@/components/tax-property/RetirementPlanner';
+import WealthSimulator from '@/components/tax-property/WealthSimulator';
+import FinancingCalculator from '@/components/tax-property/FinancingCalculator';
+import EquityReturnAnalysis from '@/components/tax-property/EquityReturnAnalysis';
+import CashflowSimulation from '@/components/tax-property/CashflowSimulation';
+import PropertyComparison from '@/components/tax-property/PropertyComparison';
+import RenovationROI from '@/components/tax-property/RenovationROI';
+import InsuranceOverview from '@/components/tax-property/InsuranceOverview';
+import PropertyTaxCalculator from '@/components/tax-property/PropertyTaxCalculator';
+import GoBDArchive from '@/components/tax-property/GoBDArchive';
+import RetentionTracker from '@/components/tax-property/RetentionTracker';
+import AuditPreparation from '@/components/tax-property/AuditPreparation';
+import TaxDeclarationChecklist from '@/components/tax-property/TaxDeclarationChecklist';
+import DeadlineTrafficLight from '@/components/tax-property/DeadlineTrafficLight';
+import FinAPISyncPanel from '@/components/tax-property/FinAPISyncPanel';
+import AICategorizationEngine from '@/components/tax-property/AICategorizationEngine';
+import RecurringBookings from '@/components/tax-property/RecurringBookings';
+import SmartAlerts from '@/components/tax-property/SmartAlerts';
+import BatchImport from '@/components/tax-property/BatchImport';
+
 export default function SteuerVermoegenApp() {
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -163,12 +204,26 @@ export default function SteuerVermoegenApp() {
               </Card>
             </div>
 
+            <PropertyTaxOverview />
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <PortfolioKPICards />
-              <BuildingSummary />
+              <WealthAllocationChart />
+              <InvestmentAnalysis />
             </div>
 
-            <PerformanceChart />
+            <TaxOptimizationRecommendations />
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <AnlageVQuickGenerator />
+              <AfACalculator />
+              <ElsterDirectSubmit />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <SmartAlerts />
+              <DeadlineTrafficLight />
+            </div>
+
             <TaxCockpit />
           </TabsContent>
 
@@ -199,7 +254,27 @@ export default function SteuerVermoegenApp() {
 
           {/* Property Tab */}
           <TabsContent value="property" className="space-y-6">
+            <PropertyTaxOverview />
             <BuildingSummary />
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <InvestmentAnalysis />
+              <EquityReturnAnalysis />
+              <PropertyComparison />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <FinancingCalculator />
+              <CashflowSimulation />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <AfACalculator />
+              <RenovationROI />
+              <PropertyTaxCalculator />
+            </div>
+
+            <InsuranceOverview />
             <BuildingTable />
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -249,6 +324,36 @@ export default function SteuerVermoegenApp() {
 
           {/* Tax Tab */}
           <TabsContent value="tax" className="space-y-6">
+            <TaxOptimizationRecommendations />
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <ElsterDirectSubmit />
+              <AnlageVQuickGenerator />
+              <TaxDeclarationChecklist />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <QuarterlyTaxCalculator />
+              <LossCarryforwardTracker />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <ExpenseScanner />
+              <MileageLogger />
+              <BusinessTripTracker />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <DoubleTaxCalculator />
+              <TaxAdvisorInterface />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <GoBDArchive />
+              <RetentionTracker />
+              <AuditPreparation />
+            </div>
+
             <ComprehensiveTaxDashboard />
             <TaxOptimizationPanel />
             
