@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Home, Building2, Users, Briefcase, TrendingUp } from 'lucide-react';
+import { Home, Building2, Users, Briefcase, TrendingUp, FileText } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 export default function HorizontalMainNavigation({ activeCategory = null }) {
@@ -9,6 +9,7 @@ export default function HorizontalMainNavigation({ activeCategory = null }) {
   
   const getActiveSection = () => {
     const path = location.pathname.toLowerCase();
+    if (path.includes('documentmanagementdashboard')) return 'dokumente';
     if (path.includes('wealth') || path.includes('vermogen')) return 'vermogen';
     if (path.includes('building') || path.includes('unit') || path.includes('insurance') || path.includes('finanzen')) return 'immobilien';
     if (path.includes('tenant') || path.includes('contract') || path.includes('operating')) return 'mieter';
@@ -64,6 +65,15 @@ export default function HorizontalMainNavigation({ activeCategory = null }) {
       colorActive: 'bg-orange-50 text-orange-700',
       colorHover: 'hover:bg-orange-50/50',
       category: 'business'
+    },
+    {
+      key: 'dokumente',
+      label: 'Dokumenten-Dashboard',
+      icon: FileText,
+      page: 'DocumentManagementDashboard',
+      colorActive: 'bg-slate-100 text-slate-800',
+      colorHover: 'hover:bg-slate-50',
+      category: 'documents'
     }
   ];
   
