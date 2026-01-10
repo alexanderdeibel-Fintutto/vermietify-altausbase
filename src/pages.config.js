@@ -289,6 +289,7 @@ import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import AdminMessagingCenter from './pages/AdminMessagingCenter';
 import TechnicianManagement from './pages/TechnicianManagement';
 import BuildingWorkflowManager from './pages/BuildingWorkflowManager';
+import IoTSensorManagement from './pages/IoTSensorManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -584,6 +585,7 @@ export const PAGES = {
     "AdminMessagingCenter": AdminMessagingCenter,
     "TechnicianManagement": TechnicianManagement,
     "BuildingWorkflowManager": BuildingWorkflowManager,
+    "IoTSensorManagement": IoTSensorManagement,
 }
 
 export const pagesConfig = {
