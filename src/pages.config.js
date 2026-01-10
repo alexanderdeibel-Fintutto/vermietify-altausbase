@@ -27,6 +27,7 @@ import AdvancedReportBuilder from './pages/AdvancedReportBuilder';
 import AdvancedReporting from './pages/AdvancedReporting';
 import AdvancedSearch from './pages/AdvancedSearch';
 import AdvancedTaxReporting from './pages/AdvancedTaxReporting';
+import AdvancedWorkflowAnalytics from './pages/AdvancedWorkflowAnalytics';
 import AlertManagement from './pages/AlertManagement';
 import Analytics from './pages/Analytics';
 import AnalyticsPage from './pages/AnalyticsPage';
@@ -106,9 +107,9 @@ import EmployeeManagement from './pages/EmployeeManagement';
 import EnergyManagement from './pages/EnergyManagement';
 import EntityTaxPlanning from './pages/EntityTaxPlanning';
 import Equipment from './pages/Equipment';
+import FeatureCatalog from './pages/FeatureCatalog';
 import EstateTaxPlanning from './pages/EstateTaxPlanning';
 import EstimatedTaxScheduler from './pages/EstimatedTaxScheduler';
-import FeatureCatalog from './pages/FeatureCatalog';
 import FinAPICallback from './pages/FinAPICallback';
 import FinanceManagement from './pages/FinanceManagement';
 import FinancialForecasting from './pages/FinancialForecasting';
@@ -217,11 +218,11 @@ import TaxAuthoritySubmissions from './pages/TaxAuthoritySubmissions';
 import TaxAutomationCenter from './pages/TaxAutomationCenter';
 import TaxBracketCalculator from './pages/TaxBracketCalculator';
 import TaxCalendarAndTimeline from './pages/TaxCalendarAndTimeline';
+import TaxDashboard from './pages/TaxDashboard';
 import TaxComplianceChecker from './pages/TaxComplianceChecker';
 import TaxComplianceDashboard from './pages/TaxComplianceDashboard';
 import TaxComplianceTracker from './pages/TaxComplianceTracker';
 import TaxCreditsAndIncentives from './pages/TaxCreditsAndIncentives';
-import TaxDashboard from './pages/TaxDashboard';
 import TaxDashboardAT from './pages/TaxDashboardAT';
 import TaxDashboardCH from './pages/TaxDashboardCH';
 import TaxDashboardDE from './pages/TaxDashboardDE';
@@ -307,6 +308,7 @@ import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
 import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
+import WorkflowAI from './pages/WorkflowAI';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationBuilder from './pages/WorkflowAutomationBuilder';
 import WorkflowAutomationCenter from './pages/WorkflowAutomationCenter';
@@ -314,9 +316,8 @@ import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
-import WorkflowAI from './pages/WorkflowAI';
-import AdvancedWorkflowAnalytics from './pages/AdvancedWorkflowAnalytics';
 import WorkflowTemplates from './pages/WorkflowTemplates';
+import WorkflowAutomationDashboard from './pages/WorkflowAutomationDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -350,6 +351,7 @@ export const PAGES = {
     "AdvancedReporting": AdvancedReporting,
     "AdvancedSearch": AdvancedSearch,
     "AdvancedTaxReporting": AdvancedTaxReporting,
+    "AdvancedWorkflowAnalytics": AdvancedWorkflowAnalytics,
     "AlertManagement": AlertManagement,
     "Analytics": Analytics,
     "AnalyticsPage": AnalyticsPage,
@@ -429,9 +431,9 @@ export const PAGES = {
     "EnergyManagement": EnergyManagement,
     "EntityTaxPlanning": EntityTaxPlanning,
     "Equipment": Equipment,
+    "FeatureCatalog": FeatureCatalog,
     "EstateTaxPlanning": EstateTaxPlanning,
     "EstimatedTaxScheduler": EstimatedTaxScheduler,
-    "FeatureCatalog": FeatureCatalog,
     "FinAPICallback": FinAPICallback,
     "FinanceManagement": FinanceManagement,
     "FinancialForecasting": FinancialForecasting,
@@ -540,11 +542,11 @@ export const PAGES = {
     "TaxAutomationCenter": TaxAutomationCenter,
     "TaxBracketCalculator": TaxBracketCalculator,
     "TaxCalendarAndTimeline": TaxCalendarAndTimeline,
+    "TaxDashboard": TaxDashboard,
     "TaxComplianceChecker": TaxComplianceChecker,
     "TaxComplianceDashboard": TaxComplianceDashboard,
     "TaxComplianceTracker": TaxComplianceTracker,
     "TaxCreditsAndIncentives": TaxCreditsAndIncentives,
-    "TaxDashboard": TaxDashboard,
     "TaxDashboardAT": TaxDashboardAT,
     "TaxDashboardCH": TaxDashboardCH,
     "TaxDashboardDE": TaxDashboardDE,
@@ -630,6 +632,7 @@ export const PAGES = {
     "WhatsAppSettings": WhatsAppSettings,
     "WhatsAppSetup": WhatsAppSetup,
     "WithholdingTaxCalculator": WithholdingTaxCalculator,
+    "WorkflowAI": WorkflowAI,
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationBuilder": WorkflowAutomationBuilder,
     "WorkflowAutomationCenter": WorkflowAutomationCenter,
@@ -637,9 +640,8 @@ export const PAGES = {
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "WorkflowExecutionCenter": WorkflowExecutionCenter,
     "WorkflowReporting": WorkflowReporting,
-    "WorkflowAI": WorkflowAI,
-    "AdvancedWorkflowAnalytics": AdvancedWorkflowAnalytics,
     "WorkflowTemplates": WorkflowTemplates,
+    "WorkflowAutomationDashboard": WorkflowAutomationDashboard,
 }
 
 export const pagesConfig = {
