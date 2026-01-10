@@ -308,6 +308,7 @@ import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import DocumentAnalytics from './pages/DocumentAnalytics';
 import DocumentArchiveManager from './pages/DocumentArchiveManager';
+import DocumentSearch from './pages/DocumentSearch';
 import __Layout from './Layout.jsx';
 
 
@@ -622,6 +623,7 @@ export const PAGES = {
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "DocumentAnalytics": DocumentAnalytics,
     "DocumentArchiveManager": DocumentArchiveManager,
+    "DocumentSearch": DocumentSearch,
 }
 
 export const pagesConfig = {

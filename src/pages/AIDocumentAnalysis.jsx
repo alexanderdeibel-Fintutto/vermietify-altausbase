@@ -1,11 +1,32 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import ContractDataExtractor from '@/components/ai/ContractDataExtractor';
 import DocumentAutoCategorization from '@/components/ai/DocumentAutoCategorization';
 import ContractRiskAnalyzer from '@/components/ai/ContractRiskAnalyzer';
+import AdvancedDocumentSearch from '@/components/documents/AdvancedDocumentSearch';
 import { Sparkles } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 
 export default function AIDocumentAnalysis() {
+  const { data: user } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: async () => base44.auth.me()
+  });
+
+  const { data: buildings = [] } = useQuery({
+    queryKey: ['user-buildings'],
+    queryFn: async () => {
+      if (!user) return [];
+      return await base44.entities.Building.list('-created_date', 1);
+    },
+    enabled: !!user
+  });
+
+  const companyId = buildings[0]?.id || user?.id;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -18,12 +39,17 @@ export default function AIDocumentAnalysis() {
         </div>
       </div>
 
-      <Tabs defaultValue="extract">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="search">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="search">Dokumentensuche</TabsTrigger>
           <TabsTrigger value="extract">Daten-Extraktion</TabsTrigger>
           <TabsTrigger value="categorize">Auto-Kategorisierung</TabsTrigger>
           <TabsTrigger value="risks">Risiko-Analyse</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="search" className="space-y-6">
+          {companyId && <AdvancedDocumentSearch companyId={companyId} />}
+        </TabsContent>
 
         <TabsContent value="extract" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
