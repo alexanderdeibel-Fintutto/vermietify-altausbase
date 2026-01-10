@@ -8,6 +8,8 @@ import { DollarSign, TrendingUp, AlertCircle, Download } from 'lucide-react';
 import IncomeExpenseOverview from '@/components/reports/IncomeExpenseOverview';
 import PaymentAnalysis from '@/components/reports/PaymentAnalysis';
 import FinancialExport from '@/components/reports/FinancialExport';
+import BudgetManagement from '@/components/reports/BudgetManagement';
+import FinancialForecast from '@/components/reports/FinancialForecast';
 
 export default function FinancialReports() {
   const [dateRange, setDateRange] = useState('current_year');
@@ -32,6 +34,12 @@ export default function FinancialReports() {
             <TrendingUp className="w-4 h-4 mr-2" />
             Einnahmen & Ausgaben
           </TabsTrigger>
+          <TabsTrigger value="budget">
+            Budgetverwaltung
+          </TabsTrigger>
+          <TabsTrigger value="forecast">
+            Prognose
+          </TabsTrigger>
           <TabsTrigger value="payments">
             <AlertCircle className="w-4 h-4 mr-2" />
             Zahlungsanalyse
@@ -44,6 +52,14 @@ export default function FinancialReports() {
 
         <TabsContent value="overview">
           <IncomeExpenseOverview />
+        </TabsContent>
+
+        <TabsContent value="budget">
+          <BudgetManagement />
+        </TabsContent>
+
+        <TabsContent value="forecast">
+          <FinancialForecast />
         </TabsContent>
 
         <TabsContent value="payments">
