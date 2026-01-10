@@ -278,6 +278,7 @@ import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import SteuerVermoegenApp from './pages/SteuerVermoegenApp';
 import DocumentManagementCenter from './pages/DocumentManagementCenter';
+import AdvancedFeatures from './pages/AdvancedFeatures';
 import __Layout from './Layout.jsx';
 
 
@@ -562,6 +563,7 @@ export const PAGES = {
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "SteuerVermoegenApp": SteuerVermoegenApp,
     "DocumentManagementCenter": DocumentManagementCenter,
+    "AdvancedFeatures": AdvancedFeatures,
 }
 
 export const pagesConfig = {
