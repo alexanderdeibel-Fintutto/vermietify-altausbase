@@ -1,74 +1,72 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-/**
- * Checks if a user has a specific permission
- */
 Deno.serve(async (req) => {
-    try {
-        const base44 = createClientFromRequest(req);
-        const user = await base44.auth.me();
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
 
-        if (!user) {
-            return Response.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const { permission_code } = await req.json();
-
-        if (!permission_code) {
-            return Response.json({ error: 'permission_code required' }, { status: 400 });
-        }
-
-        // Admins have all permissions
-        if (user.role === 'admin') {
-            return Response.json({ has_permission: true });
-        }
-
-        // Get user's role assignment
-        const assignments = await base44.asServiceRole.entities.UserRoleAssignment.filter(
-            { user_email: user.email },
-            null,
-            1
-        );
-
-        if (assignments.length === 0) {
-            // Default to User role
-            const defaultRoles = await base44.asServiceRole.entities.UserRole.filter(
-                { role_name: 'User' },
-                null,
-                1
-            );
-
-            if (defaultRoles.length === 0) {
-                return Response.json({ has_permission: false });
-            }
-
-            const role = defaultRoles[0];
-            const hasPermission = (role.permissions || []).includes(permission_code);
-            return Response.json({ has_permission: hasPermission });
-        }
-
-        const assignment = assignments[0];
-        const roles = await base44.asServiceRole.entities.UserRole.filter(
-            { id: assignment.role_id },
-            null,
-            1
-        );
-
-        if (roles.length === 0) {
-            return Response.json({ has_permission: false });
-        }
-
-        const role = roles[0];
-        const hasPermission = (role.permissions || []).includes(permission_code);
-
-        return Response.json({
-            has_permission: hasPermission,
-            user_role: role.role_name,
-            user_permissions: role.permissions
-        });
-
-    } catch (error) {
-        console.error('Error checking permission:', error);
-        return Response.json({ error: error.message }, { status: 500 });
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const { resource, action, company_id } = await req.json();
+
+    // Get user's role assignments
+    const assignments = await base44.asServiceRole.entities.UserRoleAssignment.filter({
+      user_email: user.email,
+      company_id: company_id,
+      is_active: true
+    });
+
+    if (assignments.length === 0) {
+      return Response.json({ has_permission: false, reason: 'no_role_assigned' });
+    }
+
+    // Check if any of the user's roles has the required permission
+    for (const assignment of assignments) {
+      const role = await base44.asServiceRole.entities.UserRole.filter({
+        id: assignment.role_id
+      });
+
+      if (role.length > 0) {
+        const roleData = role[0];
+        
+        // Check expiration
+        if (assignment.expires_at && new Date(assignment.expires_at) < new Date()) {
+          continue; // Skip expired assignment
+        }
+
+        // Check permission
+        const parts = resource.split('.');
+        let perms = roleData.permissions;
+
+        for (const part of parts) {
+          if (perms && typeof perms === 'object') {
+            perms = perms[part];
+          } else {
+            break;
+          }
+        }
+
+        if (perms && perms[action] === true) {
+          return Response.json({
+            has_permission: true,
+            role: roleData.name,
+            resource,
+            action
+          });
+        }
+      }
+    }
+
+    return Response.json({
+      has_permission: false,
+      reason: 'permission_denied',
+      resource,
+      action
+    });
+  } catch (error) {
+    console.error('Check permission error:', error);
+    return Response.json({ error: error.message }, { status: 500 });
+  }
 });

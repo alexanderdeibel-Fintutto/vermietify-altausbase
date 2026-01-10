@@ -1,160 +1,148 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
-const ENTITIES = [
-  'financial_data',
-  'reports',
-  'tax_forms',
-  'users',
-  'settings',
-  'audit_log',
-  'team_members'
-];
+export default function RolePermissionEditor({
+  role,
+  onSave,
+  isLoading
+}) {
+  const [name, setName] = useState(role?.name || '');
+  const [description, setDescription] = useState(role?.description || '');
+  const [permissions, setPermissions] = useState(role?.permissions || {});
 
-const ACTIONS = ['create', 'read', 'update', 'delete', 'export'];
-
-export default function RolePermissionEditor({ role, onUpdate, profiles }) {
-  const [selectedProfile, setSelectedProfile] = useState(role?.permission_profile || 'custom');
-  const [granularPerms, setGranularPerms] = useState(role?.granular_permissions || {});
-  const [loading, setLoading] = useState(false);
-
-  const handleApplyProfile = async (profileId) => {
-    try {
-      setLoading(true);
-      const response = await base44.functions.invoke('manageRolePermissions', {
-        action: 'set_profile',
-        role_id: role.id,
-        permission_profile: profileId
-      });
-      setSelectedProfile(profileId);
-      setGranularPerms(response.data.permissions);
-      toast.success(`Profil '${profileId}' angewendet`);
-      onUpdate?.();
-    } catch (error) {
-      toast.error(`Fehler: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
+  const handlePermissionChange = (resource, action, value) => {
+    setPermissions({
+      ...permissions,
+      [resource]: {
+        ...permissions[resource],
+        [action]: value
+      }
+    });
   };
 
-  const handlePermissionChange = async (entity, action, checked) => {
-    const updated = { ...granularPerms };
-    if (!updated[entity]) updated[entity] = [];
-    
-    if (checked) {
-      updated[entity].push(action);
-    } else {
-      updated[entity] = updated[entity].filter(a => a !== action);
-    }
+  const handleSave = () => {
+    onSave({
+      ...role,
+      name,
+      description,
+      permissions
+    });
+  };
 
-    try {
-      await base44.functions.invoke('manageRolePermissions', {
-        action: 'set_granular',
-        role_id: role.id,
-        entity_name: entity,
-        actions_allowed: updated[entity]
-      });
-      setGranularPerms(updated);
-      toast.success('Berechtigungen aktualisiert');
-      onUpdate?.();
-    } catch (error) {
-      toast.error(`Fehler: ${error.message}`);
+  const resources = [
+    {
+      key: 'documents',
+      label: 'Dokumente',
+      actions: ['view', 'create', 'edit', 'delete', 'archive', 'export']
+    },
+    {
+      key: 'tasks',
+      label: 'Aufgaben',
+      actions: ['view', 'create', 'edit', 'delete', 'assign', 'complete']
+    },
+    {
+      key: 'rules',
+      label: 'Regeln',
+      actions: ['view', 'create', 'edit', 'delete', 'execute']
+    },
+    {
+      key: 'admin',
+      label: 'Administration',
+      actions: ['manage_users', 'manage_roles', 'view_analytics', 'manage_settings']
     }
+  ];
+
+  const actionLabels = {
+    view: 'Anzeigen',
+    create: 'Erstellen',
+    edit: 'Bearbeiten',
+    delete: 'Löschen',
+    archive: 'Archivieren',
+    export: 'Exportieren',
+    assign: 'Zuweisen',
+    complete: 'Abschließen',
+    execute: 'Ausführen',
+    manage_users: 'Benutzer verwalten',
+    manage_roles: 'Rollen verwalten',
+    view_analytics: 'Analytics anzeigen',
+    manage_settings: 'Einstellungen verwalten'
   };
 
   return (
-    <div className="space-y-4">
-      <Tabs defaultValue="profiles" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="profiles">Profile</TabsTrigger>
-          <TabsTrigger value="granular">Granulare Berechtigungen</TabsTrigger>
-        </TabsList>
+    <div className="space-y-6">
+      {/* Basic Info */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Allgemeine Informationen</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label className="text-sm">Rollenname</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="z.B. Bearbeiter"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label className="text-sm">Beschreibung</Label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Beschreiben Sie die Rolle..."
+              className="mt-1"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-        <TabsContent value="profiles" className="space-y-3 mt-4">
-          <p className="text-sm text-slate-600 mb-4">
-            Wählen Sie ein vordefiniertes Profil oder passen Sie Berechtigungen manuell an
-          </p>
-          {profiles?.map(profile => (
-            <Card
-              key={profile.id}
-              className={`cursor-pointer transition-all ${
-                selectedProfile === profile.id ? 'border-blue-500 bg-blue-50' : ''
-              }`}
-              onClick={() => handleApplyProfile(profile.id)}
-            >
-              <CardContent className="pt-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <p className="font-semibold capitalize">{profile.name}</p>
-                    <p className="text-xs text-slate-600 mt-1">{profile.description}</p>
-                    <div className="flex gap-1 mt-2 flex-wrap">
-                      {Object.keys(profile.permissions).slice(0, 3).map(entity => (
-                        <Badge key={entity} variant="outline" className="text-xs">
-                          {entity}
-                        </Badge>
-                      ))}
-                      {Object.keys(profile.permissions).length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{Object.keys(profile.permissions).length - 3}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant={selectedProfile === profile.id ? 'default' : 'outline'}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleApplyProfile(profile.id);
-                    }}
-                    disabled={loading}
-                  >
-                    {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Anwenden'}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="granular" className="space-y-4 mt-4">
-          <p className="text-sm text-slate-600 mb-4">
-            Definieren Sie granulare Berechtigungen für jede Entity
-          </p>
-          {ENTITIES.map(entity => (
-            <Card key={entity}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm capitalize">{entity}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-3 md:grid-cols-5">
-                  {ACTIONS.map(action => (
-                    <label
-                      key={`${entity}-${action}`}
-                      className="flex items-center gap-2 cursor-pointer"
+      {/* Permissions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Berechtigungen</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {resources.map(resource => (
+            <div key={resource.key} className="border-b pb-6 last:border-b-0">
+              <h4 className="font-medium text-sm text-slate-900 mb-3">{resource.label}</h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {resource.actions.map(action => (
+                  <div key={action} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`${resource.key}-${action}`}
+                      checked={permissions[resource.key]?.[action] || false}
+                      onCheckedChange={(value) =>
+                        handlePermissionChange(resource.key, action, value)
+                      }
+                    />
+                    <Label
+                      htmlFor={`${resource.key}-${action}`}
+                      className="text-xs cursor-pointer font-normal"
                     >
-                      <Checkbox
-                        checked={(granularPerms[entity] || []).includes(action)}
-                        onCheckedChange={(checked) =>
-                          handlePermissionChange(entity, action, checked)
-                        }
-                      />
-                      <span className="text-xs capitalize">{action}</span>
-                    </label>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                      {actionLabels[action] || action}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
           ))}
-        </TabsContent>
-      </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Save Button */}
+      <Button
+        onClick={handleSave}
+        disabled={isLoading}
+        className="w-full"
+      >
+        {isLoading ? 'Speichert...' : 'Änderungen speichern'}
+      </Button>
     </div>
   );
 }

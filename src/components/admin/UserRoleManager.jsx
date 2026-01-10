@@ -1,228 +1,164 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Loader2, Plus, Trash2, Edit } from 'lucide-react';
-import { toast } from 'sonner';
-import RolePermissionEditor from './RolePermissionEditor';
-import RoleAssignmentManager from './RoleAssignmentManager';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
+import { Trash2, Plus } from 'lucide-react';
 
-export default function UserRoleManager() {
-  const [showDialog, setShowDialog] = useState(false);
-  const [editingRole, setEditingRole] = useState(null);
-  const [selectedRole, setSelectedRole] = useState(null);
-  const [formData, setFormData] = useState({
-    role_name: '',
-    description: '',
-    permissions: []
-  });
+export default function UserRoleManager({ companyId }) {
+  const [userEmail, setUserEmail] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
+  const queryClient = useQueryClient();
 
-  const { data: roles, isLoading, refetch } = useQuery({
-    queryKey: ['userRoles'],
+  const { data: roles = [] } = useQuery({
+    queryKey: ['roles', companyId],
     queryFn: async () => {
-      try {
-        return await base44.entities.UserRole.list('-created_at', 50);
-      } catch {
-        return [];
-      }
-    }
-  });
-
-  const { data: profiles, isLoading: loadingProfiles } = useQuery({
-    queryKey: ['permissionProfiles'],
-    queryFn: async () => {
-      try {
-        const response = await base44.functions.invoke('manageRolePermissions', {
-          action: 'get_profiles'
-        });
-        return response.data.profiles;
-      } catch {
-        return [];
-      }
-    }
-  });
-
-  const handleCreateRole = async () => {
-    try {
-      await base44.functions.invoke('manageUserRole', {
-        action: 'create_role',
-        ...formData
+      const result = await base44.asServiceRole.entities.UserRole.filter({
+        company_id: companyId
       });
-      toast.success('Rolle erstellt');
-      setFormData({ role_name: '', description: '', permissions: [] });
-      setShowDialog(false);
-      refetch();
-    } catch (error) {
-      toast.error(`Fehler: ${error.message}`);
+      return result;
     }
-  };
+  });
 
-  const handleDeleteRole = async (roleId) => {
-    if (!confirm('Diese Rolle wirklich löschen?')) return;
-    try {
-      await base44.asServiceRole.entities.UserRole.delete(roleId);
-      toast.success('Rolle gelöscht');
-      refetch();
-    } catch (error) {
-      toast.error(`Fehler: ${error.message}`);
+  const { data: assignments = [] } = useQuery({
+    queryKey: ['role-assignments', companyId],
+    queryFn: async () => {
+      const result = await base44.asServiceRole.entities.UserRoleAssignment.filter({
+        company_id: companyId,
+        is_active: true
+      });
+      return result.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+    }
+  });
+
+  const assignRoleMutation = useMutation({
+    mutationFn: () =>
+      base44.functions.invoke('assignUserRole', {
+        user_email: userEmail,
+        role_id: selectedRole,
+        company_id: companyId
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['role-assignments', companyId] });
+      setUserEmail('');
+      setSelectedRole('');
+    }
+  });
+
+  const removeRoleMutation = useMutation({
+    mutationFn: (assignmentId) =>
+      base44.asServiceRole.entities.UserRoleAssignment.update(assignmentId, {
+        is_active: false
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['role-assignments', companyId] });
+    }
+  });
+
+  const handleAssignRole = () => {
+    if (userEmail && selectedRole) {
+      assignRoleMutation.mutate();
     }
   };
 
   return (
-    <div className="space-y-4">
-      <Tabs defaultValue="roles" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="roles">Rollen</TabsTrigger>
-          <TabsTrigger value="assignments">Rollenzuweisungen</TabsTrigger>
-          <TabsTrigger value="permissions">Berechtigungen</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="roles" className="space-y-4 mt-4">
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingRole ? 'Rolle bearbeiten' : 'Neue Rolle'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label className="text-sm">Rollenname</Label>
-              <Input
-                value={formData.role_name}
-                onChange={(e) => setFormData({...formData, role_name: e.target.value})}
-                placeholder="z.B. Team-Lead"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label className="text-sm">Beschreibung</Label>
-              <Input
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-                placeholder="Beschreibung dieser Rolle"
-                className="mt-1"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm">Berechtigungen</Label>
-              {['financial_data', 'reporting', 'user_management', 'audit'].map(perm => (
-                <label key={perm} className="flex items-center gap-2 text-sm cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.permissions.includes(perm)}
-                    onChange={(e) => {
-                      setFormData({
-                        ...formData,
-                        permissions: e.target.checked
-                          ? [...formData.permissions, perm]
-                          : formData.permissions.filter(p => p !== perm)
-                      });
-                    }}
-                  />
-                  {perm}
-                </label>
-              ))}
-            </div>
-            <div className="flex gap-2 pt-4">
-              <Button onClick={handleCreateRole} className="flex-1 bg-blue-600">
-                Speichern
-              </Button>
-              <Button onClick={() => setShowDialog(false)} variant="outline" className="flex-1">
-                Abbrechen
-              </Button>
-            </div>
+    <div className="space-y-6">
+      {/* Assign Role */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Rolle zuweisen</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Input
+              placeholder="E-Mail-Adresse"
+              value={userEmail}
+              onChange={(e) => setUserEmail(e.target.value)}
+              type="email"
+            />
+            <Select value={selectedRole} onValueChange={setSelectedRole}>
+              <SelectTrigger>
+                <SelectValue placeholder="Rolle auswählen" />
+              </SelectTrigger>
+              <SelectContent>
+                {roles.map(role => (
+                  <SelectItem key={role.id} value={role.id}>
+                    {role.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              onClick={handleAssignRole}
+              disabled={!userEmail || !selectedRole || assignRoleMutation.isPending}
+              className="gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Zuweisen
+            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        </CardContent>
+      </Card>
 
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold">Rollen ({roles?.length || 0})</h3>
-        <Button
-          onClick={() => {
-            setEditingRole(null);
-            setFormData({ role_name: '', description: '', permissions: [] });
-            setShowDialog(true);
-          }}
-          size="sm"
-          className="bg-blue-600"
-        >
-          <Plus className="w-4 h-4 mr-1" />
-          Neue Rolle
-        </Button>
-      </div>
-
-      {isLoading ? (
-        <Loader2 className="w-6 h-6 animate-spin" />
-      ) : roles && roles.length > 0 ? (
-        <div className="space-y-2">
-          {roles.map(role => (
-            <Card key={role.id}>
-              <CardContent className="pt-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <p className="font-semibold">{role.role_name}</p>
-                    <p className="text-xs text-slate-600 mt-1">{role.description}</p>
-                    <div className="flex gap-1 mt-2 flex-wrap">
-                      {role.permissions?.slice(0, 3).map(p => (
-                        <Badge key={p} variant="outline" className="text-xs">{p}</Badge>
-                      ))}
-                      {role.permissions?.length > 3 && (
-                        <Badge variant="outline" className="text-xs">+{role.permissions.length - 3}</Badge>
+      {/* Current Assignments */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Aktuelle Zuweisungen</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {assignments.length === 0 ? (
+            <p className="text-sm text-slate-500 text-center py-6">Keine Rollenzuweisungen vorhanden</p>
+          ) : (
+            <div className="space-y-3">
+              {assignments.map(assignment => {
+                const role = roles.find(r => r.id === assignment.role_id);
+                return (
+                  <div
+                    key={assignment.id}
+                    className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm text-slate-900">{assignment.user_email}</p>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <Badge className="bg-blue-100 text-blue-700 text-xs">
+                          {role?.name || 'Unbekannt'}
+                        </Badge>
+                        {assignment.expires_at && (
+                          <span className="text-xs text-slate-600">
+                            Verfällt: {format(new Date(assignment.expires_at), 'dd.MM.yyyy', { locale: de })}
+                          </span>
+                        )}
+                      </div>
+                      {assignment.notes && (
+                        <p className="text-xs text-slate-600 mt-1">{assignment.notes}</p>
                       )}
                     </div>
-                  </div>
-                  <div className="flex gap-2">
                     <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setSelectedRole(role)}
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => removeRoleMutation.mutate(assignment.id)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
-                      <Edit className="w-3 h-3" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDeleteRole(role.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="w-3 h-3" />
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <p className="text-sm text-slate-600">Keine Rollen vorhanden</p>
-      )}
-        </TabsContent>
-
-        <TabsContent value="assignments" className="mt-4">
-          <RoleAssignmentManager />
-        </TabsContent>
-
-        <TabsContent value="permissions" className="mt-4 space-y-4">
-          {selectedRole ? (
-            <RolePermissionEditor
-              role={selectedRole}
-              profiles={profiles}
-              onUpdate={refetch}
-            />
-          ) : (
-            <Card className="bg-slate-50">
-              <CardContent className="pt-4 text-center">
-                <p className="text-sm text-slate-600">Wählen Sie eine Rolle aus dem Tab 'Rollen' aus</p>
-              </CardContent>
-            </Card>
+                );
+              })}
+            </div>
           )}
-        </TabsContent>
-      </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
