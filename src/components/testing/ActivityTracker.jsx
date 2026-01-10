@@ -30,7 +30,7 @@ export function useActivityTracker() {
           testAccountCacheRef.current = testAccounts[0];
         }
       } catch (error) {
-        console.debug('Activity tracking initialization skipped');
+        // Activity tracking initialization skipped
       }
     };
 
@@ -58,7 +58,7 @@ export function useActivityTracker() {
           });
           lastClickTimeRef.current = now;
         } catch (error) {
-          console.debug('Click tracking skipped');
+          // Click tracking skipped
         }
       }, 500);
     };
