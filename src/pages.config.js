@@ -312,6 +312,7 @@ import WorkflowAutomationCenter from './pages/WorkflowAutomationCenter';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import WorkflowAutomationBuilder from './pages/WorkflowAutomationBuilder';
+import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import __Layout from './Layout.jsx';
 
 
@@ -630,6 +631,7 @@ export const PAGES = {
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "WorkflowAutomationBuilder": WorkflowAutomationBuilder,
+    "WorkflowExecutionCenter": WorkflowExecutionCenter,
 }
 
 export const pagesConfig = {

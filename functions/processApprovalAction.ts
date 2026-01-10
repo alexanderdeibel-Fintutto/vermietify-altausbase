@@ -1,117 +1,94 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-/**
- * Processes approval or rejection with comments
- */
 Deno.serve(async (req) => {
-    try {
-        const base44 = createClientFromRequest(req);
-        const user = await base44.auth.me();
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
 
-        if (!user) {
-            return Response.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-        const { workflow_id, action, comment = '' } = await req.json();
+    const { execution_id, approval_id, action } = await req.json();
 
-        if (!workflow_id || !['approve', 'reject'].includes(action)) {
-            return Response.json({ error: 'Invalid parameters' }, { status: 400 });
-        }
+    // Get execution
+    const executions = await base44.asServiceRole.entities.WorkflowExecution.filter({
+      id: execution_id
+    });
 
-        console.log(`Processing ${action} for workflow: ${workflow_id}`);
+    if (executions.length === 0) {
+      return Response.json({ error: 'Execution not found' }, { status: 404 });
+    }
 
-        // Get workflow
-        const workflows = await base44.entities.ApprovalWorkflow.filter(
-            { id: workflow_id },
-            null,
-            1
-        );
+    const execution = executions[0];
+    const approval = execution.pending_approvals.find(a => a.approval_id === approval_id);
 
-        if (workflows.length === 0) {
-            return Response.json({ error: 'Workflow not found' }, { status: 404 });
-        }
+    if (!approval) {
+      return Response.json({ error: 'Approval not found' }, { status: 404 });
+    }
+
+    if (action === 'approve') {
+      // Add approver
+      approval.approved_by.push(user.email);
+
+      const allApproved =
+        approval.approval_type === 'sequential'
+          ? approval.approved_by.includes(approval.required_approvers[approval.approved_by.length])
+          : approval.required_approvers.every(a => approval.approved_by.includes(a));
+
+      if (allApproved) {
+        // Remove from pending and continue workflow
+        const updatedApprovals = execution.pending_approvals.filter(a => a.approval_id !== approval_id);
+        
+        // Get workflow to find next step
+        const workflows = await base44.asServiceRole.entities.WorkflowAutomation.filter({
+          id: execution.workflow_id
+        });
 
         const workflow = workflows[0];
+        const currentStepIndex = workflow.steps.findIndex(s => s.id === approval.step_id);
 
-        // Check if user is an approver
-        const approverIndex = workflow.approvers?.findIndex(
-            a => a.approver_email === user.email
-        );
-
-        if (approverIndex === -1) {
-            return Response.json({ error: 'Not an approver for this workflow' }, { status: 403 });
-        }
-
-        // Update approver status
-        workflow.approvers[approverIndex] = {
-            ...workflow.approvers[approverIndex],
-            status: action === 'approve' ? 'approved' : 'rejected',
-            comment: comment,
-            approved_at: new Date().toISOString()
-        };
-
-        // Add to history
-        if (!workflow.history) {
-            workflow.history = [];
-        }
-        workflow.history.push({
-            timestamp: new Date().toISOString(),
-            action: action === 'approve' ? 'approved' : 'rejected',
-            actor: user.email,
-            details: comment || 'No comment provided'
+        await base44.asServiceRole.entities.WorkflowExecution.update(execution_id, {
+          pending_approvals: updatedApprovals,
+          steps_completed: [
+            ...execution.steps_completed,
+            {
+              step_id: approval.step_id,
+              status: 'completed',
+              started_at: approval.created_at,
+              completed_at: new Date().toISOString(),
+              result: { approved_by: approval.approved_by }
+            }
+          ]
         });
 
-        // Determine overall workflow status
-        const allApprovals = workflow.approvers || [];
-        const approved = allApprovals.filter(a => a.status === 'approved').length;
-        const rejected = allApprovals.filter(a => a.status === 'rejected').length;
-
-        if (rejected > 0) {
-            workflow.status = 'rejected';
-        } else if (approved === allApprovals.length) {
-            workflow.status = 'approved';
-        }
-
-        // Update workflow
-        await base44.asServiceRole.entities.ApprovalWorkflow.update(workflow_id, workflow);
-
-        // Send notification to requester
-        const message = action === 'approve'
-            ? `✅ Ihre Anfrage wurde von ${user.email} genehmigt`
-            : `❌ Ihre Anfrage wurde von ${user.email} abgelehnt${comment ? ': ' + comment : ''}`;
-
-        await base44.asServiceRole.entities.Notification.create({
-            user_email: workflow.requester_email,
-            notification_type: action === 'approve' ? 'request_approved' : 'request_rejected',
-            severity: action === 'approve' ? 'info' : 'high',
-            message: message,
-            related_id: workflow_id,
-            created_at: new Date().toISOString()
+        // Execute next step
+        await base44.functions.invoke('executeWorkflowInstance', {
+          workflow_id: execution.workflow_id,
+          company_id: execution.company_id,
+          execution_id: execution_id,
+          step_index: currentStepIndex + 1
         });
-
-        // Log action
-        await base44.asServiceRole.entities.UserAuditLog.create({
-            user_email: user.email,
-            action: action === 'approve' ? 'request_approved' : 'request_rejected',
-            resource_type: 'ApprovalWorkflow',
-            resource_id: workflow_id,
-            resource_name: workflow.workflow_name,
-            changes: {
-                action: action,
-                comment: comment
-            },
-            timestamp: new Date().toISOString(),
-            status: 'success'
+      } else {
+        // Update execution with partial approval
+        await base44.asServiceRole.entities.WorkflowExecution.update(execution_id, {
+          pending_approvals: execution.pending_approvals.map(a =>
+            a.approval_id === approval_id ? approval : a
+          )
         });
-
-        return Response.json({
-            success: true,
-            workflow_status: workflow.status,
-            message: `Request ${action}ed${comment ? ' with comment' : ''}`
-        });
-
-    } catch (error) {
-        console.error('Error processing approval:', error);
-        return Response.json({ error: error.message }, { status: 500 });
+      }
+    } else if (action === 'reject') {
+      // Mark execution as failed
+      await base44.asServiceRole.entities.WorkflowExecution.update(execution_id, {
+        status: 'cancelled',
+        completed_at: new Date().toISOString(),
+        error_message: `Genehmigung von ${user.email} abgelehnt`
+      });
     }
+
+    return Response.json({ success: true });
+  } catch (error) {
+    console.error('Process approval error:', error);
+    return Response.json({ error: error.message }, { status: 500 });
+  }
 });
