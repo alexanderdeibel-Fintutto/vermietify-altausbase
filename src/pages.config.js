@@ -296,6 +296,7 @@ import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import MaintenanceScheduling from './pages/MaintenanceScheduling';
 import AdminAnalyticsDashboard from './pages/AdminAnalyticsDashboard';
 import BuildingsMap from './pages/BuildingsMap';
+import FinancialReports from './pages/FinancialReports';
 import __Layout from './Layout.jsx';
 
 
@@ -598,6 +599,7 @@ export const PAGES = {
     "MaintenanceScheduling": MaintenanceScheduling,
     "AdminAnalyticsDashboard": AdminAnalyticsDashboard,
     "BuildingsMap": BuildingsMap,
+    "FinancialReports": FinancialReports,
 }
 
 export const pagesConfig = {
