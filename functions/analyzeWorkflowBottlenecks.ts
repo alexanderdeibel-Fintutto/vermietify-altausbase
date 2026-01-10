@@ -9,127 +9,59 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { company_id } = await req.json();
+    const { company_id, workflow_id, days = 30 } = await req.json();
 
-    // Get recent executions
+    // Get executions
     const executions = await base44.asServiceRole.entities.WorkflowExecution.filter({
+      workflow_id,
       company_id
     });
 
-    // Analyze bottlenecks
-    const stepBottlenecks = {};
-    const approvalBottlenecks = {};
-    let totalExecutionTime = 0;
-    let completedCount = 0;
+    // Filter by date
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
 
-    executions.forEach(e => {
-      if (e.execution_time_seconds) {
-        totalExecutionTime += e.execution_time_seconds;
-        if (e.status === 'completed') completedCount += 1;
-      }
+    const recentExecutions = executions.filter(ex =>
+      new Date(ex.started_at) >= cutoffDate
+    );
 
-      // Step analysis
-      e.steps_completed?.forEach(step => {
-        const key = step.step_id;
-        if (!stepBottlenecks[key]) {
-          stepBottlenecks[key] = {
-            total: 0,
-            errors: 0,
-            avg_time: 0,
-            total_time: 0
-          };
-        }
-        stepBottlenecks[key].total += 1;
-        if (step.status === 'failed') stepBottlenecks[key].errors += 1;
-        if (step.completed_at && step.started_at) {
-          const time = new Date(step.completed_at) - new Date(step.started_at);
-          stepBottlenecks[key].total_time += time;
-        }
+    if (recentExecutions.length === 0) {
+      return Response.json({
+        success: true,
+        bottlenecks: [],
+        suggestions: [],
+        metrics: { total_executions: 0 }
       });
+    }
 
-      // Approval analysis
-      e.pending_approvals?.forEach(approval => {
-        const key = `${approval.step_id}_${approval.approval_type}`;
-        if (!approvalBottlenecks[key]) {
-          approvalBottlenecks[key] = {
-            pending: 0,
-            completed: 0,
-            avg_wait_time: 0
-          };
-        }
-        if (approval.approved_by?.length === 0) {
-          approvalBottlenecks[key].pending += 1;
-        } else {
-          approvalBottlenecks[key].completed += 1;
-        }
-      });
-    });
+    // Analyze step durations
+    const stepAnalysis = analyzeStepDurations(recentExecutions);
+    const bottlenecks = identifyBottlenecks(stepAnalysis);
+    const suggestions = generateOptimizationSuggestions(stepAnalysis, bottlenecks, recentExecutions);
 
-    // Calculate averages
-    Object.keys(stepBottlenecks).forEach(key => {
-      stepBottlenecks[key].avg_time = stepBottlenecks[key].total > 0
-        ? (stepBottlenecks[key].total_time / stepBottlenecks[key].total / 1000 / 60).toFixed(2)
-        : 0;
-      stepBottlenecks[key].error_rate = stepBottlenecks[key].total > 0
-        ? ((stepBottlenecks[key].errors / stepBottlenecks[key].total) * 100).toFixed(1)
-        : 0;
-    });
+    // Get AI insights
+    const aiSuggestions = await base44.integrations.Core.InvokeLLM({
+      prompt: `Analyze these workflow bottlenecks and suggest optimizations:
+      
+Bottlenecks: ${JSON.stringify(bottlenecks, null, 2)}
+Step Analysis: ${JSON.stringify(stepAnalysis, null, 2)}
+Total Executions: ${recentExecutions.length}
+Avg Duration: ${Math.round(getAverageDuration(recentExecutions))} seconds
+Failed Executions: ${recentExecutions.filter(e => e.status === 'failed').length}
 
-    const avgExecutionTime = completedCount > 0 ? (totalExecutionTime / completedCount / 60).toFixed(2) : 0;
-
-    // Prepare data for AI analysis
-    const bottleneckData = {
-      avg_workflow_time: avgExecutionTime,
-      step_issues: Object.entries(stepBottlenecks)
-        .filter(([_, stats]) => stats.error_rate > 10 || stats.avg_time > 30)
-        .map(([id, stats]) => ({
-          step_id: id,
-          error_rate: stats.error_rate,
-          avg_time_minutes: stats.avg_time,
-          failures: stats.errors
-        })),
-      approval_issues: Object.entries(approvalBottlenecks)
-        .filter(([_, stats]) => stats.pending > 0)
-        .map(([id, stats]) => ({
-          approval_id: id,
-          pending_count: stats.pending,
-          completed_count: stats.completed
-        }))
-    };
-
-    // Call AI for optimization suggestions
-    const optimizations = await base44.integrations.Core.InvokeLLM({
-      prompt: `Analyze these workflow bottlenecks and provide 3-5 specific, actionable optimization recommendations:
-
-Average workflow execution time: ${bottleneckData.avg_workflow_time} minutes
-
-Top problematic steps:
-${
-  bottleneckData.step_issues
-    .map(s => `- Step ${s.step_id}: ${s.error_rate}% failure rate, avg ${s.avg_time_minutes}min`)
-    .join('\n')
-}
-
-Approval bottlenecks:
-${
-  bottleneckData.approval_issues
-    .map(a => `- ${a.approval_id}: ${a.pending_count} pending`)
-    .join('\n')
-}
-
-Provide recommendations as a JSON array with: title, description, expected_improvement, implementation_effort (low/medium/high).`,
+Provide 3-5 specific, actionable optimization recommendations in German.`,
       response_json_schema: {
         type: 'object',
         properties: {
-          optimizations: {
+          recommendations: {
             type: 'array',
             items: {
               type: 'object',
               properties: {
                 title: { type: 'string' },
                 description: { type: 'string' },
-                expected_improvement: { type: 'string' },
-                implementation_effort: { type: 'string' }
+                estimated_improvement: { type: 'string' },
+                priority: { type: 'string' }
               }
             }
           }
@@ -139,11 +71,117 @@ Provide recommendations as a JSON array with: title, description, expected_impro
 
     return Response.json({
       success: true,
-      bottleneck_analysis: bottleneckData,
-      optimizations: Array.isArray(optimizations) ? optimizations : optimizations.optimizations || []
+      bottlenecks,
+      suggestions: [...suggestions, ...aiSuggestions.recommendations],
+      metrics: {
+        total_executions: recentExecutions.length,
+        successful_executions: recentExecutions.filter(e => e.status === 'completed').length,
+        failed_executions: recentExecutions.filter(e => e.status === 'failed').length,
+        average_duration_seconds: Math.round(getAverageDuration(recentExecutions)),
+        success_rate: (recentExecutions.filter(e => e.status === 'completed').length / recentExecutions.length * 100).toFixed(2)
+      },
+      step_analysis: stepAnalysis
     });
   } catch (error) {
     console.error('Analyze workflow bottlenecks error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
+
+function analyzeStepDurations(executions) {
+  const stepStats = {};
+
+  executions.forEach(execution => {
+    (execution.steps_completed || []).forEach(step => {
+      if (!stepStats[step.step_id]) {
+        stepStats[step.step_id] = {
+          step_id: step.step_id,
+          executions: 0,
+          total_duration: 0,
+          min_duration: Infinity,
+          max_duration: 0,
+          failures: 0
+        };
+      }
+
+      const duration = new Date(step.completed_at) - new Date(step.started_at);
+      stepStats[step.step_id].executions++;
+      stepStats[step.step_id].total_duration += duration / 1000;
+      stepStats[step.step_id].min_duration = Math.min(stepStats[step.step_id].min_duration, duration / 1000);
+      stepStats[step.step_id].max_duration = Math.max(stepStats[step.step_id].max_duration, duration / 1000);
+      if (step.error) stepStats[step.step_id].failures++;
+    });
+  });
+
+  // Calculate averages
+  Object.values(stepStats).forEach(stats => {
+    stats.average_duration = Math.round(stats.total_duration / stats.executions);
+    stats.failure_rate = (stats.failures / stats.executions * 100).toFixed(2);
+  });
+
+  return Object.values(stepStats).sort((a, b) => b.average_duration - a.average_duration);
+}
+
+function identifyBottlenecks(stepAnalysis) {
+  const bottlenecks = [];
+  const avgDuration = stepAnalysis.reduce((sum, s) => sum + s.average_duration, 0) / stepAnalysis.length;
+
+  stepAnalysis.forEach(step => {
+    if (step.average_duration > avgDuration * 1.5) {
+      bottlenecks.push({
+        step_id: step.step_id,
+        type: 'slow_step',
+        severity: step.average_duration > avgDuration * 2.5 ? 'critical' : 'high',
+        average_duration: step.average_duration,
+        impact: `This step takes ${Math.round(step.average_duration / avgDuration)}x the average time`
+      });
+    }
+
+    if (parseFloat(step.failure_rate) > 5) {
+      bottlenecks.push({
+        step_id: step.step_id,
+        type: 'high_failure_rate',
+        severity: parseFloat(step.failure_rate) > 20 ? 'critical' : 'high',
+        failure_rate: step.failure_rate,
+        failures: step.failures
+      });
+    }
+  });
+
+  return bottlenecks;
+}
+
+function generateOptimizationSuggestions(stepAnalysis, bottlenecks, executions) {
+  const suggestions = [];
+
+  bottlenecks.forEach(bottleneck => {
+    if (bottleneck.type === 'slow_step') {
+      suggestions.push({
+        title: `Optimize Step ${bottleneck.step_id}`,
+        description: `This step is ${bottleneck.impact}. Consider parallel execution, caching, or external service optimization.`,
+        estimated_improvement: `${Math.round((bottleneck.average_duration / 2) / getAverageDuration(executions) * 100)}% overall improvement`,
+        priority: bottleneck.severity
+      });
+    }
+
+    if (bottleneck.type === 'high_failure_rate') {
+      suggestions.push({
+        title: `Add Retry Logic to Step ${bottleneck.step_id}`,
+        description: `This step fails in ${bottleneck.failure_rate}% of executions. Implement exponential backoff and error handling.`,
+        estimated_improvement: `Reduce failure rate to <2%`,
+        priority: bottleneck.severity
+      });
+    }
+  });
+
+  return suggestions;
+}
+
+function getAverageDuration(executions) {
+  if (executions.length === 0) return 0;
+  return executions.reduce((sum, ex) => {
+    if (ex.execution_time_seconds) return sum + ex.execution_time_seconds;
+    const duration = new Date(ex.completed_at) - new Date(ex.started_at);
+    return sum + (duration / 1000);
+  }, 0) / executions.length;
+}
