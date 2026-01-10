@@ -23,14 +23,17 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Template not found' }, { status: 404 });
     }
 
-    // Create new workflow from template
-    const newWorkflow = await base44.asServiceRole.entities.WorkflowAutomation.create({
+    // Create workflow from template
+    const workflowConfig = template.workflow_config || {};
+    const workflow = await base44.asServiceRole.entities.WorkflowAutomation.create({
       company_id,
       name: workflow_name,
-      description: workflow_description || template.description,
-      trigger: template.workflow_config?.trigger || {},
-      steps: template.workflow_config?.steps || [],
-      is_active: false
+      description: workflow_description,
+      trigger: workflowConfig.trigger,
+      steps: workflowConfig.steps,
+      is_active: false,
+      execution_count: 0,
+      created_by: user.email
     });
 
     // Increment template usage
@@ -38,20 +41,20 @@ Deno.serve(async (req) => {
       usage_count: (template.usage_count || 0) + 1
     });
 
-    // Log action
-    await base44.functions.invoke('logAuditAction', {
+    // Log audit
+    await base44.asServiceRole.entities.AuditLog.create({
       action_type: 'workflow_created',
       entity_type: 'workflow',
-      entity_id: newWorkflow.id,
+      entity_id: workflow.id,
       user_email: user.email,
       company_id,
-      description: `Workflow "${workflow_name}" aus Template "${template.name}" erstellt`,
-      metadata: { template_id, workflow_id: newWorkflow.id }
+      description: `Created workflow from template "${template.name}"`,
+      metadata: { template_id, workflow_id: workflow.id }
     });
 
     return Response.json({
       success: true,
-      workflow: newWorkflow
+      workflow
     });
   } catch (error) {
     console.error('Create workflow from template error:', error);

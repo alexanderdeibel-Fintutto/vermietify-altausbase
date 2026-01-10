@@ -1,13 +1,6 @@
 import React, { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,115 +11,186 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { X } from 'lucide-react';
 
-export default function SaveAsTemplateDialog({ workflow, companyId, isOpen, onOpenChange, onSuccess }) {
-  const [formData, setFormData] = useState({
-    template_name: workflow?.name || '',
-    description: workflow?.description || '',
-    category: 'general',
-    tags: '',
-    difficulty: 'intermediate'
-  });
+export default function SaveAsTemplateDialog({ 
+  open, 
+  onOpenChange, 
+  workflowId, 
+  companyId,
+  workflowName 
+}) {
+  const [name, setName] = useState(workflowName || '');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
+  const [tags, setTags] = useState([]);
+  const [tagInput, setTagInput] = useState('');
+  const [difficulty, setDifficulty] = useState('intermediate');
+  const [isPublic, setIsPublic] = useState(false);
+  const queryClient = useQueryClient();
 
   const saveMutation = useMutation({
     mutationFn: () =>
-      base44.functions.invoke('saveWorkflowTemplate', {
+      base44.functions.invoke('saveWorkflowAsTemplate', {
         company_id: companyId,
-        name: formData.template_name,
-        description: formData.description,
-        category: formData.category,
-        tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
-        workflow_id: workflow?.id,
-        difficulty: formData.difficulty
+        workflow_id: workflowId,
+        template_name: name,
+        template_description: description,
+        category,
+        tags,
+        difficulty,
+        is_public: isPublic
       }),
     onSuccess: () => {
-      onSuccess?.();
+      queryClient.invalidateQueries({ queryKey: ['search-templates'] });
       onOpenChange(false);
+      resetForm();
     }
   });
 
+  const resetForm = () => {
+    setName(workflowName || '');
+    setDescription('');
+    setCategory('');
+    setTags([]);
+    setTagInput('');
+    setDifficulty('intermediate');
+    setIsPublic(false);
+  };
+
+  const addTag = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput('');
+    }
+  };
+
+  const removeTag = (tag) => {
+    setTags(tags.filter(t => t !== tag));
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md max-h-96 overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Als Template speichern</DialogTitle>
-          <DialogDescription>
-            Speichern Sie diesen Workflow als wiederverwendbare Vorlage
-          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Name */}
           <div>
-            <label className="text-sm font-medium text-slate-700">Template-Name</label>
+            <label className="text-sm font-medium">Template-Name</label>
             <Input
-              value={formData.template_name}
-              onChange={(e) => setFormData({ ...formData, template_name: e.target.value })}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               className="mt-1"
             />
           </div>
 
+          {/* Description */}
           <div>
-            <label className="text-sm font-medium text-slate-700">Beschreibung</label>
+            <label className="text-sm font-medium">Beschreibung</label>
             <Textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Was macht dieses Template?"
-              className="mt-1 h-20"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="mt-1 h-16"
+              placeholder="Erklären Sie, wofür dieses Template verwendet wird..."
             />
           </div>
 
+          {/* Category */}
           <div>
-            <label className="text-sm font-medium text-slate-700">Kategorie</label>
-            <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="approval">Genehmigung</SelectItem>
-                <SelectItem value="automation">Automatisierung</SelectItem>
-                <SelectItem value="notification">Benachrichtigung</SelectItem>
-                <SelectItem value="general">Allgemein</SelectItem>
-                <SelectItem value="other">Sonstiges</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-slate-700">
-              Tags (kommagetrennt)
-            </label>
+            <label className="text-sm font-medium">Kategorie</label>
             <Input
-              value={formData.tags}
-              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-              placeholder="z.B. schnell, dokumentation, genehmigung"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
               className="mt-1"
+              placeholder="z.B. approval, automation"
             />
           </div>
 
+          {/* Tags */}
           <div>
-            <label className="text-sm font-medium text-slate-700">Schwierigkeitsstufe</label>
-            <Select value={formData.difficulty} onValueChange={(v) => setFormData({ ...formData, difficulty: v })}>
+            <label className="text-sm font-medium">Tags</label>
+            <div className="flex gap-1 mt-1">
+              <Input
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && addTag()}
+                placeholder="Tag eingeben..."
+                className="flex-1"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={addTag}
+              >
+                +
+              </Button>
+            </div>
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {tags.map(tag => (
+                  <Badge
+                    key={tag}
+                    variant="secondary"
+                    className="cursor-pointer"
+                    onClick={() => removeTag(tag)}
+                  >
+                    {tag}
+                    <X className="w-3 h-3 ml-1" />
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Difficulty */}
+          <div>
+            <label className="text-sm font-medium">Schwierigkeitsstufe</label>
+            <Select value={difficulty} onValueChange={setDifficulty}>
               <SelectTrigger className="mt-1">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="beginner">Anfänger</SelectItem>
-                <SelectItem value="intermediate">Fortgeschritten</SelectItem>
-                <SelectItem value="advanced">Experte</SelectItem>
+                <SelectItem value="intermediate">Mittel</SelectItem>
+                <SelectItem value="advanced">Fortgeschrittene</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
+          {/* Public Checkbox */}
+          <div className="flex items-center gap-2 pt-2">
+            <input
+              type="checkbox"
+              id="public"
+              checked={isPublic}
+              onChange={(e) => setIsPublic(e.target.checked)}
+              className="w-4 h-4"
+            />
+            <label htmlFor="public" className="text-sm">
+              Mit Team teilen
+            </label>
+          </div>
+
+          {/* Buttons */}
           <div className="flex gap-2 pt-4 border-t">
-            <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="flex-1"
+            >
               Abbrechen
             </Button>
             <Button
               onClick={() => saveMutation.mutate()}
-              disabled={!formData.template_name || saveMutation.isPending}
+              disabled={!name || saveMutation.isPending}
               className="flex-1"
             >
-              {saveMutation.isPending ? 'Speichert...' : 'Als Template speichern'}
+              {saveMutation.isPending ? 'Speichert...' : 'Speichern'}
             </Button>
           </div>
         </div>

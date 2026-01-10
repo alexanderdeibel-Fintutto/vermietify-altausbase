@@ -11,66 +11,63 @@ Deno.serve(async (req) => {
 
     const {
       company_id,
-      search_query = '',
+      search_query,
       category,
-      tags = [],
+      tags,
       difficulty,
-      limit = 20
+      is_public
     } = await req.json();
 
-    // Get all templates for company
-    const templates = await base44.asServiceRole.entities.WorkflowTemplate.filter({
+    // Get all templates
+    let templates = await base44.asServiceRole.entities.WorkflowTemplate.filter({
       company_id
     });
 
-    // Filter based on criteria
-    let filtered = templates;
-
-    // Text search
+    // Apply filters
     if (search_query) {
       const query = search_query.toLowerCase();
-      filtered = filtered.filter(t =>
-        t.name?.toLowerCase().includes(query) ||
-        t.description?.toLowerCase().includes(query) ||
-        t.tags?.some(tag => tag.toLowerCase().includes(query))
+      templates = templates.filter(t =>
+        t.name.toLowerCase().includes(query) ||
+        t.description.toLowerCase().includes(query)
       );
     }
 
-    // Category filter
     if (category) {
-      filtered = filtered.filter(t => t.category === category);
+      templates = templates.filter(t => t.category === category);
     }
 
-    // Tags filter
-    if (tags.length > 0) {
-      filtered = filtered.filter(t =>
+    if (difficulty) {
+      templates = templates.filter(t => t.difficulty === difficulty);
+    }
+
+    if (tags && tags.length > 0) {
+      templates = templates.filter(t =>
         tags.some(tag => t.tags?.includes(tag))
       );
     }
 
-    // Difficulty filter
-    if (difficulty) {
-      filtered = filtered.filter(t => t.difficulty === difficulty);
+    if (typeof is_public === 'boolean') {
+      templates = templates.filter(t => t.is_public === is_public);
     }
 
-    // Sort by usage (popular first)
-    filtered.sort((a, b) => (b.usage_count || 0) - (a.usage_count || 0));
+    // Get unique values for filters
+    const allTemplates = await base44.asServiceRole.entities.WorkflowTemplate.filter({
+      company_id
+    });
 
-    // Limit results
-    const results = filtered.slice(0, limit);
-
-    // Extract unique categories and tags for UI
-    const allCategories = [...new Set(templates.map(t => t.category).filter(Boolean))];
-    const allTags = [...new Set(templates.flatMap(t => t.tags || []))];
+    const categories = [...new Set(allTemplates.map(t => t.category).filter(Boolean))];
+    const difficulties = [...new Set(allTemplates.map(t => t.difficulty).filter(Boolean))];
+    const allTags = [...new Set(allTemplates.flatMap(t => t.tags || []))];
 
     return Response.json({
       success: true,
-      templates: results,
-      metadata: {
-        total_count: filtered.length,
-        categories: allCategories,
+      templates,
+      filters: {
+        categories,
+        difficulties,
         tags: allTags
-      }
+      },
+      total_results: templates.length
     });
   } catch (error) {
     console.error('Search workflow templates error:', error);
