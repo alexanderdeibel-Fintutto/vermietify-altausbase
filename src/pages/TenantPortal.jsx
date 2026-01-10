@@ -13,6 +13,9 @@ import KnowledgeBaseWidget from '@/components/tenant-portal/KnowledgeBaseWidget'
 import PaymentForm from '@/components/tenant-portal/PaymentForm';
 import PaymentReceiptViewer from '@/components/tenant-portal/PaymentReceiptViewer';
 import TenantCommunicationHub from '@/components/tenant-portal/TenantCommunicationHub';
+import TenantDocumentUpload from '@/components/tenant-portal/TenantDocumentUpload';
+import UpcomingMaintenanceView from '@/components/tenant-portal/UpcomingMaintenanceView';
+import TenantPaymentManagement from '@/components/tenant-portal/TenantPaymentManagement';
 
 export default function TenantPortal() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -34,6 +37,18 @@ export default function TenantPortal() {
       return results[0];
     },
     enabled: !!currentUser?.email,
+  });
+
+  const { data: contract } = useQuery({
+    queryKey: ['tenant-contract', tenantRecord?.id],
+    queryFn: async () => {
+      const contracts = await base44.entities.LeaseContract.filter({ 
+        tenant_id: tenantRecord.id,
+        status: 'active'
+      });
+      return contracts[0];
+    },
+    enabled: !!tenantRecord
   });
 
   if (!currentUser) {
@@ -60,9 +75,15 @@ export default function TenantPortal() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
           <TabsTrigger value="overview" className="font-light text-xs">
             Übersicht
+          </TabsTrigger>
+          <TabsTrigger value="payments" className="font-light text-xs">
+            Zahlungen
+          </TabsTrigger>
+          <TabsTrigger value="documents" className="font-light text-xs">
+            Dokumente
           </TabsTrigger>
           <TabsTrigger value="maintenance" className="font-light text-xs">
             Wartung
@@ -80,10 +101,21 @@ export default function TenantPortal() {
             <LeaseDetailsCard tenantId={tenantRecord?.id} />
             <PaymentHistoryWidget tenantId={tenantRecord?.id} />
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <PaymentForm tenantId={tenantRecord?.id} pendingInvoices={[]} />
-            <PaymentReceiptViewer tenantId={tenantRecord?.id} />
-          </div>
+          <UpcomingMaintenanceView unitId={tenantRecord?.unit_id} />
+        </TabsContent>
+
+        <TabsContent value="payments" className="space-y-6">
+          <TenantPaymentManagement 
+            tenantId={tenantRecord?.id} 
+            contractId={contract?.id}
+          />
+        </TabsContent>
+
+        <TabsContent value="documents" className="space-y-6">
+          <TenantDocumentUpload 
+            tenantId={tenantRecord?.id}
+            contractId={contract?.id}
+          />
         </TabsContent>
 
         <TabsContent value="maintenance" className="space-y-6">
