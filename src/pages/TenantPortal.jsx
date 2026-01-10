@@ -12,7 +12,7 @@ import MaintenanceRequestTracker from '@/components/tenant-portal/MaintenanceReq
 import KnowledgeBaseWidget from '@/components/tenant-portal/KnowledgeBaseWidget';
 import PaymentForm from '@/components/tenant-portal/PaymentForm';
 import PaymentReceiptViewer from '@/components/tenant-portal/PaymentReceiptViewer';
-import TenantCommunicationHub from '@/components/tenant-portal/TenantCommunicationHub';
+import EnhancedTenantChat from '@/components/tenant-portal/EnhancedTenantChat';
 import TenantDocumentUpload from '@/components/tenant-portal/TenantDocumentUpload';
 import UpcomingMaintenanceView from '@/components/tenant-portal/UpcomingMaintenanceView';
 import TenantPaymentManagement from '@/components/tenant-portal/TenantPaymentManagement';
@@ -138,7 +138,7 @@ export default function TenantPortal() {
         </TabsContent>
 
         <TabsContent value="messages">
-          <TenantCommunicationHub />
+          <EnhancedTenantChat />
         </TabsContent>
 
         <TabsContent value="help">

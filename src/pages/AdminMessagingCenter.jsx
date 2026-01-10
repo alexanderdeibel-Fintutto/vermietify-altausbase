@@ -1,10 +1,10 @@
 import React from 'react';
-import TenantMessagesManager from '@/components/admin/TenantMessagesManager';
+import EnhancedAdminMessaging from '@/components/admin/EnhancedAdminMessaging';
 
 export default function AdminMessagingCenter() {
   return (
     <div>
-      <TenantMessagesManager />
+      <EnhancedAdminMessaging />
     </div>
   );
 }
