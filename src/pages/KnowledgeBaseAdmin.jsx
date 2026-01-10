@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { BookOpen, Plus, Edit, Trash2, Eye, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import RoleBasedGuard from '@/components/admin/RoleBasedGuard';
 
 const categoryOptions = [
   { value: 'mietvertrag', label: 'Mietvertrag' },
@@ -99,8 +100,9 @@ export default function KnowledgeBaseAdmin() {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <RoleBasedGuard requiredRole="admin">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
             <BookOpen className="w-6 h-6 text-white" />
@@ -257,5 +259,6 @@ export default function KnowledgeBaseAdmin() {
         ))}
       </div>
     </div>
+    </RoleBasedGuard>
   );
 }

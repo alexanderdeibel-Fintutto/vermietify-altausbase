@@ -1,172 +1,135 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Users, Shield, Package, Activity, Key, Database, TrendingUp } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from '../utils';
-import StatCard from '@/components/shared/StatCard';
-import QuickActions from '@/components/admin/QuickActions';
-import AuditTrailVisualization from '@/components/audit/AuditTrailVisualization';
+import { 
+  BarChart3, MessageCircle, AlertCircle, FileText, 
+  Building2, Users, Settings, TrendingUp 
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+import AdminAnalyticsDashboard from '@/components/admin/AdminAnalyticsDashboard';
+import UrgentNotificationPanel from '@/components/admin/UrgentNotificationPanel';
+import RoleBasedGuard from '@/components/admin/RoleBasedGuard';
 
 export default function AdminDashboard() {
-  const navigate = useNavigate();
-
-  const { data: users = [] } = useQuery({
-    queryKey: ['all-users'],
-    queryFn: () => base44.asServiceRole.entities.User.list()
+  const { data: buildings = [] } = useQuery({
+    queryKey: ['buildings-count'],
+    queryFn: () => base44.entities.Building.list()
   });
 
-  const { data: roles = [] } = useQuery({
-    queryKey: ['roles'],
-    queryFn: () => base44.asServiceRole.entities.Role.list()
+  const { data: tenants = [] } = useQuery({
+    queryKey: ['tenants-count'],
+    queryFn: () => base44.entities.Tenant.list()
   });
 
-  const { data: permissions = [] } = useQuery({
-    queryKey: ['permissions'],
-    queryFn: () => base44.asServiceRole.entities.Permission.list()
-  });
-
-  const { data: moduleAccess = [] } = useQuery({
-    queryKey: ['module-access'],
-    queryFn: () => base44.asServiceRole.entities.ModuleAccess.list()
-  });
-
-  const { data: apiKeys = [] } = useQuery({
-    queryKey: ['api-keys'],
-    queryFn: () => base44.asServiceRole.entities.APIKey.list()
-  });
-
-  const { data: testSessions = [] } = useQuery({
-    queryKey: ['test-sessions'],
-    queryFn: () => base44.asServiceRole.entities.TestSession.list()
+  const { data: unreadThreads = [] } = useQuery({
+    queryKey: ['unread-threads-count'],
+    queryFn: async () => {
+      const threads = await base44.entities.MessageThread.list();
+      return threads.filter(t => (t.unread_count_admin || 0) > 0);
+    },
+    refetchInterval: 10000
   });
 
   const quickLinks = [
-    { name: 'Benutzerverwaltung', icon: Users, page: 'UserManagement' },
-    { name: 'Rollen', icon: Shield, page: 'RoleManagement' },
-    { name: 'Module', icon: Package, page: 'ModuleManagement' },
-    { name: 'Activity Logs', icon: Activity, page: 'ActivityLogs' },
-    { name: 'API Keys', icon: Key, page: 'APIKeyManagement' },
-    { name: 'System Health', icon: Database, page: 'SystemHealth' }
+    {
+      title: 'Nachrichten',
+      description: `${unreadThreads.length} ungelesen`,
+      icon: MessageCircle,
+      color: 'blue',
+      link: 'AdminMessagingCenter'
+    },
+    {
+      title: 'Störungsmeldungen',
+      description: 'Probleme verwalten',
+      icon: AlertCircle,
+      color: 'red',
+      link: 'AdminIssueReports'
+    },
+    {
+      title: 'Wissensdatenbank',
+      description: 'FAQ bearbeiten',
+      icon: FileText,
+      color: 'purple',
+      link: 'KnowledgeBaseAdmin'
+    },
+    {
+      title: 'Gebäude',
+      description: `${buildings.length} Objekte`,
+      icon: Building2,
+      color: 'green',
+      link: 'Buildings'
+    },
+    {
+      title: 'Mieter',
+      description: `${tenants.length} aktiv`,
+      icon: Users,
+      color: 'orange',
+      link: 'Tenants'
+    },
+    {
+      title: 'IoT Sensoren',
+      description: 'Überwachung',
+      icon: TrendingUp,
+      color: 'indigo',
+      link: 'IoTSensorManagement'
+    }
   ];
 
+  const colorClasses = {
+    blue: 'bg-blue-600',
+    red: 'bg-red-600',
+    purple: 'bg-purple-600',
+    green: 'bg-green-600',
+    orange: 'bg-orange-600',
+    indigo: 'bg-indigo-600'
+  };
+
   return (
-    <div className="space-y-6">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
-        <p className="text-slate-600">Zentrale Verwaltung und Übersicht</p>
-      </motion.div>
+    <RoleBasedGuard requiredRole="admin">
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-slate-900 rounded-lg flex items-center justify-center">
+            <BarChart3 className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+            <p className="text-slate-600">Zentrale Verwaltungsübersicht</p>
+          </div>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[
-          { title: "Benutzer", value: users.length, icon: Users, color: "blue" },
-          { title: "Rollen", value: roles.length, icon: Shield, color: "purple" },
-          { title: "Permissions", value: permissions.length, icon: Shield, color: "green" },
-          { title: "Module", value: moduleAccess.filter(ma => ma.is_active).length, icon: Package, color: "orange" }
-        ].map((stat, idx) => (
-          <motion.div
-            key={stat.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 + idx * 0.05 }}
-          >
-        <StatCard {...stat} />
-          </motion.div>
-        ))}
-      </div>
+        {/* Urgent Notifications */}
+        <UrgentNotificationPanel />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          { title: "API Keys", value: apiKeys.length, icon: Key, color: "red" },
-          { title: "Test Sessions", value: testSessions.length, icon: Activity, color: "emerald" },
-          { title: "Aktive Tester", value: users.filter(u => u.is_tester).length, icon: Users, color: "blue" }
-        ].map((stat, idx) => (
-          <motion.div
-            key={stat.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 + idx * 0.05 }}
-          >
-            <StatCard {...stat} />
-          </motion.div>
-        ))}
-      </div>
+        {/* Quick Links */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {quickLinks.map((link, idx) => (
+            <Link key={idx} to={createPageUrl(link.link)}>
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+                <CardContent className="p-4">
+                  <div className={`w-10 h-10 ${colorClasses[link.color]} rounded-lg flex items-center justify-center mb-3`}>
+                    <link.icon className="w-5 h-5 text-white" />
+                  </div>
+                  <p className="font-semibold text-sm mb-1">{link.title}</p>
+                  <p className="text-xs text-slate-600">{link.description}</p>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-      >
-        <QuickActions />
-      </motion.div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {[0, 1].map(idx => (
-          <motion.div
-            key={idx}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 + idx * 0.1 }}
-          >
-            {idx === 0 ? (
+        {/* Analytics */}
         <Card>
           <CardHeader>
-            <CardTitle>System-Status</CardTitle>
+            <CardTitle className="text-lg">Kommunikations- & Störungsanalysen</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-slate-600">Aktive Rollen</span>
-                <span className="font-bold">{roles.filter(r => r.is_active).length}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-600">Admin-Benutzer</span>
-                <span className="font-bold">{users.filter(u => u.role === 'admin').length}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-600">Aktive API Keys</span>
-                <span className="font-bold">{apiKeys.filter(k => k.is_active).length}</span>
-              </div>
-            </div>
+            <AdminAnalyticsDashboard />
           </CardContent>
         </Card>
-            ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Scheduled Tasks</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between p-2 bg-green-50 rounded">
-                <span>Daily Data Cleanup</span>
-                <Badge className="bg-green-600">Aktiv</Badge>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-green-50 rounded">
-                <span>Weekly Roles Backup</span>
-                <Badge className="bg-green-600">Aktiv</Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-            )}
-          </motion.div>
-        ))}
       </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8 }}
-      >
-        <AuditTrailVisualization />
-      </motion.div>
-    </div>
+    </RoleBasedGuard>
   );
 }

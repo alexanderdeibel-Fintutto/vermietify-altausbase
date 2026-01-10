@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { AlertCircle, Activity, CheckCircle, Eye } from 'lucide-react';
 import { toast } from 'sonner';
+import RoleBasedGuard from '@/components/admin/RoleBasedGuard';
 
 const statusColors = {
   open: 'bg-yellow-500',
@@ -70,8 +71,9 @@ export default function AdminIssueReports() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
+    <RoleBasedGuard requiredRole="admin">
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
           <AlertCircle className="w-6 h-6 text-white" />
         </div>
@@ -239,5 +241,6 @@ export default function AdminIssueReports() {
         ))}
       </div>
     </div>
+    </RoleBasedGuard>
   );
 }
