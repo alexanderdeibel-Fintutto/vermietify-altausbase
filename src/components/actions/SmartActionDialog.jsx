@@ -8,6 +8,7 @@ import { Mic, Camera, Send, Loader2, FileText, Users, Building, FileCheck } from
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import ActionWorkflowDialog from './ActionWorkflowDialog';
+import DocumentAnalysisResults from './DocumentAnalysisResults';
 
 const CONTEXT_ACTIONS = {
   '/buildings': [
@@ -37,6 +38,7 @@ export default function SmartActionDialog({ isOpen, onClose, actionType, actionS
   const [isListening, setIsListening] = useState(false);
   const [photos, setPhotos] = useState([]);
   const [workflowData, setWorkflowData] = useState(null);
+  const [analysisResults, setAnalysisResults] = useState(null);
   const fileInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -134,8 +136,35 @@ export default function SmartActionDialog({ isOpen, onClose, actionType, actionS
       );
       setPhotos([...photos, ...uploadedUrls]);
       toast.success(`${files.length} Foto(s) hochgeladen`);
+
+      // Auto-analyze if it's a document type action
+      if (actionType === 'document' || actionType === 'photo') {
+        await analyzeDocuments(uploadedUrls);
+      }
     } catch (error) {
       toast.error('Foto-Upload fehlgeschlagen');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const analyzeDocuments = async (urls) => {
+    setIsProcessing(true);
+    try {
+      const analyses = await Promise.all(
+        urls.map(async (url) => {
+          const response = await base44.functions.invoke('analyzeDocument', {
+            document_url: url,
+            document_type_hint: actionSubtype,
+            context: currentPath
+          });
+          return response.data;
+        })
+      );
+      setAnalysisResults(analyses);
+      toast.success('Dokumente analysiert');
+    } catch (error) {
+      toast.error('Dokumentenanalyse fehlgeschlagen');
     } finally {
       setIsProcessing(false);
     }
@@ -179,6 +208,7 @@ export default function SmartActionDialog({ isOpen, onClose, actionType, actionS
     setInput('');
     setPhotos([]);
     setWorkflowData(null);
+    setAnalysisResults(null);
   };
 
   const handleWorkflowComplete = () => {
@@ -294,6 +324,29 @@ export default function SmartActionDialog({ isOpen, onClose, actionType, actionS
                 Ausführen
               </Button>
             </div>
+
+            {/* Analysis Results */}
+            {analysisResults && analysisResults.length > 0 && (
+              <div className="space-y-4 mt-4">
+                <h3 className="font-semibold text-sm">Analyseergebnisse</h3>
+                {analysisResults.map((result, idx) => (
+                  <DocumentAnalysisResults
+                    key={idx}
+                    analysis={result.analysis}
+                    onApprove={async () => {
+                      // Create financial item from analysis
+                      toast.success('Buchung erstellt');
+                      resetForm();
+                      onClose();
+                    }}
+                    onEdit={() => {
+                      // Open edit dialog
+                      toast.info('Bearbeiten-Funktion in Entwicklung');
+                    }}
+                  />
+                ))}
+              </div>
+            )}
 
             {isProcessing && (
               <div className="text-center py-4">
