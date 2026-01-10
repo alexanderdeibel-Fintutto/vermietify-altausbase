@@ -1,72 +1,79 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Mic, Square, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function VoiceNoteRecorder({ onTranscriptionComplete }) {
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
+  const [useWebSpeechAPI, setUseWebSpeechAPI] = useState(false);
+  const recognitionRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
 
+  useEffect(() => {
+    // Check for Web Speech API support
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      setUseWebSpeechAPI(true);
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.lang = 'de-DE';
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = false;
+
+      recognitionRef.current.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0].transcript)
+          .join(' ');
+        
+        if (transcript) {
+          onTranscriptionComplete(transcript);
+          toast.success('Sprachnotiz transkribiert');
+        }
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        toast.error('Spracherkennung fehlgeschlagen');
+        setRecording(false);
+      };
+
+      recognitionRef.current.onend = () => {
+        setRecording(false);
+      };
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
+
   const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      audioChunksRef.current = [];
-
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
-
-      mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        await transcribeAudio(audioBlob);
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorderRef.current.start();
-      setRecording(true);
-    } catch (error) {
-      toast.error('Mikrofon-Zugriff verweigert');
+    if (useWebSpeechAPI && recognitionRef.current) {
+      // Use Web Speech API
+      try {
+        recognitionRef.current.start();
+        setRecording(true);
+        toast.success('Sprechen Sie jetzt...');
+      } catch (error) {
+        toast.error('Spracherkennung konnte nicht gestartet werden');
+      }
+    } else {
+      // Fallback to manual input
+      const note = prompt("Sprachnotiz eingeben:");
+      if (note) {
+        onTranscriptionComplete(note);
+        toast.success('Notiz hinzugefügt');
+      }
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && recording) {
-      mediaRecorderRef.current.stop();
+    if (useWebSpeechAPI && recognitionRef.current) {
+      recognitionRef.current.stop();
       setRecording(false);
-      setTranscribing(true);
-    }
-  };
-
-  const transcribeAudio = async (audioBlob) => {
-    try {
-      // Convert to base64 for API
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Audio = reader.result.split(',')[1];
-        
-        // Simple approach: use AI to transcribe
-        // In production, use dedicated speech-to-text service
-        const prompt = `Dies ist eine Sprachnotiz zu einer Zählerablesung. 
-        Transkribiere den Text genau.`;
-        
-        // For now, just provide a simple text input fallback
-        const note = prompt("Sprachnotiz (Audio-Transkription in Entwicklung):");
-        
-        if (note) {
-          onTranscriptionComplete(note);
-          toast.success('Notiz hinzugefügt');
-        }
-        
-        setTranscribing(false);
-      };
-      reader.readAsDataURL(audioBlob);
-    } catch (error) {
-      toast.error('Transkription fehlgeschlagen');
-      setTranscribing(false);
     }
   };
 

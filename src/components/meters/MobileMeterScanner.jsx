@@ -67,26 +67,43 @@ export default function MobileMeterScanner({ buildingId, onComplete }) {
     mutationFn: async (data) => {
       // Check if online
       if (!navigator.onLine) {
-        addOfflineReading({
+        const offlineReading = {
           meter_id: data.meter_id,
           reading_value: data.reading_value,
           reading_date: data.reading_date,
           meter_number: result.meter_number,
           image_url: capturedImage,
-          voice_notes: voiceNotes
-        });
+          voice_notes: voiceNotes,
+          auto_detected: !manualEdit,
+          confidence_score: result.confidence
+        };
+        
+        addOfflineReading(offlineReading);
         throw new Error('offline_saved');
       }
 
-      const response = await base44.functions.invoke('saveMeterReading', {
+      // Save online
+      const reading = await base44.entities.MeterReading.create({
         meter_id: data.meter_id,
         reading_value: data.reading_value,
         reading_date: data.reading_date,
         image_url: capturedImage,
         auto_detected: !manualEdit,
-        voice_notes: voiceNotes
+        confidence_score: result.confidence,
+        read_by: (await base44.auth.me()).email,
+        voice_notes: voiceNotes,
+        plausibility_check: validationResult?.plausibility_check,
+        consumption: validationResult?.consumption
       });
-      return response.data;
+
+      // Update meter
+      await base44.entities.Meter.update(data.meter_id, {
+        current_reading: data.reading_value,
+        last_reading_date: data.reading_date,
+        last_reading_by: (await base44.auth.me()).email
+      });
+
+      return reading;
     },
     onSuccess: async (savedReading) => {
       // Auto-link to operating costs
@@ -100,14 +117,20 @@ export default function MobileMeterScanner({ buildingId, onComplete }) {
       }
 
       queryClient.invalidateQueries({ queryKey: ['meters'] });
-      toast.success('Zählerstand gespeichert & verknüpft');
+      queryClient.invalidateQueries({ queryKey: ['recentReadings'] });
+      toast.success('✓ Gespeichert & verknüpft');
       resetScanner();
       if (onComplete) onComplete();
     },
     onError: (error) => {
       if (error.message === 'offline_saved') {
-        toast.success('Offline gespeichert - wird später synchronisiert');
+        toast.success('💾 Offline gespeichert', {
+          description: 'Wird automatisch synchronisiert'
+        });
         resetScanner();
+        if (onComplete) onComplete();
+      } else {
+        toast.error('Fehler: ' + error.message);
       }
     }
   });

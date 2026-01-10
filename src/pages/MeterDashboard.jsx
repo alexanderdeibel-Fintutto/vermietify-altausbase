@@ -214,9 +214,7 @@ export default function MeterDashboard() {
         <TabsContent value="scan">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <OfflineMeterQueue onSync={(reading) => {
-                // Sync function
-              }} />
+              <OfflineMeterQueue />
               <MobileMeterScanner buildingId={selectedBuilding} />
             </div>
             

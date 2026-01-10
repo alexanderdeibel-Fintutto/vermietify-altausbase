@@ -74,13 +74,23 @@ export default function BatchMeterScanner({ routeId, meters }) {
       setCapturedReadings([...capturedReadings, { ...reading, meter: currentMeter }]);
       toast.success(`${currentMeter.meter_number} erfasst`);
       
-      // Move to next meter
+      // Auto-advance to next meter
       if (currentIndex < meters.length - 1) {
-        setCurrentIndex(currentIndex + 1);
-        setCurrentImage(null);
-        setResult(null);
+        setTimeout(() => {
+          setCurrentIndex(currentIndex + 1);
+          setCurrentImage(null);
+          setResult(null);
+          
+          // Auto-trigger camera after short delay
+          setTimeout(() => {
+            fileInputRef.current?.click();
+          }, 300);
+        }, 500);
       } else {
-        toast.success('Alle Zähler erfasst!');
+        toast.success('🎉 Alle Zähler erfasst!', {
+          duration: 5000,
+          description: `${capturedReadings.length + 1} Ablesungen abgeschlossen`
+        });
       }
     },
     onError: (error) => {
@@ -104,12 +114,31 @@ export default function BatchMeterScanner({ routeId, meters }) {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!result?.meter_id || !result?.reading_value) {
       toast.error('Bitte alle Felder prüfen');
       return;
     }
-    saveMutation.mutate(result);
+
+    // Validate first
+    try {
+      const validation = await base44.functions.invoke('validateMeterReading', {
+        meter_id: result.meter_id,
+        new_reading: result.reading_value,
+        reading_date: result.reading_date || new Date().toISOString()
+      });
+
+      if (!validation.data.can_proceed) {
+        const proceed = confirm(
+          `Warnung:\n${validation.data.plausibility_check.warnings.join('\n')}\n\nTrotzdem fortfahren?`
+        );
+        if (!proceed) return;
+      }
+
+      saveMutation.mutate(result);
+    } catch (error) {
+      toast.error('Validierung fehlgeschlagen');
+    }
   };
 
   const handleSkip = () => {
@@ -204,30 +233,44 @@ export default function BatchMeterScanner({ routeId, meters }) {
           />
 
           {result && !analyzing && (
-            <div className="flex gap-2">
-              <Button
-                onClick={handleSave}
-                disabled={saveMutation.isPending}
-                className="flex-1 bg-green-600 hover:bg-green-700"
-              >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Speichern & Weiter
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleSkip}
-              >
-                Überspringen
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setCurrentImage(null);
-                  setResult(null);
-                }}
-              >
-                <RotateCw className="w-4 h-4" />
-              </Button>
+            <div className="space-y-3">
+              {/* Quick confirm hint */}
+              <div className="text-center text-sm text-slate-600">
+                Wert überprüfen und bestätigen
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleSave}
+                  disabled={saveMutation.isPending}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-lg h-14"
+                >
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                  {saveMutation.isPending ? 'Speichere...' : 'Bestätigen →'}
+                </Button>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSkip}
+                  className="flex-1"
+                >
+                  Überspringen
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setCurrentImage(null);
+                    setResult(null);
+                  }}
+                >
+                  <RotateCw className="w-4 h-4 mr-1" />
+                  Neu
+                </Button>
+              </div>
             </div>
           )}
         </div>
