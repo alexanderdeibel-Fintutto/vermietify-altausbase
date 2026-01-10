@@ -11,19 +11,35 @@ export default function DocumentGeneratorDialog({ isOpen, onClose, template, com
   const [generatedUrl, setGeneratedUrl] = useState(null);
 
   useEffect(() => {
-    if (template?.placeholders) {
-      const initialData = {};
-      template.placeholders.forEach(ph => {
-        // Auto-fill mit Firmendaten wenn verfügbar
-        if (ph.key === 'company_name') initialData[ph.key] = companyData?.name || '';
-        else if (ph.key === 'address') initialData[ph.key] = companyData?.address || '';
-        else if (ph.key === 'tax_id') initialData[ph.key] = companyData?.tax_id || '';
-        else if (ph.key === 'registration_number') initialData[ph.key] = companyData?.registration_number || '';
-        else initialData[ph.key] = '';
-      });
-      setFormData(initialData);
-    }
-  }, [template, companyData]);
+    const initializeFormData = async () => {
+      if (template?.placeholders) {
+        let initialData = {};
+        
+        // Try to get enriched data from FinAPI
+        try {
+          const finAPIResponse = await base44.functions.invoke('syncFinAPIToTemplates', {
+            company_id: companyId
+          });
+          initialData = finAPIResponse.data;
+        } catch (error) {
+          console.log('Using basic company data');
+        }
+
+        // Auto-fill with company data
+        template.placeholders.forEach(ph => {
+          if (!initialData[ph.key]) {
+            if (ph.key === 'company_name') initialData[ph.key] = companyData?.name || '';
+            else if (ph.key === 'address') initialData[ph.key] = companyData?.address || '';
+            else if (ph.key === 'tax_id') initialData[ph.key] = companyData?.tax_id || '';
+            else if (ph.key === 'registration_number') initialData[ph.key] = companyData?.registration_number || '';
+            else initialData[ph.key] = '';
+          }
+        });
+        setFormData(initialData);
+      }
+    };
+    initializeFormData();
+  }, [template, companyData, companyId]);
 
   const generateMutation = useMutation({
     mutationFn: async () => {

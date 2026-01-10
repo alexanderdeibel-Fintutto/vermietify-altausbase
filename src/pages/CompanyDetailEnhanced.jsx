@@ -14,6 +14,9 @@ import CompanyAnalytics from '@/components/companies/CompanyAnalytics';
 import ComplianceChecklist from '@/components/companies/ComplianceChecklist';
 import DocumentVersionControl from '@/components/companies/DocumentVersionControl';
 import TemplateLibrary from '@/components/companies/TemplateLibrary';
+import DocumentComparisonDialog from '@/components/companies/DocumentComparisonDialog';
+import DocumentSignatureDialog from '@/components/companies/DocumentSignatureDialog';
+import DocumentBatchUpload from '@/components/companies/DocumentBatchUpload';
 
 const legalFormLabels = {
   einzelunternehmen: 'Einzelunternehmen',
@@ -139,6 +142,10 @@ export default function CompanyDetailEnhanced() {
         </TabsList>
 
         <TabsContent value="documents" className="space-y-6">
+          <DocumentBatchUpload
+            companyId={companyId}
+            onComplete={() => queryClient.invalidateQueries({ queryKey: ['company-documents', companyId] })}
+          />
           <CompanyDocuments
             companyId={companyId}
             legalForm={company.legal_form}

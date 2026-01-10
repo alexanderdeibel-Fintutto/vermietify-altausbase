@@ -54,6 +54,7 @@ import BudgetAnalysis from './pages/BudgetAnalysis';
 import BudgetPlanning from './pages/BudgetPlanning';
 import BuildingBoard from './pages/BuildingBoard';
 import BuildingDetail from './pages/BuildingDetail';
+import BuildingDetailEnhanced from './pages/BuildingDetailEnhanced';
 import BuildingWorkflowManager from './pages/BuildingWorkflowManager';
 import Buildings from './pages/Buildings';
 import BuildingsMap from './pages/BuildingsMap';
@@ -64,6 +65,8 @@ import CapitalGainsManagement from './pages/CapitalGainsManagement';
 import CapitalGainsOptimizer from './pages/CapitalGainsOptimizer';
 import CharitableDonationPlanner from './pages/CharitableDonationPlanner';
 import CommunicationCenter from './pages/CommunicationCenter';
+import Companies from './pages/Companies';
+import CompanyDetailEnhanced from './pages/CompanyDetailEnhanced';
 import CompleteEnterpriseHub from './pages/CompleteEnterpriseHub';
 import CompleteFeaturesHub from './pages/CompleteFeaturesHub';
 import ComplexTaxSetupWizard from './pages/ComplexTaxSetupWizard';
@@ -95,6 +98,7 @@ import DocumentManagementCenter from './pages/DocumentManagementCenter';
 import Documents from './pages/Documents';
 import ElsterIntegration from './pages/ElsterIntegration';
 import EmailTemplates from './pages/EmailTemplates';
+import EmployeeManagement from './pages/EmployeeManagement';
 import EnergyManagement from './pages/EnergyManagement';
 import EntityTaxPlanning from './pages/EntityTaxPlanning';
 import Equipment from './pages/Equipment';
@@ -171,6 +175,7 @@ import ROIDashboard from './pages/ROIDashboard';
 import RealEstateCH from './pages/RealEstateCH';
 import RealEstateTaxPlanning from './pages/RealEstateTaxPlanning';
 import RealTimeTaxCalculator from './pages/RealTimeTaxCalculator';
+import ReportBuilder from './pages/ReportBuilder';
 import ReportGenerator from './pages/ReportGenerator';
 import ReportScheduling from './pages/ReportScheduling';
 import ReportingDashboard from './pages/ReportingDashboard';
@@ -301,11 +306,6 @@ import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import ReportBuilder from './pages/ReportBuilder';
-import BuildingDetailEnhanced from './pages/BuildingDetailEnhanced';
-import CompanyDetailEnhanced from './pages/CompanyDetailEnhanced';
-import Companies from './pages/Companies';
-import EmployeeManagement from './pages/EmployeeManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -366,6 +366,7 @@ export const PAGES = {
     "BudgetPlanning": BudgetPlanning,
     "BuildingBoard": BuildingBoard,
     "BuildingDetail": BuildingDetail,
+    "BuildingDetailEnhanced": BuildingDetailEnhanced,
     "BuildingWorkflowManager": BuildingWorkflowManager,
     "Buildings": Buildings,
     "BuildingsMap": BuildingsMap,
@@ -376,6 +377,8 @@ export const PAGES = {
     "CapitalGainsOptimizer": CapitalGainsOptimizer,
     "CharitableDonationPlanner": CharitableDonationPlanner,
     "CommunicationCenter": CommunicationCenter,
+    "Companies": Companies,
+    "CompanyDetailEnhanced": CompanyDetailEnhanced,
     "CompleteEnterpriseHub": CompleteEnterpriseHub,
     "CompleteFeaturesHub": CompleteFeaturesHub,
     "ComplexTaxSetupWizard": ComplexTaxSetupWizard,
@@ -407,6 +410,7 @@ export const PAGES = {
     "Documents": Documents,
     "ElsterIntegration": ElsterIntegration,
     "EmailTemplates": EmailTemplates,
+    "EmployeeManagement": EmployeeManagement,
     "EnergyManagement": EnergyManagement,
     "EntityTaxPlanning": EntityTaxPlanning,
     "Equipment": Equipment,
@@ -483,6 +487,7 @@ export const PAGES = {
     "RealEstateCH": RealEstateCH,
     "RealEstateTaxPlanning": RealEstateTaxPlanning,
     "RealTimeTaxCalculator": RealTimeTaxCalculator,
+    "ReportBuilder": ReportBuilder,
     "ReportGenerator": ReportGenerator,
     "ReportScheduling": ReportScheduling,
     "ReportingDashboard": ReportingDashboard,
@@ -613,11 +618,6 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "ReportBuilder": ReportBuilder,
-    "BuildingDetailEnhanced": BuildingDetailEnhanced,
-    "CompanyDetailEnhanced": CompanyDetailEnhanced,
-    "Companies": Companies,
-    "EmployeeManagement": EmployeeManagement,
 }
 
 export const pagesConfig = {
