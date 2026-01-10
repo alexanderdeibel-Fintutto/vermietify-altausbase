@@ -12,6 +12,7 @@ import MaintenanceRequestTracker from '@/components/tenant-portal/MaintenanceReq
 import KnowledgeBaseWidget from '@/components/tenant-portal/KnowledgeBaseWidget';
 import PaymentForm from '@/components/tenant-portal/PaymentForm';
 import PaymentReceiptViewer from '@/components/tenant-portal/PaymentReceiptViewer';
+import TenantCommunicationHub from '@/components/tenant-portal/TenantCommunicationHub';
 
 export default function TenantPortal() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -91,15 +92,7 @@ export default function TenantPortal() {
         </TabsContent>
 
         <TabsContent value="messages">
-          <Card className="p-6">
-            <h2 className="text-lg font-light text-slate-900 mb-4">Direkte Nachricht an Administrator</h2>
-            <p className="text-sm font-light text-slate-600">
-              Nutzen Sie das Mieterkommunikationszentrum, um mit dem Verwaltungsteam zu kommunizieren.
-            </p>
-            <a href="/TenantCommunication" className="inline-block mt-4 px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-light hover:bg-slate-800">
-              Zum Nachrichtenzentrum
-            </a>
-          </Card>
+          <TenantCommunicationHub />
         </TabsContent>
 
         <TabsContent value="help">

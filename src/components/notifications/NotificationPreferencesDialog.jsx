@@ -28,7 +28,8 @@ export default function NotificationPreferencesDialog({ onClose }) {
         contract_renewals: true,
         new_messages: true,
         document_updates: true,
-        system_updates: false
+        system_updates: false,
+        support_tickets: true
       };
     },
     enabled: !!user
