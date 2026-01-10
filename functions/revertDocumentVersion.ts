@@ -9,102 +9,84 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { version_id, document_id, company_id } = await req.json();
+    const {
+      document_id,
+      version_id,
+      reason = 'Manual revert'
+    } = await req.json();
 
-    // Get version
-    const versionQuery = await base44.asServiceRole.entities.DocumentVersion.filter({
-      id: version_id
-    });
-    if (versionQuery.length === 0) {
+    // Get the version
+    const versions = await base44.asServiceRole.entities.DocumentVersion.filter({ id: version_id });
+    if (versions.length === 0) {
       return Response.json({ error: 'Version not found' }, { status: 404 });
     }
-    const version = versionQuery[0];
+    const targetVersion = versions[0];
+
+    // Verify it belongs to correct document
+    if (targetVersion.document_id !== document_id) {
+      return Response.json({ error: 'Version does not belong to document' }, { status: 400 });
+    }
 
     // Get document
-    const docs = await base44.asServiceRole.entities.Document.filter({ id: document_id });
+    const docs = await base44.entities.Document.filter({ id: document_id });
     if (docs.length === 0) {
       return Response.json({ error: 'Document not found' }, { status: 404 });
     }
     const doc = docs[0];
 
-    // Mark all versions as not current
-    const allVersions = await base44.asServiceRole.entities.DocumentVersion.filter({
-      document_id
-    });
-    for (const v of allVersions.filter(v => v.is_current)) {
-      await base44.asServiceRole.entities.DocumentVersion.update(v.id, {
-        is_current: false
-      });
+    // Create backup of current version before reverting
+    const currentVersions = await base44.asServiceRole.entities.DocumentVersion.filter(
+      { document_id, is_current: true }
+    );
+    if (currentVersions.length > 0) {
+      await base44.asServiceRole.entities.DocumentVersion.update(
+        currentVersions[0].id,
+        { is_current: false }
+      );
     }
 
-    // Mark reverted version as current
-    await base44.asServiceRole.entities.DocumentVersion.update(version_id, {
+    // Create new version from the reverted content
+    const maxVersionNumber = Math.max(
+      ...currentVersions.map(v => v.version_number),
+      targetVersion.version_number
+    );
+
+    const newVersion = await base44.asServiceRole.entities.DocumentVersion.create({
+      document_id,
+      company_id: doc.company_id,
+      file_url: targetVersion.file_url,
+      file_name: targetVersion.file_name,
+      file_size: targetVersion.file_size,
+      version_number: maxVersionNumber + 1,
+      uploaded_by: user.email,
+      change_notes: `Reverted from version ${targetVersion.version_number}. Reason: ${reason}`,
       is_current: true
     });
 
     // Update document
     await base44.asServiceRole.entities.Document.update(document_id, {
-      url: version.file_url,
-      updated_date: new Date().toISOString()
+      url: targetVersion.file_url,
+      current_version: maxVersionNumber + 1
     });
 
-    // Log metric
-    await base44.asServiceRole.entities.DocumentAnalytics.create({
-      company_id,
-      metric_type: 'document_reverted',
-      date: new Date().toISOString().split('T')[0],
-      count: 1,
-      details: { document_id, reverted_to_version: version.version_number }
+    // Send notification
+    await base44.functions.invoke('sendNotification', {
+      recipient_email: user.email,
+      title: `⏮️ Version zurückgesetzt`,
+      message: `"${doc.name}" wurde auf Version ${targetVersion.version_number} zurückgesetzt (neue Version: ${maxVersionNumber + 1}).`,
+      notification_type: 'document_event',
+      related_entity_type: 'document',
+      related_entity_id: document_id,
+      priority: 'medium'
     });
 
-    // Update signature requests audit trail
-    const signatureRequests = await base44.asServiceRole.entities.SignatureRequest.filter({
-      document_id
+    return Response.json({ 
+      success: true, 
+      new_version_id: newVersion.id,
+      new_version_number: maxVersionNumber + 1
     });
-
-    for (const sr of signatureRequests) {
-      const updatedAuditTrail = [
-        ...sr.audit_trail,
-        {
-          action: 'document_reverted',
-          actor: user.email,
-          timestamp: new Date().toISOString(),
-          details: `Zurückgewechselt zu Version ${version.version_number}`
-        }
-      ];
-      await base44.asServiceRole.entities.SignatureRequest.update(sr.id, {
-        audit_trail: updatedAuditTrail
-      });
-    }
-
-    // Notify via Slack
-    try {
-      const accessToken = await base44.asServiceRole.connectors.getAccessToken('slack');
-      await fetch('https://slack.com/api/chat.postMessage', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          channel: '#documents',
-          text: `⏮️ Dokument zurückgesetzt: ${doc.name}`,
-          blocks: [{
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `*Zurückgesetzt auf Version ${version.version_number}*\n*Dokument:* ${doc.name}\n*Aktualisiert von:* ${user.full_name}`
-            }
-          }]
-        })
-      });
-    } catch (error) {
-      console.log('Slack notification optional');
-    }
-
-    return Response.json({ success: true });
   } catch (error) {
-    console.error('Revert error:', error);
+    console.error('Revert version error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

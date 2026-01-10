@@ -9,105 +9,72 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { document_id, company_id, file, change_notes } = await req.json();
+    const {
+      document_id,
+      file_url,
+      file_name,
+      file_size,
+      change_notes
+    } = await req.json();
 
-    // Get document
-    const documents = await base44.asServiceRole.entities.Document.filter({ id: document_id });
-    if (documents.length === 0) {
+    // Get the document
+    const docs = await base44.entities.Document.filter({ id: document_id });
+    if (docs.length === 0) {
       return Response.json({ error: 'Document not found' }, { status: 404 });
     }
-    const doc = documents[0];
+    const doc = docs[0];
 
-    // Get current version count
-    const versions = await base44.asServiceRole.entities.DocumentVersion.filter({
-      document_id
-    });
+    // Get latest version number
+    const versions = await base44.asServiceRole.entities.DocumentVersion.filter(
+      { document_id },
+      '-version_number',
+      1
+    );
+    const latestVersion = versions[0]?.version_number || 0;
+    const newVersionNumber = latestVersion + 1;
 
-    const nextVersionNumber = versions.length + 1;
+    // Mark previous version as not current
+    if (versions.length > 0) {
+      await base44.asServiceRole.entities.DocumentVersion.update(versions[0].id, {
+        is_current: false
+      });
+    }
 
-    // Upload file
-    const uploadResult = await base44.integrations.Core.UploadFile({ file });
-
-    // Create version record
+    // Create new version
     const version = await base44.asServiceRole.entities.DocumentVersion.create({
       document_id,
-      company_id,
-      file_url: uploadResult.file_url,
-      version_number: nextVersionNumber,
-      file_name: doc.name,
+      company_id: doc.company_id,
+      file_url,
+      file_name: file_name || doc.name,
+      file_size,
+      version_number: newVersionNumber,
       uploaded_by: user.email,
       change_notes,
       is_current: true
     });
 
-    // Mark previous versions as not current
-    for (const v of versions.filter(v => v.is_current)) {
-      await base44.asServiceRole.entities.DocumentVersion.update(v.id, {
-        is_current: false
-      });
-    }
-
-    // Update original document
+    // Update document to point to new version
     await base44.asServiceRole.entities.Document.update(document_id, {
-      url: uploadResult.file_url,
-      updated_date: new Date().toISOString()
+      url: file_url,
+      current_version: newVersionNumber
     });
 
-    // Log to analytics
-    await base44.asServiceRole.entities.DocumentAnalytics.create({
-      company_id,
-      metric_type: 'document_versioned',
-      date: new Date().toISOString().split('T')[0],
-      count: 1,
-      details: { document_id, version_number: nextVersionNumber }
+    // Log in audit trail
+    await base44.functions.invoke('sendNotification', {
+      recipient_email: user.email,
+      title: `✅ Version ${newVersionNumber} hochgeladen`,
+      message: `${file_name || doc.name} - Version ${newVersionNumber} erfolgreich erstellt.`,
+      notification_type: 'document_event',
+      related_entity_type: 'document',
+      related_entity_id: document_id,
+      priority: 'low'
     });
 
-    // Update signature requests audit trail
-    const signatureRequests = await base44.asServiceRole.entities.SignatureRequest.filter({
-      document_id
+    return Response.json({ 
+      success: true, 
+      version_id: version.id, 
+      version_number: newVersionNumber 
     });
-
-    for (const sr of signatureRequests) {
-      const updatedAuditTrail = [
-        ...sr.audit_trail,
-        {
-          action: 'document_version_uploaded',
-          actor: user.email,
-          timestamp: new Date().toISOString(),
-          details: `Version ${nextVersionNumber} hochgeladen${change_notes ? ': ' + change_notes : ''}`
-        }
-      ];
-      await base44.asServiceRole.entities.SignatureRequest.update(sr.id, {
-        audit_trail: updatedAuditTrail
-      });
-    }
-
-    // Notify via Slack
-    try {
-      const accessToken = await base44.asServiceRole.connectors.getAccessToken('slack');
-      await fetch('https://slack.com/api/chat.postMessage', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          channel: '#documents',
-          text: `📝 Neue Dokumentversion: ${doc.name}`,
-          blocks: [{
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `*Version ${nextVersionNumber}*\n*Dokument:* ${doc.name}\n*Hochgeladen von:* ${user.full_name}${change_notes ? `\n*Änderungen:* ${change_notes}` : ''}`
-            }
-          }]
-        })
-      });
-    } catch (error) {
-      console.log('Slack notification optional');
-    }
-
-    return Response.json({ success: true, version_id: version.id, version_number: nextVersionNumber });
   } catch (error) {
     console.error('Upload version error:', error);
     return Response.json({ error: error.message }, { status: 500 });
