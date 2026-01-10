@@ -1,57 +1,26 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
+  const base44 = createClientFromRequest(req);
 
-    console.log('[REMINDERS] Checking deadlines');
-
-    const currentYear = new Date().getFullYear();
-    const deadlines = [
-      { form: 'ANLAGE_V', date: new Date(currentYear + 1, 6, 31), days_before: 30 },
-      { form: 'EUER', date: new Date(currentYear + 1, 6, 31), days_before: 30 },
-      { form: 'UMSATZSTEUER', date: new Date(currentYear + 1, 0, 31), days_before: 14 }
-    ];
-
-    const today = new Date();
-    let sent = 0;
-
-    for (const deadline of deadlines) {
-      const daysUntil = Math.ceil((deadline.date - today) / (1000 * 60 * 60 * 24));
-      
-      if (daysUntil === deadline.days_before || daysUntil === 7 || daysUntil === 1) {
-        const submissions = await base44.asServiceRole.entities.ElsterSubmission.filter({
-          tax_form_type: deadline.form,
-          tax_year: currentYear,
-          status: { $in: ['DRAFT', 'AI_PROCESSED', 'VALIDATED'] }
-        });
-
-        if (submissions.length > 0) {
-          const users = new Set(submissions.map(s => s.created_by).filter(Boolean));
-
-          for (const userEmail of users) {
-            await base44.integrations.Core.SendEmail({
-              to: userEmail,
-              subject: `ELSTER Erinnerung: ${deadline.form} - noch ${daysUntil} Tage`,
-              body: `
-                <h2>Deadline-Erinnerung</h2>
-                <p>Die Abgabefrist für ${deadline.form} ${currentYear} endet in <strong>${daysUntil} Tagen</strong>.</p>
-                <p>Deadline: ${deadline.date.toLocaleDateString('de-DE')}</p>
-                <p>Sie haben noch ${submissions.length} offene Submission(s).</p>
-              `
-            });
-            sent++;
-          }
-        }
-      }
+  const deadlines = await base44.asServiceRole.entities.TaxDeadline.filter({
+    deadline_date: {
+      $gte: new Date().toISOString().split('T')[0],
+      $lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     }
+  }, null, 50);
 
-    console.log(`[REMINDERS] Sent ${sent} reminders`);
+  const users = await base44.asServiceRole.entities.User.list(null, 100);
 
-    return Response.json({ success: true, sent });
-
-  } catch (error) {
-    console.error('[ERROR]', error);
-    return Response.json({ error: error.message }, { status: 500 });
+  for (const user of users) {
+    if (deadlines.length > 0) {
+      await base44.integrations.Core.SendEmail({
+        to: user.email,
+        subject: 'Steuerfristen in den nächsten 7 Tagen',
+        body: `Hallo ${user.full_name},\n\n${deadlines.length} Fristen stehen an:\n${deadlines.map(d => `- ${d.title}: ${d.deadline_date}`).join('\n')}`
+      });
+    }
   }
+
+  return Response.json({ success: true, sent: users.length });
 });
