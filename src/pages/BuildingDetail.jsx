@@ -21,6 +21,8 @@ import BuildingInfoPanel from '@/components/building-detail/BuildingInfoPanel';
 import IoTSensorsPanel from '@/components/building-detail/IoTSensorsPanel';
 import InteractiveBuildingMap from '@/components/building-detail/InteractiveBuildingMap';
 import MaintenanceCalendarView from '@/components/maintenance/MaintenanceCalendarView';
+import BuildingDocumentsManager from '@/components/building-detail/BuildingDocumentsManager';
+import BuildingMaintenanceOverview from '@/components/building-detail/BuildingMaintenanceOverview';
 
 export default function BuildingDetailPage() {
   const buildingId = new URLSearchParams(window.location.search).get('id');
@@ -160,10 +162,12 @@ export default function BuildingDetailPage() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <BuildingInfoPanel building={building} />
-            <IoTSensorsPanel buildingId={buildingId} />
+            <BuildingMaintenanceOverview buildingId={buildingId} />
+            <BuildingDocumentsManager buildingId={buildingId} />
           </div>
+          <IoTSensorsPanel buildingId={buildingId} />
         </TabsContent>
 
         <TabsContent value="iot-map">
@@ -187,7 +191,10 @@ export default function BuildingDetailPage() {
         </TabsContent>
 
         <TabsContent value="documents">
-          <BuildingDocumentsOverview buildingId={buildingId} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <BuildingDocumentsManager buildingId={buildingId} />
+            <BuildingDocumentsOverview buildingId={buildingId} />
+          </div>
         </TabsContent>
 
         <TabsContent value="tasks">
