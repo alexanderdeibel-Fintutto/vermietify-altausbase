@@ -85,6 +85,7 @@ import DataImportExportHub from './pages/DataImportExportHub';
 import DeductionMaximizationTool from './pages/DeductionMaximizationTool';
 import DeveloperDocumentation from './pages/DeveloperDocumentation';
 import DividendOptimization from './pages/DividendOptimization';
+import DocumentAnalysisDashboard from './pages/DocumentAnalysisDashboard';
 import DocumentGeneration from './pages/DocumentGeneration';
 import DocumentInbox from './pages/DocumentInbox';
 import DocumentInboxSettings from './pages/DocumentInboxSettings';
@@ -115,7 +116,9 @@ import GlobalTaxOverview from './pages/GlobalTaxOverview';
 import GlobalWealthDashboard from './pages/GlobalWealthDashboard';
 import HelpCenter from './pages/HelpCenter';
 import HilfeCenter from './pages/HilfeCenter';
+import Home from './pages/Home';
 import IncomeOptimizationTool from './pages/IncomeOptimizationTool';
+import Index from './pages/Index';
 import InsuranceManagement from './pages/InsuranceManagement';
 import IntegrationHub from './pages/IntegrationHub';
 import IntegrationMarketplace from './pages/IntegrationMarketplace';
@@ -218,9 +221,9 @@ import TaxDashboardMultiCountry from './pages/TaxDashboardMultiCountry';
 import TaxDataImportHub from './pages/TaxDataImportHub';
 import TaxDeadlines from './pages/TaxDeadlines';
 import TaxDeductionOptimizer from './pages/TaxDeductionOptimizer';
-import TaxExportHub from './pages/TaxExportHub';
 import TaxDocumentManager from './pages/TaxDocumentManager';
 import TaxDocumentProcessor from './pages/TaxDocumentProcessor';
+import TaxExportHub from './pages/TaxExportHub';
 import TaxFilingTimeline from './pages/TaxFilingTimeline';
 import TaxFilingWizard from './pages/TaxFilingWizard';
 import TaxForecastPlanner from './pages/TaxForecastPlanner';
@@ -260,6 +263,7 @@ import TenantCommunicationCenter from './pages/TenantCommunicationCenter';
 import TenantCommunicationHub from './pages/TenantCommunicationHub';
 import TenantDetail from './pages/TenantDetail';
 import TenantOnboarding from './pages/TenantOnboarding';
+import TenantOnboardingManager from './pages/TenantOnboardingManager';
 import TenantPortal from './pages/TenantPortal';
 import TenantPortalAdminDashboard from './pages/TenantPortalAdminDashboard';
 import TenantPortalDashboard from './pages/TenantPortalDashboard';
@@ -297,10 +301,6 @@ import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import DocumentAnalysisDashboard from './pages/DocumentAnalysisDashboard';
-import TenantOnboardingManager from './pages/TenantOnboardingManager';
-import Home from './pages/Home';
-import Index from './pages/Index';
 import __Layout from './Layout.jsx';
 
 
@@ -392,6 +392,7 @@ export const PAGES = {
     "DeductionMaximizationTool": DeductionMaximizationTool,
     "DeveloperDocumentation": DeveloperDocumentation,
     "DividendOptimization": DividendOptimization,
+    "DocumentAnalysisDashboard": DocumentAnalysisDashboard,
     "DocumentGeneration": DocumentGeneration,
     "DocumentInbox": DocumentInbox,
     "DocumentInboxSettings": DocumentInboxSettings,
@@ -422,7 +423,9 @@ export const PAGES = {
     "GlobalWealthDashboard": GlobalWealthDashboard,
     "HelpCenter": HelpCenter,
     "HilfeCenter": HilfeCenter,
+    "Home": Home,
     "IncomeOptimizationTool": IncomeOptimizationTool,
+    "Index": Index,
     "InsuranceManagement": InsuranceManagement,
     "IntegrationHub": IntegrationHub,
     "IntegrationMarketplace": IntegrationMarketplace,
@@ -525,9 +528,9 @@ export const PAGES = {
     "TaxDataImportHub": TaxDataImportHub,
     "TaxDeadlines": TaxDeadlines,
     "TaxDeductionOptimizer": TaxDeductionOptimizer,
-    "TaxExportHub": TaxExportHub,
     "TaxDocumentManager": TaxDocumentManager,
     "TaxDocumentProcessor": TaxDocumentProcessor,
+    "TaxExportHub": TaxExportHub,
     "TaxFilingTimeline": TaxFilingTimeline,
     "TaxFilingWizard": TaxFilingWizard,
     "TaxForecastPlanner": TaxForecastPlanner,
@@ -567,6 +570,7 @@ export const PAGES = {
     "TenantCommunicationHub": TenantCommunicationHub,
     "TenantDetail": TenantDetail,
     "TenantOnboarding": TenantOnboarding,
+    "TenantOnboardingManager": TenantOnboardingManager,
     "TenantPortal": TenantPortal,
     "TenantPortalAdminDashboard": TenantPortalAdminDashboard,
     "TenantPortalDashboard": TenantPortalDashboard,
@@ -604,10 +608,6 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "DocumentAnalysisDashboard": DocumentAnalysisDashboard,
-    "TenantOnboardingManager": TenantOnboardingManager,
-    "Home": Home,
-    "Index": Index,
 }
 
 export const pagesConfig = {
