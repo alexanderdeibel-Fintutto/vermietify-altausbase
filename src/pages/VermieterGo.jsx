@@ -54,6 +54,26 @@ import QuoteCreator from '@/components/vermieter-go/QuoteCreator';
 import SeasonalChecklist from '@/components/vermieter-go/SeasonalChecklist';
 import TenantFeedbackCollector from '@/components/vermieter-go/TenantFeedbackCollector';
 import OfflineSyncStatus from '@/components/vermieter-go/OfflineSyncStatus';
+import FinanceDashboard from '@/components/vermieter-go/FinanceDashboard';
+import MonthlyReport from '@/components/vermieter-go/MonthlyReport';
+import TaxDocuments from '@/components/vermieter-go/TaxDocuments';
+import BudgetComparison from '@/components/vermieter-go/BudgetComparison';
+import BroadcastMessage from '@/components/vermieter-go/BroadcastMessage';
+import SMSNotifier from '@/components/vermieter-go/SMSNotifier';
+import EmailTemplates from '@/components/vermieter-go/EmailTemplates';
+import WhatsAppMessenger from '@/components/vermieter-go/WhatsAppMessenger';
+import CalendarView from '@/components/vermieter-go/CalendarView';
+import DeadlineReminders from '@/components/vermieter-go/DeadlineReminders';
+import ContractOverview from '@/components/vermieter-go/ContractOverview';
+import LegalUpdates from '@/components/vermieter-go/LegalUpdates';
+import OccupancyStats from '@/components/vermieter-go/OccupancyStats';
+import RentPriceTrend from '@/components/vermieter-go/RentPriceTrend';
+import ROIDashboard from '@/components/vermieter-go/ROIDashboard';
+import BenchmarkComparison from '@/components/vermieter-go/BenchmarkComparison';
+import BarcodeScanner from '@/components/vermieter-go/BarcodeScanner';
+import NFCReader from '@/components/vermieter-go/NFCReader';
+import AutoBackup from '@/components/vermieter-go/AutoBackup';
+import CurrencyConverter from '@/components/vermieter-go/CurrencyConverter';
 
 export default function VermieterGo() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -152,9 +172,14 @@ export default function VermieterGo() {
 
           <TabsContent value="dashboard" className="space-y-4">
             <DayPlanner buildingId={selectedBuilding} />
+            <FinanceDashboard buildingId={selectedBuilding} />
+            <OccupancyStats buildingId={selectedBuilding} />
             <RentPaymentStatus buildingId={selectedBuilding} />
             <DepositTracker buildingId={selectedBuilding} />
             <VacancyOverview buildingId={selectedBuilding} />
+            <ROIDashboard buildingId={selectedBuilding} />
+            <CalendarView buildingId={selectedBuilding} />
+            <DeadlineReminders />
             <TourPlanner />
             <GPSNavigation buildingId={selectedBuilding} />
             <BuildingBoardMobile buildingId={selectedBuilding} />
@@ -170,6 +195,7 @@ export default function VermieterGo() {
             <MaintenanceChecklist buildingId={selectedBuilding} />
             <SeasonalChecklist buildingId={selectedBuilding} />
             <ExpenseTracker buildingId={selectedBuilding} />
+            <BudgetComparison buildingId={selectedBuilding} />
             <TimeTracker buildingId={selectedBuilding} />
             <QuoteCreator buildingId={selectedBuilding} />
             <RecurringMaintenance buildingId={selectedBuilding} />
@@ -177,20 +203,29 @@ export default function VermieterGo() {
             <WarrantyTracker buildingId={selectedBuilding} />
             <InsuranceClaim buildingId={selectedBuilding} />
             <BeforeAfterPhotos />
+            <MonthlyReport buildingId={selectedBuilding} />
+            <TaxDocuments buildingId={selectedBuilding} />
           </TabsContent>
 
           <TabsContent value="tenants" className="space-y-4">
             <TenantQuickView buildingId={selectedBuilding} />
             <DirectMessaging buildingId={selectedBuilding} />
+            <BroadcastMessage buildingId={selectedBuilding} />
+            <WhatsAppMessenger />
+            <SMSNotifier />
+            <EmailTemplates />
             <ViewingScheduler />
             <TenantFeedbackCollector />
             <UnitRating />
             <DigitalSignature />
             <NeighborComplaints buildingId={selectedBuilding} />
+            <ContractOverview />
           </TabsContent>
 
           <TabsContent value="tools" className="space-y-4">
             <QRScanner />
+            <BarcodeScanner />
+            <NFCReader />
             <DocumentScanner buildingId={selectedBuilding} />
             <PhotoGallery buildingId={selectedBuilding} />
             <VoiceRecorder onSave={(text) => console.log('Voice note:', text)} />
@@ -202,6 +237,11 @@ export default function VermieterGo() {
             <KeyManagement buildingId={selectedBuilding} />
             <FloorPlanAccess buildingId={selectedBuilding} />
             <EnergyPassportAccess buildingId={selectedBuilding} />
+            <RentPriceTrend />
+            <BenchmarkComparison />
+            <LegalUpdates />
+            <CurrencyConverter />
+            <AutoBackup />
             <PushNotifications />
             <TeamUpdates />
           </TabsContent>
