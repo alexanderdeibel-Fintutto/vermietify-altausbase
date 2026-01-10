@@ -19,6 +19,7 @@ import BuildingBoardOverview from '@/components/building-detail/BuildingBoardOve
 import BuildingTasksManager from '@/components/building-detail/BuildingTasksManager';
 import BuildingInfoPanel from '@/components/building-detail/BuildingInfoPanel';
 import IoTSensorsPanel from '@/components/building-detail/IoTSensorsPanel';
+import InteractiveBuildingMap from '@/components/building-detail/InteractiveBuildingMap';
 
 export default function BuildingDetailPage() {
   const buildingId = new URLSearchParams(window.location.search).get('id');
@@ -148,6 +149,7 @@ export default function BuildingDetailPage() {
       <Tabs defaultValue="overview" className="w-full">
         <TabsList>
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
+          <TabsTrigger value="iot-map">IoT-Karte</TabsTrigger>
           <TabsTrigger value="units">Einheiten</TabsTrigger>
           <TabsTrigger value="tenants">Mieter</TabsTrigger>
           <TabsTrigger value="contracts">Verträge</TabsTrigger>
@@ -161,6 +163,10 @@ export default function BuildingDetailPage() {
             <BuildingInfoPanel building={building} />
             <IoTSensorsPanel buildingId={buildingId} />
           </div>
+        </TabsContent>
+
+        <TabsContent value="iot-map">
+          <InteractiveBuildingMap buildingId={buildingId} />
         </TabsContent>
 
         <TabsContent value="units">
