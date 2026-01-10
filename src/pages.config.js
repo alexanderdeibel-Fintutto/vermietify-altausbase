@@ -285,6 +285,7 @@ import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import AIDocumentAnalysis from './pages/AIDocumentAnalysis';
 import PropertyManagerDashboard from './pages/PropertyManagerDashboard';
+import NotificationHub from './pages/NotificationHub';
 import __Layout from './Layout.jsx';
 
 
@@ -576,6 +577,7 @@ export const PAGES = {
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "AIDocumentAnalysis": AIDocumentAnalysis,
     "PropertyManagerDashboard": PropertyManagerDashboard,
+    "NotificationHub": NotificationHub,
 }
 
 export const pagesConfig = {
