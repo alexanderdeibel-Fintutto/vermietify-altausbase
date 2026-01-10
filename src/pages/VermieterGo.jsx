@@ -25,6 +25,19 @@ import WeatherWidget from '@/components/vermieter-go/WeatherWidget';
 import EmergencyContacts from '@/components/vermieter-go/EmergencyContacts';
 import KeyManagement from '@/components/vermieter-go/KeyManagement';
 import FloorPlanAccess from '@/components/vermieter-go/FloorPlanAccess';
+import ExpenseTracker from '@/components/vermieter-go/ExpenseTracker';
+import RentPaymentStatus from '@/components/vermieter-go/RentPaymentStatus';
+import TimeTracker from '@/components/vermieter-go/TimeTracker';
+import PhotoGallery from '@/components/vermieter-go/PhotoGallery';
+import VoiceRecorder from '@/components/vermieter-go/VoiceRecorder';
+import QRScanner from '@/components/vermieter-go/QRScanner';
+import BeforeAfterPhotos from '@/components/vermieter-go/BeforeAfterPhotos';
+import ViewingScheduler from '@/components/vermieter-go/ViewingScheduler';
+import MaterialInventory from '@/components/vermieter-go/MaterialInventory';
+import RecurringMaintenance from '@/components/vermieter-go/RecurringMaintenance';
+import TourPlanner from '@/components/vermieter-go/TourPlanner';
+import PushNotifications from '@/components/vermieter-go/PushNotifications';
+import TeamUpdates from '@/components/vermieter-go/TeamUpdates';
 
 export default function VermieterGo() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -120,6 +133,8 @@ export default function VermieterGo() {
 
           <TabsContent value="dashboard" className="space-y-4">
             <DayPlanner buildingId={selectedBuilding} />
+            <RentPaymentStatus buildingId={selectedBuilding} />
+            <TourPlanner />
             <GPSNavigation buildingId={selectedBuilding} />
             <BuildingBoardMobile buildingId={selectedBuilding} />
           </TabsContent>
@@ -132,18 +147,29 @@ export default function VermieterGo() {
             <QuickTaskCreator buildingId={selectedBuilding} />
             <DamageReport buildingId={selectedBuilding} />
             <MaintenanceChecklist buildingId={selectedBuilding} />
+            <ExpenseTracker buildingId={selectedBuilding} />
+            <TimeTracker buildingId={selectedBuilding} />
+            <RecurringMaintenance buildingId={selectedBuilding} />
+            <BeforeAfterPhotos />
           </TabsContent>
 
           <TabsContent value="tenants" className="space-y-4">
             <TenantQuickView buildingId={selectedBuilding} />
             <DirectMessaging buildingId={selectedBuilding} />
+            <ViewingScheduler />
             <DigitalSignature />
           </TabsContent>
 
           <TabsContent value="tools" className="space-y-4">
+            <QRScanner />
+            <PhotoGallery buildingId={selectedBuilding} />
+            <VoiceRecorder onSave={(text) => console.log('Voice note:', text)} />
+            <MaterialInventory />
             <EmergencyContacts />
             <KeyManagement buildingId={selectedBuilding} />
             <FloorPlanAccess buildingId={selectedBuilding} />
+            <PushNotifications />
+            <TeamUpdates />
           </TabsContent>
         </Tabs>
       </div>
