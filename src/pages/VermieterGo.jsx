@@ -15,6 +15,16 @@ import QuickTaskCreator from '@/components/vermieter-go/QuickTaskCreator';
 import TenantQuickView from '@/components/vermieter-go/TenantQuickView';
 import BuildingBoardMobile from '@/components/vermieter-go/BuildingBoardMobile';
 import QuickStats from '@/components/vermieter-go/QuickStats';
+import DirectMessaging from '@/components/vermieter-go/DirectMessaging';
+import DamageReport from '@/components/vermieter-go/DamageReport';
+import DigitalSignature from '@/components/vermieter-go/DigitalSignature';
+import MaintenanceChecklist from '@/components/vermieter-go/MaintenanceChecklist';
+import DayPlanner from '@/components/vermieter-go/DayPlanner';
+import GPSNavigation from '@/components/vermieter-go/GPSNavigation';
+import WeatherWidget from '@/components/vermieter-go/WeatherWidget';
+import EmergencyContacts from '@/components/vermieter-go/EmergencyContacts';
+import KeyManagement from '@/components/vermieter-go/KeyManagement';
+import FloorPlanAccess from '@/components/vermieter-go/FloorPlanAccess';
 
 export default function VermieterGo() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -79,6 +89,9 @@ export default function VermieterGo() {
       </div>
 
       <div className="p-4 space-y-4">
+        {/* Weather */}
+        <WeatherWidget />
+
         {/* Quick Stats */}
         <QuickStats buildingId={selectedBuilding} />
 
@@ -87,7 +100,7 @@ export default function VermieterGo() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4 bg-white">
+          <TabsList className="grid w-full grid-cols-5 bg-white">
             <TabsTrigger value="dashboard">
               <Building2 className="w-4 h-4" />
             </TabsTrigger>
@@ -100,46 +113,14 @@ export default function VermieterGo() {
             <TabsTrigger value="tenants">
               <Users className="w-4 h-4" />
             </TabsTrigger>
+            <TabsTrigger value="tools">
+              <Wrench className="w-4 h-4" />
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-4">
-            {/* Today's Tasks */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4" />
-                  Heutige Aufgaben
-                  <Badge>{todayTasks.length}</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {todayTasks.length > 0 ? (
-                  <div className="space-y-2">
-                    {todayTasks.slice(0, 5).map(task => (
-                      <div key={task.id} className="p-3 bg-slate-50 rounded-lg">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <p className="font-semibold text-sm">{task.task_title}</p>
-                            <p className="text-xs text-slate-600 mt-1">{task.description}</p>
-                          </div>
-                          <Badge className={
-                            task.priority === 'urgent' ? 'bg-red-100 text-red-800' :
-                            task.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                            'bg-blue-100 text-blue-800'
-                          }>
-                            {task.priority}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-slate-600 py-4">Keine offenen Aufgaben</p>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Building Board */}
+            <DayPlanner buildingId={selectedBuilding} />
+            <GPSNavigation buildingId={selectedBuilding} />
             <BuildingBoardMobile buildingId={selectedBuilding} />
           </TabsContent>
 
@@ -147,31 +128,41 @@ export default function VermieterGo() {
             <MobileMeterScanner buildingId={selectedBuilding} />
           </TabsContent>
 
-          <TabsContent value="tasks">
+          <TabsContent value="tasks" className="space-y-4">
             <QuickTaskCreator buildingId={selectedBuilding} />
+            <DamageReport buildingId={selectedBuilding} />
+            <MaintenanceChecklist buildingId={selectedBuilding} />
           </TabsContent>
 
-          <TabsContent value="tenants">
+          <TabsContent value="tenants" className="space-y-4">
             <TenantQuickView buildingId={selectedBuilding} />
+            <DirectMessaging buildingId={selectedBuilding} />
+            <DigitalSignature />
+          </TabsContent>
+
+          <TabsContent value="tools" className="space-y-4">
+            <EmergencyContacts />
+            <KeyManagement buildingId={selectedBuilding} />
+            <FloorPlanAccess buildingId={selectedBuilding} />
           </TabsContent>
         </Tabs>
       </div>
 
       {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-lg">
-        <div className="grid grid-cols-4">
+        <div className="grid grid-cols-5">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`py-4 flex flex-col items-center gap-1 ${
+            className={`py-3 flex flex-col items-center gap-1 ${
               activeTab === 'dashboard' ? 'text-blue-600' : 'text-slate-500'
             }`}
           >
             <Building2 className="w-5 h-5" />
-            <span className="text-xs">Übersicht</span>
+            <span className="text-xs">Start</span>
           </button>
           <button
             onClick={() => setActiveTab('meter')}
-            className={`py-4 flex flex-col items-center gap-1 ${
+            className={`py-3 flex flex-col items-center gap-1 ${
               activeTab === 'meter' ? 'text-blue-600' : 'text-slate-500'
             }`}
           >
@@ -180,21 +171,30 @@ export default function VermieterGo() {
           </button>
           <button
             onClick={() => setActiveTab('tasks')}
-            className={`py-4 flex flex-col items-center gap-1 ${
+            className={`py-3 flex flex-col items-center gap-1 ${
               activeTab === 'tasks' ? 'text-blue-600' : 'text-slate-500'
             }`}
           >
             <Wrench className="w-5 h-5" />
-            <span className="text-xs">Aufgaben</span>
+            <span className="text-xs">Tasks</span>
           </button>
           <button
             onClick={() => setActiveTab('tenants')}
-            className={`py-4 flex flex-col items-center gap-1 ${
+            className={`py-3 flex flex-col items-center gap-1 ${
               activeTab === 'tenants' ? 'text-blue-600' : 'text-slate-500'
             }`}
           >
             <Users className="w-5 h-5" />
             <span className="text-xs">Mieter</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('tools')}
+            className={`py-3 flex flex-col items-center gap-1 ${
+              activeTab === 'tools' ? 'text-blue-600' : 'text-slate-500'
+            }`}
+          >
+            <Wrench className="w-5 h-5" />
+            <span className="text-xs">Tools</span>
           </button>
         </div>
       </div>
