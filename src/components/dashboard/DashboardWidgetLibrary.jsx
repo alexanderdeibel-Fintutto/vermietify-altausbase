@@ -196,3 +196,29 @@ export const getWidgetsByCategory = (category) => {
 export const getWidgetById = (id) => {
   return AVAILABLE_WIDGETS.find(w => w.id === id);
 };
+
+// Filter widgets based on user access
+export const getAccessibleWidgets = (hasModuleAccess) => {
+  if (!hasModuleAccess) return AVAILABLE_WIDGETS;
+  
+  return AVAILABLE_WIDGETS.filter(widget => {
+    // Map widgets to required modules
+    const moduleMap = {
+      'buildings': 'immobilien',
+      'occupancy': 'immobilien',
+      'tenants': 'mieter',
+      'contracts': 'mieter',
+      'onboardings': 'mieter',
+      'revenue': 'finanzen',
+      'budget': 'finanzen',
+      'forecast': 'finanzen',
+      'documents': 'dokumenteingang',
+      'document-analysis': 'dokumenteingang'
+    };
+    
+    const requiredModule = moduleMap[widget.id];
+    if (!requiredModule) return true; // No restriction
+    
+    return hasModuleAccess(requiredModule);
+  });
+};

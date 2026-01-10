@@ -3,9 +3,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Settings, Plus } from 'lucide-react';
-import { WIDGET_COMPONENTS, AVAILABLE_WIDGETS } from '@/components/dashboard/DashboardWidgetLibrary';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Settings, Plus, LayoutDashboard } from 'lucide-react';
+import { WIDGET_COMPONENTS, AVAILABLE_WIDGETS, getAccessibleWidgets } from '@/components/dashboard/DashboardWidgetLibrary';
 import EnhancedWidgetConfig from '@/components/dashboard/EnhancedWidgetConfig';
+import { usePackageAccess } from '@/components/hooks/usePackageAccess';
 
 const DEFAULT_LAYOUT = AVAILABLE_WIDGETS.slice(0, 7).map((widget, idx) => ({
   id: widget.id,
@@ -18,26 +20,32 @@ const DEFAULT_LAYOUT = AVAILABLE_WIDGETS.slice(0, 7).map((widget, idx) => ({
 export default function Dashboard() {
   const [layout, setLayout] = useState(DEFAULT_LAYOUT);
   const [configOpen, setConfigOpen] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState(null);
   const queryClient = useQueryClient();
+  const { hasModuleAccess } = usePackageAccess();
 
   const { data: user } = useQuery({
     queryKey: ['current-user'],
     queryFn: () => base44.auth.me()
   });
 
-  // Load user-specific dashboard config
-  const { data: savedConfig } = useQuery({
-    queryKey: ['dashboard-config', user?.email],
+  // Load all user profiles
+  const { data: userProfiles = [] } = useQuery({
+    queryKey: ['dashboard-profiles', user?.email],
     queryFn: async () => {
-      if (!user?.email) return null;
-      const configs = await base44.entities.DashboardConfig.filter({ 
-        user_email: user.email,
-        is_default: true 
+      if (!user?.email) return [];
+      return await base44.entities.DashboardConfig.filter({ 
+        user_email: user.email
       });
-      return configs[0] || null;
     },
     enabled: !!user?.email
   });
+
+  // Get accessible widgets
+  const accessibleWidgets = getAccessibleWidgets(hasModuleAccess);
+
+  // Load active/default profile
+  const savedConfig = userProfiles.find(p => p.is_default) || userProfiles[0];
 
   // Save dashboard config
   const saveConfigMutation = useMutation({
@@ -77,6 +85,14 @@ export default function Dashboard() {
     setLayout(newLayout);
     localStorage.setItem('dashboard-layout', JSON.stringify(newLayout));
     saveConfigMutation.mutate(newLayout);
+  };
+
+  const switchProfile = (profileId) => {
+    const profile = userProfiles.find(p => p.id === profileId);
+    if (profile) {
+      setSelectedProfile(profileId);
+      setLayout(profile.layout);
+    }
   };
 
   const enabledWidgets = layout
@@ -140,6 +156,7 @@ export default function Dashboard() {
         onClose={() => setConfigOpen(false)}
         layout={layout}
         onSave={saveLayout}
+        user={user}
       />
     </div>
   );
