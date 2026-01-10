@@ -17,6 +17,8 @@ import TemplateLibrary from '@/components/companies/TemplateLibrary';
 import DocumentComparisonDialog from '@/components/companies/DocumentComparisonDialog';
 import DocumentSignatureDialog from '@/components/companies/DocumentSignatureDialog';
 import DocumentBatchUpload from '@/components/companies/DocumentBatchUpload';
+import SignatureWorkflow from '@/components/documents/SignatureWorkflow';
+import SignatureStatusTracker from '@/components/documents/SignatureStatusTracker';
 
 const legalFormLabels = {
   einzelunternehmen: 'Einzelunternehmen',
@@ -153,11 +155,23 @@ export default function CompanyDetailEnhanced() {
             onUpdate={handleDocumentsUpdate}
           />
           {company.documents?.map(doc => (
-            <DocumentVersionControl
-              key={doc.id}
-              documentId={doc.id}
-              fileName={doc.name}
-            />
+            <div key={doc.id} className="space-y-4">
+              <DocumentVersionControl
+                documentId={doc.id}
+                fileName={doc.name}
+              />
+              <SignatureStatusTracker documentId={doc.id} />
+              <Button
+                onClick={() => {
+                  setSelectedDocForSignature(doc);
+                  setWorkflowDialogOpen(true);
+                }}
+                variant="outline"
+                className="w-full"
+              >
+                Signaturanfrage erstellen
+              </Button>
+            </div>
           ))}
         </TabsContent>
 
@@ -196,6 +210,19 @@ export default function CompanyDetailEnhanced() {
           <ComplianceChecklist legalForm={company.legal_form} />
         </TabsContent>
       </Tabs>
-    </div>
-  );
-}
+
+      {selectedDocForSignature && (
+        <SignatureWorkflow
+          isOpen={workflowDialogOpen}
+          onClose={() => {
+            setWorkflowDialogOpen(false);
+            setSelectedDocForSignature(null);
+          }}
+          documentId={selectedDocForSignature.id}
+          documentName={selectedDocForSignature.name}
+          companyId={companyId}
+        />
+      )}
+      </div>
+      );
+      }

@@ -1,333 +1,203 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent } from '@/components/ui/card';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Pen, Plus, X, CheckCircle, Clock, AlertCircle, Send } from 'lucide-react';
-import { toast } from 'sonner';
+import { Plus, Trash2, Send, AlertCircle } from 'lucide-react';
 
-export default function SignatureWorkflow({ documentId, onClose }) {
+export default function SignatureWorkflow({ isOpen, onClose, documentId, documentName, companyId }) {
   const [signers, setSigners] = useState([]);
-  const [newSignerEmail, setNewSignerEmail] = useState('');
-  const [showSignDialog, setShowSignDialog] = useState(false);
-  const [currentSignature, setCurrentSignature] = useState(null);
+  const [newSigner, setNewSigner] = useState({ email: '', name: '', role: '' });
+  const [message, setMessage] = useState('');
+  const [signingOrder, setSigningOrder] = useState('parallel');
   const queryClient = useQueryClient();
 
-  const { data: document } = useQuery({
-    queryKey: ['document', documentId],
-    queryFn: () => base44.entities.Document.filter({ id: documentId }, null, 1).then(d => d[0])
-  });
-
-  const { data: signatures = [] } = useQuery({
-    queryKey: ['signatures', documentId],
-    queryFn: () => base44.entities.DocumentSignature.filter({ document_id: documentId }, 'signature_order', 50)
-  });
-
-  const addSignerMutation = useMutation({
-    mutationFn: async (email) => {
-      const user = await base44.auth.me();
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7);
-
-      return await base44.entities.DocumentSignature.create({
-        document_id: documentId,
-        signer_email: email,
-        signer_name: email.split('@')[0],
-        status: 'pending',
-        signature_order: signatures.length + 1,
-        expires_at: expiresAt.toISOString(),
-        created_at: new Date().toISOString()
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['signatures', documentId] });
-      toast.success('Unterzeichner hinzugefügt');
-      setNewSignerEmail('');
-    }
-  });
-
-  const sendSignatureRequestMutation = useMutation({
+  const createRequestMutation = useMutation({
     mutationFn: async () => {
-      const user = await base44.auth.me();
-      for (const signature of signatures.filter(s => s.status === 'pending')) {
-        await base44.integrations.Core.SendEmail({
-          to: signature.signer_email,
-          subject: `Signaturanfrage: ${document.title}`,
-          body: `Hallo ${signature.signer_name},
-
-Sie wurden gebeten, das folgende Dokument zu signieren: "${document.title}"
-
-Bitte melden Sie sich im Portal an, um das Dokument zu überprüfen und zu signieren.
-
-Ablaufdatum: ${new Date(signature.expires_at).toLocaleDateString('de-DE')}
-
-Mit freundlichen Grüßen,
-${user.full_name}`
-        });
-
-        await base44.entities.DocumentSignature.update(signature.id, {
-          reminder_sent: true
-        });
+      if (signers.length === 0) {
+        throw new Error('Mindestens ein Unterzeichner erforderlich');
       }
-    },
-    onSuccess: () => {
-      toast.success('Signaturanfragen versendet');
-      queryClient.invalidateQueries({ queryKey: ['signatures', documentId] });
-    }
-  });
 
-  const signDocumentMutation = useMutation({
-    mutationFn: async ({ signatureId, signatureData }) => {
-      return await base44.entities.DocumentSignature.update(signatureId, {
-        status: 'signed',
-        signature_data: signatureData,
-        signed_at: new Date().toISOString(),
-        ip_address: 'masked'
+      const request = await base44.entities.SignatureRequest.create({
+        document_id: documentId,
+        document_name: documentName,
+        company_id: companyId,
+        initiator_email: (await base44.auth.me()).email,
+        initiator_name: (await base44.auth.me()).full_name,
+        signers: signers.map(s => ({
+          ...s,
+          status: 'pending'
+        })),
+        message,
+        signing_order: signingOrder,
+        status: 'draft',
+        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        audit_trail: [{
+          action: 'created',
+          actor: (await base44.auth.me()).email,
+          timestamp: new Date().toISOString(),
+          details: `Signaturanfrage erstellt für ${signers.length} Unterzeichner`
+        }]
       });
+
+      // Send signature requests
+      await base44.functions.invoke('sendSignatureRequests', {
+        signature_request_id: request.id,
+        signers,
+        document_url: (await base44.entities.Document.filter({ id: documentId }))[0]?.url,
+        message
+      });
+
+      return request;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['signatures', documentId] });
-      toast.success('Dokument signiert');
-      setShowSignDialog(false);
+      queryClient.invalidateQueries({ queryKey: ['signature-requests'] });
+      onClose();
+      setSigners([]);
+      setMessage('');
     }
   });
 
   const addSigner = () => {
-    if (!newSignerEmail || !newSignerEmail.includes('@')) {
-      toast.error('Bitte gültige E-Mail eingeben');
-      return;
-    }
-    addSignerMutation.mutate(newSignerEmail);
+    if (!newSigner.email) return;
+    setSigners([...signers, { ...newSigner, id: Math.random().toString(36) }]);
+    setNewSigner({ email: '', name: '', role: '' });
   };
 
-  const removeSigner = async (signatureId) => {
-    await base44.entities.DocumentSignature.delete(signatureId);
-    queryClient.invalidateQueries({ queryKey: ['signatures', documentId] });
-    toast.success('Unterzeichner entfernt');
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'signed': return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'pending': return <Clock className="w-4 h-4 text-amber-600" />;
-      case 'declined': return <X className="w-4 h-4 text-red-600" />;
-      case 'expired': return <AlertCircle className="w-4 h-4 text-slate-600" />;
-      default: return null;
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'signed': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-amber-100 text-amber-800';
-      case 'declined': return 'bg-red-100 text-red-800';
-      case 'expired': return 'bg-slate-100 text-slate-800';
-      default: return 'bg-slate-100 text-slate-800';
-    }
+  const removeSigner = (id) => {
+    setSigners(signers.filter(s => s.id !== id));
   };
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Pen className="w-5 h-5" />
-            Signatur-Workflow: {document?.title}
-          </DialogTitle>
+          <DialogTitle>Signaturanfrage erstellen</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Add Signer */}
-          <div className="flex gap-2">
-            <Input
-              placeholder="E-Mail des Unterzeichners"
-              value={newSignerEmail}
-              onChange={(e) => setNewSignerEmail(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && addSigner()}
-            />
-            <Button onClick={addSigner} disabled={addSignerMutation.isPending}>
-              <Plus className="w-4 h-4 mr-2" />
-              Hinzufügen
-            </Button>
+        <div className="space-y-6">
+          {/* Document Info */}
+          <div className="bg-slate-50 p-3 rounded-lg">
+            <p className="text-sm text-slate-600">Dokument</p>
+            <p className="text-sm font-medium text-slate-900">{documentName}</p>
           </div>
 
-          {/* Signers List */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium">Unterzeichner ({signatures.length})</h3>
-              {signatures.some(s => s.status === 'pending') && (
-                <Button
-                  size="sm"
-                  onClick={() => sendSignatureRequestMutation.mutate()}
-                  disabled={sendSignatureRequestMutation.isPending}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  Anfragen versenden
-                </Button>
-              )}
+          {/* Signers */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium text-slate-900">Unterzeichner hinzufügen</h3>
+            
+            <div className="space-y-2">
+              <Input
+                placeholder="Email-Adresse"
+                value={newSigner.email}
+                onChange={(e) => setNewSigner({ ...newSigner, email: e.target.value })}
+                type="email"
+              />
+              <Input
+                placeholder="Name"
+                value={newSigner.name}
+                onChange={(e) => setNewSigner({ ...newSigner, name: e.target.value })}
+              />
+              <Input
+                placeholder="Rolle (z.B. Geschäftsführer)"
+                value={newSigner.role}
+                onChange={(e) => setNewSigner({ ...newSigner, role: e.target.value })}
+              />
+              <Button
+                onClick={addSigner}
+                className="w-full gap-2"
+                variant="outline"
+              >
+                <Plus className="w-4 h-4" />
+                Unterzeichner hinzufügen
+              </Button>
             </div>
 
-            {signatures.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6 text-center text-slate-600">
-                  Noch keine Unterzeichner hinzugefügt
-                </CardContent>
-              </Card>
-            ) : (
-              signatures.map((signature, idx) => (
-                <Card key={signature.id}>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="outline">#{signature.signature_order}</Badge>
-                          <p className="font-medium">{signature.signer_email}</p>
-                          {getStatusIcon(signature.status)}
-                        </div>
-                        <div className="flex items-center gap-4 text-xs text-slate-500">
-                          <Badge className={getStatusColor(signature.status)}>
-                            {signature.status === 'signed' ? 'Signiert' :
-                             signature.status === 'pending' ? 'Ausstehend' :
-                             signature.status === 'declined' ? 'Abgelehnt' : 'Abgelaufen'}
-                          </Badge>
-                          {signature.signed_at && (
-                            <span>Signiert: {new Date(signature.signed_at).toLocaleString('de-DE')}</span>
-                          )}
-                          {signature.status === 'pending' && (
-                            <span>Läuft ab: {new Date(signature.expires_at).toLocaleDateString('de-DE')}</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        {signature.status === 'pending' && (
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              setCurrentSignature(signature);
-                              setShowSignDialog(true);
-                            }}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            <Pen className="w-4 h-4 mr-1" />
-                            Signieren
-                          </Button>
-                        )}
-                        {signature.status === 'pending' && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => removeSigner(signature.id)}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
+            {signers.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm text-slate-600">{signers.length} Unterzeichner</p>
+                {signers.map(signer => (
+                  <div key={signer.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                    <div className="text-sm">
+                      <p className="font-medium text-slate-900">{signer.name}</p>
+                      <p className="text-slate-600">{signer.email}</p>
+                      {signer.role && <Badge variant="outline" className="mt-1">{signer.role}</Badge>}
                     </div>
-                  </CardContent>
-                </Card>
-              ))
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => removeSigner(signer.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
-        </div>
 
-        {showSignDialog && currentSignature && (
-          <SignatureDialog
-            signature={currentSignature}
-            document={document}
-            onClose={() => setShowSignDialog(false)}
-            onSign={(signatureData) => signDocumentMutation.mutate({ 
-              signatureId: currentSignature.id, 
-              signatureData 
-            })}
-          />
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function SignatureDialog({ signature, document, onClose, onSign }) {
-  const canvasRef = useRef(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-
-  const startDrawing = (e) => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const rect = canvas.getBoundingClientRect();
-    ctx.beginPath();
-    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
-    setIsDrawing(true);
-  };
-
-  const draw = (e) => {
-    if (!isDrawing) return;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const rect = canvas.getBoundingClientRect();
-    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-    ctx.stroke();
-  };
-
-  const stopDrawing = () => {
-    setIsDrawing(false);
-  };
-
-  const clearSignature = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  };
-
-  const saveSignature = () => {
-    const canvas = canvasRef.current;
-    const signatureData = canvas.toDataURL();
-    onSign(signatureData);
-  };
-
-  return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Dokument signieren</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="p-4 bg-slate-50 rounded border">
-            <p className="text-sm font-medium mb-1">Dokument: {document.title}</p>
-            <p className="text-xs text-slate-600">Als: {signature.signer_email}</p>
+          {/* Signing Order */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-900">Signaturreihenfolge</label>
+            <div className="flex gap-2">
+              {['parallel', 'sequential'].map(order => (
+                <Button
+                  key={order}
+                  variant={signingOrder === order ? 'default' : 'outline'}
+                  onClick={() => setSigningOrder(order)}
+                  className="flex-1"
+                >
+                  {order === 'parallel' ? 'Parallel' : 'Nacheinander'}
+                </Button>
+              ))}
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Ihre Unterschrift</label>
-            <canvas
-              ref={canvasRef}
-              width={400}
-              height={150}
-              className="border border-slate-300 rounded cursor-crosshair w-full"
-              onMouseDown={startDrawing}
-              onMouseMove={draw}
-              onMouseUp={stopDrawing}
-              onMouseLeave={stopDrawing}
+          {/* Message */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-900">Nachricht</label>
+            <Textarea
+              placeholder="Persönliche Nachricht an Unterzeichner (optional)"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={3}
             />
-            <Button variant="outline" size="sm" onClick={clearSignature} className="mt-2">
-              Löschen
+          </div>
+
+          {/* Info */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex gap-2">
+            <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div className="text-xs text-blue-900">
+              <p className="font-semibold">Automatische Ablauf in 30 Tagen</p>
+              <p>Unterzeichner erhalten E-Mails mit Signaturlinks</p>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={onClose}>
+              Abbrechen
+            </Button>
+            <Button
+              onClick={() => createRequestMutation.mutate()}
+              disabled={signers.length === 0 || createRequestMutation.isPending}
+              className="gap-2"
+            >
+              <Send className="w-4 h-4" />
+              Signaturanfrage senden
             </Button>
           </div>
 
-          <div className="text-xs text-slate-500 p-3 bg-amber-50 border border-amber-200 rounded">
-            Mit Ihrer Unterschrift bestätigen Sie, dass Sie das Dokument gelesen und verstanden haben.
-          </div>
-
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose}>Abbrechen</Button>
-            <Button onClick={saveSignature} className="bg-green-600 hover:bg-green-700">
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Signieren
-            </Button>
-          </div>
+          {createRequestMutation.isError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-sm text-red-900">{createRequestMutation.error.message}</p>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
