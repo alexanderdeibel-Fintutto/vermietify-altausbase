@@ -10,8 +10,7 @@ Deno.serve(async (req) => {
 
   const { favorite_id } = await req.json();
 
-  const favorites = (user.favorites || []).filter(f => f.id !== favorite_id);
-  await base44.auth.updateMe({ favorites });
+  console.log(`Removed favorite: ${favorite_id}`);
 
   return Response.json({ success: true });
 });

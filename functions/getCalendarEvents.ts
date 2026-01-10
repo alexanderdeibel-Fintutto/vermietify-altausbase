@@ -9,8 +9,8 @@ Deno.serve(async (req) => {
   }
 
   const events = [
-    { title: 'Umsatzsteuer-Voranmeldung', date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString() },
-    { title: 'Betriebsprüfung Vorbereitung', date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString() }
+    { id: '1', summary: 'Besichtigung Musterstraße 1', start: new Date().toISOString() },
+    { id: '2', summary: 'Wartungstermin', start: new Date(Date.now() + 86400000).toISOString() }
   ];
 
   return Response.json({ events });

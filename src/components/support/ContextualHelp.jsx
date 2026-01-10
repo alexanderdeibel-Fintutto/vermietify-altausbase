@@ -1,28 +1,42 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { HelpCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { HelpCircle, ExternalLink } from 'lucide-react';
 
-export default function ContextualHelp({ context = 'general' }) {
-  const helpTexts = {
-    general: 'Willkommen! Nutzen Sie die Navigation oben, um zwischen Modulen zu wechseln.',
-    tax: 'Hier verwalten Sie Ihre Steuerdaten. Laden Sie Belege hoch und lassen Sie sich Steueroptimierungen vorschlagen.',
-    wealth: 'Verwalten Sie Ihr Vermögen und tracken Sie Ihre Investments.',
-    documents: 'Alle Dokumente zentral verwalten mit KI-gestützter Kategorisierung.'
+export default function ContextualHelp({ page }) {
+  const helpContent = {
+    Buildings: {
+      title: 'Hilfe: Gebäude verwalten',
+      tips: [
+        'Klicken Sie auf "+" um ein neues Gebäude anzulegen',
+        'Nutzen Sie die Filter-Funktion für schnelle Suche',
+        'Gebäude können mit Einheiten und Mietern verknüpft werden'
+      ],
+      videoUrl: 'https://help.example.com/buildings'
+    }
   };
 
+  const content = helpContent[page] || helpContent.Buildings;
+
   return (
-    <div className="fixed bottom-6 left-6 z-50">
-      <Card className="w-80 shadow-lg">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <HelpCircle className="w-4 h-4" />
-            Hilfe
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-slate-600">{helpTexts[context]}</p>
-        </CardContent>
-      </Card>
-    </div>
+    <Card className="border-blue-200 bg-blue-50">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <HelpCircle className="w-4 h-4" />
+          {content.title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <ul className="text-xs space-y-1">
+          {content.tips.map((tip, idx) => (
+            <li key={idx}>• {tip}</li>
+          ))}
+        </ul>
+        <Button size="sm" variant="outline" className="w-full text-xs">
+          <ExternalLink className="w-3 h-3 mr-1" />
+          Mehr erfahren
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

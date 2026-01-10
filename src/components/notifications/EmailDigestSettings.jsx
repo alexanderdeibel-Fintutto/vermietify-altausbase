@@ -1,21 +1,28 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function EmailDigestSettings() {
-  const [frequency, setFrequency] = React.useState('weekly');
-  const [enabled, setEnabled] = React.useState(true);
+  const queryClient = useQueryClient();
 
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      await base44.functions.invoke('saveEmailDigestSettings', { frequency, enabled });
+  const { data: settings } = useQuery({
+    queryKey: ['emailDigest'],
+    queryFn: async () => {
+      const prefs = await base44.entities.NotificationPreference.list(null, 1);
+      return prefs[0] || { email_digest_frequency: 'daily' };
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (frequency) => {
+      await base44.functions.invoke('saveEmailDigestSettings', { frequency });
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['emailDigest'] });
       toast.success('Einstellungen gespeichert');
     }
   });
@@ -25,22 +32,22 @@ export default function EmailDigestSettings() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Mail className="w-5 h-5" />
-          Email-Zusammenfassung
+          E-Mail-Zusammenfassung
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-sm">Aktiviert</span>
-          <Switch checked={enabled} onCheckedChange={setEnabled} />
-        </div>
-        <Select value={frequency} onValueChange={setFrequency}>
+      <CardContent>
+        <Select 
+          value={settings?.email_digest_frequency || 'daily'}
+          onValueChange={(val) => updateMutation.mutate(val)}
+        >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="realtime">Sofort</SelectItem>
             <SelectItem value="daily">Täglich</SelectItem>
             <SelectItem value="weekly">Wöchentlich</SelectItem>
-            <SelectItem value="monthly">Monatlich</SelectItem>
+            <SelectItem value="never">Nie</SelectItem>
           </SelectContent>
         </Select>
       </CardContent>

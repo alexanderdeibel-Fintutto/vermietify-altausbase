@@ -8,21 +8,21 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { format, data_type } = await req.json();
+  const { entity_type, format } = await req.json();
 
-  const data = await base44.entities.FinancialItem.list(null, 1000);
+  const entities = await base44.entities[entity_type].list(null, 1000);
 
   let content = '';
   let mime_type = 'text/csv';
-  let filename = `export_${Date.now()}.csv`;
 
   if (format === 'csv') {
-    content = 'Name;Betrag;Datum\n' + data.map(d => `${d.name};${d.amount};${d.created_date}`).join('\n');
+    const headers = Object.keys(entities[0] || {}).join(',');
+    const rows = entities.map(e => Object.values(e).join(',')).join('\n');
+    content = `${headers}\n${rows}`;
   } else if (format === 'json') {
-    content = JSON.stringify(data, null, 2);
+    content = JSON.stringify(entities, null, 2);
     mime_type = 'application/json';
-    filename = `export_${Date.now()}.json`;
   }
 
-  return Response.json({ content, mime_type, filename });
+  return Response.json({ content, mime_type });
 });

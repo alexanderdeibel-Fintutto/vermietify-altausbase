@@ -1,26 +1,34 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { useMutation } from '@tanstack/react-query';
+import { Switch } from '@/components/ui/switch';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Bell } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function PushNotificationSettings() {
-  const [enabled, setEnabled] = React.useState(false);
+  const queryClient = useQueryClient();
+
+  const { data: settings } = useQuery({
+    queryKey: ['pushSettings'],
+    queryFn: async () => {
+      const prefs = await base44.entities.NotificationPreference.list(null, 1);
+      return prefs[0] || { push_enabled: false };
+    }
+  });
 
   const subscribeMutation = useMutation({
     mutationFn: async () => {
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: 'your-vapid-public-key'
+        applicationServerKey: 'YOUR_VAPID_PUBLIC_KEY'
       });
       await base44.functions.invoke('savePushSubscription', { subscription });
     },
     onSuccess: () => {
-      setEnabled(true);
+      queryClient.invalidateQueries({ queryKey: ['pushSettings'] });
       toast.success('Push-Benachrichtigungen aktiviert');
     }
   });
@@ -35,12 +43,12 @@ export default function PushNotificationSettings() {
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-sm">Aktiviert</span>
-          <Switch checked={enabled} onCheckedChange={(checked) => checked && subscribeMutation.mutate()} />
+          <span className="text-sm">Browser-Benachrichtigungen</span>
+          <Switch checked={settings?.push_enabled} />
         </div>
-        <p className="text-xs text-slate-600">
-          Erhalten Sie wichtige Updates direkt auf Ihr Gerät
-        </p>
+        <Button onClick={() => subscribeMutation.mutate()} className="w-full">
+          Aktivieren
+        </Button>
       </CardContent>
     </Card>
   );

@@ -8,50 +8,55 @@ import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function MultiFormatExporter() {
+  const [entityType, setEntityType] = useState('Building');
   const [format, setFormat] = useState('csv');
-  const [dataType, setDataType] = useState('all');
 
   const exportMutation = useMutation({
     mutationFn: async () => {
-      const response = await base44.functions.invoke('exportData', { format, data_type: dataType });
-      return response.data;
-    },
-    onSuccess: (data) => {
-      const blob = new Blob([data.content], { type: data.mime_type });
-      const url = URL.createObjectURL(blob);
+      const response = await base44.functions.invoke('exportData', { 
+        entity_type: entityType,
+        format 
+      });
+      const blob = new Blob([response.data.content], { type: response.data.mime_type });
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = data.filename;
+      a.download = `export.${format}`;
       a.click();
-      toast.success('Export erstellt');
+    },
+    onSuccess: () => {
+      toast.success('Export erfolgreich');
     }
   });
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Multi-Format Export</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Download className="w-5 h-5" />
+          Multi-Format-Export
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
+        <Select value={entityType} onValueChange={setEntityType}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Building">Gebäude</SelectItem>
+            <SelectItem value="Tenant">Mieter</SelectItem>
+            <SelectItem value="FinancialItem">Finanzen</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={format} onValueChange={setFormat}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="csv">CSV</SelectItem>
-            <SelectItem value="excel">Excel</SelectItem>
-            <SelectItem value="pdf">PDF</SelectItem>
+            <SelectItem value="xlsx">Excel</SelectItem>
             <SelectItem value="json">JSON</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={dataType} onValueChange={setDataType}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Daten</SelectItem>
-            <SelectItem value="financial">Nur Finanzen</SelectItem>
-            <SelectItem value="tax">Nur Steuer</SelectItem>
+            <SelectItem value="pdf">PDF</SelectItem>
           </SelectContent>
         </Select>
         <Button onClick={() => exportMutation.mutate()} className="w-full">

@@ -2,25 +2,27 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Upload, FileSpreadsheet } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function UniversalImporter() {
-  const [importType, setImportType] = useState('transactions');
+  const [entityType, setEntityType] = useState('Building');
+  const queryClient = useQueryClient();
 
   const importMutation = useMutation({
     mutationFn: async (file) => {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      const response = await base44.functions.invoke('universalImport', {
-        file_url,
-        import_type: importType
+      const response = await base44.functions.invoke('universalImport', { 
+        file_url, 
+        entity_type: entityType 
       });
       return response.data;
     },
     onSuccess: (data) => {
-      toast.success(`${data.imported} Einträge importiert`);
+      queryClient.invalidateQueries();
+      toast.success(`${data.imported} Datensätze importiert`);
     }
   });
 
@@ -33,21 +35,20 @@ export default function UniversalImporter() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <Select value={importType} onValueChange={setImportType}>
+        <Select value={entityType} onValueChange={setEntityType}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="transactions">Transaktionen</SelectItem>
-            <SelectItem value="buildings">Gebäude</SelectItem>
-            <SelectItem value="contracts">Verträge</SelectItem>
-            <SelectItem value="documents">Dokumente</SelectItem>
+            <SelectItem value="Building">Gebäude</SelectItem>
+            <SelectItem value="Tenant">Mieter</SelectItem>
+            <SelectItem value="FinancialItem">Finanzen</SelectItem>
+            <SelectItem value="Document">Dokumente</SelectItem>
           </SelectContent>
         </Select>
-        
         <input
           type="file"
-          accept=".csv,.xlsx,.pdf"
+          accept=".csv,.xlsx,.json"
           onChange={(e) => e.target.files?.[0] && importMutation.mutate(e.target.files[0])}
           className="hidden"
           id="universal-import"
@@ -56,7 +57,7 @@ export default function UniversalImporter() {
           <Button asChild className="w-full">
             <span>
               <Upload className="w-4 h-4 mr-2" />
-              Datei hochladen
+              CSV/Excel/JSON importieren
             </span>
           </Button>
         </label>

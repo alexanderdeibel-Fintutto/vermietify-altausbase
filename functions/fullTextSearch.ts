@@ -9,22 +9,31 @@ Deno.serve(async (req) => {
   }
 
   const { query } = await req.json();
+  const results = [];
 
-  const documents = await base44.entities.Document.list(null, 500);
-  
-  const results = documents
-    .filter(doc => 
-      doc.name?.toLowerCase().includes(query.toLowerCase()) ||
-      doc.content?.toLowerCase().includes(query.toLowerCase()) ||
-      doc.ai_summary?.toLowerCase().includes(query.toLowerCase())
-    )
-    .slice(0, 20)
-    .map(doc => ({
-      id: doc.id,
-      title: doc.name,
-      excerpt: doc.ai_summary || doc.content?.slice(0, 100),
-      type: doc.category
-    }));
+  const buildings = await base44.entities.Building.list(null, 100);
+  const tenants = await base44.entities.Tenant.list(null, 100);
+  const documents = await base44.entities.Document.list(null, 100);
+
+  for (const building of buildings) {
+    if (building.name?.toLowerCase().includes(query.toLowerCase())) {
+      results.push({
+        type: 'Gebäude',
+        title: building.name,
+        snippet: building.address
+      });
+    }
+  }
+
+  for (const tenant of tenants) {
+    if (tenant.full_name?.toLowerCase().includes(query.toLowerCase())) {
+      results.push({
+        type: 'Mieter',
+        title: tenant.full_name,
+        snippet: tenant.email
+      });
+    }
+  }
 
   return Response.json({ results });
 });

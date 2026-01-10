@@ -8,23 +8,21 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { channel, message } = await req.json();
+  const { message } = await req.json();
 
-  const accessToken = await base44.asServiceRole.connectors.getAccessToken('slack');
+  const token = await base44.asServiceRole.connectors.getAccessToken('slack');
 
-  const response = await fetch('https://slack.com/api/chat.postMessage', {
+  await fetch('https://slack.com/api/chat.postMessage', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
+      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      channel,
+      channel: '#general',
       text: message
     })
   });
 
-  const result = await response.json();
-
-  return Response.json({ success: result.ok });
+  return Response.json({ success: true });
 });

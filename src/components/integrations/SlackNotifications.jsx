@@ -1,23 +1,21 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { useMutation } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { MessageSquare, Send } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function SlackNotifications() {
-  const [channel, setChannel] = useState('#general');
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = React.useState('');
 
   const sendMutation = useMutation({
     mutationFn: async () => {
-      await base44.functions.invoke('sendSlackNotification', { channel, message });
+      await base44.functions.invoke('sendSlackNotification', { message });
     },
     onSuccess: () => {
-      toast.success('Nachricht an Slack gesendet');
+      toast.success('Nachricht gesendet');
       setMessage('');
     }
   });
@@ -31,20 +29,13 @@ export default function SlackNotifications() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <Badge className="bg-purple-600">Verbunden</Badge>
-        <Input
-          placeholder="Channel (z.B. #general)"
-          value={channel}
-          onChange={(e) => setChannel(e.target.value)}
-        />
-        <Input
-          placeholder="Nachricht"
+        <Input 
+          placeholder="Nachricht an Team..." 
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
-        <Button onClick={() => sendMutation.mutate()} disabled={!message} className="w-full">
-          <Send className="w-4 h-4 mr-2" />
-          Senden
+        <Button onClick={() => sendMutation.mutate()} className="w-full">
+          An Slack senden
         </Button>
       </CardContent>
     </Card>

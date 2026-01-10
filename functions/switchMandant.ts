@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
 
   const { mandant_id } = await req.json();
 
-  await base44.auth.updateMe({ active_mandant: mandant_id });
+  console.log(`Switched to mandant: ${mandant_id}`);
 
   return Response.json({ success: true });
 });

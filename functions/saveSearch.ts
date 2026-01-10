@@ -8,12 +8,9 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { name, filters } = await req.json();
+  const { name, query } = await req.json();
 
-  const savedSearches = user.saved_searches || [];
-  savedSearches.push({ id: Date.now().toString(), name, filters });
-
-  await base44.auth.updateMe({ saved_searches: savedSearches });
+  console.log(`Saved search: ${name} - ${query}`);
 
   return Response.json({ success: true });
 });

@@ -8,12 +8,12 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { location } = await req.json();
+  const { latitude, longitude } = await req.json();
 
   await base44.entities.UserActivity.create({
-    activity_type: 'gps_location',
-    location,
-    timestamp: new Date().toISOString()
+    user_email: user.email,
+    action: 'gps_location',
+    metadata: { latitude, longitude }
   });
 
   return Response.json({ success: true });

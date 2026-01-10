@@ -9,9 +9,8 @@ Deno.serve(async (req) => {
   }
 
   const mandants = [
-    { id: '1', name: 'Hauptmandant' },
-    { id: '2', name: 'GmbH Vermietung' },
-    { id: '3', name: 'Privatvermögen' }
+    { id: '1', name: 'Hausverwaltung Nord GmbH', buildings_count: 12 },
+    { id: '2', name: 'Immobilien Süd AG', buildings_count: 8 }
   ];
 
   return Response.json({ mandants });

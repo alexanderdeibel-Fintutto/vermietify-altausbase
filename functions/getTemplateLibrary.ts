@@ -9,10 +9,9 @@ Deno.serve(async (req) => {
   }
 
   const templates = [
-    { id: '1', name: 'Mietvertrag Standard', category: 'Verträge' },
-    { id: '2', name: 'Mieterhöhung', category: 'Schreiben' },
-    { id: '3', name: 'Nebenkostenabrechnung', category: 'Abrechnungen' },
-    { id: '4', name: 'Kündigung', category: 'Schreiben' }
+    { id: '1', name: 'Mieterhöhung', description: 'Vorlage für Mieterhöhung', category: 'Mietrecht' },
+    { id: '2', name: 'Kündigung', description: 'Kündigungsschreiben', category: 'Mietrecht' },
+    { id: '3', name: 'Nebenkostenabrechnung', description: 'Standard-Abrechnung', category: 'Finanzen' }
   ];
 
   return Response.json({ templates });

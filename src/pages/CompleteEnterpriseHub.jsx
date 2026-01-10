@@ -1,110 +1,93 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import PropertyROIComparison from '@/components/realestate/PropertyROIComparison';
-import VacancyCostCalculator from '@/components/realestate/VacancyCostCalculator';
-import RegionalMarketAnalysis from '@/components/realestate/RegionalMarketAnalysis';
-
-import RealtimeCashflowMonitor from '@/components/finance/RealtimeCashflowMonitor';
-import BudgetAlertManager from '@/components/finance/BudgetAlertManager';
-import CostCenterAccounting from '@/components/finance/CostCenterAccounting';
-import ProfitLossForecast from '@/components/finance/ProfitLossForecast';
-
-import TenantScoring from '@/components/tenants/TenantScoring';
-import AutomatedReminderFlow from '@/components/tenants/AutomatedReminderFlow';
-import DepositManager from '@/components/tenants/DepositManager';
-import ContractRenewalAssistant from '@/components/tenants/ContractRenewalAssistant';
-
-import QuarterlyReportGenerator from '@/components/reporting/QuarterlyReportGenerator';
-import PlanVsActualComparison from '@/components/reporting/PlanVsActualComparison';
-import CustomReportDesigner from '@/components/reporting/CustomReportDesigner';
-
-import GPSLocationTracker from '@/components/mobile/GPSLocationTracker';
+import UniversalImporter from '@/components/import/UniversalImporter';
+import MultiFormatExporter from '@/components/export/MultiFormatExporter';
+import APIKeyManager from '@/components/api/APIKeyManager';
+import WebhookManager from '@/components/api/WebhookManager';
+import PushNotificationSettings from '@/components/notifications/PushNotificationSettings';
+import EmailDigestSettings from '@/components/notifications/EmailDigestSettings';
 import OfflineSyncManager from '@/components/mobile/OfflineSyncManager';
-import BarcodeReceiptScanner from '@/components/mobile/BarcodeReceiptScanner';
-
+import GPSLocationTracker from '@/components/mobile/GPSLocationTracker';
+import GoogleCalendarSync from '@/components/integrations/GoogleCalendarSync';
 import SlackNotifications from '@/components/integrations/SlackNotifications';
-import DATEVInterface from '@/components/integrations/DATEVInterface';
-import BankingAutoSync from '@/components/integrations/BankingAutoSync';
-
-import PredictiveAnalytics from '@/components/analytics/PredictiveAnalytics';
-import MarketBenchmarking from '@/components/analytics/MarketBenchmarking';
-import PortfolioRiskAnalysis from '@/components/analytics/PortfolioRiskAnalysis';
-import TaxOptimizationAutopilot from '@/components/analytics/TaxOptimizationAutopilot';
+import FullTextSearch from '@/components/search/FullTextSearch';
+import SavedSearches from '@/components/search/SavedSearches';
+import MultiMandantManager from '@/components/team/MultiMandantManager';
+import TemplateLibrary from '@/components/templates/TemplateLibrary';
+import BulkOperationsPanel from '@/components/bulk/BulkOperationsPanel';
+import BackupRestore from '@/components/backup/BackupRestore';
+import AIAssistant from '@/components/support/AIAssistant';
+import VideoTutorials from '@/components/support/VideoTutorials';
+import ContextualHelp from '@/components/support/ContextualHelp';
+import DashboardBuilder from '@/components/dashboard/DashboardBuilder';
+import FavoritesManager from '@/components/dashboard/FavoritesManager';
 
 export default function CompleteEnterpriseHub() {
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Enterprise Features</h1>
+      <h1 className="text-3xl font-bold">Complete Enterprise Hub</h1>
+      <p className="text-slate-600">Alle Enterprise-Features an einem Ort</p>
 
-      <Tabs defaultValue="realestate">
-        <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger value="realestate">Immobilien</TabsTrigger>
-          <TabsTrigger value="finance">Controlling</TabsTrigger>
-          <TabsTrigger value="tenants">Mieter</TabsTrigger>
-          <TabsTrigger value="reporting">Reports</TabsTrigger>
+      <Tabs defaultValue="import">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="import">Import/Export</TabsTrigger>
+          <TabsTrigger value="notifications">Benachrichtigungen</TabsTrigger>
           <TabsTrigger value="mobile">Mobile</TabsTrigger>
           <TabsTrigger value="integrations">Integrationen</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="productivity">Produktivität</TabsTrigger>
+          <TabsTrigger value="support">Support</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="realestate" className="space-y-6">
-          <PropertyROIComparison />
+        <TabsContent value="import" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <VacancyCostCalculator />
-            <RegionalMarketAnalysis />
+            <UniversalImporter />
+            <MultiFormatExporter />
+            <APIKeyManager />
+            <WebhookManager />
           </div>
         </TabsContent>
 
-        <TabsContent value="finance" className="space-y-6">
-          <RealtimeCashflowMonitor />
+        <TabsContent value="notifications" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <BudgetAlertManager />
-            <CostCenterAccounting />
+            <PushNotificationSettings />
+            <EmailDigestSettings />
           </div>
-          <ProfitLossForecast />
-        </TabsContent>
-
-        <TabsContent value="tenants" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <TenantScoring tenantId="example" />
-            <AutomatedReminderFlow />
-            <DepositManager />
-            <ContractRenewalAssistant />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="reporting" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <QuarterlyReportGenerator />
-            <CustomReportDesigner />
-          </div>
-          <PlanVsActualComparison />
         </TabsContent>
 
         <TabsContent value="mobile" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <GPSLocationTracker />
             <OfflineSyncManager />
-            <BarcodeReceiptScanner />
+            <GPSLocationTracker />
           </div>
         </TabsContent>
 
         <TabsContent value="integrations" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <GoogleCalendarSync />
             <SlackNotifications />
-            <DATEVInterface />
-            <BankingAutoSync />
           </div>
         </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-6">
-          <PredictiveAnalytics />
+        <TabsContent value="productivity" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <MarketBenchmarking />
-            <PortfolioRiskAnalysis />
+            <FullTextSearch />
+            <SavedSearches />
+            <MultiMandantManager />
+            <TemplateLibrary />
+            <BulkOperationsPanel />
+            <BackupRestore />
+            <DashboardBuilder />
+            <FavoritesManager />
           </div>
-          <TaxOptimizationAutopilot />
+        </TabsContent>
+
+        <TabsContent value="support" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <AIAssistant />
+            <VideoTutorials />
+          </div>
+          <ContextualHelp page="Buildings" />
         </TabsContent>
       </Tabs>
     </div>

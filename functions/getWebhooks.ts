@@ -9,8 +9,7 @@ Deno.serve(async (req) => {
   }
 
   const webhooks = [
-    { id: '1', url: 'https://example.com/webhook', events: ['transaction.created'], active: true },
-    { id: '2', url: 'https://zapier.com/hooks/abc', events: ['document.uploaded'], active: true }
+    { id: '1', url: 'https://example.com/webhook', events: ['building.created', 'tenant.updated'] }
   ];
 
   return Response.json({ webhooks });

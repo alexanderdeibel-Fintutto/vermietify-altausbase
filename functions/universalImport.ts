@@ -8,47 +8,27 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { file_url, import_type } = await req.json();
+  const { file_url, entity_type } = await req.json();
 
-  const schema = {
-    transactions: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          name: { type: 'string' },
-          amount: { type: 'number' },
-          date: { type: 'string' }
-        }
-      }
-    },
-    buildings: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          name: { type: 'string' },
-          address: { type: 'string' }
-        }
-      }
-    }
-  };
+  const response = await fetch(file_url);
+  const text = await response.text();
+  
+  const rows = text.split('\n').slice(1);
+  let imported = 0;
 
-  const extracted = await base44.integrations.Core.ExtractDataFromUploadedFile({
-    file_url,
-    json_schema: schema[import_type] || schema.transactions
-  });
+  for (const row of rows) {
+    if (!row.trim()) continue;
+    const values = row.split(',');
+    
+    const data = entity_type === 'Building' ? {
+      name: values[0],
+      address: values[1],
+      city: values[2]
+    } : {};
 
-  if (extracted.status === 'error') {
-    return Response.json({ error: extracted.details }, { status: 400 });
+    await base44.asServiceRole.entities[entity_type].create(data);
+    imported++;
   }
 
-  const entityMap = {
-    transactions: 'FinancialItem',
-    buildings: 'Building'
-  };
-
-  const imported = await base44.entities[entityMap[import_type]].bulkCreate(extracted.output);
-
-  return Response.json({ success: true, imported: imported.length });
+  return Response.json({ imported });
 });

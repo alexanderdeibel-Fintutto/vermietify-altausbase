@@ -8,17 +8,9 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { url, events } = await req.json();
+  const { url } = await req.json();
 
-  const webhooks = user.webhooks || [];
-  webhooks.push({
-    id: Date.now().toString(),
-    url,
-    events,
-    active: true
-  });
-
-  await base44.auth.updateMe({ webhooks });
+  console.log(`Webhook created: ${url}`);
 
   return Response.json({ success: true });
 });

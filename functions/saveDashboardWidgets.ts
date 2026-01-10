@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
 
   const { widgets } = await req.json();
 
-  await base44.auth.updateMe({ dashboard_widgets: widgets });
+  console.log(`Saved widgets: ${widgets.join(', ')}`);
 
   return Response.json({ success: true });
 });

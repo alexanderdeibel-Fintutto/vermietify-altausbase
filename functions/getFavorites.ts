@@ -8,9 +8,9 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const favorites = user.favorites || [
-    { id: '1', title: 'Meine Gebäude', type: 'buildings' },
-    { id: '2', title: 'Steuer-Dashboard', type: 'tax' }
+  const favorites = [
+    { id: '1', name: 'Gebäude-Übersicht', page: 'Buildings' },
+    { id: '2', name: 'Finanz-Dashboard', page: 'FinancialItems' }
   ];
 
   return Response.json({ favorites });

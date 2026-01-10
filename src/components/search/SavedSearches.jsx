@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Bookmark, Plus } from 'lucide-react';
 import { toast } from 'sonner';
@@ -22,7 +21,7 @@ export default function SavedSearches() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await base44.functions.invoke('saveSearch', { name, filters: {} });
+      await base44.functions.invoke('saveSearch', { name, query: 'current_query' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['savedSearches'] });
@@ -41,16 +40,22 @@ export default function SavedSearches() {
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex gap-2">
-          <Input placeholder="Name der Suche" value={name} onChange={(e) => setName(e.target.value)} />
+          <Input 
+            placeholder="Suchname..." 
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
           <Button size="icon" onClick={() => saveMutation.mutate()}>
             <Plus className="w-4 h-4" />
           </Button>
         </div>
-        {searches.map(search => (
-          <Button key={search.id} variant="outline" className="w-full justify-start">
-            {search.name}
-          </Button>
-        ))}
+        <div className="space-y-2">
+          {searches.map(search => (
+            <Button key={search.id} variant="outline" className="w-full justify-start">
+              {search.name}
+            </Button>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

@@ -8,35 +8,17 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { operation, ids } = await req.json();
+  const { operation, entity_type, data } = await req.json();
 
-  switch (operation) {
-    case 'categorize':
-      for (const id of ids) {
-        const item = await base44.entities.FinancialItem.filter({ id });
-        const category = await base44.integrations.Core.InvokeLLM({
-          prompt: `Kategorisiere diese Transaktion: ${item[0].name}`,
-          response_json_schema: {
-            type: 'object',
-            properties: { category: { type: 'string' } }
-          }
-        });
-        await base44.entities.FinancialItem.update(id, { category: category.category });
-      }
-      break;
-    
-    case 'delete':
-      for (const id of ids) {
-        await base44.entities.FinancialItem.delete(id);
-      }
-      break;
-    
-    case 'archive':
-      for (const id of ids) {
-        await base44.entities.FinancialItem.update(id, { is_archived: true });
-      }
-      break;
+  let affected = 0;
+
+  if (operation === 'update') {
+    const entities = await base44.entities[entity_type].list(null, 100);
+    for (const entity of entities) {
+      await base44.entities[entity_type].update(entity.id, data);
+      affected++;
+    }
   }
 
-  return Response.json({ success: true, processed: ids.length });
+  return Response.json({ affected });
 });

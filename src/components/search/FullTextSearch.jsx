@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Search, FileText } from 'lucide-react';
+import { Search } from 'lucide-react';
 
 export default function FullTextSearch() {
   const [query, setQuery] = useState('');
@@ -28,23 +28,22 @@ export default function FullTextSearch() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <Input
-          placeholder="Dokumente durchsuchen..."
+        <Input 
+          placeholder="Suche über alle Daten..." 
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        {results.map(result => (
-          <div key={result.id} className="p-3 bg-slate-50 rounded-lg">
-            <div className="flex items-start gap-2">
-              <FileText className="w-4 h-4 text-blue-600 mt-1" />
-              <div className="flex-1">
+        <div className="space-y-2 max-h-96 overflow-y-auto">
+          {results.map((result, idx) => (
+            <div key={idx} className="p-3 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer">
+              <div className="flex items-center justify-between">
                 <p className="font-semibold text-sm">{result.title}</p>
-                <p className="text-xs text-slate-600">{result.excerpt}...</p>
-                <Badge variant="outline" className="mt-1 text-xs">{result.type}</Badge>
+                <Badge variant="outline">{result.type}</Badge>
               </div>
+              <p className="text-xs text-slate-600 mt-1">{result.snippet}</p>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

@@ -10,7 +10,19 @@ Deno.serve(async (req) => {
 
   const { subscription } = await req.json();
 
-  await base44.auth.updateMe({ push_subscription: subscription });
+  const prefs = await base44.entities.NotificationPreference.filter({ user_email: user.email });
+  if (prefs.length > 0) {
+    await base44.entities.NotificationPreference.update(prefs[0].id, {
+      push_enabled: true,
+      push_subscription: subscription
+    });
+  } else {
+    await base44.entities.NotificationPreference.create({
+      user_email: user.email,
+      push_enabled: true,
+      push_subscription: subscription
+    });
+  }
 
   return Response.json({ success: true });
 });

@@ -8,12 +8,7 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const widgets = [
-    { id: '1', name: 'Vermögensübersicht', type: 'wealth', enabled: true },
-    { id: '2', name: 'Steuer-Dashboard', type: 'tax', enabled: true },
-    { id: '3', name: 'Immobilien', type: 'buildings', enabled: true },
-    { id: '4', name: 'Transaktionen', type: 'transactions', enabled: false }
-  ];
+  const widgets = ['stats', 'revenue', 'tasks'];
 
   return Response.json({ widgets });
 });
