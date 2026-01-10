@@ -321,6 +321,7 @@ import WorkflowAutomationDashboard from './pages/WorkflowAutomationDashboard';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import DocumentComplianceDashboard from './pages/DocumentComplianceDashboard';
 import DocumentIntegrationHub from './pages/DocumentIntegrationHub';
+import DocumentAdvancedHub from './pages/DocumentAdvancedHub';
 import __Layout from './Layout.jsx';
 
 
@@ -648,6 +649,7 @@ export const PAGES = {
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "DocumentComplianceDashboard": DocumentComplianceDashboard,
     "DocumentIntegrationHub": DocumentIntegrationHub,
+    "DocumentAdvancedHub": DocumentAdvancedHub,
 }
 
 export const pagesConfig = {
