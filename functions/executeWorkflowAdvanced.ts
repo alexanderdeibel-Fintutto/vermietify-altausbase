@@ -172,6 +172,11 @@ async function executeAction(action, entityData, base44) {
     case 'slack_message':
       return await sendSlackMessage(config, entityData, base44);
     
+    case 'auto_assign_maintenance':
+      return await base44.asServiceRole.functions.invoke('autoAssignMaintenanceTask', {
+        task_id: entityData.id
+      });
+    
     default:
       throw new Error(`Unknown action type: ${type}`);
   }

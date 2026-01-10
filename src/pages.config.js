@@ -1,3 +1,4 @@
+import AIDocumentAnalysis from './pages/AIDocumentAnalysis';
 import AIRuleApprovalDashboard from './pages/AIRuleApprovalDashboard';
 import AITaxAdvisor from './pages/AITaxAdvisor';
 import AITaxRecommendations from './pages/AITaxRecommendations';
@@ -135,6 +136,7 @@ import MultiYearTaxStrategy from './pages/MultiYearTaxStrategy';
 import MyAccount from './pages/MyAccount';
 import NavigationDemo from './pages/NavigationDemo';
 import NotificationCenter from './pages/NotificationCenter';
+import NotificationHub from './pages/NotificationHub';
 import NotificationManagement from './pages/NotificationManagement';
 import Onboarding from './pages/Onboarding';
 import OnboardingWizard from './pages/OnboardingWizard';
@@ -148,6 +150,7 @@ import PerformanceMonitor from './pages/PerformanceMonitor';
 import PermissionDashboard from './pages/PermissionDashboard';
 import PersonalizedTaxCockpit from './pages/PersonalizedTaxCockpit';
 import ProjectManagement from './pages/ProjectManagement';
+import PropertyManagerDashboard from './pages/PropertyManagerDashboard';
 import PropertyPortfolio from './pages/PropertyPortfolio';
 import PropertyValuation from './pages/PropertyValuation';
 import QuarterlyTaxEstimator from './pages/QuarterlyTaxEstimator';
@@ -216,16 +219,16 @@ import TaxFormLibrary from './pages/TaxFormLibrary';
 import TaxForms from './pages/TaxForms';
 import TaxLawUpdates from './pages/TaxLawUpdates';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
+import TaxManagement from './pages/TaxManagement';
 import TaxLossHarvesting from './pages/TaxLossHarvesting';
 import TaxLossHarvestingAdvisor from './pages/TaxLossHarvestingAdvisor';
-import TaxManagement from './pages/TaxManagement';
-import TaxReportExport from './pages/TaxReportExport';
 import TaxMonitoringDashboard from './pages/TaxMonitoringDashboard';
 import TaxOptimizationAnalyzer from './pages/TaxOptimizationAnalyzer';
 import TaxOptimizationStrategy from './pages/TaxOptimizationStrategy';
 import TaxPerformanceDashboard from './pages/TaxPerformanceDashboard';
 import TaxPlanningAdvisor from './pages/TaxPlanningAdvisor';
 import TaxRemindersCenter from './pages/TaxRemindersCenter';
+import TaxReportExport from './pages/TaxReportExport';
 import TaxReportGeneration from './pages/TaxReportGeneration';
 import TaxReportingHub from './pages/TaxReportingHub';
 import TaxReturnFilingManager from './pages/TaxReturnFilingManager';
@@ -283,14 +286,13 @@ import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import AIDocumentAnalysis from './pages/AIDocumentAnalysis';
-import PropertyManagerDashboard from './pages/PropertyManagerDashboard';
-import NotificationHub from './pages/NotificationHub';
 import AdminMessagingCenter from './pages/AdminMessagingCenter';
+import TechnicianManagement from './pages/TechnicianManagement';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AIDocumentAnalysis": AIDocumentAnalysis,
     "AIRuleApprovalDashboard": AIRuleApprovalDashboard,
     "AITaxAdvisor": AITaxAdvisor,
     "AITaxRecommendations": AITaxRecommendations,
@@ -428,6 +430,7 @@ export const PAGES = {
     "MyAccount": MyAccount,
     "NavigationDemo": NavigationDemo,
     "NotificationCenter": NotificationCenter,
+    "NotificationHub": NotificationHub,
     "NotificationManagement": NotificationManagement,
     "Onboarding": Onboarding,
     "OnboardingWizard": OnboardingWizard,
@@ -441,6 +444,7 @@ export const PAGES = {
     "PermissionDashboard": PermissionDashboard,
     "PersonalizedTaxCockpit": PersonalizedTaxCockpit,
     "ProjectManagement": ProjectManagement,
+    "PropertyManagerDashboard": PropertyManagerDashboard,
     "PropertyPortfolio": PropertyPortfolio,
     "PropertyValuation": PropertyValuation,
     "QuarterlyTaxEstimator": QuarterlyTaxEstimator,
@@ -509,16 +513,16 @@ export const PAGES = {
     "TaxForms": TaxForms,
     "TaxLawUpdates": TaxLawUpdates,
     "TaxLibraryManagement": TaxLibraryManagement,
+    "TaxManagement": TaxManagement,
     "TaxLossHarvesting": TaxLossHarvesting,
     "TaxLossHarvestingAdvisor": TaxLossHarvestingAdvisor,
-    "TaxManagement": TaxManagement,
-    "TaxReportExport": TaxReportExport,
     "TaxMonitoringDashboard": TaxMonitoringDashboard,
     "TaxOptimizationAnalyzer": TaxOptimizationAnalyzer,
     "TaxOptimizationStrategy": TaxOptimizationStrategy,
     "TaxPerformanceDashboard": TaxPerformanceDashboard,
     "TaxPlanningAdvisor": TaxPlanningAdvisor,
     "TaxRemindersCenter": TaxRemindersCenter,
+    "TaxReportExport": TaxReportExport,
     "TaxReportGeneration": TaxReportGeneration,
     "TaxReportingHub": TaxReportingHub,
     "TaxReturnFilingManager": TaxReturnFilingManager,
@@ -576,10 +580,8 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "AIDocumentAnalysis": AIDocumentAnalysis,
-    "PropertyManagerDashboard": PropertyManagerDashboard,
-    "NotificationHub": NotificationHub,
     "AdminMessagingCenter": AdminMessagingCenter,
+    "TechnicianManagement": TechnicianManagement,
 }
 
 export const pagesConfig = {

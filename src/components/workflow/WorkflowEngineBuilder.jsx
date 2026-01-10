@@ -12,6 +12,7 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import AdvancedConditionBuilder from './AdvancedConditionBuilder';
 import WebhookActionBuilder from './WebhookActionBuilder';
+import AutoAssignmentConfig from './AutoAssignmentConfig';
 
 export default function WorkflowEngineBuilder({ workflow, onClose }) {
   const queryClient = useQueryClient();
@@ -60,7 +61,8 @@ export default function WorkflowEngineBuilder({ workflow, onClose }) {
     { value: 'update_entity', label: 'Datensatz aktualisieren' },
     { value: 'send_notification', label: 'Benachrichtigung senden' },
     { value: 'webhook', label: 'Webhook aufrufen' },
-    { value: 'slack_message', label: 'Slack Nachricht' }
+    { value: 'slack_message', label: 'Slack Nachricht' },
+    { value: 'auto_assign_maintenance', label: 'Wartungsauftrag automatisch zuweisen' }
   ];
 
   const entityFieldOptions = [
@@ -310,6 +312,17 @@ export default function WorkflowEngineBuilder({ workflow, onClose }) {
                     }}
                   />
                 </>
+              )}
+
+              {action.type === 'auto_assign_maintenance' && (
+                <AutoAssignmentConfig
+                  action={action}
+                  onChange={(updated) => {
+                    const newActions = [...actions];
+                    newActions[idx] = updated;
+                    setActions(newActions);
+                  }}
+                />
               )}
             </div>
           ))}
