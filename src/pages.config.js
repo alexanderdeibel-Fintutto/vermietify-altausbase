@@ -308,10 +308,10 @@ import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
 import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import WorkflowAutomation from './pages/WorkflowAutomation';
+import WorkflowAutomationBuilder from './pages/WorkflowAutomationBuilder';
 import WorkflowAutomationCenter from './pages/WorkflowAutomationCenter';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
-import WorkflowAutomationBuilder from './pages/WorkflowAutomationBuilder';
 import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import __Layout from './Layout.jsx';
 
@@ -627,10 +627,10 @@ export const PAGES = {
     "WhatsAppSetup": WhatsAppSetup,
     "WithholdingTaxCalculator": WithholdingTaxCalculator,
     "WorkflowAutomation": WorkflowAutomation,
+    "WorkflowAutomationBuilder": WorkflowAutomationBuilder,
     "WorkflowAutomationCenter": WorkflowAutomationCenter,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
-    "WorkflowAutomationBuilder": WorkflowAutomationBuilder,
     "WorkflowExecutionCenter": WorkflowExecutionCenter,
 }
 
