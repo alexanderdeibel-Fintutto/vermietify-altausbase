@@ -8,6 +8,7 @@ import LeaseDetailsCard from '@/components/tenant-portal/LeaseDetailsCard';
 import PaymentHistoryWidget from '@/components/tenant-portal/PaymentHistoryWidget';
 import MaintenanceRequestForm from '@/components/tenant-portal/MaintenanceRequestForm';
 import MaintenanceRequestList from '@/components/tenant-portal/MaintenanceRequestList';
+import MaintenanceRequestTracker from '@/components/tenant-portal/MaintenanceRequestTracker';
 import KnowledgeBaseWidget from '@/components/tenant-portal/KnowledgeBaseWidget';
 import PaymentForm from '@/components/tenant-portal/PaymentForm';
 import PaymentReceiptViewer from '@/components/tenant-portal/PaymentReceiptViewer';
