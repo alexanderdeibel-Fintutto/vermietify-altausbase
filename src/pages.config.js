@@ -282,6 +282,7 @@ import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import FullFeatureHub from './pages/FullFeatureHub';
 import CompleteFeaturesHub from './pages/CompleteFeaturesHub';
 import CompleteEnterpriseHub from './pages/CompleteEnterpriseHub';
+import UltimateEnterpriseHub from './pages/UltimateEnterpriseHub';
 import __Layout from './Layout.jsx';
 
 
@@ -570,6 +571,7 @@ export const PAGES = {
     "FullFeatureHub": FullFeatureHub,
     "CompleteFeaturesHub": CompleteFeaturesHub,
     "CompleteEnterpriseHub": CompleteEnterpriseHub,
+    "UltimateEnterpriseHub": UltimateEnterpriseHub,
 }
 
 export const pagesConfig = {
