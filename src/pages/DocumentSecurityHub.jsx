@@ -6,6 +6,11 @@ import DocumentLockManager from '@/components/documents/DocumentLockManager';
 import DigitalRightsManager from '@/components/documents/DigitalRightsManager';
 import TenantIsolationDashboard from '@/components/documents/TenantIsolationDashboard';
 import WatermarkTool from '@/components/documents/WatermarkTool';
+import RedactionTool from '@/components/documents/RedactionTool';
+import EncryptionManager from '@/components/documents/EncryptionManager';
+import DLPScanner from '@/components/documents/DLPScanner';
+import DLPRuleManager from '@/components/documents/DLPRuleManager';
+import CloudIntegrationHub from '@/components/documents/CloudIntegrationHub';
 import { Card } from '@/components/ui/card';
 
 export default function DocumentSecurityHub() {
@@ -48,15 +53,19 @@ export default function DocumentSecurityHub() {
       <div>
         <h1 className="text-3xl font-bold">Document Security Hub</h1>
         <p className="text-slate-600 mt-1">
-          Locking, DRM, Watermarks & Multi-Tenant Isolation
+          Locking, DRM, E2E Encryption, Redaction, DLP & Multi-Tenant Isolation
         </p>
       </div>
 
       <Tabs defaultValue="locking" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
           <TabsTrigger value="locking">Locking</TabsTrigger>
           <TabsTrigger value="drm">DRM</TabsTrigger>
           <TabsTrigger value="watermark">Watermark</TabsTrigger>
+          <TabsTrigger value="redaction">Redaction</TabsTrigger>
+          <TabsTrigger value="encryption">E2E</TabsTrigger>
+          <TabsTrigger value="dlp">DLP</TabsTrigger>
+          <TabsTrigger value="cloud">Cloud</TabsTrigger>
           <TabsTrigger value="tenant">Tenant</TabsTrigger>
         </TabsList>
 
@@ -88,6 +97,37 @@ export default function DocumentSecurityHub() {
               <p className="text-slate-600">Keine Dokumente gefunden</p>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="redaction">
+          {firstDocId ? (
+            <RedactionTool documentId={firstDocId} />
+          ) : (
+            <Card className="text-center py-12">
+              <p className="text-slate-600">Keine Dokumente gefunden</p>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="encryption">
+          {firstDocId ? (
+            <EncryptionManager documentId={firstDocId} companyId={companyId} />
+          ) : (
+            <Card className="text-center py-12">
+              <p className="text-slate-600">Keine Dokumente gefunden</p>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="dlp">
+          <div className="grid gap-4 md:grid-cols-2">
+            <DLPRuleManager companyId={companyId} />
+            {firstDocId && <DLPScanner documentId={firstDocId} companyId={companyId} />}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="cloud">
+          <CloudIntegrationHub companyId={companyId} />
         </TabsContent>
 
         <TabsContent value="tenant">
