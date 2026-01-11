@@ -92,14 +92,15 @@ export default function LetterXpressManagement() {
   };
 
   const handleTest = async () => {
-    setTestLoading(true);
-    try {
-      if (!apiKey || !accountId || !email) {
-        toast.error('Bitte füllen Sie alle Felder aus');
-        setTestLoading(false);
-        return;
-      }
+    if (!apiKey || !accountId || !email) {
+      toast.error('Bitte füllen Sie alle Felder aus');
+      return;
+    }
 
+    setTestLoading(true);
+    const loadingToast = toast.loading('Verbindung wird getestet...');
+    
+    try {
       const response = await base44.functions.invoke('testLetterXpressConnection', {
         apiKey,
         accountId,
@@ -107,12 +108,15 @@ export default function LetterXpressManagement() {
       });
 
       if (response.data?.success) {
+        toast.dismiss(loadingToast);
         toast.success(response.data.message);
       } else {
+        toast.dismiss(loadingToast);
         toast.error(response.data?.message || 'Verbindung fehlgeschlagen');
       }
     } catch (error) {
       console.error('Test error:', error);
+      toast.dismiss(loadingToast);
       toast.error('Fehler: ' + (error.message || 'Verbindung fehlgeschlagen'));
     } finally {
       setTestLoading(false);
