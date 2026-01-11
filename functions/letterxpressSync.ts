@@ -10,19 +10,40 @@ Deno.serve(async (req) => {
     }
 
     // Hole LetterXpress-Zugangsdaten vom aktuellen User
-    const creds = await base44.entities.LetterXpressCredential.filter({
-      created_by: user.email
-    });
+    let creds = [];
+    try {
+      creds = await base44.entities.LetterXpressCredential.filter({
+        created_by: user.email
+      });
+    } catch (err) {
+      console.log('LetterXpressCredential entity may not exist yet');
+    }
 
     if (!creds || creds.length === 0) {
-      return Response.json({ error: 'LetterXpress credentials not configured' }, { status: 400 });
+      return Response.json({ 
+        success: false,
+        error: 'LetterXpress credentials not configured',
+        message: 'Bitte konfigurieren Sie Ihre LetterXpress-Zugangsdaten zuerst'
+      }, { status: 400 });
     }
 
     const apiKey = creds[0].api_key;
     const accountId = creds[0].account_id;
 
     if (!apiKey || !accountId) {
-      return Response.json({ error: 'LetterXpress credentials incomplete' }, { status: 400 });
+      return Response.json({ 
+        success: false,
+        error: 'LetterXpress credentials incomplete'
+      }, { status: 400 });
+    }
+
+    // Für Demo: wenn keine echten Daten, gib leeres Array zurück
+    if (apiKey === 'demo' || accountId === 'demo') {
+      return Response.json({ 
+        success: true, 
+        synced: 0,
+        message: 'Demo-Modus: Keine echten Daten'
+      });
     }
 
     // API-Call zu LetterXpress
@@ -36,47 +57,65 @@ Deno.serve(async (req) => {
     });
 
     if (!response.ok) {
-      return Response.json({ error: 'LetterXpress API error', status: response.status }, { status: 400 });
+      const errorBody = await response.text();
+      console.error('LetterXpress API error:', response.status, errorBody);
+      return Response.json({ 
+        success: false,
+        error: 'LetterXpress API error',
+        status: response.status,
+        message: 'Verbindung zu LetterXpress fehlgeschlagen'
+      }, { status: 400 });
     }
 
     const shipments = await response.json();
 
     // Speichere/Update Versände in Datenbank
-    for (const shipment of shipments) {
-      const existing = await base44.entities.LetterShipment.filter({
-        letterxpress_id: shipment.id
-      });
+    let syncedCount = 0;
+    for (const shipment of shipments || []) {
+      try {
+        const existing = await base44.entities.LetterShipment.filter({
+          letterxpress_id: shipment.id
+        });
 
-      if (existing.length === 0) {
-        await base44.entities.LetterShipment.create({
-          letterxpress_id: shipment.id,
-          recipient_name: shipment.recipient?.name,
-          recipient_address: `${shipment.recipient?.street} ${shipment.recipient?.housenumber}, ${shipment.recipient?.zipcode} ${shipment.recipient?.city}`,
-          shipment_type: shipment.type, // letter, registered, etc.
-          status: shipment.status, // pending, sent, delivered, failed
-          tracking_number: shipment.tracking_number,
-          sent_date: shipment.sent_date,
-          delivery_date: shipment.delivered_date,
-          cost: shipment.price,
-          letterxpress_data: JSON.stringify(shipment)
-        });
-      } else {
-        // Update existing
-        await base44.entities.LetterShipment.update(existing[0].id, {
-          status: shipment.status,
-          delivery_date: shipment.delivered_date,
-          tracking_number: shipment.tracking_number,
-          letterxpress_data: JSON.stringify(shipment)
-        });
+        if (existing.length === 0) {
+          await base44.entities.LetterShipment.create({
+            letterxpress_id: shipment.id,
+            recipient_name: shipment.recipient?.name || 'Unknown',
+            recipient_address: `${shipment.recipient?.street || ''} ${shipment.recipient?.housenumber || ''}, ${shipment.recipient?.zipcode || ''} ${shipment.recipient?.city || ''}`.trim(),
+            shipment_type: shipment.type || 'letter',
+            status: shipment.status || 'pending',
+            tracking_number: shipment.tracking_number || '',
+            sent_date: shipment.sent_date,
+            delivery_date: shipment.delivered_date,
+            cost: shipment.price || 0,
+            letterxpress_data: JSON.stringify(shipment)
+          });
+          syncedCount++;
+        } else {
+          await base44.entities.LetterShipment.update(existing[0].id, {
+            status: shipment.status || 'pending',
+            delivery_date: shipment.delivered_date,
+            tracking_number: shipment.tracking_number || '',
+            letterxpress_data: JSON.stringify(shipment)
+          });
+          syncedCount++;
+        }
+      } catch (itemError) {
+        console.error('Error syncing shipment:', itemError);
       }
     }
 
     return Response.json({ 
       success: true, 
-      synced: shipments.length,
-      message: `${shipments.length} Versände synchronisiert`
+      synced: syncedCount,
+      message: `${syncedCount} Versände synchronisiert`
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('Sync error:', error);
+    return Response.json({ 
+      success: false,
+      error: error.message || 'Unknown error',
+      message: 'Fehler beim Synchronisieren'
+    }, { status: 500 });
   }
 });
