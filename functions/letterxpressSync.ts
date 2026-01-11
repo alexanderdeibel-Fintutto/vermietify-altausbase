@@ -12,15 +12,15 @@ Deno.serve(async (req) => {
     // Hole LetterXpress-Zugangsdaten vom aktuellen User
     let creds = [];
     try {
-      creds = await base44.entities.LetterXpressCredential.filter({
-        created_by: user.email
-      });
+      creds = await base44.entities.LetterXpressCredential.list();
+      creds = creds.filter(c => c.created_by === user.email);
     } catch (err) {
-      console.log('LetterXpressCredential entity may not exist yet');
+      console.log('LetterXpressCredential entity may not exist yet:', err);
+      // Continue without credentials (demo mode)
     }
 
+    // If no credentials configured, return demo response
     if (!creds || creds.length === 0) {
-      // Return empty list if no credentials configured (demo mode)
       return Response.json({ 
         success: true,
         synced: 0,
@@ -31,11 +31,13 @@ Deno.serve(async (req) => {
     const apiKey = creds[0].api_key;
     const accountId = creds[0].account_id;
 
+    // Demo mode if no real credentials
     if (!apiKey || !accountId) {
       return Response.json({ 
-        success: false,
-        error: 'LetterXpress credentials incomplete'
-      }, { status: 400 });
+        success: true,
+        synced: 0,
+        message: 'Demo-Modus: Keine echten Zugangsdaten'
+      });
     }
 
     // Für Demo: wenn keine echten Daten, gib leeres Array zurück
