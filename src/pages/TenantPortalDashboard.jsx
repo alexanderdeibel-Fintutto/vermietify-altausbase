@@ -15,7 +15,7 @@ import CommunityFeed from '@/components/tenant-community/CommunityFeed';
 import TenantChatbot from '@/components/tenant-portal/TenantChatbot';
 import TenantAnnouncementFeed from '@/components/tenant-portal/TenantAnnouncementFeed';
 import TenantSurveyParticipation from '@/components/tenant-portal/TenantSurveyParticipation';
-import AIOnboardingAssistant from '@/components/onboarding/AIOnboardingAssistant';
+import TenantAIChatbot from '@/components/tenant-portal/TenantAIChatbot';
 
 export default function TenantPortalDashboard() {
   const { data: user } = useQuery({
