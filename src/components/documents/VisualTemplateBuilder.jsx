@@ -1,160 +1,152 @@
 import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DndContext, DragEndEvent, closestCenter } from '@dnd-kit/core';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Plus, X, Eye } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Eye, Code, Layout } from 'lucide-react';
+import TemplateComponentLibrary from './TemplateComponentLibrary';
+import TemplateDesignPanel from './TemplateDesignPanel';
+import TemplateBlockEditor from './TemplateBlockEditor';
+import TemplateCanvasPreview from './TemplateCanvasPreview';
 
-export default function VisualTemplateBuilder({ companyId }) {
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
-  const [content, setContent] = useState('');
-  const [fields, setFields] = useState([]);
-  const [fieldName, setFieldName] = useState('');
-  const [fieldType, setFieldType] = useState('text');
-  const [preview, setPreview] = useState(false);
-  const queryClient = useQueryClient();
-
-  const createMutation = useMutation({
-    mutationFn: () =>
-      base44.asServiceRole.entities.DocumentTemplate.create({
-        company_id: companyId,
-        name,
-        category,
-        content,
-        fields,
-        version: 1,
-        is_public: false
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['document-templates'] });
-      resetForm();
-    }
+export default function VisualTemplateBuilder({ template, onChange }) {
+  const [blocks, setBlocks] = useState(template.blocks || []);
+  const [selectedBlockId, setSelectedBlockId] = useState(null);
+  const [design, setDesign] = useState(template.design || {
+    primaryColor: '#1e293b',
+    font: 'Arial, sans-serif',
+    spacing: 'medium',
+    borderRadius: '0.5rem'
   });
 
-  const resetForm = () => {
-    setName('');
-    setCategory('');
-    setContent('');
-    setFields([]);
+  const handleAddBlock = (blockType) => {
+    const newBlock = {
+      id: `block_${Date.now()}`,
+      type: blockType,
+      content: blockType === 'text' ? 'Text eingeben...' : '',
+      styles: {}
+    };
+    const newBlocks = [...blocks, newBlock];
+    setBlocks(newBlocks);
+    setSelectedBlockId(newBlock.id);
+    onChange({ ...template, blocks: newBlocks });
   };
 
-  const addField = () => {
-    if (fieldName.trim()) {
-      setFields([...fields, { name: fieldName, type: fieldType }]);
-      setFieldName('');
-      setFieldType('text');
+  const handleUpdateBlock = (blockId, updates) => {
+    const newBlocks = blocks.map(b => b.id === blockId ? { ...b, ...updates } : b);
+    setBlocks(newBlocks);
+    onChange({ ...template, blocks: newBlocks });
+  };
+
+  const handleDeleteBlock = (blockId) => {
+    const newBlocks = blocks.filter(b => b.id !== blockId);
+    setBlocks(newBlocks);
+    setSelectedBlockId(null);
+    onChange({ ...template, blocks: newBlocks });
+  };
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeIndex = blocks.findIndex(b => b.id === active.id);
+    const overIndex = blocks.findIndex(b => b.id === over.id);
+
+    if (activeIndex !== -1 && overIndex !== -1) {
+      const newBlocks = [...blocks];
+      [newBlocks[activeIndex], newBlocks[overIndex]] = [newBlocks[overIndex], newBlocks[activeIndex]];
+      setBlocks(newBlocks);
+      onChange({ ...template, blocks: newBlocks });
     }
   };
 
-  const removeField = (index) => {
-    setFields(fields.filter((_, i) => i !== index));
+  const handleDesignChange = (newDesign) => {
+    setDesign(newDesign);
+    onChange({ ...template, design: newDesign });
   };
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Dokumententemplate erstellen</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Input
-            placeholder="Template-Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <Input
-            placeholder="Kategorie"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          />
+      <Tabs defaultValue="visual" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="visual" className="gap-2">
+            <Layout className="w-4 h-4" /> Visual
+          </TabsTrigger>
+          <TabsTrigger value="design" className="gap-2">
+            <Eye className="w-4 h-4" /> Design
+          </TabsTrigger>
+          <TabsTrigger value="preview" className="gap-2">
+            <Eye className="w-4 h-4" /> Vorschau
+          </TabsTrigger>
+        </TabsList>
 
-          {/* Content Editor */}
-          <div>
-            <label className="text-sm font-medium">Inhalt</label>
-            <Textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Template-Inhalt (HTML/Markdown)..."
-              className="h-32 mt-1"
-            />
-          </div>
-
-          {/* Field Management */}
-          <div>
-            <label className="text-sm font-medium">Dynamische Felder</label>
-            <div className="flex gap-2 mt-1">
-              <Input
-                placeholder="Feldname"
-                value={fieldName}
-                onChange={(e) => setFieldName(e.target.value)}
-                className="flex-1"
-              />
-              <select
-                value={fieldType}
-                onChange={(e) => setFieldType(e.target.value)}
-                className="px-2 border rounded text-sm"
-              >
-                <option value="text">Text</option>
-                <option value="number">Zahl</option>
-                <option value="date">Datum</option>
-                <option value="select">Auswahl</option>
-              </select>
-              <Button size="sm" variant="outline" onClick={addField}>
-                +
-              </Button>
+        <TabsContent value="visual" className="space-y-4">
+          <div className="grid grid-cols-4 gap-4">
+            {/* Component Library */}
+            <div className="col-span-1 bg-slate-50 rounded-lg p-4 border">
+              <TemplateComponentLibrary onAddBlock={handleAddBlock} />
             </div>
 
-            {fields.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {fields.map((f, i) => (
-                  <Badge
-                    key={i}
-                    variant="secondary"
-                    className="cursor-pointer"
-                    onClick={() => removeField(i)}
-                  >
-                    {f.name} ({f.type}) <X className="w-3 h-3 ml-1" />
-                  </Badge>
-                ))}
+            {/* Canvas */}
+            <div className="col-span-2">
+              <div className="bg-white border-2 border-slate-200 rounded-lg min-h-96 p-6 shadow-sm">
+                <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <div className="space-y-3">
+                    {blocks.length === 0 ? (
+                      <div className="text-center py-12 text-slate-400">
+                        Komponenten links hinzufügen zum starten
+                      </div>
+                    ) : (
+                      blocks.map(block => (
+                        <div
+                          key={block.id}
+                          className={`p-3 border rounded cursor-move ${
+                            selectedBlockId === block.id
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-slate-200 hover:border-slate-300'
+                          }`}
+                          onClick={() => setSelectedBlockId(block.id)}
+                        >
+                          <TemplateBlockEditor
+                            block={block}
+                            isSelected={selectedBlockId === block.id}
+                            onUpdate={(updates) => handleUpdateBlock(block.id, updates)}
+                            onDelete={() => handleDeleteBlock(block.id)}
+                          />
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </DndContext>
               </div>
-            )}
-          </div>
+            </div>
 
-          <div className="flex gap-2">
-            <Button
-              onClick={() => setPreview(!preview)}
-              variant="outline"
-              className="gap-2"
-            >
-              <Eye className="w-4 h-4" />
-              Vorschau
-            </Button>
-            <Button
-              onClick={() => createMutation.mutate()}
-              disabled={!name || !content || createMutation.isPending}
-              className="flex-1"
-            >
-              Erstellen
-            </Button>
+            {/* Block Inspector */}
+            <div className="col-span-1">
+              {selectedBlockId ? (
+                <TemplateBlockEditor
+                  block={blocks.find(b => b.id === selectedBlockId)}
+                  isSelected={true}
+                  onUpdate={(updates) => handleUpdateBlock(selectedBlockId, updates)}
+                  onDelete={() => handleDeleteBlock(selectedBlockId)}
+                  showInspector={true}
+                />
+              ) : (
+                <div className="bg-slate-50 rounded-lg p-4 text-center text-slate-500 text-sm">
+                  Block auswählen zum Bearbeiten
+                </div>
+              )}
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
 
-      {/* Preview */}
-      {preview && (
-        <Card className="bg-slate-50">
-          <CardHeader>
-            <CardTitle className="text-sm">Vorschau</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-white p-4 rounded border" dangerouslySetInnerHTML={{ __html: content }} />
-          </CardContent>
-        </Card>
-      )}
+        <TabsContent value="design" className="space-y-4">
+          <TemplateDesignPanel design={design} onChange={handleDesignChange} />
+        </TabsContent>
+
+        <TabsContent value="preview">
+          <TemplateCanvasPreview blocks={blocks} design={design} template={template} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
