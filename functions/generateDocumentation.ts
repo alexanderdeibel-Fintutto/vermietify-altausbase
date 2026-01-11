@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
 // Helper Functions
 
 async function getAllEntitySchemas(base44) {
-    // Hole alle Entities direkt aus der Datenbank
+    // This list should ideally be dynamic, but for now we keep it hardcoded
     const entityNames = [
         'Building', 'Unit', 'Tenant', 'LeaseContract', 'Document', 'Template',
         'PropertyTax', 'Insurance', 'Financing', 'Supplier', 'BankAccount',
@@ -240,44 +240,35 @@ async function getAllEntitySchemas(base44) {
 
     const schemas = {};
     
-    // Versuche ein Beispiel-Entity zu laden um Schema zu extrahieren
+    // Rufe das Schema direkt ab
     for (const name of entityNames) {
         try {
-            const items = await base44.asServiceRole.entities[name].list('', 1);
-            if (items && items.length > 0) {
-                // Schema aus erstem Item ableiten
-                const schema = inferSchemaFromItem(items[0], name);
-                schemas[name] = schema;
+            // HIER DIE ÄNDERUNG: Verwende .schema() statt .list()
+            const schema = await base44.asServiceRole.entities[name].schema();
+            if (schema) {
+                schemas[name] = { name: name, ...schema }; // Füge den Namen hinzu, da .schema() ihn nicht direkt im Root hat
             }
         } catch (error) {
-            console.log(`Skipping ${name}:`, error.message);
+            // Ignoriere Fehler für nicht existierende Entities, um den Prozess nicht zu blockieren
+            console.error(`Schema for ${name} could not be loaded:`, error.message);
         }
     }
     
-    console.log(`✅ Loaded ${Object.keys(schemas).length} entity schemas`);
     return schemas;
 }
 
 function inferSchemaFromItem(item, entityName) {
+    // This function is now obsolete but kept to avoid breaking other parts if they accidentally call it.
+    // The correct approach is using the .schema() method.
     const properties = {};
-    
     for (const [key, value] of Object.entries(item)) {
         if (['id', 'created_date', 'updated_date', 'created_by'].includes(key)) {
-            continue; // Skip built-in fields
+            continue;
         }
-        
         const type = Array.isArray(value) ? 'array' : typeof value;
-        properties[key] = {
-            type: type === 'object' && value !== null ? 'object' : type,
-            description: key
-        };
+        properties[key] = { type, description: key };
     }
-    
-    return {
-        name: entityName,
-        type: 'object',
-        properties
-    };
+    return { name: entityName, type: 'object', properties };
 }
 
 function getTitleForType(type) {
