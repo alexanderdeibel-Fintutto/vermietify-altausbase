@@ -1,17 +1,20 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-// Fallback: Bekannte Entity-Schemas
+// Fallback: Bekannte Entity-Schemas (ALLE Entities)
 const KNOWN_ENTITY_SCHEMAS = {
+  // === KERN-ENTITIES ===
   "Building": {
     "name": "Building",
     "type": "object",
     "properties": {
-      "name": {"type": "string", "description": "Name des Gebäudes"},
-      "address": {"type": "string", "description": "Straße des Gebäudes"},
-      "city": {"type": "string", "description": "Stadt des Gebäudes"},
-      "postal_code": {"type": "string", "description": "Postleitzahl des Gebäudes"},
-      "year_built": {"type": "number", "description": "Baujahr"},
-      "total_units": {"type": "number", "description": "Anzahl Wohneinheiten"}
+      "name": {"type": "string"},
+      "address": {"type": "string"},
+      "city": {"type": "string"},
+      "postal_code": {"type": "string"},
+      "year_built": {"type": "number"},
+      "total_units": {"type": "number"},
+      "owner_name": {"type": "string"},
+      "contact_email": {"type": "string"}
     },
     "required": ["name", "address", "city", "postal_code"]
   },
@@ -19,24 +22,59 @@ const KNOWN_ENTITY_SCHEMAS = {
     "name": "Unit",
     "type": "object",
     "properties": {
-      "gebaeude_id": {"type": "string", "description": "Referenz zum Gebäude"},
-      "unit_number": {"type": "string", "description": "Wohnungsnummer"},
-      "floor": {"type": "number", "description": "Etage"},
-      "rooms": {"type": "number", "description": "Anzahl Zimmer"},
-      "sqm": {"type": "number", "description": "Wohnfläche in qm"},
-      "status": {"type": "string", "enum": ["occupied", "vacant", "renovation"]}
+      "gebaeude_id": {"type": "string"},
+      "unit_number": {"type": "string"},
+      "floor": {"type": "number"},
+      "rooms": {"type": "number"},
+      "sqm": {"type": "number"},
+      "status": {"type": "string"},
+      "base_rent": {"type": "number"}
     },
     "required": ["gebaeude_id", "unit_number", "sqm"]
   },
+  "Owner": {
+    "name": "Owner",
+    "type": "object",
+    "properties": {
+      "name": {"type": "string"},
+      "email": {"type": "string"},
+      "phone": {"type": "string"},
+      "address": {"type": "string"}
+    },
+    "required": ["name"]
+  },
+  "Shareholder": {
+    "name": "Shareholder",
+    "type": "object",
+    "properties": {
+      "name": {"type": "string"},
+      "email": {"type": "string"},
+      "share_percentage": {"type": "number"}
+    },
+    "required": ["name"]
+  },
+  "OwnerRelationship": {
+    "name": "OwnerRelationship",
+    "type": "object",
+    "properties": {
+      "owner_id": {"type": "string"},
+      "building_id": {"type": "string"},
+      "share_percentage": {"type": "number"}
+    },
+    "required": ["owner_id", "building_id"]
+  },
+
+  // === MIETER & VERTRÄGE ===
   "Tenant": {
     "name": "Tenant",
     "type": "object",
     "properties": {
-      "first_name": {"type": "string", "description": "Vorname"},
-      "last_name": {"type": "string", "description": "Nachname"},
-      "email": {"type": "string", "description": "E-Mail-Adresse"},
-      "phone": {"type": "string", "description": "Telefonnummer"},
-      "date_of_birth": {"type": "string", "format": "date"}
+      "first_name": {"type": "string"},
+      "last_name": {"type": "string"},
+      "email": {"type": "string"},
+      "phone": {"type": "string"},
+      "date_of_birth": {"type": "string"},
+      "notes": {"type": "string"}
     },
     "required": ["first_name", "last_name"]
   },
@@ -46,13 +84,344 @@ const KNOWN_ENTITY_SCHEMAS = {
     "properties": {
       "unit_id": {"type": "string"},
       "tenant_id": {"type": "string"},
-      "start_date": {"type": "string", "format": "date"},
-      "end_date": {"type": "string", "format": "date"},
+      "start_date": {"type": "string"},
+      "end_date": {"type": "string"},
       "base_rent": {"type": "number"},
+      "utilities": {"type": "number"},
       "total_rent": {"type": "number"},
-      "status": {"type": "string", "enum": ["active", "terminated", "expired"]}
+      "deposit": {"type": "number"},
+      "status": {"type": "string"}
     },
     "required": ["unit_id", "tenant_id", "start_date", "base_rent", "total_rent"]
+  },
+  "Termination": {
+    "name": "Termination",
+    "type": "object",
+    "properties": {
+      "contract_id": {"type": "string"},
+      "tenant_id": {"type": "string"},
+      "termination_date": {"type": "string"},
+      "move_out_date": {"type": "string"},
+      "reason": {"type": "string"},
+      "status": {"type": "string"}
+    },
+    "required": ["contract_id", "tenant_id"]
+  },
+
+  // === FINANZEN ===
+  "Invoice": {
+    "name": "Invoice",
+    "type": "object",
+    "properties": {
+      "invoice_number": {"type": "string"},
+      "building_id": {"type": "string"},
+      "tenant_id": {"type": "string"},
+      "amount": {"type": "number"},
+      "due_date": {"type": "string"},
+      "paid_date": {"type": "string"},
+      "status": {"type": "string"}
+    },
+    "required": ["invoice_number", "amount"]
+  },
+  "FinancialItem": {
+    "name": "FinancialItem",
+    "type": "object",
+    "properties": {
+      "building_id": {"type": "string"},
+      "type": {"type": "string"},
+      "amount": {"type": "number"},
+      "date": {"type": "string"},
+      "category": {"type": "string"},
+      "description": {"type": "string"}
+    },
+    "required": ["type", "amount"]
+  },
+  "GeneratedFinancialBooking": {
+    "name": "GeneratedFinancialBooking",
+    "type": "object",
+    "properties": {
+      "building_id": {"type": "string"},
+      "booking_type": {"type": "string"},
+      "amount": {"type": "number"},
+      "date": {"type": "string"},
+      "source": {"type": "string"}
+    },
+    "required": ["booking_type", "amount"]
+  },
+  "CostCategory": {
+    "name": "CostCategory",
+    "type": "object",
+    "properties": {
+      "name": {"type": "string"},
+      "code": {"type": "string"},
+      "description": {"type": "string"}
+    },
+    "required": ["name"]
+  },
+  "BankAccount": {
+    "name": "BankAccount",
+    "type": "object",
+    "properties": {
+      "building_id": {"type": "string"},
+      "account_number": {"type": "string"},
+      "iban": {"type": "string"},
+      "bic": {"type": "string"},
+      "bank_name": {"type": "string"},
+      "account_holder": {"type": "string"}
+    },
+    "required": ["account_number"]
+  },
+  "BankTransaction": {
+    "name": "BankTransaction",
+    "type": "object",
+    "properties": {
+      "account_id": {"type": "string"},
+      "amount": {"type": "number"},
+      "date": {"type": "string"},
+      "reference": {"type": "string"},
+      "payer": {"type": "string"},
+      "category": {"type": "string"}
+    },
+    "required": ["amount", "date"]
+  },
+  "PropertyTax": {
+    "name": "PropertyTax",
+    "type": "object",
+    "properties": {
+      "building_id": {"type": "string"},
+      "tax_id": {"type": "string"},
+      "amount": {"type": "number"},
+      "due_date": {"type": "string"}
+    },
+    "required": ["building_id"]
+  },
+  "Insurance": {
+    "name": "Insurance",
+    "type": "object",
+    "properties": {
+      "building_id": {"type": "string"},
+      "insurance_type": {"type": "string"},
+      "provider": {"type": "string"},
+      "premium": {"type": "number"},
+      "renewal_date": {"type": "string"}
+    },
+    "required": ["building_id"]
+  },
+  "Financing": {
+    "name": "Financing",
+    "type": "object",
+    "properties": {
+      "building_id": {"type": "string"},
+      "lender": {"type": "string"},
+      "amount": {"type": "number"},
+      "interest_rate": {"type": "number"},
+      "start_date": {"type": "string"},
+      "end_date": {"type": "string"}
+    },
+    "required": ["building_id"]
+  },
+  "Supplier": {
+    "name": "Supplier",
+    "type": "object",
+    "properties": {
+      "name": {"type": "string"},
+      "email": {"type": "string"},
+      "phone": {"type": "string"},
+      "address": {"type": "string"},
+      "category": {"type": "string"}
+    },
+    "required": ["name"]
+  },
+  "Meter": {
+    "name": "Meter",
+    "type": "object",
+    "properties": {
+      "building_id": {"type": "string"},
+      "unit_id": {"type": "string"},
+      "meter_type": {"type": "string"},
+      "meter_number": {"type": "string"},
+      "last_reading": {"type": "number"},
+      "reading_date": {"type": "string"}
+    },
+    "required": ["meter_type", "meter_number"]
+  },
+  "BuildingTaxLibrary": {
+    "name": "BuildingTaxLibrary",
+    "type": "object",
+    "properties": {
+      "building_id": {"type": "string"},
+      "tax_category": {"type": "string"},
+      "tax_id": {"type": "string"},
+      "amount": {"type": "number"}
+    },
+    "required": ["building_id"]
+  },
+
+  // === BETRIEBSKOSTEN ===
+  "OperatingCostStatement": {
+    "name": "OperatingCostStatement",
+    "type": "object",
+    "properties": {
+      "building_id": {"type": "string"},
+      "statement_year": {"type": "number"},
+      "total_costs": {"type": "number"},
+      "created_date": {"type": "string"}
+    },
+    "required": ["building_id"]
+  },
+  "OperatingCostStatementItem": {
+    "name": "OperatingCostStatementItem",
+    "type": "object",
+    "properties": {
+      "statement_id": {"type": "string"},
+      "cost_category": {"type": "string"},
+      "amount": {"type": "number"},
+      "description": {"type": "string"}
+    },
+    "required": ["statement_id"]
+  },
+
+  // === DOKUMENTE & KOMMUNIKATION ===
+  "Document": {
+    "name": "Document",
+    "type": "object",
+    "properties": {
+      "building_id": {"type": "string"},
+      "document_type": {"type": "string"},
+      "file_name": {"type": "string"},
+      "file_url": {"type": "string"},
+      "uploaded_date": {"type": "string"}
+    },
+    "required": ["document_type"]
+  },
+  "DocumentTemplate": {
+    "name": "DocumentTemplate",
+    "type": "object",
+    "properties": {
+      "name": {"type": "string"},
+      "document_type": {"type": "string"},
+      "template_html": {"type": "string"},
+      "is_active": {"type": "boolean"}
+    },
+    "required": ["name"]
+  },
+  "TextBlock": {
+    "name": "TextBlock",
+    "type": "object",
+    "properties": {
+      "name": {"type": "string"},
+      "content": {"type": "string"},
+      "category": {"type": "string"}
+    },
+    "required": ["name"]
+  },
+  "LetterShipment": {
+    "name": "LetterShipment",
+    "type": "object",
+    "properties": {
+      "recipient_name": {"type": "string"},
+      "recipient_address": {"type": "string"},
+      "shipment_type": {"type": "string"},
+      "status": {"type": "string"},
+      "tracking_number": {"type": "string"}
+    },
+    "required": ["recipient_name"]
+  },
+  "LetterXpressCredential": {
+    "name": "LetterXpressCredential",
+    "type": "object",
+    "properties": {
+      "api_key": {"type": "string"},
+      "account_id": {"type": "string"},
+      "email": {"type": "string"}
+    },
+    "required": ["api_key"]
+  },
+
+  // === SYSTEM & WORKFLOWS ===
+  "Task": {
+    "name": "Task",
+    "type": "object",
+    "properties": {
+      "title": {"type": "string"},
+      "description": {"type": "string"},
+      "status": {"type": "string"},
+      "priority": {"type": "string"},
+      "due_date": {"type": "string"},
+      "assigned_to": {"type": "string"}
+    },
+    "required": ["title"]
+  },
+  "ActivityLog": {
+    "name": "ActivityLog",
+    "type": "object",
+    "properties": {
+      "user_email": {"type": "string"},
+      "action": {"type": "string"},
+      "entity_type": {"type": "string"},
+      "entity_id": {"type": "string"},
+      "timestamp": {"type": "string"}
+    },
+    "required": ["action"]
+  },
+  "Notification": {
+    "name": "Notification",
+    "type": "object",
+    "properties": {
+      "user_email": {"type": "string"},
+      "title": {"type": "string"},
+      "message": {"type": "string"},
+      "read": {"type": "boolean"},
+      "created_date": {"type": "string"}
+    },
+    "required": ["title"]
+  },
+  "DeveloperDocumentation": {
+    "name": "DeveloperDocumentation",
+    "type": "object",
+    "properties": {
+      "documentation_type": {"type": "string"},
+      "title": {"type": "string"},
+      "description": {"type": "string"},
+      "content_markdown": {"type": "string"},
+      "status": {"type": "string"}
+    },
+    "required": ["documentation_type"]
+  },
+
+  // === BERECHTIGUNGEN & ROLLEN ===
+  "BuildingPermission": {
+    "name": "BuildingPermission",
+    "type": "object",
+    "properties": {
+      "user_email": {"type": "string"},
+      "building_id": {"type": "string"},
+      "permission_level": {"type": "string"}
+    },
+    "required": ["user_email", "building_id"]
+  },
+  "FieldPermission": {
+    "name": "FieldPermission",
+    "type": "object",
+    "properties": {
+      "role": {"type": "string"},
+      "entity_type": {"type": "string"},
+      "field_name": {"type": "string"},
+      "access_level": {"type": "string"},
+      "is_sensitive": {"type": "boolean"}
+    },
+    "required": ["role", "entity_type", "field_name"]
+  },
+  "RoleDefinition": {
+    "name": "RoleDefinition",
+    "type": "object",
+    "properties": {
+      "role_name": {"type": "string"},
+      "description": {"type": "string"},
+      "building_access": {"type": "string"},
+      "default_field_access": {"type": "string"}
+    },
+    "required": ["role_name"]
   }
 };
 
