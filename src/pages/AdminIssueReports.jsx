@@ -281,8 +281,6 @@ export default function AdminIssueReports() {
           </Card>
         ))}
       </div>
-    </div>
       </div>
-    </div>
-  );
+      );
 }
