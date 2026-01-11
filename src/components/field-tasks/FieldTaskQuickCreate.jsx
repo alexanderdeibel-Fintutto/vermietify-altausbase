@@ -47,7 +47,8 @@ export default function FieldTaskQuickCreate({ isOpen, onClose }) {
     createTaskMutation.mutate(formData);
   };
 
-  const taskTypesOld = {
+  // Replaced by FIELD_TASK_CATEGORIES import
+  const taskTypesOldRemoved = {
     'objekt_stammdaten': [
       { id: 'objektfotos_aktualisieren', label: 'Objektfotos aktualisieren' },
       { id: 'grundriss_abgleichen', label: 'Grundriss abgleichen/korrigieren' },
@@ -253,11 +254,11 @@ export default function FieldTaskQuickCreate({ isOpen, onClose }) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="objekt_stammdaten">1. Objekt: Stammdaten & Dokumentation</SelectItem>
-                <SelectItem value="objekt_zaehler">Objekt: Zähler & Verbrauch</SelectItem>
-                <SelectItem value="objekt_technik">Objekt: Technik & Anlagen</SelectItem>
-                <SelectItem value="objekt_aussenanlagen">Objekt: Außenanlagen</SelectItem>
-                <SelectItem value="objekt_gemeinschaftsflaechen">Objekt: Gemeinschaftsflächen</SelectItem>
-                <SelectItem value="wohnung_besichtigung">Wohnung: Besichtigung & Vermietung</SelectItem>
+                <SelectItem value="objekt_zaehler">1. Objekt: Zähler & Verbrauch</SelectItem>
+                <SelectItem value="objekt_technik">1. Objekt: Technik & Anlagen</SelectItem>
+                <SelectItem value="objekt_aussenanlagen">1. Objekt: Außenanlagen</SelectItem>
+                <SelectItem value="objekt_gemeinschaftsflaechen">1. Objekt: Gemeinschaftsflächen</SelectItem>
+                <SelectItem value="wohnung_besichtigung">2. Wohnung: Besichtigung & Vermietung</SelectItem>
                 <SelectItem value="wohnung_uebergabe_einzug">Wohnung: Übergabe Einzug</SelectItem>
                 <SelectItem value="wohnung_uebergabe_auszug">Wohnung: Übergabe Auszug</SelectItem>
                 <SelectItem value="wohnung_pruefung">Wohnung: Prüfung während Mietzeit</SelectItem>
