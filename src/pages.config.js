@@ -344,6 +344,7 @@ import BuildingInspections from './pages/BuildingInspections';
 import AICommunicationHub from './pages/AICommunicationHub';
 import AIInsightsDashboard from './pages/AIInsightsDashboard';
 import AIDocumentManagement from './pages/AIDocumentManagement';
+import EnhancedTenantPortal from './pages/EnhancedTenantPortal';
 import __Layout from './Layout.jsx';
 
 
@@ -694,6 +695,7 @@ export const PAGES = {
     "AICommunicationHub": AICommunicationHub,
     "AIInsightsDashboard": AIInsightsDashboard,
     "AIDocumentManagement": AIDocumentManagement,
+    "EnhancedTenantPortal": EnhancedTenantPortal,
 }
 
 export const pagesConfig = {
