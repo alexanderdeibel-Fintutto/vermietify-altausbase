@@ -2,7 +2,7 @@ import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Mail, Bell, Phone, BarChart3, Settings, Users, Lightbulb, AlertCircle, Activity } from 'lucide-react';
+import { MessageSquare, Mail, Bell, Phone, BarChart3, Settings, Users, Lightbulb, AlertCircle, Activity, TrendingUp, Package } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
@@ -16,7 +16,7 @@ export default function KommunikationDashboard() {
 
   const { data: messages = [] } = useQuery({
     queryKey: ['messages'],
-    queryFn: () => base44.entities.TenantMessage?.list?.('-created_date', 20) || Promise.resolve([]),
+    queryFn: () => base44.entities.TenantMessage?.list?.('-created_date', 100) || Promise.resolve([]),
   });
 
   const { data: announcements = [] } = useQuery({
@@ -24,7 +24,49 @@ export default function KommunikationDashboard() {
     queryFn: () => base44.entities.Announcement?.list?.('-created_date', 20) || Promise.resolve([]),
   });
 
+  const { data: issues = [] } = useQuery({
+    queryKey: ['issue-reports'],
+    queryFn: () => base44.entities.TenantIssueReport?.list?.('-created_date', 100) || Promise.resolve([]),
+  });
+
+  const { data: communityPosts = [] } = useQuery({
+    queryKey: ['community-posts'],
+    queryFn: () => base44.entities.CommunityPost?.list?.('-created_date', 50) || Promise.resolve([]),
+  });
+
+  const { data: letterShipments = [] } = useQuery({
+    queryKey: ['letter-shipments'],
+    queryFn: () => base44.entities.LetterShipment?.list?.('-created_date', 50) || Promise.resolve([]),
+  });
+
+  const { data: notifications = [] } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => base44.entities.TenantNotification?.list?.('-created_date', 100) || Promise.resolve([]),
+  });
+
   const isAdmin = currentUser?.role === 'admin';
+
+  // Calculated metrics
+  const unreadMessages = messages.filter(m => !m.is_read).length;
+  const openTickets = issues.filter(i => i.status === 'open' || i.status === 'acknowledged').length;
+  const pendingPosts = communityPosts.filter(p => !p.is_approved).length;
+  const activeShipments = letterShipments.filter(s => s.status === 'pending' || s.status === 'in_transit').length;
+  
+  // Calculate average response time
+  const resolvedMessages = messages.filter(m => m.response_date);
+  const avgResponseTime = resolvedMessages.length > 0
+    ? Math.round(resolvedMessages.reduce((sum, m) => {
+        const created = new Date(m.created_date).getTime();
+        const responded = new Date(m.response_date).getTime();
+        return sum + (responded - created);
+      }, 0) / resolvedMessages.length / (1000 * 60))
+    : 0;
+  
+  const formatResponseTime = (minutes) => {
+    if (minutes < 60) return `${minutes}m`;
+    if (minutes < 1440) return `${Math.round(minutes / 60)}h`;
+    return `${Math.round(minutes / 1440)}d`;
+  };
 
   return (
     <div className="space-y-6">
