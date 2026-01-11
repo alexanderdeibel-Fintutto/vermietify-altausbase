@@ -23,8 +23,9 @@ export default function OrgLogoSelector() {
 
   // Generate initials from building name
   const getInitials = (name) => {
+    if (!name) return 'ORG';
     return name
-      ?.split(' ')
+      .split(' ')
       .map(word => word[0])
       .join('')
       .toUpperCase()
