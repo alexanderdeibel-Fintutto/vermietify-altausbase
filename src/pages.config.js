@@ -354,6 +354,7 @@ import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
 import TenantPortalPage from './pages/TenantPortalPage';
+import AdminTenantDashboard from './pages/AdminTenantDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -714,6 +715,7 @@ export const PAGES = {
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
     "TenantPortalPage": TenantPortalPage,
+    "AdminTenantDashboard": AdminTenantDashboard,
 }
 
 export const pagesConfig = {
