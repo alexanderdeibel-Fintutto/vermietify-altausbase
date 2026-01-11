@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
             if (!name) continue;
             try {
                 // Hole das Entity-Objekt und rufe .schema() auf
-                const entityClass = base44.entities[name];
+                const entityClass = base44.asServiceRole.entities[name];
                 if (entityClass) {
                   const schema = await entityClass.schema();
                   if (schema) {
@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
                   }
                 }
             } catch (error) {
-                // Silent catch
+                logDebug(`[${name}] ❌ ERROR: ${error.message}`);
             }
         }
         
