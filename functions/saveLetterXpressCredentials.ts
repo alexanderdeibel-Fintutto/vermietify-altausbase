@@ -13,6 +13,7 @@ Deno.serve(async (req) => {
 
     if (!apiKey || !accountId || !email) {
       return Response.json({ 
+        success: false,
         error: 'Missing required fields',
         message: 'API-Schlüssel, Account-ID und E-Mail sind erforderlich'
       }, { status: 400 });

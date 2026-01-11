@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
       return Response.json({ 
         success: false, 
         message: 'Alle Felder müssen gefüllt sein' 
-      });
+      }, { status: 400 });
     }
 
     // Test with real LetterXpress API
