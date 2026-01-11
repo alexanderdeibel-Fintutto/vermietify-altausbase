@@ -18,6 +18,7 @@ const MAIN_CATEGORIES = [
       { name: 'Invoices', label: 'Rechnungen' },
       { name: 'BankAccounts', label: 'Bankkonten' },
       { name: 'Payments', label: 'Zahlungen' },
+      { name: 'RoleManagementPage', label: 'Rollen & Rechte' },
     ]
   },
   {
