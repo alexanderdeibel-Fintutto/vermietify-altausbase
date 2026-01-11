@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import SmartActionDialog from './SmartActionDialog';
 import MobileActionSheet from './MobileActionSheet';
+import VoiceCommandDialog from './VoiceCommandDialog';
 
 const FIRST_LEVEL_ACTIONS = [
   { id: 'voice', icon: Mic, label: 'Sprechen', color: 'from-blue-500 to-blue-600' },
@@ -241,10 +242,15 @@ export default function SmartActionButton() {
 
       {/* Dialog */}
       <SmartActionDialog 
-        isOpen={!!selectedAction} 
+        isOpen={!!selectedAction && selectedAction?.type !== 'voice'} 
         onClose={handleClose}
         actionType={selectedAction?.type}
         actionSubtype={selectedAction?.subtype}
+      />
+
+      <VoiceCommandDialog
+        isOpen={selectedAction?.type === 'voice'}
+        onClose={handleClose}
       />
     </>
   );
