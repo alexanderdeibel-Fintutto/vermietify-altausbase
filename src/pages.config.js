@@ -332,6 +332,11 @@ import ContractAutomationHub from './pages/ContractAutomationHub';
 import ComplianceReportingHub from './pages/ComplianceReportingHub';
 import SmartPropertyHub from './pages/SmartPropertyHub';
 import SmartHomeHub from './pages/SmartHomeHub';
+import TenantMobileApp from './pages/TenantMobileApp';
+import TenantDigitalKey from './pages/TenantDigitalKey';
+import TenantMessages from './pages/TenantMessages';
+import TenantDocuments from './pages/TenantDocuments';
+import TenantMaintenance from './pages/TenantMaintenance';
 import __Layout from './Layout.jsx';
 
 
@@ -670,6 +675,11 @@ export const PAGES = {
     "ComplianceReportingHub": ComplianceReportingHub,
     "SmartPropertyHub": SmartPropertyHub,
     "SmartHomeHub": SmartHomeHub,
+    "TenantMobileApp": TenantMobileApp,
+    "TenantDigitalKey": TenantDigitalKey,
+    "TenantMessages": TenantMessages,
+    "TenantDocuments": TenantDocuments,
+    "TenantMaintenance": TenantMaintenance,
 }
 
 export const pagesConfig = {

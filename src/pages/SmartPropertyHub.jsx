@@ -6,6 +6,8 @@ import RentOptimizationPanel from '@/components/ai/RentOptimizationPanel';
 import PredictiveMaintenancePanel from '@/components/ai/PredictiveMaintenancePanel';
 import DigitalKeyManager from '@/components/smarthome/DigitalKeyManager';
 import ServiceProviderDirectory from '@/components/marketplace/ServiceProviderDirectory';
+import SmartHomeControl from '@/components/smarthome/SmartHomeControl';
+import ARViewingLauncher from '@/components/tenant-app/ARViewingLauncher';
 
 export default function SmartPropertyHub() {
   const { data: user } = useQuery({
@@ -39,10 +41,12 @@ export default function SmartPropertyHub() {
       </div>
 
       <Tabs defaultValue="rent-ai" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="rent-ai">KI-Miete</TabsTrigger>
           <TabsTrigger value="predictive">Predictive</TabsTrigger>
+          <TabsTrigger value="smarthome">Smart Home</TabsTrigger>
           <TabsTrigger value="keys">Schlüssel</TabsTrigger>
+          <TabsTrigger value="ar">AR-Tours</TabsTrigger>
           <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
         </TabsList>
 
@@ -54,8 +58,16 @@ export default function SmartPropertyHub() {
           <PredictiveMaintenancePanel companyId={companyId} />
         </TabsContent>
 
+        <TabsContent value="smarthome">
+          <SmartHomeControl companyId={companyId} />
+        </TabsContent>
+
         <TabsContent value="keys">
           <DigitalKeyManager companyId={companyId} />
+        </TabsContent>
+
+        <TabsContent value="ar">
+          <ARViewingLauncher companyId={companyId} />
         </TabsContent>
 
         <TabsContent value="marketplace">
