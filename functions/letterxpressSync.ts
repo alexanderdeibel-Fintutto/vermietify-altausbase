@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     let response;
     try {
       response = await fetch('https://api.letterxpress.de/v1/shipments', {
-        method: 'GET',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
