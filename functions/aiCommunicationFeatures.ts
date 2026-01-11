@@ -9,104 +9,84 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { action, messageId, tenantId, content, type } = await req.json();
+    const { action, data } = await req.json();
 
-    switch (action) {
-      case 'generateResponse': {
-        // KI-basierte Antwortvorschläge
-        const response = await base44.integrations.Core.InvokeLLM({
-          prompt: `Du bist ein hilfreicher Gebäudeverwaltungs-Assistent. 
-          Generiere eine professionelle, freundliche Antwortnachricht auf folgende Mieter-Nachricht:
-          
-          "${content}"
-          
-          Die Antwort sollte:
-          - Kurz und prägnant sein (max 3 Sätze)
-          - Professionell aber freundlich wirken
-          - Das Problem lösen oder eine Lösung anbieten`,
-          response_json_schema: {
-            type: 'object',
-            properties: {
-              response: { type: 'string' },
-              tone: { type: 'string' },
-            },
-          },
-        });
+    if (action === 'suggestResponse') {
+      const { messageId, messageContent } = data;
 
-        return Response.json({ success: true, suggestion: response.response });
-      }
+      // Nutze InvokeLLM um Response-Vorschläge zu generieren
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `Du bist ein professioneller Kundenservice-Agent für eine Immobilienverwaltung. 
+        
+Mieter-Nachricht: "${messageContent}"
 
-      case 'prioritizeMessages': {
-        // Intelligent priorisierte Nachrichten-Warteschlange
-        const messages = await base44.entities.TenantMessage.list('-updated_date', 50);
+Generiere 3 kurze, höfliche und professionelle Response-Vorschläge auf Deutsch (jeweils max 100 Wörter).
+Antworte nur mit den 3 Vorschlägen, nummeriert.`,
+        add_context_from_internet: false,
+      });
 
-        const prioritized = await base44.integrations.Core.InvokeLLM({
-          prompt: `Analysiere diese Mieter-Nachrichten und ordne sie nach Priorität (1=höchste, 3=niedrigste):
-          
-          ${messages.map(m => `- ${m.subject} (${m.category}): "${m.message.substring(0, 50)}..."`).join('\n')}
-          
-          Berücksichtige: Dringlichkeit, Problem-Typ, Häufigkeit ähnlicher Anfragen.
-          Gib nur die Nummern zurück.`,
-          response_json_schema: {
-            type: 'object',
-            properties: {
-              priorities: {
-                type: 'array',
-                items: { type: 'object', properties: { id: { type: 'string' }, priority: { type: 'number' } } },
-              },
-            },
-          },
-        });
+      // Parse responses
+      const suggestions = response.split('\n').filter(line => line.trim().match(/^\d\./)).map(line => line.replace(/^\d\.\s*/, ''));
 
-        return Response.json({ success: true, priorities: prioritized.priorities });
-      }
+      return Response.json({
+        success: true,
+        suggestions: suggestions.slice(0, 3),
+      });
+    }
 
-      case 'automateResponse': {
-        // Automatische Antwort für häufige Anfragen
-        if (type === 'payment_reminder') {
-          await base44.entities.TenantMessage.update(messageId, {
-            status: 'resolved',
-            response: 'Vielen Dank für Ihre Zahlung. Diese ist bei uns eingegangen.',
-            response_date: new Date().toISOString(),
-          });
-        } else if (type === 'maintenance_request') {
-          await base44.entities.TenantMessage.update(messageId, {
-            status: 'in_progress',
-            response: 'Vielen Dank für Ihre Anfrage. Wir kümmern uns darum und melden uns zeitnah.',
-            response_date: new Date().toISOString(),
-          });
+    if (action === 'generateAutoMessage') {
+      const { tenant, messageType } = data;
+
+      const templates = {
+        payment_reminder: `Sehr geehrte(r) ${tenant.first_name} ${tenant.last_name},\n\nwir erinnern Sie höflich daran, dass Ihre Mietzahlung fällig ist. Bitte überweisen Sie den Betrag bis spätestens zum 5. des Monats.\n\nMit freundlichen Grüßen\nIhre Hausverwaltung`,
+        maintenance_notice: `Sehr geehrte(r) ${tenant.first_name} ${tenant.last_name},\n\nwir möchten Sie über anstehende Wartungsarbeiten in Ihrem Gebäude informieren. Der Termin wird in den nächsten Tagen festgelegt.\n\nMit freundlichen Grüßen\nIhre Hausverwaltung`,
+        announcement: `Sehr geehrte(r) ${tenant.first_name} ${tenant.last_name},\n\nwichtige Mitteilung für alle Bewohner: Das Treppenhaus wird vom 15.-17. Januar gereinigt und renoviert.\n\nMit freundlichen Grüßen\nIhre Hausverwaltung`,
+      };
+
+      const message = templates[messageType] || templates.announcement;
+
+      return Response.json({
+        success: true,
+        message,
+        type: messageType,
+      });
+    }
+
+    if (action === 'prioritizeMessages') {
+      const { messages } = data;
+
+      // Simple prioritization based on keywords
+      const priorityKeywords = {
+        high: ['notfall', 'dringend', 'sofort', 'schaden', 'leck', 'strom'],
+        medium: ['wartung', 'reparatur', 'besichtigung'],
+        low: ['anfrage', 'information', 'sonstiges'],
+      };
+
+      const prioritized = messages.map(msg => {
+        let priority = 'low';
+        const content = (msg.message || '').toLowerCase();
+
+        if (priorityKeywords.high.some(kw => content.includes(kw))) {
+          priority = 'high';
+        } else if (priorityKeywords.medium.some(kw => content.includes(kw))) {
+          priority = 'medium';
         }
 
-        return Response.json({ success: true });
-      }
+        return { ...msg, priority, suggestedResponse: null };
+      }).sort((a, b) => {
+        const order = { high: 0, medium: 1, low: 2 };
+        return order[a.priority] - order[b.priority];
+      });
 
-      case 'getSentimentAnalysis': {
-        // Sentiment-Analyse von Nachrichten
-        const message = await base44.entities.TenantMessage.read(messageId);
-        const analysis = await base44.integrations.Core.InvokeLLM({
-          prompt: `Analysiere die Stimmung dieser Mieter-Nachricht auf einer Skala von 1-10 (1=sehr negativ, 10=sehr positiv):
-          
-          "${message.message}"
-          
-          Gib auch kurz an: Was ist das Kernproblem?`,
-          response_json_schema: {
-            type: 'object',
-            properties: {
-              sentiment: { type: 'number' },
-              coreIssue: { type: 'string' },
-              requiresUrgentAction: { type: 'boolean' },
-            },
-          },
-        });
-
-        return Response.json({ success: true, analysis });
-      }
-
-      default:
-        return Response.json({ error: 'Unknown action' }, { status: 400 });
+      return Response.json({
+        success: true,
+        messages: prioritized,
+      });
     }
+
+    return Response.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
-    console.error('Error:', error);
+    console.error('AI Communication error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
