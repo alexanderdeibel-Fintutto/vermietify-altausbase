@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
             if (!name) continue;
             try {
                 console.log(`Versuche Schema für: ${name}`);
-                const schema = await base44.entities[name].schema();
+                const schema = await base44.asServiceRole.entities[name].schema();
                 console.log(`✅ Schema gefunden für ${name}:`, Object.keys(schema || {}));
                 schemas[name] = { name, ...schema };
             } catch (e) {
