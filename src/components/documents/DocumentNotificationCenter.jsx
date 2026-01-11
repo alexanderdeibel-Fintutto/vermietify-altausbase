@@ -37,8 +37,9 @@ export default function DocumentNotificationCenter() {
       });
       return all.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)).slice(0, 10);
     },
-    enabled: !!user?.email,
-    refetchInterval: 30000
+    enabled: !!user?.email && isOpen,
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: isOpen ? 60000 : false
   });
 
   const markAsReadMutation = useMutation({
