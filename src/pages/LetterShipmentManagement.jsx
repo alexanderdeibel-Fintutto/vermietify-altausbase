@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Package, CheckCircle2, Clock, AlertCircle, DollarSign, MapPin } from 'lucide-react';
+import { Package, CheckCircle2, Clock, AlertCircle, DollarSign, MapPin, Truck, BarChart3 } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function LetterShipmentManagement() {
   const [selectedShipment, setSelectedShipment] = useState(null);
@@ -27,7 +28,20 @@ export default function LetterShipmentManagement() {
     sent: shipments.filter(s => s.status === 'sent').length,
     pending: shipments.filter(s => ['queue', 'done'].includes(s.status)).length,
     costs: shipments.reduce((sum, s) => sum + (s.cost_gross || 0), 0),
+    avgCost: shipments.length > 0 ? (shipments.reduce((sum, s) => sum + (s.cost_gross || 0), 0) / shipments.length).toFixed(2) : 0,
   };
+
+  // Cost analytics data
+  const costByType = shipments.reduce((acc, s) => {
+    const type = s.document_type || 'Sonstige';
+    const existing = acc.find(item => item.name === type);
+    if (existing) {
+      existing.value += s.cost_gross || 0;
+    } else {
+      acc.push({ name: type, value: s.cost_gross || 0 });
+    }
+    return acc;
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -80,14 +94,46 @@ export default function LetterShipmentManagement() {
           <CardContent className="pt-6">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs text-slate-600">Kosten (Brutto)</p>
+                <p className="text-xs text-slate-600">Gesamtkosten</p>
                 <p className="text-2xl font-semibold mt-1">{stats.costs.toFixed(2)}€</p>
               </div>
               <DollarSign className="w-8 h-8 text-blue-500" />
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-xs text-slate-600">Ø Kosten pro Brief</p>
+                <p className="text-2xl font-semibold mt-1">{stats.avgCost}€</p>
+              </div>
+              <BarChart3 className="w-8 h-8 text-slate-400" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Cost Analytics */}
+      {costByType.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Kostenanalyse nach Dokumenttyp</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={costByType}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip formatter={(value) => `${value.toFixed(2)}€`} />
+                <Bar dataKey="value" fill="#3b82f6" name="Kosten (€)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Liste */}
       <Tabs defaultValue="all" className="w-full">
@@ -118,17 +164,23 @@ export default function LetterShipmentManagement() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <div className={`p-2 rounded-lg ${config.color}`}>
-                            <StatusIcon className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-slate-900">{shipment.recipient_name}</h3>
-                            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              {shipment.recipient_address}
-                            </p>
-                          </div>
-                        </div>
+                              <div className={`p-2 rounded-lg ${config.color}`}>
+                                <StatusIcon className="w-4 h-4" />
+                              </div>
+                              <div className="flex-1">
+                                <h3 className="font-medium text-slate-900">{shipment.recipient_name}</h3>
+                                <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                                  <MapPin className="w-3 h-3" />
+                                  {shipment.recipient_address}
+                                </p>
+                                {shipment.tracking_code && (
+                                  <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                                    <Truck className="w-3 h-3" />
+                                    Tracking: {shipment.tracking_code}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-medium text-slate-900">{shipment.cost_gross}€</p>
