@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Users, Building2, Search } from 'lucide-react';
 
-export default function LetterRecipientSelector({ onSelect }) {
-  const [filterType, setFilterType] = useState('tenant');
-  const [searchQuery, setSearchQuery] = useState('');
+export default function LetterRecipientSelector({ onSelect = () => {} }) {
+   const [filterType, setFilterType] = useState('tenant');
+   const [searchQuery, setSearchQuery] = useState('');
 
   const recipients = [
     { id: 1, name: 'Max Müller', address: 'Hauptstr. 10', type: 'tenant' },
