@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, DollarSign, User, MessageSquare, AlertCircle, Download } from 'lucide-react';
+import { FileText, DollarSign, User, MessageSquare, AlertCircle, Download, Users } from 'lucide-react';
 import TenantInvoices from '@/components/tenant-portal/TenantInvoices';
 import TenantPaymentStatus from '@/components/tenant-portal/TenantPaymentStatus';
 import TenantOperatingCosts from '@/components/tenant-portal/TenantOperatingCosts';
@@ -12,6 +12,7 @@ import TenantProfile from '@/components/tenant-portal/TenantProfile';
 import TenantInquiry from '@/components/tenant-portal/TenantInquiry';
 import TenantDocuments from '@/components/tenant-portal/TenantDocuments';
 import TenantNotificationCenter from '@/components/tenant-portal/TenantNotificationCenter';
+import CommunityFeed from '@/components/tenant-community/CommunityFeed';
 
 export default function TenantPortalPage() {
   const { data: user, isLoading } = useQuery({
@@ -68,7 +69,7 @@ export default function TenantPortalPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="invoices" className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-6">
+          <TabsList className="grid w-full grid-cols-7 mb-6">
             <TabsTrigger value="invoices" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">Rechnungen</span>
@@ -92,6 +93,10 @@ export default function TenantPortalPage() {
             <TabsTrigger value="inquiry" className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4" />
               <span className="hidden sm:inline">Anfrage</span>
+            </TabsTrigger>
+            <TabsTrigger value="community" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">Pinnwand</span>
             </TabsTrigger>
           </TabsList>
 
@@ -117,6 +122,10 @@ export default function TenantPortalPage() {
 
           <TabsContent value="inquiry">
             <TenantInquiry tenantId={tenant.id} tenantEmail={tenant.email} />
+          </TabsContent>
+
+          <TabsContent value="community">
+            <CommunityFeed tenantId={tenant.id} buildingId={tenant.gebaeude_id} companyId={tenant.company_id} />
           </TabsContent>
         </Tabs>
       </div>
