@@ -144,39 +144,49 @@ export default function VoiceFormDialog({ isOpen, onClose }) {
           <DialogTitle>Sprachnachricht aufnehmen</DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-6 py-8 w-full items-center">
-          <div className="flex justify-center w-full">
-            <button
-              onClick={isRecording ? stopRecording : startRecording}
-              disabled={isProcessing}
-              className={`h-24 w-24 rounded-full flex items-center justify-center transition-all active:scale-95 shadow-lg ${
-                isRecording
-                  ? 'bg-red-500 hover:bg-red-600 animate-pulse'
-                  : 'bg-blue-500 hover:bg-blue-600'
-              } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              {isProcessing ? (
-                <Loader2 className="h-8 w-8 text-white animate-spin" />
-              ) : isRecording ? (
-                <Square className="h-8 w-8 text-white" />
-              ) : (
-                <Mic className="h-8 w-8 text-white" />
-              )}
-            </button>
-          </div>
+        <div className="flex flex-col gap-8 py-8 w-full items-center">
+          {!isRecording && !isProcessing && (
+            <div className="flex justify-center w-full">
+              <button
+                onClick={startRecording}
+                className="h-28 w-28 rounded-full flex items-center justify-center transition-all active:scale-95 shadow-xl bg-blue-500 hover:bg-blue-600"
+              >
+                <Mic className="h-12 w-12 text-white" />
+              </button>
+            </div>
+          )}
 
-          <div className="text-center w-full">
-            <p className="text-base font-semibold text-slate-900 mb-2">
-              {isProcessing
-                ? 'Verarbeite Sprachnachricht...'
-                : isRecording
-                ? '⏹️ Zum Beenden drücken'
-                : '🎤 Zum Starten drücken'}
+          {isRecording && (
+            <div className="flex flex-col gap-4 w-full items-center">
+              <div className="animate-pulse flex gap-2 justify-center">
+                <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-semibold text-red-600">Aufnahme läuft...</span>
+              </div>
+              <button
+                onClick={stopRecording}
+                disabled={isProcessing}
+                className="w-full h-20 rounded-2xl flex items-center justify-center gap-3 bg-red-500 hover:bg-red-600 active:scale-95 transition-all shadow-lg disabled:opacity-50"
+              >
+                <Square className="h-8 w-8 text-white" />
+                <span className="text-lg font-bold text-white">Aufnahme beenden</span>
+              </button>
+            </div>
+          )}
+
+          {isProcessing && (
+            <div className="flex flex-col gap-4 w-full items-center">
+              <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />
+              <p className="text-base font-semibold text-slate-900">
+                Verarbeite Sprachnachricht...
+              </p>
+            </div>
+          )}
+
+          {!isRecording && !isProcessing && (
+            <p className="text-center text-sm text-slate-600">
+              Zum Starten drücken
             </p>
-            <p className="text-xs text-slate-500">
-              {isRecording && 'Aufnahme läuft...'}
-            </p>
-          </div>
+          )}
         </div>
 
         <div className="flex gap-2 justify-center w-full pt-4 border-t">
