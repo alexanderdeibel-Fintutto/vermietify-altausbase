@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import SmartActionDialog from './SmartActionDialog';
 import MobileActionSheet from './MobileActionSheet';
 import VoiceCommandDialog from './VoiceCommandDialog';
+import VoiceFormDialog from './VoiceFormDialog';
 
 const FIRST_LEVEL_ACTIONS = [
   { id: 'voice', icon: Mic, label: 'Sprechen', color: 'from-blue-500 to-blue-600' },
