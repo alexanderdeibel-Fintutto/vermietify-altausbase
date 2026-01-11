@@ -121,7 +121,13 @@ export default function VoiceFormDialog({ isOpen, onClose }) {
 
   const handleFormClose = () => {
     setFormData(null);
+    setRecordingStarted(false);
     onClose();
+  };
+
+  const handleStartRecording = async () => {
+    setRecordingStarted(true);
+    await startRecording();
   };
 
   if (formData) {
