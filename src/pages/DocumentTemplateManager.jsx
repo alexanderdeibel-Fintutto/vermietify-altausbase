@@ -9,6 +9,8 @@ import { Plus, Edit, Trash2, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import TemplateEditor from '@/components/documents/TemplateEditor';
 import TemplatePreview from '@/components/documents/TemplatePreview';
+import TemplateVersionManager from '@/components/documents/TemplateVersionManager';
+import BuildingTemplateAssigner from '@/components/documents/BuildingTemplateAssigner';
 
 const DOCUMENT_TYPES = [
   'mietvertrag',
@@ -32,6 +34,8 @@ export default function DocumentTemplateManager() {
   const [selectedType, setSelectedType] = useState(DOCUMENT_TYPES[0]);
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [showEditor, setShowEditor] = useState(false);
+  const [showVersions, setShowVersions] = useState(false);
+  const [showBuildingAssign, setShowBuildingAssign] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: templates = [] } = useQuery({
@@ -170,6 +174,18 @@ export default function DocumentTemplateManager() {
                   }}>
                     <Edit className="w-4 h-4" />
                   </Button>
+                  <Button size="sm" variant="outline" onClick={() => {
+                    setEditingTemplate(template);
+                    setShowBuildingAssign(true);
+                  }}>
+                    Gebäude
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => {
+                    setEditingTemplate(template);
+                    setShowVersions(true);
+                  }}>
+                    Versionen
+                  </Button>
                   <Button size="sm" variant="outline" onClick={() => duplicateTemplateMutation.mutate(template)}>
                     <Copy className="w-4 h-4" />
                   </Button>
@@ -181,6 +197,23 @@ export default function DocumentTemplateManager() {
             ))
           )}
         </div>
+      )}
+
+      {showVersions && editingTemplate && (
+        <div className="space-y-4 border rounded-lg p-6 bg-slate-50">
+          <TemplateVersionManager
+            templateId={editingTemplate.id}
+            onBack={() => setShowVersions(false)}
+          />
+        </div>
+      )}
+
+      {showBuildingAssign && editingTemplate && (
+        <BuildingTemplateAssigner
+          templateId={editingTemplate.id}
+          isOpen={showBuildingAssign}
+          onClose={() => setShowBuildingAssign(false)}
+        />
       )}
     </div>
   );
