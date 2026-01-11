@@ -52,15 +52,21 @@ export default function PostausgangsbuchTable() {
   const handleSync = async () => {
     setSyncing(true);
     try {
+      console.log('[PostausgangsbuchTable] Calling letterxpressSync...');
       const response = await base44.functions.invoke('letterxpressSync', {});
+      console.log('[PostausgangsbuchTable] Response:', response);
+      console.log('[PostausgangsbuchTable] Response.data:', response.data);
+      
       if (response.data?.success) {
+        console.log('[PostausgangsbuchTable] Success! Refreshing...');
         refetch();
         toast.success(response.data?.message || 'Synchronisiert');
       } else {
+        console.log('[PostausgangsbuchTable] No success flag');
         toast.error(response.data?.message || 'Fehler beim Synchronisieren');
       }
     } catch (error) {
-      console.error('Sync error:', error);
+      console.error('[PostausgangsbuchTable] Sync error:', error);
       const message = error.response?.data?.message || error.message || 'Netzwerkfehler';
       toast.error('Fehler: ' + message);
     } finally {
