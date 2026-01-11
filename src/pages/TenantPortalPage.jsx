@@ -11,6 +11,7 @@ import TenantOperatingCosts from '@/components/tenant-portal/TenantOperatingCost
 import TenantProfile from '@/components/tenant-portal/TenantProfile';
 import TenantInquiry from '@/components/tenant-portal/TenantInquiry';
 import TenantDocuments from '@/components/tenant-portal/TenantDocuments';
+import TenantNotificationCenter from '@/components/tenant-portal/TenantNotificationCenter';
 
 export default function TenantPortalPage() {
   const { data: user, isLoading } = useQuery({
@@ -58,6 +59,11 @@ export default function TenantPortalPage() {
           <p className="text-slate-600">
             Willkommen, {tenant?.first_name} {tenant?.last_name}
           </p>
+        </div>
+
+        {/* Benachrichtigungen */}
+        <div className="mb-6">
+          <TenantNotificationCenter tenantId={tenant.id} />
         </div>
 
         {/* Tabs */}
