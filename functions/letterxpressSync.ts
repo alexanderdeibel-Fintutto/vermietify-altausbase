@@ -18,20 +18,95 @@ Deno.serve(async (req) => {
 
     console.log('[letterxpressSync] User authenticated:', user.email);
 
-    // Demo-Modus: 5 Versände synchronisiert
-    const result = {
-      success: true,
-      synced: 5,
-      message: 'Demo-Modus: 5 Versände synchronisiert',
-      isDemo: true,
-      data: [
-        { id: 1, recipient: 'Max Mustermann', status: 'delivered', cost: 1.50 },
-        { id: 2, recipient: 'Anna Schmidt', status: 'pending', cost: 0.95 }
-      ]
-    };
+    // Lade LetterXpress-Credentials
+    console.log('[letterxpressSync] Loading LetterXpress credentials...');
+    const credentials = await base44.entities.LetterXpressCredential.list();
+    
+    if (!credentials || credentials.length === 0) {
+      console.log('[letterxpressSync] No LetterXpress credentials found');
+      return Response.json({ 
+        success: false, 
+        message: 'Keine LetterXpress-Credentials konfiguriert' 
+      }, { status: 400 });
+    }
 
-    console.log('[letterxpressSync] Returning result:', result);
-    return Response.json(result);
+    const cred = credentials[0];
+    console.log('[letterxpressSync] Using account:', cred.email);
+
+    // Hole Versände von LetterXpress API
+    console.log('[letterxpressSync] Fetching shipments from LetterXpress...');
+    const letterxpressResponse = await fetch('https://www.letterxpress.de/api/v1/shipments', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${cred.api_key}`,
+        'X-Account-ID': cred.account_id,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!letterxpressResponse.ok) {
+      const error = await letterxpressResponse.text();
+      console.error('[letterxpressSync] LetterXpress API error:', error);
+      throw new Error(`LetterXpress API error: ${letterxpressResponse.status}`);
+    }
+
+    const letterxpressData = await letterxpressResponse.json();
+    console.log('[letterxpressSync] Got shipments from LetterXpress:', letterxpressData);
+
+    // Synchronisiere in LetterShipment-Entity
+    const shipments = letterxpressData.shipments || [];
+    let synced = 0;
+    const errors = [];
+
+    for (const shipment of shipments) {
+      try {
+        // Prüfe ob Versand bereits existiert
+        const existing = await base44.entities.LetterShipment.filter({
+          letterxpress_id: shipment.id
+        });
+
+        if (existing.length === 0) {
+          // Erstelle neuen Versand
+          await base44.entities.LetterShipment.create({
+            letterxpress_id: shipment.id,
+            recipient_name: shipment.recipient_name,
+            recipient_address: shipment.recipient_address,
+            shipment_type: shipment.type || 'letter',
+            status: shipment.status || 'pending',
+            tracking_number: shipment.tracking_number,
+            sent_date: shipment.sent_date,
+            delivery_date: shipment.delivery_date,
+            cost: shipment.cost,
+            letterxpress_data: JSON.stringify(shipment)
+          });
+          synced++;
+        } else {
+          // Update existierenden Versand
+          await base44.entities.LetterShipment.update(existing[0].id, {
+            status: shipment.status || 'pending',
+            tracking_number: shipment.tracking_number,
+            delivery_date: shipment.delivery_date,
+            letterxpress_data: JSON.stringify(shipment)
+          });
+          synced++;
+        }
+      } catch (err) {
+        console.error('[letterxpressSync] Error syncing shipment:', err);
+        errors.push(shipment.id);
+      }
+    }
+
+    const message = errors.length > 0 
+      ? `${synced} Versände synchronisiert, ${errors.length} Fehler`
+      : `${synced} Versände erfolgreich synchronisiert`;
+
+    console.log('[letterxpressSync] Sync complete:', message);
+    return Response.json({
+      success: true,
+      synced,
+      message,
+      errors: errors.length > 0 ? errors : undefined
+    });
     
   } catch (error) {
     console.error('[letterxpressSync] Error:', error);
