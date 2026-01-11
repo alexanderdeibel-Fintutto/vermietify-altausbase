@@ -3,58 +3,63 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
-    const pathname = url.pathname;
     const apiKey = req.headers.get('X-API-Key');
-
+    
     if (!apiKey) {
       return Response.json({ error: 'API key required' }, { status: 401 });
     }
 
-    // Simple API key validation (in production use proper token system)
-    const isValidKey = apiKey.startsWith('pk_');
-
-    if (!isValidKey) {
+    // Verify API key
+    const keys = await base44.asServiceRole.entities.APIKey.filter({ key: apiKey, is_active: true });
+    if (keys.length === 0) {
       return Response.json({ error: 'Invalid API key' }, { status: 401 });
     }
 
-    // GET /api/v1/documents
-    if (pathname === '/api/v1/documents' && req.method === 'GET') {
-      const base44 = createClientFromRequest(req);
-      const limit = parseInt(url.searchParams.get('limit') || '50');
-      const offset = parseInt(url.searchParams.get('offset') || '0');
+    const apiKeyRecord = keys[0];
+    const base44 = createClientFromRequest(req);
 
-      const docs = await base44.asServiceRole.entities.Document.list('-created_date', limit);
-      return Response.json({ documents: docs, total: docs.length });
-    }
+    const endpoint = url.pathname.split('/api/documents/')[1];
+    const method = req.method;
 
-    // GET /api/v1/documents/:id
-    if (pathname.match(/^\/api\/v1\/documents\/[^\/]+$/) && req.method === 'GET') {
-      const base44 = createClientFromRequest(req);
-      const docId = pathname.split('/').pop();
-      const doc = await base44.asServiceRole.entities.Document.read(docId);
-      return Response.json(doc);
-    }
-
-    // POST /api/v1/documents
-    if (pathname === '/api/v1/documents' && req.method === 'POST') {
-      const base44 = createClientFromRequest(req);
-      const data = await req.json();
-      const doc = await base44.asServiceRole.entities.Document.create(data);
-      return Response.json(doc, { status: 201 });
-    }
-
-    // POST /api/v1/documents/:id/workflows
-    if (pathname.match(/^\/api\/v1\/documents\/[^\/]+\/workflows$/) && req.method === 'POST') {
-      const base44 = createClientFromRequest(req);
-      const docId = pathname.split('/')[4];
-      const { workflow_id } = await req.json();
-
-      const execution = await base44.asServiceRole.entities.WorkflowExecution.create({
-        workflow_id,
-        variables: { document_id: docId }
+    // GET /api/documents - List documents
+    if (method === 'GET' && !endpoint) {
+      const docs = await base44.asServiceRole.entities.Document.filter({
+        company_id: apiKeyRecord.company_id
       });
+      return Response.json({ documents: docs, count: docs.length });
+    }
 
-      return Response.json(execution, { status: 201 });
+    // GET /api/documents/:id - Get document
+    if (method === 'GET' && endpoint) {
+      const doc = await base44.asServiceRole.entities.Document.read(endpoint);
+      if (doc.company_id !== apiKeyRecord.company_id) {
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
+      return Response.json({ document: doc });
+    }
+
+    // POST /api/documents - Create document
+    if (method === 'POST' && !endpoint) {
+      const body = await req.json();
+      const doc = await base44.asServiceRole.entities.Document.create({
+        ...body,
+        company_id: apiKeyRecord.company_id,
+        created_by: 'api'
+      });
+      return Response.json({ document: doc }, { status: 201 });
+    }
+
+    // PUT /api/documents/:id - Update document
+    if (method === 'PUT' && endpoint) {
+      const body = await req.json();
+      const doc = await base44.asServiceRole.entities.Document.update(endpoint, body);
+      return Response.json({ document: doc });
+    }
+
+    // DELETE /api/documents/:id - Delete document
+    if (method === 'DELETE' && endpoint) {
+      await base44.asServiceRole.entities.Document.delete(endpoint);
+      return Response.json({ success: true }, { status: 204 });
     }
 
     return Response.json({ error: 'Not found' }, { status: 404 });

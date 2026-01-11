@@ -323,6 +323,7 @@ import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
 import DocumentEnterpriseHub from './pages/DocumentEnterpriseHub';
+import DocumentUltimateHub from './pages/DocumentUltimateHub';
 import __Layout from './Layout.jsx';
 
 
@@ -652,6 +653,7 @@ export const PAGES = {
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
     "DocumentEnterpriseHub": DocumentEnterpriseHub,
+    "DocumentUltimateHub": DocumentUltimateHub,
 }
 
 export const pagesConfig = {
