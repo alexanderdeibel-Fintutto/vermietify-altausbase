@@ -189,6 +189,143 @@ Deno.serve(async (req) => {
             message = 'Notiz wird erstellt.';
         }
 
+        // === OBJEKT/GEBÄUDE AUFGABEN ===
+        
+        // Objektfotos aktualisieren
+        else if (lowerCommand.includes('objektfotos') || lowerCommand.includes('gebäudefotos')) {
+            intent = 'CreateFieldTask';
+            extractedData = {
+                task_category: 'objekt_stammdaten',
+                task_type: 'objektfotos_aktualisieren',
+                title: 'Objektfotos aktualisieren',
+                priority: 'normal',
+                created_via: 'voice'
+            };
+            if (context.buildingId) extractedData.building_id = context.buildingId;
+            missingFields = [];
+            message = 'Aufgabe "Objektfotos aktualisieren" wird erstellt.';
+        }
+
+        // Zählerablesung
+        else if (lowerCommand.includes('zähler ablesen') || lowerCommand.includes('zaehler ablesen')) {
+            intent = 'CreateFieldTask';
+            let meterType = 'water';
+            if (lowerCommand.includes('wasser')) meterType = 'water';
+            else if (lowerCommand.includes('strom')) meterType = 'electricity';
+            else if (lowerCommand.includes('gas')) meterType = 'gas';
+            else if (lowerCommand.includes('wärme')) meterType = 'heat';
+            
+            extractedData = {
+                task_category: 'objekt_zaehler',
+                task_type: 'zaehler_ablesen',
+                title: `Zählerablesung - ${meterType === 'water' ? 'Wasser' : meterType === 'electricity' ? 'Strom' : meterType === 'gas' ? 'Gas' : 'Wärme'}`,
+                priority: 'normal',
+                created_via: 'voice',
+                meter_reading: {
+                    meter_type: meterType
+                }
+            };
+            if (context.buildingId) extractedData.building_id = context.buildingId;
+            missingFields = ['meter_reading.reading_value'];
+            message = 'Zählerablesung wird erfasst.';
+        }
+
+        // Heizungsprüfung
+        else if (lowerCommand.includes('heizung') && (lowerCommand.includes('prüfen') || lowerCommand.includes('status'))) {
+            intent = 'CreateFieldTask';
+            extractedData = {
+                task_category: 'objekt_technik',
+                task_type: 'heizung_betriebsstatus_pruefen',
+                title: 'Heizungsanlage Betriebsstatus prüfen',
+                priority: 'hoch',
+                created_via: 'voice'
+            };
+            if (context.buildingId) extractedData.building_id = context.buildingId;
+            missingFields = [];
+            message = 'Heizungsprüfung wird dokumentiert.';
+        }
+
+        // Feuerlöscher prüfen
+        else if (lowerCommand.includes('feuerlöscher') || lowerCommand.includes('feuerloescher')) {
+            intent = 'CreateFieldTask';
+            extractedData = {
+                task_category: 'objekt_technik',
+                task_type: 'feuerloescher_pruefdatum_kontrollieren',
+                title: 'Feuerlöscher Prüfdatum kontrollieren',
+                priority: 'hoch',
+                created_via: 'voice'
+            };
+            if (context.buildingId) extractedData.building_id = context.buildingId;
+            missingFields = [];
+            message = 'Feuerlöscher-Prüfung wird dokumentiert.';
+        }
+
+        // Treppenhaus reinigung
+        else if (lowerCommand.includes('treppenhaus') && (lowerCommand.includes('reinigung') || lowerCommand.includes('sauber'))) {
+            intent = 'CreateFieldTask';
+            extractedData = {
+                task_category: 'objekt_gemeinschaftsflaechen',
+                task_type: 'treppenhaus_reinigungszustand',
+                title: 'Treppenhaus Reinigungszustand prüfen',
+                priority: 'normal',
+                created_via: 'voice'
+            };
+            if (context.buildingId) extractedData.building_id = context.buildingId;
+            missingFields = [];
+            message = 'Treppenhaus-Prüfung wird erfasst.';
+        }
+
+        // Spielplatz Sicherheitsprüfung
+        else if (lowerCommand.includes('spielplatz')) {
+            intent = 'CreateFieldTask';
+            extractedData = {
+                task_category: 'objekt_aussenanlagen',
+                task_type: 'spielplatz_sicherheitspruefung',
+                title: 'Spielplatz Sicherheitsprüfung',
+                priority: 'hoch',
+                created_via: 'voice'
+            };
+            if (context.buildingId) extractedData.building_id = context.buildingId;
+            missingFields = [];
+            message = 'Spielplatz-Sicherheitsprüfung wird dokumentiert.';
+        }
+
+        // Müllstandplatz prüfen
+        else if (lowerCommand.includes('müll') && (lowerCommand.includes('standplatz') || lowerCommand.includes('tonnen'))) {
+            intent = 'CreateFieldTask';
+            extractedData = {
+                task_category: 'objekt_aussenanlagen',
+                task_type: 'muellstandplatz_zustand',
+                title: 'Müllstandplatz Zustand/Sauberkeit prüfen',
+                priority: 'normal',
+                created_via: 'voice'
+            };
+            if (context.buildingId) extractedData.building_id = context.buildingId;
+            missingFields = [];
+            message = 'Müllstandplatz-Prüfung wird erfasst.';
+        }
+
+        // Aufzug prüfen
+        else if (lowerCommand.includes('aufzug')) {
+            intent = 'CreateFieldTask';
+            extractedData = {
+                task_category: 'objekt_technik',
+                task_type: 'aufzug_funktionspruefung',
+                title: 'Aufzug Funktionsprüfung',
+                priority: 'hoch',
+                created_via: 'voice'
+            };
+            if (context.buildingId) extractedData.building_id = context.buildingId;
+            missingFields = [];
+            message = 'Aufzug-Prüfung wird dokumentiert.';
+        }
+
+        // Default fallback
+        else {
+            intent = 'Unknown';
+            message = 'Befehl wurde nicht erkannt. Bitte versuchen Sie es erneut.';
+        }
+
         // Add context if available
         if (context.buildingId) {
             extractedData.buildingId = context.buildingId;
