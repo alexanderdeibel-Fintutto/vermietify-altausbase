@@ -32,17 +32,25 @@ Deno.serve(async (req) => {
 
         const schemas = {};
         
+        console.log("=== DEBUG getAllEntitySchemas ===");
+        console.log("entityNames Liste:", entityNames);
+        console.log("Anzahl Entity-Namen:", entityNames.length);
+
         for (const name of entityNames) {
             if (!name) continue;
             try {
+                console.log(`Versuche Schema für: ${name}`);
                 const schema = await base44.entities[name].schema();
-                if (schema) {
-                    schemas[name] = { name, ...schema };
-                }
-            } catch (error) {
-                console.log(`Could not fetch schema for ${name}.`);
+                console.log(`✅ Schema gefunden für ${name}:`, Object.keys(schema || {}));
+                schemas[name] = { name, ...schema };
+            } catch (e) {
+                console.log(`❌ FEHLER bei ${name}:`, e.message);
             }
         }
+        
+        console.log("=== ERGEBNIS ===");
+        console.log("Gefundene Schemas:", Object.keys(schemas));
+        console.log("Anzahl:", Object.keys(schemas).length);
 
         return Response.json({
             success: true,
