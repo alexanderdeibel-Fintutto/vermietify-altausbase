@@ -114,6 +114,7 @@ import DocumentManagementCenter from './pages/DocumentManagementCenter';
 import DocumentManagementDashboard from './pages/DocumentManagementDashboard';
 import DocumentSearch from './pages/DocumentSearch';
 import DocumentSecurityHub from './pages/DocumentSecurityHub';
+import DocumentTemplateManager from './pages/DocumentTemplateManager';
 import DocumentUltimateHub from './pages/DocumentUltimateHub';
 import Documents from './pages/Documents';
 import ElsterIntegration from './pages/ElsterIntegration';
@@ -352,7 +353,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import DocumentTemplateManager from './pages/DocumentTemplateManager';
 import __Layout from './Layout.jsx';
 
 
@@ -473,6 +473,7 @@ export const PAGES = {
     "DocumentManagementDashboard": DocumentManagementDashboard,
     "DocumentSearch": DocumentSearch,
     "DocumentSecurityHub": DocumentSecurityHub,
+    "DocumentTemplateManager": DocumentTemplateManager,
     "DocumentUltimateHub": DocumentUltimateHub,
     "Documents": Documents,
     "ElsterIntegration": ElsterIntegration,
@@ -711,7 +712,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "DocumentTemplateManager": DocumentTemplateManager,
 }
 
 export const pagesConfig = {

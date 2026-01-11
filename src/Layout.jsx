@@ -30,6 +30,8 @@ import DocumentInboxNavItem from '@/components/navigation/DocumentInboxNavItem';
 import MainCategoryTabs from '@/components/navigation/MainCategoryTabs';
 import CategorySubNavigation from '@/components/navigation/CategorySubNavigation';
 import PWAInstallPrompt from '@/components/mobile/PWAInstallPrompt';
+import MainSidebar from '@/components/sidebar/MainSidebar';
+import { useSelectedBuilding } from '@/components/hooks/useSelectedBuilding';
 
 // Lazy load heavy components
 const TesterTracker = lazy(() => import('@/components/testing/TesterTracker'));
