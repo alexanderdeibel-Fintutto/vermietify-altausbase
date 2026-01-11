@@ -164,7 +164,7 @@ const SECONDARY_CATEGORIES = [
 ];
 
 export default function MainSidebar() {
-  const [expandedCategory, setExpandedCategory] = React.useState('kommunikation');
+  const [expandedCategory, setExpandedCategory] = React.useState('kommunikation-submenu');
   const { selectedBuilding } = useSelectedBuilding();
 
   const { data: buildings = [] } = useQuery({
