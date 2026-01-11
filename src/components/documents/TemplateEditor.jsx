@@ -23,26 +23,7 @@ export default function TemplateEditor({ template, onChange }) {
         </TabsList>
 
         <TabsContent value="visual" className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            {/* Editor Links */}
-            <div className="space-y-3">
-              <h3 className="font-semibold">HTML-Editor</h3>
-              <Textarea
-                value={template.template_html || ''}
-                onChange={(e) => onChange({ ...template, template_html: e.target.value })}
-                placeholder="<h1>{{title}}</h1>..."
-                className="font-mono text-xs h-96"
-              />
-            </div>
-
-            {/* Preview Rechts */}
-            <div className="space-y-3">
-              <h3 className="font-semibold">Vorschau</h3>
-              <div className="border rounded-lg p-4 bg-white h-96 overflow-auto">
-                <div dangerouslySetInnerHTML={{ __html: template.template_html || '<p>Leer</p>' }} />
-              </div>
-            </div>
-          </div>
+          <VisualTemplateBuilder template={template} onChange={onChange} />
         </TabsContent>
 
         <TabsContent value="code">
