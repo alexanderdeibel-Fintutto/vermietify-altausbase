@@ -5,13 +5,20 @@ Deno.serve(async (req) => {
   
   try {
     console.log('[letterxpressSync] Starting sync...');
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    console.log('[letterxpressSync] User authenticated:', user?.email);
+    
+    let base44, user;
+    try {
+      base44 = createClientFromRequest(req);
+      user = await base44.auth.me();
+    } catch (authErr) {
+      console.log('[letterxpressSync] Auth error:', authErr.message);
+      return Response.json({ success: false, message: 'Authentifizierung erforderlich' }, { status: 401 });
+    }
+    
+    console.log('[letterxpressSync] User:', user?.email);
 
     if (!user) {
-      console.log('[letterxpressSync] No user found');
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ success: false, message: 'Nicht authentifiziert' }, { status: 401 });
     }
 
     // Hole LetterXpress-Zugangsdaten vom aktuellen User
