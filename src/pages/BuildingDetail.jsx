@@ -228,7 +228,7 @@ export default function BuildingDetailPage() {
 
         <TabsContent value="documents">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <BuildingDocumentsManager buildingId={buildingId} />
+            <BuildingDocumentsManager buildingId={buildingId} permissionLevel={permissionLevel} />
             <BuildingDocumentsOverview buildingId={buildingId} />
           </div>
         </TabsContent>

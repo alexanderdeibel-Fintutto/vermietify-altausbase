@@ -203,6 +203,7 @@ import PackageTestPage from './pages/PackageTestPage';
 import Payments from './pages/Payments';
 import PerformanceMonitor from './pages/PerformanceMonitor';
 import PermissionDashboard from './pages/PermissionDashboard';
+import PermissionManagement from './pages/PermissionManagement';
 import PersonalizedTaxCockpit from './pages/PersonalizedTaxCockpit';
 import ProjectManagement from './pages/ProjectManagement';
 import PropertyManagementHub from './pages/PropertyManagementHub';
@@ -367,7 +368,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import PermissionManagement from './pages/PermissionManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -577,6 +577,7 @@ export const PAGES = {
     "Payments": Payments,
     "PerformanceMonitor": PerformanceMonitor,
     "PermissionDashboard": PermissionDashboard,
+    "PermissionManagement": PermissionManagement,
     "PersonalizedTaxCockpit": PersonalizedTaxCockpit,
     "ProjectManagement": ProjectManagement,
     "PropertyManagementHub": PropertyManagementHub,
@@ -741,7 +742,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "PermissionManagement": PermissionManagement,
 }
 
 export const pagesConfig = {
