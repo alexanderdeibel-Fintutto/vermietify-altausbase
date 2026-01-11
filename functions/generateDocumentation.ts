@@ -243,8 +243,7 @@ async function getAllEntitySchemas(base44) {
     // Rufe das Schema direkt ab
     for (const name of entityNames) {
         try {
-            // HIER DIE ÄNDERUNG: Verwende .schema() statt .list()
-            const schema = await base44.asServiceRole.entities[name].schema();
+            const schema = await base44.asServiceRole.entities.schema(name);
             if (schema) {
                 schemas[name] = { name: name, ...schema }; // Füge den Namen hinzu, da .schema() ihn nicht direkt im Root hat
             }
