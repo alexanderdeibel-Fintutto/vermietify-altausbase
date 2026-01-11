@@ -8,6 +8,7 @@ const DESIGN_PRESETS = [
     id: 'modern',
     name: 'Modern',
     primaryColor: '#1e40af',
+    accentColor: '#ec4899',
     font: '"Inter", sans-serif',
     spacing: 'medium',
     borderRadius: '0.5rem'
@@ -16,6 +17,7 @@ const DESIGN_PRESETS = [
     id: 'classic',
     name: 'Klassisch',
     primaryColor: '#1e293b',
+    accentColor: '#dc2626',
     font: '"Georgia", serif',
     spacing: 'large',
     borderRadius: '0rem'
@@ -24,6 +26,7 @@ const DESIGN_PRESETS = [
     id: 'minimal',
     name: 'Minimalistisch',
     primaryColor: '#000000',
+    accentColor: '#6b7280',
     font: '"Helvetica", sans-serif',
     spacing: 'small',
     borderRadius: '0.25rem'
@@ -32,9 +35,19 @@ const DESIGN_PRESETS = [
     id: 'corporate',
     name: 'Business',
     primaryColor: '#0c4a6e',
+    accentColor: '#16a34a',
     font: '"Arial", sans-serif',
     spacing: 'medium',
     borderRadius: '0.375rem'
+  },
+  {
+    id: 'creative',
+    name: 'Kreativ',
+    primaryColor: '#7c3aed',
+    accentColor: '#f59e0b',
+    font: '"Verdana", sans-serif',
+    spacing: 'large',
+    borderRadius: '1rem'
   }
 ];
 
