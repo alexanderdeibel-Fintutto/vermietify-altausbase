@@ -43,19 +43,11 @@ export default function VisualTemplateBuilder({ template, onChange }) {
     onChange({ ...template, blocks: newBlocks });
   };
 
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
-    if (!over) return;
-
-    const activeIndex = blocks.findIndex(b => b.id === active.id);
-    const overIndex = blocks.findIndex(b => b.id === over.id);
-
-    if (activeIndex !== -1 && overIndex !== -1) {
-      const newBlocks = [...blocks];
-      [newBlocks[activeIndex], newBlocks[overIndex]] = [newBlocks[overIndex], newBlocks[activeIndex]];
-      setBlocks(newBlocks);
-      onChange({ ...template, blocks: newBlocks });
-    }
+  const moveBlock = (fromIndex, toIndex) => {
+    const newBlocks = [...blocks];
+    [newBlocks[fromIndex], newBlocks[toIndex]] = [newBlocks[toIndex], newBlocks[fromIndex]];
+    setBlocks(newBlocks);
+    onChange({ ...template, blocks: newBlocks });
   };
 
   const handleDesignChange = (newDesign) => {
