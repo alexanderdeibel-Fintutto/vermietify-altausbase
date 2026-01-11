@@ -993,15 +993,22 @@ export default function DeveloperDocumentation() {
                 </Card>
             )}
 
-            {/* Suchfeld */}
-            <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <Input
-                    type="text"
-                    placeholder="Dokumentationen durchsuchen..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+            {/* Erweiterte Such- und Filteroptionen */}
+            <div className="space-y-3">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <Input
+                        type="text"
+                        placeholder="Dokumentationen global durchsuchen..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10"
+                    />
+                </div>
+                <DocumentationAdvancedFilters
+                    filters={advancedFilters}
+                    onFiltersChange={setAdvancedFilters}
+                    documentations={documentations}
                 />
             </div>
 
