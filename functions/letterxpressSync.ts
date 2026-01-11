@@ -62,18 +62,43 @@ Deno.serve(async (req) => {
       });
     }
 
-    // API-Call zu LetterXpress
+    // API-Call zu LetterXpress - versuche verschiedene Authentifizierungsmethoden
     console.log('[letterxpressSync] Calling LetterXpress API with account:', accountId);
     
-    const response = await fetch('https://api.letterxpress.de/v1/shipments', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Basic ${btoa(accountId + ':' + apiKey)}`,
-        'Content-Type': 'application/json'
+    let response;
+    
+    // Versuche mit Bearer Token
+    try {
+      response = await fetch('https://api.letterxpress.de/v1/shipments', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('[letterxpressSync] API Response status (Bearer):', response.status);
+    } catch (fetchErr) {
+      console.error('[letterxpressSync] Fetch error (Bearer):', fetchErr.message);
+      
+      // Fallback: versuche mit Basic Auth
+      try {
+        response = await fetch('https://api.letterxpress.de/v1/shipments', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Basic ${btoa(accountId + ':' + apiKey)}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        console.log('[letterxpressSync] API Response status (Basic):', response.status);
+      } catch (basicErr) {
+        console.error('[letterxpressSync] Fetch error (Basic):', basicErr.message);
+        return Response.json({ 
+          success: false,
+          message: `Verbindung zu LetterXpress fehlgeschlagen: ${basicErr.message}`
+        }, { status: 500 });
       }
-    });
-
-    console.log('[letterxpressSync] API Response status:', response.status);
+    }
     
     if (!response.ok) {
       const errorBody = await response.text();
@@ -82,8 +107,8 @@ Deno.serve(async (req) => {
         success: false,
         error: 'LetterXpress API error',
         status: response.status,
-        message: `LetterXpress API Fehler: ${response.status} - ${errorBody.substring(0, 100)}`
-      }, { status: 400 });
+        message: `LetterXpress API Fehler: ${response.status} - ${errorBody.substring(0, 200)}`
+      }, { status: response.status });
     }
 
     let shipments = [];
