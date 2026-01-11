@@ -32,7 +32,10 @@ export default function SmartActionButton() {
   const [showVoiceForm, setShowVoiceForm] = useState(false);
 
   const handleFirstLevelClick = (action) => {
-    if (action.id === 'voice' || action.id === 'photo') {
+    if (action.id === 'voice') {
+      setShowVoiceForm(true);
+      setIsExpanded(false);
+    } else if (action.id === 'photo') {
       setSelectedAction({ type: action.id });
       setIsExpanded(false);
     } else if (action.id === 'document') {
