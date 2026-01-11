@@ -165,17 +165,22 @@ export default function VoiceFormDialog({ isOpen, onClose }) {
             </button>
           </div>
 
-          <p className="text-center text-sm text-slate-600">
-            {isProcessing
-              ? 'Verarbeite Sprachnachricht...'
-              : isRecording
-              ? 'Aufnahme läuft... Zum Beenden drücken'
-              : 'Zum Starten drücken'}
-          </p>
+          <div className="text-center w-full">
+            <p className="text-base font-semibold text-slate-900 mb-2">
+              {isProcessing
+                ? 'Verarbeite Sprachnachricht...'
+                : isRecording
+                ? '⏹️ Zum Beenden drücken'
+                : '🎤 Zum Starten drücken'}
+            </p>
+            <p className="text-xs text-slate-500">
+              {isRecording && 'Aufnahme läuft...'}
+            </p>
+          </div>
         </div>
 
-        <div className="flex gap-2 justify-end">
-          <Button variant="outline" onClick={() => { stopRecording(); onClose(); }}>
+        <div className="flex gap-2 justify-center w-full pt-4 border-t">
+          <Button variant="outline" onClick={() => { stopRecording(); onClose(); }} className="flex-1">
             Abbrechen
           </Button>
         </div>
