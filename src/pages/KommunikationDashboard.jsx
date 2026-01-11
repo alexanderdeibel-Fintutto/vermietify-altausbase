@@ -2,7 +2,7 @@ import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Mail, Bell, Phone, BarChart3, Settings } from 'lucide-react';
+import { MessageSquare, Mail, Bell, Phone, BarChart3, Settings, Users, Lightbulb, AlertCircle, Activity } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
@@ -38,7 +38,7 @@ export default function KommunikationDashboard() {
 
       {/* Quick Stats */}
       {isAdmin && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -67,10 +67,10 @@ export default function KommunikationDashboard() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-600">Kontaktkanäle</p>
-                  <p className="text-2xl font-semibold text-slate-900 mt-2">5+</p>
+                  <p className="text-sm text-slate-600">Support-Tickets</p>
+                  <p className="text-2xl font-semibold text-slate-900 mt-2">8</p>
                 </div>
-                <Phone className="w-8 h-8 text-green-500 opacity-20" />
+                <AlertCircle className="w-8 h-8 text-red-500 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -79,10 +79,34 @@ export default function KommunikationDashboard() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-600">E-Mail-Vorlagen</p>
-                  <p className="text-2xl font-semibold text-slate-900 mt-2">12</p>
+                  <p className="text-sm text-slate-600">Community Posts</p>
+                  <p className="text-2xl font-semibold text-slate-900 mt-2">3 ausstehend</p>
+                </div>
+                <Users className="w-8 h-8 text-green-500 opacity-20" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-600">Postversände</p>
+                  <p className="text-2xl font-semibold text-slate-900 mt-2">7 aktiv</p>
                 </div>
                 <Mail className="w-8 h-8 text-purple-500 opacity-20" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-600">Ø Antwortzeit</p>
+                  <p className="text-2xl font-semibold text-slate-900 mt-2">1.9h</p>
+                </div>
+                <Activity className="w-8 h-8 text-blue-600 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -91,7 +115,7 @@ export default function KommunikationDashboard() {
 
       {/* Communication Channels */}
       <Tabs defaultValue="nachrichten" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="nachrichten">
             <MessageSquare className="w-4 h-4 mr-2" />
             Nachrichten
@@ -176,12 +200,27 @@ export default function KommunikationDashboard() {
               <CardContent>
                 <p className="text-sm text-slate-600 mb-4">Verwaltung von Mieterbeschwerden</p>
                 <Link to={createPageUrl('AdminIssueReports')}>
-                  <Button className="w-full">Zum Portal</Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+                    <Button className="w-full">Zum Portal</Button>
+                  </Link>
+                </CardContent>
+                </Card>
+
+                <Card>
+                <CardHeader>
+                 <CardTitle className="text-lg flex items-center gap-2">
+                   <Users className="w-5 h-5" />
+                   Community-Forum
+                 </CardTitle>
+                </CardHeader>
+                <CardContent>
+                 <p className="text-sm text-slate-600 mb-4">Mieter-Austausch und Gemeinschaftsposts</p>
+                 <Link to={createPageUrl('CommunityForum')}>
+                   <Button className="w-full">Zum Forum</Button>
+                 </Link>
+                </CardContent>
+                </Card>
+                </div>
+                </TabsContent>
 
         {/* Ankündigungen Tab */}
         {isAdmin && (
@@ -212,13 +251,28 @@ export default function KommunikationDashboard() {
                 <CardContent>
                   <p className="text-sm text-slate-600 mb-4">Massennachrichten per E-Mail/SMS</p>
                   <Link to={createPageUrl('BulkMessaging')}>
-                    <Button className="w-full">Massen-Versand</Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        )}
+                        <Button className="w-full">Massen-Versand</Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Mail className="w-5 h-5" />
+                        Postversand
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-slate-600 mb-4">LetterXpress Integration für Briefe</p>
+                      <Link to={createPageUrl('LetterXpressManagement')}>
+                        <Button className="w-full">Postversand verwalten</Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                  </div>
+                  </TabsContent>
+                  )}
 
         {/* E-Mail Tab */}
         {isAdmin && (
@@ -264,13 +318,28 @@ export default function KommunikationDashboard() {
                 <CardContent>
                   <p className="text-sm text-slate-600 mb-4">Zentrale Verwaltung aller Templates</p>
                   <Link to={createPageUrl('EmailTemplateManager')}>
-                    <Button className="w-full">Verwaltung</Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        )}
+                        <Button className="w-full">Verwaltung</Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Lightbulb className="w-5 h-5" />
+                        KI-Generator
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-slate-600 mb-4">KI-basierte Vorlagen-Generierung</p>
+                      <Link to={createPageUrl('AITemplateGenerator')}>
+                        <Button className="w-full">Vorlagen generieren</Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                  </div>
+                  </TabsContent>
+                  )}
 
         {/* Support Tab */}
         {isAdmin && (
@@ -316,46 +385,93 @@ export default function KommunikationDashboard() {
                 <CardContent>
                   <p className="text-sm text-slate-600 mb-4">Müterfeedback und Bewertungen</p>
                   <Link to={createPageUrl('TenantFeedbackManager')}>
-                    <Button className="w-full">Feedback anzeigen</Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        )}
+                        <Button className="w-full">Feedback anzeigen</Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Users className="w-5 h-5" />
+                        Wissensdatenbank
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-slate-600 mb-4">FAQs und Hilfeinhalte für Mieter</p>
+                      <Link to={createPageUrl('KnowledgeBaseAdmin')}>
+                        <Button className="w-full">Zur Wissensdatenbank</Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                  </div>
+                  </TabsContent>
+                  )}
 
         {/* Analytics Tab */}
         {isAdmin && (
           <TabsContent value="analytics" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5" />
-                  Kommunikations-Analysen
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-slate-600 mb-4">Detaillierte Statistiken über alle Kommunikationskanäle</p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                  <div className="p-4 bg-slate-50 rounded-lg">
-                    <p className="text-xs text-slate-600">Ø Antwortzeit</p>
-                    <p className="text-2xl font-semibold mt-2">2.5h</p>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-lg">
-                    <p className="text-xs text-slate-600">Zufriedenheit</p>
-                    <p className="text-2xl font-semibold mt-2">94%</p>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-lg">
-                    <p className="text-xs text-slate-600">Ausstehend</p>
-                    <p className="text-2xl font-semibold mt-2">12</p>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-lg">
-                    <p className="text-xs text-slate-600">Diese Woche</p>
-                    <p className="text-2xl font-semibold mt-2">87</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5" />
+                    Kommunikations-Analysen
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-slate-600 mb-4">Detaillierte Statistiken über alle Kanäle</p>
+                  <Link to={createPageUrl('CommunicationAnalytics')}>
+                    <Button className="w-full">Zur Analyse</Button>
+                  </Link>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Activity className="w-5 h-5" />
+                    Automatisierte Kommunikation
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-slate-600 mb-4">KI-gestützte Automatisierungen</p>
+                  <Link to={createPageUrl('AutomatedCommunication')}>
+                    <Button className="w-full">Automatisierungen</Button>
+                  </Link>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5" />
+                    Audit-Log
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-slate-600 mb-4">Detaillierte Logs aller Events</p>
+                  <Link to={createPageUrl('CommunicationAuditLog')}>
+                    <Button className="w-full">Zum Audit-Log</Button>
+                  </Link>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Bell className="w-5 h-5" />
+                    Benachrichtigungs-Verlauf
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-slate-600 mb-4">Übersicht aller Versände</p>
+                  <Link to={createPageUrl('NotificationHistory')}>
+                    <Button className="w-full">Verlauf anzeigen</Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         )}
       </Tabs>
