@@ -20,11 +20,12 @@ Deno.serve(async (req) => {
     }
 
     if (!creds || creds.length === 0) {
+      // Return empty list if no credentials configured (demo mode)
       return Response.json({ 
-        success: false,
-        error: 'LetterXpress credentials not configured',
-        message: 'Bitte konfigurieren Sie Ihre LetterXpress-Zugangsdaten zuerst'
-      }, { status: 400 });
+        success: true,
+        synced: 0,
+        message: 'Keine LetterXpress-Zugangsdaten konfiguriert - Demo-Modus'
+      });
     }
 
     const apiKey = creds[0].api_key;
