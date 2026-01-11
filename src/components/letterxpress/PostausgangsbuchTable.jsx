@@ -1,142 +1,198 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ExternalLink, Package, Mail } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { 
+  Send, 
+  CheckCircle, 
+  Clock, 
+  AlertCircle, 
+  Download,
+  RefreshCw,
+  Search,
+  Filter
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
+
+const statusConfig = {
+  pending: { label: 'Ausstehend', icon: Clock, color: 'text-yellow-600 bg-yellow-50' },
+  sent: { label: 'Versendet', icon: Send, color: 'text-blue-600 bg-blue-50' },
+  delivered: { label: 'Zugestellt', icon: CheckCircle, color: 'text-green-600 bg-green-50' },
+  failed: { label: 'Fehlgeschlagen', icon: AlertCircle, color: 'text-red-600 bg-red-50' }
+};
+
+const typeConfig = {
+  letter: 'Standardbrief',
+  registered: 'Einschreiben',
+  color: 'Farbdruck',
+  express: 'Express'
+};
 
 export default function PostausgangsbuchTable() {
-    const { data: shipments, isLoading } = useQuery({
-        queryKey: ['letter-shipments'],
-        queryFn: () => base44.entities.LetterShipment.list('-created_date', 100),
-        initialData: []
-    });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [syncing, setSyncing] = useState(false);
 
-    const getStatusBadge = (status) => {
-        const variants = {
-            queue: { label: 'Warteschlange', class: 'bg-yellow-100 text-yellow-700' },
-            hold: { label: 'Angehalten', class: 'bg-orange-100 text-orange-700' },
-            done: { label: 'Verarbeitet', class: 'bg-blue-100 text-blue-700' },
-            sent: { label: 'Versendet', class: 'bg-green-100 text-green-700' },
-            canceled: { label: 'Storniert', class: 'bg-red-100 text-red-700' }
-        };
-        const variant = variants[status] || variants.queue;
-        return <Badge className={variant.class}>{variant.label}</Badge>;
-    };
+  const { data: shipments = [], isLoading, refetch } = useQuery({
+    queryKey: ['letterShipments'],
+    queryFn: () => base44.entities.LetterShipment.list('-sent_date', 100),
+    staleTime: 5 * 60 * 1000
+  });
 
-    const getShippingTypeBadge = (type) => {
-        const types = {
-            normal: 'Normal',
-            r1: 'Einschreiben Einwurf',
-            r2: 'Einschreiben'
-        };
-        return types[type] || type;
-    };
-
-    const totalCost = shipments.reduce((sum, s) => sum + (s.cost_gross || 0), 0);
-
-    if (isLoading) {
-        return <div className="text-center py-12">Lade Postausgangsbuch...</div>;
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      const response = await base44.functions.invoke('letterxpressSync', {});
+      if (response.data.success) {
+        refetch();
+      }
+    } finally {
+      setSyncing(false);
     }
+  };
 
-    return (
-        <div className="space-y-4">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Postausgangsbuch</CardTitle>
-                    <CardDescription>
-                        Übersicht aller versendeten Briefe über LetterXpress
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {shipments.length === 0 ? (
-                        <div className="text-center py-12 text-slate-500">
-                            <Mail className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-                            <p>Noch keine Briefe versendet</p>
-                        </div>
-                    ) : (
-                        <>
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead className="border-b">
-                                        <tr className="text-left text-sm text-slate-600">
-                                            <th className="pb-3 font-medium">Datum</th>
-                                            <th className="pb-3 font-medium">Empfänger</th>
-                                            <th className="pb-3 font-medium">Dokument</th>
-                                            <th className="pb-3 font-medium">Versandart</th>
-                                            <th className="pb-3 font-medium">Status</th>
-                                            <th className="pb-3 font-medium">Tracking</th>
-                                            <th className="pb-3 font-medium text-right">Kosten</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y">
-                                        {shipments.map((shipment) => (
-                                            <tr key={shipment.id} className="text-sm">
-                                                <td className="py-3">
-                                                    {new Date(shipment.sent_at || shipment.created_date).toLocaleDateString('de-DE')}
-                                                </td>
-                                                <td className="py-3">
-                                                    <div className="font-medium text-slate-900">
-                                                        {shipment.recipient_name}
-                                                    </div>
-                                                    <div className="text-xs text-slate-500 max-w-xs truncate">
-                                                        {shipment.recipient_address}
-                                                    </div>
-                                                </td>
-                                                <td className="py-3">
-                                                    <div className="text-slate-900">{shipment.document_type}</div>
-                                                    <div className="text-xs text-slate-500">{shipment.filename}</div>
-                                                </td>
-                                                <td className="py-3">
-                                                    <div className="flex items-center gap-1">
-                                                        <Package className="w-3 h-3 text-slate-400" />
-                                                        {getShippingTypeBadge(shipment.shipping_type)}
-                                                    </div>
-                                                    <div className="text-xs text-slate-500">
-                                                        {shipment.color === '1' ? 'S/W' : 'Farbe'} • {shipment.pages} Seite(n)
-                                                    </div>
-                                                </td>
-                                                <td className="py-3">
-                                                    {getStatusBadge(shipment.status)}
-                                                </td>
-                                                <td className="py-3">
-                                                    {shipment.tracking_code ? (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => window.open(
-                                                                `https://www.dhl.de/de/privatkunden/pakete-empfangen/verfolgen.html?piececode=${shipment.tracking_code}`,
-                                                                '_blank'
-                                                            )}
-                                                        >
-                                                            Tracking <ExternalLink className="w-3 h-3 ml-1" />
-                                                        </Button>
-                                                    ) : (
-                                                        <span className="text-xs text-slate-400">-</span>
-                                                    )}
-                                                </td>
-                                                <td className="py-3 text-right font-medium">
-                                                    {shipment.cost_gross?.toFixed(2)} €
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+  const filteredShipments = shipments.filter(shipment => {
+    const matchesSearch = !searchTerm || 
+      shipment.recipient_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shipment.tracking_number?.includes(searchTerm);
+    
+    const matchesStatus = statusFilter === 'all' || shipment.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
-                            <div className="mt-6 pt-6 border-t flex justify-between items-center">
-                                <div className="text-sm text-slate-600">
-                                    Gesamt: {shipments.length} Brief(e)
-                                </div>
-                                <div className="text-lg font-bold text-slate-900">
-                                    {totalCost.toFixed(2)} € (brutto)
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </CardContent>
-            </Card>
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle>Postausgangsbuch</CardTitle>
+            <p className="text-sm text-slate-600 mt-1">Alle versendeten Briefe und ihre Status</p>
+          </div>
+          <Button
+            onClick={handleSync}
+            disabled={syncing}
+            className="gap-2"
+            variant="outline"
+          >
+            <RefreshCw className="w-4 h-4" />
+            {syncing ? 'Synchronisiere...' : 'Synchronisieren'}
+          </Button>
         </div>
-    );
+      </CardHeader>
+      
+      <CardContent className="space-y-4">
+        {/* Filter & Search */}
+        <div className="flex gap-3 flex-wrap">
+          <div className="flex-1 min-w-64 relative">
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Nach Empfänger oder Tracking-Nummer suchen..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm"
+            />
+          </div>
+          
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 border rounded-lg text-sm"
+          >
+            <option value="all">Alle Status</option>
+            <option value="pending">Ausstehend</option>
+            <option value="sent">Versendet</option>
+            <option value="delivered">Zugestellt</option>
+            <option value="failed">Fehlgeschlagen</option>
+          </select>
+        </div>
+
+        {/* Table */}
+        {isLoading ? (
+          <div className="text-center py-8 text-slate-500">Laden...</div>
+        ) : filteredShipments.length === 0 ? (
+          <div className="text-center py-8 text-slate-500">
+            {shipments.length === 0 ? 'Noch keine Versände vorhanden' : 'Keine Treffer'}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50">
+                  <th className="text-left p-3 font-medium">Empfänger</th>
+                  <th className="text-left p-3 font-medium">Adresse</th>
+                  <th className="text-left p-3 font-medium">Typ</th>
+                  <th className="text-left p-3 font-medium">Status</th>
+                  <th className="text-left p-3 font-medium">Versendet</th>
+                  <th className="text-left p-3 font-medium">Kosten</th>
+                  <th className="text-left p-3 font-medium">Tracking</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredShipments.map((shipment) => {
+                  const statusInfo = statusConfig[shipment.status] || statusConfig.pending;
+                  const StatusIcon = statusInfo.icon;
+                  
+                  return (
+                    <tr key={shipment.id} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="p-3 font-medium text-slate-900">{shipment.recipient_name}</td>
+                      <td className="p-3 text-slate-600 text-xs">{shipment.recipient_address}</td>
+                      <td className="p-3 text-slate-600">{typeConfig[shipment.shipment_type] || shipment.shipment_type}</td>
+                      <td className="p-3">
+                        <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium ${statusInfo.color}`}>
+                          <StatusIcon className="w-3.5 h-3.5" />
+                          {statusInfo.label}
+                        </div>
+                      </td>
+                      <td className="p-3 text-slate-600">
+                        {shipment.sent_date 
+                          ? format(new Date(shipment.sent_date), 'dd.MM.yyyy', { locale: de })
+                          : '-'
+                        }
+                      </td>
+                      <td className="p-3 font-medium">€ {shipment.cost?.toFixed(2) || '0,00'}</td>
+                      <td className="p-3 text-slate-600 font-mono text-xs">
+                        {shipment.tracking_number || '-'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Stats */}
+        {shipments.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-200">
+            <div>
+              <p className="text-xs text-slate-600">Gesamt Versände</p>
+              <p className="text-xl font-semibold text-slate-900">{shipments.length}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-600">Zugestellt</p>
+              <p className="text-xl font-semibold text-green-600">
+                {shipments.filter(s => s.status === 'delivered').length}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-600">Gesamtkosten</p>
+              <p className="text-xl font-semibold text-slate-900">
+                € {shipments.reduce((sum, s) => sum + (s.cost || 0), 0).toFixed(2)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-600">Fehlerquote</p>
+              <p className="text-xl font-semibold text-red-600">
+                {((shipments.filter(s => s.status === 'failed').length / shipments.length) * 100).toFixed(1)}%
+              </p>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
