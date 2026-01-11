@@ -172,20 +172,23 @@ export default function VisualTemplateBuilder({ template, onChange }) {
       </div>
 
       <Tabs defaultValue="visual" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="visual" className="gap-2">
-            <Layout className="w-4 h-4" /> Visual
-          </TabsTrigger>
-          <TabsTrigger value="design" className="gap-2">
-            <Eye className="w-4 h-4" /> Design
-          </TabsTrigger>
-          <TabsTrigger value="pages" className="gap-2">
-            <Layout className="w-4 h-4" /> Seite
-          </TabsTrigger>
-          <TabsTrigger value="preview" className="gap-2">
-            <Eye className="w-4 h-4" /> Vorschau
-          </TabsTrigger>
-        </TabsList>
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="visual" className="gap-2">
+                  <Layout className="w-4 h-4" /> Visual
+                </TabsTrigger>
+                <TabsTrigger value="design" className="gap-2">
+                  <Eye className="w-4 h-4" /> Design
+                </TabsTrigger>
+                <TabsTrigger value="pages" className="gap-2">
+                  <Layout className="w-4 h-4" /> Seite
+                </TabsTrigger>
+                <TabsTrigger value="library" className="gap-2">
+                  <Library className="w-4 h-4" /> Bibliothek
+                </TabsTrigger>
+                <TabsTrigger value="preview" className="gap-2">
+                  <Eye className="w-4 h-4" /> Vorschau
+                </TabsTrigger>
+              </TabsList>
 
         <TabsContent value="visual" className="space-y-4">
           <div className="grid grid-cols-4 gap-4">
@@ -194,21 +197,57 @@ export default function VisualTemplateBuilder({ template, onChange }) {
               <TemplateComponentLibrary onAddBlock={handleAddBlock} />
             </div>
 
-            {/* Canvas mit Drag & Drop */}
+            {/* Canvas */}
             <div className="col-span-2">
               <div className="bg-white border-2 border-slate-200 rounded-lg min-h-96 p-6 shadow-sm">
-                <DragDropTemplateBuilder
-                  blocks={blocks}
-                  onBlocksReorder={(newBlocks) => {
-                    setBlocks(newBlocks);
-                    undoRedo.push({ blocks: newBlocks, design, pageSetup });
-                    onChange({ ...template, blocks: newBlocks });
-                  }}
-                  onUpdate={(id, updates) => handleUpdateBlock(id, updates)}
-                  onDelete={(id) => handleDeleteBlock(id)}
-                  selectedBlockId={selectedBlockId}
-                  onSelect={setSelectedBlockId}
-                />
+                <div className="space-y-3">
+                  {blocks.length === 0 ? (
+                    <div className="text-center py-12 text-slate-400">
+                      Komponenten links hinzufügen zum starten
+                    </div>
+                  ) : (
+                    blocks.map((block, idx) => (
+                      <div
+                        key={block.id}
+                        className={`p-3 border rounded flex items-start gap-2 ${
+                          selectedBlockId === block.id
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-slate-200 hover:border-slate-300'
+                        }`}
+                        onClick={() => setSelectedBlockId(block.id)}
+                      >
+                        <div className="flex gap-1 pt-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              idx > 0 && moveBlock(idx, idx - 1);
+                            }}
+                            className="text-slate-400 hover:text-slate-600"
+                          >
+                            ↑
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              idx < blocks.length - 1 && moveBlock(idx, idx + 1);
+                            }}
+                            className="text-slate-400 hover:text-slate-600"
+                          >
+                            ↓
+                          </button>
+                        </div>
+                        <div className="flex-1">
+                          <TemplateBlockEditor
+                            block={block}
+                            isSelected={selectedBlockId === block.id}
+                            onUpdate={(updates) => handleUpdateBlock(block.id, updates)}
+                            onDelete={() => handleDeleteBlock(block.id)}
+                          />
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
 
