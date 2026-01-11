@@ -2,8 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { DollarSign, Home, Users, Building2, Calculator, ChevronRight, FileText, MessageSquare } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import { useSelectedBuilding } from '@/components/hooks/useSelectedBuilding';
 import BuildingSelector from './BuildingSelector';
+import OrgLogoSelector from './OrgLogoSelector';
 
 const MAIN_CATEGORIES = [
   {
@@ -83,11 +86,22 @@ export default function MainSidebar() {
   const [expandedCategory, setExpandedCategory] = React.useState('immobilien');
   const { selectedBuilding } = useSelectedBuilding();
 
+  const { data: buildings = [] } = useQuery({
+    queryKey: ['buildings'],
+    queryFn: () => base44.entities.Building.list(),
+  });
+
+  const currentBuilding = buildings.find(b => b.id === selectedBuilding);
+  const themeColor = currentBuilding?.theme_color || '#1e293b';
+
   return (
-    <div className="w-64 bg-white border-r border-slate-200 flex flex-col h-screen">
+    <div className="w-64 bg-white border-r border-slate-200 flex flex-col h-screen" style={{
+      borderRightColor: `${themeColor}20`,
+    }}>
       {/* Logo/Header */}
       <div className="p-4 space-y-4">
         <div className="flex items-center gap-2">
+          <OrgLogoSelector />
           <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
             <Building2 className="w-4 h-4 text-white" />
           </div>
