@@ -136,6 +136,8 @@ export default function MainSidebar() {
         {MAIN_CATEGORIES.map((category) => {
           const Icon = category.icon;
           const isExpanded = expandedCategory === category.id;
+          const subMenuId = `${category.id}-submenu`;
+          const isSubMenuExpanded = expandedCategory === subMenuId;
 
           return (
             <div key={category.id} className="space-y-1">
@@ -166,6 +168,38 @@ export default function MainSidebar() {
                     >
                       {page.label}
                     </Link>
+                  ))}
+
+                  {category.subMenu && category.subMenu.map((subCategory) => (
+                    <div key={subCategory.id} className="space-y-1 mt-2 pt-2 border-t border-slate-200">
+                      <button
+                        onClick={() => setExpandedCategory(isSubMenuExpanded ? null : subMenuId)}
+                        className="w-full flex items-center justify-between px-3 py-1.5 text-sm font-medium rounded-lg transition-colors"
+                        style={{
+                          color: themeColor,
+                          backgroundColor: isSubMenuExpanded ? `${themeColor}08` : 'transparent',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = `${themeColor}12`}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isSubMenuExpanded ? `${themeColor}08` : 'transparent'}
+                      >
+                        <span>{subCategory.label}</span>
+                        <ChevronRight className={`w-3 h-3 transition-transform ${isSubMenuExpanded ? 'rotate-90' : ''}`} />
+                      </button>
+
+                      {isSubMenuExpanded && (
+                        <div className="pl-4 space-y-1">
+                          {subCategory.pages.map((page) => (
+                            <Link
+                              key={page.name}
+                              to={createPageUrl(page.name)}
+                              className="block px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded transition-colors"
+                            >
+                              {page.label}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               )}
