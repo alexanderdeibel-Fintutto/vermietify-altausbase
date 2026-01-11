@@ -89,12 +89,15 @@ import DataImportExportHub from './pages/DataImportExportHub';
 import DeductionMaximizationTool from './pages/DeductionMaximizationTool';
 import DeveloperDocumentation from './pages/DeveloperDocumentation';
 import DividendOptimization from './pages/DividendOptimization';
+import DocumentAdvancedHub from './pages/DocumentAdvancedHub';
 import DocumentAnalysisDashboard from './pages/DocumentAnalysisDashboard';
 import DocumentAnalytics from './pages/DocumentAnalytics';
 import DocumentArchiveManager from './pages/DocumentArchiveManager';
+import DocumentComplianceDashboard from './pages/DocumentComplianceDashboard';
 import DocumentGeneration from './pages/DocumentGeneration';
 import DocumentInbox from './pages/DocumentInbox';
 import DocumentInboxSettings from './pages/DocumentInboxSettings';
+import DocumentIntegrationHub from './pages/DocumentIntegrationHub';
 import DocumentLibrary from './pages/DocumentLibrary';
 import DocumentManagement from './pages/DocumentManagement';
 import DocumentManagementCenter from './pages/DocumentManagementCenter';
@@ -107,9 +110,9 @@ import EmployeeManagement from './pages/EmployeeManagement';
 import EnergyManagement from './pages/EnergyManagement';
 import EntityTaxPlanning from './pages/EntityTaxPlanning';
 import Equipment from './pages/Equipment';
-import FeatureCatalog from './pages/FeatureCatalog';
 import EstateTaxPlanning from './pages/EstateTaxPlanning';
 import EstimatedTaxScheduler from './pages/EstimatedTaxScheduler';
+import FeatureCatalog from './pages/FeatureCatalog';
 import FinAPICallback from './pages/FinAPICallback';
 import FinanceManagement from './pages/FinanceManagement';
 import FinancialForecasting from './pages/FinancialForecasting';
@@ -218,11 +221,11 @@ import TaxAuthoritySubmissions from './pages/TaxAuthoritySubmissions';
 import TaxAutomationCenter from './pages/TaxAutomationCenter';
 import TaxBracketCalculator from './pages/TaxBracketCalculator';
 import TaxCalendarAndTimeline from './pages/TaxCalendarAndTimeline';
-import TaxDashboard from './pages/TaxDashboard';
 import TaxComplianceChecker from './pages/TaxComplianceChecker';
 import TaxComplianceDashboard from './pages/TaxComplianceDashboard';
 import TaxComplianceTracker from './pages/TaxComplianceTracker';
 import TaxCreditsAndIncentives from './pages/TaxCreditsAndIncentives';
+import TaxDashboard from './pages/TaxDashboard';
 import TaxDashboardAT from './pages/TaxDashboardAT';
 import TaxDashboardCH from './pages/TaxDashboardCH';
 import TaxDashboardDE from './pages/TaxDashboardDE';
@@ -312,16 +315,14 @@ import WorkflowAI from './pages/WorkflowAI';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationBuilder from './pages/WorkflowAutomationBuilder';
 import WorkflowAutomationCenter from './pages/WorkflowAutomationCenter';
+import WorkflowAutomationDashboard from './pages/WorkflowAutomationDashboard';
 import WorkflowAutomationHub from './pages/WorkflowAutomationHub';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage';
 import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
-import WorkflowTemplates from './pages/WorkflowTemplates';
-import WorkflowAutomationDashboard from './pages/WorkflowAutomationDashboard';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
-import DocumentComplianceDashboard from './pages/DocumentComplianceDashboard';
-import DocumentIntegrationHub from './pages/DocumentIntegrationHub';
-import DocumentAdvancedHub from './pages/DocumentAdvancedHub';
+import WorkflowTemplates from './pages/WorkflowTemplates';
+import DocumentEnterpriseHub from './pages/DocumentEnterpriseHub';
 import __Layout from './Layout.jsx';
 
 
@@ -417,12 +418,15 @@ export const PAGES = {
     "DeductionMaximizationTool": DeductionMaximizationTool,
     "DeveloperDocumentation": DeveloperDocumentation,
     "DividendOptimization": DividendOptimization,
+    "DocumentAdvancedHub": DocumentAdvancedHub,
     "DocumentAnalysisDashboard": DocumentAnalysisDashboard,
     "DocumentAnalytics": DocumentAnalytics,
     "DocumentArchiveManager": DocumentArchiveManager,
+    "DocumentComplianceDashboard": DocumentComplianceDashboard,
     "DocumentGeneration": DocumentGeneration,
     "DocumentInbox": DocumentInbox,
     "DocumentInboxSettings": DocumentInboxSettings,
+    "DocumentIntegrationHub": DocumentIntegrationHub,
     "DocumentLibrary": DocumentLibrary,
     "DocumentManagement": DocumentManagement,
     "DocumentManagementCenter": DocumentManagementCenter,
@@ -435,9 +439,9 @@ export const PAGES = {
     "EnergyManagement": EnergyManagement,
     "EntityTaxPlanning": EntityTaxPlanning,
     "Equipment": Equipment,
-    "FeatureCatalog": FeatureCatalog,
     "EstateTaxPlanning": EstateTaxPlanning,
     "EstimatedTaxScheduler": EstimatedTaxScheduler,
+    "FeatureCatalog": FeatureCatalog,
     "FinAPICallback": FinAPICallback,
     "FinanceManagement": FinanceManagement,
     "FinancialForecasting": FinancialForecasting,
@@ -546,11 +550,11 @@ export const PAGES = {
     "TaxAutomationCenter": TaxAutomationCenter,
     "TaxBracketCalculator": TaxBracketCalculator,
     "TaxCalendarAndTimeline": TaxCalendarAndTimeline,
-    "TaxDashboard": TaxDashboard,
     "TaxComplianceChecker": TaxComplianceChecker,
     "TaxComplianceDashboard": TaxComplianceDashboard,
     "TaxComplianceTracker": TaxComplianceTracker,
     "TaxCreditsAndIncentives": TaxCreditsAndIncentives,
+    "TaxDashboard": TaxDashboard,
     "TaxDashboardAT": TaxDashboardAT,
     "TaxDashboardCH": TaxDashboardCH,
     "TaxDashboardDE": TaxDashboardDE,
@@ -640,16 +644,14 @@ export const PAGES = {
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationBuilder": WorkflowAutomationBuilder,
     "WorkflowAutomationCenter": WorkflowAutomationCenter,
+    "WorkflowAutomationDashboard": WorkflowAutomationDashboard,
     "WorkflowAutomationHub": WorkflowAutomationHub,
     "WorkflowAutomationPage": WorkflowAutomationPage,
     "WorkflowExecutionCenter": WorkflowExecutionCenter,
     "WorkflowReporting": WorkflowReporting,
-    "WorkflowTemplates": WorkflowTemplates,
-    "WorkflowAutomationDashboard": WorkflowAutomationDashboard,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
-    "DocumentComplianceDashboard": DocumentComplianceDashboard,
-    "DocumentIntegrationHub": DocumentIntegrationHub,
-    "DocumentAdvancedHub": DocumentAdvancedHub,
+    "WorkflowTemplates": WorkflowTemplates,
+    "DocumentEnterpriseHub": DocumentEnterpriseHub,
 }
 
 export const pagesConfig = {
