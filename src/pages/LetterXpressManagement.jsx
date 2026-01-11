@@ -182,7 +182,17 @@ export default function LetterXpressManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-slate-600">Geben Sie Ihre LetterXpress-Zugangsdaten ein, um zu starten:</p>
+            <p className="text-sm text-slate-600">
+              Geben Sie Ihre LetterXpress-Zugangsdaten ein, um zu starten:{' '}
+              <a 
+                href="https://www.letterxpress.de/settings/api" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
+                → API-Daten finden
+              </a>
+            </p>
             
             <div className="space-y-3">
               <div>
