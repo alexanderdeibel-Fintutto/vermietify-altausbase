@@ -7,7 +7,10 @@ import {
   Minus, 
   PlusSquare, 
   FileText,
-  CheckSquare
+  CheckSquare,
+  Columns3,
+  QrCode,
+  Zap
 } from 'lucide-react';
 
 const COMPONENTS = [
@@ -22,6 +25,12 @@ const COMPONENTS = [
     label: 'Text',
     icon: FileText,
     description: 'Absätze & Content'
+  },
+  {
+    id: 'columns',
+    label: '2-Spalten',
+    icon: Columns3,
+    description: 'Nebeneinander-Layout'
   },
   {
     id: 'table',
@@ -40,6 +49,12 @@ const COMPONENTS = [
     label: 'Linie',
     icon: Minus,
     description: 'Visueller Separator'
+  },
+  {
+    id: 'qrcode',
+    label: 'QR-Code',
+    icon: QrCode,
+    description: 'QR-Code generieren'
   },
   {
     id: 'signature',
