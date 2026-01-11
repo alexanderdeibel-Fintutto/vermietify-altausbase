@@ -1,20 +1,19 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const startTime = Date.now();
+  console.log('[letterxpressSync] Method:', req.method);
+  console.log('[letterxpressSync] Headers:', Object.fromEntries(req.headers));
   
+  if (req.method !== 'POST') {
+    return Response.json({ success: false, message: 'POST only' }, { status: 405 });
+  }
+
   try {
-    console.log('[letterxpressSync] Starting sync...');
+    console.log('[letterxpressSync] Creating base44 client...');
+    const base44 = createClientFromRequest(req);
     
-    let base44, user;
-    try {
-      base44 = createClientFromRequest(req);
-      user = await base44.auth.me();
-    } catch (authErr) {
-      console.log('[letterxpressSync] Auth error:', authErr.message);
-      return Response.json({ success: false, message: 'Authentifizierung erforderlich' }, { status: 401 });
-    }
-    
+    console.log('[letterxpressSync] Getting user...');
+    const user = await base44.auth.me();
     console.log('[letterxpressSync] User:', user?.email);
 
     if (!user) {
