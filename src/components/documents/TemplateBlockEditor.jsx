@@ -5,6 +5,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trash2, Copy, Droplet, Palette, Ruler } from 'lucide-react';
 import { toast } from 'sonner';
+import TextFormattingToolbar from './TextFormattingToolbar';
+import EffectsPanel from './EffectsPanel';
+import ImageUploadBlock from './ImageUploadBlock';
 
 export default function TemplateBlockEditor({
   block,
