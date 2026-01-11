@@ -321,12 +321,18 @@ export default function LetterXpressManagement() {
         </Card>
       </div>
 
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Übersicht</TabsTrigger>
+      <Tabs defaultValue="postausgangsbuch" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="postausgangsbuch">Postausgangsbuch</TabsTrigger>
+          <TabsTrigger value="overview">Neuer Versand</TabsTrigger>
           <TabsTrigger value="history">Verlauf</TabsTrigger>
           <TabsTrigger value="settings">Einstellungen</TabsTrigger>
         </TabsList>
+
+        {/* Postausgangsbuch */}
+        <TabsContent value="postausgangsbuch" className="mt-6">
+          <PostausgangsbuchTable />
+        </TabsContent>
 
         {/* Neuer Versand */}
         <TabsContent value="overview" className="mt-6 space-y-6">
