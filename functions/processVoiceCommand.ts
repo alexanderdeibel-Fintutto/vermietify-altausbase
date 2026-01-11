@@ -483,6 +483,191 @@ Deno.serve(async (req) => {
             message = 'Notfall-Sofortmaßnahme wird dokumentiert!';
         }
 
+        // === DOKUMENT-BEFEHLE ===
+        
+        // Mietvertrag
+        else if (lowerCommand.includes('mietvertrag') && lowerCommand.includes('erstelle')) {
+            intent = 'CreateDocument';
+            const tenantMatch = textCommand.match(/(?:für|an) ([\wäöüß]+ [\wäöüß]+)/i);
+            extractedData = {
+                document_type: 'mietvertrag',
+                tenantName: tenantMatch?.[1],
+                distribution_channels: ['email'],
+                create_task: true
+            };
+            missingFields = ['tenant_id', 'unit_id', 'contract_id'];
+            message = `Mietvertrag-Template für ${extractedData.tenantName || 'Mieter'} wird vorbereitet.`;
+        }
+
+        // Übergabeprotokoll
+        else if (lowerCommand.includes('übergabeprotokoll') || lowerCommand.includes('uebergabeprotokoll')) {
+            intent = 'CreateDocument';
+            const isAuszug = lowerCommand.includes('auszug');
+            const isEinzug = lowerCommand.includes('einzug');
+            extractedData = {
+                document_type: isAuszug ? 'uebergabeprotokoll_auszug' : 'uebergabeprotokoll_einzug',
+                protocol_type: isAuszug ? 'move_out' : 'move_in',
+                distribution_channels: ['email', 'in_app'],
+                create_task: true
+            };
+            if (context.unitId) extractedData.unit_id = context.unitId;
+            if (context.buildingId) extractedData.building_id = context.buildingId;
+            missingFields = ['tenant_id', 'unit_id'];
+            message = `Übergabeprotokoll ${isAuszug ? '(Auszug)' : '(Einzug)'} wird vorbereitet.`;
+        }
+
+        // Mietangebot
+        else if (lowerCommand.includes('mietangebot')) {
+            intent = 'CreateDocument';
+            const tenantMatch = textCommand.match(/(?:für|an) ([\wäöüß]+ [\wäöüß]+)/i);
+            extractedData = {
+                document_type: 'mietangebot',
+                tenantName: tenantMatch?.[1],
+                distribution_channels: ['email'],
+                create_task: true
+            };
+            missingFields = ['tenant_id', 'unit_id'];
+            message = `Mietangebot für ${extractedData.tenantName || 'Kandidat'} wird vorbereitet.`;
+        }
+
+        // SEPA-Mandat
+        else if (lowerCommand.includes('sepa') && (lowerCommand.includes('mandat') || lowerCommand.includes('lastschrift'))) {
+            intent = 'CreateDocument';
+            extractedData = {
+                document_type: 'sepa_mandat',
+                distribution_channels: ['email'],
+                create_task: true
+            };
+            missingFields = ['tenant_id', 'contract_id'];
+            message = 'SEPA-Lastschriftmandat wird vorbereitet.';
+        }
+
+        // Zahlungserinnerung
+        else if (lowerCommand.includes('zahlungserinnerung')) {
+            intent = 'CreateDocument';
+            extractedData = {
+                document_type: 'zahlungserinnerung',
+                distribution_channels: ['email', 'whatsapp'],
+                create_task: true
+            };
+            missingFields = ['tenant_id', 'contract_id'];
+            message = 'Zahlungserinnerung wird erstellt.';
+        }
+
+        // Mahnung (1./2./3.)
+        else if (lowerCommand.includes('mahnung')) {
+            intent = 'CreateDocument';
+            let level = 1;
+            if (lowerCommand.includes('zweite') || lowerCommand.includes('2.')) level = 2;
+            if (lowerCommand.includes('dritte') || lowerCommand.includes('3.')) level = 3;
+            extractedData = {
+                document_type: 'mahnung',
+                mahnung_stufe: level,
+                distribution_channels: ['email', 'postal'],
+                create_task: true
+            };
+            missingFields = ['tenant_id', 'contract_id'];
+            message = `${level}. Mahnung wird erstellt.`;
+        }
+
+        // Abmahnung
+        else if (lowerCommand.includes('abmahnung')) {
+            intent = 'CreateDocument';
+            extractedData = {
+                document_type: 'abmahnung',
+                distribution_channels: ['email', 'postal'],
+                create_task: true
+            };
+            missingFields = ['tenant_id', 'contract_id', 'reason'];
+            message = 'Abmahnung wird vorbereitet.';
+        }
+
+        // Kündigung
+        else if (lowerCommand.includes('kündigung') || lowerCommand.includes('kuendigung')) {
+            intent = 'CreateDocument';
+            const isFristlos = lowerCommand.includes('fristlos');
+            extractedData = {
+                document_type: 'kuendigung',
+                kuendigung_art: isFristlos ? 'fristlos' : 'ordentlich',
+                distribution_channels: ['email', 'postal'],
+                create_task: true
+            };
+            missingFields = ['tenant_id', 'contract_id', 'termination_date'];
+            message = `${isFristlos ? 'Fristlose ' : ''}Kündigung wird vorbereitet.`;
+        }
+
+        // Betriebskostenabrechnung
+        else if (lowerCommand.includes('betriebskosten') && lowerCommand.includes('abrechnung')) {
+            intent = 'CreateDocument';
+            extractedData = {
+                document_type: 'betriebskostenabrechnung',
+                distribution_channels: ['email'],
+                create_task: true
+            };
+            missingFields = ['tenant_id', 'unit_id', 'contract_id', 'abrechnungsjahr'];
+            message = 'Betriebskostenabrechnung wird vorbereitet.';
+        }
+
+        // Mieterhöhung
+        else if (lowerCommand.includes('mieterhoehung') || lowerCommand.includes('mieterhöhung')) {
+            intent = 'CreateDocument';
+            extractedData = {
+                document_type: 'mieterhoehung',
+                distribution_channels: ['email', 'postal'],
+                create_task: true
+            };
+            missingFields = ['tenant_id', 'contract_id', 'new_rent', 'effective_date'];
+            message = 'Mieterhöhungsverlangen wird vorbereitet.';
+        }
+
+        // Wohnungsgeberbestätigung
+        else if (lowerCommand.includes('wohnungsgeberbeschaeinigung') || lowerCommand.includes('wohnungsgeberbestaetigung')) {
+            intent = 'CreateDocument';
+            extractedData = {
+                document_type: 'wohnungsgeberbestaetigung',
+                distribution_channels: ['email'],
+                create_task: true
+            };
+            missingFields = ['tenant_id', 'unit_id'];
+            message = 'Wohnungsgeberbestätigung wird vorbereitet.';
+        }
+
+        // Schadensanzeige
+        else if ((lowerCommand.includes('schaden') || lowerCommand.includes('mängel')) && lowerCommand.includes('anzeige')) {
+            intent = 'CreateDocument';
+            extractedData = {
+                document_type: 'schadensanzeige',
+                distribution_channels: ['email', 'in_app'],
+                create_task: true
+            };
+            missingFields = ['tenant_id', 'unit_id', 'damage_description'];
+            message = 'Schadensanzeige wird erstellt.';
+        }
+
+        // Auftragserteilung Handwerker
+        else if (lowerCommand.includes('handwerker') && lowerCommand.includes('auftrag')) {
+            intent = 'CreateDocument';
+            extractedData = {
+                document_type: 'auftragserteilung',
+                distribution_channels: ['email'],
+                create_task: true
+            };
+            missingFields = ['vendor_id', 'work_description', 'estimated_cost'];
+            message = 'Auftragserteilung wird vorbereitet.';
+        }
+
+        // Kautionsquittung/-abrechnung
+        else if (lowerCommand.includes('kaution') && (lowerCommand.includes('quittung') || lowerCommand.includes('abrechnung'))) {
+            intent = 'CreateDocument';
+            extractedData = {
+                document_type: 'kautionsquittung',
+                distribution_channels: ['email'],
+                create_task: true
+            };
+            missingFields = ['tenant_id', 'contract_id', 'deposit_amount'];
+            message = 'Kautionsquittung/-abrechnung wird vorbereitet.';
+        }
+
         // Default fallback
         else {
             intent = 'Unknown';
