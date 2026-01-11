@@ -7,8 +7,10 @@ import { useMutation } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { useLocation } from 'react-router-dom';
+import VoicePrefilledFormDialog from './VoicePrefilledFormDialog';
 
 export default function VoiceCommandDialog({ isOpen, onClose }) {
+  const [processedResult, setProcessedResult] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
   const mediaRecorderRef = useRef(null);
@@ -41,7 +43,8 @@ export default function VoiceCommandDialog({ isOpen, onClose }) {
       if (data.success) {
         toast.success(data.message || `Befehl verarbeitet: ${data.intent}`);
         console.log('Processed voice command:', data);
-        onClose();
+        setProcessedResult(data);
+        setTranscript('');
       } else {
         toast.error(data.message || 'Ein unbekannter Fehler ist aufgetreten.');
       }
@@ -105,9 +108,15 @@ export default function VoiceCommandDialog({ isOpen, onClose }) {
     }
   };
 
+  const handleFormClose = () => {
+    setProcessedResult(null);
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+    <>
+      <Dialog open={isOpen && !processedResult} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Sprachbefehl</DialogTitle>
           <DialogDescription>
@@ -174,5 +183,12 @@ export default function VoiceCommandDialog({ isOpen, onClose }) {
         </div>
       </DialogContent>
     </Dialog>
+
+    <VoicePrefilledFormDialog
+      isOpen={!!processedResult}
+      onClose={handleFormClose}
+      result={processedResult}
+    />
+  </>
   );
 }

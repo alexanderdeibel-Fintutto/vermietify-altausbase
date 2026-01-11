@@ -14,6 +14,37 @@ Deno.serve(async (req) => {
         console.log(`Processing voice command from ${user.email}: "${textCommand}"`);
         console.log('Context:', context);
 
+        // Helper function to find entities
+        const findTenant = async (name) => {
+            if (!name) return null;
+            const nameParts = name.split(' ');
+            const firstName = nameParts[0];
+            const lastName = nameParts.slice(1).join(' ');
+            
+            const tenants = await base44.entities.Tenant.filter({
+                first_name: firstName,
+                last_name: lastName
+            });
+            return tenants[0] || null;
+        };
+
+        const findUnit = async (unitNumber, buildingId) => {
+            if (!unitNumber) return null;
+            const filters = { unit_number: unitNumber };
+            if (buildingId) filters.gebaeude_id = buildingId;
+            
+            const units = await base44.entities.Unit.filter(filters);
+            return units[0] || null;
+        };
+
+        const findBuilding = async (buildingName) => {
+            if (!buildingName) return null;
+            const buildings = await base44.entities.Building.filter({
+                name: buildingName
+            });
+            return buildings[0] || null;
+        };
+
         // Simulated LLM parsing (will be replaced with actual LLM when costs approved)
         let intent = 'GenericCommand';
         let extractedData = { rawText: textCommand };
@@ -34,7 +65,38 @@ Deno.serve(async (req) => {
                 unitNumber: unitMatch?.[1],
                 buildingName: buildingMatch?.[1],
             };
-            missingFields = ['unit_id', 'tenant_id', 'start_date', 'base_rent', 'total_rent'];
+
+            // Perform entity lookups
+            if (extractedData.tenantName) {
+                const tenant = await findTenant(extractedData.tenantName);
+                if (tenant) {
+                    extractedData.tenant_id = tenant.id;
+                    extractedData.tenantName = `${tenant.first_name} ${tenant.last_name}`;
+                }
+            }
+
+            if (extractedData.buildingName) {
+                const building = await findBuilding(extractedData.buildingName);
+                if (building) {
+                    extractedData.building_id = building.id;
+                }
+            }
+
+            if (extractedData.unitNumber) {
+                const unit = await findUnit(extractedData.unitNumber, extractedData.building_id || context.buildingId);
+                if (unit) {
+                    extractedData.unit_id = unit.id;
+                    extractedData.unitNumber = unit.unit_number;
+                }
+            }
+            
+            missingFields = [];
+            if (!extractedData.tenant_id) missingFields.push('tenant_id');
+            if (!extractedData.unit_id) missingFields.push('unit_id');
+            if (!extractedData.start_date) missingFields.push('start_date');
+            if (!extractedData.base_rent) missingFields.push('base_rent');
+            if (!extractedData.total_rent) missingFields.push('total_rent');
+            
             message = `Mietvertrag für ${extractedData.tenantName || 'unbekannt'} wird vorbereitet.`;
         } 
         // Parse Übergabeprotokoll (HandoverProtocol)
@@ -45,8 +107,21 @@ Deno.serve(async (req) => {
             extractedData = {
                 unitNumber: unitMatch?.[1],
                 protocolType: lowerCommand.includes('einzug') ? 'move_in' : 'move_out',
+                protocol_type: lowerCommand.includes('einzug') ? 'move_in' : 'move_out',
             };
-            missingFields = ['unit_id', 'company_id', 'protocol_type'];
+
+            // Perform entity lookups
+            if (extractedData.unitNumber) {
+                const unit = await findUnit(extractedData.unitNumber, context.buildingId);
+                if (unit) {
+                    extractedData.unit_id = unit.id;
+                }
+            }
+
+            missingFields = [];
+            if (!extractedData.unit_id) missingFields.push('unit_id');
+            if (!extractedData.company_id) missingFields.push('company_id');
+            
             message = `Übergabeprotokoll für Wohnung ${extractedData.unitNumber || 'unbekannt'} wird vorbereitet.`;
         }
         // Parse Aufgabe (Task)
@@ -74,7 +149,19 @@ Deno.serve(async (req) => {
                 priority: 'medium',
                 status: 'pending',
             };
-            missingFields = ['title', 'category'];
+
+            // Perform entity lookups
+            if (extractedData.unitNumber) {
+                const unit = await findUnit(extractedData.unitNumber, context.buildingId);
+                if (unit) {
+                    extractedData.unit_id = unit.id;
+                }
+            }
+
+            missingFields = [];
+            if (!extractedData.title) missingFields.push('title');
+            if (!extractedData.category) missingFields.push('category');
+            
             message = 'Problem wird als Wartungsaufgabe erfasst.';
         }
         // Parse Angebot erstellen
