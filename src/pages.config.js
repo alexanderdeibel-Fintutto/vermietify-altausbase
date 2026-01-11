@@ -331,6 +331,7 @@ import WorkflowTemplates from './pages/WorkflowTemplates';
 import ContractAutomationHub from './pages/ContractAutomationHub';
 import ComplianceReportingHub from './pages/ComplianceReportingHub';
 import SmartPropertyHub from './pages/SmartPropertyHub';
+import SmartHomeHub from './pages/SmartHomeHub';
 import __Layout from './Layout.jsx';
 
 
@@ -668,6 +669,7 @@ export const PAGES = {
     "ContractAutomationHub": ContractAutomationHub,
     "ComplianceReportingHub": ComplianceReportingHub,
     "SmartPropertyHub": SmartPropertyHub,
+    "SmartHomeHub": SmartHomeHub,
 }
 
 export const pagesConfig = {
