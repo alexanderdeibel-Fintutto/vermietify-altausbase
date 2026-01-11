@@ -9,6 +9,9 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Forbidden' }, { status: 403 });
         }
         
+        console.error("=== DENO CONSOLE TEST ===");
+        console.error("User:", user?.email);
+        
         const entityNames = [...new Set([
             'Building', 'Unit', 'Tenant', 'LeaseContract', 'Document', 'Template',
             'PropertyTax', 'Insurance', 'Financing', 'Supplier', 'BankAccount',
