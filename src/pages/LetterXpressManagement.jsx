@@ -33,7 +33,8 @@ export default function LetterXpressManagement() {
           setIsConfigured(true);
         }
       } catch (err) {
-        console.log('No credentials found yet');
+        console.log('Credentials load error:', err);
+        setIsConfigured(false);
       } finally {
         setLoadingConfig(false);
       }
