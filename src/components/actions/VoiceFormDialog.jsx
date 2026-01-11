@@ -189,11 +189,13 @@ export default function VoiceFormDialog({ isOpen, onClose }) {
           )}
         </div>
 
-        <div className="flex gap-2 justify-center w-full pt-4 border-t">
-          <Button variant="outline" onClick={() => { stopRecording(); onClose(); }} className="flex-1">
-            Abbrechen
-          </Button>
-        </div>
+        {!isRecording && !isProcessing && (
+          <div className="flex gap-2 justify-center w-full pt-4 border-t">
+            <Button variant="outline" onClick={() => { stopRecording(); onClose(); }} className="flex-1">
+              Abbrechen
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
