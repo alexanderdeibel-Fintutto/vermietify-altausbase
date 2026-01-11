@@ -1,21 +1,34 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Send, Bot, User, CheckCircle } from 'lucide-react';
+import { MessageSquare, Send, Bot, User, CheckCircle, Calendar, AlertCircle, Bell } from 'lucide-react';
 
 export default function TenantAIChatbot({ tenantId }) {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: 'Hallo! Ich bin Ihr KI-Assistent. Ich kann Ihnen bei Fragen zu Wartung, Mietvertrag, Zahlungen, Hausordnung und mehr helfen. Wie kann ich Ihnen heute helfen?'
+      content: 'Hallo! Ich bin Ihr KI-Assistent. Ich kann Ihnen bei Wartung, Terminbuchungen, Status-Updates und mehr helfen!'
     }
   ]);
   const [input, setInput] = useState('');
   const messagesEndRef = useRef(null);
+
+  // Fetch proactive notifications
+  const { data: notifications } = useQuery({
+    queryKey: ['tenant-notifications'],
+    queryFn: async () => {
+      const response = await base44.functions.invoke('tenantAIChatbot', {
+        check_notifications: true,
+        tenant_id: tenantId
+      });
+      return response.data.notifications;
+    },
+    refetchInterval: 60000 // Check every minute
+  });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -37,7 +50,9 @@ export default function TenantAIChatbot({ tenantId }) {
         role: 'assistant',
         content: data.response,
         action: data.action,
-        task_created: data.task_created
+        task_created: data.task_created,
+        appointment_booked: data.appointment_booked,
+        status_info: data.status_info
       }]);
       setInput('');
     }
@@ -51,11 +66,11 @@ export default function TenantAIChatbot({ tenantId }) {
   };
 
   const quickActions = [
-    'Wie erstelle ich eine Wartungsanfrage?',
+    'Wartungsanfrage erstellen',
+    'Termin buchen',
+    'Status meiner Anfragen',
     'Wann ist die Miete fällig?',
-    'Was sind die Ruhezeiten?',
-    'Wo finde ich meinen Mietvertrag?',
-    'Gibt es Gemeinschaftsräume?'
+    'Hausordnung'
   ];
 
   return (
@@ -68,6 +83,30 @@ export default function TenantAIChatbot({ tenantId }) {
       </CardHeader>
       
       <CardContent className="flex-1 overflow-hidden p-0 flex flex-col">
+        {/* Proactive Notifications */}
+        {notifications && (notifications.urgent_maintenance?.length > 0 || notifications.announcements?.length > 0) && (
+          <div className="p-3 border-b bg-orange-50 space-y-2">
+            {notifications.urgent_maintenance?.map((task, i) => (
+              <div key={i} className="flex items-start gap-2 text-sm">
+                <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5" />
+                <div>
+                  <p className="font-medium text-orange-900">{task.title}</p>
+                  <p className="text-xs text-orange-700">{task.description}</p>
+                </div>
+              </div>
+            ))}
+            {notifications.announcements?.map((ann, i) => (
+              <div key={i} className="flex items-start gap-2 text-sm">
+                <Bell className="w-4 h-4 text-blue-600 mt-0.5" />
+                <div>
+                  <p className="font-medium text-blue-900">{ann.title}</p>
+                  <p className="text-xs text-blue-700">{ann.message}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.map((msg, i) => (
             <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -89,6 +128,18 @@ export default function TenantAIChatbot({ tenantId }) {
                     <CheckCircle className="w-3 h-3 mr-1" />
                     Wartungsanfrage erstellt
                   </Badge>
+                )}
+                {msg.appointment_booked && (
+                  <Badge className="mt-2 bg-blue-100 text-blue-800">
+                    <Calendar className="w-3 h-3 mr-1" />
+                    Termin gebucht
+                  </Badge>
+                )}
+                {msg.status_info && (
+                  <div className="mt-2 p-2 bg-slate-100 rounded text-xs">
+                    <p><strong>Status:</strong> {msg.status_info.status}</p>
+                    <p><strong>Voraussichtlich:</strong> {msg.status_info.estimated_completion}</p>
+                  </div>
                 )}
               </div>
               {msg.role === 'user' && (
