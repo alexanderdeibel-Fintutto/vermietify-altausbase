@@ -12,32 +12,62 @@ export default function VoiceFormDialog({ isOpen, onClose }) {
   const [formData, setFormData] = useState(null);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
+  const streamRef = useRef(null);
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      const constraints = {
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = stream;
+
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm')
+        ? 'audio/webm'
+        : MediaRecorder.isTypeSupported('audio/mp4')
+        ? 'audio/mp4'
+        : 'audio/wav';
+
+      const recorder = new MediaRecorder(stream, { mimeType });
       chunksRef.current = [];
 
-      recorder.ondataavailable = (e) => chunksRef.current.push(e.data);
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
       recorder.onstop = async () => {
-        const audioBlob = new Blob(chunksRef.current, { type: 'audio/wav' });
+        const audioBlob = new Blob(chunksRef.current, { type: mimeType });
         await processAudio(audioBlob);
-        stream.getTracks().forEach(t => t.stop());
+      };
+
+      recorder.onerror = (e) => {
+        console.error('Recording error:', e);
+        toast.error('Fehler bei der Aufnahme');
+        stopRecording();
       };
 
       recorder.start();
       mediaRecorderRef.current = recorder;
       setIsRecording(true);
     } catch (error) {
+      console.error('Microphone error:', error);
       toast.error('Mikrofon konnte nicht aktiviert werden');
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current) {
+    if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
     }
   };
 
@@ -48,29 +78,41 @@ export default function VoiceFormDialog({ isOpen, onClose }) {
       const { file_url } = await base44.integrations.Core.UploadFile({ file: audioBlob });
 
       // Transcribe with LLM
-      const transcription = await base44.integrations.Core.InvokeLLM({
-        prompt: 'Transcribe the following audio and extract the text content.',
+      const transcriptionResponse = await base44.integrations.Core.InvokeLLM({
+        prompt: 'Transcribe the following audio. Return only the text transcription, nothing else.',
         file_urls: [file_url]
       });
 
+      const transcribedText = typeof transcriptionResponse === 'string'
+        ? transcriptionResponse
+        : transcriptionResponse.toString();
+
+      if (!transcribedText || transcribedText.length < 3) {
+        toast.error('Konnte Sprachnachricht nicht verstehen');
+        setIsProcessing(false);
+        return;
+      }
+
+      console.log('[VoiceFormDialog] Transcribed:', transcribedText);
+
       // Analyze intent and extract data
       const response = await base44.functions.invoke('voiceFormIntent', {
-        transcribedText: transcription
+        transcribedText
       });
 
-      if (response.data.success) {
+      if (response?.data?.success) {
         setFormData({
           form_type: response.data.form_type,
           confidence: response.data.confidence,
-          all_data: response.data.all_data,
-          essential_data: response.data.essential_data
+          all_data: response.data.all_data || {},
+          essential_data: response.data.essential_data || {}
         });
       } else {
-        toast.error('Konnte Intent nicht erkennen');
+        toast.error(response?.data?.error || 'Konnte Intent nicht erkennen');
       }
     } catch (error) {
       console.error('Processing error:', error);
-      toast.error('Fehler bei der Verarbeitung');
+      toast.error('Fehler bei der Verarbeitung: ' + (error?.message || ''));
     } finally {
       setIsProcessing(false);
     }
@@ -96,7 +138,7 @@ export default function VoiceFormDialog({ isOpen, onClose }) {
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={() => { stopRecording(); onClose(); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Sprachnachricht aufnehmen</DialogTitle>
@@ -107,7 +149,7 @@ export default function VoiceFormDialog({ isOpen, onClose }) {
             <button
               onClick={isRecording ? stopRecording : startRecording}
               disabled={isProcessing}
-              className={`h-20 w-20 rounded-full flex items-center justify-center transition-all ${
+              className={`h-20 w-20 rounded-full flex items-center justify-center transition-all active:scale-95 ${
                 isRecording
                   ? 'bg-red-500 hover:bg-red-600 animate-pulse'
                   : 'bg-blue-500 hover:bg-blue-600'
@@ -127,13 +169,13 @@ export default function VoiceFormDialog({ isOpen, onClose }) {
             {isProcessing
               ? 'Verarbeite Sprachnachricht...'
               : isRecording
-              ? 'Aufnahme läuft... Klick zum Beenden'
-              : 'Klick zum Starten'}
+              ? 'Aufnahme läuft... Zum Beenden drücken'
+              : 'Zum Starten drücken'}
           </p>
         </div>
 
         <div className="flex gap-2 justify-end">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={() => { stopRecording(); onClose(); }}>
             Abbrechen
           </Button>
         </div>
