@@ -152,18 +152,27 @@ export default function VoiceFormDialog({ isOpen, onClose }) {
         </DialogHeader>
 
         <div className="flex flex-col gap-8 py-8 w-full items-center">
-          {!isRecording && !isProcessing && (
-            <div className="flex justify-center w-full">
+          {!recordingStarted && !isProcessing && (
+            <>
+              <div className="text-center space-y-4">
+                <p className="text-lg font-semibold text-slate-900">
+                  Sagen Sie einfach, was Sie machen möchten
+                </p>
+                <p className="text-sm text-slate-600">
+                  Zum Beispiel: "Rechnung erstellen" oder "Mietvertrag"
+                </p>
+              </div>
               <button
-                onClick={startRecording}
-                className="h-28 w-28 rounded-full flex items-center justify-center transition-all active:scale-95 shadow-xl bg-blue-500 hover:bg-blue-600"
+                onClick={handleStartRecording}
+                className="w-full h-20 rounded-2xl flex items-center justify-center gap-3 bg-blue-500 hover:bg-blue-600 active:scale-95 transition-all shadow-lg"
               >
-                <Mic className="h-12 w-12 text-white" />
+                <Mic className="h-8 w-8 text-white" />
+                <span className="text-lg font-bold text-white">Aufnahme starten</span>
               </button>
-            </div>
+            </>
           )}
 
-          {isRecording && (
+          {recordingStarted && isRecording && (
             <div className="flex flex-col gap-4 w-full items-center">
               <div className="animate-pulse flex gap-2 justify-center">
                 <div className="h-3 w-3 bg-red-500 rounded-full animate-pulse"></div>
@@ -171,8 +180,7 @@ export default function VoiceFormDialog({ isOpen, onClose }) {
               </div>
               <button
                 onClick={stopRecording}
-                disabled={isProcessing}
-                className="w-full h-20 rounded-2xl flex items-center justify-center gap-3 bg-red-500 hover:bg-red-600 active:scale-95 transition-all shadow-lg disabled:opacity-50"
+                className="w-full h-20 rounded-2xl flex items-center justify-center gap-3 bg-red-500 hover:bg-red-600 active:scale-95 transition-all shadow-lg"
               >
                 <Square className="h-8 w-8 text-white" />
                 <span className="text-lg font-bold text-white">Aufnahme beenden</span>
@@ -187,12 +195,6 @@ export default function VoiceFormDialog({ isOpen, onClose }) {
                 Verarbeite Sprachnachricht...
               </p>
             </div>
-          )}
-
-          {!isRecording && !isProcessing && (
-            <p className="text-center text-sm text-slate-600">
-              Zum Starten drücken
-            </p>
           )}
         </div>
 
