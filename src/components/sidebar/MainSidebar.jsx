@@ -100,6 +100,7 @@ const SECONDARY_CATEGORIES = [
           { name: 'AdminMessagingCenter', label: 'Direktnachrichten' },
           { name: 'TenantCommunicationCenter', label: 'Mieter-Chat' },
           { name: 'AdminIssueReports', label: 'Beschwerde-Portal' },
+          { name: 'CommunityForum', label: 'Community-Forum' },
         ]
       },
       {
@@ -118,6 +119,7 @@ const SECONDARY_CATEGORIES = [
           { name: 'EmailTemplates', label: 'E-Mail-Vorlagen' },
           { name: 'CommunicationTemplates', label: 'Nachrichtenvorlagen' },
           { name: 'EmailTemplateManager', label: 'Template-Verwaltung' },
+          { name: 'AITemplateGenerator', label: 'KI-Generator' },
         ]
       },
       {
@@ -127,6 +129,7 @@ const SECONDARY_CATEGORIES = [
           { name: 'SupportCenter', label: 'Support-Center' },
           { name: 'SupportTicketManager', label: 'Ticket-Verwaltung' },
           { name: 'TenantFeedbackManager', label: 'Feedback-Manager' },
+          { name: 'KnowledgeBaseAdmin', label: 'Wissensdatenbank' },
         ]
       },
       {
@@ -136,15 +139,24 @@ const SECONDARY_CATEGORIES = [
           { name: 'NotificationCenter', label: 'Benachrichtigungsverwaltung' },
           { name: 'NotificationManagement', label: 'Push-Einstellungen' },
           { name: 'NotificationPreferences', label: 'Nutzer-Präferenzen' },
+          { name: 'NotificationHistory', label: 'Versand-Verlauf' },
         ]
       },
       {
         id: 'postversand',
         label: 'Postversand',
         pages: [
-          { name: 'WhatsAppSetup', label: 'LetterXpress-Verwaltung' },
+          { name: 'LetterXpressManagement', label: 'LetterXpress' },
           { name: 'DocumentManagement', label: 'Dokumente zum Versand' },
-          { name: 'AdminMessagingCenter', label: 'Versand-Verlauf' },
+        ]
+      },
+      {
+        id: 'analyse-automatisierung',
+        label: 'Analyse & Automatisierung',
+        pages: [
+          { name: 'CommunicationAnalytics', label: 'Kommunikations-Analysen' },
+          { name: 'AutomatedCommunication', label: 'Automatisierte Kommunikation' },
+          { name: 'CommunicationAuditLog', label: 'Audit-Log' },
         ]
       }
     ]
