@@ -217,6 +217,7 @@ export default function DocumentTemplateManager() {
           onClose={() => setShowBuildingAssign(false)}
         />
       )}
-    </div>
-  );
-}
+      </div>
+      </PermissionGate>
+      );
+      }
