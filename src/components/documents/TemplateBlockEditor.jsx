@@ -173,25 +173,6 @@ export default function TemplateBlockEditor({
         </div>
 
         <div>
-          <label className="text-xs font-medium text-slate-700">Textfarbe</label>
-          <div className="flex gap-2">
-            <Input
-              type="color"
-              value={localBlock.textColor || '#000000'}
-              onChange={(e) => handleChange('textColor', e.target.value)}
-              className="h-8 w-12"
-            />
-            <Input
-              type="text"
-              value={localBlock.textColor || '#000000'}
-              onChange={(e) => handleChange('textColor', e.target.value)}
-              placeholder="#000000"
-              className="h-8 text-xs flex-1"
-            />
-          </div>
-        </div>
-
-        <div>
           <label className="text-xs font-medium text-slate-700">Padding</label>
           <Select value={localBlock.padding || 'md'} onValueChange={(v) => handleChange('padding', v)}>
             <SelectTrigger className="h-8 text-xs">
