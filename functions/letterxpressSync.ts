@@ -63,12 +63,12 @@ Deno.serve(async (req) => {
     }
 
     // API-Call zu LetterXpress
-    console.log('[letterxpressSync] Calling LetterXpress API...');
-    const response = await fetch('https://www.letterxpress.de/api/v1/shipments', {
+    console.log('[letterxpressSync] Calling LetterXpress API with account:', accountId);
+    
+    const response = await fetch('https://api.letterxpress.de/v1/shipments', {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'X-Account-ID': accountId,
+        'Authorization': `Basic ${btoa(accountId + ':' + apiKey)}`,
         'Content-Type': 'application/json'
       }
     });
