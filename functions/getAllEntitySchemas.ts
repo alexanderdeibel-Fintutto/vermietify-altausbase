@@ -1,6 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
+    const debugLogs = [];
+    const logDebug = (msg) => {
+        debugLogs.push(msg);
+        console.error(msg);
+    };
+    
     try {
         const base44 = createClientFromRequest(req);
         const user = await base44.auth.me();
@@ -9,8 +15,8 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Forbidden' }, { status: 403 });
         }
         
-        console.error("=== DENO CONSOLE TEST ===");
-        console.error("User:", user?.email);
+        logDebug("=== getAllEntitySchemas START ===");
+        logDebug(`User: ${user?.email}`);
         
         const entityNames = [...new Set([
             'Building', 'Unit', 'Tenant', 'LeaseContract', 'Document', 'Template',
