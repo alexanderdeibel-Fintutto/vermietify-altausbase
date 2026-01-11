@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
     // Lade LetterXpress-Credentials
     console.log('[letterxpressSync] Loading LetterXpress credentials...');
     const credentials = await base44.entities.LetterXpressCredential.list();
-    
+
     if (!credentials || credentials.length === 0) {
       console.log('[letterxpressSync] No LetterXpress credentials found');
       return Response.json({ 
@@ -33,15 +33,20 @@ Deno.serve(async (req) => {
     const cred = credentials[0];
     console.log('[letterxpressSync] Using account:', cred.email);
 
-    // Hole Versände von LetterXpress API
-    console.log('[letterxpressSync] Fetching shipments from LetterXpress...');
-    const auth = btoa(`${cred.account_id}:${cred.api_key}`);
-    const letterxpressResponse = await fetch('https://api.letterxpress.de/shipments', {
+    // Hole Versände von LetterXpress API (v2)
+    console.log('[letterxpressSync] Fetching printjobs from LetterXpress...');
+    const letterxpressResponse = await fetch('https://api.letterxpress.de/v2/printjobs', {
       method: 'GET',
       headers: {
-        'Authorization': `Basic ${auth}`,
         'Content-Type': 'application/json'
-      }
+      },
+      body: JSON.stringify({
+        auth: {
+          username: cred.account_id,
+          apikey: cred.api_key,
+          mode: 'live'
+        }
+      })
     });
 
     if (!letterxpressResponse.ok) {
@@ -51,7 +56,7 @@ Deno.serve(async (req) => {
     }
 
     const letterxpressData = await letterxpressResponse.json();
-    console.log('[letterxpressSync] Got shipments from LetterXpress:', letterxpressData);
+    console.log('[letterxpressSync] Got printjobs from LetterXpress:', letterxpressData);
 
     // Synchronisiere in LetterShipment-Entity
     const shipments = letterxpressData.shipments || [];
