@@ -96,6 +96,15 @@ export default function Layout({ children, currentPageName }) {
     };
 
     const mainSection = getCurrentMainSection();
+    const { selectedBuilding } = useSelectedBuilding();
+
+    // Fetch selected building for theme color
+    const { data: buildings = [] } = useQuery({
+        queryKey: ['buildings'],
+        queryFn: () => base44.entities.Building.list(),
+    });
+    const currentBuilding = buildings.find(b => b.id === selectedBuilding);
+    const themeColor = currentBuilding?.theme_color || '#1e293b';
 
     return (
                             <ThemeProvider>
@@ -103,10 +112,15 @@ export default function Layout({ children, currentPageName }) {
                             <Suspense fallback={null}>
                               <TesterTracker>
                                 <Suspense fallback={null}>
-                                  <FeatureUnlockNotification />
-                                </Suspense>
-                                <div className="min-h-screen bg-slate-50">
-                {/* Top Header Bar */}
+                                   <FeatureUnlockNotification />
+                                 </Suspense>
+                                 <div className="min-h-screen flex" style={{ backgroundColor: `${themeColor}04` }}>
+                                   {/* Sidebar */}
+                                   <MainSidebar />
+
+                                   {/* Main Content Area */}
+                                   <div className="flex-1 flex flex-col">
+                 {/* Top Header Bar */}
                 <header className="sticky top-0 z-50 bg-white border-b border-slate-100">
                     <div className="flex items-center justify-between h-16 px-8">
                         {/* Logo */}
