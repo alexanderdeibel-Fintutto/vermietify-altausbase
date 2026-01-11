@@ -474,6 +474,28 @@ export default function DeveloperDocumentation() {
         return documentations.find(d => d.documentation_type === type);
     };
 
+    const applyAdvancedFilters = (docs) => {
+        return docs.filter(doc => {
+            if (advancedFilters.status && doc.status !== advancedFilters.status) return false;
+            
+            if (advancedFilters.daysOld && doc.last_generated_at) {
+                const now = new Date();
+                const docDate = new Date(doc.last_generated_at);
+                const ageInDays = (now - docDate) / (1000 * 60 * 60 * 24);
+                if (ageInDays > advancedFilters.daysOld) return false;
+            }
+            
+            if (advancedFilters.sizeRange && doc.file_size_bytes) {
+                const kb = doc.file_size_bytes / 1024;
+                if (advancedFilters.sizeRange === 'small' && kb > 100) return false;
+                if (advancedFilters.sizeRange === 'medium' && (kb <= 100 || kb > 500)) return false;
+                if (advancedFilters.sizeRange === 'large' && kb <= 500) return false;
+            }
+            
+            return true;
+        });
+    };
+
     const formatBytes = (bytes) => {
         if (!bytes) return '0 KB';
         const kb = bytes / 1024;
