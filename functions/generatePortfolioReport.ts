@@ -3,72 +3,71 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { portfolioId, userId, sections } = await req.json();
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    console.log(`Generating report for portfolio ${portfolioId}, sections: ${sections.join(',')}`);
+    const { company_id } = await req.json();
 
-    // Fetch portfolio data
-    const portfolios = await base44.asServiceRole.entities.AssetPortfolio.filter({
-      user_id: userId
-    });
-
-    const portfolio = portfolios.find(p => p.id === portfolioId);
-    if (!portfolio) {
-      return Response.json({ error: 'Portfolio not found' }, { status: 404 });
-    }
-
-    // Fetch related data
-    const allAssets = portfolios;
-    const benchmarks = await base44.asServiceRole.entities.PortfolioBenchmark.filter({
-      portfolio_id: portfolioId
-    });
-
-    // Build report content
-    let reportData = {
-      title: `Portfolio Report - ${portfolio.name}`,
-      generated_date: new Date().toISOString(),
-      sections: {}
-    };
-
-    if (sections.includes('summary')) {
-      const totalValue = allAssets.reduce((sum, a) => sum + (a.quantity * a.current_value), 0);
-      const totalInvested = allAssets.reduce((sum, a) => sum + (a.quantity * a.purchase_price), 0);
-      reportData.sections.summary = {
-        total_value: totalValue,
-        total_invested: totalInvested,
-        gain_loss: totalValue - totalInvested,
-        gain_loss_percent: ((totalValue - totalInvested) / totalInvested * 100)
-      };
-    }
-
-    if (sections.includes('allocation')) {
-      const allocation = {};
-      allAssets.forEach(asset => {
-        allocation[asset.asset_category] = (allocation[asset.asset_category] || 0) + (asset.quantity * asset.current_value);
-      });
-      reportData.sections.allocation = allocation;
-    }
-
-    if (sections.includes('benchmarks')) {
-      reportData.sections.benchmarks = benchmarks;
-    }
-
-    // Store report metadata
-    const reportId = `report_${Date.now()}`;
+    const buildings = await base44.asServiceRole.entities.Building.filter({ company_id });
+    const allUnits = await base44.asServiceRole.entities.Unit.filter({ company_id });
     
-    // In production, generate actual PDF
-    const pdf_url = `https://example.com/reports/${reportId}.pdf`;
+    const occupiedUnits = allUnits.filter(u => u.status === 'rented').length;
+    const totalUnits = allUnits.length;
+    const vacancyRate = totalUnits > 0 ? ((totalUnits - occupiedUnits) / totalUnits) * 100 : 0;
 
-    console.log(`Report generated: ${reportId}`);
-
-    return Response.json({
-      success: true,
-      report_id: reportId,
-      pdf_url: pdf_url,
-      data: reportData
+    // Calculate total rental income
+    let totalRentalIncome = 0;
+    const activeContracts = await base44.asServiceRole.entities.LeaseContract.filter({ 
+      company_id, 
+      status: 'active' 
     });
+    activeContracts.forEach(c => totalRentalIncome += (c.monthly_rent || 0) * 12);
+
+    // Calculate total expenses
+    const currentYear = new Date().getFullYear();
+    const budgets = await base44.asServiceRole.entities.PropertyBudget.filter({ 
+      company_id, 
+      year: currentYear 
+    });
+    let totalExpenses = 0;
+    budgets.forEach(b => {
+      const expenses = Object.values(b.actual_expenses || {}).reduce((a, c) => a + (c || 0), 0);
+      totalExpenses += expenses;
+    });
+
+    const noi = totalRentalIncome - totalExpenses;
+
+    // Calculate total debt
+    const loans = await base44.asServiceRole.entities.Financing.filter({ company_id });
+    const totalDebt = loans.reduce((sum, loan) => sum + (loan.loan_amount || 0), 0);
+
+    // Calculate portfolio value (simplified)
+    const portfolioValue = buildings.reduce((sum, b) => sum + (b.purchase_price || 0), 0);
+    const equityRatio = portfolioValue > 0 ? ((portfolioValue - totalDebt) / portfolioValue) * 100 : 0;
+
+    // Calculate average ROI
+    const roiAnalyses = await base44.asServiceRole.entities.PropertyROI.filter({ company_id });
+    const avgROI = roiAnalyses.length > 0 
+      ? roiAnalyses.reduce((sum, r) => sum + (r.net_yield_percentage || 0), 0) / roiAnalyses.length
+      : 0;
+
+    const metrics = await base44.asServiceRole.entities.PortfolioMetrics.create({
+      company_id,
+      reporting_period: `${currentYear}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
+      total_units: totalUnits,
+      occupied_units: occupiedUnits,
+      vacancy_rate: Math.round(vacancyRate * 100) / 100,
+      total_rental_income: Math.round(totalRentalIncome * 100) / 100,
+      total_expenses: Math.round(totalExpenses * 100) / 100,
+      net_operating_income: Math.round(noi * 100) / 100,
+      portfolio_value: portfolioValue,
+      avg_roi: Math.round(avgROI * 100) / 100,
+      total_debt: totalDebt,
+      equity_ratio: Math.round(equityRatio * 100) / 100
+    });
+
+    return Response.json({ success: true, metrics });
   } catch (error) {
-    console.error('Report generation error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
