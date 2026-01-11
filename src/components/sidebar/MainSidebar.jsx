@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { DollarSign, Home, Users, Building2, Calculator, ChevronRight, FileText, MessageSquare } from 'lucide-react';
+import { DollarSign, Home, Users, Building2, Calculator, ChevronRight, FileText, MessageSquare, Mail, Bell, Phone, Send } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useSelectedBuilding } from '@/components/hooks/useSelectedBuilding';
@@ -90,9 +90,54 @@ const SECONDARY_CATEGORIES = [
     label: 'Kommunikation',
     icon: MessageSquare,
     pages: [
-      { name: 'TenantCommunicationCenter', label: 'Übersicht' },
-      { name: 'AdminMessagingCenter', label: 'Nachrichten' },
-      { name: 'AdminAnnouncementCenter', label: 'Ankündigungen' },
+      { name: 'KommunikationDashboard', label: 'Übersicht' },
+    ],
+    subMenu: [
+      {
+        id: 'nachrichtenkanal',
+        label: 'Nachrichtenkanäle',
+        pages: [
+          { name: 'AdminMessagingCenter', label: 'Direktnachrichten' },
+          { name: 'TenantCommunicationCenter', label: 'Mieter-Chat' },
+          { name: 'AdminIssueReports', label: 'Beschwerde-Portal' },
+        ]
+      },
+      {
+        id: 'ankuendigungen',
+        label: 'Ankündigungen & Massen',
+        pages: [
+          { name: 'AdminAnnouncementCenter', label: 'Ankündigungen' },
+          { name: 'BulkMessaging', label: 'Massen-Versand' },
+          { name: 'WhatsAppCommunication', label: 'WhatsApp' },
+        ]
+      },
+      {
+        id: 'email-vorlagen',
+        label: 'E-Mail & Vorlagen',
+        pages: [
+          { name: 'EmailTemplates', label: 'E-Mail-Vorlagen' },
+          { name: 'CommunicationTemplates', label: 'Nachrichtenvorlagen' },
+          { name: 'EmailTemplateManager', label: 'Template-Verwaltung' },
+        ]
+      },
+      {
+        id: 'support-tickets',
+        label: 'Support & Tickets',
+        pages: [
+          { name: 'SupportCenter', label: 'Support-Center' },
+          { name: 'SupportTicketManager', label: 'Ticket-Verwaltung' },
+          { name: 'TenantFeedbackManager', label: 'Feedback-Manager' },
+        ]
+      },
+      {
+        id: 'benachrichtigungen',
+        label: 'Benachrichtigungen',
+        pages: [
+          { name: 'NotificationCenter', label: 'Benachrichtigungsverwaltung' },
+          { name: 'NotificationManagement', label: 'Push-Einstellungen' },
+          { name: 'NotificationPreferences', label: 'Nutzer-Präferenzen' },
+        ]
+      }
     ]
   }
 ];
