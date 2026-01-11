@@ -19,6 +19,28 @@ export default function VisualTemplateBuilder({ template, onChange }) {
     spacing: 'medium',
     borderRadius: '0.5rem'
   });
+  const [pageSetup, setPageSetup] = useState(template.pageSetup || {
+    format: 'a4',
+    width: 210,
+    height: 297,
+    marginTop: 20,
+    marginRight: 20,
+    marginBottom: 20,
+    marginLeft: 20,
+    orientation: 'portrait'
+  });
+  const [undoRedo] = useState(() => new UndoRedoManager({ blocks, design, pageSetup }));
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = undoRedo.subscribe(() => {
+      setCanUndo(undoRedo.canUndo());
+      setCanRedo(undoRedo.canRedo());
+    });
+    return unsubscribe;
+  }, [undoRedo]);
 
   const handleAddBlock = (blockType) => {
     const newBlock = {
