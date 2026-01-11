@@ -123,22 +123,9 @@ export default function VoiceFormDialog({ isOpen, onClose }) {
     onClose();
   };
 
-  // Show form display if we have data
-  if (formData) {
-    return (
-      <VoiceFormDisplay
-        isOpen={isOpen}
-        onClose={handleFormClose}
-        formType={formData.form_type}
-        allData={formData.all_data}
-        essentialData={formData.essential_data}
-        confidence={formData.confidence}
-      />
-    );
-  }
-
   return (
     <Dialog open={isOpen} onOpenChange={() => { stopRecording(); onClose(); }}>
+      {!formData ? (
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Sprachnachricht aufnehmen</DialogTitle>
