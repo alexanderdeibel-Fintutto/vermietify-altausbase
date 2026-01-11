@@ -6,6 +6,7 @@ import AIMaintenanceDashboard from './pages/AIMaintenanceDashboard';
 import AIRuleApprovalDashboard from './pages/AIRuleApprovalDashboard';
 import AITaxAdvisor from './pages/AITaxAdvisor';
 import AITaxRecommendations from './pages/AITaxRecommendations';
+import AITemplateGenerator from './pages/AITemplateGenerator';
 import APIKeyManagement from './pages/APIKeyManagement';
 import APILogs from './pages/APILogs';
 import ActivityLogs from './pages/ActivityLogs';
@@ -51,6 +52,7 @@ import AnnualTaxReview from './pages/AnnualTaxReview';
 import AuditLog from './pages/AuditLog';
 import AuditReadinessAssessment from './pages/AuditReadinessAssessment';
 import AuditReports from './pages/AuditReports';
+import AutomatedCommunication from './pages/AutomatedCommunication';
 import AutomatedTaxFormGenerator from './pages/AutomatedTaxFormGenerator';
 import AutomationRules from './pages/AutomationRules';
 import BackupRecovery from './pages/BackupRecovery';
@@ -66,13 +68,18 @@ import BuildingInspections from './pages/BuildingInspections';
 import BuildingWorkflowManager from './pages/BuildingWorkflowManager';
 import Buildings from './pages/Buildings';
 import BuildingsMap from './pages/BuildingsMap';
+import BulkMessaging from './pages/BulkMessaging';
 import BulkOperations from './pages/BulkOperations';
 import BusinessStructureOptimizer from './pages/BusinessStructureOptimizer';
 import CapitalGainCH from './pages/CapitalGainCH';
 import CapitalGainsManagement from './pages/CapitalGainsManagement';
 import CapitalGainsOptimizer from './pages/CapitalGainsOptimizer';
 import CharitableDonationPlanner from './pages/CharitableDonationPlanner';
+import CommunicationAnalytics from './pages/CommunicationAnalytics';
+import CommunicationAuditLog from './pages/CommunicationAuditLog';
 import CommunicationCenter from './pages/CommunicationCenter';
+import CommunicationTemplates from './pages/CommunicationTemplates';
+import CommunityForum from './pages/CommunityForum';
 import Companies from './pages/Companies';
 import CompanyDetailEnhanced from './pages/CompanyDetailEnhanced';
 import CompleteEnterpriseHub from './pages/CompleteEnterpriseHub';
@@ -106,7 +113,6 @@ import DocumentComplianceDashboard from './pages/DocumentComplianceDashboard';
 import DocumentEnterpriseHub from './pages/DocumentEnterpriseHub';
 import DocumentGeneration from './pages/DocumentGeneration';
 import DocumentInbox from './pages/DocumentInbox';
-import Finanzen from './pages/Finanzen';
 import DocumentInboxSettings from './pages/DocumentInboxSettings';
 import DocumentIntegrationHub from './pages/DocumentIntegrationHub';
 import DocumentLibrary from './pages/DocumentLibrary';
@@ -136,6 +142,7 @@ import FinancialForecasting from './pages/FinancialForecasting';
 import FinancialItems from './pages/FinancialItems';
 import FinancialReporting from './pages/FinancialReporting';
 import FinancialReports from './pages/FinancialReports';
+import Finanzen from './pages/Finanzen';
 import FullFeatureHub from './pages/FullFeatureHub';
 import GeneratedBookings from './pages/GeneratedBookings';
 import GlobalSettings from './pages/GlobalSettings';
@@ -162,7 +169,9 @@ import IoTSensorManagement from './pages/IoTSensorManagement';
 import KnowledgeBaseAdmin from './pages/KnowledgeBaseAdmin';
 import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
 import Kommunikation from './pages/Kommunikation';
+import KommunikationDashboard from './pages/KommunikationDashboard';
 import LeaseContracts from './pages/LeaseContracts';
+import LetterXpressManagement from './pages/LetterXpressManagement';
 import MaintenanceManager from './pages/MaintenanceManager';
 import MaintenanceScheduling from './pages/MaintenanceScheduling';
 import MaintenanceTasks from './pages/MaintenanceTasks';
@@ -179,8 +188,10 @@ import MultiYearTaxStrategy from './pages/MultiYearTaxStrategy';
 import MyAccount from './pages/MyAccount';
 import NavigationDemo from './pages/NavigationDemo';
 import NotificationCenter from './pages/NotificationCenter';
+import NotificationHistory from './pages/NotificationHistory';
 import NotificationHub from './pages/NotificationHub';
 import NotificationManagement from './pages/NotificationManagement';
+import NotificationPreferences from './pages/NotificationPreferences';
 import Onboarding from './pages/Onboarding';
 import OnboardingWizard from './pages/OnboardingWizard';
 import OperatingCosts from './pages/OperatingCosts';
@@ -205,6 +216,7 @@ import RealTimeTaxCalculator from './pages/RealTimeTaxCalculator';
 import ReportBuilder from './pages/ReportBuilder';
 import ReportGenerator from './pages/ReportGenerator';
 import ReportScheduling from './pages/ReportScheduling';
+import Tasks from './pages/Tasks';
 import ReportingDashboard from './pages/ReportingDashboard';
 import ReportsPage from './pages/ReportsPage';
 import RetirementIncomeTaxOptimizer from './pages/RetirementIncomeTaxOptimizer';
@@ -229,7 +241,6 @@ import SyncManagement from './pages/SyncManagement';
 import SystemConfiguration from './pages/SystemConfiguration';
 import SystemHealth from './pages/SystemHealth';
 import TaskManagement from './pages/TaskManagement';
-import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
 import TaxAIChatbot from './pages/TaxAIChatbot';
 import TaxAdminDashboard from './pages/TaxAdminDashboard';
@@ -355,17 +366,7 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import KommunikationDashboard from './pages/KommunikationDashboard';
-import BulkMessaging from './pages/BulkMessaging';
-import NotificationPreferences from './pages/NotificationPreferences';
-import CommunicationTemplates from './pages/CommunicationTemplates';
-import CommunityForum from './pages/CommunityForum';
-import LetterXpressManagement from './pages/LetterXpressManagement';
-import AITemplateGenerator from './pages/AITemplateGenerator';
-import NotificationHistory from './pages/NotificationHistory';
-import CommunicationAnalytics from './pages/CommunicationAnalytics';
-import AutomatedCommunication from './pages/AutomatedCommunication';
-import CommunicationAuditLog from './pages/CommunicationAuditLog';
+import LetterShipmentManagement from './pages/LetterShipmentManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -378,6 +379,7 @@ export const PAGES = {
     "AIRuleApprovalDashboard": AIRuleApprovalDashboard,
     "AITaxAdvisor": AITaxAdvisor,
     "AITaxRecommendations": AITaxRecommendations,
+    "AITemplateGenerator": AITemplateGenerator,
     "APIKeyManagement": APIKeyManagement,
     "APILogs": APILogs,
     "ActivityLogs": ActivityLogs,
@@ -423,6 +425,7 @@ export const PAGES = {
     "AuditLog": AuditLog,
     "AuditReadinessAssessment": AuditReadinessAssessment,
     "AuditReports": AuditReports,
+    "AutomatedCommunication": AutomatedCommunication,
     "AutomatedTaxFormGenerator": AutomatedTaxFormGenerator,
     "AutomationRules": AutomationRules,
     "BackupRecovery": BackupRecovery,
@@ -438,13 +441,18 @@ export const PAGES = {
     "BuildingWorkflowManager": BuildingWorkflowManager,
     "Buildings": Buildings,
     "BuildingsMap": BuildingsMap,
+    "BulkMessaging": BulkMessaging,
     "BulkOperations": BulkOperations,
     "BusinessStructureOptimizer": BusinessStructureOptimizer,
     "CapitalGainCH": CapitalGainCH,
     "CapitalGainsManagement": CapitalGainsManagement,
     "CapitalGainsOptimizer": CapitalGainsOptimizer,
     "CharitableDonationPlanner": CharitableDonationPlanner,
+    "CommunicationAnalytics": CommunicationAnalytics,
+    "CommunicationAuditLog": CommunicationAuditLog,
     "CommunicationCenter": CommunicationCenter,
+    "CommunicationTemplates": CommunicationTemplates,
+    "CommunityForum": CommunityForum,
     "Companies": Companies,
     "CompanyDetailEnhanced": CompanyDetailEnhanced,
     "CompleteEnterpriseHub": CompleteEnterpriseHub,
@@ -478,7 +486,6 @@ export const PAGES = {
     "DocumentEnterpriseHub": DocumentEnterpriseHub,
     "DocumentGeneration": DocumentGeneration,
     "DocumentInbox": DocumentInbox,
-    "Finanzen": Finanzen,
     "DocumentInboxSettings": DocumentInboxSettings,
     "DocumentIntegrationHub": DocumentIntegrationHub,
     "DocumentLibrary": DocumentLibrary,
@@ -508,6 +515,7 @@ export const PAGES = {
     "FinancialItems": FinancialItems,
     "FinancialReporting": FinancialReporting,
     "FinancialReports": FinancialReports,
+    "Finanzen": Finanzen,
     "FullFeatureHub": FullFeatureHub,
     "GeneratedBookings": GeneratedBookings,
     "GlobalSettings": GlobalSettings,
@@ -534,7 +542,9 @@ export const PAGES = {
     "KnowledgeBaseAdmin": KnowledgeBaseAdmin,
     "KnowledgeManagementDashboard": KnowledgeManagementDashboard,
     "Kommunikation": Kommunikation,
+    "KommunikationDashboard": KommunikationDashboard,
     "LeaseContracts": LeaseContracts,
+    "LetterXpressManagement": LetterXpressManagement,
     "MaintenanceManager": MaintenanceManager,
     "MaintenanceScheduling": MaintenanceScheduling,
     "MaintenanceTasks": MaintenanceTasks,
@@ -551,8 +561,10 @@ export const PAGES = {
     "MyAccount": MyAccount,
     "NavigationDemo": NavigationDemo,
     "NotificationCenter": NotificationCenter,
+    "NotificationHistory": NotificationHistory,
     "NotificationHub": NotificationHub,
     "NotificationManagement": NotificationManagement,
+    "NotificationPreferences": NotificationPreferences,
     "Onboarding": Onboarding,
     "OnboardingWizard": OnboardingWizard,
     "OperatingCosts": OperatingCosts,
@@ -577,6 +589,7 @@ export const PAGES = {
     "ReportBuilder": ReportBuilder,
     "ReportGenerator": ReportGenerator,
     "ReportScheduling": ReportScheduling,
+    "Tasks": Tasks,
     "ReportingDashboard": ReportingDashboard,
     "ReportsPage": ReportsPage,
     "RetirementIncomeTaxOptimizer": RetirementIncomeTaxOptimizer,
@@ -601,7 +614,6 @@ export const PAGES = {
     "SystemConfiguration": SystemConfiguration,
     "SystemHealth": SystemHealth,
     "TaskManagement": TaskManagement,
-    "Tasks": Tasks,
     "Tax": Tax,
     "TaxAIChatbot": TaxAIChatbot,
     "TaxAdminDashboard": TaxAdminDashboard,
@@ -727,17 +739,7 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "KommunikationDashboard": KommunikationDashboard,
-    "BulkMessaging": BulkMessaging,
-    "NotificationPreferences": NotificationPreferences,
-    "CommunicationTemplates": CommunicationTemplates,
-    "CommunityForum": CommunityForum,
-    "LetterXpressManagement": LetterXpressManagement,
-    "AITemplateGenerator": AITemplateGenerator,
-    "NotificationHistory": NotificationHistory,
-    "CommunicationAnalytics": CommunicationAnalytics,
-    "AutomatedCommunication": AutomatedCommunication,
-    "CommunicationAuditLog": CommunicationAuditLog,
+    "LetterShipmentManagement": LetterShipmentManagement,
 }
 
 export const pagesConfig = {

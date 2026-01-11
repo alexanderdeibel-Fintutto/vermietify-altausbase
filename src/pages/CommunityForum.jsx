@@ -14,14 +14,34 @@ export default function CommunityForum() {
     queryFn: () => base44.auth.me(),
   });
 
+  const { data: posts = [] } = useQuery({
+    queryKey: ['communityPosts'],
+    queryFn: () => base44.entities.CommunityPost.list('-updated_date', 50),
+  });
+
   const isAdmin = currentUser?.role === 'admin';
+  
+  const categoryMap = {
+    all: 'Alle Posts',
+    roommate_search: 'Mitbewohner',
+    item_offer: 'Angebote',
+    item_request: 'Gesuche',
+    event: 'Events',
+    tip: 'Tipps',
+    general: 'Allgemeines',
+  };
+
+  const postsByCategory = Object.keys(categoryMap).reduce((acc, cat) => {
+    acc[cat] = posts.filter(p => cat === 'all' || p.category === cat).length;
+    return acc;
+  }, {});
 
   const categories = [
-    { id: 'all', label: 'Alle Posts', count: 24 },
-    { id: 'pending', label: 'Zur Genehmigung', count: 3 },
-    { id: 'roommate', label: 'Mitbewohner', count: 8 },
-    { id: 'items', label: 'Gegenstände', count: 12 },
-    { id: 'events', label: 'Events', count: 4 },
+    { id: 'all', label: categoryMap.all, count: posts.length },
+    { id: 'pending', label: 'Zur Genehmigung', count: posts.filter(p => !p.is_approved).length },
+    { id: 'roommate_search', label: categoryMap.roommate_search, count: postsByCategory.roommate_search },
+    { id: 'item_offer', label: categoryMap.item_offer, count: postsByCategory.item_offer },
+    { id: 'event', label: categoryMap.event, count: postsByCategory.event },
   ];
 
   return (
@@ -101,32 +121,34 @@ export default function CommunityForum() {
           )}
 
           {/* Post List */}
-          <div className="space-y-3">
-            {[1, 2, 3, 4].map(id => (
-              <Card key={id} className="hover:shadow-md transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="font-medium text-slate-900">Post Titel {id}</h3>
-                      <p className="text-xs text-slate-500 mt-1">von Mieter • vor 2 Tagen</p>
-                    </div>
-                    <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">Kategorie</span>
-                  </div>
-                  <p className="text-sm text-slate-600 mb-3">Kurze Beschreibung des Posts mit einer Vorschau des Inhalts...</p>
-                  <div className="flex gap-4 text-xs text-slate-600">
-                    <button className="flex items-center gap-1 hover:text-slate-900">
-                      <Heart className="w-4 h-4" />
-                      12 Likes
-                    </button>
-                    <button className="flex items-center gap-1 hover:text-slate-900">
-                      <MessageSquare className="w-4 h-4" />
-                      5 Kommentare
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+           <div className="space-y-3">
+             {posts
+               .filter(p => selectedCategory === 'all' || selectedCategory === 'pending' ? !p.is_approved : p.category === selectedCategory)
+               .map(post => (
+               <Card key={post.id} className="hover:shadow-md transition-shadow">
+                 <CardContent className="pt-6">
+                   <div className="flex justify-between items-start mb-3">
+                     <div>
+                       <h3 className="font-medium text-slate-900">{post.title}</h3>
+                       <p className="text-xs text-slate-500 mt-1">von {post.author_name} • {new Date(post.updated_date).toLocaleDateString('de-DE')}</p>
+                     </div>
+                     <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">{categoryMap[post.category]}</span>
+                   </div>
+                   <p className="text-sm text-slate-600 mb-3">{post.content.substring(0, 100)}...</p>
+                   <div className="flex gap-4 text-xs text-slate-600">
+                     <button className="flex items-center gap-1 hover:text-slate-900">
+                       <Heart className="w-4 h-4" />
+                       0 Likes
+                     </button>
+                     <button className="flex items-center gap-1 hover:text-slate-900">
+                       <MessageSquare className="w-4 h-4" />
+                       0 Kommentare
+                     </button>
+                   </div>
+                 </CardContent>
+               </Card>
+             ))}
+           </div>
         </div>
       </div>
     </div>
