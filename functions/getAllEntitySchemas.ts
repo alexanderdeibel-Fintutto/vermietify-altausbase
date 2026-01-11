@@ -40,32 +40,7 @@ Deno.serve(async (req) => {
                     schemas[name] = { name, ...schema };
                 }
             } catch (error) {
-                // Fallback: try to infer schema from existing data
-                try {
-                    const records = await base44.entities[name].list(undefined, 1);
-                    if (records && records.length > 0) {
-                        const sample = records[0];
-                        const inferredSchema = { name, type: 'object', properties: {} };
-                        
-                        for (const [key, value] of Object.entries(sample)) {
-                            if (['id', 'created_date', 'updated_date', 'created_by'].includes(key)) continue;
-                            
-                            let type = 'string';
-                            if (typeof value === 'number') type = 'number';
-                            else if (typeof value === 'boolean') type = 'boolean';
-                            else if (Array.isArray(value)) type = 'array';
-                            else if (typeof value === 'object' && value !== null) type = 'object';
-                            
-                            inferredSchema.properties[key] = { type };
-                        }
-                        
-                        if (Object.keys(inferredSchema.properties).length > 0) {
-                            schemas[name] = inferredSchema;
-                        }
-                    }
-                } catch (fallbackError) {
-                    console.log(`Could not get data for ${name}:`, fallbackError.message);
-                }
+                console.log(`Could not fetch schema for ${name}.`);
             }
         }
 
