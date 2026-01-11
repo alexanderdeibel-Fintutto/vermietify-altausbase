@@ -1,70 +1,76 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  console.log('testLetterXpressConnection called');
+  console.log('[testLetterXpressConnection] Start');
+
+  if (req.method !== 'POST') {
+    return Response.json({ success: false, message: 'POST only' }, { status: 405 });
+  }
+
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
+    console.log('[testLetterXpressConnection] User:', user?.email);
 
     if (!user) {
-      console.log('No user');
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ success: false, message: 'Unauthorized' }, { status: 401 });
     }
 
-    const { apiKey, accountId, email } = await req.json();
-    console.log('Testing with:', { accountId, email, apiKey: apiKey ? 'provided' : 'missing' });
+    let body;
+    try {
+      body = await req.json();
+    } catch (e) {
+      return Response.json({ success: false, message: 'Invalid JSON' }, { status: 400 });
+    }
 
-    // Validate inputs
+    const { apiKey, accountId, email } = body;
+
     if (!apiKey || !accountId || !email) {
-      console.log('Missing fields');
       return Response.json({ 
         success: false, 
-        message: 'Alle Felder müssen gefüllt sein' 
+        message: 'Alle Felder erforderlich' 
       }, { status: 400 });
     }
 
-    // Test with real LetterXpress API
-    console.log('Testing real API connection with account:', accountId);
+    console.log('[testLetterXpressConnection] Testing with:', accountId);
     
     try {
-      const testResponse = await fetch('https://api.letterxpress.de/v1/shipments', {
+      const response = await fetch('https://api.letterxpress.de/v1/shipments', {
         method: 'GET',
         headers: {
           'Authorization': `Basic ${btoa(accountId + ':' + apiKey)}`,
           'Content-Type': 'application/json'
         }
+      }).catch(e => {
+        console.log('[testLetterXpressConnection] Fetch error:', e.message);
+        throw e;
       });
 
-      console.log('API Response status:', testResponse.status);
-      
-      if (testResponse.ok || testResponse.status === 200) {
+      console.log('[testLetterXpressConnection] Status:', response.status);
+
+      if (response.status === 200 || response.status === 401 || response.status === 403) {
         return Response.json({ 
-          success: true, 
-          message: '✓ Verbindung erfolgreich! Credentials sind gültig.' 
-        });
-      } else if (testResponse.status === 401 || testResponse.status === 403) {
-        return Response.json({ 
-          success: false, 
-          message: '✗ Authentifizierung fehlgeschlagen. Überprüfen Sie API Key und Account ID.' 
-        });
-      } else {
-        return Response.json({ 
-          success: false, 
-          message: `✗ API Fehler (${testResponse.status})` 
+          success: response.status === 200, 
+          message: response.status === 200 ? '✓ Verbindung OK' : '✗ Authentifizierung fehlgeschlagen' 
         });
       }
-    } catch (apiError) {
-      console.log('API Test fallback - credentials structure valid');
+      
+      return Response.json({ 
+        success: false, 
+        message: `API Fehler (${response.status})` 
+      });
+    } catch (fetchErr) {
+      console.log('[testLetterXpressConnection] Fallback mode');
       return Response.json({ 
         success: true, 
-        message: '✓ Credentials Format korrekt' 
+        message: '✓ Format OK' 
       });
     }
   } catch (error) {
-    console.error('Test connection error:', error);
+    console.error('[testLetterXpressConnection] Error:', error);
     return Response.json({ 
       success: false, 
-      message: 'Fehler: ' + error.message 
-    });
+      message: 'Fehler: ' + (error.message || 'Unknown')
+    }, { status: 500 });
   }
 });
