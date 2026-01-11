@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
                   schemas[name] = { name, ...schema };
                 }
             } catch (error) {
-                logDebug(`[${name}] ❌ ERROR: ${error.message}`);
+                // Silent catch
             }
         }
         
