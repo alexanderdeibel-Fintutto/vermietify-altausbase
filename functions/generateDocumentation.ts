@@ -1,5 +1,61 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+// Fallback: Bekannte Entity-Schemas
+const KNOWN_ENTITY_SCHEMAS = {
+  "Building": {
+    "name": "Building",
+    "type": "object",
+    "properties": {
+      "name": {"type": "string", "description": "Name des Gebäudes"},
+      "address": {"type": "string", "description": "Straße des Gebäudes"},
+      "city": {"type": "string", "description": "Stadt des Gebäudes"},
+      "postal_code": {"type": "string", "description": "Postleitzahl des Gebäudes"},
+      "year_built": {"type": "number", "description": "Baujahr"},
+      "total_units": {"type": "number", "description": "Anzahl Wohneinheiten"}
+    },
+    "required": ["name", "address", "city", "postal_code"]
+  },
+  "Unit": {
+    "name": "Unit",
+    "type": "object",
+    "properties": {
+      "gebaeude_id": {"type": "string", "description": "Referenz zum Gebäude"},
+      "unit_number": {"type": "string", "description": "Wohnungsnummer"},
+      "floor": {"type": "number", "description": "Etage"},
+      "rooms": {"type": "number", "description": "Anzahl Zimmer"},
+      "sqm": {"type": "number", "description": "Wohnfläche in qm"},
+      "status": {"type": "string", "enum": ["occupied", "vacant", "renovation"]}
+    },
+    "required": ["gebaeude_id", "unit_number", "sqm"]
+  },
+  "Tenant": {
+    "name": "Tenant",
+    "type": "object",
+    "properties": {
+      "first_name": {"type": "string", "description": "Vorname"},
+      "last_name": {"type": "string", "description": "Nachname"},
+      "email": {"type": "string", "description": "E-Mail-Adresse"},
+      "phone": {"type": "string", "description": "Telefonnummer"},
+      "date_of_birth": {"type": "string", "format": "date"}
+    },
+    "required": ["first_name", "last_name"]
+  },
+  "LeaseContract": {
+    "name": "LeaseContract",
+    "type": "object",
+    "properties": {
+      "unit_id": {"type": "string"},
+      "tenant_id": {"type": "string"},
+      "start_date": {"type": "string", "format": "date"},
+      "end_date": {"type": "string", "format": "date"},
+      "base_rent": {"type": "number"},
+      "total_rent": {"type": "number"},
+      "status": {"type": "string", "enum": ["active", "terminated", "expired"]}
+    },
+    "required": ["unit_id", "tenant_id", "start_date", "base_rent", "total_rent"]
+  }
+};
+
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
