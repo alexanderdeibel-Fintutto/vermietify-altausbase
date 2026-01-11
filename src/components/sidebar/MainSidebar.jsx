@@ -5,7 +5,7 @@ import { DollarSign, Home, Users, Building2, Calculator, ChevronRight, FileText,
 import { useSelectedBuilding } from '@/components/hooks/useSelectedBuilding';
 import BuildingSelector from './BuildingSelector';
 
-const CATEGORIES = [
+const MAIN_CATEGORIES = [
   {
     id: 'finanzen',
     label: 'Finanzen',
@@ -44,16 +44,10 @@ const CATEGORIES = [
       { name: 'Companies', label: 'Firmen' },
       { name: 'AdminSettings', label: 'Einstellungen' },
     ]
-  },
-  {
-    id: 'steuern',
-    label: 'Steuern',
-    icon: Calculator,
-    pages: [
-      { name: 'TaxManagement', label: 'Übersicht' },
-      { name: 'TaxDocumentManager', label: 'Dokumente' },
-    ]
-  },
+  }
+];
+
+const SECONDARY_CATEGORIES = [
   {
     id: 'dokumente',
     label: 'Dokumente',
@@ -62,6 +56,15 @@ const CATEGORIES = [
       { name: 'DocumentManagement', label: 'Verwaltung' },
       { name: 'DocumentInbox', label: 'Eingang' },
       { name: 'DocumentTemplateManager', label: 'Vorlagen' },
+    ]
+  },
+  {
+    id: 'steuern',
+    label: 'Steuern',
+    icon: Calculator,
+    pages: [
+      { name: 'TaxManagement', label: 'Übersicht' },
+      { name: 'TaxDocumentManager', label: 'Dokumente' },
     ]
   },
   {
@@ -99,7 +102,44 @@ export default function MainSidebar() {
 
       {/* Navigation Categories */}
       <nav className="flex-1 overflow-y-auto p-4 space-y-2">
-        {CATEGORIES.map((category) => {
+        {MAIN_CATEGORIES.map((category) => {
+          const Icon = category.icon;
+          const isExpanded = expandedCategory === category.id;
+
+          return (
+            <div key={category.id} className="space-y-1">
+              <button
+                onClick={() => setExpandedCategory(isExpanded ? null : category.id)}
+                className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Icon className="w-4 h-4" />
+                  {category.label}
+                </div>
+                <ChevronRight className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+              </button>
+
+              {isExpanded && (
+                <div className="pl-8 space-y-1">
+                  {category.pages.map((page) => (
+                    <Link
+                      key={page.name}
+                      to={createPageUrl(page.name)}
+                      className="block px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded transition-colors"
+                    >
+                      {page.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {/* Secondary Categories Separator */}
+        <div className="my-4 h-px bg-slate-200" />
+
+        {SECONDARY_CATEGORIES.map((category) => {
           const Icon = category.icon;
           const isExpanded = expandedCategory === category.id;
 
