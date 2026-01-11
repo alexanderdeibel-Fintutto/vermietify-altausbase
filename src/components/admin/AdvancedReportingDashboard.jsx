@@ -37,8 +37,10 @@ export default function AdvancedReportingDashboard() {
   const getRevenueData = () => {
     const monthlyData = {};
     payments.forEach(p => {
-      const month = new Date(p.payment_date).toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
-      monthlyData[month] = (monthlyData[month] || 0) + (p.amount || 0);
+      if (p.payment_date && !isNaN(new Date(p.payment_date).getTime())) {
+        const month = new Date(p.payment_date).toLocaleDateString('de-DE', { month: 'short', year: '2-digit' });
+        monthlyData[month] = (monthlyData[month] || 0) + (p.amount || 0);
+      }
     });
     return Object.entries(monthlyData).map(([month, amount]) => ({
       month,

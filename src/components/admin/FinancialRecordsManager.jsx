@@ -152,7 +152,7 @@ export default function FinancialRecordsManager() {
                       <td className="py-3 px-3">{tenant?.first_name} {tenant?.last_name}</td>
                       <td className="py-3 px-3 font-bold">{inv.document_data?.amount?.toFixed(2)}€</td>
                       <td className="py-3 px-3">
-                        {inv.document_data?.dueDate
+                        {inv.document_data?.dueDate && !isNaN(new Date(inv.document_data.dueDate).getTime())
                           ? format(new Date(inv.document_data.dueDate), 'dd. MMM yyyy', { locale: de })
                           : '-'}
                       </td>
@@ -168,7 +168,9 @@ export default function FinancialRecordsManager() {
                         </span>
                       </td>
                       <td className="py-3 px-3 text-xs text-slate-600">
-                        {format(new Date(inv.created_date), 'dd.MM.yyyy', { locale: de })}
+                        {inv.created_date && !isNaN(new Date(inv.created_date).getTime())
+                          ? format(new Date(inv.created_date), 'dd.MM.yyyy', { locale: de })
+                          : '-'}
                       </td>
                       <td className="py-3 px-3">
                         <Button variant="ghost" size="sm" className="gap-1">
