@@ -1,114 +1,172 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Check, FileText, MessageSquare, Wrench, Euro } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Bell, Trash2, CheckCircle2, AlertCircle, FileText, Home } from 'lucide-react';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 export default function TenantNotificationCenter({ tenantId }) {
-  const queryClient = useQueryClient();
-
-  const { data: notifications = [] } = useQuery({
-    queryKey: ['tenant-notifications', tenantId],
-    queryFn: () => base44.entities.TenantNotification.filter({ tenant_id: tenantId }, '-sent_at', 20)
+  const { data: notifications, isLoading } = useQuery({
+    queryKey: ['tenantNotifications', tenantId],
+    queryFn: async () => {
+      const notifs = await base44.entities.TenantNotification.filter({
+        tenant_id: tenantId
+      });
+      return notifs.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+    },
+    refetchInterval: 30000
   });
+
+  const queryClient = useQueryClient();
 
   const markAsReadMutation = useMutation({
     mutationFn: (notificationId) =>
       base44.entities.TenantNotification.update(notificationId, { is_read: true }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tenant-notifications'] })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenantNotifications'] });
+    }
   });
 
-  const markAllAsReadMutation = useMutation({
-    mutationFn: async () => {
-      const unread = notifications.filter(n => !n.is_read);
-      await Promise.all(unread.map(n => 
-        base44.entities.TenantNotification.update(n.id, { is_read: true })
-      ));
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tenant-notifications'] })
+  const deleteNotificationMutation = useMutation({
+    mutationFn: (notificationId) =>
+      base44.entities.TenantNotification.delete(notificationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenantNotifications'] });
+      toast.success('Benachrichtigung gelöscht');
+    }
   });
 
-  const getIcon = (type) => {
-    switch(type) {
-      case 'maintenance_update': return <Wrench className="w-4 h-4" />;
-      case 'new_document': return <FileText className="w-4 h-4" />;
-      case 'new_message': return <MessageSquare className="w-4 h-4" />;
-      case 'payment_reminder': return <Euro className="w-4 h-4" />;
-      default: return <Bell className="w-4 h-4" />;
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case 'invoice':
+        return <FileText className="w-5 h-5 text-blue-600" />;
+      case 'operating_costs':
+        return <FileText className="w-5 h-5 text-green-600" />;
+      case 'announcement':
+        return <Bell className="w-5 h-5 text-purple-600" />;
+      case 'payment_reminder':
+        return <AlertCircle className="w-5 h-5 text-red-600" />;
+      default:
+        return <Home className="w-5 h-5 text-slate-600" />;
     }
   };
 
-  const getColor = (priority) => {
-    switch(priority) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-slate-100 text-slate-800';
-    }
+  const getNotificationTypeLabel = (type) => {
+    const labels = {
+      invoice: 'Rechnung',
+      operating_costs: 'Betriebskostenabrechnung',
+      announcement: 'Ankündigung',
+      payment_reminder: 'Zahlungserinnerung'
+    };
+    return labels[type] || type;
   };
 
-  const unreadCount = notifications.filter(n => !n.is_read).length;
+  const unreadCount = notifications?.filter(n => !n.is_read).length || 0;
+
+  if (isLoading) return null;
+
+  if (!notifications || notifications.length === 0) {
+    return (
+      <Card className="bg-slate-50 border-slate-200">
+        <CardContent className="pt-6 text-center">
+          <Bell className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+          <p className="text-slate-500">Keine Benachrichtigungen</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Bell className="w-5 h-5" />
-            Benachrichtigungen
-            {unreadCount > 0 && (
-              <Badge className="bg-red-500 text-white">{unreadCount}</Badge>
-            )}
-          </CardTitle>
-          {unreadCount > 0 && (
-            <Button size="sm" variant="outline" onClick={() => markAllAsReadMutation.mutate()}>
-              <Check className="w-4 h-4 mr-2" />
-              Alle als gelesen
-            </Button>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-2 max-h-96 overflow-y-auto">
-        {notifications.map(notif => (
-          <div
-            key={notif.id}
-            className={`p-3 border rounded-lg ${!notif.is_read ? 'bg-blue-50 border-blue-200' : 'bg-white'}`}
-          >
-            <div className="flex items-start gap-3">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getColor(notif.priority)}`}>
-                {getIcon(notif.notification_type)}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-start justify-between mb-1">
-                  <h4 className="font-medium text-sm">{notif.title}</h4>
-                  {!notif.is_read && (
-                    <Badge className="bg-blue-500 text-white text-xs">Neu</Badge>
-                  )}
-                </div>
-                <p className="text-sm text-slate-600 mb-2">{notif.message}</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-500">
-                    {new Date(notif.sent_at || notif.created_date).toLocaleString('de-DE')}
-                  </span>
-                  {!notif.is_read && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => markAsReadMutation.mutate(notif.id)}
-                    >
-                      Als gelesen markieren
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
+    <div className="space-y-4">
+      {/* Ungelesene Zusammenfassung */}
+      {unreadCount > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Bell className="w-5 h-5 text-blue-600" />
+            <span className="text-blue-900 font-semibold">
+              {unreadCount} neue {unreadCount === 1 ? 'Benachrichtigung' : 'Benachrichtigungen'}
+            </span>
           </div>
+        </div>
+      )}
+
+      {/* Benachrichtigungen */}
+      <div className="space-y-3">
+        {notifications.map((notification) => (
+          <Card
+            key={notification.id}
+            className={`transition-all ${
+              !notification.is_read ? 'bg-blue-50 border-blue-200' : 'hover:shadow-md'
+            }`}
+          >
+            <CardContent className="pt-6">
+              <div className="flex gap-4">
+                {/* Icon */}
+                <div className="flex-shrink-0 pt-1">
+                  {getNotificationIcon(notification.type)}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <h3 className="font-semibold text-slate-900 text-base">
+                      {notification.title}
+                    </h3>
+                    {!notification.is_read && (
+                      <Badge className="bg-blue-600 text-white flex-shrink-0">
+                        Neu
+                      </Badge>
+                    )}
+                  </div>
+
+                  <p className="text-slate-600 text-sm mb-2">
+                    {notification.message}
+                  </p>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <span className="px-2 py-1 bg-slate-100 rounded">
+                        {getNotificationTypeLabel(notification.type)}
+                      </span>
+                      <span>
+                        {format(new Date(notification.created_date), 'dd. MMM HH:mm', {
+                          locale: de
+                        })}
+                      </span>
+                    </div>
+
+                    <div className="flex gap-2">
+                      {!notification.is_read && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => markAsReadMutation.mutate(notification.id)}
+                          className="text-blue-600 hover:text-blue-700 gap-1"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span className="text-xs">Gelesen</span>
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteNotificationMutation.mutate(notification.id)}
+                        className="text-slate-400 hover:text-red-600"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         ))}
-        {notifications.length === 0 && (
-          <p className="text-center text-slate-600 py-8">Keine Benachrichtigungen</p>
-        )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
