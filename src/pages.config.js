@@ -337,6 +337,7 @@ import TenantDigitalKey from './pages/TenantDigitalKey';
 import TenantMessages from './pages/TenantMessages';
 import TenantDocuments from './pages/TenantDocuments';
 import TenantMaintenance from './pages/TenantMaintenance';
+import TenantCommunity from './pages/TenantCommunity';
 import __Layout from './Layout.jsx';
 
 
@@ -680,6 +681,7 @@ export const PAGES = {
     "TenantMessages": TenantMessages,
     "TenantDocuments": TenantDocuments,
     "TenantMaintenance": TenantMaintenance,
+    "TenantCommunity": TenantCommunity,
 }
 
 export const pagesConfig = {
