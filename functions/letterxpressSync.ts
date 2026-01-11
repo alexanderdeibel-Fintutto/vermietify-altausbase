@@ -62,42 +62,33 @@ Deno.serve(async (req) => {
       });
     }
 
-    // API-Call zu LetterXpress - versuche verschiedene Authentifizierungsmethoden
-    console.log('[letterxpressSync] Calling LetterXpress API with account:', accountId);
+    // API-Call zu LetterXpress mit korrekter Authentifizierung (JSON Body)
+    console.log('[letterxpressSync] Calling LetterXpress API with username:', username);
+    
+    const authPayload = {
+      username: username,  // e.g., "LXPApi62881"
+      api_key: apiKey      // e.g., "435346ab6c70a1f05c4f9cc5416399f9fdc6556c92ab16a03eeee274f8d640d4"
+    };
+
+    console.log('[letterxpressSync] Auth payload:', { username: username, api_key: apiKey.substring(0, 10) + '...' });
     
     let response;
-    
-    // Versuche mit Bearer Token
     try {
       response = await fetch('https://api.letterxpress.de/v1/shipments', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify(authPayload)
       });
       
-      console.log('[letterxpressSync] API Response status (Bearer):', response.status);
+      console.log('[letterxpressSync] API Response status:', response.status);
     } catch (fetchErr) {
-      console.error('[letterxpressSync] Fetch error (Bearer):', fetchErr.message);
-      
-      // Fallback: versuche mit Basic Auth
-      try {
-        response = await fetch('https://api.letterxpress.de/v1/shipments', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Basic ${btoa(accountId + ':' + apiKey)}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        console.log('[letterxpressSync] API Response status (Basic):', response.status);
-      } catch (basicErr) {
-        console.error('[letterxpressSync] Fetch error (Basic):', basicErr.message);
-        return Response.json({ 
-          success: false,
-          message: `Verbindung zu LetterXpress fehlgeschlagen: ${basicErr.message}`
-        }, { status: 500 });
-      }
+      console.error('[letterxpressSync] Fetch error:', fetchErr.message);
+      return Response.json({ 
+        success: false,
+        message: `Verbindung zu LetterXpress fehlgeschlagen: ${fetchErr.message}`
+      }, { status: 500 });
     }
     
     if (!response.ok) {
