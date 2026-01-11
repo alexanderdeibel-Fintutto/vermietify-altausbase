@@ -356,6 +356,9 @@ import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
 import KommunikationDashboard from './pages/KommunikationDashboard';
+import BulkMessaging from './pages/BulkMessaging';
+import NotificationPreferences from './pages/NotificationPreferences';
+import CommunicationTemplates from './pages/CommunicationTemplates';
 import __Layout from './Layout.jsx';
 
 
@@ -718,6 +721,9 @@ export const PAGES = {
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
     "KommunikationDashboard": KommunikationDashboard,
+    "BulkMessaging": BulkMessaging,
+    "NotificationPreferences": NotificationPreferences,
+    "CommunicationTemplates": CommunicationTemplates,
 }
 
 export const pagesConfig = {
