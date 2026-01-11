@@ -48,12 +48,8 @@ Deno.serve(async (req) => {
             if (!name) continue;
             try {
                 const schema = await base44.entities.schema(name);
-                
                 if (schema) {
-                  logDebug(`[${name}] ✅ SUCCESS - ${Object.keys(schema).length} keys`);
                   schemas[name] = { name, ...schema };
-                } else {
-                  logDebug(`[${name}] ⚠️ Schema is null/undefined`);
                 }
             } catch (error) {
                 logDebug(`[${name}] ❌ ERROR: ${error.message}`);
