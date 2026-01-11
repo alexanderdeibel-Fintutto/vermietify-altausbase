@@ -46,14 +46,7 @@ const TesterManagement = lazy(() => import('@/pages/TesterManagement'));
 const LoadingFallback = () => null;
 
 export default function Layout({ children, currentPageName }) {
-  // Register service worker for PWA
-  React.useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js')
-        .then(registration => console.log('SW registered:', registration))
-        .catch(error => console.log('SW registration failed:', error));
-    }
-  }, []);
+
           const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
           const [activeCategory, setActiveCategory] = useState('real_estate');
           const { hasModuleAccess, packageConfig } = usePackageAccess();
@@ -71,7 +64,7 @@ export default function Layout({ children, currentPageName }) {
               queryKey: ['navigationState'],
               queryFn: async () => {
                   const states = await base44.entities.NavigationState.list('-updated_date', 1);
-                  return states[0];
+                  return states[0] || null;
               },
               staleTime: 5 * 60 * 1000,
               cacheTime: 10 * 60 * 1000
