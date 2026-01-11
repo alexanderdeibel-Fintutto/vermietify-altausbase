@@ -128,13 +128,59 @@ export default function VisualTemplateBuilder({ template, onChange }) {
 
   return (
     <div className="space-y-4">
+      {/* Toolbar */}
+      <div className="flex gap-2 bg-white p-3 rounded-lg border">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleUndo}
+          disabled={!canUndo}
+          className="gap-1 h-8 text-xs"
+          title="Rückgängig machen"
+        >
+          <RotateCcw className="w-3 h-3" /> Undo
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleRedo}
+          disabled={!canRedo}
+          className="gap-1 h-8 text-xs"
+          title="Wiederherstellen"
+        >
+          <RotateCw className="w-3 h-3" /> Redo
+        </Button>
+        <div className="border-l mx-2"></div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => handleExport('html')}
+          disabled={exporting}
+          className="gap-1 h-8 text-xs"
+        >
+          <Download className="w-3 h-3" /> HTML
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => handleExport('pdf')}
+          disabled={exporting}
+          className="gap-1 h-8 text-xs"
+        >
+          <Download className="w-3 h-3" /> PDF
+        </Button>
+      </div>
+
       <Tabs defaultValue="visual" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="visual" className="gap-2">
             <Layout className="w-4 h-4" /> Visual
           </TabsTrigger>
           <TabsTrigger value="design" className="gap-2">
             <Eye className="w-4 h-4" /> Design
+          </TabsTrigger>
+          <TabsTrigger value="pages" className="gap-2">
+            <Layout className="w-4 h-4" /> Seite
           </TabsTrigger>
           <TabsTrigger value="preview" className="gap-2">
             <Eye className="w-4 h-4" /> Vorschau
