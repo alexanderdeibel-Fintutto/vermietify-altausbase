@@ -17,7 +17,8 @@ Deno.serve(async (req) => {
             contract_id, 
             unit_id, 
             building_id,
-            document_data 
+            document_data,
+            distribution_channels = ['email']
         } = await req.json();
 
         console.log(`Generating document: ${document_type} for tenant ${tenant_id}`);
@@ -82,7 +83,8 @@ Deno.serve(async (req) => {
             building_id,
             pdf_file_uri: uploadResult.file_uri,
             document_data: document_data,
-            distribution_status: 'generated'
+            distribution_status: 'generated',
+            distribution_channels: distribution_channels.map(ch => ({ channel: ch, status: 'queued' }))
         });
 
         console.log(`Document ${document_type} generated successfully: ${generatedDoc.id}`);
