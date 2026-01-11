@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, Code, Layout, GripVertical } from 'lucide-react';
+import { Eye, Code, Layout, GripVertical, RotateCcw, RotateCw, Download } from 'lucide-react';
 import TemplateComponentLibrary from './TemplateComponentLibrary';
 import TemplateDesignPanel from './TemplateDesignPanel';
 import TemplateBlockEditor from './TemplateBlockEditor';
 import TemplateCanvasPreview from './TemplateCanvasPreview';
+import PageSetupPanel from './PageSetupPanel';
+import { UndoRedoManager } from './UndoRedoManager';
+import { exportTemplateAsHTML, exportTemplateAsPDF } from './TemplateExporter';
 
 export default function VisualTemplateBuilder({ template, onChange }) {
   const [blocks, setBlocks] = useState(template.blocks || []);
