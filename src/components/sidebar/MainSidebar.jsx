@@ -86,19 +86,19 @@ export default function MainSidebar() {
   return (
     <div className="w-64 bg-white border-r border-slate-200 flex flex-col h-screen">
       {/* Logo/Header */}
-      <div className="p-4 border-b border-slate-200">
+      <div className="p-4 space-y-4">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
             <Building2 className="w-4 h-4 text-white" />
           </div>
           <span className="font-semibold text-slate-900">FinX</span>
         </div>
-      </div>
 
-      {/* Building Selector */}
-      <div className="p-4 border-b border-slate-200">
+        {/* Building Selector */}
         <BuildingSelector />
       </div>
+
+      <div className="border-b border-slate-200" />
 
       {/* Navigation Categories */}
       <nav className="flex-1 overflow-y-auto p-4 space-y-2">
