@@ -1,97 +1,74 @@
-import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Download } from 'lucide-react';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { AlertCircle } from 'lucide-react';
 
-export default function TemplatePreview({ open, onOpenChange, template }) {
-    const generatePreviewHTML = () => {
-        if (!template) return '';
+export default function TemplatePreview({ template, fields = [] }) {
+  const [previewData, setPreviewData] = useState({});
 
-        const styles = template.styles || {};
-        
-        return `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <style>
-                    body {
-                        font-family: ${styles.font_family || 'Arial, sans-serif'};
-                        font-size: ${styles.font_size || '11pt'};
-                        color: ${styles.primary_color || '#000000'};
-                        margin: 0;
-                        padding: 20px;
-                    }
-                    .header {
-                        border-bottom: 2px solid #ccc;
-                        padding-bottom: 10px;
-                        margin-bottom: 20px;
-                    }
-                    .content {
-                        min-height: 400px;
-                    }
-                    .footer {
-                        border-top: 2px solid #ccc;
-                        padding-top: 10px;
-                        margin-top: 20px;
-                        font-size: 9pt;
-                        color: ${styles.secondary_color || '#666666'};
-                    }
-                    table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        margin: 20px 0;
-                    }
-                    table th, table td {
-                        border: 1px solid #ccc;
-                        padding: 8px;
-                        text-align: left;
-                    }
-                    table th {
-                        background-color: #f0f0f0;
-                        font-weight: bold;
-                    }
-                    ${template.logo_url ? `
-                    .header img {
-                        max-height: 60px;
-                        margin-bottom: 10px;
-                    }
-                    ` : ''}
-                </style>
-            </head>
-            <body>
-                ${template.logo_url ? `<div class="header"><img src="${template.logo_url}" alt="Logo" /></div>` : ''}
-                ${template.header_html ? `<div class="header">${template.header_html}</div>` : ''}
-                <div class="content">
-                    ${template.content || '<p>Noch kein Inhalt</p>'}
-                </div>
-                ${template.footer_html ? `<div class="footer">${template.footer_html}</div>` : ''}
-            </body>
-            </html>
-        `;
-    };
+  const renderPreview = () => {
+    let html = template.template_html || '';
 
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-5xl max-h-[90vh]">
-                <DialogHeader>
-                    <DialogTitle>Vorschau: {template?.name}</DialogTitle>
-                </DialogHeader>
+    // Replace placeholders with preview data or field names
+    fields.forEach(field => {
+      const value = previewData[field.name] || `[${field.name}]`;
+      const regex = new RegExp(`{{${field.name}}}`, 'g');
+      html = html.replace(regex, value);
+    });
 
-                <div className="border rounded-lg overflow-hidden bg-white" style={{ height: '70vh' }}>
-                    <iframe
-                        srcDoc={generatePreviewHTML()}
-                        className="w-full h-full"
-                        title="Template Preview"
-                    />
-                </div>
+    // Replace remaining placeholders with field names
+    html = html.replace(/{{(\w+)}}/g, '[$1]');
 
-                <div className="flex justify-end gap-3">
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>
-                        Schließen
-                    </Button>
-                </div>
-            </DialogContent>
-        </Dialog>
-    );
+    return html;
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-4">
+        {/* Felder Links */}
+        <div className="space-y-3 col-span-1">
+          <h3 className="font-semibold text-sm">Test-Daten eingeben</h3>
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {fields.length === 0 && (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded flex gap-2">
+                <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-yellow-800">Keine Felder definiert</p>
+              </div>
+            )}
+            {fields.map((field) => (
+              <div key={field.id} className="space-y-1">
+                <Label className="text-xs font-medium">{field.name}</Label>
+                {field.type === 'textarea' ? (
+                  <textarea
+                    value={previewData[field.name] || ''}
+                    onChange={(e) => setPreviewData({ ...previewData, [field.name]: e.target.value })}
+                    className="w-full border rounded px-2 py-1 text-xs"
+                    rows={2}
+                  />
+                ) : (
+                  <Input
+                    type={field.type === 'number' ? 'number' : 'text'}
+                    value={previewData[field.name] || ''}
+                    onChange={(e) => setPreviewData({ ...previewData, [field.name]: e.target.value })}
+                    placeholder={`Test ${field.type}`}
+                    className="text-xs"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Vorschau Rechts */}
+        <div className="col-span-2 space-y-3">
+          <h3 className="font-semibold text-sm">Live-Vorschau</h3>
+          <div className="border rounded-lg p-6 bg-white min-h-96 max-h-96 overflow-auto">
+            <div dangerouslySetInnerHTML={{ __html: renderPreview() }} />
+          </div>
+          <Button className="w-full">Als PDF herunterladen</Button>
+        </div>
+      </div>
+    </div>
+  );
 }
