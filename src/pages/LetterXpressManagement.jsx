@@ -3,6 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Package, Send, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import LetterTemplateSelector from '@/components/letterxpress/LetterTemplateSelector';
+import LetterRecipientSelector from '@/components/letterxpress/LetterRecipientSelector';
+import LetterPreview from '@/components/letterxpress/LetterPreview';
 
 export default function LetterXpressManagement() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -79,8 +82,19 @@ export default function LetterXpressManagement() {
           <TabsTrigger value="settings">Einstellungen</TabsTrigger>
         </TabsList>
 
-        {/* Übersicht */}
-        <TabsContent value="overview" className="mt-6">
+        {/* Neuer Versand */}
+        <TabsContent value="overview" className="mt-6 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <LetterTemplateSelector />
+              <LetterRecipientSelector />
+            </div>
+            <LetterPreview />
+          </div>
+        </TabsContent>
+
+        {/* Übersicht - alternativ */}
+        <TabsContent value="overview-alt" className="mt-6">
           <Card>
             <CardHeader>
               <CardTitle>Aktive Versände</CardTitle>
