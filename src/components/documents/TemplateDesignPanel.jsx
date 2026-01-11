@@ -113,6 +113,24 @@ export default function TemplateDesignPanel({ design, onChange }) {
         </div>
       </div>
 
+      <div>
+        <Label className="text-sm font-medium mb-2 block">Akzentfarbe</Label>
+        <div className="flex gap-3 items-center">
+          <input
+            type="color"
+            value={design.accentColor || '#ec4899'}
+            onChange={(e) => handleChange('accentColor', e.target.value)}
+            className="w-12 h-10 rounded cursor-pointer"
+          />
+          <Input
+            value={design.accentColor || '#ec4899'}
+            onChange={(e) => handleChange('accentColor', e.target.value)}
+            placeholder="#ec4899"
+            className="text-xs"
+          />
+        </div>
+      </div>
+
       {/* Font */}
       <div>
         <Label className="text-sm font-medium mb-2 block">Schriftart</Label>
