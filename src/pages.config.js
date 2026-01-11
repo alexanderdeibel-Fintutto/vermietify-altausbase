@@ -326,6 +326,7 @@ import DocumentEnterpriseHub from './pages/DocumentEnterpriseHub';
 import DocumentUltimateHub from './pages/DocumentUltimateHub';
 import DocumentSecurityHub from './pages/DocumentSecurityHub';
 import TenantManagementHub from './pages/TenantManagementHub';
+import PropertyManagementHub from './pages/PropertyManagementHub';
 import __Layout from './Layout.jsx';
 
 
@@ -658,6 +659,7 @@ export const PAGES = {
     "DocumentUltimateHub": DocumentUltimateHub,
     "DocumentSecurityHub": DocumentSecurityHub,
     "TenantManagementHub": TenantManagementHub,
+    "PropertyManagementHub": PropertyManagementHub,
 }
 
 export const pagesConfig = {

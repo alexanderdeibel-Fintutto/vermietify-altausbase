@@ -5,6 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import DepositManager from '@/components/tenant-management/DepositManager';
 import UtilitySettlementManager from '@/components/tenant-management/UtilitySettlementManager';
 import RentIncreaseAssistant from '@/components/tenant-management/RentIncreaseAssistant';
+import TerminationManager from '@/components/tenant-management/TerminationManager';
+import HandoverProtocolBuilder from '@/components/tenant-management/HandoverProtocolBuilder';
+import RentDebtManager from '@/components/tenant-management/RentDebtManager';
 
 export default function TenantManagementHub() {
   const { data: user } = useQuery({
@@ -38,10 +41,13 @@ export default function TenantManagementHub() {
       </div>
 
       <Tabs defaultValue="deposits" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
           <TabsTrigger value="deposits">Kautionen</TabsTrigger>
           <TabsTrigger value="utilities">Nebenkosten</TabsTrigger>
           <TabsTrigger value="increases">Mieterhöhungen</TabsTrigger>
+          <TabsTrigger value="terminations">Kündigungen</TabsTrigger>
+          <TabsTrigger value="handover">Übergabe</TabsTrigger>
+          <TabsTrigger value="debts">Mahnwesen</TabsTrigger>
         </TabsList>
 
         <TabsContent value="deposits">
@@ -54,6 +60,18 @@ export default function TenantManagementHub() {
 
         <TabsContent value="increases">
           <RentIncreaseAssistant companyId={companyId} />
+        </TabsContent>
+
+        <TabsContent value="terminations">
+          <TerminationManager companyId={companyId} />
+        </TabsContent>
+
+        <TabsContent value="handover">
+          <HandoverProtocolBuilder unitId={building?.id} companyId={companyId} />
+        </TabsContent>
+
+        <TabsContent value="debts">
+          <RentDebtManager companyId={companyId} />
         </TabsContent>
       </Tabs>
     </div>
