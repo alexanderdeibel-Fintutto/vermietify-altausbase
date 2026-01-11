@@ -4,12 +4,13 @@ import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, DollarSign, User, MessageSquare, AlertCircle } from 'lucide-react';
+import { FileText, DollarSign, User, MessageSquare, AlertCircle, Download } from 'lucide-react';
 import TenantInvoices from '@/components/tenant-portal/TenantInvoices';
 import TenantPaymentStatus from '@/components/tenant-portal/TenantPaymentStatus';
 import TenantOperatingCosts from '@/components/tenant-portal/TenantOperatingCosts';
 import TenantProfile from '@/components/tenant-portal/TenantProfile';
 import TenantInquiry from '@/components/tenant-portal/TenantInquiry';
+import TenantDocuments from '@/components/tenant-portal/TenantDocuments';
 
 export default function TenantPortalPage() {
   const { data: user, isLoading } = useQuery({
@@ -61,7 +62,7 @@ export default function TenantPortalPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="invoices" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-6 mb-6">
             <TabsTrigger value="invoices" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">Rechnungen</span>
@@ -73,6 +74,10 @@ export default function TenantPortalPage() {
             <TabsTrigger value="operating-costs" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
               <span className="hidden sm:inline">BKA</span>
+            </TabsTrigger>
+            <TabsTrigger value="documents" className="flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">Dokumente</span>
             </TabsTrigger>
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="w-4 h-4" />
@@ -94,6 +99,10 @@ export default function TenantPortalPage() {
 
           <TabsContent value="operating-costs">
             <TenantOperatingCosts tenantId={tenant.id} />
+          </TabsContent>
+
+          <TabsContent value="documents">
+            <TenantDocuments tenantId={tenant.id} />
           </TabsContent>
 
           <TabsContent value="profile">
