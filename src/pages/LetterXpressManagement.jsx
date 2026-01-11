@@ -471,14 +471,15 @@ export default function LetterXpressManagement() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">LetterXpress Account ID</label>
+                  <label className="block text-sm font-medium mb-2">LetterXpress Benutzername</label>
                   <input 
                     type="text" 
-                    placeholder="z.B. ACC-12345" 
+                    placeholder="z.B. LXPApi62881" 
                     value={accountId}
                     onChange={(e) => setAccountId(e.target.value)}
                     className="w-full px-3 py-2 border rounded-lg"
                   />
+                  <p className="text-xs text-slate-500 mt-1">Aus Mein Konto → Zugangsdaten → LXP API</p>
                 </div>
 
                 <div>
