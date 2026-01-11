@@ -61,6 +61,19 @@ export default function TemplateBlockEditor({
         );
       case 'spacer':
         return <div className="h-8 bg-slate-100 rounded text-center text-xs text-slate-400">Abstand</div>;
+      case 'columns':
+        return (
+          <div className="grid grid-cols-2 gap-4">
+            <div className="h-16 bg-slate-100 rounded text-center text-xs text-slate-500">Spalte 1</div>
+            <div className="h-16 bg-slate-100 rounded text-center text-xs text-slate-500">Spalte 2</div>
+          </div>
+        );
+      case 'qrcode':
+        return (
+          <div className="w-20 h-20 bg-slate-100 rounded flex items-center justify-center text-xs text-slate-500">
+            QR-Code
+          </div>
+        );
       default:
         return <p className="text-slate-600">{block.type}</p>;
     }
