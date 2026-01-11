@@ -271,6 +271,10 @@ export default function VisualTemplateBuilder({ template, onChange }) {
           <TemplateDesignPanel design={design} onChange={handleDesignChange} />
         </TabsContent>
 
+        <TabsContent value="pages">
+          <PageSetupPanel pageSetup={pageSetup} onChange={handlePageSetupChange} />
+        </TabsContent>
+
         <TabsContent value="preview">
           <TemplateCanvasPreview blocks={blocks} design={design} template={template} />
         </TabsContent>
