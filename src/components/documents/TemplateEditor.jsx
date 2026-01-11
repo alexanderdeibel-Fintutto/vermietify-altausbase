@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Code, Eye } from 'lucide-react';
 import TemplateFieldManager from './TemplateFieldManager';
+import VisualTemplateBuilder from './VisualTemplateBuilder';
 
 export default function TemplateEditor({ template, onChange }) {
   const [mode, setMode] = useState('visual'); // visual, code, fields
