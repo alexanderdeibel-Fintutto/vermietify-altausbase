@@ -253,9 +253,9 @@ export default function SmartActionButton() {
         actionSubtype={selectedAction?.subtype}
       />
 
-      <VoiceCommandDialog
-        isOpen={selectedAction?.type === 'voice'}
-        onClose={handleClose}
+      <VoiceFormDialog
+        isOpen={showVoiceForm}
+        onClose={() => setShowVoiceForm(false)}
       />
     </>
   );
