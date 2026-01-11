@@ -100,12 +100,14 @@ export default function MainSidebar() {
     }}>
       {/* Logo/Header */}
       <div className="p-4 space-y-4">
-        <div className="flex items-center gap-2">
-          <OrgLogoSelector />
-          <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
-            <Building2 className="w-4 h-4 text-white" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
+              <Building2 className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-semibold text-slate-900">FinX</span>
           </div>
-          <span className="font-semibold text-slate-900">FinX</span>
+          <OrgLogoSelector />
         </div>
 
         {/* Building Selector */}
