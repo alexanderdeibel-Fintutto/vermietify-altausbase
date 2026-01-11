@@ -178,8 +178,8 @@ export default function LetterXpressManagement() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800 font-medium mb-2">Schritt 1: API-Credentials eintragen</p>
-                <p className="text-xs text-blue-700">Gehen Sie zu Ihren Admin-Einstellungen → Umgebungsvariablen</p>
+                <p className="text-sm text-blue-800 font-medium mb-2">Schritt 1: LetterXpress Account-Daten eingeben</p>
+                <p className="text-xs text-blue-700">Füllen Sie Ihre LetterXpress API-Daten aus und speichern Sie diese</p>
               </div>
               
               <div className="space-y-3">
@@ -187,11 +187,12 @@ export default function LetterXpressManagement() {
                   <label className="block text-sm font-medium mb-2">LetterXpress API Key</label>
                   <input 
                     type="password" 
-                    placeholder="Wird aus Umgebungsvariablen geladen..." 
-                    disabled 
-                    className="w-full px-3 py-2 border rounded-lg bg-slate-100 text-slate-500"
+                    placeholder="Geben Sie Ihren API-Schlüssel ein" 
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg"
                   />
-                  <p className="text-xs text-slate-500 mt-1">Umgebungsvariable: LETTERXPRESS_API_KEY</p>
+                  <p className="text-xs text-slate-500 mt-1">Wird verschlüsselt gespeichert</p>
                 </div>
 
                 <div>
@@ -199,14 +200,40 @@ export default function LetterXpressManagement() {
                   <input 
                     type="text" 
                     placeholder="z.B. ACC-12345" 
+                    value={accountId}
+                    onChange={(e) => setAccountId(e.target.value)}
                     className="w-full px-3 py-2 border rounded-lg"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">E-Mail-Adresse</label>
+                  <input 
+                    type="email" 
+                    placeholder="z.B. kontakt@beispiel.de" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">Die mit Ihrem LetterXpress-Account verknüpfte E-Mail</p>
+                </div>
               </div>
+
+              {message && (
+                <div className={`p-3 rounded-lg text-sm ${message.startsWith('✓') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                  {message}
+                </div>
+              )}
 
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg mt-4">
                 <p className="text-sm text-amber-800 font-medium mb-2">Schritt 2: Verbindung testen</p>
-                <Button className="w-full bg-amber-600 hover:bg-amber-700">Verbindung testen</Button>
+                <Button 
+                  className="w-full bg-amber-600 hover:bg-amber-700"
+                  onClick={handleTest}
+                  disabled={testLoading || !apiKey || !accountId || !email}
+                >
+                  {testLoading ? 'Wird getestet...' : 'Verbindung testen'}
+                </Button>
               </div>
 
               <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
