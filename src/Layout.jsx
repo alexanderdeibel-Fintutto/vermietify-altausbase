@@ -205,11 +205,11 @@ export default function Layout({ children, currentPageName }) {
 
                 {/* Mobile Bottom Navigation */}
                 <MobileBottomNav visibleFeatures={visibleFeatures} />
-                   </div>
-                 </div>
-                       </TesterTracker>
-                     </Suspense>
-                 </OnboardingRedirect>
-                 </ThemeProvider>
-                 );
+                    </div>
+                  </div>
+                      </TesterTracker>
+                    </Suspense>
+                </OnboardingRedirect>
+                </ThemeProvider>
+                );
                 }
