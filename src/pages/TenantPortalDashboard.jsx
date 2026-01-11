@@ -12,10 +12,10 @@ import { Home, FileText, Wrench, Euro, MessageSquare, Bell, Star, Users } from '
 import TenantNotificationCenter from '@/components/tenant-portal/TenantNotificationCenter';
 import TenantFavoritesManager from '@/components/tenant-portal/TenantFavoritesManager';
 import CommunityFeed from '@/components/tenant-community/CommunityFeed';
-import TenantChatbot from '@/components/tenant-portal/TenantChatbot';
 import TenantAnnouncementFeed from '@/components/tenant-portal/TenantAnnouncementFeed';
 import TenantSurveyParticipation from '@/components/tenant-portal/TenantSurveyParticipation';
 import TenantAIChatbot from '@/components/tenant-portal/TenantAIChatbot';
+import AIOnboardingAssistant from '@/components/onboarding/AIOnboardingAssistant';
 
 export default function TenantPortalDashboard() {
   const { data: user } = useQuery({
@@ -112,8 +112,7 @@ export default function TenantPortalDashboard() {
               <TenantAnnouncementFeed tenantId={tenant.id} buildingId={contract?.unit_id} />
             </div>
             <div className="space-y-6">
-              <AIOnboardingAssistant tenantId={tenant.id} />
-              <TenantChatbot tenantId={tenant.id} companyId={tenant.company_id} />
+              <TenantAIChatbot tenantId={tenant.id} />
               <TenantSurveyParticipation tenantId={tenant.id} />
             </div>
           </div>
