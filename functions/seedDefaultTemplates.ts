@@ -1,5 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { DOCUMENT_TEMPLATES } from '../components/documents/DocumentTemplateLibrary.js';
+
+const FALLBACK_TEMPLATES = {
+  mietvertrag: '<h1>MIETVERTRAG</h1><p><strong>Vermieter:</strong> {{landlord_name}}</p><p><strong>Mieter:</strong> {{tenant_first_name}} {{tenant_last_name}}</p>',
+  uebergabeprotokoll_einzug: '<h1>ÜBERGABEPROTOKOLL</h1><p>Mieter: {{tenant_first_name}} {{tenant_last_name}}</p>',
+  sepa_mandat: '<h1>SEPA-LASTSCHRIFTMANDAT</h1><p>Kontoinhaber: {{tenant_first_name}} {{tenant_last_name}}</p>',
+  mahnung: '<h1>MAHNUNG</h1><p>Betrag: {{amount}} EUR</p>',
+  kuendigung: '<h1>KÜNDIGUNG</h1><p>Zum: {{termination_date}}</p>'
+};
 
 Deno.serve(async (req) => {
     try {
@@ -16,7 +23,7 @@ Deno.serve(async (req) => {
 
         const templates = [];
 
-        for (const [docType, html] of Object.entries(DOCUMENT_TEMPLATES)) {
+        for (const [docType, html] of Object.entries(FALLBACK_TEMPLATES)) {
             templates.push({
                 document_type: docType,
                 template_html: html,
