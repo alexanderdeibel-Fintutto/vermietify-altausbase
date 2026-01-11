@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
         for (const name of entityNames) {
             if (!name) continue;
             try {
-                const schema = await base44.asServiceRole.entities.schema(name);
+                const schema = await base44.asServiceRole.entities[name].schema();
                 if (schema) {
                   schemas[name] = { name, ...schema };
                 }
