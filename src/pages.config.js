@@ -345,6 +345,12 @@ import AICommunicationHub from './pages/AICommunicationHub';
 import AIInsightsDashboard from './pages/AIInsightsDashboard';
 import AIDocumentManagement from './pages/AIDocumentManagement';
 import EnhancedTenantPortal from './pages/EnhancedTenantPortal';
+import VermieterApp from './pages/VermieterApp';
+import VermieterGoApp from './pages/VermieterGoApp';
+import MeterApp from './pages/MeterApp';
+import HaushaltsbuchbudgetApp from './pages/HaushaltsbuchbudgetApp';
+import SteuerApp from './pages/SteuerApp';
+import VollversionApp from './pages/VollversionApp';
 import __Layout from './Layout.jsx';
 
 
@@ -696,6 +702,12 @@ export const PAGES = {
     "AIInsightsDashboard": AIInsightsDashboard,
     "AIDocumentManagement": AIDocumentManagement,
     "EnhancedTenantPortal": EnhancedTenantPortal,
+    "VermieterApp": VermieterApp,
+    "VermieterGoApp": VermieterGoApp,
+    "MeterApp": MeterApp,
+    "HaushaltsbuchbudgetApp": HaushaltsbuchbudgetApp,
+    "SteuerApp": SteuerApp,
+    "VollversionApp": VollversionApp,
 }
 
 export const pagesConfig = {
