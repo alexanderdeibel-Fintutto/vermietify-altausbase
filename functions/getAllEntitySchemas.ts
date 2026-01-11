@@ -32,25 +32,35 @@ Deno.serve(async (req) => {
 
         const schemas = {};
         
-        console.log("=== DEBUG getAllEntitySchemas ===");
-        console.log("entityNames Liste:", entityNames);
-        console.log("Anzahl Entity-Namen:", entityNames.length);
+        console.log("========== DEBUG getAllEntitySchemas START ==========");
+        console.log("Anzahl Entity-Namen in Liste:", entityNames.length);
+        console.log("Erste 5 Entity-Namen:", entityNames.slice(0, 5));
 
         for (const name of entityNames) {
             if (!name) continue;
             try {
-                console.log(`Versuche Schema für: ${name}`);
-                const schema = await base44.asServiceRole.entities[name].schema();
-                console.log(`✅ Schema gefunden für ${name}:`, Object.keys(schema || {}));
-                schemas[name] = { name, ...schema };
-            } catch (e) {
-                console.log(`❌ FEHLER bei ${name}:`, e.message);
+                console.log(`\n[${name}] Versuche Schema zu laden...`);
+                console.log(`[${name}] base44.entities existiert:`, !!base44.entities);
+                console.log(`[${name}] base44.entities[name] existiert:`, !!base44.entities[name]);
+                console.log(`[${name}] typeof .schema:`, typeof base44.entities[name]?.schema);
+                
+                const schema = await base44.entities[name].schema();
+                
+                console.log(`[${name}] ✅ Schema geladen:`, schema ? Object.keys(schema).length + " keys" : "NULL/UNDEFINED");
+                if (schema) {
+                  schemas[name] = { name, ...schema };
+                }
+            } catch (error) {
+                console.log(`[${name}] ❌ FEHLER:`, error.message);
+                if (error.stack) {
+                  console.log(`[${name}] Stack:`, error.stack.substring(0, 150));
+                }
             }
         }
         
-        console.log("=== ERGEBNIS ===");
+        console.log("\n========== DEBUG getAllEntitySchemas ENDE ==========");
         console.log("Gefundene Schemas:", Object.keys(schemas));
-        console.log("Anzahl:", Object.keys(schemas).length);
+        console.log("Anzahl gefunden:", Object.keys(schemas).length);
 
         return Response.json({
             success: true,
