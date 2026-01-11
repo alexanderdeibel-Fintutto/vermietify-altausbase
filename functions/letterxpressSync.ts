@@ -183,12 +183,13 @@ Deno.serve(async (req) => {
     }
 
     const duration = Date.now() - startTime;
-    console.log('[letterxpressSync] Sync completed in', duration, 'ms. Synced:', syncedCount);
+    console.log('[letterxpressSync] Sync completed in', duration, 'ms. Synced:', syncedCount, 'Errors:', errorCount);
     
     return Response.json({ 
       success: true, 
       synced: syncedCount,
-      message: `${syncedCount} Versände synchronisiert`,
+      errors: errorCount,
+      message: syncedCount > 0 ? `${syncedCount} Versände synchronisiert` : 'Keine Versände zu synchronisieren',
       duration
     });
   } catch (error) {
