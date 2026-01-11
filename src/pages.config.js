@@ -343,6 +343,7 @@ import WorkflowTemplates from './pages/WorkflowTemplates';
 import BuildingInspections from './pages/BuildingInspections';
 import AICommunicationHub from './pages/AICommunicationHub';
 import AIInsightsDashboard from './pages/AIInsightsDashboard';
+import AIDocumentManagement from './pages/AIDocumentManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -692,6 +693,7 @@ export const PAGES = {
     "BuildingInspections": BuildingInspections,
     "AICommunicationHub": AICommunicationHub,
     "AIInsightsDashboard": AIInsightsDashboard,
+    "AIDocumentManagement": AIDocumentManagement,
 }
 
 export const pagesConfig = {
