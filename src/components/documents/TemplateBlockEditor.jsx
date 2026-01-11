@@ -116,16 +116,28 @@ export default function TemplateBlockEditor({
         )}
 
         {block.type === 'image' && (
-          <div>
-            <label className="text-xs font-medium text-slate-700">Bild-URL</label>
-            <Input
-              value={localBlock.src || ''}
-              onChange={(e) => handleChange('src', e.target.value)}
-              placeholder="https://..."
-              className="h-8 text-xs"
-            />
-          </div>
+          <ImageUploadBlock block={localBlock} onUpdate={handleChange} onDelete={onDelete} />
         )}
+
+        {['text', 'heading'].includes(block.type) && (
+          <>
+            <div className="border-t pt-3">
+              <h5 className="text-xs font-semibold text-slate-700 mb-2">Text-Formatierung</h5>
+              <TextFormattingToolbar
+                formatting={localBlock.formatting || {}}
+                onChange={(fmt) => handleChange('formatting', fmt)}
+              />
+            </div>
+          </>
+        )}
+
+        <div className="border-t pt-3">
+          <h5 className="text-xs font-semibold text-slate-700 mb-2">Effekte & Styling</h5>
+          <EffectsPanel
+            effects={localBlock.effects || {}}
+            onChange={(eff) => handleChange('effects', eff)}
+          />
+        </div>
 
         <div>
           <label className="text-xs font-medium text-slate-700">Breite</label>
