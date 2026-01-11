@@ -1,4 +1,5 @@
 import AIDocumentAnalysis from './pages/AIDocumentAnalysis';
+import AIMaintenanceDashboard from './pages/AIMaintenanceDashboard';
 import AIRuleApprovalDashboard from './pages/AIRuleApprovalDashboard';
 import AITaxAdvisor from './pages/AITaxAdvisor';
 import AITaxRecommendations from './pages/AITaxRecommendations';
@@ -9,6 +10,7 @@ import AdaptiveNavigationAdmin from './pages/AdaptiveNavigationAdmin';
 import AdminAIAnalytics from './pages/AdminAIAnalytics';
 import AdminAIAnalyticsLazy from './pages/AdminAIAnalyticsLazy';
 import AdminAnalyticsDashboard from './pages/AdminAnalyticsDashboard';
+import AdminAnnouncementCenter from './pages/AdminAnnouncementCenter';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminIssueReports from './pages/AdminIssueReports';
 import AdminMasterDashboard from './pages/AdminMasterDashboard';
@@ -74,8 +76,10 @@ import ComplexTaxSetupWizard from './pages/ComplexTaxSetupWizard';
 import ComplianceAudit from './pages/ComplianceAudit';
 import ComplianceCenter from './pages/ComplianceCenter';
 import ComplianceMonitoringDashboard from './pages/ComplianceMonitoringDashboard';
+import ComplianceReportingHub from './pages/ComplianceReportingHub';
 import ComprehensiveTaxDashboard from './pages/ComprehensiveTaxDashboard';
 import ConsolidatedTaxSummary from './pages/ConsolidatedTaxSummary';
+import ContractAutomationHub from './pages/ContractAutomationHub';
 import ContractDetail from './pages/ContractDetail';
 import Contracts from './pages/Contracts';
 import CostTypes from './pages/CostTypes';
@@ -102,8 +106,8 @@ import DocumentIntegrationHub from './pages/DocumentIntegrationHub';
 import DocumentLibrary from './pages/DocumentLibrary';
 import DocumentManagement from './pages/DocumentManagement';
 import DocumentManagementCenter from './pages/DocumentManagementCenter';
-import DocumentManagementDashboard from './pages/DocumentManagementDashboard';
 import DocumentSearch from './pages/DocumentSearch';
+import DocumentManagementDashboard from './pages/DocumentManagementDashboard';
 import DocumentSecurityHub from './pages/DocumentSecurityHub';
 import DocumentUltimateHub from './pages/DocumentUltimateHub';
 import Documents from './pages/Documents';
@@ -201,6 +205,8 @@ import SelfEmploymentTaxPlanner from './pages/SelfEmploymentTaxPlanner';
 import SelfEmploymentTaxPlanning from './pages/SelfEmploymentTaxPlanning';
 import SettingsPage from './pages/SettingsPage';
 import SmartExpenseTracker from './pages/SmartExpenseTracker';
+import SmartHomeHub from './pages/SmartHomeHub';
+import SmartPropertyHub from './pages/SmartPropertyHub';
 import SmartTaskDashboard from './pages/SmartTaskDashboard';
 import StaffMobileApp from './pages/StaffMobileApp';
 import SteuerVermoegenApp from './pages/SteuerVermoegenApp';
@@ -211,8 +217,8 @@ import SupportCenter from './pages/SupportCenter';
 import SyncManagement from './pages/SyncManagement';
 import SystemConfiguration from './pages/SystemConfiguration';
 import SystemHealth from './pages/SystemHealth';
-import TaskManagement from './pages/TaskManagement';
 import Tasks from './pages/Tasks';
+import TaskManagement from './pages/TaskManagement';
 import Tax from './pages/Tax';
 import TaxAIChatbot from './pages/TaxAIChatbot';
 import TaxAdminDashboard from './pages/TaxAdminDashboard';
@@ -279,8 +285,14 @@ import TechnicianManagement from './pages/TechnicianManagement';
 import TenantCommunication from './pages/TenantCommunication';
 import TenantCommunicationCenter from './pages/TenantCommunicationCenter';
 import TenantCommunicationHub from './pages/TenantCommunicationHub';
+import TenantCommunity from './pages/TenantCommunity';
 import TenantDetail from './pages/TenantDetail';
+import TenantDigitalKey from './pages/TenantDigitalKey';
+import TenantDocuments from './pages/TenantDocuments';
+import TenantMaintenance from './pages/TenantMaintenance';
 import TenantManagementHub from './pages/TenantManagementHub';
+import TenantMessages from './pages/TenantMessages';
+import TenantMobileApp from './pages/TenantMobileApp';
 import TenantOnboarding from './pages/TenantOnboarding';
 import TenantOnboardingManager from './pages/TenantOnboardingManager';
 import TenantPortal from './pages/TenantPortal';
@@ -328,23 +340,12 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import ContractAutomationHub from './pages/ContractAutomationHub';
-import ComplianceReportingHub from './pages/ComplianceReportingHub';
-import SmartPropertyHub from './pages/SmartPropertyHub';
-import SmartHomeHub from './pages/SmartHomeHub';
-import TenantMobileApp from './pages/TenantMobileApp';
-import TenantDigitalKey from './pages/TenantDigitalKey';
-import TenantMessages from './pages/TenantMessages';
-import TenantDocuments from './pages/TenantDocuments';
-import TenantMaintenance from './pages/TenantMaintenance';
-import TenantCommunity from './pages/TenantCommunity';
-import AdminAnnouncementCenter from './pages/AdminAnnouncementCenter';
-import AIMaintenanceDashboard from './pages/AIMaintenanceDashboard';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "AIDocumentAnalysis": AIDocumentAnalysis,
+    "AIMaintenanceDashboard": AIMaintenanceDashboard,
     "AIRuleApprovalDashboard": AIRuleApprovalDashboard,
     "AITaxAdvisor": AITaxAdvisor,
     "AITaxRecommendations": AITaxRecommendations,
@@ -355,6 +356,7 @@ export const PAGES = {
     "AdminAIAnalytics": AdminAIAnalytics,
     "AdminAIAnalyticsLazy": AdminAIAnalyticsLazy,
     "AdminAnalyticsDashboard": AdminAnalyticsDashboard,
+    "AdminAnnouncementCenter": AdminAnnouncementCenter,
     "AdminDashboard": AdminDashboard,
     "AdminIssueReports": AdminIssueReports,
     "AdminMasterDashboard": AdminMasterDashboard,
@@ -420,8 +422,10 @@ export const PAGES = {
     "ComplianceAudit": ComplianceAudit,
     "ComplianceCenter": ComplianceCenter,
     "ComplianceMonitoringDashboard": ComplianceMonitoringDashboard,
+    "ComplianceReportingHub": ComplianceReportingHub,
     "ComprehensiveTaxDashboard": ComprehensiveTaxDashboard,
     "ConsolidatedTaxSummary": ConsolidatedTaxSummary,
+    "ContractAutomationHub": ContractAutomationHub,
     "ContractDetail": ContractDetail,
     "Contracts": Contracts,
     "CostTypes": CostTypes,
@@ -448,8 +452,8 @@ export const PAGES = {
     "DocumentLibrary": DocumentLibrary,
     "DocumentManagement": DocumentManagement,
     "DocumentManagementCenter": DocumentManagementCenter,
-    "DocumentManagementDashboard": DocumentManagementDashboard,
     "DocumentSearch": DocumentSearch,
+    "DocumentManagementDashboard": DocumentManagementDashboard,
     "DocumentSecurityHub": DocumentSecurityHub,
     "DocumentUltimateHub": DocumentUltimateHub,
     "Documents": Documents,
@@ -547,6 +551,8 @@ export const PAGES = {
     "SelfEmploymentTaxPlanning": SelfEmploymentTaxPlanning,
     "SettingsPage": SettingsPage,
     "SmartExpenseTracker": SmartExpenseTracker,
+    "SmartHomeHub": SmartHomeHub,
+    "SmartPropertyHub": SmartPropertyHub,
     "SmartTaskDashboard": SmartTaskDashboard,
     "StaffMobileApp": StaffMobileApp,
     "SteuerVermoegenApp": SteuerVermoegenApp,
@@ -557,8 +563,8 @@ export const PAGES = {
     "SyncManagement": SyncManagement,
     "SystemConfiguration": SystemConfiguration,
     "SystemHealth": SystemHealth,
-    "TaskManagement": TaskManagement,
     "Tasks": Tasks,
+    "TaskManagement": TaskManagement,
     "Tax": Tax,
     "TaxAIChatbot": TaxAIChatbot,
     "TaxAdminDashboard": TaxAdminDashboard,
@@ -625,8 +631,14 @@ export const PAGES = {
     "TenantCommunication": TenantCommunication,
     "TenantCommunicationCenter": TenantCommunicationCenter,
     "TenantCommunicationHub": TenantCommunicationHub,
+    "TenantCommunity": TenantCommunity,
     "TenantDetail": TenantDetail,
+    "TenantDigitalKey": TenantDigitalKey,
+    "TenantDocuments": TenantDocuments,
+    "TenantMaintenance": TenantMaintenance,
     "TenantManagementHub": TenantManagementHub,
+    "TenantMessages": TenantMessages,
+    "TenantMobileApp": TenantMobileApp,
     "TenantOnboarding": TenantOnboarding,
     "TenantOnboardingManager": TenantOnboardingManager,
     "TenantPortal": TenantPortal,
@@ -674,18 +686,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "ContractAutomationHub": ContractAutomationHub,
-    "ComplianceReportingHub": ComplianceReportingHub,
-    "SmartPropertyHub": SmartPropertyHub,
-    "SmartHomeHub": SmartHomeHub,
-    "TenantMobileApp": TenantMobileApp,
-    "TenantDigitalKey": TenantDigitalKey,
-    "TenantMessages": TenantMessages,
-    "TenantDocuments": TenantDocuments,
-    "TenantMaintenance": TenantMaintenance,
-    "TenantCommunity": TenantCommunity,
-    "AdminAnnouncementCenter": AdminAnnouncementCenter,
-    "AIMaintenanceDashboard": AIMaintenanceDashboard,
 }
 
 export const pagesConfig = {

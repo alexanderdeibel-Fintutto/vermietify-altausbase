@@ -10,6 +10,7 @@ import TenantDocumentAccess from '@/components/tenant-app/TenantDocumentAccess';
 import TenantMaintenanceRequest from '@/components/tenant-app/TenantMaintenanceRequest';
 import TenantFavoritesManager from '@/components/tenant-portal/TenantFavoritesManager';
 import TenantNotificationCenter from '@/components/tenant-portal/TenantNotificationCenter';
+import AIOnboardingAssistant from '@/components/onboarding/AIOnboardingAssistant';
 import { Home, Key, MessageSquare, FileText, Wrench, CheckSquare, Star, Bell, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -60,7 +61,10 @@ export default function TenantMobileApp() {
           <TenantNotificationCenter tenantId={tenant.id} />
         )}
         {activeTab === 'onboarding' && (
-          <TenantOnboardingChecklist tenantId={tenant.id} />
+          <div className="space-y-4">
+            <AIOnboardingAssistant tenantId={tenant.id} />
+            <TenantOnboardingChecklist tenantId={tenant.id} />
+          </div>
         )}
         {activeTab === 'key' && (
           <TenantDigitalKeyAccess tenantId={tenant.id} />
