@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Copy } from 'lucide-react';
+import { Trash2, Copy, Droplet, Palette, Ruler } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function TemplateBlockEditor({
