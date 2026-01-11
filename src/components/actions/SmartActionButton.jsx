@@ -29,6 +29,7 @@ export default function SmartActionButton() {
   const [selectedFirstLevel, setSelectedFirstLevel] = useState(null);
   const [selectedAction, setSelectedAction] = useState(null);
   const [showMobileSheet, setShowMobileSheet] = useState(false);
+  const [showVoiceForm, setShowVoiceForm] = useState(false);
 
   const handleFirstLevelClick = (action) => {
     if (action.id === 'voice' || action.id === 'photo') {
