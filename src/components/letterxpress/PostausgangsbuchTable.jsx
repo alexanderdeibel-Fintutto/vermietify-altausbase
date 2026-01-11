@@ -52,9 +52,14 @@ export default function PostausgangsbuchTable() {
     setSyncing(true);
     try {
       const response = await base44.functions.invoke('letterxpressSync', {});
-      if (response.data.success) {
+      if (response.data?.success) {
         refetch();
+        alert(response.data?.message || 'Synchronisiert');
+      } else {
+        alert(response.data?.message || 'Fehler beim Synchronisieren');
       }
+    } catch (error) {
+      alert('Fehler: ' + (error.response?.data?.message || error.message));
     } finally {
       setSyncing(false);
     }
