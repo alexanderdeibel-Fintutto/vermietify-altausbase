@@ -37,6 +37,21 @@ const MAIN_CATEGORIES = [
     pages: [
       { name: 'Tenants', label: 'Übersicht' },
       { name: 'LeaseContracts', label: 'Verträge' },
+      { name: 'TenantPortalAdminDashboard', label: 'Portal Admin' },
+    ],
+    subMenu: [
+      {
+        id: 'tenant-portal',
+        label: 'Mieterportal',
+        pages: [
+          { name: 'TenantPortalAdminDashboard', label: 'Dashboard' },
+          { name: 'TenantOnboardingManager', label: 'Onboarding' },
+          { name: 'TenantFeedbackManager', label: 'Feedback' },
+          { name: 'AdminMessagingCenter', label: 'Nachrichten' },
+          { name: 'TenantCommunicationCenter', label: 'Kommunikation' },
+          { name: 'AdminAnnouncementCenter', label: 'Ankündigungen' },
+        ]
+      }
     ]
   },
   {
