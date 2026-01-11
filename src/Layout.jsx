@@ -153,26 +153,7 @@ export default function Layout({ children, currentPageName }) {
                                         </div>
                             </div>
 
-                            {/* Main Category Tabs */}
-                                    <MainCategoryTabs 
-                                        activeCategory={activeCategory} 
-                                        onCategoryChange={setActiveCategory}
-                                    />
 
-                                    {/* Document Inbox Quick Link */}
-                                    <div className="px-8 py-2 border-b border-slate-100 bg-white">
-                                        <DocumentInboxNavItem />
-                                    </div>
-
-                                    {/* Horizontal Main Navigation - Desktop */}
-                                    <div className="hidden lg:block">
-                                        <HorizontalMainNavigation activeCategory={activeCategory} />
-                                    </div>
-
-                                    {/* Mobile Main Navigation Dropdown */}
-                                    <div className="lg:hidden border-t border-slate-100">
-                                        <HorizontalMainNavigation activeCategory={activeCategory} />
-                                    </div>
                 </header>
 
                 {/* Category Sub-Navigation */}
