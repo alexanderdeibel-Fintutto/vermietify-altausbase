@@ -23,22 +23,25 @@ export default function TenantPortalAdminDashboard() {
 
   const { data: tenants = [], isLoading } = useQuery({
     queryKey: ['tenants'],
-    queryFn: () => base44.entities.Tenant.list('-created_at', 100)
+    queryFn: () => base44.entities.Tenant.list('-created_at', 50),
+    staleTime: 5 * 60 * 1000
   });
 
   const { data: leaseContracts = [] } = useQuery({
     queryKey: ['leaseContracts'],
-    queryFn: () => base44.entities.LeaseContract.list('-created_at', 100)
+    queryFn: () => base44.entities.LeaseContract.list('-created_at', 50),
+    staleTime: 5 * 60 * 1000
   });
 
   const { data: tenantLocks = [] } = useQuery({
     queryKey: ['tenantLocks'],
-    queryFn: () => base44.entities.TenantAdministrationLock.list('-created_at', 100)
+    queryFn: () => base44.entities.TenantAdministrationLock.list('-created_at', 50),
+    staleTime: 5 * 60 * 1000
   });
 
   const filteredTenants = tenants.filter(tenant =>
-    tenant.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tenant.email.toLowerCase().includes(searchQuery.toLowerCase())
+    (tenant.full_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (tenant.email?.toLowerCase() || '').includes(searchQuery.toLowerCase())
   );
 
   const getTenantLocks = (tenantId) => {
