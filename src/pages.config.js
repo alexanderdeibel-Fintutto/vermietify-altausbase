@@ -330,6 +330,7 @@ import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
 import ContractAutomationHub from './pages/ContractAutomationHub';
 import ComplianceReportingHub from './pages/ComplianceReportingHub';
+import SmartPropertyHub from './pages/SmartPropertyHub';
 import __Layout from './Layout.jsx';
 
 
@@ -666,6 +667,7 @@ export const PAGES = {
     "WorkflowTemplates": WorkflowTemplates,
     "ContractAutomationHub": ContractAutomationHub,
     "ComplianceReportingHub": ComplianceReportingHub,
+    "SmartPropertyHub": SmartPropertyHub,
 }
 
 export const pagesConfig = {
