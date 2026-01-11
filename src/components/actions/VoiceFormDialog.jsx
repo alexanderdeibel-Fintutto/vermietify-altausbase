@@ -10,6 +10,7 @@ export default function VoiceFormDialog({ isOpen, onClose }) {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [formData, setFormData] = useState(null);
+  const [recordingStarted, setRecordingStarted] = useState(false);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
   const streamRef = useRef(null);
