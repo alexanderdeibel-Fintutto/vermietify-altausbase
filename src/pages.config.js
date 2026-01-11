@@ -1,4 +1,7 @@
+import AICommunicationHub from './pages/AICommunicationHub';
 import AIDocumentAnalysis from './pages/AIDocumentAnalysis';
+import AIDocumentManagement from './pages/AIDocumentManagement';
+import AIInsightsDashboard from './pages/AIInsightsDashboard';
 import AIMaintenanceDashboard from './pages/AIMaintenanceDashboard';
 import AIRuleApprovalDashboard from './pages/AIRuleApprovalDashboard';
 import AITaxAdvisor from './pages/AITaxAdvisor';
@@ -58,6 +61,7 @@ import BudgetPlanning from './pages/BudgetPlanning';
 import BuildingBoard from './pages/BuildingBoard';
 import BuildingDetail from './pages/BuildingDetail';
 import BuildingDetailEnhanced from './pages/BuildingDetailEnhanced';
+import BuildingInspections from './pages/BuildingInspections';
 import BuildingWorkflowManager from './pages/BuildingWorkflowManager';
 import Buildings from './pages/Buildings';
 import BuildingsMap from './pages/BuildingsMap';
@@ -102,12 +106,13 @@ import DocumentEnterpriseHub from './pages/DocumentEnterpriseHub';
 import DocumentGeneration from './pages/DocumentGeneration';
 import DocumentInbox from './pages/DocumentInbox';
 import DocumentInboxSettings from './pages/DocumentInboxSettings';
+import Finanzen from './pages/Finanzen';
 import DocumentIntegrationHub from './pages/DocumentIntegrationHub';
 import DocumentLibrary from './pages/DocumentLibrary';
 import DocumentManagement from './pages/DocumentManagement';
 import DocumentManagementCenter from './pages/DocumentManagementCenter';
-import DocumentSearch from './pages/DocumentSearch';
 import DocumentManagementDashboard from './pages/DocumentManagementDashboard';
+import DocumentSearch from './pages/DocumentSearch';
 import DocumentSecurityHub from './pages/DocumentSecurityHub';
 import DocumentUltimateHub from './pages/DocumentUltimateHub';
 import Documents from './pages/Documents';
@@ -115,6 +120,7 @@ import ElsterIntegration from './pages/ElsterIntegration';
 import EmailTemplates from './pages/EmailTemplates';
 import EmployeeManagement from './pages/EmployeeManagement';
 import EnergyManagement from './pages/EnergyManagement';
+import EnhancedTenantPortal from './pages/EnhancedTenantPortal';
 import EntityTaxPlanning from './pages/EntityTaxPlanning';
 import Equipment from './pages/Equipment';
 import EstateTaxPlanning from './pages/EstateTaxPlanning';
@@ -127,13 +133,13 @@ import FinancialForecasting from './pages/FinancialForecasting';
 import FinancialItems from './pages/FinancialItems';
 import FinancialReporting from './pages/FinancialReporting';
 import FinancialReports from './pages/FinancialReports';
-import Finanzen from './pages/Finanzen';
 import FullFeatureHub from './pages/FullFeatureHub';
 import GeneratedBookings from './pages/GeneratedBookings';
 import GlobalSettings from './pages/GlobalSettings';
 import GlobalTaxDeadlineCalendar from './pages/GlobalTaxDeadlineCalendar';
 import GlobalTaxOverview from './pages/GlobalTaxOverview';
 import GlobalWealthDashboard from './pages/GlobalWealthDashboard';
+import HaushaltsbuchbudgetApp from './pages/HaushaltsbuchbudgetApp';
 import HelpCenter from './pages/HelpCenter';
 import HilfeCenter from './pages/HilfeCenter';
 import Home from './pages/Home';
@@ -158,6 +164,7 @@ import MaintenanceManager from './pages/MaintenanceManager';
 import MaintenanceScheduling from './pages/MaintenanceScheduling';
 import MaintenanceTasks from './pages/MaintenanceTasks';
 import MarketAnalytics from './pages/MarketAnalytics';
+import MeterApp from './pages/MeterApp';
 import MeterDashboard from './pages/MeterDashboard';
 import MieterSelfServicePortal from './pages/MieterSelfServicePortal';
 import MobileApp from './pages/MobileApp';
@@ -209,6 +216,7 @@ import SmartHomeHub from './pages/SmartHomeHub';
 import SmartPropertyHub from './pages/SmartPropertyHub';
 import SmartTaskDashboard from './pages/SmartTaskDashboard';
 import StaffMobileApp from './pages/StaffMobileApp';
+import SteuerApp from './pages/SteuerApp';
 import SteuerVermoegenApp from './pages/SteuerVermoegenApp';
 import SubmissionDashboard from './pages/SubmissionDashboard';
 import SuiteManagement from './pages/SuiteManagement';
@@ -217,8 +225,8 @@ import SupportCenter from './pages/SupportCenter';
 import SyncManagement from './pages/SyncManagement';
 import SystemConfiguration from './pages/SystemConfiguration';
 import SystemHealth from './pages/SystemHealth';
-import Tasks from './pages/Tasks';
 import TaskManagement from './pages/TaskManagement';
+import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
 import TaxAIChatbot from './pages/TaxAIChatbot';
 import TaxAdminDashboard from './pages/TaxAdminDashboard';
@@ -315,7 +323,10 @@ import UserDetail from './pages/UserDetail';
 import UserManagement from './pages/UserManagement';
 import UserSettings from './pages/UserSettings';
 import VendorManagement from './pages/VendorManagement';
+import VermieterApp from './pages/VermieterApp';
 import VermieterGo from './pages/VermieterGo';
+import VermieterGoApp from './pages/VermieterGoApp';
+import VollversionApp from './pages/VollversionApp';
 import WealthAdvanced from './pages/WealthAdvanced';
 import WealthAnalytics from './pages/WealthAnalytics';
 import WealthAutomation from './pages/WealthAutomation';
@@ -340,22 +351,15 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import BuildingInspections from './pages/BuildingInspections';
-import AICommunicationHub from './pages/AICommunicationHub';
-import AIInsightsDashboard from './pages/AIInsightsDashboard';
-import AIDocumentManagement from './pages/AIDocumentManagement';
-import EnhancedTenantPortal from './pages/EnhancedTenantPortal';
-import VermieterApp from './pages/VermieterApp';
-import VermieterGoApp from './pages/VermieterGoApp';
-import MeterApp from './pages/MeterApp';
-import HaushaltsbuchbudgetApp from './pages/HaushaltsbuchbudgetApp';
-import SteuerApp from './pages/SteuerApp';
-import VollversionApp from './pages/VollversionApp';
+import FieldTasksManager from './pages/FieldTasksManager';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AICommunicationHub": AICommunicationHub,
     "AIDocumentAnalysis": AIDocumentAnalysis,
+    "AIDocumentManagement": AIDocumentManagement,
+    "AIInsightsDashboard": AIInsightsDashboard,
     "AIMaintenanceDashboard": AIMaintenanceDashboard,
     "AIRuleApprovalDashboard": AIRuleApprovalDashboard,
     "AITaxAdvisor": AITaxAdvisor,
@@ -415,6 +419,7 @@ export const PAGES = {
     "BuildingBoard": BuildingBoard,
     "BuildingDetail": BuildingDetail,
     "BuildingDetailEnhanced": BuildingDetailEnhanced,
+    "BuildingInspections": BuildingInspections,
     "BuildingWorkflowManager": BuildingWorkflowManager,
     "Buildings": Buildings,
     "BuildingsMap": BuildingsMap,
@@ -459,12 +464,13 @@ export const PAGES = {
     "DocumentGeneration": DocumentGeneration,
     "DocumentInbox": DocumentInbox,
     "DocumentInboxSettings": DocumentInboxSettings,
+    "Finanzen": Finanzen,
     "DocumentIntegrationHub": DocumentIntegrationHub,
     "DocumentLibrary": DocumentLibrary,
     "DocumentManagement": DocumentManagement,
     "DocumentManagementCenter": DocumentManagementCenter,
-    "DocumentSearch": DocumentSearch,
     "DocumentManagementDashboard": DocumentManagementDashboard,
+    "DocumentSearch": DocumentSearch,
     "DocumentSecurityHub": DocumentSecurityHub,
     "DocumentUltimateHub": DocumentUltimateHub,
     "Documents": Documents,
@@ -472,6 +478,7 @@ export const PAGES = {
     "EmailTemplates": EmailTemplates,
     "EmployeeManagement": EmployeeManagement,
     "EnergyManagement": EnergyManagement,
+    "EnhancedTenantPortal": EnhancedTenantPortal,
     "EntityTaxPlanning": EntityTaxPlanning,
     "Equipment": Equipment,
     "EstateTaxPlanning": EstateTaxPlanning,
@@ -484,13 +491,13 @@ export const PAGES = {
     "FinancialItems": FinancialItems,
     "FinancialReporting": FinancialReporting,
     "FinancialReports": FinancialReports,
-    "Finanzen": Finanzen,
     "FullFeatureHub": FullFeatureHub,
     "GeneratedBookings": GeneratedBookings,
     "GlobalSettings": GlobalSettings,
     "GlobalTaxDeadlineCalendar": GlobalTaxDeadlineCalendar,
     "GlobalTaxOverview": GlobalTaxOverview,
     "GlobalWealthDashboard": GlobalWealthDashboard,
+    "HaushaltsbuchbudgetApp": HaushaltsbuchbudgetApp,
     "HelpCenter": HelpCenter,
     "HilfeCenter": HilfeCenter,
     "Home": Home,
@@ -515,6 +522,7 @@ export const PAGES = {
     "MaintenanceScheduling": MaintenanceScheduling,
     "MaintenanceTasks": MaintenanceTasks,
     "MarketAnalytics": MarketAnalytics,
+    "MeterApp": MeterApp,
     "MeterDashboard": MeterDashboard,
     "MieterSelfServicePortal": MieterSelfServicePortal,
     "MobileApp": MobileApp,
@@ -566,6 +574,7 @@ export const PAGES = {
     "SmartPropertyHub": SmartPropertyHub,
     "SmartTaskDashboard": SmartTaskDashboard,
     "StaffMobileApp": StaffMobileApp,
+    "SteuerApp": SteuerApp,
     "SteuerVermoegenApp": SteuerVermoegenApp,
     "SubmissionDashboard": SubmissionDashboard,
     "SuiteManagement": SuiteManagement,
@@ -574,8 +583,8 @@ export const PAGES = {
     "SyncManagement": SyncManagement,
     "SystemConfiguration": SystemConfiguration,
     "SystemHealth": SystemHealth,
-    "Tasks": Tasks,
     "TaskManagement": TaskManagement,
+    "Tasks": Tasks,
     "Tax": Tax,
     "TaxAIChatbot": TaxAIChatbot,
     "TaxAdminDashboard": TaxAdminDashboard,
@@ -672,7 +681,10 @@ export const PAGES = {
     "UserManagement": UserManagement,
     "UserSettings": UserSettings,
     "VendorManagement": VendorManagement,
+    "VermieterApp": VermieterApp,
     "VermieterGo": VermieterGo,
+    "VermieterGoApp": VermieterGoApp,
+    "VollversionApp": VollversionApp,
     "WealthAdvanced": WealthAdvanced,
     "WealthAnalytics": WealthAnalytics,
     "WealthAutomation": WealthAutomation,
@@ -697,17 +709,7 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "BuildingInspections": BuildingInspections,
-    "AICommunicationHub": AICommunicationHub,
-    "AIInsightsDashboard": AIInsightsDashboard,
-    "AIDocumentManagement": AIDocumentManagement,
-    "EnhancedTenantPortal": EnhancedTenantPortal,
-    "VermieterApp": VermieterApp,
-    "VermieterGoApp": VermieterGoApp,
-    "MeterApp": MeterApp,
-    "HaushaltsbuchbudgetApp": HaushaltsbuchbudgetApp,
-    "SteuerApp": SteuerApp,
-    "VollversionApp": VollversionApp,
+    "FieldTasksManager": FieldTasksManager,
 }
 
 export const pagesConfig = {
