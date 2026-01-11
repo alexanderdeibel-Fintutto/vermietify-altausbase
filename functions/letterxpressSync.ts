@@ -1,30 +1,39 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
+  const startTime = Date.now();
+  
   try {
+    console.log('[letterxpressSync] Starting sync...');
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
+    console.log('[letterxpressSync] User authenticated:', user?.email);
 
     if (!user) {
+      console.log('[letterxpressSync] No user found');
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Hole LetterXpress-Zugangsdaten vom aktuellen User
     let creds = [];
     try {
+      console.log('[letterxpressSync] Fetching credentials...');
       creds = await base44.entities.LetterXpressCredential.list();
       creds = creds.filter(c => c.created_by === user.email);
+      console.log('[letterxpressSync] Found credentials:', creds.length);
     } catch (err) {
-      console.log('LetterXpressCredential entity may not exist yet:', err);
+      console.log('[letterxpressSync] LetterXpressCredential entity may not exist:', err.message);
       // Continue without credentials (demo mode)
     }
 
     // If no credentials configured, return demo response
     if (!creds || creds.length === 0) {
+      console.log('[letterxpressSync] No credentials - Demo mode');
       return Response.json({ 
         success: true,
         synced: 0,
-        message: 'Keine LetterXpress-Zugangsdaten konfiguriert - Demo-Modus'
+        message: 'Demo-Modus: Bitte konfigurieren Sie Ihre LetterXpress-Zugangsdaten in den Einstellungen',
+        isDemo: true
       });
     }
 
@@ -33,23 +42,28 @@ Deno.serve(async (req) => {
 
     // Demo mode if no real credentials
     if (!apiKey || !accountId) {
+      console.log('[letterxpressSync] Empty credentials - Demo mode');
       return Response.json({ 
         success: true,
         synced: 0,
-        message: 'Demo-Modus: Keine echten Zugangsdaten'
+        message: 'Demo-Modus: Zugangsdaten sind leer',
+        isDemo: true
       });
     }
 
     // Für Demo: wenn keine echten Daten, gib leeres Array zurück
     if (apiKey === 'demo' || accountId === 'demo') {
+      console.log('[letterxpressSync] Demo credentials detected');
       return Response.json({ 
         success: true, 
         synced: 0,
-        message: 'Demo-Modus: Keine echten Daten'
+        message: 'Demo-Modus: Keine echten Daten verfügbar',
+        isDemo: true
       });
     }
 
     // API-Call zu LetterXpress
+    console.log('[letterxpressSync] Calling LetterXpress API...');
     const response = await fetch('https://www.letterxpress.de/api/v1/shipments', {
       method: 'GET',
       headers: {
@@ -61,16 +75,17 @@ Deno.serve(async (req) => {
 
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error('LetterXpress API error:', response.status, errorBody);
+      console.error('[letterxpressSync] API error:', response.status, errorBody);
       return Response.json({ 
         success: false,
         error: 'LetterXpress API error',
         status: response.status,
-        message: 'Verbindung zu LetterXpress fehlgeschlagen'
+        message: `LetterXpress API Fehler: ${response.status}`
       }, { status: 400 });
     }
 
     const shipments = await response.json();
+    console.log('[letterxpressSync] Received', shipments.length || 0, 'shipments from API');
 
     // Speichere/Update Versände in Datenbank
     let syncedCount = 0;
@@ -104,21 +119,27 @@ Deno.serve(async (req) => {
           syncedCount++;
         }
       } catch (itemError) {
-        console.error('Error syncing shipment:', itemError);
+        console.error('[letterxpressSync] Error syncing shipment:', itemError);
       }
     }
 
+    const duration = Date.now() - startTime;
+    console.log('[letterxpressSync] Sync completed in', duration, 'ms. Synced:', syncedCount);
+    
     return Response.json({ 
       success: true, 
       synced: syncedCount,
-      message: `${syncedCount} Versände synchronisiert`
+      message: `${syncedCount} Versände synchronisiert`,
+      duration
     });
   } catch (error) {
-    console.error('Sync error:', error);
+    const duration = Date.now() - startTime;
+    console.error('[letterxpressSync] Fatal error:', error);
     return Response.json({ 
       success: false,
       error: error.message || 'Unknown error',
-      message: 'Fehler beim Synchronisieren'
+      message: 'Fehler beim Synchronisieren: ' + (error.message || 'Unbekannter Fehler'),
+      duration
     }, { status: 500 });
   }
 });
