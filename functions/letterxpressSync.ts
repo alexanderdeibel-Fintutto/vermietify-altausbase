@@ -112,30 +112,41 @@ Deno.serve(async (req) => {
     }
 
     let shipments = [];
+    const responseText = await response.text();
+    console.log('[letterxpressSync] Raw response:', responseText.substring(0, 500));
+    
     try {
-      const jsonData = await response.json();
-      console.log('[letterxpressSync] Received JSON:', JSON.stringify(jsonData).substring(0, 200));
+      const jsonData = JSON.parse(responseText);
+      console.log('[letterxpressSync] Parsed JSON type:', typeof jsonData, 'is array:', Array.isArray(jsonData));
       
       // Handle different response formats
       if (Array.isArray(jsonData)) {
         shipments = jsonData;
+        console.log('[letterxpressSync] Found array format, items:', jsonData.length);
       } else if (jsonData.shipments && Array.isArray(jsonData.shipments)) {
         shipments = jsonData.shipments;
+        console.log('[letterxpressSync] Found shipments property, items:', jsonData.shipments.length);
       } else if (jsonData.data && Array.isArray(jsonData.data)) {
         shipments = jsonData.data;
+        console.log('[letterxpressSync] Found data property, items:', jsonData.data.length);
       } else {
-        console.log('[letterxpressSync] Unexpected response format:', jsonData);
+        console.log('[letterxpressSync] Unexpected response format. Keys:', Object.keys(jsonData).join(', '));
+        console.log('[letterxpressSync] Full response:', JSON.stringify(jsonData).substring(0, 500));
       }
     } catch (parseErr) {
-      console.error('[letterxpressSync] Error parsing JSON:', parseErr.message);
+      console.error('[letterxpressSync] Error parsing JSON:', parseErr.message, 'Raw:', responseText.substring(0, 100));
     }
     
-    console.log('[letterxpressSync] Processing', shipments.length, 'shipments');
+    console.log('[letterxpressSync] Starting to process', shipments.length, 'shipments');
 
     // Speichere/Update Versände in Datenbank
     let syncedCount = 0;
+    let errorCount = 0;
+    
     for (const shipment of shipments || []) {
       try {
+        console.log('[letterxpressSync] Processing shipment:', shipment.id);
+        
         const existing = await base44.entities.LetterShipment.filter({
           letterxpress_id: shipment.id
         });
@@ -153,6 +164,7 @@ Deno.serve(async (req) => {
             cost: shipment.price || 0,
             letterxpress_data: JSON.stringify(shipment)
           });
+          console.log('[letterxpressSync] Created new shipment:', shipment.id);
           syncedCount++;
         } else {
           await base44.entities.LetterShipment.update(existing[0].id, {
@@ -161,10 +173,12 @@ Deno.serve(async (req) => {
             tracking_number: shipment.tracking_number || '',
             letterxpress_data: JSON.stringify(shipment)
           });
+          console.log('[letterxpressSync] Updated shipment:', shipment.id);
           syncedCount++;
         }
       } catch (itemError) {
-        console.error('[letterxpressSync] Error syncing shipment:', itemError);
+        console.error('[letterxpressSync] Error syncing shipment', shipment.id, ':', itemError.message);
+        errorCount++;
       }
     }
 
