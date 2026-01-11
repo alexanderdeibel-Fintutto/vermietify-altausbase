@@ -1,140 +1,195 @@
 import React, { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Sparkles, Copy, Save } from 'lucide-react';
+import { Lightbulb, Copy, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function AITemplateGenerator() {
   const [templateType, setTemplateType] = useState('payment_reminder');
+  const [prompt, setPrompt] = useState('');
   const [generatedText, setGeneratedText] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const templateTypes = [
-    { id: 'payment_reminder', label: 'Zahlungserinnerung' },
-    { id: 'maintenance', label: 'Wartungsankündigung' },
-    { id: 'welcome', label: 'Willkommensnachricht' },
-    { id: 'renewal', label: 'Vertragsverlängerung' },
-    { id: 'feedback', label: 'Feedback-Anfrage' },
-  ];
+  const generateMutation = useMutation({
+    mutationFn: async () => {
+      setIsLoading(true);
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: `Erstelle eine professionelle und höfliche ${getTemplateTypeLabel(templateType)} für eine Immobilienverwaltung. 
+        
+Kontext: ${prompt || 'Standard-Kommunikation mit Mietern'}
 
-  const handleGenerate = async () => {
-    setLoading(true);
-    // Simulate AI generation
-    setTimeout(() => {
-      setGeneratedText(`Liebe/r Mieter/in,
+Die Nachricht sollte:
+- Formell aber freundlich sein
+- Klar und verständlich sein
+- Alle wichtigen Informationen enthalten
+- Mit einem professionellen Gruß enden
 
-hier ist eine KI-generierte Vorlage für ${templateTypes.find(t => t.id === templateType)?.label}.
+Gib nur die Nachricht aus, ohne Erklärungen.`,
+      });
+      return response;
+    },
+    onSuccess: (data) => {
+      setGeneratedText(data);
+      toast.success('Vorlage generiert');
+    },
+    onError: () => {
+      toast.error('Fehler bei der Generierung');
+    },
+    onSettled: () => {
+      setIsLoading(false);
+    },
+  });
 
-Dies ist ein Beispieltext, der von der KI generiert wurde. Der Text ist professionell, freundlich und enthält alle wichtigen Informationen.
+  const getTemplateTypeLabel = (type) => {
+    const labels = {
+      payment_reminder: 'Zahlungserinnerung',
+      contract_renewal: 'Vertragsverlängerung',
+      maintenance_notice: 'Wartungsmitteilung',
+      announcement: 'Ankündigung',
+      welcome: 'Willkommensnachricht',
+      feedback_request: 'Feedback-Anfrage',
+      complaint_response: 'Beschwerdeantwort',
+      rule_violation: 'Regelverstoß-Benachrichtigung',
+    };
+    return labels[type] || type;
+  };
 
-Mit freundlichen Grüßen,
-Ihre Hausverwaltung`);
-      setLoading(false);
-    }, 1000);
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(generatedText);
+    toast.success('In Zwischenablage kopiert');
+  };
+
+  const templateDescriptions = {
+    payment_reminder: 'Erinnerung an ausstehende Mietzahlungen',
+    contract_renewal: 'Ankündigung einer Vertragsverlängerung',
+    maintenance_notice: 'Ankündigung von Wartungsarbeiten',
+    announcement: 'Allgemeine Ankündigung für Mieter',
+    welcome: 'Willkommensnachricht für neue Mieter',
+    feedback_request: 'Anfrage nach Feedback oder Bewertung',
+    complaint_response: 'Antwort auf eine Beschwerde',
+    rule_violation: 'Benachrichtigung über Regelverstoß',
   };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-light text-slate-900">KI-Vorlagen-Generator</h1>
-        <p className="text-slate-600 font-light mt-2">Generieren Sie intelligente Nachrichtenvorlagen mit KI</p>
+        <p className="text-slate-600 font-light mt-2">Intelligente Textgenerierung für Kommunikationsvorlagen</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Konfiguration */}
+        {/* Generator Panel */}
         <div className="lg:col-span-2 space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Vorlagentyp</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 text-yellow-500" />
+                Vorlage generieren
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-2">
-                {templateTypes.map(type => (
-                  <button
-                    key={type.id}
-                    onClick={() => setTemplateType(type.id)}
-                    className={`p-3 rounded-lg border-2 transition-all text-sm ${
-                      templateType === type.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
-                  >
-                    {type.label}
-                  </button>
-                ))}
+            <CardContent className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Vorlagentyp</label>
+                <select
+                  value={templateType}
+                  onChange={(e) => setTemplateType(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg"
+                >
+                  {Object.entries(templateDescriptions).map(([key, desc]) => (
+                    <option key={key} value={key}>
+                      {getTemplateTypeLabel(key)} - {desc}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Zusätzliche Details (optional)</label>
+                <Textarea
+                  placeholder="z.B. Spezifische Mieterdaten, Besonderheiten, Ton der Nachricht..."
+                  rows={3}
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                />
+              </div>
+
+              <Button
+                onClick={() => generateMutation.mutate()}
+                disabled={isLoading}
+                className="w-full"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generierung läuft...
+                  </>
+                ) : (
+                  <>
+                    <Lightbulb className="w-4 h-4 mr-2" />
+                    Vorlage generieren
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {generatedText && (
+            <Card className="border-green-200 bg-green-50">
+              <CardHeader>
+                <CardTitle>Generierte Vorlage</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 bg-white border rounded-lg">
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{generatedText}</p>
+                </div>
+                <Button onClick={copyToClipboard} className="w-full">
+                  <Copy className="w-4 h-4 mr-2" />
+                  In Zwischenablage kopieren
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Examples Sidebar */}
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Tipps & Beispiele</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-slate-600 space-y-3">
+              <div>
+                <p className="font-semibold text-slate-900">Zahlungserinnerungen</p>
+                <p>Beste Ergebnisse mit Mieterdaten wie Name, Betrag und Zahlungsfrist.</p>
+              </div>
+              <div>
+                <p className="font-semibold text-slate-900">Wartungsmitteilungen</p>
+                <p>Geben Sie Details zum Arbeitstyp und Datum an.</p>
+              </div>
+              <div>
+                <p className="font-semibold text-slate-900">Beschwerdeantworten</p>
+                <p>Beschreiben Sie das Problem für kontextuelle Antworten.</p>
+              </div>
+              <div>
+                <p className="font-semibold text-slate-900">Willkommensnachrichten</p>
+                <p>Personalisierung mit Gebäudename und -informationen möglich.</p>
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5" />
-                Generierter Text
-              </CardTitle>
+              <CardTitle className="text-base">Kürzliche Vorlagen</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <Textarea
-                value={generatedText}
-                onChange={(e) => setGeneratedText(e.target.value)}
-                placeholder="Der generierte Text wird hier angezeigt..."
-                className="min-h-48 font-light"
-              />
-              <div className="flex gap-2">
-                <Button 
-                  onClick={handleGenerate}
-                  disabled={loading}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700"
-                >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  {loading ? 'Wird generiert...' : 'Neu generieren'}
-                </Button>
-                <Button variant="outline" className="flex-1">
-                  <Copy className="w-4 h-4 mr-2" />
-                  Kopieren
-                </Button>
-              </div>
+            <CardContent>
+              <p className="text-xs text-slate-500">Keine gespeicherten Vorlagen vorhanden</p>
             </CardContent>
           </Card>
-
-          <Button className="w-full bg-green-600 hover:bg-green-700">
-            <Save className="w-4 h-4 mr-2" />
-            Als Vorlage speichern
-          </Button>
         </div>
-
-        {/* Optionen */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Optionen</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Ton</label>
-              <select className="w-full px-3 py-2 border rounded-lg">
-                <option>Professionell</option>
-                <option>Freundlich</option>
-                <option>Formal</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Länge</label>
-              <select className="w-full px-3 py-2 border rounded-lg">
-                <option>Kurz</option>
-                <option>Mittel</option>
-                <option>Ausführlich</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Sprache</label>
-              <select className="w-full px-3 py-2 border rounded-lg">
-                <option>Deutsch</option>
-                <option>Englisch</option>
-              </select>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
