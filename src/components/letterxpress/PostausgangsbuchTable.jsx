@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 const statusConfig = {
   pending: { label: 'Ausstehend', icon: Clock, color: 'text-yellow-600 bg-yellow-50' },
@@ -54,14 +55,14 @@ export default function PostausgangsbuchTable() {
       const response = await base44.functions.invoke('letterxpressSync', {});
       if (response.data?.success) {
         refetch();
-        alert(response.data?.message || 'Synchronisiert');
+        toast.success(response.data?.message || 'Synchronisiert');
       } else {
-        alert(response.data?.message || 'Fehler beim Synchronisieren');
+        toast.error(response.data?.message || 'Fehler beim Synchronisieren');
       }
     } catch (error) {
       console.error('Sync error:', error);
       const message = error.response?.data?.message || error.message || 'Netzwerkfehler';
-      alert('Fehler: ' + message);
+      toast.error('Fehler: ' + message);
     } finally {
       setSyncing(false);
     }
