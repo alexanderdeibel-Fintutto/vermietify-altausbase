@@ -48,6 +48,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import ReactMarkdown from 'react-markdown';
 import { cn } from "@/lib/utils";
+import DocumentationAdvancedFilters from '@/components/documentation/DocumentationAdvancedFilters';
+import DocumentationFulltextSearch from '@/components/documentation/DocumentationFulltextSearch';
 
 const PRIORITY_TYPES = [
     {
@@ -228,6 +230,12 @@ export default function DeveloperDocumentation() {
     const [searchQuery, setSearchQuery] = useState('');
     const [showVersionHistory, setShowVersionHistory] = useState(null);
     const [showExportPresets, setShowExportPresets] = useState(false);
+    const [showFulltextSearch, setShowFulltextSearch] = useState(false);
+    const [advancedFilters, setAdvancedFilters] = useState({
+        status: null,
+        daysOld: null,
+        sizeRange: null
+    });
     const queryClient = useQueryClient();
 
     const { data: documentations = [], isLoading } = useQuery({
