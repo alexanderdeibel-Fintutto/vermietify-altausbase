@@ -26,11 +26,13 @@ export default function LetterXpressManagement() {
     const loadCredentials = async () => {
       try {
         const creds = await base44.entities.LetterXpressCredential.list();
-        if (creds && creds.length > 0) {
+        if (creds && creds.length > 0 && creds[0].api_key && creds[0].account_id && creds[0].email) {
           setApiKey(creds[0].api_key);
           setAccountId(creds[0].account_id);
           setEmail(creds[0].email);
           setIsConfigured(true);
+        } else {
+          setIsConfigured(false);
         }
       } catch (err) {
         console.log('Credentials load error:', err);
