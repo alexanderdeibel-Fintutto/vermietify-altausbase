@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Package, Send, CheckCircle, Clock, AlertCircle, Mail, Lock, Zap } from 'lucide-react';
+import PostausgangsbuchTable from '@/components/letterxpress/PostausgangsbuchTable';
 import LetterTemplateSelector from '@/components/letterxpress/LetterTemplateSelector';
 import LetterRecipientSelector from '@/components/letterxpress/LetterRecipientSelector';
 import LetterPreview from '@/components/letterxpress/LetterPreview';
