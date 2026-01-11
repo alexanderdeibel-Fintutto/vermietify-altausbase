@@ -44,7 +44,7 @@ export default function TemplateFieldManager({ fields = [], onChange, documentTy
           <div key={field.id} className="flex gap-2 p-3 bg-slate-50 rounded-lg items-center">
             <div className="flex-1 space-y-1">
               <div className="font-medium text-sm">{field.name}</div>
-              <div className="text-xs text-slate-600">{{{field.name}}}</div>
+              <div className="text-xs text-slate-600">{`{{${field.name}}}`}</div>
             </div>
             <div className="text-xs bg-white px-2 py-1 rounded border">{field.type}</div>
             {field.required && <div className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Pflichtfeld</div>}
