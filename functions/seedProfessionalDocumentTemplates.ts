@@ -13,105 +13,7 @@ Deno.serve(async (req) => {
       // 1. MIETVERTRAG
       {
         document_type: 'mietvertrag',
-        template_html: `
-          <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 900px; margin: 0 auto; padding: 40px; background: #ffffff;">
-            <div style="text-align: center; margin-bottom: 40px; border-bottom: 3px solid #1e40af; padding-bottom: 20px;">
-              <h1 style="margin: 0; color: #1e40af; font-size: 28px; font-weight: 700;">MIETVERTRAG</h1>
-              <p style="margin: 10px 0 0 0; color: #6b7280; font-size: 13px;">Für Wohnraum nach deutschem Mietrecht (BGB)</p>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; background: #f3f4f6; padding: 20px; border-radius: 8px;">
-              <div>
-                <h3 style="margin: 0 0 10px 0; color: #1e40af; font-size: 13px; font-weight: 600; text-transform: uppercase;">Vermietende Partei</h3>
-                <p style="margin: 0; color: #111827; font-weight: 600;">{{landlord_name}}</p>
-                <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 13px;">{{landlord_address}}</p>
-              </div>
-              <div>
-                <h3 style="margin: 0 0 10px 0; color: #1e40af; font-size: 13px; font-weight: 600; text-transform: uppercase;">Mietende Partei</h3>
-                <p style="margin: 0; color: #111827; font-weight: 600;">{{tenant_first_name}} {{tenant_last_name}}</p>
-                <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 13px;">{{tenant_address}}</p>
-              </div>
-            </div>
-
-            <h2 style="color: #1e40af; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #dbeafe; padding-bottom: 10px;">1. MIETOBJEKT</h2>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-              <tr style="background: #f9fafb;">
-                <td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Anschrift:</td>
-                <td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{property_address}}, {{property_postal_code}} {{property_city}}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Wohnfläche:</td>
-                <td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{property_sqm}} m²</td>
-              </tr>
-              <tr style="background: #f9fafb;">
-                <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Zimmer:</td>
-                <td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{property_rooms}}</td>
-              </tr>
-            </table>
-
-            <h2 style="color: #1e40af; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #dbeafe; padding-bottom: 10px;">2. MIETDAUER</h2>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-              <tr style="background: #f9fafb;">
-                <td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Mietbeginn:</td>
-                <td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{contract_start_date}}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Mietende:</td>
-                <td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{contract_end_date}}</td>
-              </tr>
-              <tr style="background: #f9fafb;">
-                <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Art des Mietverhältnisses:</td>
-                <td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{contract_type}}</td>
-              </tr>
-            </table>
-
-            <h2 style="color: #1e40af; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #dbeafe; padding-bottom: 10px;">3. MIETZAHLUNG</h2>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-              <tr style="background: #f9fafb;">
-                <td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Kaltmiete monatlich:</td>
-                <td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; font-weight: 600;">{{base_rent}} EUR</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Nebenkosten monatlich:</td>
-                <td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; font-weight: 600;">{{utilities}} EUR</td>
-              </tr>
-              <tr style="background: #fef3c7;">
-                <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 700; color: #78350f;">GESAMTMIETE monatlich:</td>
-                <td style="padding: 10px; border: 1px solid #e5e7eb; color: #78350f; font-weight: 700; font-size: 15px;">{{total_rent}} EUR</td>
-              </tr>
-              <tr style="background: #f9fafb;">
-                <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Zahlungsart:</td>
-                <td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{payment_method}}</td>
-              </tr>
-            </table>
-
-            <h2 style="color: #1e40af; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #dbeafe; padding-bottom: 10px;">4. KAUTION</h2>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-              <tr style="background: #f9fafb;">
-                <td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Kautionsbetrag:</td>
-                <td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; font-weight: 600;">{{deposit}} EUR</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Zahlungstermin:</td>
-                <td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{deposit_due_date}}</td>
-              </tr>
-            </table>
-
-            <div style="margin-top: 40px; padding: 20px; background: #eff6ff; border-left: 4px solid #1e40af; border-radius: 4px;">
-              <p style="margin: 0; color: #1e3a8a; font-size: 13px; font-weight: 600;">Unterschriften</p>
-              <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
-                <div>
-                  <p style="margin: 0 0 40px 0; border-bottom: 1px solid #1e40af; min-height: 30px;"></p>
-                  <p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">Vermietende Partei</p>
-                </div>
-                <div>
-                  <p style="margin: 0 0 40px 0; border-bottom: 1px solid #1e40af; min-height: 30px;"></p>
-                  <p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">Mietende Partei</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        `,
+        template_html: `<div style="font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px; background: #ffffff;"><div style="text-align: center; margin-bottom: 40px; border-bottom: 3px solid #1e40af; padding-bottom: 20px;"><h1 style="margin: 0; color: #1e40af; font-size: 28px; font-weight: 700;">MIETVERTRAG</h1><p style="margin: 10px 0 0 0; color: #6b7280; font-size: 13px;">Für Wohnraum nach deutschem Mietrecht (BGB)</p></div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; background: #f3f4f6; padding: 20px; border-radius: 8px;"><div><h3 style="margin: 0 0 10px 0; color: #1e40af; font-size: 13px; font-weight: 600; text-transform: uppercase;">Vermietende Partei</h3><p style="margin: 0; color: #111827; font-weight: 600;">{{landlord_name}}</p><p style="margin: 5px 0 0 0; color: #6b7280; font-size: 13px;">{{landlord_address}}</p></div><div><h3 style="margin: 0 0 10px 0; color: #1e40af; font-size: 13px; font-weight: 600; text-transform: uppercase;">Mietende Partei</h3><p style="margin: 0; color: #111827; font-weight: 600;">{{tenant_first_name}} {{tenant_last_name}}</p><p style="margin: 5px 0 0 0; color: #6b7280; font-size: 13px;">{{tenant_address}}</p></div></div><h2 style="color: #1e40af; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #dbeafe; padding-bottom: 10px;">1. MIETOBJEKT</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Anschrift:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{property_address}}, {{property_postal_code}} {{property_city}}</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Wohnfläche:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{property_sqm}} m²</td></tr></table><h2 style="color: #1e40af; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #dbeafe; padding-bottom: 10px;">2. MIETBEDINGUNGEN</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Kaltmiete monatlich:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; font-weight: 600;">{{base_rent}} EUR</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Nebenkosten monatlich:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; font-weight: 600;">{{utilities}} EUR</td></tr><tr style="background: #fef3c7;"><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 700; color: #78350f;">GESAMTMIETE:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #78350f; font-weight: 700; font-size: 15px;">{{total_rent}} EUR</td></tr><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Kaution:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; font-weight: 600;">{{deposit}} EUR</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Mietbeginn:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{contract_start_date}}</td></tr></table><div style="margin-top: 40px; padding: 20px; background: #eff6ff; border-left: 4px solid #1e40af; border-radius: 4px;"><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px;"><div><p style="margin: 0 0 40px 0; border-bottom: 1px solid #1e40af; min-height: 30px;"></p><p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">Vermietende Partei / Ort, Datum</p></div><div><p style="margin: 0 0 40px 0; border-bottom: 1px solid #1e40af; min-height: 30px;"></p><p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">Mietende Partei / Ort, Datum</p></div></div></div></div>`,
         template_fields: [
           { id: 'landlord_name', name: 'landlord_name', type: 'text', required: true },
           { id: 'landlord_address', name: 'landlord_address', type: 'text', required: true },
@@ -122,18 +24,258 @@ Deno.serve(async (req) => {
           { id: 'property_postal_code', name: 'property_postal_code', type: 'text', required: true },
           { id: 'property_city', name: 'property_city', type: 'text', required: true },
           { id: 'property_sqm', name: 'property_sqm', type: 'number', required: true },
-          { id: 'property_rooms', name: 'property_rooms', type: 'number', required: false },
-          { id: 'contract_start_date', name: 'contract_start_date', type: 'date', required: true },
-          { id: 'contract_end_date', name: 'contract_end_date', type: 'date', required: false },
-          { id: 'contract_type', name: 'contract_type', type: 'text', required: true },
           { id: 'base_rent', name: 'base_rent', type: 'currency', required: true },
           { id: 'utilities', name: 'utilities', type: 'currency', required: false },
           { id: 'total_rent', name: 'total_rent', type: 'currency', required: true },
-          { id: 'payment_method', name: 'payment_method', type: 'text', required: true },
           { id: 'deposit', name: 'deposit', type: 'currency', required: true },
-          { id: 'deposit_due_date', name: 'deposit_due_date', type: 'date', required: true }
+          { id: 'contract_start_date', name: 'contract_start_date', type: 'date', required: true }
         ],
         description: 'Professioneller Mietvertrag für Wohnraum'
+      },
+
+      // 2. ÜBERGABEPROTOKOLL EINZUG
+      {
+        document_type: 'uebergabeprotokoll_einzug',
+        template_html: `<div style="font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px; background: #ffffff;"><div style="text-align: center; margin-bottom: 40px; border-bottom: 3px solid #10b981; padding-bottom: 20px;"><h1 style="margin: 0; color: #10b981; font-size: 28px; font-weight: 700;">ÜBERGABEPROTOKOLL EINZUG</h1><p style="margin: 10px 0 0 0; color: #6b7280; font-size: 13px;">Anlage zum Mietvertrag</p></div><div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin-bottom: 30px;"><h3 style="margin: 0 0 15px 0; color: #10b981; font-size: 14px; font-weight: 600;">WOHNUNGSANGABEN</h3><p style="margin: 0; color: #111827; font-weight: 600;">{{property_address}}</p><p style="margin: 5px 0 0 0; color: #6b7280; font-size: 13px;">Übergabedatum: {{handover_date}}</p></div><h2 style="color: #10b981; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #d1fae5; padding-bottom: 10px;">ZÄHLER BEI ÜBERGABE</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Stromzähler:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{electricity_meter}}</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Wasserzähler:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{water_meter}}</td></tr><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Gaszähler:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{gas_meter}}</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Wärmezähler:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{heat_meter}}</td></tr></table><h2 style="color: #10b981; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #d1fae5; padding-bottom: 10px;">ZUSTAND DER WOHNUNG</h2><div style="background: #f0fdf4; padding: 15px; border-radius: 6px; margin-bottom: 20px;"><p style="margin: 0; color: #166534; font-size: 13px; white-space: pre-wrap;">{{condition_notes}}</p></div><h2 style="color: #10b981; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #d1fae5; padding-bottom: 10px;">SCHLÜSSELÜBERGABE</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Anzahl Schlüssel:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{keys_count}}</td></tr></table><div style="margin-top: 40px; padding: 20px; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 4px;"><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px;"><div><p style="margin: 0 0 40px 0; border-bottom: 1px solid #10b981; min-height: 30px;"></p><p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">Vermietender / Datum</p></div><div><p style="margin: 0 0 40px 0; border-bottom: 1px solid #10b981; min-height: 30px;"></p><p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">Mieter / Datum</p></div></div></div></div>`,
+        template_fields: [
+          { id: 'property_address', name: 'property_address', type: 'text', required: true },
+          { id: 'handover_date', name: 'handover_date', type: 'date', required: true },
+          { id: 'electricity_meter', name: 'electricity_meter', type: 'text', required: false },
+          { id: 'water_meter', name: 'water_meter', type: 'text', required: false },
+          { id: 'gas_meter', name: 'gas_meter', type: 'text', required: false },
+          { id: 'heat_meter', name: 'heat_meter', type: 'text', required: false },
+          { id: 'condition_notes', name: 'condition_notes', type: 'textarea', required: false },
+          { id: 'keys_count', name: 'keys_count', type: 'number', required: false }
+        ],
+        description: 'Protokoll bei Mietbeginn'
+      },
+
+      // 3. ÜBERGABEPROTOKOLL AUSZUG
+      {
+        document_type: 'uebergabeprotokoll_auszug',
+        template_html: `<div style="font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px; background: #ffffff;"><div style="text-align: center; margin-bottom: 40px; border-bottom: 3px solid #ef4444; padding-bottom: 20px;"><h1 style="margin: 0; color: #ef4444; font-size: 28px; font-weight: 700;">ÜBERGABEPROTOKOLL AUSZUG</h1><p style="margin: 10px 0 0 0; color: #6b7280; font-size: 13px;">Endreinigung und Schlüsselrückgabe</p></div><div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin-bottom: 30px;"><h3 style="margin: 0 0 15px 0; color: #ef4444; font-size: 14px; font-weight: 600;">WOHNUNGSANGABEN</h3><p style="margin: 0; color: #111827; font-weight: 600;">{{property_address}}</p><p style="margin: 5px 0 0 0; color: #6b7280; font-size: 13px;">Auszugsdatum: {{moveout_date}}</p></div><h2 style="color: #ef4444; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #fee2e2; padding-bottom: 10px;">ZÄHLERSTÄNDE BEI AUSZUG</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Stromzähler:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{electricity_meter}}</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Wasserzähler:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{water_meter}}</td></tr><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Gaszähler:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{gas_meter}}</td></tr></table><h2 style="color: #ef4444; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #fee2e2; padding-bottom: 10px;">WOHNUNGSZUSTAND</h2><div style="background: #fef2f2; padding: 15px; border-radius: 6px; margin-bottom: 20px;"><p style="margin: 0; color: #7f1d1d; font-size: 13px; white-space: pre-wrap;">{{condition_notes}}</p></div><h2 style="color: #ef4444; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #fee2e2; padding-bottom: 10px;">MÄNGEL UND SCHÄDEN</h2><div style="background: #fef2f2; padding: 15px; border-radius: 6px; margin-bottom: 20px;"><p style="margin: 0; color: #7f1d1d; font-size: 13px; white-space: pre-wrap;">{{damages_notes}}</p></div><h2 style="color: #ef4444; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #fee2e2; padding-bottom: 10px;">SCHLÜSSELRÜCKGABE</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Zurückgegebene Schlüssel:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{keys_returned}}</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Reinigung:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{cleaning_status}}</td></tr></table><div style="margin-top: 40px; padding: 20px; background: #fef2f2; border-left: 4px solid #ef4444; border-radius: 4px;"><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px;"><div><p style="margin: 0 0 40px 0; border-bottom: 1px solid #ef4444; min-height: 30px;"></p><p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">Vermietender / Datum</p></div><div><p style="margin: 0 0 40px 0; border-bottom: 1px solid #ef4444; min-height: 30px;"></p><p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">Mieter / Datum</p></div></div></div></div>`,
+        template_fields: [
+          { id: 'property_address', name: 'property_address', type: 'text', required: true },
+          { id: 'moveout_date', name: 'moveout_date', type: 'date', required: true },
+          { id: 'electricity_meter', name: 'electricity_meter', type: 'text', required: false },
+          { id: 'water_meter', name: 'water_meter', type: 'text', required: false },
+          { id: 'gas_meter', name: 'gas_meter', type: 'text', required: false },
+          { id: 'condition_notes', name: 'condition_notes', type: 'textarea', required: false },
+          { id: 'damages_notes', name: 'damages_notes', type: 'textarea', required: false },
+          { id: 'keys_returned', name: 'keys_returned', type: 'number', required: false },
+          { id: 'cleaning_status', name: 'cleaning_status', type: 'text', required: false }
+        ],
+        description: 'Protokoll bei Mietende'
+      },
+
+      // 4. MIETANGEBOT
+      {
+        document_type: 'mietangebot',
+        template_html: `<div style="font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px; background: #ffffff;"><div style="text-align: center; margin-bottom: 40px; border-bottom: 3px solid #8b5cf6; padding-bottom: 20px;"><h1 style="margin: 0; color: #8b5cf6; font-size: 28px; font-weight: 700;">MIETANGEBOT</h1><p style="margin: 10px 0 0 0; color: #6b7280; font-size: 13px;">Verbindliches Angebot</p></div><div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin-bottom: 30px;"><h3 style="margin: 0 0 10px 0; color: #8b5cf6; font-size: 14px; font-weight: 600;">AN</h3><p style="margin: 0; color: #111827; font-weight: 600;">{{applicant_name}}</p></div><h2 style="color: #8b5cf6; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #ede9fe; padding-bottom: 10px;">ANGEBOTENE WOHNUNG</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Adresse:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{property_address}}, {{property_postal_code}} {{property_city}}</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Wohnfläche:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{property_sqm}} m²</td></tr></table><h2 style="color: #8b5cf6; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #ede9fe; padding-bottom: 10px;">ANGEBOTSBEDINGUNGEN</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Monatliche Miete (netto):</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; font-weight: 600;">{{monthly_rent}} EUR</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Nebenkosten:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; font-weight: 600;">{{utilities}} EUR</td></tr><tr style="background: #f3e8ff;"><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 700; color: #6b21a8;">Gesamtmiete monatlich:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #6b21a8; font-weight: 700; font-size: 15px;">{{total_rent}} EUR</td></tr><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Kaution:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; font-weight: 600;">{{deposit}} EUR</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Makler / Provision:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{broker_info}}</td></tr><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Angebotsstelldatum:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{offer_date}}</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Gültig bis:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; font-weight: 600;">{{offer_expiry}}</td></tr></table><div style="margin-top: 40px; padding: 20px; background: #f5f3ff; border-left: 4px solid #8b5cf6; border-radius: 4px;"><p style="margin: 0 0 20px 0; color: #6b21a8; font-size: 13px;"><strong>Hinweis:</strong> Dieses Angebot ist gültig bis zum angegebenen Datum. Eine Annahme muss schriftlich mitgeteilt werden.</p><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px;"><div><p style="margin: 0 0 40px 0; border-bottom: 1px solid #8b5cf6; min-height: 30px;"></p><p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">Vermietender / Datum</p></div></div></div></div>`,
+        template_fields: [
+          { id: 'applicant_name', name: 'applicant_name', type: 'text', required: true },
+          { id: 'property_address', name: 'property_address', type: 'text', required: true },
+          { id: 'property_postal_code', name: 'property_postal_code', type: 'text', required: true },
+          { id: 'property_city', name: 'property_city', type: 'text', required: true },
+          { id: 'property_sqm', name: 'property_sqm', type: 'number', required: true },
+          { id: 'monthly_rent', name: 'monthly_rent', type: 'currency', required: true },
+          { id: 'utilities', name: 'utilities', type: 'currency', required: false },
+          { id: 'total_rent', name: 'total_rent', type: 'currency', required: true },
+          { id: 'deposit', name: 'deposit', type: 'currency', required: true },
+          { id: 'broker_info', name: 'broker_info', type: 'text', required: false },
+          { id: 'offer_date', name: 'offer_date', type: 'date', required: true },
+          { id: 'offer_expiry', name: 'offer_expiry', type: 'date', required: true }
+        ],
+        description: 'Professionelles Mietangebot'
+      },
+
+      // 5. SEPA-MANDAT
+      {
+        document_type: 'sepa_mandat',
+        template_html: `<div style="font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px; background: #ffffff;"><div style="text-align: center; margin-bottom: 40px; border-bottom: 3px solid #0891b2; padding-bottom: 20px;"><h1 style="margin: 0; color: #0891b2; font-size: 28px; font-weight: 700;">SEPA-LASTSCHRIFTMANDAT</h1><p style="margin: 10px 0 0 0; color: #6b7280; font-size: 13px;">Gläubiger-Identifikationsnummer: {{creditor_id}}</p></div><div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin-bottom: 30px;"><p style="margin: 0; color: #111827; font-weight: 600;">Gläubiger: {{landlord_name}}</p><p style="margin: 5px 0 0 0; color: #6b7280; font-size: 13px;">Mandatsreferenz: {{mandate_reference}}</p></div><h2 style="color: #0891b2; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #cffafe; padding-bottom: 10px;">KONTOINHABER</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Name:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{tenant_name}}</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">IBAN:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; font-family: monospace; font-weight: 600;">{{iban}}</td></tr><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">BIC (optional):</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{bic}}</td></tr></table><h2 style="color: #0891b2; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #cffafe; padding-bottom: 10px;">MANDAT</h2><div style="background: #f0f9ff; padding: 20px; border-radius: 6px; margin-bottom: 20px; line-height: 1.6; font-size: 13px;"><p style="margin: 0 0 10px 0;">Ich bevollmächtige hiermit {{landlord_name}} Zahlungen für Miete und Nebenkosten (Referenz: {{mandate_reference}}) von meinem Konto mittels Lastschrift (SEPA-Basis-Lastschrift) einzuziehen.</p><p style="margin: 0;">Die Zahlung wird normalerweise innerhalb von 3-5 Werktagen eingezogen. Falls erforderlich, kann ich Rückerstattung verlangen.</p></div><h2 style="color: #0891b2; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #cffafe; padding-bottom: 10px;">UNTERSCHRIFT</h2><div style="margin-top: 30px; padding: 20px; background: #ecf0f1; border-radius: 6px;"><div style="margin-bottom: 20px;"><p style="margin: 0 0 30px 0; border-bottom: 1px solid #0891b2; min-height: 30px;"></p><p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">Kontoinhaber (Mieter) / Datum</p></div></div></div>`,
+        template_fields: [
+          { id: 'creditor_id', name: 'creditor_id', type: 'text', required: true },
+          { id: 'landlord_name', name: 'landlord_name', type: 'text', required: true },
+          { id: 'mandate_reference', name: 'mandate_reference', type: 'text', required: true },
+          { id: 'tenant_name', name: 'tenant_name', type: 'text', required: true },
+          { id: 'iban', name: 'iban', type: 'text', required: true },
+          { id: 'bic', name: 'bic', type: 'text', required: false }
+        ],
+        description: 'SEPA-Lastschrift für automatische Mietzahlung'
+      },
+
+      // 6. ZAHLUNGSERINNERUNG
+      {
+        document_type: 'zahlungserinnerung',
+        template_html: `<div style="font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px; background: #ffffff;"><div style="text-align: center; margin-bottom: 40px; border-bottom: 3px solid #f59e0b; padding-bottom: 20px;"><h1 style="margin: 0; color: #f59e0b; font-size: 28px; font-weight: 700;">ZAHLUNGSERINNERUNG</h1><p style="margin: 10px 0 0 0; color: #6b7280; font-size: 13px;">Höfliche Zahlungserinnerung</p></div><div style="background: #fef3c7; padding: 20px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-bottom: 30px;"><h3 style="margin: 0 0 10px 0; color: #92400e; font-weight: 600;">AN</h3><p style="margin: 0; color: #111827; font-weight: 600;">{{tenant_name}}</p></div><p style="margin: 0 0 30px 0; color: #374151;">Sehr geehrter Mieter,</p><p style="margin: 0 0 20px 0; color: #374151; line-height: 1.6;">wir möchten Sie höflich an folgende offene Zahlung erinnern:</p><table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Rechnungszeitraum:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{period}}</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Fälliger Betrag:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; font-weight: 600; font-size: 15px;">{{amount}} EUR</td></tr><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Ursprüngliches Fälligkeitsdatum:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{due_date}}</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Zahlungsart:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{payment_method}}</td></tr></table><h2 style="color: #f59e0b; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #fef3c7; padding-bottom: 10px;">ZAHLUNGSHINWEIS</h2><p style="margin: 0 0 15px 0; color: #374151; line-height: 1.6;">Bitte überweisen Sie den offenen Betrag bis <strong style="color: #92400e;">{{payment_deadline}}</strong> auf folgendes Bankkonto:</p><div style="background: #fef3c7; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-family: monospace; color: #111827; font-size: 13px;"><p style="margin: 0 0 5px 0;"><strong>{{bank_details}}</strong></p></div><p style="margin: 0 0 30px 0; color: #374151; line-height: 1.6;">Sollte die Zahlung bereits erfolgt sein, können Sie dieses Schreiben ignorieren. Für Fragen stehe ich gerne zur Verfügung.</p><div style="margin-top: 40px; padding: 20px; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;"><p style="margin: 0 0 20px 0; color: #92400e; font-size: 13px;">Mit freundlichen Grüßen</p><div style="margin-top: 30px;"><p style="margin: 0 0 40px 0; border-bottom: 1px solid #f59e0b; min-height: 30px;"></p><p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">{{landlord_name}}</p></div></div></div>`,
+        template_fields: [
+          { id: 'tenant_name', name: 'tenant_name', type: 'text', required: true },
+          { id: 'period', name: 'period', type: 'text', required: true },
+          { id: 'amount', name: 'amount', type: 'currency', required: true },
+          { id: 'due_date', name: 'due_date', type: 'date', required: true },
+          { id: 'payment_method', name: 'payment_method', type: 'text', required: false },
+          { id: 'payment_deadline', name: 'payment_deadline', type: 'date', required: true },
+          { id: 'bank_details', name: 'bank_details', type: 'text', required: true },
+          { id: 'landlord_name', name: 'landlord_name', type: 'text', required: true }
+        ],
+        description: 'Höfliche Zahlungserinnerung'
+      },
+
+      // 7. MAHNUNG
+      {
+        document_type: 'mahnung',
+        template_html: `<div style="font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px; background: #ffffff;"><div style="text-align: center; margin-bottom: 40px; border-bottom: 3px solid #dc2626; padding-bottom: 20px;"><h1 style="margin: 0; color: #dc2626; font-size: 28px; font-weight: 700;">MAHNUNG {{mahnung_level}}. STUFE</h1><p style="margin: 10px 0 0 0; color: #6b7280; font-size: 13px;">Zahlungsaufforderung</p></div><div style="background: #fee2e2; padding: 20px; border-radius: 8px; border-left: 4px solid #dc2626; margin-bottom: 30px;"><h3 style="margin: 0 0 10px 0; color: #7f1d1d; font-weight: 600;">AN</h3><p style="margin: 0; color: #111827; font-weight: 600;">{{tenant_name}}</p></div><p style="margin: 0 0 30px 0; color: #374151;">Sehr geehrter Mieter,</p><p style="margin: 0 0 20px 0; color: #374151; line-height: 1.6;">trotz Zahlungserinnerung ist folgende Zahlung bis heute nicht eingegangen:</p><table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Rechnungszeitraum:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{period}}</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Offener Betrag:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #dc2626; font-weight: 700; font-size: 15px;">{{amount}} EUR</td></tr><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Fälligkeitsdatum:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{due_date}}</td></tr></table><h2 style="color: #dc2626; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #fee2e2; padding-bottom: 10px;">ZAHLUNGSAUFFORDERUNG</h2><p style="margin: 0 0 15px 0; color: #374151; line-height: 1.6;">Wir mahnen Sie hiermit formell auf, den offenen Betrag bis <strong style="color: #dc2626;">{{payment_deadline}}</strong> zu bezahlen.</p><p style="margin: 0 0 15px 0; color: #374151; line-height: 1.6;">Die Zahlung erfolgt auf folgendes Bankkonto:</p><div style="background: #fee2e2; padding: 15px; border-radius: 6px; margin-bottom: 20px; font-family: monospace; color: #111827; font-size: 13px;"><p style="margin: 0;"><strong>{{bank_details}}</strong></p></div>{{#if_mahnung_3}}<div style="background: #fee2e2; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #dc2626;"><p style="margin: 0; color: #7f1d1d; font-weight: 600;">⚠️ WICHTIGER HINWEIS:</p><p style="margin: 5px 0 0 0; color: #7f1d1d; font-size: 13px;">Sollte die Zahlung bis zum genannten Termin nicht eingehen, werden wir rechtliche Schritte einleiten. Dies kann zu zusätzlichen Kosten und ggf. zur Kündigung des Mietverhältnisses führen.</p></div>{{/if_mahnung_3}}<div style="margin-top: 40px; padding: 20px; background: #fee2e2; border-left: 4px solid #dc2626; border-radius: 4px;"><p style="margin: 0 0 20px 0; color: #7f1d1d; font-size: 13px;">Mit freundlichen Grüßen</p><div style="margin-top: 30px;"><p style="margin: 0 0 40px 0; border-bottom: 1px solid #dc2626; min-height: 30px;"></p><p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">{{landlord_name}}</p></div></div></div>`,
+        template_fields: [
+          { id: 'mahnung_level', name: 'mahnung_level', type: 'text', required: true },
+          { id: 'tenant_name', name: 'tenant_name', type: 'text', required: true },
+          { id: 'period', name: 'period', type: 'text', required: true },
+          { id: 'amount', name: 'amount', type: 'currency', required: true },
+          { id: 'due_date', name: 'due_date', type: 'date', required: true },
+          { id: 'payment_deadline', name: 'payment_deadline', type: 'date', required: true },
+          { id: 'bank_details', name: 'bank_details', type: 'text', required: true },
+          { id: 'landlord_name', name: 'landlord_name', type: 'text', required: true }
+        ],
+        description: 'Mahnung (Stufe 1-3)'
+      },
+
+      // 8. ABMAHNUNG
+      {
+        document_type: 'abmahnung',
+        template_html: `<div style="font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px; background: #ffffff;"><div style="text-align: center; margin-bottom: 40px; border-bottom: 3px solid #991b1b; padding-bottom: 20px;"><h1 style="margin: 0; color: #991b1b; font-size: 28px; font-weight: 700;">ABMAHNUNG</h1><p style="margin: 10px 0 0 0; color: #6b7280; font-size: 13px;">Formelle Verwarnung wegen Vertragsverletzung</p></div><div style="background: #7f1d1d; color: white; padding: 20px; border-radius: 8px; margin-bottom: 30px;"><h3 style="margin: 0 0 10px 0; font-weight: 600;">AN</h3><p style="margin: 0; font-weight: 600;">{{tenant_name}}</p></div><p style="margin: 0 0 30px 0; color: #374151;">Sehr geehrter Mieter,</p><p style="margin: 0 0 20px 0; color: #374151; line-height: 1.6;">hiermit mahnen wir Sie ab und fordern Sie auf, folgende Vertragsverletzung sofort abzustellen:</p><h2 style="color: #991b1b; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #fee2e2; padding-bottom: 10px;">BESCHREIBUNG DER VERLETZUNG</h2><div style="background: #fee2e2; padding: 20px; border-radius: 6px; margin-bottom: 30px;"><p style="margin: 0; color: #374151; white-space: pre-wrap; line-height: 1.6;">{{violation_description}}</p></div><h2 style="color: #991b1b; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #fee2e2; padding-bottom: 10px;">FRISTSETZUNG</h2><p style="margin: 0 0 15px 0; color: #374151; line-height: 1.6;">Sie haben bis <strong style="color: #991b1b;">{{deadline}}</strong> Zeit, den Missstand zu beheben.</p><p style="margin: 0 0 20px 0; color: #374151; line-height: 1.6;">Sollten Sie dieser Aufforderung nicht nachkommen, behalten wir uns weitere rechtliche Schritte vor, einschließlich einer Kündigung des Mietverhältnisses.</p><div style="background: #fee2e2; padding: 20px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #991b1b;"><p style="margin: 0; color: #7f1d1d; font-weight: 600;">⚠️ HINWEIS:</p><p style="margin: 5px 0 0 0; color: #7f1d1d; font-size: 13px;">Dies ist eine formelle Verwarnung. Weitere Verstöße können zur sofortigen Beendigung des Mietverhältnisses führen.</p></div><div style="margin-top: 40px; padding: 20px; background: #fee2e2; border-left: 4px solid #991b1b; border-radius: 4px;"><p style="margin: 0 0 20px 0; color: #7f1d1d; font-size: 13px;">Mit freundlichen Grüßen</p><div style="margin-top: 30px;"><p style="margin: 0 0 40px 0; border-bottom: 1px solid #991b1b; min-height: 30px;"></p><p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">{{landlord_name}} / Datum</p></div></div></div>`,
+        template_fields: [
+          { id: 'tenant_name', name: 'tenant_name', type: 'text', required: true },
+          { id: 'violation_description', name: 'violation_description', type: 'textarea', required: true },
+          { id: 'deadline', name: 'deadline', type: 'date', required: true },
+          { id: 'landlord_name', name: 'landlord_name', type: 'text', required: true }
+        ],
+        description: 'Abmahnung bei Vertragsverletzung'
+      },
+
+      // 9. KÜNDIGUNG
+      {
+        document_type: 'kuendigung',
+        template_html: `<div style="font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px; background: #ffffff;"><div style="text-align: center; margin-bottom: 40px; border-bottom: 3px solid #7c2d12; padding-bottom: 20px;"><h1 style="margin: 0; color: #7c2d12; font-size: 28px; font-weight: 700;">KÜNDIGUNGSMITTEILUNG</h1><p style="margin: 10px 0 0 0; color: #6b7280; font-size: 13px;">Beendigung des Mietverhältnisses</p></div><div style="background: #fed7aa; padding: 20px; border-radius: 8px; border-left: 4px solid #7c2d12; margin-bottom: 30px;"><h3 style="margin: 0 0 10px 0; color: #7c2d12; font-weight: 600;">AN</h3><p style="margin: 0; color: #111827; font-weight: 600;">{{tenant_name}}</p></div><p style="margin: 0 0 20px 0; color: #374151;">Sehr geehrter Mieter,</p><p style="margin: 0 0 30px 0; color: #374151; line-height: 1.6;">hiermit kündigen wir das bestehende Mietverhältnis zum unten genannten Termin.</p><table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Kündigungsart:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{termination_type}}</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Kündigungsdatum:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{termination_date}}</td></tr><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Kündigungsfrist:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{notice_period}} Monate</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Wirksamer Kündigungstermin:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #7c2d12; font-weight: 700; font-size: 15px;">{{effective_date}}</td></tr></table><h2 style="color: #7c2d12; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #fed7aa; padding-bottom: 10px;">KÜNDIGUNGSGRUND</h2><div style="background: #fed7aa; padding: 20px; border-radius: 6px; margin-bottom: 30px;"><p style="margin: 0; color: #374151; white-space: pre-wrap; line-height: 1.6;">{{termination_reason}}</p></div><h2 style="color: #7c2d12; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #fed7aa; padding-bottom: 10px;">HANDLUNGSSCHRITTE</h2><ol style="margin: 0; padding-left: 20px; color: #374151; line-height: 1.8;"><li>Räumen Sie die Wohnung bis zum {{effective_date}} vollständig</li><li>Führen Sie mit uns ein Übergabeprotokoll durch</li><li>Leisten Sie eine gründliche Endreinigung</li><li>Geben Sie alle Schlüssel zurück</li><li>Teilen Sie Ihre neue Adresse mit</li></ol><div style="margin-top: 40px; padding: 20px; background: #fed7aa; border-left: 4px solid #7c2d12; border-radius: 4px;"><p style="margin: 0 0 20px 0; color: #7c2d12; font-size: 13px;">Mit freundlichen Grüßen</p><div style="margin-top: 30px;"><p style="margin: 0 0 40px 0; border-bottom: 1px solid #7c2d12; min-height: 30px;"></p><p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">{{landlord_name}} / Datum</p></div></div></div>`,
+        template_fields: [
+          { id: 'tenant_name', name: 'tenant_name', type: 'text', required: true },
+          { id: 'termination_type', name: 'termination_type', type: 'text', required: true },
+          { id: 'termination_date', name: 'termination_date', type: 'date', required: true },
+          { id: 'notice_period', name: 'notice_period', type: 'number', required: true },
+          { id: 'effective_date', name: 'effective_date', type: 'date', required: true },
+          { id: 'termination_reason', name: 'termination_reason', type: 'textarea', required: false },
+          { id: 'landlord_name', name: 'landlord_name', type: 'text', required: true }
+        ],
+        description: 'Kündigungsmitteilung'
+      },
+
+      // 10. BETRIEBSKOSTENABRECHNUNG
+      {
+        document_type: 'betriebskostenabrechnung',
+        template_html: `<div style="font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px; background: #ffffff;"><div style="text-align: center; margin-bottom: 40px; border-bottom: 3px solid #059669; padding-bottom: 20px;"><h1 style="margin: 0; color: #059669; font-size: 28px; font-weight: 700;">BETRIEBSKOSTENABRECHNUNG</h1><p style="margin: 10px 0 0 0; color: #6b7280; font-size: 13px;">Jahresabrechnung Nebenkosten</p></div><div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin-bottom: 30px;"><p style="margin: 0 0 10px 0; color: #111827; font-weight: 600;">{{property_address}}</p><p style="margin: 0; color: #6b7280; font-size: 13px;">Abrechnungszeitraum: {{start_date}} bis {{end_date}}</p></div><h2 style="color: #059669; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #d1fae5; padding-bottom: 10px;">KOSTENAUFSTELLUNG</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"><tr style="background: #f9fafb;"><td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151; width: 60%;">Kostenart</td><td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151; text-align: right;">Betrag (EUR)</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">Heizung und Warmwasser</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; text-align: right;">{{heating_costs}}</td></tr><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">Wasser / Abwasser</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; text-align: right;">{{water_costs}}</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">Müllabfuhr</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; text-align: right;">{{waste_costs}}</td></tr><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">Straßenreinigung</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; text-align: right;">{{street_cleaning_costs}}</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">Hausmeister / Reinigung</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; text-align: right;">{{cleaning_costs}}</td></tr><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">Sonstige Betriebskosten</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; text-align: right;">{{other_costs}}</td></tr><tr style="background: #d1fae5;"><td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 700; color: #059669;">GESAMTKOSTEN</td><td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 700; color: #059669; text-align: right; font-size: 15px;">{{total_costs}}</td></tr></table><h2 style="color: #059669; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #d1fae5; padding-bottom: 10px;">IHR ANTEIL</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 60%; font-weight: 600; color: #374151;">Geleistete Vorauszahlungen:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; text-align: right;">{{paid_advances}}</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; width: 60%; font-weight: 600; color: #374151;">Erneuerter Anteil:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; text-align: right;">{{calculated_amount}}</td></tr><tr style="background: #d1fae5;"><td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 700; color: #059669;">Differenz (Nachzahlung / Rückerstattung):</td><td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 700; color: #059669; text-align: right; font-size: 15px;">{{balance}}</td></tr></table><div style="margin-top: 40px; padding: 20px; background: #f0fdf4; border-left: 4px solid #059669; border-radius: 4px;"><p style="margin: 0 0 10px 0; color: #15803d; font-size: 13px;">Diese Abrechnung basiert auf den tatsächlich angefallenen Betriebskosten des Abrechnungszeitraums.</p><div style="margin-top: 30px;"><p style="margin: 0 0 40px 0; border-bottom: 1px solid #059669; min-height: 30px;"></p><p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">{{landlord_name}} / Datum</p></div></div></div>`,
+        template_fields: [
+          { id: 'property_address', name: 'property_address', type: 'text', required: true },
+          { id: 'start_date', name: 'start_date', type: 'date', required: true },
+          { id: 'end_date', name: 'end_date', type: 'date', required: true },
+          { id: 'heating_costs', name: 'heating_costs', type: 'currency', required: true },
+          { id: 'water_costs', name: 'water_costs', type: 'currency', required: true },
+          { id: 'waste_costs', name: 'waste_costs', type: 'currency', required: true },
+          { id: 'street_cleaning_costs', name: 'street_cleaning_costs', type: 'currency', required: false },
+          { id: 'cleaning_costs', name: 'cleaning_costs', type: 'currency', required: false },
+          { id: 'other_costs', name: 'other_costs', type: 'currency', required: false },
+          { id: 'total_costs', name: 'total_costs', type: 'currency', required: true },
+          { id: 'paid_advances', name: 'paid_advances', type: 'currency', required: true },
+          { id: 'calculated_amount', name: 'calculated_amount', type: 'currency', required: true },
+          { id: 'balance', name: 'balance', type: 'currency', required: true },
+          { id: 'landlord_name', name: 'landlord_name', type: 'text', required: true }
+        ],
+        description: 'Jahresabrechnung Betriebskosten'
+      },
+
+      // 11. MIETERHÖHUNG
+      {
+        document_type: 'mieterhoehung',
+        template_html: `<div style="font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px; background: #ffffff;"><div style="text-align: center; margin-bottom: 40px; border-bottom: 3px solid #d97706; padding-bottom: 20px;"><h1 style="margin: 0; color: #d97706; font-size: 28px; font-weight: 700;">MIETERHÖHUNGSVERLANGEN</h1><p style="margin: 10px 0 0 0; color: #6b7280; font-size: 13px;">Anpassung der Mietkosten</p></div><div style="background: #fef3c7; padding: 20px; border-radius: 8px; border-left: 4px solid #d97706; margin-bottom: 30px;"><h3 style="margin: 0 0 10px 0; color: #d97706; font-weight: 600;">AN</h3><p style="margin: 0; color: #111827; font-weight: 600;">{{tenant_name}}</p></div><p style="margin: 0 0 30px 0; color: #374151;">Sehr geehrter Mieter,</p><p style="margin: 0 0 20px 0; color: #374151; line-height: 1.6;">hiermit teilen wir Ihnen mit, dass wir die Miete für die oben genannte Wohnung erhöhen möchten:</p><table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Wohnung:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{property_address}}</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Kündigungsdatum:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{notice_date}}</td></tr></table><h2 style="color: #d97706; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #fef3c7; padding-bottom: 10px;">MIETANPASSUNG</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Bisherige Kaltmiete:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; font-weight: 600;">{{current_rent}} EUR</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Neue Kaltmiete:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #d97706; font-weight: 700; font-size: 15px;">{{new_rent}} EUR</td></tr><tr style="background: #fef3c7;"><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #d97706;">Erhöhung:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #d97706; font-weight: 700;">{{increase_amount}} EUR ({{increase_percentage}}%)</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Wirksam ab:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; font-weight: 600;">{{effective_date}}</td></tr></table><h2 style="color: #d97706; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #fef3c7; padding-bottom: 10px;">BEGRÜNDUNG</h2><div style="background: #fef3c7; padding: 20px; border-radius: 6px; margin-bottom: 20px;"><p style="margin: 0; color: #374151; white-space: pre-wrap; line-height: 1.6;">{{reason}}</p></div><div style="margin-top: 40px; padding: 20px; background: #fef3c7; border-left: 4px solid #d97706; border-radius: 4px;"><p style="margin: 0 0 20px 0; color: #92400e; font-size: 13px;">Die Erhöhung der Miete ist gem. § 558 BGB zulässig.</p><div style="margin-top: 30px;"><p style="margin: 0 0 40px 0; border-bottom: 1px solid #d97706; min-height: 30px;"></p><p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">{{landlord_name}} / Datum</p></div></div></div>`,
+        template_fields: [
+          { id: 'tenant_name', name: 'tenant_name', type: 'text', required: true },
+          { id: 'property_address', name: 'property_address', type: 'text', required: true },
+          { id: 'notice_date', name: 'notice_date', type: 'date', required: true },
+          { id: 'current_rent', name: 'current_rent', type: 'currency', required: true },
+          { id: 'new_rent', name: 'new_rent', type: 'currency', required: true },
+          { id: 'increase_amount', name: 'increase_amount', type: 'currency', required: false },
+          { id: 'increase_percentage', name: 'increase_percentage', type: 'number', required: false },
+          { id: 'effective_date', name: 'effective_date', type: 'date', required: true },
+          { id: 'reason', name: 'reason', type: 'textarea', required: false },
+          { id: 'landlord_name', name: 'landlord_name', type: 'text', required: true }
+        ],
+        description: 'Mieterhöhungsverlangen'
+      },
+
+      // 12. WOHNUNGSGEBERBESCHEINIGUNG
+      {
+        document_type: 'wohnungsgeberbestaetigung',
+        template_html: `<div style="font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px; background: #ffffff;"><div style="text-align: center; margin-bottom: 40px; border-bottom: 3px solid #0ea5e9; padding-bottom: 20px;"><h1 style="margin: 0; color: #0ea5e9; font-size: 26px; font-weight: 700;">WOHNUNGSGEBERBESCHEINIGUNG</h1><p style="margin: 10px 0 0 0; color: #6b7280; font-size: 13px;">Gemäß § 21 Abs. 3 Satz 1 MStättV (Meldegesetz)</p></div><div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin-bottom: 30px;"><p style="margin: 0 0 10px 0; color: #374151; font-weight: 600;">Diese Bescheinigung wird ausgestellt von:</p><p style="margin: 0; color: #111827;">{{landlord_name}}</p><p style="margin: 5px 0 0 0; color: #6b7280; font-size: 13px;">{{landlord_address}}</p></div><h2 style="color: #0ea5e9; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #cffafe; padding-bottom: 10px;">MIETER/IN</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Name:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{tenant_name}}</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Geburtsdatum:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{tenant_dob}}</td></tr></table><h2 style="color: #0ea5e9; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #cffafe; padding-bottom: 10px;">WOHNUNGSADRESSE</h2><p style="margin: 0 0 20px 0; color: #111827; font-weight: 600; line-height: 1.6;">{{property_address}}</p><h2 style="color: #0ea5e9; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #cffafe; padding-bottom: 10px;">MIETVERHÄLTNIS</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Mietbeginn:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{move_in_date}}</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Anzahl Räume:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{room_count}}</td></tr><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Wohnfläche:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{sqm}} m²</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Nutzung als:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">Wohnung</td></tr></table><div style="margin-top: 40px; padding: 20px; background: #ecf0f1; border-radius: 6px;"><p style="margin: 0 0 10px 0; color: #0ea5e9; font-size: 13px;">Diese Bescheinigung wird für Anmeldezwecke beim Bürgerbüro/Meldeamt verwendet.</p><div style="margin-top: 30px;"><p style="margin: 0 0 40px 0; border-bottom: 1px solid #0ea5e9; min-height: 30px;"></p><p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">{{landlord_name}} / Datum</p></div></div></div>`,
+        template_fields: [
+          { id: 'landlord_name', name: 'landlord_name', type: 'text', required: true },
+          { id: 'landlord_address', name: 'landlord_address', type: 'text', required: true },
+          { id: 'tenant_name', name: 'tenant_name', type: 'text', required: true },
+          { id: 'tenant_dob', name: 'tenant_dob', type: 'date', required: true },
+          { id: 'property_address', name: 'property_address', type: 'text', required: true },
+          { id: 'move_in_date', name: 'move_in_date', type: 'date', required: true },
+          { id: 'room_count', name: 'room_count', type: 'number', required: false },
+          { id: 'sqm', name: 'sqm', type: 'number', required: false }
+        ],
+        description: 'Wohnungsgeberbescheinigung'
+      },
+
+      // 13. SCHADENSANZEIGE
+      {
+        document_type: 'schadensanzeige',
+        template_html: `<div style="font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px; background: #ffffff;"><div style="text-align: center; margin-bottom: 40px; border-bottom: 3px solid #6366f1; padding-bottom: 20px;"><h1 style="margin: 0; color: #6366f1; font-size: 28px; font-weight: 700;">SCHADENSANZEIGE</h1><p style="margin: 10px 0 0 0; color: #6b7280; font-size: 13px;">Mängelmitteilung</p></div><div style="background: #eef2ff; padding: 20px; border-radius: 8px; margin-bottom: 30px;"><h3 style="margin: 0 0 10px 0; color: #6366f1; font-weight: 600;">WOHNUNG</h3><p style="margin: 0; color: #111827;">{{property_address}}</p></div><h2 style="color: #6366f1; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #e0e7ff; padding-bottom: 10px;">SCHADENMELDUNG</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Meldedatum:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{report_date}}</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Betroffener Bereich:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{damage_location}}</td></tr></table><h2 style="color: #6366f1; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #e0e7ff; padding-bottom: 10px;">SCHADENBESCHREIBUNG</h2><div style="background: #eef2ff; padding: 20px; border-radius: 6px; margin-bottom: 20px;"><p style="margin: 0; color: #374151; white-space: pre-wrap; line-height: 1.6;">{{damage_description}}</p></div><h2 style="color: #6366f1; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #e0e7ff; padding-bottom: 10px;">WEITERE INFORMATIONEN</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Geschätzter Schadenwert:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{damage_value}} EUR</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Ursache:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{damage_cause}}</td></tr></table><div style="margin-top: 40px; padding: 20px; background: #eef2ff; border-left: 4px solid #6366f1; border-radius: 4px;"><p style="margin: 0 0 20px 0; color: #4f46e5; font-size: 13px;">Diese Schadensanzeige wird unverzüglich an die Hausverwaltung und ggf. an die Versicherung weitergeleitet.</p><div style="margin-top: 30px;"><p style="margin: 0 0 40px 0; border-bottom: 1px solid #6366f1; min-height: 30px;"></p><p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">Mieter/in / Datum</p></div></div></div>`,
+        template_fields: [
+          { id: 'property_address', name: 'property_address', type: 'text', required: true },
+          { id: 'report_date', name: 'report_date', type: 'date', required: true },
+          { id: 'damage_location', name: 'damage_location', type: 'text', required: true },
+          { id: 'damage_description', name: 'damage_description', type: 'textarea', required: true },
+          { id: 'damage_value', name: 'damage_value', type: 'currency', required: false },
+          { id: 'damage_cause', name: 'damage_cause', type: 'textarea', required: false }
+        ],
+        description: 'Schadensanzeige / Mängelanzeige'
+      },
+
+      // 14. AUFTRAGSERTEILUNG
+      {
+        document_type: 'auftragserteilung',
+        template_html: `<div style="font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px; background: #ffffff;"><div style="text-align: center; margin-bottom: 40px; border-bottom: 3px solid #ec4899; padding-bottom: 20px;"><h1 style="margin: 0; color: #ec4899; font-size: 28px; font-weight: 700;">AUFTRAGSERTEILUNG</h1><p style="margin: 10px 0 0 0; color: #6b7280; font-size: 13px;">Beauftragung von Handwerker/Dienstleister</p></div><div style="background: #fce7f3; padding: 20px; border-radius: 8px; margin-bottom: 30px;"><h3 style="margin: 0 0 10px 0; color: #ec4899; font-weight: 600;">AUFTRAGNEHMER</h3><p style="margin: 0; color: #111827; font-weight: 600;">{{contractor_name}}</p></div><h2 style="color: #ec4899; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #fbcfe8; padding-bottom: 10px;">AUFTRAGSDETAILS</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Auftragsdatum:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{order_date}}</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Einsatzort:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{property_address}}</td></tr><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Geplanter Termin:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{due_date}}</td></tr></table><h2 style="color: #ec4899; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #fbcfe8; padding-bottom: 10px;">LEISTUNGSBESCHREIBUNG</h2><div style="background: #fce7f3; padding: 20px; border-radius: 6px; margin-bottom: 20px;"><p style="margin: 0; color: #374151; white-space: pre-wrap; line-height: 1.6;">{{service_description}}</p></div><h2 style="color: #ec4899; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #fbcfe8; padding-bottom: 10px;">VEREINBARUNG</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Vereinbartes Honorar:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #ec4899; font-weight: 700; font-size: 15px;">{{price}} EUR</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Material enthalten:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{materials_included}}</td></tr><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Zahlungsweise:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{payment_method}}</td></tr></table><div style="margin-top: 40px; padding: 20px; background: #fce7f3; border-left: 4px solid #ec4899; border-radius: 4px;"><p style="margin: 0 0 20px 0; color: #9f1239; font-size: 13px;">Dieser Auftrag wird erteilt unter Anerkennung der angegebenen Konditionen.</p><div style="margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px;"><div><p style="margin: 0 0 40px 0; border-bottom: 1px solid #ec4899; min-height: 30px;"></p><p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">Auftraggeber / Datum</p></div><div><p style="margin: 0 0 40px 0; border-bottom: 1px solid #ec4899; min-height: 30px;"></p><p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">Auftragnehmer / Datum</p></div></div></div></div>`,
+        template_fields: [
+          { id: 'contractor_name', name: 'contractor_name', type: 'text', required: true },
+          { id: 'order_date', name: 'order_date', type: 'date', required: true },
+          { id: 'property_address', name: 'property_address', type: 'text', required: true },
+          { id: 'due_date', name: 'due_date', type: 'date', required: false },
+          { id: 'service_description', name: 'service_description', type: 'textarea', required: true },
+          { id: 'price', name: 'price', type: 'currency', required: true },
+          { id: 'materials_included', name: 'materials_included', type: 'text', required: false },
+          { id: 'payment_method', name: 'payment_method', type: 'text', required: false }
+        ],
+        description: 'Auftragserteilung'
+      },
+
+      // 15. KAUTIONSQUITTUNG
+      {
+        document_type: 'kautionsquittung',
+        template_html: `<div style="font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 40px; background: #ffffff;"><div style="text-align: center; margin-bottom: 40px; border-bottom: 3px solid #8b5cf6; padding-bottom: 20px;"><h1 style="margin: 0; color: #8b5cf6; font-size: 28px; font-weight: 700;">KAUTIONSQUITTUNG</h1><p style="margin: 10px 0 0 0; color: #6b7280; font-size: 13px;">Kaution und Endabrechnung</p></div><div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin-bottom: 30px;"><p style="margin: 0 0 10px 0; color: #374151; font-weight: 600;">Mieter: {{tenant_name}}</p><p style="margin: 0; color: #6b7280; font-size: 13px;">Objekt: {{property_address}}</p></div><h2 style="color: #8b5cf6; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #ede9fe; padding-bottom: 10px;">KAUTION</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 40%; font-weight: 600; color: #374151;">Eingezahlte Kaution:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #8b5cf6; font-weight: 700; font-size: 15px;">{{deposit_amount}} EUR</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Eingangsdatum:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827;">{{deposit_date}}</td></tr></table><h2 style="color: #8b5cf6; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #ede9fe; padding-bottom: 10px;">KOSTENABRECHNUNG</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 60%; font-weight: 600; color: #374151;">Reparaturen / Schäden:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; text-align: right;">{{repairs_costs}} EUR</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Professionelle Reinigung:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; text-align: right;">{{cleaning_costs}} EUR</td></tr><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Sonstige Kosten:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; text-align: right;">{{other_costs}} EUR</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Ersatz fehlender Gegenstände:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; text-align: right;">{{missing_items_costs}} EUR</td></tr><tr style="background: #ede9fe;"><td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 700; color: #6b21a8;">Gesamtkosten:</td><td style="padding: 12px; border: 1px solid #e5e7eb; color: #6b21a8; text-align: right; font-size: 15px; font-weight: 700;">{{total_costs}} EUR</td></tr></table><h2 style="color: #8b5cf6; font-size: 16px; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #ede9fe; padding-bottom: 10px;">ABRECHNUNG</h2><table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;"><tr style="background: #f9fafb;"><td style="padding: 10px; border: 1px solid #e5e7eb; width: 60%; font-weight: 600; color: #374151;">Eingezahlte Kaution:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; text-align: right; font-weight: 600;">{{deposit_amount}} EUR</td></tr><tr><td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: 600; color: #374151;">Abzüge insgesamt:</td><td style="padding: 10px; border: 1px solid #e5e7eb; color: #111827; text-align: right;">{{total_costs}} EUR</td></tr><tr style="background: #ede9fe;"><td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 700; color: #6b21a8;">Zu zahlende Differenz:</td><td style="padding: 12px; border: 1px solid #e5e7eb; color: #6b21a8; text-align: right; font-size: 15px; font-weight: 700;">{{balance}} EUR</td></tr></table><div style="background: #ede9fe; padding: 20px; border-radius: 6px; margin-bottom: 20px; line-height: 1.6; font-size: 13px;"><p style="margin: 0; color: #6b21a8;"><strong>{{#if_refund}}Rückzahlung{{/if_refund}}{{#if_payment}}Nachzahlung{{/if_payment}}</strong> wird zum angegebenen Termin durchgeführt.</p></div><div style="margin-top: 40px; padding: 20px; background: #f5f3ff; border-left: 4px solid #8b5cf6; border-radius: 4px;"><div style="margin-top: 30px;"><p style="margin: 0 0 40px 0; border-bottom: 1px solid #8b5cf6; min-height: 30px;"></p><p style="margin: 0; color: #374151; font-weight: 600; font-size: 13px;">{{landlord_name}} / Datum</p></div></div></div>`,
+        template_fields: [
+          { id: 'tenant_name', name: 'tenant_name', type: 'text', required: true },
+          { id: 'property_address', name: 'property_address', type: 'text', required: true },
+          { id: 'deposit_amount', name: 'deposit_amount', type: 'currency', required: true },
+          { id: 'deposit_date', name: 'deposit_date', type: 'date', required: true },
+          { id: 'repairs_costs', name: 'repairs_costs', type: 'currency', required: false },
+          { id: 'cleaning_costs', name: 'cleaning_costs', type: 'currency', required: false },
+          { id: 'other_costs', name: 'other_costs', type: 'currency', required: false },
+          { id: 'missing_items_costs', name: 'missing_items_costs', type: 'currency', required: false },
+          { id: 'total_costs', name: 'total_costs', type: 'currency', required: true },
+          { id: 'balance', name: 'balance', type: 'currency', required: true },
+          { id: 'landlord_name', name: 'landlord_name', type: 'text', required: true }
+        ],
+        description: 'Kautionsquittung und Abrechnung'
       }
     ];
 
@@ -141,8 +283,13 @@ Deno.serve(async (req) => {
       await base44.entities.DocumentTemplate.create(template);
     }
 
-    return Response.json({ success: true, created: 1 });
+    return Response.json({
+      success: true,
+      message: `${templates.length} professionelle Dokumentvorlagen erstellt`,
+      templates_created: templates.length
+    });
   } catch (error) {
+    console.error('Fehler:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
