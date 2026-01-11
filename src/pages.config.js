@@ -359,6 +359,13 @@ import KommunikationDashboard from './pages/KommunikationDashboard';
 import BulkMessaging from './pages/BulkMessaging';
 import NotificationPreferences from './pages/NotificationPreferences';
 import CommunicationTemplates from './pages/CommunicationTemplates';
+import CommunityForum from './pages/CommunityForum';
+import LetterXpressManagement from './pages/LetterXpressManagement';
+import AITemplateGenerator from './pages/AITemplateGenerator';
+import NotificationHistory from './pages/NotificationHistory';
+import CommunicationAnalytics from './pages/CommunicationAnalytics';
+import AutomatedCommunication from './pages/AutomatedCommunication';
+import CommunicationAuditLog from './pages/CommunicationAuditLog';
 import __Layout from './Layout.jsx';
 
 
@@ -724,6 +731,13 @@ export const PAGES = {
     "BulkMessaging": BulkMessaging,
     "NotificationPreferences": NotificationPreferences,
     "CommunicationTemplates": CommunicationTemplates,
+    "CommunityForum": CommunityForum,
+    "LetterXpressManagement": LetterXpressManagement,
+    "AITemplateGenerator": AITemplateGenerator,
+    "NotificationHistory": NotificationHistory,
+    "CommunicationAnalytics": CommunicationAnalytics,
+    "AutomatedCommunication": AutomatedCommunication,
+    "CommunicationAuditLog": CommunicationAuditLog,
 }
 
 export const pagesConfig = {
