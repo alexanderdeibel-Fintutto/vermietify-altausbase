@@ -8,17 +8,41 @@ Deno.serve(async (req) => {
         if (!user || user.role !== 'admin') {
             return Response.json({ error: 'Forbidden' }, { status: 403 });
         }
-
-        // This is the correct way to get all schemas.
-        // entities.list() without an entity name returns a list of all entity definitions.
-        const entityList = await base44.asServiceRole.entities.list();
         
+        const entityNames = [...new Set([
+            'Building', 'Unit', 'Tenant', 'LeaseContract', 'Document', 'Template',
+            'PropertyTax', 'Insurance', 'Financing', 'Supplier', 'BankAccount',
+            'BankTransaction', 'GeneratedFinancialBooking', 'Invoice', 'CostCategory',
+            'Task', 'Email', 'LetterXpressCredential', 'LetterShipment',
+            'Owner', 'Shareholder', 'OwnerRelationship', 'Payment', 'RentChange',
+            'PurchaseContract', 'IMAPAccount', 'Workflow', 'WorkflowStep', 'Automation',
+            'ActivityLog', 'Notification', 'TextBlock', 'TaskStatus', 'TaskPriority',
+            'TaxForm', 'TaxFormField', 'AnlageVSubmission', 'BuildingTaxLibrary',
+            'AfASchedule', 'BookingGenerationRule', 'OperatingCostStatement',
+            'OperatingCostStatementItem', 'Recipient', 'FinancialItem',
+            'CategorizationRule', 'PaymentTransactionLink', 'FinancialItemTransactionLink',
+            'EuerCategory', 'TaxCategory', 'CostTaxLink', 'CustomCostCategory', 'CostType',
+            'Gebaeude', 'Meter', 'DocumentOriginal', 'GeneratedDocumentation',
+            'DocumentationChange', 'UserProblem', 'ProblemCategory', 'ProblemSolution',
+            'ProblemStatistics', 'ProjectFeature', 'TenantNotification', 'TenantMessage', 'DocumentTemplate', 
+            'CommunityPost', 'Viewing', 'MaintenanceTask', 'Termination', 'GeneratedDocument', 
+            'FieldTask', 'BuildingInspection', 'InspectionChecklist', 'InspectionFinding', 'CommunityComment',
+            'SurveyResponse', 'TenantSurvey', 'Announcement', 'ServiceRating', 'ARViewing', 'TenantAppSession', 'TenantFavorite', 'SmartDevice', 'RentOptimization', 'IncomeVariance', 'DigitalKey', 'ServiceProvider', 'PropertyROI', 'MaintenancePrediction', 'ComplianceCheck', 'PaymentReminder', 'HeritageProtection', 'PortfolioMetrics', 'SmartContract', 'IndustryBenchmark', 'EnergyPassport', 'IndexRentAdjustment', 'ContractRenewal', 'RentIncrease', 'PropertyBudget', 'Deposit', 'Applicant', 'HandoverProtocol', 'UtilitySettlement', 'LoanPayment', 'SEPAMandate', 'Reserve', 'MaintenanceRoute', 'Vacancy', 'RentDebt', 'SignatureRequest', 'DocumentVersion', 'DLPViolation', 'DocumentRights', 'DLPRule', 'DocumentLock', 'DocumentEncryption', 'TenantAccessControl', 'DashboardConfig', 'CustomMetadataField', 'DocumentComment', 'DocumentRelationship', 'DocumentExpiry', 'DocumentCollaborationSession', 'DocumentPermission', 'Webhook', 'DocumentClassificationRule', 'DocumentRetentionPolicy', 'ComplianceReport', 'WorkflowExecution', 'WorkflowComment', 'WorkflowCollaborationSession', 'WorkflowCondition', 'WorkflowRoleAssignment', 'WorkflowTrigger', 'WorkflowRole', 'WorkflowIntegration', 'ReportSchedule', 'WorkflowTemplate', 'WorkflowPermission', 'UserGroup', 'WorkflowVersion', 'AuditLog', 'CustomRole', 'PermissionAuditLog', 'UserPreferences', 'WorkflowAutomation', 'UserRoleAssignment', 'UserRole', 'DocumentWorkflowRule', 'DocumentTask', 'DocumentWorkflow', 'DocumentArchive', 'DocumentAnalytics', 'Company', 'KnowledgeBaseArticle', 'DashboardTemplate', 'WidgetInteraction', 'TenantOnboarding', 'DocumentAnalysis', 'Budget', 'MessageThread', 'IoTSensor', 'HeatingOptimization', 'TenantIssueReport', 'EnergyAnalysis', 'SensorReading', 'BuildingTask', 'SavedSearch', 'MeterReading', 'MeterReadingSchedule', 'MeterReadingRoute', 'Vendor', 'VendorRating', 'VendorTask', 'BuildingManager', 'VendorDocument', 'NotificationPreference', 'BuildingBoardComment', 'BuildingBoardPost', 'DocumentSignature', 'SupportTicket', 'CommunicationTemplate', 'OnboardingWorkflow', 'ApprovalWorkflow', 'BudgetRequest', 'OnboardingAuditLog', 'TenantFeedback', 'RollingBudget', 'TenantAdministrationLock', 'ExpenseReport', 'CostOptimizationAnalysis', 'BudgetScenario', 'DepartmentMember', 'Department', 'UserPermission', 'UserAuditLog', 'FinAPISync', 'ReportConfig', 'FinancialReport', 'SyncJob', 'SyncAuditLog', 'ElsterSubmission', 'TaxLawUpdate', 'TaxConfig', 'TaxRuleCategory', 'TaxRule', 'TaxRuleAuditLog', 'OnboardingScenario', 'TaxProfile', 'CrossBorderTransaction', 'CryptoHolding', 'DashboardWidget', 'DocumentInbox', 'OtherIncomeCH', 'TaxDeadline', 'TaxLossCarryforward', 'TaxAuditFile', 'TaxReminder', 'TaxCalculation', 'TaxCompliance', 'TaxScenario', 'TaxAlert', 'TaxDocument', 'TaxPlanning', 'TaxFiling', 'CapitalGainCH', 'PriceHistory', 'PortfolioShare', 'CantonConfig', 'PortfolioAlert', 'AutomationConfig', 'OtherIncomeAT', 'InvestmentAT', 'InvestmentCH', 'CapitalGainAT', 'RealEstateCH', 'PortfolioComment', 'ComplianceAudit', 'AIRecommendation', 'Investment', 'TeamActivityLog', 'CapitalGain', 'OwnerAssetLink', 'AdvisorPortal', 'OtherIncome', 'AssetPortfolio', 'ScenarioSimulation', 'PortfolioBenchmark', 'PortfolioNotification', 'RebalancingStrategy', 'AssetPerformanceHistory', 'ImportBatchLog', 'ImportMapping', 'FinancialItem', 'CostCenter', 'BudgetAlert', 'CashflowForecast', 'TenantCommunication', 'Equipment', 'UserOnboarding', 'TesterAnalytics', 'UserJourney', 'ArchivedInsights', 'AIInsight', 'UserSegment', 'ProblemSummary', 'CleanupLog', 'TestPhase', 'UXPattern', 'Theme', 'TestAssignment', 'TestSession', 'TesterInvitation', 'TestAccount', 'TesterActivity', 'NavigationState', 'FeatureUnlock', 'UserPackageConfiguration', 'PackageTemplate', 'LegalKnowledgeBase', 'LegalUpdateMonitor', 'KnowledgeGap', 'ClaudeAnalysisReport', 'TaxCategoryMaster', 'ElsterCertificate', 'ElsterFormTemplate', 'ProblemReportSummary', 'UserPackageConfig', 'OnboardingProgress', 'EmailTemplate', 'APIKey', 'ModulePricing', 'FieldPermission', 'Role', 'ModuleAccess', 'Permission', 'UserActivity', 'UserSuiteSubscription', 'ModuleDefinition', 'UserModuleAccess', 'AppSuite', 'WhatsAppOptIn', 'WhatsAppTemplate', 'WhatsAppAccount', 'WhatsAppMessage', 'WhatsAppWebhookLog', 'WhatsAppContact'
+        ])];
+
         const schemas = {};
         
-        // Extract the schema from each entity definition
-        for (const entityDef of entityList) {
-            if (entityDef.name && entityDef.schema) {
-                schemas[entityDef.name] = { name: entityDef.name, ...entityDef.schema };
+        for (const name of entityNames) {
+            if (!name) continue;
+            try {
+                // Calling schema() on the user-level client
+                const schema = await base44.entities[name].schema();
+                if (schema) {
+                    schemas[name] = { name, ...schema };
+                }
+            } catch (error) {
+                // It's possible some entities don't have schemas or user lacks permission
+                console.log(`Could not fetch schema for ${name}:`, error.message);
             }
         }
 
