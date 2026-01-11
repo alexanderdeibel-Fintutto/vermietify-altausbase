@@ -248,21 +248,36 @@ export default function KommunikationDashboard() {
                 </Card>
 
                 <Card>
-                <CardHeader>
-                 <CardTitle className="text-lg flex items-center gap-2">
-                   <Users className="w-5 h-5" />
-                   Community-Forum
-                 </CardTitle>
-                </CardHeader>
-                <CardContent>
-                 <p className="text-sm text-slate-600 mb-4">Mieter-Austausch und Gemeinschaftsposts</p>
-                 <Link to={createPageUrl('CommunityForum')}>
-                   <Button className="w-full">Zum Forum</Button>
-                 </Link>
-                </CardContent>
-                </Card>
-                </div>
-                </TabsContent>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Users className="w-5 h-5" />
+                        Community-Forum
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-slate-600 mb-4">Mieter-Austausch und Gemeinschaftsposts</p>
+                      <Link to={createPageUrl('CommunityForum')}>
+                        <Button className="w-full">Zum Forum</Button>
+                      </Link>
+                    </CardContent>
+                    </Card>
+
+                    <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Mail className="w-5 h-5" />
+                        Postversand
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-slate-600 mb-4">LetterXpress Integration für Briefe</p>
+                      <Link to={createPageUrl('LetterXpressManagement')}>
+                        <Button className="w-full">Postversand verwalten</Button>
+                      </Link>
+                    </CardContent>
+                    </Card>
+                    </div>
+                    </TabsContent>
 
         {/* Ankündigungen Tab */}
         {isAdmin && (
