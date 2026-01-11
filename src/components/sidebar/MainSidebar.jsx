@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { DollarSign, Home, Users, Building2, Calculator, ChevronRight } from 'lucide-react';
+import { DollarSign, Home, Users, Building2, Calculator, ChevronRight, FileText, MessageSquare } from 'lucide-react';
 import { useSelectedBuilding } from '@/components/hooks/useSelectedBuilding';
 import BuildingSelector from './BuildingSelector';
 
@@ -52,6 +52,26 @@ const CATEGORIES = [
     pages: [
       { name: 'TaxManagement', label: 'Übersicht' },
       { name: 'TaxDocumentManager', label: 'Dokumente' },
+    ]
+  },
+  {
+    id: 'dokumente',
+    label: 'Dokumente',
+    icon: FileText,
+    pages: [
+      { name: 'DocumentManagement', label: 'Verwaltung' },
+      { name: 'DocumentInbox', label: 'Eingang' },
+      { name: 'DocumentTemplateManager', label: 'Vorlagen' },
+    ]
+  },
+  {
+    id: 'kommunikation',
+    label: 'Kommunikation',
+    icon: MessageSquare,
+    pages: [
+      { name: 'TenantCommunicationCenter', label: 'Übersicht' },
+      { name: 'AdminMessagingCenter', label: 'Nachrichten' },
+      { name: 'AdminAnnouncementCenter', label: 'Ankündigungen' },
     ]
   }
 ];
