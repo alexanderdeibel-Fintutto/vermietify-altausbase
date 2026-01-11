@@ -124,7 +124,13 @@ export default function MainSidebar() {
             <div key={category.id} className="space-y-1">
               <button
                 onClick={() => setExpandedCategory(isExpanded ? null : category.id)}
-                className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+                className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+                style={{
+                  color: themeColor,
+                  backgroundColor: isExpanded ? `${themeColor}08` : 'transparent',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = `${themeColor}12`}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isExpanded ? `${themeColor}08` : 'transparent'}
               >
                 <div className="flex items-center gap-2">
                   <Icon className="w-4 h-4" />
@@ -161,7 +167,13 @@ export default function MainSidebar() {
             <div key={category.id} className="space-y-1">
               <button
                 onClick={() => setExpandedCategory(isExpanded ? null : category.id)}
-                className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+                className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+                style={{
+                  color: themeColor,
+                  backgroundColor: isExpanded ? `${themeColor}08` : 'transparent',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = `${themeColor}12`}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isExpanded ? `${themeColor}08` : 'transparent'}
               >
                 <div className="flex items-center gap-2">
                   <Icon className="w-4 h-4" />
