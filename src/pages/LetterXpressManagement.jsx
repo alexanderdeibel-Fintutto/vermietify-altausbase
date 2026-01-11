@@ -94,14 +94,26 @@ export default function LetterXpressManagement() {
   const handleTest = async () => {
     setTestLoading(true);
     try {
-      // Quick validation that credentials are not empty
       if (!apiKey || !accountId || !email) {
         toast.error('Bitte füllen Sie alle Felder aus');
+        setTestLoading(false);
         return;
       }
-      toast.success('Zugangsdaten look valid');
+
+      const response = await base44.functions.invoke('testLetterXpressConnection', {
+        apiKey,
+        accountId,
+        email
+      });
+
+      if (response.data?.success) {
+        toast.success(response.data.message);
+      } else {
+        toast.error(response.data?.message || 'Verbindung fehlgeschlagen');
+      }
     } catch (error) {
-      toast.error('Fehler: ' + error.message);
+      console.error('Test error:', error);
+      toast.error('Fehler: ' + (error.message || 'Verbindung fehlgeschlagen'));
     } finally {
       setTestLoading(false);
     }
