@@ -324,6 +324,7 @@ import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
 import DocumentEnterpriseHub from './pages/DocumentEnterpriseHub';
 import DocumentUltimateHub from './pages/DocumentUltimateHub';
+import DocumentSecurityHub from './pages/DocumentSecurityHub';
 import __Layout from './Layout.jsx';
 
 
@@ -654,6 +655,7 @@ export const PAGES = {
     "WorkflowTemplates": WorkflowTemplates,
     "DocumentEnterpriseHub": DocumentEnterpriseHub,
     "DocumentUltimateHub": DocumentUltimateHub,
+    "DocumentSecurityHub": DocumentSecurityHub,
 }
 
 export const pagesConfig = {
