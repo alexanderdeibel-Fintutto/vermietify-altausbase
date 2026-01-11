@@ -35,11 +35,9 @@ Deno.serve(async (req) => {
 
     // Hole Versände von LetterXpress API
     console.log('[letterxpressSync] Fetching shipments from LetterXpress...');
-    const letterxpressResponse = await fetch('https://www.letterxpress.de/api/v1/shipments', {
+    const letterxpressResponse = await fetch(`https://api.letterxpress.de/v1/shipments?api_key=${encodeURIComponent(cred.api_key)}&account_id=${encodeURIComponent(cred.account_id)}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${cred.api_key}`,
-        'X-Account-ID': cred.account_id,
         'Content-Type': 'application/json'
       }
     });
