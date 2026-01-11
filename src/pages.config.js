@@ -171,6 +171,7 @@ import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
 import Kommunikation from './pages/Kommunikation';
 import KommunikationDashboard from './pages/KommunikationDashboard';
 import LeaseContracts from './pages/LeaseContracts';
+import LetterShipmentManagement from './pages/LetterShipmentManagement';
 import LetterXpressManagement from './pages/LetterXpressManagement';
 import MaintenanceManager from './pages/MaintenanceManager';
 import MaintenanceScheduling from './pages/MaintenanceScheduling';
@@ -216,7 +217,6 @@ import RealTimeTaxCalculator from './pages/RealTimeTaxCalculator';
 import ReportBuilder from './pages/ReportBuilder';
 import ReportGenerator from './pages/ReportGenerator';
 import ReportScheduling from './pages/ReportScheduling';
-import Tasks from './pages/Tasks';
 import ReportingDashboard from './pages/ReportingDashboard';
 import ReportsPage from './pages/ReportsPage';
 import RetirementIncomeTaxOptimizer from './pages/RetirementIncomeTaxOptimizer';
@@ -241,6 +241,7 @@ import SyncManagement from './pages/SyncManagement';
 import SystemConfiguration from './pages/SystemConfiguration';
 import SystemHealth from './pages/SystemHealth';
 import TaskManagement from './pages/TaskManagement';
+import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
 import TaxAIChatbot from './pages/TaxAIChatbot';
 import TaxAdminDashboard from './pages/TaxAdminDashboard';
@@ -366,7 +367,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import LetterShipmentManagement from './pages/LetterShipmentManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -544,6 +544,7 @@ export const PAGES = {
     "Kommunikation": Kommunikation,
     "KommunikationDashboard": KommunikationDashboard,
     "LeaseContracts": LeaseContracts,
+    "LetterShipmentManagement": LetterShipmentManagement,
     "LetterXpressManagement": LetterXpressManagement,
     "MaintenanceManager": MaintenanceManager,
     "MaintenanceScheduling": MaintenanceScheduling,
@@ -589,7 +590,6 @@ export const PAGES = {
     "ReportBuilder": ReportBuilder,
     "ReportGenerator": ReportGenerator,
     "ReportScheduling": ReportScheduling,
-    "Tasks": Tasks,
     "ReportingDashboard": ReportingDashboard,
     "ReportsPage": ReportsPage,
     "RetirementIncomeTaxOptimizer": RetirementIncomeTaxOptimizer,
@@ -614,6 +614,7 @@ export const PAGES = {
     "SystemConfiguration": SystemConfiguration,
     "SystemHealth": SystemHealth,
     "TaskManagement": TaskManagement,
+    "Tasks": Tasks,
     "Tax": Tax,
     "TaxAIChatbot": TaxAIChatbot,
     "TaxAdminDashboard": TaxAdminDashboard,
@@ -739,7 +740,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "LetterShipmentManagement": LetterShipmentManagement,
 }
 
 export const pagesConfig = {

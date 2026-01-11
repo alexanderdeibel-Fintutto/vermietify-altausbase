@@ -6,9 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { AlertCircle, Activity, CheckCircle, Eye } from 'lucide-react';
+import { AlertCircle, Activity, CheckCircle, Eye, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
-import RoleBasedGuard from '@/components/admin/RoleBasedGuard';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const statusColors = {
   open: 'bg-yellow-500',
@@ -60,6 +60,23 @@ export default function AdminIssueReports() {
   const inProgressIssues = issues.filter(i => i.status === 'in_progress');
   const resolvedIssues = issues.filter(i => i.status === 'resolved' || i.status === 'closed');
 
+  // Analytics
+  const avgResolutionTime = resolvedIssues.length > 0 
+    ? Math.round(resolvedIssues.reduce((sum, i) => {
+        const created = new Date(i.created_date).getTime();
+        const resolved = new Date(i.resolved_at || Date.now()).getTime();
+        return sum + (resolved - created);
+      }, 0) / resolvedIssues.length / (1000 * 60 * 60 * 24))
+    : 0;
+
+  const issuesByType = issues.reduce((acc, i) => {
+    const type = i.issue_type || 'Sonstige';
+    const existing = acc.find(item => item.name === type);
+    if (existing) existing.count++;
+    else acc.push({ name: type, count: 1 });
+    return acc;
+  }, []);
+
   const getTenantName = (tenantId) => {
     const tenant = tenants.find(t => t.id === tenantId);
     return tenant ? `${tenant.first_name} ${tenant.last_name}` : 'Unbekannt';
@@ -71,8 +88,7 @@ export default function AdminIssueReports() {
   };
 
   return (
-    <RoleBasedGuard requiredRole="admin">
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
           <AlertCircle className="w-6 h-6 text-white" />
@@ -84,31 +100,56 @@ export default function AdminIssueReports() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-3xl font-bold text-yellow-600">{openIssues.length}</div>
-            <p className="text-slate-600 text-sm">Offen</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-3xl font-bold text-orange-600">{inProgressIssues.length}</div>
-            <p className="text-slate-600 text-sm">In Bearbeitung</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-3xl font-bold text-green-600">{resolvedIssues.length}</div>
-            <p className="text-slate-600 text-sm">Gelöst</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-3xl font-bold">{issues.length}</div>
-            <p className="text-slate-600 text-sm">Gesamt</p>
-          </CardContent>
-        </Card>
-      </div>
+         <Card>
+           <CardContent className="p-6">
+             <div className="text-3xl font-bold text-yellow-600">{openIssues.length}</div>
+             <p className="text-slate-600 text-sm">Offen</p>
+           </CardContent>
+         </Card>
+         <Card>
+           <CardContent className="p-6">
+             <div className="text-3xl font-bold text-orange-600">{inProgressIssues.length}</div>
+             <p className="text-slate-600 text-sm">In Bearbeitung</p>
+           </CardContent>
+         </Card>
+         <Card>
+           <CardContent className="p-6">
+             <div className="text-3xl font-bold text-green-600">{resolvedIssues.length}</div>
+             <p className="text-slate-600 text-sm">Gelöst</p>
+           </CardContent>
+         </Card>
+         <Card>
+           <CardContent className="p-6">
+             <div className="flex items-center justify-between">
+               <div>
+                 <p className="text-3xl font-bold">{avgResolutionTime}</p>
+                 <p className="text-slate-600 text-sm">Ø Lösungszeit (Tage)</p>
+               </div>
+               <TrendingUp className="w-8 h-8 text-blue-500" />
+             </div>
+           </CardContent>
+         </Card>
+       </div>
+
+       {/* Issues by Type */}
+       {issuesByType.length > 0 && (
+         <Card>
+           <CardHeader>
+             <CardTitle className="text-lg">Störungen nach Kategorie</CardTitle>
+           </CardHeader>
+           <CardContent>
+             <ResponsiveContainer width="100%" height={250}>
+               <BarChart data={issuesByType}>
+                 <CartesianGrid strokeDasharray="3 3" />
+                 <XAxis dataKey="name" />
+                 <YAxis />
+                 <Tooltip />
+                 <Bar dataKey="count" fill="#ef4444" name="Anzahl" />
+               </BarChart>
+             </ResponsiveContainer>
+           </CardContent>
+         </Card>
+       )}
 
       <div className="grid gap-3">
         {issues.map(issue => (
@@ -241,6 +282,7 @@ export default function AdminIssueReports() {
         ))}
       </div>
     </div>
-    </RoleBasedGuard>
+      </div>
+    </div>
   );
 }
