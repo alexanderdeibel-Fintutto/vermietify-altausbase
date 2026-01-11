@@ -262,7 +262,13 @@ export default function LetterXpressManagement() {
                 </div>
               </div>
 
-              <Button className="w-full bg-green-600 hover:bg-green-700">Einstellungen speichern</Button>
+              <Button 
+                className="w-full bg-green-600 hover:bg-green-700"
+                onClick={handleSave}
+                disabled={saveLoading || !apiKey || !accountId || !email}
+              >
+                {saveLoading ? 'Wird gespeichert...' : 'Einstellungen speichern'}
+              </Button>
             </CardContent>
           </Card>
 
