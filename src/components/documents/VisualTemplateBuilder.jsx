@@ -52,12 +52,14 @@ export default function VisualTemplateBuilder({ template, onChange }) {
     const newBlocks = [...blocks, newBlock];
     setBlocks(newBlocks);
     setSelectedBlockId(newBlock.id);
+    undoRedo.push({ blocks: newBlocks, design, pageSetup });
     onChange({ ...template, blocks: newBlocks });
   };
 
   const handleUpdateBlock = (blockId, updates) => {
     const newBlocks = blocks.map(b => b.id === blockId ? { ...b, ...updates } : b);
     setBlocks(newBlocks);
+    undoRedo.push({ blocks: newBlocks, design, pageSetup });
     onChange({ ...template, blocks: newBlocks });
   };
 
@@ -65,6 +67,7 @@ export default function VisualTemplateBuilder({ template, onChange }) {
     const newBlocks = blocks.filter(b => b.id !== blockId);
     setBlocks(newBlocks);
     setSelectedBlockId(null);
+    undoRedo.push({ blocks: newBlocks, design, pageSetup });
     onChange({ ...template, blocks: newBlocks });
   };
 
@@ -72,12 +75,55 @@ export default function VisualTemplateBuilder({ template, onChange }) {
     const newBlocks = [...blocks];
     [newBlocks[fromIndex], newBlocks[toIndex]] = [newBlocks[toIndex], newBlocks[fromIndex]];
     setBlocks(newBlocks);
+    undoRedo.push({ blocks: newBlocks, design, pageSetup });
     onChange({ ...template, blocks: newBlocks });
   };
 
   const handleDesignChange = (newDesign) => {
     setDesign(newDesign);
+    undoRedo.push({ blocks, design: newDesign, pageSetup });
     onChange({ ...template, design: newDesign });
+  };
+
+  const handlePageSetupChange = (newPageSetup) => {
+    setPageSetup(newPageSetup);
+    undoRedo.push({ blocks, design, pageSetup: newPageSetup });
+    onChange({ ...template, pageSetup: newPageSetup });
+  };
+
+  const handleUndo = () => {
+    const state = undoRedo.undo();
+    if (state) {
+      setBlocks(state.blocks);
+      setDesign(state.design);
+      setPageSetup(state.pageSetup);
+      onChange({ ...template, ...state });
+    }
+  };
+
+  const handleRedo = () => {
+    const state = undoRedo.redo();
+    if (state) {
+      setBlocks(state.blocks);
+      setDesign(state.design);
+      setPageSetup(state.pageSetup);
+      onChange({ ...template, ...state });
+    }
+  };
+
+  const handleExport = async (format) => {
+    setExporting(true);
+    try {
+      if (format === 'html') {
+        await exportTemplateAsHTML(blocks, design, pageSetup);
+      } else if (format === 'pdf') {
+        await exportTemplateAsPDF(blocks, design, pageSetup);
+      }
+    } catch (err) {
+      console.error('Export fehler:', err);
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
