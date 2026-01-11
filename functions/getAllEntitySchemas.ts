@@ -47,9 +47,13 @@ Deno.serve(async (req) => {
         for (const name of entityNames) {
             if (!name) continue;
             try {
-                const schema = await base44.entities.schema(name);
-                if (schema) {
-                  schemas[name] = { name, ...schema };
+                // Hole das Entity-Objekt und rufe .schema() auf
+                const entityClass = base44.entities[name];
+                if (entityClass) {
+                  const schema = await entityClass.schema();
+                  if (schema) {
+                    schemas[name] = { name, ...schema };
+                  }
                 }
             } catch (error) {
                 // Silent catch
