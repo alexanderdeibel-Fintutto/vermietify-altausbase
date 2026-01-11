@@ -339,6 +339,7 @@ import TenantDocuments from './pages/TenantDocuments';
 import TenantMaintenance from './pages/TenantMaintenance';
 import TenantCommunity from './pages/TenantCommunity';
 import AdminAnnouncementCenter from './pages/AdminAnnouncementCenter';
+import AIMaintenanceDashboard from './pages/AIMaintenanceDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -684,6 +685,7 @@ export const PAGES = {
     "TenantMaintenance": TenantMaintenance,
     "TenantCommunity": TenantCommunity,
     "AdminAnnouncementCenter": AdminAnnouncementCenter,
+    "AIMaintenanceDashboard": AIMaintenanceDashboard,
 }
 
 export const pagesConfig = {
