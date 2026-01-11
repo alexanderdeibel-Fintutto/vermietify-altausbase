@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     // Hole Versände von LetterXpress API (v2)
     console.log('[letterxpressSync] Fetching printjobs from LetterXpress...');
     const letterxpressResponse = await fetch('https://api.letterxpress.de/v2/printjobs', {
-      method: 'GET',
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
