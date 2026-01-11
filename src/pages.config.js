@@ -328,6 +328,7 @@ import DocumentSecurityHub from './pages/DocumentSecurityHub';
 import TenantManagementHub from './pages/TenantManagementHub';
 import PropertyManagementHub from './pages/PropertyManagementHub';
 import FinanceManagementHub from './pages/FinanceManagementHub';
+import ContractAutomationHub from './pages/ContractAutomationHub';
 import __Layout from './Layout.jsx';
 
 
@@ -662,6 +663,7 @@ export const PAGES = {
     "TenantManagementHub": TenantManagementHub,
     "PropertyManagementHub": PropertyManagementHub,
     "FinanceManagementHub": FinanceManagementHub,
+    "ContractAutomationHub": ContractAutomationHub,
 }
 
 export const pagesConfig = {
