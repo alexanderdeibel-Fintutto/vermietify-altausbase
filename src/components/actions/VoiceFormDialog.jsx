@@ -139,17 +139,17 @@ export default function VoiceFormDialog({ isOpen, onClose }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={() => { stopRecording(); onClose(); }}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="w-full sm:max-w-md p-6 flex flex-col items-center justify-center min-h-[400px]">
+        <DialogHeader className="text-center w-full">
           <DialogTitle>Sprachnachricht aufnehmen</DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 py-6">
-          <div className="flex justify-center">
+        <div className="flex flex-col gap-6 py-8 w-full items-center">
+          <div className="flex justify-center w-full">
             <button
               onClick={isRecording ? stopRecording : startRecording}
               disabled={isProcessing}
-              className={`h-20 w-20 rounded-full flex items-center justify-center transition-all active:scale-95 ${
+              className={`h-24 w-24 rounded-full flex items-center justify-center transition-all active:scale-95 shadow-lg ${
                 isRecording
                   ? 'bg-red-500 hover:bg-red-600 animate-pulse'
                   : 'bg-blue-500 hover:bg-blue-600'
