@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
             try {
                 logDebug(`\n[${name}] Loading schema...`);
                 
-                const schema = await base44.entities[name].schema();
+                const schema = await base44.entities.schema(name);
                 
                 if (schema) {
                   logDebug(`[${name}] ✅ SUCCESS - ${Object.keys(schema).length} keys`);
