@@ -94,6 +94,7 @@ import DocumentAnalysisDashboard from './pages/DocumentAnalysisDashboard';
 import DocumentAnalytics from './pages/DocumentAnalytics';
 import DocumentArchiveManager from './pages/DocumentArchiveManager';
 import DocumentComplianceDashboard from './pages/DocumentComplianceDashboard';
+import DocumentEnterpriseHub from './pages/DocumentEnterpriseHub';
 import DocumentGeneration from './pages/DocumentGeneration';
 import DocumentInbox from './pages/DocumentInbox';
 import DocumentInboxSettings from './pages/DocumentInboxSettings';
@@ -103,6 +104,8 @@ import DocumentManagement from './pages/DocumentManagement';
 import DocumentManagementCenter from './pages/DocumentManagementCenter';
 import DocumentManagementDashboard from './pages/DocumentManagementDashboard';
 import DocumentSearch from './pages/DocumentSearch';
+import DocumentSecurityHub from './pages/DocumentSecurityHub';
+import DocumentUltimateHub from './pages/DocumentUltimateHub';
 import Documents from './pages/Documents';
 import ElsterIntegration from './pages/ElsterIntegration';
 import EmailTemplates from './pages/EmailTemplates';
@@ -115,6 +118,7 @@ import EstimatedTaxScheduler from './pages/EstimatedTaxScheduler';
 import FeatureCatalog from './pages/FeatureCatalog';
 import FinAPICallback from './pages/FinAPICallback';
 import FinanceManagement from './pages/FinanceManagement';
+import FinanceManagementHub from './pages/FinanceManagementHub';
 import FinancialForecasting from './pages/FinancialForecasting';
 import FinancialItems from './pages/FinancialItems';
 import FinancialReporting from './pages/FinancialReporting';
@@ -175,6 +179,7 @@ import PerformanceMonitor from './pages/PerformanceMonitor';
 import PermissionDashboard from './pages/PermissionDashboard';
 import PersonalizedTaxCockpit from './pages/PersonalizedTaxCockpit';
 import ProjectManagement from './pages/ProjectManagement';
+import PropertyManagementHub from './pages/PropertyManagementHub';
 import PropertyManagerDashboard from './pages/PropertyManagerDashboard';
 import PropertyPortfolio from './pages/PropertyPortfolio';
 import PropertyValuation from './pages/PropertyValuation';
@@ -275,6 +280,7 @@ import TenantCommunication from './pages/TenantCommunication';
 import TenantCommunicationCenter from './pages/TenantCommunicationCenter';
 import TenantCommunicationHub from './pages/TenantCommunicationHub';
 import TenantDetail from './pages/TenantDetail';
+import TenantManagementHub from './pages/TenantManagementHub';
 import TenantOnboarding from './pages/TenantOnboarding';
 import TenantOnboardingManager from './pages/TenantOnboardingManager';
 import TenantPortal from './pages/TenantPortal';
@@ -322,12 +328,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import DocumentEnterpriseHub from './pages/DocumentEnterpriseHub';
-import DocumentUltimateHub from './pages/DocumentUltimateHub';
-import DocumentSecurityHub from './pages/DocumentSecurityHub';
-import TenantManagementHub from './pages/TenantManagementHub';
-import PropertyManagementHub from './pages/PropertyManagementHub';
-import FinanceManagementHub from './pages/FinanceManagementHub';
 import ContractAutomationHub from './pages/ContractAutomationHub';
 import __Layout from './Layout.jsx';
 
@@ -429,6 +429,7 @@ export const PAGES = {
     "DocumentAnalytics": DocumentAnalytics,
     "DocumentArchiveManager": DocumentArchiveManager,
     "DocumentComplianceDashboard": DocumentComplianceDashboard,
+    "DocumentEnterpriseHub": DocumentEnterpriseHub,
     "DocumentGeneration": DocumentGeneration,
     "DocumentInbox": DocumentInbox,
     "DocumentInboxSettings": DocumentInboxSettings,
@@ -438,6 +439,8 @@ export const PAGES = {
     "DocumentManagementCenter": DocumentManagementCenter,
     "DocumentManagementDashboard": DocumentManagementDashboard,
     "DocumentSearch": DocumentSearch,
+    "DocumentSecurityHub": DocumentSecurityHub,
+    "DocumentUltimateHub": DocumentUltimateHub,
     "Documents": Documents,
     "ElsterIntegration": ElsterIntegration,
     "EmailTemplates": EmailTemplates,
@@ -450,6 +453,7 @@ export const PAGES = {
     "FeatureCatalog": FeatureCatalog,
     "FinAPICallback": FinAPICallback,
     "FinanceManagement": FinanceManagement,
+    "FinanceManagementHub": FinanceManagementHub,
     "FinancialForecasting": FinancialForecasting,
     "FinancialItems": FinancialItems,
     "FinancialReporting": FinancialReporting,
@@ -510,6 +514,7 @@ export const PAGES = {
     "PermissionDashboard": PermissionDashboard,
     "PersonalizedTaxCockpit": PersonalizedTaxCockpit,
     "ProjectManagement": ProjectManagement,
+    "PropertyManagementHub": PropertyManagementHub,
     "PropertyManagerDashboard": PropertyManagerDashboard,
     "PropertyPortfolio": PropertyPortfolio,
     "PropertyValuation": PropertyValuation,
@@ -610,6 +615,7 @@ export const PAGES = {
     "TenantCommunicationCenter": TenantCommunicationCenter,
     "TenantCommunicationHub": TenantCommunicationHub,
     "TenantDetail": TenantDetail,
+    "TenantManagementHub": TenantManagementHub,
     "TenantOnboarding": TenantOnboarding,
     "TenantOnboardingManager": TenantOnboardingManager,
     "TenantPortal": TenantPortal,
@@ -657,12 +663,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "DocumentEnterpriseHub": DocumentEnterpriseHub,
-    "DocumentUltimateHub": DocumentUltimateHub,
-    "DocumentSecurityHub": DocumentSecurityHub,
-    "TenantManagementHub": TenantManagementHub,
-    "PropertyManagementHub": PropertyManagementHub,
-    "FinanceManagementHub": FinanceManagementHub,
     "ContractAutomationHub": ContractAutomationHub,
 }
 

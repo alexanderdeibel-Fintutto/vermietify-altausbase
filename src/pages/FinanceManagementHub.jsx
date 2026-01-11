@@ -7,6 +7,8 @@ import SEPAMandateManager from '@/components/finance/SEPAMandateManager';
 import PropertyBudgetPlanner from '@/components/finance/PropertyBudgetPlanner';
 import ReserveManager from '@/components/finance/ReserveManager';
 import LoanTracker from '@/components/finance/LoanTracker';
+import ROIAnalysisDashboard from '@/components/finance/ROIAnalysisDashboard';
+import IncomeVarianceTracker from '@/components/finance/IncomeVarianceTracker';
 
 export default function FinanceManagementHub() {
   const { data: user } = useQuery({
@@ -40,10 +42,12 @@ export default function FinanceManagementHub() {
       </div>
 
       <Tabs defaultValue="budget" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="budget">Budget</TabsTrigger>
           <TabsTrigger value="reserves">Rücklagen</TabsTrigger>
           <TabsTrigger value="loans">Kredite</TabsTrigger>
+          <TabsTrigger value="roi">ROI</TabsTrigger>
+          <TabsTrigger value="variance">Abweichungen</TabsTrigger>
           <TabsTrigger value="sepa">SEPA</TabsTrigger>
           <TabsTrigger value="routes">Touren</TabsTrigger>
         </TabsList>
@@ -58,6 +62,14 @@ export default function FinanceManagementHub() {
 
         <TabsContent value="loans">
           <LoanTracker companyId={companyId} />
+        </TabsContent>
+
+        <TabsContent value="roi">
+          <ROIAnalysisDashboard companyId={companyId} />
+        </TabsContent>
+
+        <TabsContent value="variance">
+          <IncomeVarianceTracker companyId={companyId} />
         </TabsContent>
 
         <TabsContent value="sepa">
