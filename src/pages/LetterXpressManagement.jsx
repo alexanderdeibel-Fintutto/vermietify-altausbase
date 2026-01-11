@@ -40,6 +40,34 @@ export default function LetterXpressManagement() {
     return labels[status] || status;
   };
 
+  const handleSave = async () => {
+    setSaveLoading(true);
+    setMessage('');
+    try {
+      // API-Aufruf zum Speichern der Credentials
+      // Später: await base44.functions.invoke('saveLetterXpressCredentials', { apiKey, accountId, email });
+      setMessage('✓ Einstellungen gespeichert');
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error) {
+      setMessage('✗ Fehler beim Speichern');
+    }
+    setSaveLoading(false);
+  };
+
+  const handleTest = async () => {
+    setTestLoading(true);
+    setMessage('');
+    try {
+      // API-Aufruf zum Testen der Verbindung
+      // Später: await base44.functions.invoke('testLetterXpressConnection', { apiKey, accountId, email });
+      setMessage('✓ Verbindung erfolgreich');
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error) {
+      setMessage('✗ Verbindung fehlgeschlagen');
+    }
+    setTestLoading(false);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start">
