@@ -38,10 +38,10 @@ Deno.serve(async (req) => {
     }
 
     const apiKey = creds[0].api_key;
-    const accountId = creds[0].account_id;
+    const username = creds[0].account_id;  // Username like "LXPApi62881"
 
     // Demo mode if no real credentials
-    if (!apiKey || !accountId) {
+    if (!apiKey || !username) {
       console.log('[letterxpressSync] Empty credentials - Demo mode');
       return Response.json({ 
         success: true,
@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
     }
 
     // Für Demo: wenn keine echten Daten, gib leeres Array zurück
-    if (apiKey === 'demo' || accountId === 'demo') {
+    if (apiKey === 'demo' || username === 'demo') {
       console.log('[letterxpressSync] Demo credentials detected');
       return Response.json({ 
         success: true, 
@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // API-Call zu LetterXpress mit korrekter Authentifizierung (JSON Body)
+    // API-Call zu LetterXpress mit korrekter Authentifizierung (JSON Body mit username + api_key)
     console.log('[letterxpressSync] Calling LetterXpress API with username:', username);
     
     const authPayload = {
