@@ -68,6 +68,207 @@ export default function LetterXpressManagement() {
     setTestLoading(false);
   };
 
+  const isConfigured = apiKey && accountId && email;
+
+  if (!isConfigured) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-light text-slate-900">Postversand (LetterXpress)</h1>
+          <p className="text-slate-600 font-light mt-2">Verwalten Sie den physischen Postversand zu Mietern</p>
+        </div>
+
+        {/* Welcome Section */}
+        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+          <CardContent className="pt-8 pb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Info Section */}
+              <div className="lg:col-span-2">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="p-3 bg-white rounded-lg shadow-sm">
+                    <Mail className="w-8 h-8 text-indigo-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-semibold text-slate-900">Willkommen bei LetterXpress</h2>
+                    <p className="text-sm text-slate-600 mt-1">Professioneller Postversand direkt aus Ihrer Verwaltung</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4 mb-6">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-slate-900">Zahlungserinnerungen & Mahnungen</p>
+                      <p className="text-sm text-slate-600">Automatisierte Versände direkt an Ihre Mieter</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-slate-900">Kündigungen & Vertragsunterlagen</p>
+                      <p className="text-sm text-slate-600">Rechtssichere Zustellung mit Tracking</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-slate-900">Persönliche Briefe & Dokumente</p>
+                      <p className="text-sm text-slate-600">Von Betriebskostenabrechnungen bis zu wichtigen Mitteilungen</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-slate-900">Tracking & Nachweise</p>
+                      <p className="text-sm text-slate-600">Vollständige Dokumentation aller Versände</p>
+                    </div>
+                  </div>
+                </div>
+
+                <a 
+                  href="https://www.letterxpress.de" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm"
+                >
+                  → LetterXpress.de besuchen
+                </a>
+              </div>
+
+              {/* Pricing Section */}
+              <div className="lg:col-span-1">
+                <div className="bg-white rounded-lg p-4 shadow-sm space-y-4">
+                  <h3 className="font-semibold text-slate-900">Preisübersicht</h3>
+                  
+                  <div className="space-y-3 border-t border-slate-200 pt-4">
+                    <div>
+                      <p className="text-xs font-medium text-slate-600 mb-1">STANDARDBRIEF</p>
+                      <p className="text-lg font-semibold text-slate-900">ab € 0,95</p>
+                      <p className="text-xs text-slate-500">DIN A4, Standardversand</p>
+                    </div>
+
+                    <div className="border-t border-slate-200 pt-3">
+                      <p className="text-xs font-medium text-slate-600 mb-1">EINSCHREIBEN</p>
+                      <p className="text-lg font-semibold text-slate-900">ab € 4,90</p>
+                      <p className="text-xs text-slate-500">Mit Rückschein</p>
+                    </div>
+
+                    <div className="border-t border-slate-200 pt-3">
+                      <p className="text-xs font-medium text-slate-600 mb-1">FARBDRUCK</p>
+                      <p className="text-lg font-semibold text-slate-900">ab € 1,50</p>
+                      <p className="text-xs text-slate-500">Professioneller Eindruck</p>
+                    </div>
+
+                    <div className="border-t border-slate-200 pt-3">
+                      <p className="text-xs font-medium text-slate-600 mb-1">EXPRESSVERSAND</p>
+                      <p className="text-lg font-semibold text-slate-900">ab € 2,95</p>
+                      <p className="text-xs text-slate-500">1-Tages-Lieferung</p>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-500 italic pt-2">Keine Einrichtungsgebühren • Flexible Nutzung</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Setup Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lock className="w-5 h-5" />
+              Schritt 1: Account-Daten eingeben
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-slate-600">Geben Sie Ihre LetterXpress-Zugangsdaten ein, um zu starten:</p>
+            
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium mb-2">LetterXpress API Key</label>
+                <input 
+                  type="password" 
+                  placeholder="Geben Sie Ihren API-Schlüssel ein" 
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg"
+                />
+                <p className="text-xs text-slate-500 mt-1">Wird verschlüsselt gespeichert</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">LetterXpress Account ID</label>
+                <input 
+                  type="text" 
+                  placeholder="z.B. ACC-12345" 
+                  value={accountId}
+                  onChange={(e) => setAccountId(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">E-Mail-Adresse</label>
+                <input 
+                  type="email" 
+                  placeholder="z.B. kontakt@beispiel.de" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg"
+                />
+                <p className="text-xs text-slate-500 mt-1">Die mit Ihrem LetterXpress-Account verknüpfte E-Mail</p>
+              </div>
+            </div>
+
+            {message && (
+              <div className={`p-3 rounded-lg text-sm ${message.startsWith('✓') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                {message}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <Button 
+                className="flex-1 bg-amber-600 hover:bg-amber-700"
+                onClick={handleTest}
+                disabled={testLoading || !apiKey || !accountId || !email}
+              >
+                {testLoading ? 'Wird getestet...' : 'Verbindung testen'}
+              </Button>
+              <Button 
+                className="flex-1 bg-green-600 hover:bg-green-700"
+                onClick={handleSave}
+                disabled={saveLoading || !apiKey || !accountId || !email}
+              >
+                {saveLoading ? 'Wird gespeichert...' : 'Speichern & Starten'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Zap className="w-4 h-4" />
+              Noch kein LetterXpress-Account?
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-slate-600 mb-4">Registrieren Sie sich kostenlos und starten Sie sofort mit dem Versand:</p>
+            <a 
+              href="https://www.letterxpress.de/registrierung" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+            >
+              → Kostenlos registrieren
+            </a>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start">
