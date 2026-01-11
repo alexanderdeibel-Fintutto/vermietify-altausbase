@@ -35,9 +35,16 @@ export default function PostausgangsbuchTable() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [syncing, setSyncing] = useState(false);
 
-  const { data: shipments = [], isLoading, refetch } = useQuery({
+  const { data: shipments = [], isLoading, refetch, error } = useQuery({
     queryKey: ['letterShipments'],
-    queryFn: () => base44.entities.LetterShipment.list('-sent_date', 100),
+    queryFn: async () => {
+      try {
+        return await base44.entities.LetterShipment.list('-sent_date', 100);
+      } catch (err) {
+        console.error('Error loading shipments:', err);
+        return [];
+      }
+    },
     staleTime: 5 * 60 * 1000
   });
 
