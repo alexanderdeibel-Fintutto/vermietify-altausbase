@@ -9,6 +9,12 @@ import LetterPreview from '@/components/letterxpress/LetterPreview';
 
 export default function LetterXpressManagement() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [apiKey, setApiKey] = useState('');
+  const [accountId, setAccountId] = useState('');
+  const [email, setEmail] = useState('');
+  const [testLoading, setTestLoading] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [message, setMessage] = useState('');
 
   const shipments = [
     { id: 1, count: 5, status: 'delivered', date: '2026-01-10', cost: 15.50 },
