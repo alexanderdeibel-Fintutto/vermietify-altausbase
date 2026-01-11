@@ -22,6 +22,7 @@ import AdminPackageSetup from './pages/AdminPackageSetup';
 import AdminRoleManagement from './pages/AdminRoleManagement';
 import AdminSettings from './pages/AdminSettings';
 import AdminSetupGuide from './pages/AdminSetupGuide';
+import AdminTenantDashboard from './pages/AdminTenantDashboard';
 import AdminTestCleanup from './pages/AdminTestCleanup';
 import AdminTesterAnalytics from './pages/AdminTesterAnalytics';
 import AdminTesterAnalyticsLazy from './pages/AdminTesterAnalyticsLazy';
@@ -105,8 +106,8 @@ import DocumentComplianceDashboard from './pages/DocumentComplianceDashboard';
 import DocumentEnterpriseHub from './pages/DocumentEnterpriseHub';
 import DocumentGeneration from './pages/DocumentGeneration';
 import DocumentInbox from './pages/DocumentInbox';
-import DocumentInboxSettings from './pages/DocumentInboxSettings';
 import Finanzen from './pages/Finanzen';
+import DocumentInboxSettings from './pages/DocumentInboxSettings';
 import DocumentIntegrationHub from './pages/DocumentIntegrationHub';
 import DocumentLibrary from './pages/DocumentLibrary';
 import DocumentManagement from './pages/DocumentManagement';
@@ -308,6 +309,7 @@ import TenantOnboardingManager from './pages/TenantOnboardingManager';
 import TenantPortal from './pages/TenantPortal';
 import TenantPortalAdminDashboard from './pages/TenantPortalAdminDashboard';
 import TenantPortalDashboard from './pages/TenantPortalDashboard';
+import TenantPortalPage from './pages/TenantPortalPage';
 import Tenants from './pages/Tenants';
 import TesterAcceptInvitation from './pages/TesterAcceptInvitation';
 import TesterActivityAnalytics from './pages/TesterActivityAnalytics';
@@ -353,8 +355,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import TenantPortalPage from './pages/TenantPortalPage';
-import AdminTenantDashboard from './pages/AdminTenantDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -383,6 +383,7 @@ export const PAGES = {
     "AdminRoleManagement": AdminRoleManagement,
     "AdminSettings": AdminSettings,
     "AdminSetupGuide": AdminSetupGuide,
+    "AdminTenantDashboard": AdminTenantDashboard,
     "AdminTestCleanup": AdminTestCleanup,
     "AdminTesterAnalytics": AdminTesterAnalytics,
     "AdminTesterAnalyticsLazy": AdminTesterAnalyticsLazy,
@@ -466,8 +467,8 @@ export const PAGES = {
     "DocumentEnterpriseHub": DocumentEnterpriseHub,
     "DocumentGeneration": DocumentGeneration,
     "DocumentInbox": DocumentInbox,
-    "DocumentInboxSettings": DocumentInboxSettings,
     "Finanzen": Finanzen,
+    "DocumentInboxSettings": DocumentInboxSettings,
     "DocumentIntegrationHub": DocumentIntegrationHub,
     "DocumentLibrary": DocumentLibrary,
     "DocumentManagement": DocumentManagement,
@@ -669,6 +670,7 @@ export const PAGES = {
     "TenantPortal": TenantPortal,
     "TenantPortalAdminDashboard": TenantPortalAdminDashboard,
     "TenantPortalDashboard": TenantPortalDashboard,
+    "TenantPortalPage": TenantPortalPage,
     "Tenants": Tenants,
     "TesterAcceptInvitation": TesterAcceptInvitation,
     "TesterActivityAnalytics": TesterActivityAnalytics,
@@ -714,8 +716,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "TenantPortalPage": TenantPortalPage,
-    "AdminTenantDashboard": AdminTenantDashboard,
 }
 
 export const pagesConfig = {
