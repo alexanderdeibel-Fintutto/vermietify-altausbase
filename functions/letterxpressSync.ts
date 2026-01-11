@@ -1,8 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
+  const startTime = Date.now();
   console.log('[letterxpressSync] Method:', req.method);
-  console.log('[letterxpressSync] Headers:', Object.fromEntries(req.headers));
   
   if (req.method !== 'POST') {
     return Response.json({ success: false, message: 'POST only' }, { status: 405 });
