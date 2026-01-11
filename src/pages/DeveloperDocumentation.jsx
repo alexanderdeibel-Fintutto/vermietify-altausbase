@@ -1880,8 +1880,23 @@ export default function DeveloperDocumentation() {
             <Dialog open={!!previewDoc} onOpenChange={(open) => !open && setPreviewDoc(null)}>
                 <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>{previewDoc?.title}</DialogTitle>
+                        <div className="flex items-center justify-between">
+                            <DialogTitle>{previewDoc?.title}</DialogTitle>
+                            <button
+                                onClick={() => setShowFulltextSearch(!showFulltextSearch)}
+                                className="text-slate-400 hover:text-slate-600"
+                                title="Volltextsuche"
+                            >
+                                <Highlighter className="w-5 h-5" />
+                            </button>
+                        </div>
                     </DialogHeader>
+                    {showFulltextSearch && (
+                        <DocumentationFulltextSearch
+                            content={previewDoc?.content_markdown || ''}
+                            onClose={() => setShowFulltextSearch(false)}
+                        />
+                    )}
                     <div className="prose prose-slate max-w-none">
                         <ReactMarkdown>{previewDoc?.content_markdown || ''}</ReactMarkdown>
                     </div>
