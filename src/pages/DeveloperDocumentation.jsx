@@ -298,7 +298,7 @@ export default function DeveloperDocumentation() {
             } 
             // Fallback: Standard-Generierung
             else {
-                response = await base44.functions.invoke('generateDocumentation', {
+                response = await base44.functions.invoke('generateDocumentation_v2', {
                     documentation_type: docType
                 });
             }

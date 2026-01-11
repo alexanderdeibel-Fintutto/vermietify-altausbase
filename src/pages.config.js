@@ -223,6 +223,7 @@ import ReportsPage from './pages/ReportsPage';
 import RetirementIncomeTaxOptimizer from './pages/RetirementIncomeTaxOptimizer';
 import RetirementTaxPlanning from './pages/RetirementTaxPlanning';
 import RoleManagement from './pages/RoleManagement';
+import RoleManagementPage from './pages/RoleManagementPage';
 import ScheduledTasks from './pages/ScheduledTasks';
 import SelfEmploymentTaxPlanner from './pages/SelfEmploymentTaxPlanner';
 import SelfEmploymentTaxPlanning from './pages/SelfEmploymentTaxPlanning';
@@ -368,7 +369,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import RoleManagementPage from './pages/RoleManagementPage';
 import __Layout from './Layout.jsx';
 
 
@@ -598,6 +598,7 @@ export const PAGES = {
     "RetirementIncomeTaxOptimizer": RetirementIncomeTaxOptimizer,
     "RetirementTaxPlanning": RetirementTaxPlanning,
     "RoleManagement": RoleManagement,
+    "RoleManagementPage": RoleManagementPage,
     "ScheduledTasks": ScheduledTasks,
     "SelfEmploymentTaxPlanner": SelfEmploymentTaxPlanner,
     "SelfEmploymentTaxPlanning": SelfEmploymentTaxPlanning,
@@ -743,7 +744,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "RoleManagementPage": RoleManagementPage,
 }
 
 export const pagesConfig = {
