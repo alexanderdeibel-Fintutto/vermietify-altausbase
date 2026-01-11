@@ -41,7 +41,6 @@ const FORM_SCHEMAS = {
 };
 
 export default function VoiceFormDisplay({
-  isOpen,
   onClose,
   formType,
   allData,
@@ -115,7 +114,6 @@ export default function VoiceFormDisplay({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-start justify-between gap-4">
