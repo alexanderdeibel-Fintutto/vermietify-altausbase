@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Package, Send, CheckCircle, Clock, AlertCircle, Mail, Lock, Zap } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 import PostausgangsbuchTable from '@/components/letterxpress/PostausgangsbuchTable';
 import LetterTemplateSelector from '@/components/letterxpress/LetterTemplateSelector';
 import LetterRecipientSelector from '@/components/letterxpress/LetterRecipientSelector';
@@ -16,6 +18,28 @@ export default function LetterXpressManagement() {
   const [testLoading, setTestLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [isConfigured, setIsConfigured] = useState(false);
+  const [loadingConfig, setLoadingConfig] = useState(true);
+
+  // Load existing credentials on mount
+  useEffect(() => {
+    const loadCredentials = async () => {
+      try {
+        const creds = await base44.entities.LetterXpressCredential.list();
+        if (creds && creds.length > 0) {
+          setApiKey(creds[0].api_key);
+          setAccountId(creds[0].account_id);
+          setEmail(creds[0].email);
+          setIsConfigured(true);
+        }
+      } catch (err) {
+        console.log('No credentials found yet');
+      } finally {
+        setLoadingConfig(false);
+      }
+    };
+    loadCredentials();
+  }, []);
 
   const shipments = [
     { id: 1, count: 5, status: 'delivered', date: '2026-01-10', cost: 15.50 },
@@ -43,33 +67,46 @@ export default function LetterXpressManagement() {
 
   const handleSave = async () => {
     setSaveLoading(true);
-    setMessage('');
     try {
-      // API-Aufruf zum Speichern der Credentials
-      // Später: await base44.functions.invoke('saveLetterXpressCredentials', { apiKey, accountId, email });
-      setMessage('✓ Einstellungen gespeichert');
-      setTimeout(() => setMessage(''), 3000);
+      const response = await base44.functions.invoke('saveLetterXpressCredentials', { 
+        apiKey, 
+        accountId, 
+        email 
+      });
+      
+      if (response.data?.success) {
+        setIsConfigured(true);
+        toast.success(response.data.message);
+      } else {
+        toast.error(response.data?.message || 'Fehler beim Speichern');
+      }
     } catch (error) {
-      setMessage('✗ Fehler beim Speichern');
+      console.error('Save error:', error);
+      toast.error('Fehler: ' + (error.message || 'Speichern fehlgeschlagen'));
+    } finally {
+      setSaveLoading(false);
     }
-    setSaveLoading(false);
   };
 
   const handleTest = async () => {
     setTestLoading(true);
-    setMessage('');
     try {
-      // API-Aufruf zum Testen der Verbindung
-      // Später: await base44.functions.invoke('testLetterXpressConnection', { apiKey, accountId, email });
-      setMessage('✓ Verbindung erfolgreich');
-      setTimeout(() => setMessage(''), 3000);
+      // Quick validation that credentials are not empty
+      if (!apiKey || !accountId || !email) {
+        toast.error('Bitte füllen Sie alle Felder aus');
+        return;
+      }
+      toast.success('Zugangsdaten look valid');
     } catch (error) {
-      setMessage('✗ Verbindung fehlgeschlagen');
+      toast.error('Fehler: ' + error.message);
+    } finally {
+      setTestLoading(false);
     }
-    setTestLoading(false);
   };
 
-  const isConfigured = apiKey && accountId && email;
+  if (loadingConfig) {
+    return <div className="text-center py-8">Lädt...</div>;
+  }
 
   if (!isConfigured) {
     return (
