@@ -61,6 +61,7 @@ const MAIN_CATEGORIES = [
     pages: [
       { name: 'Companies', label: 'Firmen' },
       { name: 'AdminSettings', label: 'Einstellungen' },
+      { name: 'PermissionManagement', label: 'Berechtigungen' },
     ]
   }
 ];

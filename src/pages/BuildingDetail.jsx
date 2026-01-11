@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,9 +26,15 @@ import BuildingDocumentsManager from '@/components/building-detail/BuildingDocum
 import BuildingMaintenanceOverview from '@/components/building-detail/BuildingMaintenanceOverview';
 
 export default function BuildingDetailPage() {
+
   const buildingId = new URLSearchParams(window.location.search).get('id');
 
-  const { data: building, isLoading } = useQuery({
+  const { data: currentUser } = useQuery({ 
+      queryKey: ['currentUser'], 
+      queryFn: () => base44.auth.me() 
+  });
+
+  const { data: building, isLoading: isLoadingBuilding } = useQuery({
     queryKey: ['building', buildingId],
     queryFn: async () => {
       const buildings = await base44.entities.Building.filter({ id: buildingId }, null, 1);
@@ -35,6 +42,21 @@ export default function BuildingDetailPage() {
     },
     enabled: !!buildingId
   });
+
+  const { data: permissions, isLoading: isLoadingPermissions } = useQuery({
+      queryKey: ['buildingPermission', buildingId, currentUser?.email],
+      queryFn: () => base44.entities.BuildingPermission.filter({ building_id: buildingId, user_email: currentUser.email }),
+      enabled: !!buildingId && !!currentUser && currentUser.role !== 'admin'
+  });
+
+  const permissionLevel = useMemo(() => {
+      if (!currentUser) return 'none';
+      if (currentUser.role === 'admin') return 'write';
+      if (!permissions?.length) return 'none';
+      return permissions[0].permission_level;
+  }, [currentUser, permissions]);
+
+  const hasReadAccess = permissionLevel === 'read' || permissionLevel === 'write';
 
   const { data: units = [] } = useQuery({
     queryKey: ['buildingUnits', buildingId],
@@ -59,12 +81,26 @@ export default function BuildingDetailPage() {
     enabled: contracts.length > 0
   });
 
+  const isLoading = isLoadingBuilding || (!!currentUser && currentUser.role !== 'admin' && isLoadingPermissions);
+
   if (isLoading) {
     return <div className="flex justify-center items-center min-h-screen">Wird geladen...</div>;
   }
 
   if (!building) {
     return <div className="text-center p-6">Gebäude nicht gefunden</div>;
+  }
+
+  if (!hasReadAccess) {
+    return (
+        <div className="text-center p-6">
+            <h1 className="text-xl font-semibold">Zugriff verweigert</h1>
+            <p className="text-slate-600">Sie haben keine Berechtigung, auf dieses Gebäude zuzugreifen.</p>
+            <Link to={createPageUrl('Buildings')}>
+                <Button variant="outline" className="mt-4">Zurück zur Übersicht</Button>
+            </Link>
+        </div>
+    )
   }
 
   const occupiedUnits = units.filter(u => u.status === 'occupied').length;
@@ -163,11 +199,11 @@ export default function BuildingDetailPage() {
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <BuildingInfoPanel building={building} />
+            <BuildingInfoPanel building={building} permissionLevel={permissionLevel} />
             <BuildingMaintenanceOverview buildingId={buildingId} />
             <BuildingDocumentsManager buildingId={buildingId} />
           </div>
-          <IoTSensorsPanel buildingId={buildingId} />
+          <IoTSensorsPanel buildingId={buildingId} permissionLevel={permissionLevel} />
         </TabsContent>
 
         <TabsContent value="iot-map">
@@ -175,7 +211,7 @@ export default function BuildingDetailPage() {
         </TabsContent>
 
         <TabsContent value="units">
-          <BuildingUnitsManager buildingId={buildingId} units={units} />
+          <BuildingUnitsManager buildingId={buildingId} units={units} permissionLevel={permissionLevel} />
         </TabsContent>
 
         <TabsContent value="tenants">
@@ -200,7 +236,7 @@ export default function BuildingDetailPage() {
         <TabsContent value="tasks">
           <div className="space-y-6">
             <MaintenanceCalendarView buildingId={buildingId} />
-            <BuildingTasksManager buildingId={buildingId} />
+            <BuildingTasksManager buildingId={buildingId} permissionLevel={permissionLevel} />
           </div>
         </TabsContent>
       </Tabs>

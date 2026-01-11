@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useBuildingStats } from '@/components/buildings/useBuildingStats';
+import { useQuery } from '@tanstack/react-query';
 import BuildingFilterBar from '@/components/buildings/BuildingFilterBar';
 import BuildingTable from '@/components/buildings/BuildingTable';
 import BuildingSummary from '@/components/buildings/BuildingSummary';
@@ -18,12 +19,46 @@ export default function BuildingsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const queryClient = useQueryClient();
 
-  const { buildingStats, totalBuildings, totalUnitsCount, totalRentedUnits, totalRevenue } =
-    useBuildingStats();
+  const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
+  const { data: buildingStats, isLoading: isLoadingStats } = useBuildingStats();
+
+  const { data: permissions, isLoading: isLoadingPermissions } = useQuery({
+      queryKey: ['buildingPermissions', currentUser?.email],
+      queryFn: () => base44.entities.BuildingPermission.filter({ user_email: currentUser.email }),
+      enabled: !!currentUser && currentUser.role !== 'admin',
+  });
+
+  const permittedBuildingStats = useMemo(() => {
+      if (isLoadingStats || (currentUser && currentUser.role !== 'admin' && isLoadingPermissions)) {
+        return [];
+      }
+      if (!currentUser || !buildingStats) return [];
+
+      if (currentUser.role === 'admin') {
+          return buildingStats;
+      }
+
+      if (!permissions) {
+          return [];
+      }
+      
+      const permittedBuildingIds = new Set(permissions.map(p => p.building_id));
+      return buildingStats.filter(stat => permittedBuildingIds.has(stat.building.id));
+  }, [buildingStats, currentUser, permissions, isLoadingStats, isLoadingPermissions]);
+
+  const { totalBuildings, totalUnitsCount, totalRentedUnits, totalRevenue } = useMemo(() => {
+      const stats = permittedBuildingStats || [];
+      return {
+          totalBuildings: stats.length,
+          totalUnitsCount: stats.reduce((sum, s) => sum + s.totalUnits, 0),
+          totalRentedUnits: stats.reduce((sum, s) => sum + s.rentedUnits, 0),
+          totalRevenue: stats.reduce((sum, s) => sum + s.totalRent, 0),
+      }
+  }, [permittedBuildingStats]);
 
   // Filter-Logik
   const filteredStats = useMemo(() => {
-    return buildingStats.filter(stat => {
+    return permittedBuildingStats.filter(stat => {
       // Status-Filter
       if (filters.status !== 'all') {
         const occupancy = stat.occupancy;
@@ -93,7 +128,7 @@ export default function BuildingsPage() {
 
       {/* Filter-Bar */}
       <BuildingFilterBar
-        buildings={buildingStats.map(s => s.building)}
+        buildings={permittedBuildingStats.map(s => s.building)}
         filters={filters}
         onStatusChange={(status) => setFilters({ ...filters, status })}
         onCityChange={(city) => setFilters({ ...filters, city })}
