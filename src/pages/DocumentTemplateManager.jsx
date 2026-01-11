@@ -11,6 +11,7 @@ import TemplateEditor from '@/components/documents/TemplateEditor';
 import TemplatePreview from '@/components/documents/TemplatePreview';
 import TemplateVersionManager from '@/components/documents/TemplateVersionManager';
 import BuildingTemplateAssigner from '@/components/documents/BuildingTemplateAssigner';
+import PermissionGate from '@/components/permissions/PermissionGate';
 
 const DOCUMENT_TYPES = [
   'mietvertrag',
@@ -90,21 +91,22 @@ export default function DocumentTemplateManager() {
   const typeTemplates = templates.filter(t => t.document_type === selectedType);
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Dokumenten-Templates</h1>
-        <Button onClick={() => {
-          setEditingTemplate({
-            document_type: selectedType,
-            template_html: '',
-            template_fields: [],
-            is_active: true
-          });
-          setShowEditor(true);
-        }} className="gap-2">
-          <Plus className="w-4 h-4" /> Neues Template
-        </Button>
-      </div>
+    <PermissionGate action="edit" resource="templates">
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Dokumenten-Templates</h1>
+          <Button onClick={() => {
+            setEditingTemplate({
+              document_type: selectedType,
+              template_html: '',
+              template_fields: [],
+              is_active: true
+            });
+            setShowEditor(true);
+          }} className="gap-2">
+            <Plus className="w-4 h-4" /> Neues Template
+          </Button>
+        </div>
 
       <div>
         <label className="text-sm font-medium">Dokumenttyp</label>
