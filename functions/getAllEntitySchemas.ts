@@ -41,46 +41,47 @@ Deno.serve(async (req) => {
 
         const schemas = {};
         
-        console.log("========== DEBUG getAllEntitySchemas START ==========");
-        console.log("Anzahl Entity-Namen in Liste:", entityNames.length);
-        console.log("Erste 5 Entity-Namen:", entityNames.slice(0, 5));
+        logDebug(`Anzahl Entity-Namen: ${entityNames.length}`);
+        logDebug(`Erste 3 Entity-Namen: ${entityNames.slice(0, 3).join(', ')}`);
 
         for (const name of entityNames) {
-            if (!name) continue;
+            if (!name) {
+                logDebug(`[Skipped] Leerer Name`);
+                continue;
+            }
             try {
-                console.log(`\n[${name}] Versuche Schema zu laden...`);
-                console.log(`[${name}] base44.entities existiert:`, !!base44.entities);
-                console.log(`[${name}] base44.entities[name] existiert:`, !!base44.entities[name]);
-                console.log(`[${name}] typeof .schema:`, typeof base44.entities[name]?.schema);
+                logDebug(`\n[${name}] Loading schema...`);
                 
                 const schema = await base44.entities[name].schema();
                 
-                console.log(`[${name}] ✅ Schema geladen:`, schema ? Object.keys(schema).length + " keys" : "NULL/UNDEFINED");
                 if (schema) {
+                  logDebug(`[${name}] ✅ SUCCESS - ${Object.keys(schema).length} keys`);
                   schemas[name] = { name, ...schema };
+                } else {
+                  logDebug(`[${name}] ⚠️ Schema is null/undefined`);
                 }
             } catch (error) {
-                console.log(`[${name}] ❌ FEHLER:`, error.message);
-                if (error.stack) {
-                  console.log(`[${name}] Stack:`, error.stack.substring(0, 150));
-                }
+                logDebug(`[${name}] ❌ ERROR: ${error.message}`);
             }
         }
         
-        console.log("\n========== DEBUG getAllEntitySchemas ENDE ==========");
-        console.log("Gefundene Schemas:", Object.keys(schemas));
-        console.log("Anzahl gefunden:", Object.keys(schemas).length);
+        logDebug(`\n=== FINAL RESULT ===`);
+        logDebug(`Total schemas found: ${Object.keys(schemas).length}`);
+        logDebug(`Schema names: ${Object.keys(schemas).slice(0, 5).join(', ')}...`);
 
         return Response.json({
             success: true,
             count: Object.keys(schemas).length,
-            schemas
+            schemas,
+            debugLogs
         });
 
     } catch (error) {
-        console.error('Get all entity schemas error:', error);
+        debugLogs.push(`Error: ${error.message}`);
+        console.error('Error:', error);
         return Response.json({
-            error: error.message
+            error: error.message,
+            debugLogs
         }, { status: 500 });
     }
 });
