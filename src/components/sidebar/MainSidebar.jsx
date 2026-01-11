@@ -170,8 +170,8 @@ export default function MainSidebar() {
                     </Link>
                   ))}
 
-                  {category.subMenu && category.subMenu.map((subCategory) => (
-                    <div key={subCategory.id} className="space-y-1 mt-2 pt-2 border-t border-slate-200">
+                  {category.subMenu && category.subMenu.length > 0 && category.subMenu.map((subCategory) => (
+                    <div key={subCategory?.id || 'submenu'} className="space-y-1 mt-2 pt-2 border-t border-slate-200">
                       <button
                         onClick={() => setExpandedCategory(isSubMenuExpanded ? null : subMenuId)}
                         className="w-full flex items-center justify-between px-3 py-1.5 text-sm font-medium rounded-lg transition-colors"
@@ -179,22 +179,22 @@ export default function MainSidebar() {
                           color: themeColor,
                           backgroundColor: isSubMenuExpanded ? `${themeColor}08` : 'transparent',
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = `${themeColor}12`}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = isSubMenuExpanded ? `${themeColor}08` : 'transparent'}
+                        onMouseEnter={(e) => e.currentTarget?.style && (e.currentTarget.style.backgroundColor = `${themeColor}12`)}
+                        onMouseLeave={(e) => e.currentTarget?.style && (e.currentTarget.style.backgroundColor = isSubMenuExpanded ? `${themeColor}08` : 'transparent')}
                       >
-                        <span>{subCategory.label}</span>
+                        <span>{subCategory?.label || 'Menü'}</span>
                         <ChevronRight className={`w-3 h-3 transition-transform ${isSubMenuExpanded ? 'rotate-90' : ''}`} />
                       </button>
 
-                      {isSubMenuExpanded && (
+                      {isSubMenuExpanded && subCategory?.pages && (
                         <div className="pl-4 space-y-1">
                           {subCategory.pages.map((page) => (
                             <Link
-                              key={page.name}
-                              to={createPageUrl(page.name)}
+                              key={page?.name || 'page'}
+                              to={createPageUrl(page?.name || '#')}
                               className="block px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded transition-colors"
                             >
-                              {page.label}
+                              {page?.label || 'Seite'}
                             </Link>
                           ))}
                         </div>
