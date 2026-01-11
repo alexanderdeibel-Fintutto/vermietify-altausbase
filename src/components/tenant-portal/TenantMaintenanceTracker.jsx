@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Wrench, Camera, Upload, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import ServiceRatingDialog from './ServiceRatingDialog';
 
 export default function TenantMaintenanceTracker({ tenantId, unitId, companyId }) {
   const [showForm, setShowForm] = useState(false);
@@ -175,6 +176,16 @@ export default function TenantMaintenanceTracker({ tenantId, unitId, companyId }
                   <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded text-sm">
                     <p className="font-medium text-green-900">Lösung:</p>
                     <p className="text-green-700">{task.resolution_notes}</p>
+                  </div>
+                )}
+                {task.status === 'completed' && (
+                  <div className="mt-3">
+                    <ServiceRatingDialog
+                      maintenanceTask={task}
+                      tenantId={tenantId}
+                      companyId={companyId}
+                      ratingType="vendor"
+                    />
                   </div>
                 )}
               </div>

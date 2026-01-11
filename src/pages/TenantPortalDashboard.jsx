@@ -8,7 +8,9 @@ import TenantDocumentLibrary from '@/components/tenant-portal/TenantDocumentLibr
 import TenantMaintenanceTracker from '@/components/tenant-portal/TenantMaintenanceTracker';
 import TenantPaymentHistory from '@/components/tenant-portal/TenantPaymentHistory';
 import TenantCommunicationHub from '@/components/tenant-portal/TenantCommunicationHub';
-import { Home, FileText, Wrench, Euro, MessageSquare } from 'lucide-react';
+import { Home, FileText, Wrench, Euro, MessageSquare, Bell, Star } from 'lucide-react';
+import TenantNotificationCenter from '@/components/tenant-portal/TenantNotificationCenter';
+import TenantFavoritesManager from '@/components/tenant-portal/TenantFavoritesManager';
 
 export default function TenantPortalDashboard() {
   const { data: user } = useQuery({
@@ -63,10 +65,18 @@ export default function TenantPortalDashboard() {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Home className="w-4 h-4" />
             <span className="hidden sm:inline">Übersicht</span>
+          </TabsTrigger>
+          <TabsTrigger value="favorites" className="flex items-center gap-2">
+            <Star className="w-4 h-4" />
+            <span className="hidden sm:inline">Favoriten</span>
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="flex items-center gap-2">
+            <Bell className="w-4 h-4" />
+            <span className="hidden sm:inline">Mitteilungen</span>
           </TabsTrigger>
           <TabsTrigger value="documents" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
@@ -91,6 +101,14 @@ export default function TenantPortalDashboard() {
             <TenantContractOverview tenantId={tenant.id} />
             <TenantCommunicationHub tenantId={tenant.id} companyId={tenant.company_id} />
           </div>
+        </TabsContent>
+
+        <TabsContent value="favorites" className="mt-6">
+          <TenantFavoritesManager tenantId={tenant.id} />
+        </TabsContent>
+
+        <TabsContent value="notifications" className="mt-6">
+          <TenantNotificationCenter tenantId={tenant.id} />
         </TabsContent>
 
         <TabsContent value="documents" className="mt-6">
