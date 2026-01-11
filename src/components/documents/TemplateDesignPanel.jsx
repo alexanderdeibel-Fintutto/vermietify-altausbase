@@ -59,6 +59,7 @@ export default function TemplateDesignPanel({ design, onChange }) {
   const applyPreset = (preset) => {
     onChange({
       primaryColor: preset.primaryColor,
+      accentColor: preset.accentColor,
       font: preset.font,
       spacing: preset.spacing,
       borderRadius: preset.borderRadius
