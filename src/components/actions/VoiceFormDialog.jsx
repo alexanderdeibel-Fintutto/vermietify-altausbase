@@ -167,6 +167,15 @@ export default function VoiceFormDialog({ isOpen, onClose }) {
           </Button>
         </div>
       </DialogContent>
+      ) : (
+      <VoiceFormDisplay
+        formType={formData.form_type}
+        allData={formData.all_data}
+        essentialData={formData.essential_data}
+        confidence={formData.confidence}
+        onClose={handleFormClose}
+      />
+      )}
     </Dialog>
   );
 }
