@@ -59,7 +59,9 @@ export default function PostausgangsbuchTable() {
         alert(response.data?.message || 'Fehler beim Synchronisieren');
       }
     } catch (error) {
-      alert('Fehler: ' + (error.response?.data?.message || error.message));
+      console.error('Sync error:', error);
+      const message = error.response?.data?.message || error.message || 'Netzwerkfehler';
+      alert('Fehler: ' + message);
     } finally {
       setSyncing(false);
     }
