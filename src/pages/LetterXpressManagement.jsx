@@ -185,7 +185,7 @@ export default function LetterXpressManagement() {
             <p className="text-sm text-slate-600">
               Geben Sie Ihre LetterXpress-Zugangsdaten ein, um zu starten:{' '}
               <a 
-                href="https://www.letterxpress.de/settings/api" 
+                href="https://www.letterxpress.de/kundenbereich" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:text-blue-700 font-medium"
