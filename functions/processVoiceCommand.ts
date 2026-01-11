@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
         console.log(`Processing voice command from ${user.email}: "${textCommand}"`);
         console.log('Context:', context);
 
-        // Helper function to find entities
+        // Helper functions to find entities
         const findTenant = async (name) => {
             if (!name) return null;
             const nameParts = name.split(' ');
