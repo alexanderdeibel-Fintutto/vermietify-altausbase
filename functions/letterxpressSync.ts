@@ -73,6 +73,8 @@ Deno.serve(async (req) => {
       }
     });
 
+    console.log('[letterxpressSync] API Response status:', response.status);
+    
     if (!response.ok) {
       const errorBody = await response.text();
       console.error('[letterxpressSync] API error:', response.status, errorBody);
@@ -80,12 +82,30 @@ Deno.serve(async (req) => {
         success: false,
         error: 'LetterXpress API error',
         status: response.status,
-        message: `LetterXpress API Fehler: ${response.status}`
+        message: `LetterXpress API Fehler: ${response.status} - ${errorBody.substring(0, 100)}`
       }, { status: 400 });
     }
 
-    const shipments = await response.json();
-    console.log('[letterxpressSync] Received', shipments.length || 0, 'shipments from API');
+    let shipments = [];
+    try {
+      const jsonData = await response.json();
+      console.log('[letterxpressSync] Received JSON:', JSON.stringify(jsonData).substring(0, 200));
+      
+      // Handle different response formats
+      if (Array.isArray(jsonData)) {
+        shipments = jsonData;
+      } else if (jsonData.shipments && Array.isArray(jsonData.shipments)) {
+        shipments = jsonData.shipments;
+      } else if (jsonData.data && Array.isArray(jsonData.data)) {
+        shipments = jsonData.data;
+      } else {
+        console.log('[letterxpressSync] Unexpected response format:', jsonData);
+      }
+    } catch (parseErr) {
+      console.error('[letterxpressSync] Error parsing JSON:', parseErr.message);
+    }
+    
+    console.log('[letterxpressSync] Processing', shipments.length, 'shipments');
 
     // Speichere/Update Versände in Datenbank
     let syncedCount = 0;
