@@ -41,11 +41,16 @@ export default function FieldTasksManager() {
 
   const categories = [
     { id: 'all', label: 'Alle', icon: Building },
-    { id: 'objekt_stammdaten', label: 'Stammdaten', icon: FileText },
-    { id: 'objekt_zaehler', label: 'Zähler', icon: Clock },
-    { id: 'objekt_technik', label: 'Technik', icon: Wrench },
-    { id: 'objekt_aussenanlagen', label: 'Außenanlagen', icon: Home },
-    { id: 'objekt_gemeinschaftsflaechen', label: 'Gemeinschaftsflächen', icon: Building }
+    { id: 'objekt_stammdaten', label: 'Objekt: Stammdaten', icon: Building },
+    { id: 'objekt_zaehler', label: 'Objekt: Zähler', icon: Clock },
+    { id: 'objekt_technik', label: 'Objekt: Technik', icon: Wrench },
+    { id: 'wohnung_besichtigung', label: 'Wohnung: Besichtigung', icon: Home },
+    { id: 'wohnung_uebergabe_einzug', label: 'Wohnung: Einzug', icon: CheckCircle2 },
+    { id: 'wohnung_uebergabe_auszug', label: 'Wohnung: Auszug', icon: X },
+    { id: 'vertrag_abschluss', label: 'Vertrag: Abschluss', icon: FileText },
+    { id: 'schaden_erfassung', label: 'Schäden', icon: AlertCircle },
+    { id: 'handwerker_einsatz', label: 'Handwerker', icon: Wrench },
+    { id: 'notfall_sofortmassnahme', label: 'Notfälle', icon: AlertCircle }
   ];
 
   const statuses = [

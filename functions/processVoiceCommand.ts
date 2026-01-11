@@ -320,6 +320,169 @@ Deno.serve(async (req) => {
             message = 'Aufzug-Prüfung wird dokumentiert.';
         }
 
+        // === WOHNUNG AUFGABEN ===
+        
+        // Besichtigung
+        else if (lowerCommand.includes('besichtigung')) {
+            intent = 'CreateFieldTask';
+            const unitMatch = textCommand.match(/wohnung (\d+)/i);
+            extractedData = {
+                task_category: 'wohnung_besichtigung',
+                task_type: 'leerstandsbesichtigung',
+                title: 'Leerstandsbesichtigung durchführen',
+                priority: 'normal',
+                created_via: 'voice',
+                unitNumber: unitMatch?.[1]
+            };
+            if (unitMatch?.[1]) {
+                const unit = await findUnit(unitMatch[1], context.buildingId);
+                if (unit) extractedData.unit_id = unit.id;
+            }
+            if (context.buildingId) extractedData.building_id = context.buildingId;
+            missingFields = [];
+            message = 'Besichtigungsaufgabe wird erstellt.';
+        }
+
+        // Schlüsselübergabe
+        else if (lowerCommand.includes('schlüssel') && lowerCommand.includes('übergabe')) {
+            intent = 'CreateFieldTask';
+            extractedData = {
+                task_category: 'wohnung_uebergabe_einzug',
+                task_type: 'schluesseluebergabe',
+                title: 'Schlüsselübergabe dokumentieren',
+                priority: 'hoch',
+                created_via: 'voice'
+            };
+            if (context.unitId) extractedData.unit_id = context.unitId;
+            if (context.buildingId) extractedData.building_id = context.buildingId;
+            missingFields = [];
+            message = 'Schlüsselübergabe wird dokumentiert.';
+        }
+
+        // Rauchwarnmelder prüfen
+        else if (lowerCommand.includes('rauchwarnmelder') || lowerCommand.includes('rauchmelder')) {
+            intent = 'CreateFieldTask';
+            extractedData = {
+                task_category: 'wohnung_pruefung',
+                task_type: 'rauchwarnmelder_pruefung_einheit',
+                title: 'Rauchwarnmelder-Prüfung',
+                priority: 'hoch',
+                created_via: 'voice'
+            };
+            if (context.unitId) extractedData.unit_id = context.unitId;
+            if (context.buildingId) extractedData.building_id = context.buildingId;
+            missingFields = [];
+            message = 'Rauchwarnmelder-Prüfung wird erfasst.';
+        }
+
+        // === VERTRAG AUFGABEN ===
+        
+        // SEPA Mandat
+        else if (lowerCommand.includes('sepa') || lowerCommand.includes('lastschrift')) {
+            intent = 'CreateFieldTask';
+            extractedData = {
+                task_category: 'vertrag_abschluss',
+                task_type: 'sepa_mandat_unterschrieben',
+                title: 'SEPA-Lastschriftmandat unterschrieben',
+                priority: 'hoch',
+                created_via: 'voice'
+            };
+            missingFields = [];
+            message = 'SEPA-Mandat Aufgabe wird erstellt.';
+        }
+
+        // Kaution
+        else if (lowerCommand.includes('kaution')) {
+            intent = 'CreateFieldTask';
+            extractedData = {
+                task_category: 'vertrag_kaution',
+                task_type: 'kaution_rate_erhalten',
+                title: 'Kaution Rate erhalten',
+                priority: 'normal',
+                created_via: 'voice'
+            };
+            missingFields = [];
+            message = 'Kaution-Aufgabe wird erstellt.';
+        }
+
+        // Mieter angetroffen
+        else if (lowerCommand.includes('mieter angetroffen') || lowerCommand.includes('mieter getroffen')) {
+            intent = 'CreateFieldTask';
+            extractedData = {
+                task_category: 'vertrag_kommunikation',
+                task_type: 'mieter_vor_ort_angetroffen',
+                title: 'Mieter vor Ort angetroffen',
+                priority: 'niedrig',
+                created_via: 'voice'
+            };
+            missingFields = [];
+            message = 'Mieter-Kontakt wird dokumentiert.';
+        }
+
+        // === SCHADEN AUFGABEN ===
+        
+        // Schaden/Wasserschaden
+        else if (lowerCommand.includes('schaden') || lowerCommand.includes('wasserschaden') || lowerCommand.includes('rohrbruch')) {
+            intent = 'CreateFieldTask';
+            let damageType = 'allgemein';
+            if (lowerCommand.includes('wasser')) damageType = 'wasserschaden';
+            else if (lowerCommand.includes('rohr')) damageType = 'rohrbruch';
+            
+            extractedData = {
+                task_category: 'schaden_erfassung',
+                task_type: 'schadensmeldung_aufnehmen',
+                title: 'Schadensmeldung aufnehmen',
+                priority: 'hoch',
+                created_via: 'voice',
+                damage_data: {
+                    damage_type: damageType,
+                    urgency: 'zeitnah'
+                }
+            };
+            if (context.unitId) extractedData.unit_id = context.unitId;
+            if (context.buildingId) extractedData.building_id = context.buildingId;
+            missingFields = [];
+            message = 'Schadensmeldung wird aufgenommen.';
+        }
+
+        // === HANDWERKER AUFGABEN ===
+        
+        // Handwerker Einsatz
+        else if (lowerCommand.includes('handwerker')) {
+            intent = 'CreateFieldTask';
+            extractedData = {
+                task_category: 'handwerker_einsatz',
+                task_type: 'handwerker_eingewiesen',
+                title: 'Handwerker vor Ort eingewiesen',
+                priority: 'normal',
+                created_via: 'voice'
+            };
+            if (context.buildingId) extractedData.building_id = context.buildingId;
+            missingFields = [];
+            message = 'Handwerker-Einsatz wird dokumentiert.';
+        }
+
+        // === NOTFALL AUFGABEN ===
+        
+        // Notfall
+        else if (lowerCommand.includes('notfall') || lowerCommand.includes('feuerwehr') || lowerCommand.includes('wasser absperren')) {
+            intent = 'CreateFieldTask';
+            let taskType = 'notdienst_gerufen';
+            if (lowerCommand.includes('feuerwehr')) taskType = 'feuerwehr_gerufen';
+            else if (lowerCommand.includes('wasser')) taskType = 'wasserabsperrung';
+            
+            extractedData = {
+                task_category: 'notfall_sofortmassnahme',
+                task_type: taskType,
+                title: taskType === 'feuerwehr_gerufen' ? 'Feuerwehr gerufen' : taskType === 'wasserabsperrung' ? 'Wasserabsperrung vorgenommen' : 'Notdienst gerufen',
+                priority: 'sofort',
+                created_via: 'voice'
+            };
+            if (context.buildingId) extractedData.building_id = context.buildingId;
+            missingFields = [];
+            message = 'Notfall-Sofortmaßnahme wird dokumentiert!';
+        }
+
         // Default fallback
         else {
             intent = 'Unknown';

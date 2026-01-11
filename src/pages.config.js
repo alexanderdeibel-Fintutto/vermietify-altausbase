@@ -126,6 +126,7 @@ import Equipment from './pages/Equipment';
 import EstateTaxPlanning from './pages/EstateTaxPlanning';
 import EstimatedTaxScheduler from './pages/EstimatedTaxScheduler';
 import FeatureCatalog from './pages/FeatureCatalog';
+import FieldTasksManager from './pages/FieldTasksManager';
 import FinAPICallback from './pages/FinAPICallback';
 import FinanceManagement from './pages/FinanceManagement';
 import FinanceManagementHub from './pages/FinanceManagementHub';
@@ -351,7 +352,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import FieldTasksManager from './pages/FieldTasksManager';
 import __Layout from './Layout.jsx';
 
 
@@ -484,6 +484,7 @@ export const PAGES = {
     "EstateTaxPlanning": EstateTaxPlanning,
     "EstimatedTaxScheduler": EstimatedTaxScheduler,
     "FeatureCatalog": FeatureCatalog,
+    "FieldTasksManager": FieldTasksManager,
     "FinAPICallback": FinAPICallback,
     "FinanceManagement": FinanceManagement,
     "FinanceManagementHub": FinanceManagementHub,
@@ -709,7 +710,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "FieldTasksManager": FieldTasksManager,
 }
 
 export const pagesConfig = {
