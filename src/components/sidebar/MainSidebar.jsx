@@ -164,7 +164,7 @@ const SECONDARY_CATEGORIES = [
 ];
 
 export default function MainSidebar() {
-  const [expandedCategory, setExpandedCategory] = React.useState('immobilien');
+  const [expandedCategory, setExpandedCategory] = React.useState('kommunikation');
   const { selectedBuilding } = useSelectedBuilding();
 
   const { data: buildings = [] } = useQuery({
