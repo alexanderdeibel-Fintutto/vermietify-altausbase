@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { DndContext, DragEndEvent, closestCenter } from '@dnd-kit/core';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, Code, Layout } from 'lucide-react';
+import { Eye, Code, Layout, GripVertical } from 'lucide-react';
 import TemplateComponentLibrary from './TemplateComponentLibrary';
 import TemplateDesignPanel from './TemplateDesignPanel';
 import TemplateBlockEditor from './TemplateBlockEditor';
