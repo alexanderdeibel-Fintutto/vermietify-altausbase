@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { DollarSign, Home, Users, Building2, Calculator, ChevronRight, FileText, MessageSquare, Mail, Bell, Phone, Send } from 'lucide-react';
+import { DollarSign, Home, Users, Building2, Calculator, ChevronRight, FileText, MessageSquare, Mail, Bell, Phone, Send, Package } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useSelectedBuilding } from '@/components/hooks/useSelectedBuilding';
@@ -136,6 +136,15 @@ const SECONDARY_CATEGORIES = [
           { name: 'NotificationCenter', label: 'Benachrichtigungsverwaltung' },
           { name: 'NotificationManagement', label: 'Push-Einstellungen' },
           { name: 'NotificationPreferences', label: 'Nutzer-Präferenzen' },
+        ]
+      },
+      {
+        id: 'postversand',
+        label: 'Postversand',
+        pages: [
+          { name: 'WhatsAppSetup', label: 'LetterXpress-Verwaltung' },
+          { name: 'DocumentManagement', label: 'Dokumente zum Versand' },
+          { name: 'AdminMessagingCenter', label: 'Versand-Verlauf' },
         ]
       }
     ]
