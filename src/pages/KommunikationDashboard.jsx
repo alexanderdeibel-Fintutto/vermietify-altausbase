@@ -86,9 +86,57 @@ export default function KommunikationDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-slate-600">Neue Nachrichten</p>
-                  <p className="text-2xl font-semibold text-slate-900 mt-2">{messages.filter(m => !m.is_read).length}</p>
+                  <p className="text-2xl font-semibold text-slate-900 mt-2">{unreadMessages}</p>
                 </div>
                 <MessageSquare className="w-8 h-8 text-blue-500 opacity-20" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-600">Support-Tickets offen</p>
+                  <p className="text-2xl font-semibold text-slate-900 mt-2">{openTickets}</p>
+                </div>
+                <AlertCircle className="w-8 h-8 text-red-500 opacity-20" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-600">Community-Posts ausstehend</p>
+                  <p className="text-2xl font-semibold text-slate-900 mt-2">{pendingPosts}</p>
+                </div>
+                <Users className="w-8 h-8 text-green-500 opacity-20" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-600">Aktive Postversände</p>
+                  <p className="text-2xl font-semibold text-slate-900 mt-2">{activeShipments}</p>
+                </div>
+                <Package className="w-8 h-8 text-purple-500 opacity-20" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-600">Ø Antwortzeit</p>
+                  <p className="text-2xl font-semibold text-slate-900 mt-2">{formatResponseTime(avgResponseTime)}</p>
+                </div>
+                <TrendingUp className="w-8 h-8 text-blue-600 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -101,54 +149,6 @@ export default function KommunikationDashboard() {
                   <p className="text-2xl font-semibold text-slate-900 mt-2">{announcements.filter(a => a.is_active).length}</p>
                 </div>
                 <Bell className="w-8 h-8 text-amber-500 opacity-20" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-600">Support-Tickets</p>
-                  <p className="text-2xl font-semibold text-slate-900 mt-2">8</p>
-                </div>
-                <AlertCircle className="w-8 h-8 text-red-500 opacity-20" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-600">Community Posts</p>
-                  <p className="text-2xl font-semibold text-slate-900 mt-2">3 ausstehend</p>
-                </div>
-                <Users className="w-8 h-8 text-green-500 opacity-20" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-600">Postversände</p>
-                  <p className="text-2xl font-semibold text-slate-900 mt-2">7 aktiv</p>
-                </div>
-                <Mail className="w-8 h-8 text-purple-500 opacity-20" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-600">Ø Antwortzeit</p>
-                  <p className="text-2xl font-semibold text-slate-900 mt-2">1.9h</p>
-                </div>
-                <Activity className="w-8 h-8 text-blue-600 opacity-20" />
               </div>
             </CardContent>
           </Card>
