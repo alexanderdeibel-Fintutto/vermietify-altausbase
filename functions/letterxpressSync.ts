@@ -9,13 +9,20 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Hole gespeicherte LetterXpress-Daten
-    const credentials = await base44.auth.updateMe({}, true); // Hole benutzerdaten
-    const apiKey = credentials?.letterxpress_api_key;
-    const accountId = credentials?.letterxpress_account_id;
+    // Hole LetterXpress-Zugangsdaten vom aktuellen User
+    const creds = await base44.entities.LetterXpressCredential.filter({
+      created_by: user.email
+    });
+
+    if (!creds || creds.length === 0) {
+      return Response.json({ error: 'LetterXpress credentials not configured' }, { status: 400 });
+    }
+
+    const apiKey = creds[0].api_key;
+    const accountId = creds[0].account_id;
 
     if (!apiKey || !accountId) {
-      return Response.json({ error: 'LetterXpress credentials not configured' }, { status: 400 });
+      return Response.json({ error: 'LetterXpress credentials incomplete' }, { status: 400 });
     }
 
     // API-Call zu LetterXpress
