@@ -45,13 +45,8 @@ Deno.serve(async (req) => {
         logDebug(`Erste 3 Entity-Namen: ${entityNames.slice(0, 3).join(', ')}`);
 
         for (const name of entityNames) {
-            if (!name) {
-                logDebug(`[Skipped] Leerer Name`);
-                continue;
-            }
+            if (!name) continue;
             try {
-                logDebug(`\n[${name}] Loading schema...`);
-                
                 const schema = await base44.entities.schema(name);
                 
                 if (schema) {
