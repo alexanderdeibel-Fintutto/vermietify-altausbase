@@ -123,16 +123,88 @@ export default function LetterXpressManagement() {
         </TabsContent>
 
         {/* Einstellungen */}
-        <TabsContent value="settings" className="mt-6">
+        <TabsContent value="settings" className="mt-6 space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>LetterXpress-Einstellungen</CardTitle>
+              <CardTitle>LetterXpress Verbindung</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">LetterXpress API ist nicht verbunden</p>
+                <p className="text-sm text-blue-800 font-medium mb-2">Schritt 1: API-Credentials eintragen</p>
+                <p className="text-xs text-blue-700">Gehen Sie zu Ihren Admin-Einstellungen → Umgebungsvariablen</p>
               </div>
-              <Button className="w-full">LetterXpress verbinden</Button>
+              
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium mb-2">LetterXpress API Key</label>
+                  <input 
+                    type="password" 
+                    placeholder="Wird aus Umgebungsvariablen geladen..." 
+                    disabled 
+                    className="w-full px-3 py-2 border rounded-lg bg-slate-100 text-slate-500"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">Umgebungsvariable: LETTERXPRESS_API_KEY</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">LetterXpress Account ID</label>
+                  <input 
+                    type="text" 
+                    placeholder="z.B. ACC-12345" 
+                    className="w-full px-3 py-2 border rounded-lg"
+                  />
+                </div>
+              </div>
+
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg mt-4">
+                <p className="text-sm text-amber-800 font-medium mb-2">Schritt 2: Verbindung testen</p>
+                <Button className="w-full bg-amber-600 hover:bg-amber-700">Verbindung testen</Button>
+              </div>
+
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-800 font-medium mb-2">Schritt 3: Voreinstellungen</p>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Standardformat</label>
+                    <select className="w-full px-3 py-2 border rounded-lg text-sm">
+                      <option>DIN A4 Farbdruck</option>
+                      <option>DIN A4 S/W</option>
+                      <option>DIN A5</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Standard-Versand</label>
+                    <select className="w-full px-3 py-2 border rounded-lg text-sm">
+                      <option>Standardversand (ca. 2-3 Tage)</option>
+                      <option>Expressversand (1 Tag)</option>
+                      <option>Einschreiben</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" id="attach-tracking" className="rounded" />
+                    <label htmlFor="attach-tracking" className="text-sm">Tracking-Code automatisch hinzufügen</label>
+                  </div>
+                </div>
+              </div>
+
+              <Button className="w-full bg-green-600 hover:bg-green-700">Einstellungen speichern</Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick-Links</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <a href="https://www.letterxpress.de" target="_blank" rel="noopener noreferrer" className="block p-3 border rounded-lg hover:bg-slate-50 text-sm font-medium text-blue-600">
+                → LetterXpress Website
+              </a>
+              <a href="https://www.letterxpress.de/api-docs" target="_blank" rel="noopener noreferrer" className="block p-3 border rounded-lg hover:bg-slate-50 text-sm font-medium text-blue-600">
+                → API-Dokumentation
+              </a>
+              <a href="mailto:support@letterxpress.de" className="block p-3 border rounded-lg hover:bg-slate-50 text-sm font-medium text-blue-600">
+                → Support kontaktieren
+              </a>
             </CardContent>
           </Card>
         </TabsContent>
