@@ -9,88 +9,59 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const { asset_id, sell_quantity, sell_price, sell_date } = await req.json();
-    
-    console.log(`[FIFO] Calculating for asset ${asset_id}, quantity ${sell_quantity}, price ${sell_price}`);
-    
-    // Alle Käufe des Assets abrufen, sortiert nach Datum (FIFO)
-    const transactions = await base44.entities.AssetTransaction.filter({
-      asset_id,
-      transaction_type: "KAUF"
-    });
-    
-    if (transactions.length === 0) {
-      return Response.json({ error: 'Keine Käufe für dieses Asset vorhanden' }, { status: 400 });
+    const { asset_id, sell_quantity, sell_price } = await req.json();
+
+    // Hole Asset
+    const asset = await base44.entities.Asset.get(asset_id);
+    if (!asset) {
+      return Response.json({ error: 'Asset nicht gefunden' }, { status: 404 });
     }
-    
-    // Bereits verkaufte Mengen berechnen
-    const sales = await base44.entities.AssetTransaction.filter({
-      asset_id,
-      transaction_type: "VERKAUF"
-    });
-    
-    // FIFO-Zuordnung
-    let remainingToSell = sell_quantity;
-    let totalAcquisitionCost = 0;
-    let lots = [];
-    let remainingTransactions = [...transactions].sort((a, b) => 
-      new Date(a.transaction_date) - new Date(b.transaction_date)
+
+    // Alle Käufe chronologisch
+    const buys = await base44.entities.AssetTransaction.filter(
+      { asset_id, transaction_type: 'BUY' },
+      'transaction_date',
+      1000
     );
-    
-    // Bereits verkaufte Mengen pro Lot tracken
-    const soldFromLots = {};
-    for (const sale of sales) {
-      if (!soldFromLots[sale.id]) soldFromLots[sale.id] = 0;
-      soldFromLots[sale.id] += sale.quantity;
-    }
-    
-    for (const purchase of remainingTransactions) {
-      if (remainingToSell <= 0) break;
-      
-      const alreadySold = soldFromLots[purchase.id] || 0;
-      const availableFromLot = purchase.quantity - alreadySold;
-      
-      if (availableFromLot <= 0) continue;
-      
-      const soldFromThisLot = Math.min(remainingToSell, availableFromLot);
-      const costPerUnit = (purchase.total_amount + (purchase.fees || 0)) / purchase.quantity;
-      const acquisitionCostForLot = soldFromThisLot * costPerUnit;
-      
-      // Haltedauer berechnen
-      const purchaseDate = new Date(purchase.transaction_date);
-      const saleDate = new Date(sell_date);
-      const holdingPeriodDays = Math.floor((saleDate - purchaseDate) / (1000 * 60 * 60 * 24));
-      
-      lots.push({
-        purchaseId: purchase.id,
-        purchaseDate: purchase.transaction_date,
-        quantity: soldFromThisLot,
-        acquisitionCostPerUnit: Number(costPerUnit.toFixed(2)),
-        acquisitionCostTotal: Number(acquisitionCostForLot.toFixed(2)),
-        holdingPeriodDays: holdingPeriodDays,
-        isTaxFree: holdingPeriodDays > 365
+
+    let remaining_to_sell = sell_quantity;
+    let total_cost_basis = 0;
+    let lots_used = [];
+
+    for (const buy of buys) {
+      if (remaining_to_sell <= 0) break;
+
+      const quantity_from_this_lot = Math.min(buy.quantity, remaining_to_sell);
+      const cost_from_this_lot = quantity_from_this_lot * buy.price_per_unit;
+
+      total_cost_basis += cost_from_this_lot;
+      remaining_to_sell -= quantity_from_this_lot;
+
+      lots_used.push({
+        buy_id: buy.id,
+        buy_date: buy.transaction_date,
+        quantity: quantity_from_this_lot,
+        cost: cost_from_this_lot,
       });
-      
-      totalAcquisitionCost += acquisitionCostForLot;
-      remainingToSell -= soldFromThisLot;
     }
-    
-    if (remainingToSell > 0) {
-      return Response.json({ 
-        error: `Nicht genug Anteile vorhanden. Benötigt: ${sell_quantity}, verfügbar: ${sell_quantity - remainingToSell}` 
-      }, { status: 400 });
-    }
-    
-    const sellProceeds = sell_quantity * sell_price;
-    const realizedGainLoss = sellProceeds - totalAcquisitionCost;
-    
-    console.log(`[FIFO] Result: cost=${totalAcquisitionCost}, proceeds=${sellProceeds}, gain=${realizedGainLoss}`);
-    
+
+    const total_revenue = sell_quantity * sell_price;
+    const gain_loss = total_revenue - total_cost_basis;
+
+    // Prüfe Haltefrist (nur bei Krypto/Edelmetallen)
+    const oldest_lot_date = new Date(lots_used[0]?.buy_date);
+    const holding_period_days = (new Date() - oldest_lot_date) / (1000 * 60 * 60 * 24);
+    const is_tax_free = holding_period_days > 365;
+
+    console.log(`[FIFO] Asset: ${asset.name}, Gain/Loss: ${gain_loss}€, Tax-Free: ${is_tax_free}`);
+
     return Response.json({
-      acquisitionCost: Number(totalAcquisitionCost.toFixed(2)),
-      realizedGainLoss: Number(realizedGainLoss.toFixed(2)),
-      lots: lots,
-      totalQuantity: sell_quantity
+      gain_loss,
+      is_tax_free,
+      holding_period_days: Math.round(holding_period_days),
+      cost_basis: total_cost_basis,
+      revenue: total_revenue,
+      lots_used,
     });
   } catch (error) {
     console.error('[FIFO] Error:', error);
