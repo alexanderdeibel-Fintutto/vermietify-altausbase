@@ -4,129 +4,123 @@ import { jsPDF } from 'npm:jspdf@2.5.1';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { calculation_id, tax_year } = await req.json();
-
     const user = await base44.auth.me();
+    
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const calculation = await base44.asServiceRole.entities.TaxCalculation.list(
-      undefined,
-      1,
-      { id: calculation_id }
-    );
-
-    if (!calculation || calculation.length === 0) {
-      return Response.json({ error: 'Calculation not found' }, { status: 404 });
-    }
-
-    const calc = calculation[0];
-    const fields = calc.calculated_fields || {};
-
-    // Create PDF
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    let yPos = 15;
-
-    // Helper function for text
-    const addText = (text, x, y, options = {}) => {
-      doc.setFont('helvetica', options.bold ? 'bold' : 'normal');
-      doc.setFontSize(options.size || 11);
-      doc.text(text, x, y);
-    };
-
-    const addLine = () => {
-      yPos += 2;
-      doc.setDrawColor(200);
-      doc.line(10, yPos, pageWidth - 10, yPos);
-      yPos += 3;
-    };
-
+    
+    const { tax_year } = await req.json();
+    
+    console.log(`[Anlage KAP PDF] Generating for ${user.email}, year ${tax_year}`);
+    
+    // Daten abrufen
+    const response = await base44.functions.invoke('generateAnlageKAP', { tax_year });
+    const data = response.data;
+    
+    // PDF erstellen
+    const doc = new jsPDF();
+    
     // Header
-    addText('Anlage KAP - Kapitalerträge', 15, yPos, { bold: true, size: 14 });
-    yPos += 10;
-    addText(`Steuerjahr: ${tax_year}`, 15, yPos);
-    yPos += 8;
-    addText(`Erstellt: ${new Date().toLocaleDateString('de-DE')}`, 15, yPos);
-    addLine();
-
-    // Section 1: Einkünfte
-    yPos += 2;
-    addText('1. KAPITALERTRÄGE', 15, yPos, { bold: true, size: 12 });
-    yPos += 8;
-
-    const data = [
-      ['Zinsen (Zeile 7)', `€ ${(fields.zeile_7_zinsen || 0).toFixed(2)}`],
-      ['Dividenden (Zeile 9)', `€ ${(fields.zeile_9_dividenden || 0).toFixed(2)}`],
-      ['Wertpapiergewinne (Zeile 12)', `€ ${(fields.zeile_12_wertpapiergewinne || 0).toFixed(2)}`],
-      ['Steuerabzug (Zeile 37)', `€ ${(fields.zeile_37_steuerabzug || 0).toFixed(2)}`],
-    ];
-
-    data.forEach(([label, value]) => {
-      addText(label, 20, yPos);
-      addText(value, pageWidth - 30, yPos, { bold: true });
-      yPos += 7;
-    });
-
-    addLine();
-
-    // Section 2: Verluste
-    yPos += 2;
-    addText('2. VERLUSTE', 15, yPos, { bold: true, size: 12 });
-    yPos += 8;
-    addText('Verluste (Zeile 26)', 20, yPos);
-    addText(`€ ${(fields.zeile_26_verluste || 0).toFixed(2)}`, pageWidth - 30, yPos, { bold: true });
-    yPos += 8;
-
-    addLine();
-
-    // Section 3: Sparer-Pauschbetrag
-    yPos += 2;
-    addText('3. SPARER-PAUSCHBETRAG', 15, yPos, { bold: true, size: 12 });
-    yPos += 8;
-    addText(`Genutzter Pauschbetrag (Zeile 16): € ${calc.sparer_pauschbetrag_used || 0}`, 20, yPos);
-    yPos += 7;
-    addText(`Verbleibender Pauschbetrag: € ${calc.sparer_pauschbetrag_remaining || 1000}`, 20, yPos);
-
-    yPos += 10;
-    addLine();
-
-    // Section 4: Zusammenfassung
-    yPos += 2;
-    addText('4. STEUERERGEBNIS', 15, yPos, { bold: true, size: 12 });
-    yPos += 8;
-
-    const totalGains = (fields.zeile_7_zinsen || 0) + 
-                       (fields.zeile_9_dividenden || 0) + 
-                       (fields.zeile_12_wertpapiergewinne || 0);
-    const taxableGains = Math.max(0, totalGains - (calc.sparer_pauschbetrag_used || 0));
-    const estimatedTax = taxableGains * 0.25;
-
-    addText('Gesamte Kapitalerträge:', 20, yPos);
-    addText(`€ ${totalGains.toFixed(2)}`, pageWidth - 30, yPos, { bold: true });
-    yPos += 7;
-
-    addText('Steuerpflichtiger Betrag:', 20, yPos);
-    addText(`€ ${taxableGains.toFixed(2)}`, pageWidth - 30, yPos, { bold: true });
-    yPos += 7;
-
-    addText('Geschätzte Abgeltungsteuer (25%):', 20, yPos);
-    addText(`€ ${estimatedTax.toFixed(2)}`, pageWidth - 30, yPos, { bold: true, size: 12 });
-
-    // Generate PDF
+    doc.setFontSize(20);
+    doc.text('Anlage KAP', 20, 20);
+    doc.setFontSize(12);
+    doc.text(`Kapitalerträge ${tax_year}`, 20, 30);
+    doc.text(`Erstellt für: ${user.full_name || user.email}`, 20, 37);
+    doc.text(`Datum: ${new Date().toLocaleDateString('de-DE')}`, 20, 44);
+    
+    let y = 60;
+    
+    // 1. Kapitalerträge
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('1. Kapitalerträge', 20, y);
+    y += 10;
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Dividenden und Zinsen:`, 30, y);
+    doc.text(`${data.dividends.total.toFixed(2)} €`, 150, y, { align: 'right' });
+    y += 7;
+    doc.text(`Realisierte Kursgewinne:`, 30, y);
+    doc.text(`${data.capital_gains.total.toFixed(2)} €`, 150, y, { align: 'right' });
+    y += 7;
+    doc.setFont(undefined, 'bold');
+    doc.text(`Summe Einkünfte:`, 30, y);
+    doc.text(`${data.summary.total_income.toFixed(2)} €`, 150, y, { align: 'right' });
+    y += 15;
+    
+    // 2. Freistellungsauftrag
+    doc.setFontSize(14);
+    doc.text('2. Freistellungsauftrag', 20, y);
+    y += 10;
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Gesamt verfügbar:`, 30, y);
+    doc.text(`${data.freistellungsauftrag.total.toFixed(2)} €`, 150, y, { align: 'right' });
+    y += 7;
+    doc.text(`Genutzt:`, 30, y);
+    doc.text(`${data.freistellungsauftrag.used.toFixed(2)} €`, 150, y, { align: 'right' });
+    y += 7;
+    doc.setFont(undefined, 'bold');
+    doc.text(`Noch verfügbar:`, 30, y);
+    doc.text(`${data.freistellungsauftrag.available.toFixed(2)} €`, 150, y, { align: 'right' });
+    y += 15;
+    
+    // 3. Verlustverrechnungstöpfe
+    doc.setFontSize(14);
+    doc.text('3. Verlustverrechnungstöpfe', 20, y);
+    y += 10;
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Aktien-Verlusttopf:`, 30, y);
+    doc.text(`${data.loss_pots.stock.toFixed(2)} €`, 150, y, { align: 'right' });
+    y += 7;
+    doc.text(`Sonstige-Verlusttopf:`, 30, y);
+    doc.text(`${data.loss_pots.other.toFixed(2)} €`, 150, y, { align: 'right' });
+    y += 15;
+    
+    // 4. Steuerberechnung
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('4. Steuerberechnung', 20, y);
+    y += 10;
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Zu versteuernde Einkünfte:`, 30, y);
+    doc.text(`${data.summary.taxable_income.toFixed(2)} €`, 150, y, { align: 'right' });
+    y += 10;
+    doc.text(`Kapitalertragsteuer (25%):`, 30, y);
+    doc.text(`${data.summary.kapitalertragsteuer.toFixed(2)} €`, 150, y, { align: 'right' });
+    y += 7;
+    doc.text(`Solidaritätszuschlag (5,5%):`, 30, y);
+    doc.text(`${data.summary.solidaritaetszuschlag.toFixed(2)} €`, 150, y, { align: 'right' });
+    y += 10;
+    
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(12);
+    doc.text(`Gesamtsteuer:`, 30, y);
+    doc.text(`${data.summary.total_tax.toFixed(2)} €`, 150, y, { align: 'right' });
+    
+    // Footer
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'normal');
+    doc.text('Erstellt mit FinTuttoVermögen | Alle Angaben ohne Gewähr', 105, 280, { align: 'center' });
+    
     const pdfBytes = doc.output('arraybuffer');
-
+    
     return new Response(pdfBytes, {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="Anlage_KAP_${tax_year}.pdf"`
+        'Content-Disposition': `attachment; filename=Anlage_KAP_${tax_year}_${user.email}.pdf`
       }
     });
   } catch (error) {
-    console.error('generateAnlageKAPPDF error:', error);
+    console.error('[Anlage KAP PDF] Error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

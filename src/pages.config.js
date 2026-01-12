@@ -57,6 +57,7 @@ import AuditLog from './pages/AuditLog';
 import AuditReadinessAssessment from './pages/AuditReadinessAssessment';
 import AuditReports from './pages/AuditReports';
 import AutomatedCommunication from './pages/AutomatedCommunication';
+import AutomatedReports from './pages/AutomatedReports';
 import AutomatedTaxFormGenerator from './pages/AutomatedTaxFormGenerator';
 import AutomationRules from './pages/AutomationRules';
 import BackupRecovery from './pages/BackupRecovery';
@@ -83,6 +84,7 @@ import CommunicationAnalytics from './pages/CommunicationAnalytics';
 import CommunicationAuditLog from './pages/CommunicationAuditLog';
 import CommunicationCenter from './pages/CommunicationCenter';
 import CommunicationTemplates from './pages/CommunicationTemplates';
+import CommunicationWorkflows from './pages/CommunicationWorkflows';
 import CommunityForum from './pages/CommunityForum';
 import Companies from './pages/Companies';
 import CompanyDetailEnhanced from './pages/CompanyDetailEnhanced';
@@ -100,11 +102,13 @@ import ContractDetail from './pages/ContractDetail';
 import Contracts from './pages/Contracts';
 import CostTypes from './pages/CostTypes';
 import CrossBorderTaxDashboard from './pages/CrossBorderTaxDashboard';
+import Cryptocurrencies from './pages/Cryptocurrencies';
 import CustomDashboard from './pages/CustomDashboard';
 import DACHComplianceChecklist from './pages/DACHComplianceChecklist';
 import DACHTaxComparison from './pages/DACHTaxComparison';
 import Dashboard from './pages/Dashboard';
 import DataImportExport from './pages/DataImportExport';
+import Finanzen from './pages/Finanzen';
 import DataImportExportHub from './pages/DataImportExportHub';
 import DeductionMaximizationTool from './pages/DeductionMaximizationTool';
 import DeveloperDocumentation from './pages/DeveloperDocumentation';
@@ -137,6 +141,7 @@ import ElsterSubmit from './pages/ElsterSubmit';
 import EmailTemplates from './pages/EmailTemplates';
 import EmployeeManagement from './pages/EmployeeManagement';
 import EnergyManagement from './pages/EnergyManagement';
+import EnergyPassportManager from './pages/EnergyPassportManager';
 import EnhancedTenantPortal from './pages/EnhancedTenantPortal';
 import EntityTaxPlanning from './pages/EntityTaxPlanning';
 import Equipment from './pages/Equipment';
@@ -152,7 +157,6 @@ import FinancialForecasting from './pages/FinancialForecasting';
 import FinancialItems from './pages/FinancialItems';
 import FinancialReporting from './pages/FinancialReporting';
 import FinancialReports from './pages/FinancialReports';
-import Finanzen from './pages/Finanzen';
 import FullFeatureHub from './pages/FullFeatureHub';
 import GeneratedBookings from './pages/GeneratedBookings';
 import GlobalSettings from './pages/GlobalSettings';
@@ -187,6 +191,7 @@ import LetterXpressManagement from './pages/LetterXpressManagement';
 import MaintenanceManager from './pages/MaintenanceManager';
 import MaintenanceScheduling from './pages/MaintenanceScheduling';
 import MaintenanceTasks from './pages/MaintenanceTasks';
+import MandantManagement from './pages/MandantManagement';
 import MarketAnalytics from './pages/MarketAnalytics';
 import MeterApp from './pages/MeterApp';
 import MeterDashboard from './pages/MeterDashboard';
@@ -217,8 +222,10 @@ import PerformanceMonitor from './pages/PerformanceMonitor';
 import PermissionDashboard from './pages/PermissionDashboard';
 import PermissionManagement from './pages/PermissionManagement';
 import PersonalizedTaxCockpit from './pages/PersonalizedTaxCockpit';
+import PortfolioDashboard from './pages/PortfolioDashboard';
 import PortfolioDetail from './pages/PortfolioDetail';
 import PortfolioManagement from './pages/PortfolioManagement';
+import PreciousMetals from './pages/PreciousMetals';
 import ProjectManagement from './pages/ProjectManagement';
 import PropertyManagementHub from './pages/PropertyManagementHub';
 import PropertyManagerDashboard from './pages/PropertyManagerDashboard';
@@ -229,6 +236,7 @@ import ROIDashboard from './pages/ROIDashboard';
 import RealEstateCH from './pages/RealEstateCH';
 import RealEstateTaxPlanning from './pages/RealEstateTaxPlanning';
 import RealTimeTaxCalculator from './pages/RealTimeTaxCalculator';
+import RentIndexManagement from './pages/RentIndexManagement';
 import ReportBuilder from './pages/ReportBuilder';
 import ReportGenerator from './pages/ReportGenerator';
 import ReportScheduling from './pages/ReportScheduling';
@@ -249,6 +257,7 @@ import SmartTaskDashboard from './pages/SmartTaskDashboard';
 import StaffMobileApp from './pages/StaffMobileApp';
 import SteuerApp from './pages/SteuerApp';
 import SteuerVermoegenApp from './pages/SteuerVermoegenApp';
+import StocksAndETFs from './pages/StocksAndETFs';
 import SubmissionDashboard from './pages/SubmissionDashboard';
 import SuiteManagement from './pages/SuiteManagement';
 import SuppliersManagement from './pages/SuppliersManagement';
@@ -306,6 +315,7 @@ import TaxOptimizationStrategy from './pages/TaxOptimizationStrategy';
 import TaxPerformanceDashboard from './pages/TaxPerformanceDashboard';
 import TaxPlanningAdvisor from './pages/TaxPlanningAdvisor';
 import TaxRemindersCenter from './pages/TaxRemindersCenter';
+import TaxReport from './pages/TaxReport';
 import TaxReportExport from './pages/TaxReportExport';
 import TaxReportGeneration from './pages/TaxReportGeneration';
 import TaxReportingHub from './pages/TaxReportingHub';
@@ -317,9 +327,9 @@ import TaxRiskAssessment from './pages/TaxRiskAssessment';
 import TaxRiskAssessmentPanel from './pages/TaxRiskAssessmentPanel';
 import TaxRuleAdmin from './pages/TaxRuleAdmin';
 import TaxSavingsOpportunities from './pages/TaxSavingsOpportunities';
+import TaxSetup from './pages/TaxSetup';
 import TaxScenarioComparison from './pages/TaxScenarioComparison';
 import TaxScenarioSimulator from './pages/TaxScenarioSimulator';
-import TaxSetup from './pages/TaxSetup';
 import TaxSetupWizard from './pages/TaxSetupWizard';
 import TaxSimulation from './pages/TaxSimulation';
 import TaxStrategyAdvisor from './pages/TaxStrategyAdvisor';
@@ -389,16 +399,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import AutomatedReports from './pages/AutomatedReports';
-import RentIndexManagement from './pages/RentIndexManagement';
-import EnergyPassportManager from './pages/EnergyPassportManager';
-import MandantManagement from './pages/MandantManagement';
-import CommunicationWorkflows from './pages/CommunicationWorkflows';
-import PortfolioDashboard from './pages/PortfolioDashboard';
-import StocksAndETFs from './pages/StocksAndETFs';
-import Cryptocurrencies from './pages/Cryptocurrencies';
-import PreciousMetals from './pages/PreciousMetals';
-import TaxReport from './pages/TaxReport';
 import __Layout from './Layout.jsx';
 
 
@@ -462,6 +462,7 @@ export const PAGES = {
     "AuditReadinessAssessment": AuditReadinessAssessment,
     "AuditReports": AuditReports,
     "AutomatedCommunication": AutomatedCommunication,
+    "AutomatedReports": AutomatedReports,
     "AutomatedTaxFormGenerator": AutomatedTaxFormGenerator,
     "AutomationRules": AutomationRules,
     "BackupRecovery": BackupRecovery,
@@ -488,6 +489,7 @@ export const PAGES = {
     "CommunicationAuditLog": CommunicationAuditLog,
     "CommunicationCenter": CommunicationCenter,
     "CommunicationTemplates": CommunicationTemplates,
+    "CommunicationWorkflows": CommunicationWorkflows,
     "CommunityForum": CommunityForum,
     "Companies": Companies,
     "CompanyDetailEnhanced": CompanyDetailEnhanced,
@@ -505,11 +507,13 @@ export const PAGES = {
     "Contracts": Contracts,
     "CostTypes": CostTypes,
     "CrossBorderTaxDashboard": CrossBorderTaxDashboard,
+    "Cryptocurrencies": Cryptocurrencies,
     "CustomDashboard": CustomDashboard,
     "DACHComplianceChecklist": DACHComplianceChecklist,
     "DACHTaxComparison": DACHTaxComparison,
     "Dashboard": Dashboard,
     "DataImportExport": DataImportExport,
+    "Finanzen": Finanzen,
     "DataImportExportHub": DataImportExportHub,
     "DeductionMaximizationTool": DeductionMaximizationTool,
     "DeveloperDocumentation": DeveloperDocumentation,
@@ -542,6 +546,7 @@ export const PAGES = {
     "EmailTemplates": EmailTemplates,
     "EmployeeManagement": EmployeeManagement,
     "EnergyManagement": EnergyManagement,
+    "EnergyPassportManager": EnergyPassportManager,
     "EnhancedTenantPortal": EnhancedTenantPortal,
     "EntityTaxPlanning": EntityTaxPlanning,
     "Equipment": Equipment,
@@ -557,7 +562,6 @@ export const PAGES = {
     "FinancialItems": FinancialItems,
     "FinancialReporting": FinancialReporting,
     "FinancialReports": FinancialReports,
-    "Finanzen": Finanzen,
     "FullFeatureHub": FullFeatureHub,
     "GeneratedBookings": GeneratedBookings,
     "GlobalSettings": GlobalSettings,
@@ -592,6 +596,7 @@ export const PAGES = {
     "MaintenanceManager": MaintenanceManager,
     "MaintenanceScheduling": MaintenanceScheduling,
     "MaintenanceTasks": MaintenanceTasks,
+    "MandantManagement": MandantManagement,
     "MarketAnalytics": MarketAnalytics,
     "MeterApp": MeterApp,
     "MeterDashboard": MeterDashboard,
@@ -622,8 +627,10 @@ export const PAGES = {
     "PermissionDashboard": PermissionDashboard,
     "PermissionManagement": PermissionManagement,
     "PersonalizedTaxCockpit": PersonalizedTaxCockpit,
+    "PortfolioDashboard": PortfolioDashboard,
     "PortfolioDetail": PortfolioDetail,
     "PortfolioManagement": PortfolioManagement,
+    "PreciousMetals": PreciousMetals,
     "ProjectManagement": ProjectManagement,
     "PropertyManagementHub": PropertyManagementHub,
     "PropertyManagerDashboard": PropertyManagerDashboard,
@@ -634,6 +641,7 @@ export const PAGES = {
     "RealEstateCH": RealEstateCH,
     "RealEstateTaxPlanning": RealEstateTaxPlanning,
     "RealTimeTaxCalculator": RealTimeTaxCalculator,
+    "RentIndexManagement": RentIndexManagement,
     "ReportBuilder": ReportBuilder,
     "ReportGenerator": ReportGenerator,
     "ReportScheduling": ReportScheduling,
@@ -654,6 +662,7 @@ export const PAGES = {
     "StaffMobileApp": StaffMobileApp,
     "SteuerApp": SteuerApp,
     "SteuerVermoegenApp": SteuerVermoegenApp,
+    "StocksAndETFs": StocksAndETFs,
     "SubmissionDashboard": SubmissionDashboard,
     "SuiteManagement": SuiteManagement,
     "SuppliersManagement": SuppliersManagement,
@@ -711,6 +720,7 @@ export const PAGES = {
     "TaxPerformanceDashboard": TaxPerformanceDashboard,
     "TaxPlanningAdvisor": TaxPlanningAdvisor,
     "TaxRemindersCenter": TaxRemindersCenter,
+    "TaxReport": TaxReport,
     "TaxReportExport": TaxReportExport,
     "TaxReportGeneration": TaxReportGeneration,
     "TaxReportingHub": TaxReportingHub,
@@ -722,9 +732,9 @@ export const PAGES = {
     "TaxRiskAssessmentPanel": TaxRiskAssessmentPanel,
     "TaxRuleAdmin": TaxRuleAdmin,
     "TaxSavingsOpportunities": TaxSavingsOpportunities,
+    "TaxSetup": TaxSetup,
     "TaxScenarioComparison": TaxScenarioComparison,
     "TaxScenarioSimulator": TaxScenarioSimulator,
-    "TaxSetup": TaxSetup,
     "TaxSetupWizard": TaxSetupWizard,
     "TaxSimulation": TaxSimulation,
     "TaxStrategyAdvisor": TaxStrategyAdvisor,
@@ -794,16 +804,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "AutomatedReports": AutomatedReports,
-    "RentIndexManagement": RentIndexManagement,
-    "EnergyPassportManager": EnergyPassportManager,
-    "MandantManagement": MandantManagement,
-    "CommunicationWorkflows": CommunicationWorkflows,
-    "PortfolioDashboard": PortfolioDashboard,
-    "StocksAndETFs": StocksAndETFs,
-    "Cryptocurrencies": Cryptocurrencies,
-    "PreciousMetals": PreciousMetals,
-    "TaxReport": TaxReport,
 }
 
 export const pagesConfig = {

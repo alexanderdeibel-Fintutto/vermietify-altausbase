@@ -42,9 +42,45 @@ export default function TaxReport() {
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={() => toast.info('PDF-Export in Entwicklung')}>
-            <Download className="w-4 h-4 mr-2" />
+          <Button variant="outline" onClick={async () => {
+            try {
+              const response = await base44.functions.invoke('generateAnlageKAPPDF', { tax_year: selectedYear });
+              const blob = new Blob([response.data], { type: 'application/pdf' });
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `Anlage_KAP_${selectedYear}.pdf`;
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(url);
+              a.remove();
+              toast.success('PDF heruntergeladen');
+            } catch (error) {
+              toast.error('PDF-Export fehlgeschlagen: ' + error.message);
+            }
+          }}>
+            <FileText className="w-4 h-4 mr-2" />
             PDF
+          </Button>
+          <Button variant="outline" onClick={async () => {
+            try {
+              const response = await base44.functions.invoke('exportTaxDataCSV', { tax_year: selectedYear });
+              const blob = new Blob([response.data], { type: 'text/csv' });
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `Steuerrelevante_Transaktionen_${selectedYear}.csv`;
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(url);
+              a.remove();
+              toast.success('CSV heruntergeladen');
+            } catch (error) {
+              toast.error('CSV-Export fehlgeschlagen: ' + error.message);
+            }
+          }}>
+            <Download className="w-4 h-4 mr-2" />
+            CSV
           </Button>
         </div>
       </div>
