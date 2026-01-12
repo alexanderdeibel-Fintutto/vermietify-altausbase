@@ -1,216 +1,346 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Download } from 'lucide-react';
-import { toast } from 'sonner';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { Download, FileText, TrendingUp, AlertCircle } from 'lucide-react';
 
 export default function TaxReport() {
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(currentYear.toString());
 
-  const { data: reportData, isLoading } = useQuery({
-    queryKey: ['anlageKAP', selectedYear],
-    queryFn: async () => {
-      const response = await base44.functions.invoke('generateAnlageKAP', { tax_year: selectedYear });
-      return response.data;
-    }
+  const { data: assets = [] } = useQuery({
+    queryKey: ['assets'],
+    queryFn: () => base44.entities.Asset.list(),
   });
 
-  const years = [2024, 2025, 2026];
+  const { data: transactions = [] } = useQuery({
+    queryKey: ['transactions', selectedYear],
+    queryFn: async () => {
+      const allTx = await base44.entities.AssetTransaction.list();
+      return allTx.filter(tx => {
+        const txYear = new Date(tx.transaction_date).getFullYear().toString();
+        return txYear === selectedYear && ['SELL'].includes(tx.transaction_type);
+      });
+    },
+  });
 
-  if (isLoading) {
-    return <div className="flex items-center justify-center py-12">Berechne Steuer-Report...</div>;
-  }
+  const { data: dividends = [] } = useQuery({
+    queryKey: ['dividends', selectedYear],
+    queryFn: async () => {
+      const allDiv = await base44.entities.Dividend.list();
+      return allDiv.filter(d => d.tax_year.toString() === selectedYear);
+    },
+  });
+
+  const { data: taxSettings } = useQuery({
+    queryKey: ['taxSettings'],
+    queryFn: async () => {
+      const user = await base44.auth.me();
+      const settings = await base44.entities.UserTaxSettings.filter({ user_email: user.email });
+      return settings[0] || null;
+    },
+  });
+
+  // Berechnungen
+  const totalCapitalGains = transactions.reduce((sum, tx) => sum + (tx.realized_gain_loss || 0), 0);
+  const totalDividendsGross = dividends.reduce((sum, d) => sum + (d.amount_gross || 0), 0);
+  const totalDividendsTaxed = dividends.reduce((sum, d) => sum + (d.tax_withheld || 0), 0);
+  const totalDividendsNet = dividends.reduce((sum, d) => sum + (d.amount_net || 0), 0);
+
+  // Vorabpauschale für thesaurierende ETFs
+  const thesaurieringAssets = assets.filter(a => a.asset_class === 'ETF' && a.is_accumulating);
+  const totalVorabpauschale = 0; // Würde aus Berechnung kommen
+
+  // Capital Gains Tax (25% + 5.5% Soli + Kirchensteuer)
+  const capitalGainsTax = totalCapitalGains * 0.25; // KapErtSt 25%
+  const solidarityTax = totalCapitalGains * 0.055; // Soli 5.5%
+  const churchTax = taxSettings?.church_member ? totalCapitalGains * 0.08 : 0; // Beispiel
+  const totalCapitalGainsTax = capitalGainsTax + solidarityTax + churchTax;
+
+  const netCapitalGains = totalCapitalGains - totalCapitalGainsTax;
+
+  // Freistellungsauftrag
+  const sparersPauschbetrag = taxSettings?.marital_status === 'VERHEIRATET' ? 1200 : 801;
+  const usedSparersPauschbetrag = Math.min(totalDividendsGross + totalCapitalGains, sparersPauschbetrag);
+  const remainingSparesPauschbetrag = sparersPauschbetrag - usedSparersPauschbetrag;
+
+  // Gesamteinkommen
+  const totalTaxableIncome = totalCapitalGains + totalDividendsGross + totalVorabpauschale;
+
+  // Chart Data
+  const incomeBreakdown = [
+    { name: 'Kapitalgewinne', value: Math.max(0, totalCapitalGains) },
+    { name: 'Dividenden', value: totalDividendsGross },
+    { name: 'Vorabpauschale', value: totalVorabpauschale },
+  ].filter(d => d.value > 0);
+
+  const taxBreakdown = [
+    { name: 'KapErtSt (25%)', value: capitalGainsTax },
+    { name: 'Solidaritätszuschlag', value: solidarityTax },
+    { name: 'Kirchensteuer', value: churchTax },
+  ].filter(d => d.value > 0);
+
+  const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899'];
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-light text-slate-900">Steuer-Report (Anlage KAP)</h1>
-          <p className="text-slate-600 mt-1">Kapitalerträge für Steuererklärung</p>
+          <h1 className="text-3xl font-bold text-slate-900">Steuerbericht</h1>
+          <p className="text-slate-600 mt-1">Übersicht aller steuerrelevanten Transaktionen</p>
         </div>
         <div className="flex gap-2">
-          <Select value={selectedYear.toString()} onValueChange={v => setSelectedYear(parseInt(v))}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map(y => (
-                <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button variant="outline" onClick={async () => {
-            try {
-              const response = await base44.functions.invoke('generateAnlageKAPPDF', { tax_year: selectedYear });
-              const blob = new Blob([response.data], { type: 'application/pdf' });
-              const url = window.URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `Anlage_KAP_${selectedYear}.pdf`;
-              document.body.appendChild(a);
-              a.click();
-              window.URL.revokeObjectURL(url);
-              a.remove();
-              toast.success('PDF heruntergeladen');
-            } catch (error) {
-              toast.error('PDF-Export fehlgeschlagen: ' + error.message);
-            }
-          }}>
-            <FileText className="w-4 h-4 mr-2" />
-            PDF
-          </Button>
-          <Button variant="outline" onClick={async () => {
-            try {
-              const response = await base44.functions.invoke('exportTaxDataCSV', { tax_year: selectedYear });
-              const blob = new Blob([response.data], { type: 'text/csv' });
-              const url = window.URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `Steuerrelevante_Transaktionen_${selectedYear}.csv`;
-              document.body.appendChild(a);
-              a.click();
-              window.URL.revokeObjectURL(url);
-              a.remove();
-              toast.success('CSV heruntergeladen');
-            } catch (error) {
-              toast.error('CSV-Export fehlgeschlagen: ' + error.message);
-            }
-          }}>
-            <Download className="w-4 h-4 mr-2" />
-            CSV
+          <Button variant="outline" className="gap-2">
+            <Download className="w-4 h-4" />
+            Als PDF exportieren
           </Button>
         </div>
       </div>
 
-      {/* Kapitalerträge */}
+      {/* Jahr-Auswahl */}
       <Card>
         <CardHeader>
-          <CardTitle>Kapitalerträge Übersicht</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-emerald-50 p-4 rounded-lg">
-              <p className="text-sm text-emerald-700">Dividenden/Zinsen</p>
-              <p className="text-2xl font-bold text-emerald-900">
-                {(reportData?.dividends?.total || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
-              </p>
-              <p className="text-xs text-emerald-600 mt-1">{reportData?.dividends?.count || 0} Zahlungen</p>
-            </div>
-
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <p className="text-sm text-blue-700">Kursgewinne</p>
-              <p className="text-2xl font-bold text-blue-900">
-                {(reportData?.capital_gains?.total || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
-              </p>
-              <p className="text-xs text-blue-600 mt-1">{reportData?.capital_gains?.count || 0} Verkäufe</p>
-            </div>
-          </div>
-
-          <div className="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-600">
-            <div className="flex justify-between items-center">
-              <span className="font-medium text-purple-900">Gesamt-Einkünfte</span>
-              <span className="text-2xl font-bold text-purple-900">
-                {(reportData?.summary?.total_income || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Freistellungsauftrag */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Freistellungsauftrag</CardTitle>
+          <CardTitle className="text-sm">Steuerjahr auswählen</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-slate-600">Gesamtsumme</span>
-              <span className="font-medium">{(reportData?.freistellungsauftrag?.total || 1602).toFixed(2)}€</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-600">Genutzt</span>
-              <span className="font-medium text-red-600">{(reportData?.freistellungsauftrag?.used || 0).toFixed(2)}€</span>
-            </div>
-            <div className="flex justify-between border-t pt-2">
-              <span className="font-medium">Noch verfügbar</span>
-              <span className="font-bold text-emerald-600">{(reportData?.freistellungsauftrag?.available || 1602).toFixed(2)}€</span>
-            </div>
-
-            <div className="w-full bg-slate-200 rounded-full h-3 mt-3">
-              <div 
-                className="bg-emerald-600 h-3 rounded-full transition-all" 
-                style={{ width: `${Math.min(100, ((reportData?.freistellungsauftrag?.used || 0) / (reportData?.freistellungsauftrag?.total || 1602)) * 100)}%` }}
-              />
-            </div>
-          </div>
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <SelectTrigger className="max-w-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={currentYear.toString()}>{currentYear}</SelectItem>
+              <SelectItem value={(currentYear - 1).toString()}>{currentYear - 1}</SelectItem>
+              <SelectItem value={(currentYear - 2).toString()}>{currentYear - 2}</SelectItem>
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
 
-      {/* Verlustverrechnungstöpfe */}
+      {/* Gesamtübersicht */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Steuerbares Einkommen</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">
+              {totalTaxableIncome.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">{transactions.length + dividends.length} Transaktionen</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Geschuldete Steuern</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">
+              {totalCapitalGainsTax.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">KapErtSt + Soli + Kirche</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Sparerpauschbetrag</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">
+              {remainingSparesPauschbetrag.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">Noch verfügbar</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Netto nach Steuern</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {netCapitalGains.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Einkommen-Zusammensetzung */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Einkommen nach Typ</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie data={incomeBreakdown} cx="50%" cy="50%" labelLine={false} label={({ name, value }) => `${name}: ${(value / totalTaxableIncome * 100).toFixed(0)}%`} outerRadius={100} fill="#8884d8" dataKey="value">
+                  {incomeBreakdown.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Steuern nach Typ</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={taxBreakdown}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip formatter={(value) => value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })} />
+                <Bar dataKey="value" fill="#ef4444" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Kapitalgewinne */}
       <Card>
         <CardHeader>
-          <CardTitle>Verlustverrechnungstöpfe</CardTitle>
+          <CardTitle>Realisierte Kapitalgewinne/-verluste</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-red-50 p-4 rounded-lg">
-              <p className="text-sm text-red-700">Aktien-Verluste</p>
-              <p className="text-xl font-bold text-red-900">
-                {(reportData?.loss_pots?.stock || 0).toFixed(2)}€
-              </p>
-              <p className="text-xs text-red-600 mt-1">Nur mit Aktien-Gewinnen verrechenbar</p>
-            </div>
+          {transactions.length === 0 ? (
+            <p className="text-slate-600 text-sm">Keine Verkäufe im Jahr {selectedYear}</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2 px-4 font-medium text-slate-600">Datum</th>
+                    <th className="text-left py-2 px-4 font-medium text-slate-600">Asset</th>
+                    <th className="text-right py-2 px-4 font-medium text-slate-600">Menge</th>
+                    <th className="text-right py-2 px-4 font-medium text-slate-600">Preis</th>
+                    <th className="text-right py-2 px-4 font-medium text-slate-600">Gewinn/Verlust</th>
+                    <th className="text-center py-2 px-4 font-medium text-slate-600">Haltefrist</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transactions.map(tx => {
+                    const asset = assets.find(a => a.id === tx.asset_id);
+                    const holdingDays = Math.floor((new Date(tx.transaction_date) - new Date(asset?.tax_holding_period_start || new Date())) / (1000 * 60 * 60 * 24));
+                    const isTaxFree = holdingDays > 365;
 
-            <div className="bg-orange-50 p-4 rounded-lg">
-              <p className="text-sm text-orange-700">Sonstige Verluste</p>
-              <p className="text-xl font-bold text-orange-900">
-                {(reportData?.loss_pots?.other || 0).toFixed(2)}€
-              </p>
-              <p className="text-xs text-orange-600 mt-1">Mit allen Kapitalerträgen verrechenbar</p>
+                    return (
+                      <tr key={tx.id} className="border-b hover:bg-slate-50">
+                        <td className="py-2 px-4">{new Date(tx.transaction_date).toLocaleDateString('de-DE')}</td>
+                        <td className="py-2 px-4 font-medium">{asset?.name}</td>
+                        <td className="text-right py-2 px-4">{Math.abs(tx.quantity)}</td>
+                        <td className="text-right py-2 px-4">{(tx.price_per_unit || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</td>
+                        <td className={`text-right py-2 px-4 font-medium ${(tx.realized_gain_loss || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {(tx.realized_gain_loss || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                        </td>
+                        <td className="text-center py-2 px-4">
+                          {isTaxFree ? (
+                            <Badge className="bg-green-100 text-green-800">Steuerfrei</Badge>
+                          ) : (
+                            <span className="text-slate-600">{holdingDays} Tage</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Steuerberechnung */}
-      <Card className="bg-slate-50">
+      {/* Dividenden */}
+      <Card>
         <CardHeader>
-          <CardTitle>Steuerberechnung {selectedYear}</CardTitle>
+          <CardTitle>Dividenden und Ausschüttungen</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex justify-between text-sm">
-            <span>Einkünfte gesamt</span>
-            <span className="font-medium">{(reportData?.summary?.total_income || 0).toFixed(2)}€</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span>./. Freistellungsauftrag</span>
-            <span className="font-medium text-emerald-600">- {(reportData?.freistellungsauftrag?.used || 0).toFixed(2)}€</span>
-          </div>
-          <div className="flex justify-between text-sm border-t pt-2">
-            <span className="font-medium">Zu versteuernde Einkünfte</span>
-            <span className="font-bold">{(reportData?.summary?.taxable_income || 0).toFixed(2)}€</span>
-          </div>
-          
-          <div className="bg-white p-4 rounded-lg space-y-2 border-l-4 border-red-600">
-            <div className="flex justify-between text-sm">
-              <span>Kapitalertragsteuer (25%)</span>
-              <span className="font-medium">{(reportData?.summary?.kapitalertragsteuer || 0).toFixed(2)}€</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Solidaritätszuschlag (5,5%)</span>
-              <span className="font-medium">{(reportData?.summary?.solidaritaetszuschlag || 0).toFixed(2)}€</span>
-            </div>
-            <div className="flex justify-between border-t pt-2">
-              <span className="font-bold">Gesamtsteuer</span>
-              <span className="font-bold text-red-600 text-lg">
-                {(reportData?.summary?.total_tax || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
-              </span>
-            </div>
-          </div>
+        <CardContent>
+          {dividends.length === 0 ? (
+            <p className="text-slate-600 text-sm">Keine Dividenden im Jahr {selectedYear}</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div>
+                  <p className="text-xs text-slate-600">Brutto</p>
+                  <p className="text-lg font-bold">{totalDividendsGross.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-600">Einbehaltene Steuern</p>
+                  <p className="text-lg font-bold text-red-600">{totalDividendsTaxed.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-600">Netto</p>
+                  <p className="text-lg font-bold text-green-600">{totalDividendsNet.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2 px-4 font-medium text-slate-600">Datum</th>
+                      <th className="text-left py-2 px-4 font-medium text-slate-600">Asset</th>
+                      <th className="text-left py-2 px-4 font-medium text-slate-600">Typ</th>
+                      <th className="text-right py-2 px-4 font-medium text-slate-600">Brutto</th>
+                      <th className="text-right py-2 px-4 font-medium text-slate-600">Steuern</th>
+                      <th className="text-right py-2 px-4 font-medium text-slate-600">Netto</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dividends.map(div => (
+                      <tr key={div.id} className="border-b hover:bg-slate-50">
+                        <td className="py-2 px-4">{new Date(div.payment_date).toLocaleDateString('de-DE')}</td>
+                        <td className="py-2 px-4 font-medium">{assets.find(a => a.id === div.asset_id)?.name}</td>
+                        <td className="py-2 px-4">{div.dividend_type}</td>
+                        <td className="text-right py-2 px-4">{(div.amount_gross || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</td>
+                        <td className="text-right py-2 px-4 text-red-600">{(div.tax_withheld || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</td>
+                        <td className="text-right py-2 px-4 font-medium">{(div.amount_net || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Freistellungsauftrag Info */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2 text-blue-900">
+            <FileText className="w-4 h-4" />
+            Sparerpauschbetrag
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-blue-800 space-y-2">
+          <p>
+            Dein Sparerpauschbetrag: <span className="font-bold">{sparersPauschbetrag.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span>
+          </p>
+          <p>
+            Genutzt: <span className="font-bold">{usedSparersPauschbetrag.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span>
+          </p>
+          <p>
+            Noch verfügbar: <span className="font-bold">{remainingSparesPauschbetrag.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span>
+          </p>
         </CardContent>
       </Card>
     </div>
