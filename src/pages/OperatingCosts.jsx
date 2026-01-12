@@ -4,7 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, FileText, Calendar, Euro, Building2 } from 'lucide-react';
+import { Plus, FileText, Calendar, Euro, Building2, HelpCircle } from 'lucide-react';
+import InfoTooltip from '@/components/shared/InfoTooltip';
 import PageHeader from '@/components/shared/PageHeader';
 import EmptyState from '@/components/shared/EmptyState';
 import OperatingCostStatementDialog from '@/components/operating-costs/OperatingCostStatementDialog';
@@ -36,7 +37,10 @@ export default function OperatingCosts() {
                 animate={{ opacity: 1, y: 0 }}
             >
             <div>
-                <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Betriebskosten</h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Betriebskosten</h1>
+                  <InfoTooltip content="Abrechnung aller umlagefähigen Kosten an Mieter gemäß Mietvertrag und BetrKV. Umfasst: Nebenkosten, Betriebskosten, Makler- und Verwaltungsgebühren." />
+                </div>
                 <p className="text-sm font-extralight text-slate-400 mt-1">{statements.length} Abrechnungen</p>
             </div>
             </motion.div>
