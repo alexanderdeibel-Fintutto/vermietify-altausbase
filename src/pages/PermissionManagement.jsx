@@ -1,60 +1,115 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import UserPermissionCard from '@/components/permissions/UserPermissionCard';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Shield, Users, Building2, Search } from 'lucide-react';
+import RolePermissionMatrix from '@/components/permissions/RolePermissionMatrix';
+import BuildingAccessManager from '@/components/permissions/BuildingAccessManager';
+import { Badge } from "@/components/ui/badge";
 
 export default function PermissionManagement() {
-  const { data: users, isLoading: isLoadingUsers, error: usersError } = useQuery({
-    queryKey: ['users:permissions'],
-    queryFn: () => base44.entities.User.list(),
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const { data: mandant } = useQuery({
+    queryKey: ['mandant'],
+    queryFn: () => base44.entities.Mandant.list().then(r => r[0])
   });
 
-  const { data: buildings, isLoading: isLoadingBuildings, error: buildingsError } = useQuery({
-    queryKey: ['buildings:permissions'],
-    queryFn: () => base44.entities.Building.list(),
-  });
-  
-  const { data: permissions, isLoading: isLoadingPermissions, error: permissionsError } = useQuery({
-    queryKey: ['buildingPermissions'],
-    queryFn: () => base44.entities.BuildingPermission.list(),
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => base44.entities.User.list()
   });
 
-  const isLoading = isLoadingUsers || isLoadingBuildings || isLoadingPermissions;
+  const { data: userAccessCounts = {} } = useQuery({
+    queryKey: ['userAccessCounts'],
+    queryFn: async () => {
+      const allAccess = await base44.entities.UserMandantAccess.list();
+      const counts = {};
+      allAccess.forEach(access => {
+        counts[access.user_email] = (counts[access.user_email] || 0) + 1;
+      });
+      return counts;
+    }
+  });
+
+  const filteredUsers = users.filter(u => 
+    u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-          Gebäudeberechtigungen
-        </h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Weisen Sie Benutzern spezifische Lese- oder Schreibrechte für einzelne Gebäude zu.
-        </p>
-
-        <div className="mt-8 space-y-6">
-          {isLoading && (
-            <>
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-24 w-full" />
-            </>
-          )}
-
-          {!isLoading && users?.map(user => (
-            <UserPermissionCard 
-              key={user.id} 
-              user={user} 
-              buildings={buildings || []}
-              permissions={permissions?.filter(p => p.user_email === user.email) || []}
-            />
-          ))}
-
-          {!isLoading && (!users || users.length === 0) && (
-             <p className="text-center text-gray-500">Keine Benutzer gefunden.</p>
-          )}
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-light text-slate-900">Berechtigungsverwaltung</h1>
+        <p className="text-slate-600 mt-1">Rollen- und objektbasierte Zugriffskontrolle</p>
       </div>
+
+      <Tabs defaultValue="roles" className="w-full">
+        <TabsList>
+          <TabsTrigger value="roles">
+            <Shield className="w-4 h-4 mr-2" />
+            Rollenberechtigungen
+          </TabsTrigger>
+          <TabsTrigger value="users">
+            <Users className="w-4 h-4 mr-2" />
+            Benutzerzugriffe
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="roles" className="space-y-4">
+          <RolePermissionMatrix mandantId={mandant?.id} />
+        </TabsContent>
+
+        <TabsContent value="users" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Benutzer verwalten</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  placeholder="Benutzer suchen..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              <div className="space-y-2">
+                {filteredUsers.map(user => (
+                  <Card key={user.id} className="border-slate-200">
+                    <CardContent className="py-3">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <p className="font-medium">{user.full_name || user.email}</p>
+                          <p className="text-xs text-slate-600">{user.email}</p>
+                          <div className="flex gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs">
+                              {user.role === 'admin' ? 'Admin' : 'Benutzer'}
+                            </Badge>
+                            {userAccessCounts[user.email] > 0 && (
+                              <Badge className="bg-blue-100 text-blue-700 text-xs">
+                                {userAccessCounts[user.email]} Zugriff{userAccessCounts[user.email] > 1 ? 'e' : ''}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {user.role !== 'admin' && (
+                        <BuildingAccessManager userEmail={user.email} />
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

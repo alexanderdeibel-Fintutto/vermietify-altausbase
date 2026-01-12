@@ -9,64 +9,70 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { resource, action, company_id } = await req.json();
+    const { module, action, building_id } = await req.json();
 
-    // Get user's role assignments
-    const assignments = await base44.asServiceRole.entities.UserRoleAssignment.filter({
-      user_email: user.email,
-      company_id: company_id,
-      is_active: true
-    });
-
-    if (assignments.length === 0) {
-      return Response.json({ has_permission: false, reason: 'no_role_assigned' });
+    // Admins always have permission
+    if (user.role === 'admin') {
+      return Response.json({ has_permission: true, is_admin: true });
     }
 
-    // Check if any of the user's roles has the required permission
-    for (const assignment of assignments) {
-      const role = await base44.asServiceRole.entities.UserRole.filter({
-        id: assignment.role_id
-      });
+    // Get user's role assignments
+    const userAccess = await base44.entities.UserMandantAccess.filter({
+      user_email: user.email,
+      ist_aktiv: true
+    });
 
-      if (role.length > 0) {
-        const roleData = role[0];
-        
-        // Check expiration
-        if (assignment.expires_at && new Date(assignment.expires_at) < new Date()) {
-          continue; // Skip expired assignment
-        }
-
-        // Check permission
-        const parts = resource.split('.');
-        let perms = roleData.permissions;
-
-        for (const part of parts) {
-          if (perms && typeof perms === 'object') {
-            perms = perms[part];
-          } else {
-            break;
-          }
-        }
-
-        if (perms && perms[action] === true) {
-          return Response.json({
-            has_permission: true,
-            role: roleData.name,
-            resource,
-            action
-          });
-        }
+    // Check feature permission
+    let hasFeaturePermission = false;
+    for (const access of userAccess) {
+      const permissions = JSON.parse(access.berechtigungen || '{}');
+      if (permissions[module]?.includes(action)) {
+        hasFeaturePermission = true;
+        break;
       }
     }
 
-    return Response.json({
-      has_permission: false,
-      reason: 'permission_denied',
-      resource,
-      action
-    });
+    if (!hasFeaturePermission) {
+      return Response.json({ 
+        has_permission: false, 
+        reason: 'Missing feature permission',
+        required_module: module,
+        required_action: action
+      });
+    }
+
+    // Check building access if building_id provided
+    if (building_id) {
+      let hasBuildingAccess = false;
+      
+      for (const access of userAccess) {
+        const allowedBuildings = JSON.parse(access.gebaeude_zugriff || '[]');
+        
+        // Empty array means access to all buildings
+        if (allowedBuildings.length === 0) {
+          hasBuildingAccess = true;
+          break;
+        }
+        
+        // Check if building is in allowed list
+        if (allowedBuildings.includes(building_id)) {
+          hasBuildingAccess = true;
+          break;
+        }
+      }
+
+      if (!hasBuildingAccess) {
+        return Response.json({ 
+          has_permission: false, 
+          reason: 'No access to this building',
+          building_id
+        });
+      }
+    }
+
+    return Response.json({ has_permission: true });
   } catch (error) {
-    console.error('Check permission error:', error);
+    console.error('Permission check error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
