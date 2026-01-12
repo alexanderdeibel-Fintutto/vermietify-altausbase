@@ -19,6 +19,7 @@ import TopPerformersWidget from '@/components/wealth/TopPerformersWidget';
 import TaxSummaryCard from '@/components/wealth/TaxSummaryCard';
 import RebalancingAdvisor from '@/components/wealth/RebalancingAdvisor';
 import PerformanceMetricsCard from '@/components/wealth/PerformanceMetricsCard';
+import PortfolioAlertsWidget from '@/components/wealth/PortfolioAlertsWidget';
 
 export default function PortfolioDetail() {
   const [searchParams] = useSearchParams();
@@ -202,8 +203,9 @@ export default function PortfolioDetail() {
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               <TaxSummaryCard portfolioId={portfolioId} />
-              <DividendCalendar />
+              <PortfolioAlertsWidget portfolioId={portfolioId} />
             </div>
+            <DividendCalendar />
             <TopPerformersWidget />
             <RebalancingAdvisor portfolio={portfolio} holdings={holdings} assets={assets} />
           </div>

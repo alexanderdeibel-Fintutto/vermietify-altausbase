@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, TrendingUp, Edit2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { createPageUrl } from './utils';
 import AssetFormDialog from '@/components/wealth/AssetFormDialog';
 
 export default function AssetManagement() {
@@ -176,7 +177,11 @@ export default function AssetManagement() {
                   </tr>
                 ) : (
                   filteredAssets.map(asset => (
-                    <tr key={asset.id} className="border-b border-slate-100 hover:bg-slate-50">
+                    <tr 
+                      key={asset.id} 
+                      className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
+                      onClick={() => window.location.href = createPageUrl('AssetDetail') + '/' + asset.id}
+                    >
                       <td className="px-6 py-3">
                         <span className="font-semibold text-slate-900">{asset.symbol}</span>
                       </td>
@@ -197,14 +202,18 @@ export default function AssetManagement() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => handleEdit(asset)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(asset);
+                            }}
                           >
                             <Edit2 className="w-4 h-4" />
                           </Button>
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               if (confirm('Asset wirklich löschen?')) {
                                 deleteMutation.mutate(asset.id);
                               }
