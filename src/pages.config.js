@@ -370,6 +370,7 @@ import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
 import PortfolioManagement from './pages/PortfolioManagement';
+import PortfolioDetail from './pages/PortfolioDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -746,6 +747,7 @@ export const PAGES = {
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
     "PortfolioManagement": PortfolioManagement,
+    "PortfolioDetail": PortfolioDetail,
 }
 
 export const pagesConfig = {
