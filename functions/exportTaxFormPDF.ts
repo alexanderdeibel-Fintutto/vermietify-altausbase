@@ -1,93 +1,139 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { jsPDF } from 'npm:jspdf@2.5.1';
 
 Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    try {
+        const base44 = createClientFromRequest(req);
+        const user = await base44.auth.me();
+        if (!user) {
+            return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        }
 
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        const { form_type, form_id } = await req.json();
+
+        const doc = new jsPDF();
+        let formData = null;
+        let title = '';
+
+        if (form_type === 'anlage_kap') {
+            const [form] = await base44.asServiceRole.entities.AnlageKAP.filter({ id: form_id });
+            if (!form) {
+                return Response.json({ error: 'Form not found' }, { status: 404 });
+            }
+            formData = form;
+            title = `Anlage KAP ${form.tax_year}`;
+
+            // PDF-Generierung
+            doc.setFontSize(20);
+            doc.text(title, 20, 20);
+            
+            doc.setFontSize(12);
+            let y = 40;
+            
+            doc.text('Kapitalerträge', 20, y);
+            y += 10;
+            doc.setFontSize(10);
+            doc.text(`Zeile 7: Kapitalerträge (inländisch): ${formatCurrency(form.zeile_7_kapitalertraege_inland)}`, 25, y);
+            y += 7;
+            doc.text(`Zeile 8: Kapitalerträge (ausländisch): ${formatCurrency(form.zeile_8_kapitalertraege_ausland)}`, 25, y);
+            y += 10;
+
+            doc.setFontSize(12);
+            doc.text('Erträge im Einzelnen', 20, y);
+            y += 10;
+            doc.setFontSize(10);
+            doc.text(`Zeile 14: Dividenden: ${formatCurrency(form.zeile_14_dividenden)}`, 25, y);
+            y += 7;
+            doc.text(`Zeile 15: Zinsen: ${formatCurrency(form.zeile_15_zinsen)}`, 25, y);
+            y += 7;
+            doc.text(`Zeile 16: Investmenterträge: ${formatCurrency(form.zeile_16_investmentertraege)}`, 25, y);
+            y += 7;
+            doc.text(`Zeile 17: Teilfreistellung: ${formatCurrency(form.zeile_17_teilfreistellung)}`, 25, y);
+            y += 10;
+
+            doc.setFontSize(12);
+            doc.text('Veräußerungen', 20, y);
+            y += 10;
+            doc.setFontSize(10);
+            doc.text(`Zeile 18: Gewinne: ${formatCurrency(form.zeile_18_gewinne_veraeusserung)}`, 25, y);
+            y += 7;
+            doc.text(`Zeile 19: Verluste (ohne Aktien): ${formatCurrency(form.zeile_19_verluste_veraeusserung)}`, 25, y);
+            y += 7;
+            doc.text(`Zeile 20: Verluste Aktien: ${formatCurrency(form.zeile_20_verluste_aktien)}`, 25, y);
+            y += 10;
+
+            doc.setFontSize(12);
+            doc.text('Steuern', 20, y);
+            y += 10;
+            doc.setFontSize(10);
+            doc.text(`Zeile 37: Anrechenbare Quellensteuer: ${formatCurrency(form.zeile_37_anrechenbare_quellensteuer)}`, 25, y);
+            y += 7;
+            doc.text(`Zeile 48: Kapitalertragsteuer: ${formatCurrency(form.zeile_48_kapest_einbehalten)}`, 25, y);
+            y += 7;
+            doc.text(`Zeile 49: Solidaritätszuschlag: ${formatCurrency(form.zeile_49_soli_einbehalten)}`, 25, y);
+        }
+
+        if (form_type === 'anlage_so') {
+            const [form] = await base44.asServiceRole.entities.AnlageSO.filter({ id: form_id });
+            if (!form) {
+                return Response.json({ error: 'Form not found' }, { status: 404 });
+            }
+            formData = form;
+            title = `Anlage SO ${form.tax_year}`;
+
+            doc.setFontSize(20);
+            doc.text(title, 20, 20);
+            
+            doc.setFontSize(12);
+            let y = 40;
+            
+            doc.text('Private Veräußerungsgeschäfte', 20, y);
+            y += 15;
+
+            if (form.private_veraeusserungen && form.private_veraeusserungen.length > 0) {
+                doc.setFontSize(10);
+                form.private_veraeusserungen.forEach((v, idx) => {
+                    doc.text(`${idx + 1}. ${v.bezeichnung} (${v.art})`, 25, y);
+                    y += 7;
+                    doc.text(`   Anschaffung: ${new Date(v.anschaffungsdatum).toLocaleDateString('de-DE')} - Veräußerung: ${new Date(v.veraeusserungsdatum).toLocaleDateString('de-DE')}`, 25, y);
+                    y += 7;
+                    doc.text(`   Gewinn/Verlust: ${formatCurrency(v.gewinn_verlust)}`, 25, y);
+                    y += 10;
+                });
+            }
+
+            y += 5;
+            doc.setFontSize(12);
+            doc.text('Zusammenfassung', 20, y);
+            y += 10;
+            doc.setFontSize(10);
+            doc.text(`Summe Gewinne: ${formatCurrency(form.summe_gewinne)}`, 25, y);
+            y += 7;
+            doc.text(`Summe Verluste: ${formatCurrency(form.summe_verluste)}`, 25, y);
+            y += 7;
+            doc.text(`Steuerpflichtige Einkünfte: ${formatCurrency(form.steuerpflichtige_einkuenfte)}`, 25, y);
+            y += 10;
+
+            if (form.freigrenze_600_beachtet && form.summe_gewinne <= 600) {
+                doc.text('Hinweis: Freigrenze von 600€ nicht überschritten - steuerfrei', 25, y);
+            }
+        }
+
+        const pdfBytes = doc.output('arraybuffer');
+
+        return new Response(pdfBytes, {
+            status: 200,
+            headers: {
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': `attachment; filename="${title}.pdf"`
+            }
+        });
+
+    } catch (error) {
+        return Response.json({ error: error.message }, { status: 500 });
     }
-
-    const { submission_id } = await req.json();
-
-    console.log('[PDF-EXPORT] Generating PDF for submission:', submission_id);
-
-    const submissions = await base44.entities.ElsterSubmission.filter({ id: submission_id });
-    if (!submissions || submissions.length === 0) {
-      return Response.json({ error: 'Submission not found' }, { status: 404 });
-    }
-
-    const submission = submissions[0];
-
-    // HTML-Template für PDF generieren
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <style>
-          body { font-family: Arial, sans-serif; padding: 40px; }
-          h1 { color: #1e293b; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }
-          .section { margin: 20px 0; }
-          .label { font-weight: bold; color: #475569; }
-          .value { margin-left: 10px; }
-          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-          th, td { border: 1px solid #e2e8f0; padding: 8px; text-align: left; }
-          th { background-color: #f1f5f9; }
-        </style>
-      </head>
-      <body>
-        <h1>${submission.tax_form_type} - ${submission.tax_year}</h1>
-        
-        <div class="section">
-          <p><span class="label">Rechtsform:</span><span class="value">${submission.legal_form}</span></p>
-          <p><span class="label">Status:</span><span class="value">${submission.status}</span></p>
-          <p><span class="label">Erstellt:</span><span class="value">${new Date(submission.created_date).toLocaleString('de-DE')}</span></p>
-          ${submission.transfer_ticket ? `<p><span class="label">Transfer-Ticket:</span><span class="value">${submission.transfer_ticket}</span></p>` : ''}
-        </div>
-
-        <h2>Formulardaten</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Feld</th>
-              <th>Wert</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${Object.entries(submission.form_data || {}).map(([key, value]) => `
-              <tr>
-                <td>${key}</td>
-                <td>${value}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-
-        ${submission.xml_data ? `
-          <h2>ELSTER-XML</h2>
-          <pre style="background: #f1f5f9; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 10px;">${submission.xml_data}</pre>
-        ` : ''}
-      </body>
-      </html>
-    `;
-
-    // PDF generieren via generatePDF-Funktion
-    const pdfResponse = await base44.functions.invoke('generatePDF', {
-      html: htmlContent,
-      filename: `elster_${submission.tax_form_type}_${submission.tax_year}.pdf`
-    });
-
-    return new Response(pdfResponse.data, {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="elster_${submission.tax_form_type}_${submission.tax_year}.pdf"`
-      }
-    });
-
-  } catch (error) {
-    console.error('[ERROR]', error);
-    return Response.json({ error: error.message }, { status: 500 });
-  }
 });
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(amount || 0);
+}
