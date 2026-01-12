@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/documents/DocumentNotificationCenter';
 import SuiteSwitcher from '@/components/suite/SuiteSwitcher';
+import MandantSwitcher from '@/components/mandant/MandantSwitcher';
 import { Button } from "@/components/ui/button";
 import GlobalSearchBar from '@/components/search/GlobalSearchBar';
 import OnboardingRedirect from '@/components/onboarding/OnboardingRedirect';
@@ -133,6 +134,7 @@ export default function Layout({ children, currentPageName }) {
 
                                         {/* Right Actions */}
                                         <div className="flex items-center gap-3">
+                                            <MandantSwitcher />
                                             <NotificationCenter />
                                             <SuiteSwitcher />
                                             <Link to={createPageUrl('MyAccount')}>

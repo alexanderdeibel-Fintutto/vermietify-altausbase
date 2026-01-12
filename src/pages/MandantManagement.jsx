@@ -6,66 +6,94 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Building2, Users, Plus, Settings } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Building2, Plus, Edit, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function MandantManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [accessDialogOpen, setAccessDialogOpen] = useState(false);
   const [selectedMandant, setSelectedMandant] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     rechtsform: 'Privatperson',
+    strasse: '',
+    plz: '',
+    ort: '',
+    ansprechpartner: '',
+    telefon: '',
+    email: '',
     ist_aktiv: true
-  });
-  const [accessData, setAccessData] = useState({
-    user_email: '',
-    rolle: 'Objekt-Manager',
-    gebaeude_zugriff: '[]'
   });
 
   const queryClient = useQueryClient();
 
   const { data: mandanten = [] } = useQuery({
     queryKey: ['mandanten'],
-    queryFn: () => base44.entities.Mandant.list()
+    queryFn: () => base44.entities.Mandant.list('-created_date', 100)
   });
 
-  const { data: buildings = [] } = useQuery({
-    queryKey: ['buildings'],
-    queryFn: () => base44.entities.Building.list()
+  const { data: userAccessCounts = {} } = useQuery({
+    queryKey: ['mandantUserCounts'],
+    queryFn: async () => {
+      const allAccess = await base44.entities.UserMandantAccess.list();
+      const counts = {};
+      allAccess.forEach(access => {
+        counts[access.mandant_id] = (counts[access.mandant_id] || 0) + 1;
+      });
+      return counts;
+    }
   });
 
-  const createMandantMutation = useMutation({
-    mutationFn: (data) => base44.entities.Mandant.create(data),
+  const saveMutation = useMutation({
+    mutationFn: (data) => {
+      if (selectedMandant) {
+        return base44.entities.Mandant.update(selectedMandant.id, data);
+      }
+      return base44.entities.Mandant.create(data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['mandanten']);
-      toast.success('Mandant erstellt');
+      toast.success(selectedMandant ? 'Mandant aktualisiert' : 'Mandant erstellt');
       setDialogOpen(false);
-      setFormData({ name: '', rechtsform: 'Privatperson', ist_aktiv: true });
+      resetForm();
     }
   });
 
-  const createAccessMutation = useMutation({
-    mutationFn: (data) => base44.entities.UserMandantAccess.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['userAccess']);
-      toast.success('Zugriff erteilt');
-      setAccessDialogOpen(false);
-      setAccessData({ user_email: '', rolle: 'Objekt-Manager', gebaeude_zugriff: '[]' });
-    }
-  });
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      rechtsform: 'Privatperson',
+      strasse: '',
+      plz: '',
+      ort: '',
+      ansprechpartner: '',
+      telefon: '',
+      email: '',
+      ist_aktiv: true
+    });
+    setSelectedMandant(null);
+  };
+
+  const handleEdit = (mandant) => {
+    setSelectedMandant(mandant);
+    setFormData(mandant);
+    setDialogOpen(true);
+  };
+
+  const handleNew = () => {
+    resetForm();
+    setDialogOpen(true);
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-light text-slate-900">Mandanten-Verwaltung</h1>
-          <p className="text-slate-600 mt-1">Multi-Mandanten-Fähigkeit für Hausverwaltungen</p>
+          <h1 className="text-3xl font-light text-slate-900">Mandantenverwaltung</h1>
+          <p className="text-slate-600 mt-1">Verwaltung mehrerer Kunden/Eigentümer</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="bg-slate-700 hover:bg-slate-800">
+        <Button onClick={handleNew}>
           <Plus className="w-4 h-4 mr-2" />
           Neuer Mandant
         </Button>
@@ -73,136 +101,156 @@ export default function MandantManagement() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {mandanten.map(mandant => (
-          <Card key={mandant.id} className="hover:border-slate-300 transition-colors">
+          <Card key={mandant.id} className={mandant.ist_aktiv ? 'border-blue-200' : 'border-slate-200'}>
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-slate-600" />
-                  <CardTitle className="text-base">{mandant.name}</CardTitle>
+                  <Building2 className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <CardTitle className="text-base">{mandant.name}</CardTitle>
+                    <p className="text-xs text-slate-500 mt-0.5">{mandant.rechtsform}</p>
+                  </div>
                 </div>
                 {mandant.ist_aktiv ? (
                   <Badge className="bg-emerald-100 text-emerald-700">Aktiv</Badge>
                 ) : (
-                  <Badge className="bg-slate-100 text-slate-700">Inaktiv</Badge>
+                  <Badge variant="outline">Inaktiv</Badge>
                 )}
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="text-sm text-slate-600">
-                <p>Rechtsform: {mandant.rechtsform}</p>
-                {mandant.ansprechpartner && <p>Kontakt: {mandant.ansprechpartner}</p>}
-                {mandant.email && <p>E-Mail: {mandant.email}</p>}
+              {mandant.ort && (
+                <div className="text-sm">
+                  <p className="text-slate-600">{mandant.strasse}</p>
+                  <p className="text-slate-600">{mandant.plz} {mandant.ort}</p>
+                </div>
+              )}
+              
+              {mandant.ansprechpartner && (
+                <div className="text-sm">
+                  <p className="text-slate-700 font-medium">{mandant.ansprechpartner}</p>
+                  {mandant.email && <p className="text-xs text-slate-600">{mandant.email}</p>}
+                  {mandant.telefon && <p className="text-xs text-slate-600">{mandant.telefon}</p>}
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 pt-2 border-t">
+                <Users className="w-4 h-4 text-slate-400" />
+                <span className="text-xs text-slate-600">
+                  {userAccessCounts[mandant.id] || 0} Benutzer
+                </span>
               </div>
-              <Button 
-                size="sm" 
-                variant="outline" 
+
+              <Button
+                size="sm"
+                variant="outline"
                 className="w-full"
-                onClick={() => {
-                  setSelectedMandant(mandant.id);
-                  setAccessDialogOpen(true);
-                }}
+                onClick={() => handleEdit(mandant)}
               >
-                <Users className="w-4 h-4 mr-2" />
-                Zugriffe verwalten
+                <Edit className="w-4 h-4 mr-2" />
+                Bearbeiten
               </Button>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Create Mandant Dialog */}
+      {/* Form Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle>Neuer Mandant</DialogTitle>
+            <DialogTitle>{selectedMandant ? 'Mandant bearbeiten' : 'Neuer Mandant'}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Name *</Label>
+                <Input
+                  value={formData.name}
+                  onChange={e => setFormData({...formData, name: e.target.value})}
+                  placeholder="Max Mustermann GmbH"
+                />
+              </div>
+              <div>
+                <Label>Rechtsform *</Label>
+                <Select value={formData.rechtsform} onValueChange={v => setFormData({...formData, rechtsform: v})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Privatperson">Privatperson</SelectItem>
+                    <SelectItem value="GbR">GbR</SelectItem>
+                    <SelectItem value="GmbH">GmbH</SelectItem>
+                    <SelectItem value="UG">UG</SelectItem>
+                    <SelectItem value="KG">KG</SelectItem>
+                    <SelectItem value="AG">AG</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-2">
+                <Label>Straße</Label>
+                <Input
+                  value={formData.strasse}
+                  onChange={e => setFormData({...formData, strasse: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label>PLZ</Label>
+                <Input
+                  value={formData.plz}
+                  onChange={e => setFormData({...formData, plz: e.target.value})}
+                />
+              </div>
+            </div>
+
             <div>
-              <Label>Name *</Label>
+              <Label>Ort</Label>
               <Input
-                value={formData.name}
-                onChange={e => setFormData({...formData, name: e.target.value})}
-                placeholder="Mustermann GmbH"
+                value={formData.ort}
+                onChange={e => setFormData({...formData, ort: e.target.value})}
               />
             </div>
 
-            <div>
-              <Label>Rechtsform *</Label>
-              <Select value={formData.rechtsform} onValueChange={v => setFormData({...formData, rechtsform: v})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Privatperson">Privatperson</SelectItem>
-                  <SelectItem value="GbR">GbR</SelectItem>
-                  <SelectItem value="GmbH">GmbH</SelectItem>
-                  <SelectItem value="UG">UG</SelectItem>
-                  <SelectItem value="KG">KG</SelectItem>
-                  <SelectItem value="AG">AG</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>Abbrechen</Button>
-              <Button onClick={() => createMandantMutation.mutate(formData)}>Erstellen</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Access Management Dialog */}
-      <Dialog open={accessDialogOpen} onOpenChange={setAccessDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Benutzerzugriff erteilen</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div>
-              <Label>Benutzer E-Mail *</Label>
+            <div className="border-t pt-4 space-y-3">
+              <Label>Ansprechpartner</Label>
               <Input
-                type="email"
-                value={accessData.user_email}
-                onChange={e => setAccessData({...accessData, user_email: e.target.value})}
-                placeholder="user@beispiel.de"
+                value={formData.ansprechpartner}
+                onChange={e => setFormData({...formData, ansprechpartner: e.target.value})}
+                placeholder="Hauptansprechpartner"
               />
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Telefon</Label>
+                  <Input
+                    value={formData.telefon}
+                    onChange={e => setFormData({...formData, telefon: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>E-Mail</Label>
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={e => setFormData({...formData, email: e.target.value})}
+                  />
+                </div>
+              </div>
             </div>
 
-            <div>
-              <Label>Rolle *</Label>
-              <Select value={accessData.rolle} onValueChange={v => setAccessData({...accessData, rolle: v})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Objekt-Manager">Objekt-Manager</SelectItem>
-                  <SelectItem value="Buchhaltung">Buchhaltung</SelectItem>
-                  <SelectItem value="Hausmeister">Hausmeister</SelectItem>
-                  <SelectItem value="Steuerberater">Steuerberater (Read-Only)</SelectItem>
-                  <SelectItem value="Externer Prüfer">Externer Prüfer</SelectItem>
-                  <SelectItem value="Admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="bg-slate-50 rounded-lg p-3">
-              <p className="text-xs text-slate-600">
-                <strong>Hinweis:</strong> Gebäude-spezifische Rechte können nach Erstellung eingestellt werden.
-              </p>
-            </div>
-
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setAccessDialogOpen(false)}>Abbrechen</Button>
+            <div className="flex gap-2 justify-end pt-4">
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                Abbrechen
+              </Button>
               <Button 
-                onClick={() => createAccessMutation.mutate({
-                  ...accessData,
-                  mandant_id: selectedMandant
-                })}
-                disabled={!accessData.user_email}
+                onClick={() => saveMutation.mutate(formData)}
+                disabled={saveMutation.isPending || !formData.name}
               >
-                Zugriff erteilen
+                {saveMutation.isPending ? 'Speichert...' : 'Speichern'}
               </Button>
             </div>
           </div>
