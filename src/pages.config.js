@@ -49,6 +49,8 @@ import AnlageVG from './pages/AnlageVG';
 import AnlageVGAT from './pages/AnlageVGAT';
 import AnlageVGDE from './pages/AnlageVGDE';
 import AnnualTaxReview from './pages/AnnualTaxReview';
+import AssetDetail from './pages/AssetDetail';
+import AssetManagement from './pages/AssetManagement';
 import AuditLog from './pages/AuditLog';
 import AuditReadinessAssessment from './pages/AuditReadinessAssessment';
 import AuditReports from './pages/AuditReports';
@@ -105,6 +107,7 @@ import DataImportExportHub from './pages/DataImportExportHub';
 import DeductionMaximizationTool from './pages/DeductionMaximizationTool';
 import DeveloperDocumentation from './pages/DeveloperDocumentation';
 import DividendOptimization from './pages/DividendOptimization';
+import Finanzen from './pages/Finanzen';
 import DocumentAdvancedHub from './pages/DocumentAdvancedHub';
 import DocumentAnalysisDashboard from './pages/DocumentAnalysisDashboard';
 import DocumentAnalytics from './pages/DocumentAnalytics';
@@ -142,7 +145,6 @@ import FinancialForecasting from './pages/FinancialForecasting';
 import FinancialItems from './pages/FinancialItems';
 import FinancialReporting from './pages/FinancialReporting';
 import FinancialReports from './pages/FinancialReports';
-import Finanzen from './pages/Finanzen';
 import FullFeatureHub from './pages/FullFeatureHub';
 import GeneratedBookings from './pages/GeneratedBookings';
 import GlobalSettings from './pages/GlobalSettings';
@@ -205,6 +207,8 @@ import PerformanceMonitor from './pages/PerformanceMonitor';
 import PermissionDashboard from './pages/PermissionDashboard';
 import PermissionManagement from './pages/PermissionManagement';
 import PersonalizedTaxCockpit from './pages/PersonalizedTaxCockpit';
+import PortfolioDetail from './pages/PortfolioDetail';
+import PortfolioManagement from './pages/PortfolioManagement';
 import ProjectManagement from './pages/ProjectManagement';
 import PropertyManagementHub from './pages/PropertyManagementHub';
 import PropertyManagerDashboard from './pages/PropertyManagerDashboard';
@@ -369,10 +373,9 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import PortfolioManagement from './pages/PortfolioManagement';
-import PortfolioDetail from './pages/PortfolioDetail';
-import AssetManagement from './pages/AssetManagement';
-import AssetDetail from './pages/AssetDetail';
+import TaxEvents from './pages/TaxEvents';
+import TaxHarvesting from './pages/TaxHarvesting';
+import TaxSimulation from './pages/TaxSimulation';
 import __Layout from './Layout.jsx';
 
 
@@ -428,6 +431,8 @@ export const PAGES = {
     "AnlageVGAT": AnlageVGAT,
     "AnlageVGDE": AnlageVGDE,
     "AnnualTaxReview": AnnualTaxReview,
+    "AssetDetail": AssetDetail,
+    "AssetManagement": AssetManagement,
     "AuditLog": AuditLog,
     "AuditReadinessAssessment": AuditReadinessAssessment,
     "AuditReports": AuditReports,
@@ -484,6 +489,7 @@ export const PAGES = {
     "DeductionMaximizationTool": DeductionMaximizationTool,
     "DeveloperDocumentation": DeveloperDocumentation,
     "DividendOptimization": DividendOptimization,
+    "Finanzen": Finanzen,
     "DocumentAdvancedHub": DocumentAdvancedHub,
     "DocumentAnalysisDashboard": DocumentAnalysisDashboard,
     "DocumentAnalytics": DocumentAnalytics,
@@ -521,7 +527,6 @@ export const PAGES = {
     "FinancialItems": FinancialItems,
     "FinancialReporting": FinancialReporting,
     "FinancialReports": FinancialReports,
-    "Finanzen": Finanzen,
     "FullFeatureHub": FullFeatureHub,
     "GeneratedBookings": GeneratedBookings,
     "GlobalSettings": GlobalSettings,
@@ -584,6 +589,8 @@ export const PAGES = {
     "PermissionDashboard": PermissionDashboard,
     "PermissionManagement": PermissionManagement,
     "PersonalizedTaxCockpit": PersonalizedTaxCockpit,
+    "PortfolioDetail": PortfolioDetail,
+    "PortfolioManagement": PortfolioManagement,
     "ProjectManagement": ProjectManagement,
     "PropertyManagementHub": PropertyManagementHub,
     "PropertyManagerDashboard": PropertyManagerDashboard,
@@ -748,10 +755,9 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "PortfolioManagement": PortfolioManagement,
-    "PortfolioDetail": PortfolioDetail,
-    "AssetManagement": AssetManagement,
-    "AssetDetail": AssetDetail,
+    "TaxEvents": TaxEvents,
+    "TaxHarvesting": TaxHarvesting,
+    "TaxSimulation": TaxSimulation,
 }
 
 export const pagesConfig = {
