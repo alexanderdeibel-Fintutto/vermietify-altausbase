@@ -379,6 +379,13 @@ import TaxSimulation from './pages/TaxSimulation';
 import ElsterOverview from './pages/ElsterOverview';
 import ElsterCertificates from './pages/ElsterCertificates';
 import TaxReturns from './pages/TaxReturns';
+import TaxReturnDetail from './pages/TaxReturnDetail';
+import AnlageKAPEditor from './pages/AnlageKAPEditor';
+import AnlageSOEditor from './pages/AnlageSOEditor';
+import TaxReturnAttachments from './pages/TaxReturnAttachments';
+import ElsterSubmit from './pages/ElsterSubmit';
+import ElsterResponses from './pages/ElsterResponses';
+import ElsterSettings from './pages/ElsterSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -764,6 +771,13 @@ export const PAGES = {
     "ElsterOverview": ElsterOverview,
     "ElsterCertificates": ElsterCertificates,
     "TaxReturns": TaxReturns,
+    "TaxReturnDetail": TaxReturnDetail,
+    "AnlageKAPEditor": AnlageKAPEditor,
+    "AnlageSOEditor": AnlageSOEditor,
+    "TaxReturnAttachments": TaxReturnAttachments,
+    "ElsterSubmit": ElsterSubmit,
+    "ElsterResponses": ElsterResponses,
+    "ElsterSettings": ElsterSettings,
 }
 
 export const pagesConfig = {
