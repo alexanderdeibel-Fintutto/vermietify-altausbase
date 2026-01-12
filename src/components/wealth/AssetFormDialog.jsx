@@ -1,195 +1,162 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
-import { getAllCategories, getSubcategories } from './assetCategories';
+import { toast } from 'sonner';
 
-export default function AssetFormDialog({ open, onOpenChange, onSubmit, initialData, isLoading }) {
-  const [formData, setFormData] = React.useState(initialData || {});
-  const [selectedCategory, setSelectedCategory] = React.useState(initialData?.asset_category || '');
-
-  React.useEffect(() => {
-    setFormData(initialData || {});
-    setSelectedCategory(initialData?.asset_category || '');
-  }, [initialData, open]);
+export default function AssetFormDialog({ open, onOpenChange, onSave, editingAsset = null }) {
+  const [formData, setFormData] = useState(editingAsset || {
+    symbol: '',
+    isin: '',
+    name: '',
+    asset_class: 'stock',
+    currency: 'EUR',
+    exchange: '',
+    country: '',
+    tax_category: 'standard',
+    is_actively_traded: true
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    if (!formData.symbol || !formData.name) {
+      toast.error('Symbol und Name erforderlich');
+      return;
+    }
+    onSave(formData);
   };
-
-  const categoryOptions = getAllCategories();
-  const subcategoryOptions = getSubcategories(selectedCategory);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{initialData ? 'Vermögenswert bearbeiten' : 'Neuen Vermögenswert hinzufügen'}</DialogTitle>
+          <DialogTitle>
+            {editingAsset ? 'Asset bearbeiten' : 'Neues Asset'}
+          </DialogTitle>
         </DialogHeader>
-
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs font-light">Kategorie *</Label>
-              <Select value={selectedCategory} onValueChange={(value) => {
-                setSelectedCategory(value);
-                setFormData({ ...formData, asset_category: value });
-              }}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {categoryOptions.map(cat => (
-                    <SelectItem key={cat.value} value={cat.value}>
-                      {cat.icon} {cat.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Symbol/Ticker *
+              </label>
+              <Input
+                value={formData.symbol}
+                onChange={(e) => setFormData({ ...formData, symbol: e.target.value.toUpperCase() })}
+                placeholder="z.B. AAPL"
+              />
             </div>
             <div>
-              <Label className="text-xs font-light">Unterkategorie</Label>
-              <Select value={formData.asset_subcategory || ''} onValueChange={(value) => setFormData({ ...formData, asset_subcategory: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Wählen..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {subcategoryOptions.map(sub => (
-                    <SelectItem key={sub} value={sub}>
-                      {sub}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div>
-            <Label className="text-xs font-light">Name *</Label>
-            <Input
-              value={formData.name || ''}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="z.B. Apple Inc. Aktien"
-              className="font-light"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-xs font-light">ISIN</Label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                ISIN
+              </label>
               <Input
                 value={formData.isin || ''}
-                onChange={(e) => setFormData({ ...formData, isin: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, isin: e.target.value.toUpperCase() })}
                 placeholder="z.B. US0378331005"
-                className="font-light"
-              />
-            </div>
-            <div>
-              <Label className="text-xs font-light">WKN</Label>
-              <Input
-                value={formData.wkn || ''}
-                onChange={(e) => setFormData({ ...formData, wkn: e.target.value })}
-                placeholder="z.B. 865985"
-                className="font-light"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-xs font-light">Kaufdatum *</Label>
-              <Input
-                type="date"
-                value={formData.purchase_date || ''}
-                onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })}
-                className="font-light"
-                required
-              />
-            </div>
-            <div>
-              <Label className="text-xs font-light">Währung</Label>
-              <Select value={formData.currency || 'EUR'} onValueChange={(value) => setFormData({ ...formData, currency: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="GBP">GBP</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label className="text-xs font-light">Menge *</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.quantity || ''}
-                onChange={(e) => setFormData({ ...formData, quantity: parseFloat(e.target.value) })}
-                placeholder="0"
-                className="font-light"
-                required
-              />
-            </div>
-            <div>
-              <Label className="text-xs font-light">Kaufpreis (€) *</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.purchase_price || ''}
-                onChange={(e) => setFormData({ ...formData, purchase_price: parseFloat(e.target.value) })}
-                placeholder="0.00"
-                className="font-light"
-                required
-              />
-            </div>
-            <div>
-              <Label className="text-xs font-light">Aktueller Wert (€) *</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.current_value || ''}
-                onChange={(e) => setFormData({ ...formData, current_value: parseFloat(e.target.value) })}
-                placeholder="0.00"
-                className="font-light"
-                required
               />
             </div>
           </div>
 
           <div>
-            <Label className="text-xs font-light">Notizen</Label>
-            <Textarea
-              value={formData.notes || ''}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Persönliche Notizen..."
-              rows={2}
-              className="font-light text-sm"
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Name *
+            </label>
+            <Input
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="z.B. Apple Inc."
             />
           </div>
 
-          <div className="flex gap-3 justify-end pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="font-light">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Asset-Klasse
+              </label>
+              <select
+                value={formData.asset_class}
+                onChange={(e) => setFormData({ ...formData, asset_class: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+              >
+                <option value="stock">Aktie</option>
+                <option value="etf">ETF</option>
+                <option value="bond">Anleihe</option>
+                <option value="crypto">Kryptowährung</option>
+                <option value="commodity">Rohstoff</option>
+                <option value="precious_metal">Edelmetall</option>
+                <option value="p2p_loan">P2P-Kredit</option>
+                <option value="real_estate_fund">Immobilienfonds</option>
+                <option value="other">Sonstiges</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Währung
+              </label>
+              <select
+                value={formData.currency}
+                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+              >
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="CHF">CHF</option>
+                <option value="GBP">GBP</option>
+                <option value="BTC">BTC</option>
+                <option value="ETH">ETH</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Börse/Exchange
+              </label>
+              <Input
+                value={formData.exchange || ''}
+                onChange={(e) => setFormData({ ...formData, exchange: e.target.value })}
+                placeholder="z.B. XETRA, NYSE"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Land
+              </label>
+              <Input
+                value={formData.country || ''}
+                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                placeholder="z.B. Deutschland, USA"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Steuerliche Kategorie
+            </label>
+            <select
+              value={formData.tax_category}
+              onChange={(e) => setFormData({ ...formData, tax_category: e.target.value })}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+            >
+              <option value="standard">Standard</option>
+              <option value="equity_fund_30">Aktienfonds (30% pauschal)</option>
+              <option value="mixed_fund_15">Mischfonds (15% pauschal)</option>
+              <option value="bond_fund_0">Rentenfonds (0% pauschal)</option>
+              <option value="real_estate_fund_60">Immobilienfonds (60% pauschal)</option>
+              <option value="crypto_private">Krypto (Privatvermögen)</option>
+              <option value="precious_metal_private">Edelmetall (Privatvermögen)</option>
+            </select>
+          </div>
+
+          <div className="flex gap-2 justify-end pt-4">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Abbrechen
             </Button>
-            <Button type="submit" disabled={isLoading} className="bg-slate-900 hover:bg-slate-800 font-light">
-              {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {initialData ? 'Speichern' : 'Hinzufügen'}
+            <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">
+              Speichern
             </Button>
           </div>
         </form>
