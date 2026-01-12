@@ -127,6 +127,12 @@ export default function EnergyPassportPanel({ buildingId }) {
           </Link>
         </div>
       </CardContent>
+
+      <EnergyPassportUploadDialog
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        buildingId={buildingId}
+      />
     </Card>
   );
 }
