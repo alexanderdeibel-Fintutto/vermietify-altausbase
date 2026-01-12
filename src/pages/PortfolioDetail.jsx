@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,11 +8,16 @@ import { TrendingUp, Plus, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { toast } from 'sonner';
+import AccountFormDialog from '@/components/wealth/AccountFormDialog';
+import TransactionFormDialog from '@/components/wealth/TransactionFormDialog';
 
 export default function PortfolioDetail() {
   const [searchParams] = useSearchParams();
   const portfolioId = searchParams.get('id');
   const [activeTab, setActiveTab] = useState('overview');
+  const [showAccountForm, setShowAccountForm] = useState(false);
+  const [showTransactionForm, setShowTransactionForm] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: portfolio, isLoading: portfolioLoading } = useQuery({
     queryKey: ['portfolio', portfolioId],
@@ -31,6 +36,34 @@ export default function PortfolioDetail() {
     queryFn: () => base44.entities.AssetHolding.list(), // TODO: Filter by portfolio
     enabled: !!portfolioId
   });
+
+  const { data: assets = [] } = useQuery({
+    queryKey: ['assets'],
+    queryFn: () => base44.entities.Asset.list()
+  });
+
+  const createAccountMutation = useMutation({
+    mutationFn: (data) => base44.entities.PortfolioAccount.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['portfolio-accounts'] });
+      setShowAccountForm(false);
+      toast.success('Konto erstellt');
+    }
+  });
+
+  const createTransactionMutation = useMutation({
+    mutationFn: (data) => base44.entities.AssetTransaction.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['holdings'] });
+      setShowTransactionForm(false);
+      toast.success('Transaktion erfasst');
+    }
+  });
+
+  const getAssetName = (assetId) => {
+    const asset = assets.find(a => a.id === assetId);
+    return asset ? `${asset.symbol} - ${asset.name}` : `Asset ${assetId}`;
+  };
 
   if (!portfolioId) {
     return <div className="text-center py-8">Portfolio nicht gefunden</div>;
@@ -156,9 +189,13 @@ export default function PortfolioDetail() {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="font-semibold text-slate-900">Bestände</h3>
-              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
+              <Button 
+                size="sm" 
+                className="bg-emerald-600 hover:bg-emerald-700"
+                onClick={() => setShowTransactionForm(true)}
+              >
                 <Plus className="w-4 h-4 mr-2" />
-                Position hinzufügen
+                Transaktion erfassen
               </Button>
             </div>
             {holdings.length === 0 ? (
@@ -184,7 +221,7 @@ export default function PortfolioDetail() {
                         {holdings.map((holding) => (
                           <tr key={holding.id} className="border-b border-slate-100 hover:bg-slate-50">
                             <td className="px-6 py-3">
-                              <div className="font-medium text-slate-900">Asset {holding.id}</div>
+                              <div className="font-medium text-slate-900">{getAssetName(holding.asset_id)}</div>
                             </td>
                             <td className="text-right px-6 py-3 text-slate-600">{holding.quantity}</td>
                             <td className="text-right px-6 py-3 font-medium">
@@ -217,7 +254,11 @@ export default function PortfolioDetail() {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="font-semibold text-slate-900">Konten</h3>
-              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
+              <Button 
+                size="sm" 
+                className="bg-emerald-600 hover:bg-emerald-700"
+                onClick={() => setShowAccountForm(true)}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Konto hinzufügen
               </Button>
@@ -263,6 +304,20 @@ export default function PortfolioDetail() {
           </Card>
         )}
       </div>
+
+      {/* Dialogs */}
+      <AccountFormDialog
+        open={showAccountForm}
+        onOpenChange={setShowAccountForm}
+        portfolioId={portfolioId}
+        onSave={(data) => createAccountMutation.mutate(data)}
+      />
+      <TransactionFormDialog
+        open={showTransactionForm}
+        onOpenChange={setShowTransactionForm}
+        portfolioId={portfolioId}
+        onSave={(data) => createTransactionMutation.mutate(data)}
+      />
     </div>
   );
 }
