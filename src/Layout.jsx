@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { useActivityTracker } from '@/components/testing/ActivityTracker';
 import { 
-                                          Building2, 
-                                          Menu,
-                                          X,
-                                          Users,
-                                          Settings,
-                                          Zap
-                                      } from 'lucide-react';
+                                            Building2, 
+                                            Menu,
+                                            X,
+                                            Users,
+                                            Settings,
+                                            Zap
+                                        } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import NotificationCenter from '@/components/documents/DocumentNotificationCenter';
 import SuiteSwitcher from '@/components/suite/SuiteSwitcher';
@@ -32,6 +32,7 @@ import CategorySubNavigation from '@/components/navigation/CategorySubNavigation
 import PWAInstallPrompt from '@/components/mobile/PWAInstallPrompt';
 import MainSidebar from '@/components/sidebar/MainSidebar';
 import { useSelectedBuilding } from '@/components/hooks/useSelectedBuilding';
+import ProgressIndicator from '@/components/onboarding/ProgressIndicator';
 
 // Lazy load heavy components
 const TesterTracker = lazy(() => import('@/components/testing/TesterTracker'));
