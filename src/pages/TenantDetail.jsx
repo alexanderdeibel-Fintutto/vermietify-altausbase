@@ -13,6 +13,7 @@ import TenantProfileCard from '@/components/tenant-detail/TenantProfileCard';
 import TenantIssuesCard from '@/components/tenant-detail/TenantIssuesCard';
 import TenantDocumentsTab from '@/components/tenant-detail/TenantDocumentsTab';
 import TenantContractsOverview from '@/components/tenant-detail/TenantContractsOverview';
+import TenantBankSection from '@/components/tenant-detail/TenantBankSection';
 
 export default function TenantDetail() {
   const [searchParams] = useSearchParams();
@@ -79,6 +80,7 @@ export default function TenantDetail() {
         {/* Left Column - Profile */}
         <div className="space-y-6">
           <TenantProfileCard tenant={tenant} onUpdate={handleUpdate} />
+          <TenantBankSection tenant={tenant} onUpdate={handleUpdate} />
           <TenantIssuesCard tenantId={tenantId} />
         </div>
 

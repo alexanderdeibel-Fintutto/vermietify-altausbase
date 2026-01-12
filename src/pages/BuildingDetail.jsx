@@ -31,6 +31,7 @@ import BuildingTechnicalTab from '@/components/buildings/BuildingTechnicalTab';
 import BuildingTaxTab from '@/components/buildings/BuildingTaxTab';
 import { ErrorBoundaryWithRetry } from '@/components/shared/ErrorBoundaryWithRetry';
 import EnergyPassportPanel from '@/components/building-detail/EnergyPassportPanel';
+import BuildingTransfersOverview from '@/components/building-detail/BuildingTransfersOverview';
 
 export default function BuildingDetailPage() {
 
@@ -207,6 +208,7 @@ export default function BuildingDetailPage() {
           <TabsTrigger value="board">Pinnwand</TabsTrigger>
           <TabsTrigger value="documents">Dokumente</TabsTrigger>
           <TabsTrigger value="tasks">Aufgaben</TabsTrigger>
+          <TabsTrigger value="transfers">Überweisungen</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -267,6 +269,23 @@ export default function BuildingDetailPage() {
             <MaintenanceCalendarView buildingId={buildingId} />
             <BuildingTasksManager buildingId={buildingId} permissionLevel={permissionLevel} />
           </div>
+        </TabsContent>
+
+        <TabsContent value="transfers" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Überweisungen für dieses Gebäude</CardTitle>
+                <Button onClick={() => window.location.href = createPageUrl('BankTransfers')} className="gap-2">
+                  <FileText className="w-4 h-4" />
+                  Alle Überweisungen
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <BuildingTransfersOverview buildingId={buildingId} />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

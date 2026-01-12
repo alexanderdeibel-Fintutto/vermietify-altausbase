@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
-import { Landmark, Plus, MoreVertical, Pencil, Trash2, Upload, TrendingUp, TrendingDown, Link2, RefreshCw, Undo2, CreditCard, ArrowLeftRight } from 'lucide-react';
+import { Landmark, Plus, MoreVertical, Pencil, Trash2, Upload, TrendingUp, TrendingDown, Link2, RefreshCw, Undo2, CreditCard, ArrowLeftRight, FileText } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'sonner';
 import { parseISO } from 'date-fns';
@@ -179,8 +181,9 @@ function BankAccountForm({ open, onOpenChange, onSubmit, initialData, isLoading 
 }
 
 export default function BankAccounts() {
-    const [formOpen, setFormOpen] = useState(false);
-    const [editingAccount, setEditingAccount] = useState(null);
+     const navigate = useNavigate();
+     const [formOpen, setFormOpen] = useState(false);
+     const [editingAccount, setEditingAccount] = useState(null);
     const [deleteAccount, setDeleteAccount] = useState(null);
     const [isConnecting, setIsConnecting] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
@@ -513,6 +516,20 @@ export default function BankAccounts() {
                     >
                         <Link2 className="w-4 h-4" />
                         Bank verbinden
+                    </Button>
+                    <Button 
+                        onClick={() => navigate(createPageUrl('BankStatements'))}
+                        className="bg-slate-700 hover:bg-slate-800 font-extralight gap-2"
+                    >
+                        <FileText className="w-4 h-4" />
+                        Auszüge
+                    </Button>
+                    <Button 
+                        onClick={() => navigate(createPageUrl('BankTransfers'))}
+                        className="bg-slate-700 hover:bg-slate-800 font-extralight gap-2"
+                    >
+                        <ArrowLeftRight className="w-4 h-4" />
+                        Überweisungen
                     </Button>
                     <Button 
                         onClick={() => {
