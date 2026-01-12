@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Upload, Download, Trash2, Eye, Plus } from 'lucide-react';
+import { FileText, Upload, Download, Trash2, Eye, Plus, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -232,6 +232,6 @@ export default function TenantDocumentsTab({ tenantId }) {
           </div>
         </DialogContent>
       </Dialog>
-    );
-  }
+    </div>
+  );
 }
