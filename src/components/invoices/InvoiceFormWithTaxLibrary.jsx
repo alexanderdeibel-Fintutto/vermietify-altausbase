@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import RecipientForm from '@/components/recipients/RecipientForm';
 import TaxCategoryPicker from '@/components/tax-library/TaxCategoryPicker';
 import TaxLibraryInstallDialog from '@/components/tax-library/TaxLibraryInstallDialog';
+import InfoTooltip from '@/components/shared/InfoTooltip';
 
 export default function InvoiceFormWithTaxLibrary({ open, onOpenChange, invoice, buildings, units, contracts, onSuccess }) {
     const queryClient = useQueryClient();
@@ -602,6 +603,7 @@ export default function InvoiceFormWithTaxLibrary({ open, onOpenChange, invoice,
                                             <span className="ml-2 text-xs text-slate-500">(nicht umlagefähig)</span>
                                         )}
                                     </Label>
+                                    <InfoTooltip content="Umlagefähige Kosten können an Mieter weitergegeben werden (§556 BGB, BetrKV). Beispiele: Müllabfuhr, Hausmeister. Nicht umlagefähig: Verwaltungskosten, Reparaturen." />
                                 </div>
 
                                 <div className="md:col-span-2">
