@@ -42,9 +42,11 @@ import AnlageE1cAT from './pages/AnlageE1cAT';
 import AnlageE1cPage from './pages/AnlageE1cPage';
 import AnlageKAP from './pages/AnlageKAP';
 import AnlageKAPAT from './pages/AnlageKAPAT';
+import AnlageKAPEditor from './pages/AnlageKAPEditor';
 import AnlageSO from './pages/AnlageSO';
 import AnlageSOAT from './pages/AnlageSOAT';
 import AnlageSODE from './pages/AnlageSODE';
+import AnlageSOEditor from './pages/AnlageSOEditor';
 import AnlageVG from './pages/AnlageVG';
 import AnlageVGAT from './pages/AnlageVGAT';
 import AnlageVGDE from './pages/AnlageVGDE';
@@ -107,7 +109,6 @@ import DataImportExportHub from './pages/DataImportExportHub';
 import DeductionMaximizationTool from './pages/DeductionMaximizationTool';
 import DeveloperDocumentation from './pages/DeveloperDocumentation';
 import DividendOptimization from './pages/DividendOptimization';
-import Finanzen from './pages/Finanzen';
 import DocumentAdvancedHub from './pages/DocumentAdvancedHub';
 import DocumentAnalysisDashboard from './pages/DocumentAnalysisDashboard';
 import DocumentAnalytics from './pages/DocumentAnalytics';
@@ -127,7 +128,12 @@ import DocumentSecurityHub from './pages/DocumentSecurityHub';
 import DocumentTemplateManager from './pages/DocumentTemplateManager';
 import DocumentUltimateHub from './pages/DocumentUltimateHub';
 import Documents from './pages/Documents';
+import ElsterCertificates from './pages/ElsterCertificates';
 import ElsterIntegration from './pages/ElsterIntegration';
+import ElsterOverview from './pages/ElsterOverview';
+import ElsterResponses from './pages/ElsterResponses';
+import ElsterSettings from './pages/ElsterSettings';
+import ElsterSubmit from './pages/ElsterSubmit';
 import EmailTemplates from './pages/EmailTemplates';
 import EmployeeManagement from './pages/EmployeeManagement';
 import EnergyManagement from './pages/EnergyManagement';
@@ -145,6 +151,7 @@ import FinancialForecasting from './pages/FinancialForecasting';
 import FinancialItems from './pages/FinancialItems';
 import FinancialReporting from './pages/FinancialReporting';
 import FinancialReports from './pages/FinancialReports';
+import Finanzen from './pages/Finanzen';
 import FullFeatureHub from './pages/FullFeatureHub';
 import GeneratedBookings from './pages/GeneratedBookings';
 import GlobalSettings from './pages/GlobalSettings';
@@ -276,6 +283,7 @@ import TaxDeadlines from './pages/TaxDeadlines';
 import TaxDeductionOptimizer from './pages/TaxDeductionOptimizer';
 import TaxDocumentManager from './pages/TaxDocumentManager';
 import TaxDocumentProcessor from './pages/TaxDocumentProcessor';
+import TaxEvents from './pages/TaxEvents';
 import TaxExportHub from './pages/TaxExportHub';
 import TaxFilingTimeline from './pages/TaxFilingTimeline';
 import TaxFilingWizard from './pages/TaxFilingWizard';
@@ -283,6 +291,7 @@ import TaxForecastPlanner from './pages/TaxForecastPlanner';
 import TaxFormGuide from './pages/TaxFormGuide';
 import TaxFormLibrary from './pages/TaxFormLibrary';
 import TaxForms from './pages/TaxForms';
+import TaxHarvesting from './pages/TaxHarvesting';
 import TaxLawUpdates from './pages/TaxLawUpdates';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import TaxLossHarvesting from './pages/TaxLossHarvesting';
@@ -297,7 +306,10 @@ import TaxRemindersCenter from './pages/TaxRemindersCenter';
 import TaxReportExport from './pages/TaxReportExport';
 import TaxReportGeneration from './pages/TaxReportGeneration';
 import TaxReportingHub from './pages/TaxReportingHub';
+import TaxReturnAttachments from './pages/TaxReturnAttachments';
+import TaxReturnDetail from './pages/TaxReturnDetail';
 import TaxReturnFilingManager from './pages/TaxReturnFilingManager';
+import TaxReturns from './pages/TaxReturns';
 import TaxRiskAssessment from './pages/TaxRiskAssessment';
 import TaxRiskAssessmentPanel from './pages/TaxRiskAssessmentPanel';
 import TaxRuleAdmin from './pages/TaxRuleAdmin';
@@ -306,6 +318,7 @@ import TaxScenarioComparison from './pages/TaxScenarioComparison';
 import TaxScenarioSimulator from './pages/TaxScenarioSimulator';
 import TaxSetup from './pages/TaxSetup';
 import TaxSetupWizard from './pages/TaxSetupWizard';
+import TaxSimulation from './pages/TaxSimulation';
 import TaxStrategyAdvisor from './pages/TaxStrategyAdvisor';
 import TaxTreatyExplorer from './pages/TaxTreatyExplorer';
 import TaxYearClosingChecklist from './pages/TaxYearClosingChecklist';
@@ -373,19 +386,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import TaxEvents from './pages/TaxEvents';
-import TaxHarvesting from './pages/TaxHarvesting';
-import TaxSimulation from './pages/TaxSimulation';
-import ElsterOverview from './pages/ElsterOverview';
-import ElsterCertificates from './pages/ElsterCertificates';
-import TaxReturns from './pages/TaxReturns';
-import TaxReturnDetail from './pages/TaxReturnDetail';
-import AnlageKAPEditor from './pages/AnlageKAPEditor';
-import AnlageSOEditor from './pages/AnlageSOEditor';
-import TaxReturnAttachments from './pages/TaxReturnAttachments';
-import ElsterSubmit from './pages/ElsterSubmit';
-import ElsterResponses from './pages/ElsterResponses';
-import ElsterSettings from './pages/ElsterSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -434,9 +434,11 @@ export const PAGES = {
     "AnlageE1cPage": AnlageE1cPage,
     "AnlageKAP": AnlageKAP,
     "AnlageKAPAT": AnlageKAPAT,
+    "AnlageKAPEditor": AnlageKAPEditor,
     "AnlageSO": AnlageSO,
     "AnlageSOAT": AnlageSOAT,
     "AnlageSODE": AnlageSODE,
+    "AnlageSOEditor": AnlageSOEditor,
     "AnlageVG": AnlageVG,
     "AnlageVGAT": AnlageVGAT,
     "AnlageVGDE": AnlageVGDE,
@@ -499,7 +501,6 @@ export const PAGES = {
     "DeductionMaximizationTool": DeductionMaximizationTool,
     "DeveloperDocumentation": DeveloperDocumentation,
     "DividendOptimization": DividendOptimization,
-    "Finanzen": Finanzen,
     "DocumentAdvancedHub": DocumentAdvancedHub,
     "DocumentAnalysisDashboard": DocumentAnalysisDashboard,
     "DocumentAnalytics": DocumentAnalytics,
@@ -519,7 +520,12 @@ export const PAGES = {
     "DocumentTemplateManager": DocumentTemplateManager,
     "DocumentUltimateHub": DocumentUltimateHub,
     "Documents": Documents,
+    "ElsterCertificates": ElsterCertificates,
     "ElsterIntegration": ElsterIntegration,
+    "ElsterOverview": ElsterOverview,
+    "ElsterResponses": ElsterResponses,
+    "ElsterSettings": ElsterSettings,
+    "ElsterSubmit": ElsterSubmit,
     "EmailTemplates": EmailTemplates,
     "EmployeeManagement": EmployeeManagement,
     "EnergyManagement": EnergyManagement,
@@ -537,6 +543,7 @@ export const PAGES = {
     "FinancialItems": FinancialItems,
     "FinancialReporting": FinancialReporting,
     "FinancialReports": FinancialReports,
+    "Finanzen": Finanzen,
     "FullFeatureHub": FullFeatureHub,
     "GeneratedBookings": GeneratedBookings,
     "GlobalSettings": GlobalSettings,
@@ -668,6 +675,7 @@ export const PAGES = {
     "TaxDeductionOptimizer": TaxDeductionOptimizer,
     "TaxDocumentManager": TaxDocumentManager,
     "TaxDocumentProcessor": TaxDocumentProcessor,
+    "TaxEvents": TaxEvents,
     "TaxExportHub": TaxExportHub,
     "TaxFilingTimeline": TaxFilingTimeline,
     "TaxFilingWizard": TaxFilingWizard,
@@ -675,6 +683,7 @@ export const PAGES = {
     "TaxFormGuide": TaxFormGuide,
     "TaxFormLibrary": TaxFormLibrary,
     "TaxForms": TaxForms,
+    "TaxHarvesting": TaxHarvesting,
     "TaxLawUpdates": TaxLawUpdates,
     "TaxLibraryManagement": TaxLibraryManagement,
     "TaxLossHarvesting": TaxLossHarvesting,
@@ -689,7 +698,10 @@ export const PAGES = {
     "TaxReportExport": TaxReportExport,
     "TaxReportGeneration": TaxReportGeneration,
     "TaxReportingHub": TaxReportingHub,
+    "TaxReturnAttachments": TaxReturnAttachments,
+    "TaxReturnDetail": TaxReturnDetail,
     "TaxReturnFilingManager": TaxReturnFilingManager,
+    "TaxReturns": TaxReturns,
     "TaxRiskAssessment": TaxRiskAssessment,
     "TaxRiskAssessmentPanel": TaxRiskAssessmentPanel,
     "TaxRuleAdmin": TaxRuleAdmin,
@@ -698,6 +710,7 @@ export const PAGES = {
     "TaxScenarioSimulator": TaxScenarioSimulator,
     "TaxSetup": TaxSetup,
     "TaxSetupWizard": TaxSetupWizard,
+    "TaxSimulation": TaxSimulation,
     "TaxStrategyAdvisor": TaxStrategyAdvisor,
     "TaxTreatyExplorer": TaxTreatyExplorer,
     "TaxYearClosingChecklist": TaxYearClosingChecklist,
@@ -765,19 +778,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "TaxEvents": TaxEvents,
-    "TaxHarvesting": TaxHarvesting,
-    "TaxSimulation": TaxSimulation,
-    "ElsterOverview": ElsterOverview,
-    "ElsterCertificates": ElsterCertificates,
-    "TaxReturns": TaxReturns,
-    "TaxReturnDetail": TaxReturnDetail,
-    "AnlageKAPEditor": AnlageKAPEditor,
-    "AnlageSOEditor": AnlageSOEditor,
-    "TaxReturnAttachments": TaxReturnAttachments,
-    "ElsterSubmit": ElsterSubmit,
-    "ElsterResponses": ElsterResponses,
-    "ElsterSettings": ElsterSettings,
 }
 
 export const pagesConfig = {

@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle2, XCircle, AlertTriangle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import AutoSubmitScheduler from '@/components/elster/AutoSubmitScheduler';
 
 export default function ElsterSettings() {
     const queryClient = useQueryClient();
@@ -244,6 +245,9 @@ export default function ElsterSettings() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Automatische Übermittlung */}
+            <AutoSubmitScheduler />
 
             <Button 
                 onClick={() => saveMutation.mutate(formData)}
