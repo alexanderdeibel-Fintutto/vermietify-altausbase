@@ -4,67 +4,68 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    
-    const { asset_id, sell_quantity, sell_price } = await req.json();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    // Hole Asset
-    const asset = await base44.entities.Asset.get(asset_id);
-    if (!asset) {
-      return Response.json({ error: 'Asset nicht gefunden' }, { status: 404 });
-    }
+    const body = await req.json();
+    const { assetId } = body;
 
-    // Alle Käufe chronologisch
-    const buys = await base44.entities.AssetTransaction.filter(
-      { asset_id, transaction_type: 'BUY' },
-      'transaction_date',
-      1000
+    const transactions = await base44.asServiceRole.entities.AssetTransaction.filter(
+      { asset_id: assetId },
+      'transaction_date'
     );
 
-    let remaining_to_sell = sell_quantity;
-    let total_cost_basis = 0;
-    let lots_used = [];
+    let holdings = [];
+    let results = [];
 
-    for (const buy of buys) {
-      if (remaining_to_sell <= 0) break;
+    for (const tx of transactions) {
+      if (tx.transaction_type === 'BUY') {
+        holdings.push({
+          date: tx.transaction_date,
+          qty: tx.quantity,
+          price: tx.price_per_unit,
+          txId: tx.id
+        });
+      } else if (tx.transaction_type === 'SELL') {
+        let remainingQty = tx.quantity;
+        let costBasis = 0;
 
-      const quantity_from_this_lot = Math.min(buy.quantity, remaining_to_sell);
-      const cost_from_this_lot = quantity_from_this_lot * buy.price_per_unit;
+        while (remainingQty > 0 && holdings.length > 0) {
+          const holding = holdings[0];
+          const qtyToSell = Math.min(remainingQty, holding.qty);
 
-      total_cost_basis += cost_from_this_lot;
-      remaining_to_sell -= quantity_from_this_lot;
+          costBasis += qtyToSell * holding.price;
+          const proceedsEach = qtyToSell * tx.price_per_unit;
+          const gainLoss = proceedsEach - (qtyToSell * holding.price);
 
-      lots_used.push({
-        buy_id: buy.id,
-        buy_date: buy.transaction_date,
-        quantity: quantity_from_this_lot,
-        cost: cost_from_this_lot,
-      });
+          results.push({
+            sellDate: tx.transaction_date,
+            buyDate: holding.date,
+            quantity: qtyToSell,
+            buyPrice: holding.price,
+            sellPrice: tx.price_per_unit,
+            gainLoss: gainLoss,
+            holdingPeriodDays: Math.floor(
+              (new Date(tx.transaction_date) - new Date(holding.date)) / (1000 * 60 * 60 * 24)
+            ),
+            longTermGain: Math.floor((new Date(tx.transaction_date) - new Date(holding.date)) / (1000 * 60 * 60 * 24)) > 365
+          });
+
+          holding.qty -= qtyToSell;
+          if (holding.qty === 0) {
+            holdings.shift();
+          }
+
+          remainingQty -= qtyToSell;
+        }
+      }
     }
 
-    const total_revenue = sell_quantity * sell_price;
-    const gain_loss = total_revenue - total_cost_basis;
-
-    // Prüfe Haltefrist (nur bei Krypto/Edelmetallen)
-    const oldest_lot_date = new Date(lots_used[0]?.buy_date);
-    const holding_period_days = (new Date() - oldest_lot_date) / (1000 * 60 * 60 * 24);
-    const is_tax_free = holding_period_days > 365;
-
-    console.log(`[FIFO] Asset: ${asset.name}, Gain/Loss: ${gain_loss}€, Tax-Free: ${is_tax_free}`);
-
     return Response.json({
-      gain_loss,
-      is_tax_free,
-      holding_period_days: Math.round(holding_period_days),
-      cost_basis: total_cost_basis,
-      revenue: total_revenue,
-      lots_used,
+      fifoResults: results,
+      totalLongTermGains: results.filter(r => r.longTermGain).reduce((sum, r) => sum + r.gainLoss, 0),
+      totalShortTermGains: results.filter(r => !r.longTermGain).reduce((sum, r) => sum + r.gainLoss, 0)
     });
   } catch (error) {
-    console.error('[FIFO] Error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

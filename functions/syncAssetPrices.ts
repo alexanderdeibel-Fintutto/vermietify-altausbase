@@ -1,159 +1,80 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-const ALPHA_VANTAGE_KEY = Deno.env.get('ALPHA_VANTAGE_API_KEY');
-const COINGECKO_API = 'https://api.coingecko.com/api/v3';
-
-async function fetchStockPrice(symbol) {
-  if (!ALPHA_VANTAGE_KEY) return null;
-  
-  try {
-    const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_KEY}`;
-    const response = await fetch(url);
-    const data = await response.json();
-    
-    if (data['Global Quote'] && data['Global Quote']['05. price']) {
-      return {
-        price: parseFloat(data['Global Quote']['05. price']),
-        date: data['Global Quote']['07. latest trading day']
-      };
-    }
-  } catch (error) {
-    console.error(`Alpha Vantage error for ${symbol}:`, error);
-  }
-  return null;
-}
-
-async function fetchCryptoPrice(symbol) {
-  try {
-    const coinId = symbol.toLowerCase() === 'btc' ? 'bitcoin' : 
-                   symbol.toLowerCase() === 'eth' ? 'ethereum' : symbol.toLowerCase();
-    const url = `${COINGECKO_API}/simple/price?ids=${coinId}&vs_currencies=eur`;
-    const response = await fetch(url);
-    const data = await response.json();
-    
-    if (data[coinId] && data[coinId].eur) {
-      return {
-        price: data[coinId].eur,
-        date: new Date().toISOString().split('T')[0]
-      };
-    }
-  } catch (error) {
-    console.error(`CoinGecko error for ${symbol}:`, error);
-  }
-  return null;
-}
-
-async function fetchYahooPrice(symbol) {
-  try {
-    // Yahoo Finance API (inoffiziell)
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
-    const response = await fetch(url);
-    const data = await response.json();
-    
-    if (data.chart && data.chart.result && data.chart.result[0]) {
-      const result = data.chart.result[0];
-      const meta = result.meta;
-      return {
-        price: meta.regularMarketPrice,
-        date: new Date().toISOString().split('T')[0]
-      };
-    }
-  } catch (error) {
-    console.error(`Yahoo error for ${symbol}:`, error);
-  }
-  return null;
-}
-
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const body = await req.json().catch(() => ({}));
-    const { assetId } = body;
-
-    // Filter: Nur spezifisches Asset oder alle aktiven
-    const filter = assetId 
-      ? { id: assetId } 
-      : { is_actively_traded: true };
-    
-    const assets = await base44.entities.Asset.filter(filter);
-    console.log(`Synchronisiere ${assets.length} Assets...`);
-
-    const results = {
-      updated: 0,
-      failed: 0,
-      errors: []
-    };
-
-    const today = new Date().toISOString().split('T')[0];
+    const assets = await base44.asServiceRole.entities.Asset.list();
+    const results = [];
 
     for (const asset of assets) {
-      try {
-        let priceData = null;
+      let price = null;
+      let source = asset.api_source || 'MANUAL';
 
-        // Asset-Klassen-spezifischer API-Call
-        if (asset.asset_class === 'crypto') {
-          priceData = await fetchCryptoPrice(asset.symbol);
-        } else if (['stock', 'etf'].includes(asset.asset_class)) {
-          priceData = await fetchStockPrice(asset.symbol);
-          if (!priceData) {
-            priceData = await fetchYahooPrice(asset.symbol);
-          }
+      // Stocks/ETFs - Alpha Vantage
+      if (['STOCK', 'ETF', 'MUTUAL_FUND'].includes(asset.asset_class) && asset.symbol) {
+        try {
+          const apiKey = Deno.env.get('ALPHA_VANTAGE_KEY');
+          const res = await fetch(
+            `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${asset.symbol}&apikey=${apiKey}`
+          );
+          const data = await res.json();
+          price = parseFloat(data['Global Quote']?.['05. price'] || 0);
+        } catch (e) {
+          console.error('Alpha Vantage error:', e);
         }
+      }
 
-        if (!priceData) {
-          results.failed++;
-          results.errors.push({ asset: asset.symbol, error: 'Kein Preis verfügbar' });
-          continue;
+      // Crypto - CoinGecko
+      if (asset.asset_class === 'CRYPTO' && asset.symbol) {
+        try {
+          const res = await fetch(
+            `https://api.coingecko.com/api/v3/simple/price?ids=${asset.symbol.toLowerCase()}&vs_currencies=eur`
+          );
+          const data = await res.json();
+          price = data[asset.symbol.toLowerCase()]?.eur || null;
+        } catch (e) {
+          console.error('CoinGecko error:', e);
         }
+      }
 
-        // Speichere in AssetPrice
-        await base44.entities.AssetPrice.create({
-          asset_id: asset.id,
-          price_date: priceData.date,
-          close_price: priceData.price,
-          source: asset.asset_class === 'crypto' ? 'coingecko' : 'alpha_vantage'
+      // Metals - Metals-API
+      if (['GOLD', 'SILVER', 'PLATINUM'].includes(asset.asset_class)) {
+        try {
+          const metalMap = { GOLD: 'XAU', SILVER: 'XAG', PLATINUM: 'XPT' };
+          const res = await fetch(
+            `https://metals-api.com/api/latest?base=EUR&symbols=${metalMap[asset.asset_class]}&access_key=${Deno.env.get('METALS_API_KEY')}`
+          );
+          const data = await res.json();
+          price = data.rates?.[metalMap[asset.asset_class]] || null;
+        } catch (e) {
+          console.error('Metals-API error:', e);
+        }
+      }
+
+      // Update asset
+      if (price) {
+        await base44.asServiceRole.entities.Asset.update(asset.id, {
+          current_price: price,
+          last_price_update: new Date().toISOString()
         });
 
-        // Aktualisiere Holdings
-        const holdings = await base44.entities.AssetHolding.filter({ asset_id: asset.id });
-        for (const holding of holdings) {
-          const currentValue = holding.quantity * priceData.price;
-          const unrealizedGL = currentValue - holding.total_cost_basis;
-          const unrealizedGLPercent = (unrealizedGL / holding.total_cost_basis) * 100;
+        // Record valuation
+        await base44.asServiceRole.entities.AssetValuation.create({
+          asset_id: asset.id,
+          valuation_date: new Date().toISOString().split('T')[0],
+          price: price,
+          source: 'API'
+        });
 
-          await base44.entities.AssetHolding.update(holding.id, {
-            current_price: priceData.price,
-            current_value: currentValue,
-            unrealized_gain_loss: unrealizedGL,
-            unrealized_gain_loss_percent: unrealizedGLPercent,
-            last_price_update: new Date().toISOString()
-          });
-        }
-
-        results.updated++;
-        
-        // Rate Limiting
-        await new Promise(resolve => setTimeout(resolve, 200));
-      } catch (error) {
-        console.error(`Error syncing ${asset.symbol}:`, error);
-        results.failed++;
-        results.errors.push({ asset: asset.symbol, error: error.message });
+        results.push({ asset: asset.name, price, status: 'OK' });
       }
     }
 
-    return Response.json({
-      success: true,
-      message: `${results.updated} aktualisiert, ${results.failed} fehlgeschlagen`,
-      results
-    });
+    return Response.json({ success: true, updated: results.length, results });
   } catch (error) {
-    console.error('Sync error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
