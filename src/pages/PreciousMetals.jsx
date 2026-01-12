@@ -8,7 +8,6 @@ import { Plus, Gem } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
 import EmptyState from '@/components/shared/EmptyState';
 import PreciousMetalFormDialog from '@/components/wealth/PreciousMetalFormDialog';
-import { formatCurrency } from '@/lib/utils';
 
 export default function PreciousMetals() {
     const [formOpen, setFormOpen] = useState(false);
@@ -29,7 +28,7 @@ export default function PreciousMetals() {
         <div className="space-y-8">
             <PageHeader 
                 title="Edelmetalle"
-                subtitle={`${metals.length} Positionen · Gesamtwert: ${formatCurrency(totalValue)}`}
+                subtitle={`${metals.length} Positionen · Gesamtwert: ${totalValue.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}`}
             />
 
             <motion.div className="flex justify-end">
