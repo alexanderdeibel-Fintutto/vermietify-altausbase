@@ -387,6 +387,8 @@ import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
 import FinanceDashboard from './pages/FinanceDashboard';
+import InvoiceManagementNew from './pages/InvoiceManagementNew';
+import OperatingCostWizard from './pages/OperatingCostWizard';
 import __Layout from './Layout.jsx';
 
 
@@ -780,6 +782,8 @@ export const PAGES = {
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
     "FinanceDashboard": FinanceDashboard,
+    "InvoiceManagementNew": InvoiceManagementNew,
+    "OperatingCostWizard": OperatingCostWizard,
 }
 
 export const pagesConfig = {

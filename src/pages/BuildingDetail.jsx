@@ -25,6 +25,10 @@ import MaintenanceCalendarView from '@/components/maintenance/MaintenanceCalenda
 import BuildingDocumentsManager from '@/components/building-detail/BuildingDocumentsManager';
 import BuildingMaintenanceOverview from '@/components/building-detail/BuildingMaintenanceOverview';
 import BuildingOwnershipManager from '@/components/buildings/BuildingOwnershipManager';
+import BuildingFinanceTab from '@/components/buildings/BuildingFinanceTab';
+import BuildingStammdatenTab from '@/components/buildings/BuildingStammdatenTab';
+import BuildingTechnicalTab from '@/components/buildings/BuildingTechnicalTab';
+import BuildingTaxTab from '@/components/buildings/BuildingTaxTab';
 
 export default function BuildingDetailPage() {
 
@@ -187,11 +191,14 @@ export default function BuildingDetailPage() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList>
+        <TabsList className="grid grid-cols-6 lg:grid-cols-12 w-full">
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
-          <TabsTrigger value="owners">Eigentümer</TabsTrigger>
-          <TabsTrigger value="iot-map">IoT-Karte</TabsTrigger>
+          <TabsTrigger value="stammdaten">Stammdaten</TabsTrigger>
+          <TabsTrigger value="technical">Technik</TabsTrigger>
+          <TabsTrigger value="tax">Steuer</TabsTrigger>
+          <TabsTrigger value="finance">Finanzen</TabsTrigger>
           <TabsTrigger value="units">Einheiten</TabsTrigger>
+          <TabsTrigger value="owners">Eigentümer</TabsTrigger>
           <TabsTrigger value="tenants">Mieter</TabsTrigger>
           <TabsTrigger value="contracts">Verträge</TabsTrigger>
           <TabsTrigger value="board">Pinnwand</TabsTrigger>
@@ -208,12 +215,24 @@ export default function BuildingDetailPage() {
           <IoTSensorsPanel buildingId={buildingId} permissionLevel={permissionLevel} />
         </TabsContent>
 
-        <TabsContent value="owners">
-          <BuildingOwnershipManager buildingId={buildingId} />
+        <TabsContent value="stammdaten">
+          <BuildingStammdatenTab building={building} />
         </TabsContent>
 
-        <TabsContent value="iot-map">
-          <InteractiveBuildingMap buildingId={buildingId} />
+        <TabsContent value="technical">
+          <BuildingTechnicalTab building={building} />
+        </TabsContent>
+
+        <TabsContent value="tax">
+          <BuildingTaxTab building={building} />
+        </TabsContent>
+
+        <TabsContent value="finance">
+          <BuildingFinanceTab buildingId={buildingId} building={building} />
+        </TabsContent>
+
+        <TabsContent value="owners">
+          <BuildingOwnershipManager buildingId={buildingId} />
         </TabsContent>
 
         <TabsContent value="units">
