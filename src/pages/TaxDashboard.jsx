@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { AlertCircle, TrendingUp, TrendingDown, Calculator, Calendar, Info } from 'lucide-react';
+import CapitalGainsWidget from '@/components/tax/CapitalGainsWidget';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -143,6 +144,9 @@ export default function TaxDashboard() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Kapitalerträge Widget */}
+            <CapitalGainsWidget taxYear={selectedYear} />
 
             {/* Mittlerer Bereich */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
