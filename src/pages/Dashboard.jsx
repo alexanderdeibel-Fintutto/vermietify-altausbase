@@ -10,6 +10,8 @@ import EnhancedWidgetConfig from '@/components/dashboard/EnhancedWidgetConfig';
 import { usePackageAccess } from '@/components/hooks/usePackageAccess';
 import DeadlineWarningSystem from '@/components/shared/DeadlineWarningSystem';
 import OfflineIndicator from '@/components/shared/OfflineIndicator';
+import OnboardingChecklist from '@/components/shared/OnboardingChecklist';
+import ActionRequiredWidget from '@/components/dashboard/ActionRequiredWidget';
 
 const DEFAULT_LAYOUT = AVAILABLE_WIDGETS.slice(0, 7).map((widget, idx) => ({
   id: widget.id,
@@ -140,8 +142,33 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Widgets Grid */}
-      <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Content Area */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Widgets Grid */}
+          {enabledWidgets.map((widget) => {
+            const WidgetComponent = WIDGET_COMPONENTS[widget.component];
+            if (!WidgetComponent) return null;
+            
+            return (
+              <div 
+                key={widget.id}
+              >
+                <WidgetComponent />
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Right Sidebar */}
+        <div className="space-y-6">
+          <ActionRequiredWidget />
+          <OnboardingChecklist />
+        </div>
+      </div>
+
+      {/* Old Widgets Grid - to be replaced by the one above*/}
+      <div className="space-y-6 hidden">
         {enabledWidgets.map((widget) => {
           const WidgetComponent = WIDGET_COMPONENTS[widget.component];
           if (!WidgetComponent) return null;

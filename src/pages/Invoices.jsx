@@ -40,7 +40,9 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, MoreVertical, Pencil, Trash2, FileText, Building2, TrendingUp, TrendingDown, Filter, Download, Tag, Users, Sparkles } from 'lucide-react';
+import { Plus, Search, MoreVertical, Pencil, Trash2, FileText, Building2, TrendingUp, TrendingDown, Filter, Download, Tag, Users, Sparkles, HelpCircle } from 'lucide-react';
+import UmlagefaehigBadge from '@/components/shared/UmlagefaehigBadge';
+import InfoTooltip from '@/components/shared/InfoTooltip';
 import { toast } from 'sonner';
 import InvoiceForm from '@/components/invoices/InvoiceForm';
 import InvoiceFormWithTaxLibrary from '@/components/invoices/InvoiceFormWithTaxLibrary';
@@ -765,11 +767,7 @@ export default function Invoices() {
                                                             {getStatusBadge(invoice.status)}
                                                         </TableCell>
                                                         <TableCell>
-                                                            {invoice.operating_cost_relevant && (
-                                                                <Badge className="bg-blue-100 text-blue-700 text-xs">
-                                                                    ✓
-                                                                </Badge>
-                                                            )}
+                                                            <UmlagefaehigBadge status={invoice.operating_cost_relevant} />
                                                         </TableCell>
                                                         <TableCell className="text-right">
                                                             <DropdownMenu>

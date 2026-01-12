@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Zap, Eye, Trash2, RefreshCw } from 'lucide-react';
+import SOLLBookingCard from '@/components/shared/SOLLBookingCard';
+import InfoTooltip from '@/components/shared/InfoTooltip';
 import QuickStats from '@/components/shared/QuickStats';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -27,28 +29,24 @@ export default function GeneratedBookingsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">⚡ Automatisch generierte Buchungen</h1>
-          <p className="text-slate-600 mt-1">KI-generierte Finanzbuchungen aus Verträgen und Dokumenten</p>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold text-slate-900">Geplante Einnahmen/Ausgaben (SOLL)</h1>
+            <InfoTooltip content="Erstellt automatische SOLL-Buchungen basierend auf Verträgen. Diese müssen mit tatsächlichen Bank-Zahlungen (IST) abgeglichen werden." />
+           </div>
+          <p className="text-slate-600 mt-1">Automatisch erstellte Finanzbuchungen aus Verträgen und Dokumenten</p>
         </div>
-        <Button className="bg-violet-600 hover:bg-violet-700"><RefreshCw className="w-4 h-4 mr-2" />Neu generieren</Button>
+        <Button className="bg-violet-600 hover:bg-violet-700"><RefreshCw className="w-4 h-4 mr-2" />Buchungen generieren</Button>
       </div>
 
       <QuickStats stats={stats} accentColor="violet" />
 
       <div className="space-y-3">
         {bookings.map((booking) => (
-          <Card key={booking.id} className="border border-slate-200">
-            <CardContent className="pt-6">
+          <SOLLBookingCard booking={booking}>
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Zap className="w-5 h-5 text-violet-600" />
-                    <h3 className="font-semibold text-slate-900">{booking.description}</h3>
-                    <Badge className={booking.status === 'verified' ? 'bg-green-600' : 'bg-orange-600'}>
-                      {booking.status === 'verified' ? '✓ Verifiziert' : 'Ausstehend'}
-                    </Badge>
-                  </div>
-                  <div className="flex gap-4 text-sm text-slate-600">
+                   <h3 className="font-semibold text-slate-900">{booking.description}</h3>
+                   <div className="flex gap-4 text-sm text-slate-600 mt-2">
                     <span>💶 {booking.amount.toLocaleString('de-DE')} €</span>
                     <span>📅 {format(new Date(booking.date), 'dd.MM.yyyy', { locale: de })}</span>
                     <span>🔗 {booking.source}</span>
@@ -59,8 +57,7 @@ export default function GeneratedBookingsPage() {
                   <Button size="icon" variant="ghost"><Trash2 className="w-4 h-4 text-red-600" /></Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+          </SOLLBookingCard>
         ))}
       </div>
     </div>
