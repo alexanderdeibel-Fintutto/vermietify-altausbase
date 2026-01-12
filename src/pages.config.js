@@ -394,6 +394,11 @@ import RentIndexManagement from './pages/RentIndexManagement';
 import EnergyPassportManager from './pages/EnergyPassportManager';
 import MandantManagement from './pages/MandantManagement';
 import CommunicationWorkflows from './pages/CommunicationWorkflows';
+import PortfolioDashboard from './pages/PortfolioDashboard';
+import StocksAndETFs from './pages/StocksAndETFs';
+import Cryptocurrencies from './pages/Cryptocurrencies';
+import PreciousMetals from './pages/PreciousMetals';
+import TaxReport from './pages/TaxReport';
 import __Layout from './Layout.jsx';
 
 
@@ -794,6 +799,11 @@ export const PAGES = {
     "EnergyPassportManager": EnergyPassportManager,
     "MandantManagement": MandantManagement,
     "CommunicationWorkflows": CommunicationWorkflows,
+    "PortfolioDashboard": PortfolioDashboard,
+    "StocksAndETFs": StocksAndETFs,
+    "Cryptocurrencies": Cryptocurrencies,
+    "PreciousMetals": PreciousMetals,
+    "TaxReport": TaxReport,
 }
 
 export const pagesConfig = {
