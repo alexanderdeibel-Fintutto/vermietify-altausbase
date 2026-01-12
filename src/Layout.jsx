@@ -33,6 +33,7 @@ import PWAInstallPrompt from '@/components/mobile/PWAInstallPrompt';
 import MainSidebar from '@/components/sidebar/MainSidebar';
 import { useSelectedBuilding } from '@/components/hooks/useSelectedBuilding';
 import ProgressIndicator from '@/components/onboarding/ProgressIndicator';
+import OfflineIndicator from '@/components/shared/OfflineIndicator';
 
 // Lazy load heavy components
 const TesterTracker = lazy(() => import('@/components/testing/TesterTracker'));
@@ -177,6 +178,9 @@ export default function Layout({ children, currentPageName }) {
 
                 {/* PWA Install Prompt */}
                 <PWAInstallPrompt />
+
+                {/* Offline Indicator */}
+                <OfflineIndicator />
 
                 {/* Mobile Bottom Navigation */}
                 <MobileBottomNav visibleFeatures={visibleFeatures} />

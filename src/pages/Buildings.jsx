@@ -12,11 +12,13 @@ import DeleteConfirmDialog from '@/components/buildings/DeleteConfirmDialog';
 import LimitGuard from '@/components/package/LimitGuard';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import BuildingCreationWizard from '@/components/buildings/BuildingCreationWizard';
 
 export default function BuildingsPage() {
   const [filters, setFilters] = useState({ status: 'all', city: 'all', search: '' });
   const [editingBuilding, setEditingBuilding] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
@@ -105,13 +107,8 @@ export default function BuildingsPage() {
     }
   };
 
-  const handleNewBuilding = async () => {
-    const newBuilding = await base44.entities.Building.create({
-      name: 'Neues Gebäude',
-      city: '',
-      address: ''
-    });
-    setEditingBuilding(newBuilding);
+  const handleNewBuilding = () => {
+    setWizardOpen(true);
   };
 
   const handleQuickAction = (building) => {
@@ -186,6 +183,16 @@ export default function BuildingsPage() {
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteConfirm(null)}
         loading={deleteMutation.isPending}
+      />
+
+      {/* Creation Wizard */}
+      <BuildingCreationWizard
+        open={wizardOpen}
+        onClose={() => setWizardOpen(false)}
+        onBuildingCreated={(id) => {
+          queryClient.invalidateQueries(['buildings']);
+          setWizardOpen(false);
+        }}
       />
     </div>
   );
