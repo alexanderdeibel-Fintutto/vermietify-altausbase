@@ -29,6 +29,7 @@ import BuildingFinanceTab from '@/components/buildings/BuildingFinanceTab';
 import BuildingStammdatenTab from '@/components/buildings/BuildingStammdatenTab';
 import BuildingTechnicalTab from '@/components/buildings/BuildingTechnicalTab';
 import BuildingTaxTab from '@/components/buildings/BuildingTaxTab';
+import { ErrorBoundaryWithRetry } from '@/components/shared/ErrorBoundaryWithRetry';
 
 export default function BuildingDetailPage() {
 
@@ -113,6 +114,7 @@ export default function BuildingDetailPage() {
   const activeContracts = contracts.filter(c => c.status === 'active').length;
 
   return (
+    <ErrorBoundaryWithRetry>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
@@ -266,5 +268,6 @@ export default function BuildingDetailPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </ErrorBoundaryWithRetry>
   );
 }
