@@ -49,6 +49,7 @@ import InvoiceFormWithTaxLibrary from '@/components/invoices/InvoiceFormWithTaxL
 import IntelligentInvoiceWizard from '@/components/invoices/IntelligentInvoiceWizard';
 import CostTypeForm from '@/components/cost-types/CostTypeForm';
 import RecipientForm from '@/components/recipients/RecipientForm';
+import DATEVExportButton from '@/components/invoices/DATEVExportButton';
 
 export default function Invoices() {
     const queryClient = useQueryClient();
@@ -72,6 +73,11 @@ export default function Invoices() {
     const [costTypeSearchTerm, setCostTypeSearchTerm] = useState('');
     const [costTypeFilter, setCostTypeFilter] = useState('all');
     const [mainCategoryFilter, setMainCategoryFilter] = useState('all');
+
+    // DATEV Export state
+    const [dateRangeStart, setDateRangeStart] = useState('');
+    const [dateRangeEnd, setDateRangeEnd] = useState('');
+    const [selectedBuilding, setSelectedBuilding] = useState('all');
 
     // Recipient state
     const [recipientFormOpen, setRecipientFormOpen] = useState(false);
@@ -528,11 +534,12 @@ export default function Invoices() {
                 transition={{ delay: 0.1 }}
             >
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="bg-white border border-slate-200">
-                    <TabsTrigger value="invoices" className="gap-2">
-                        <FileText className="w-4 h-4" />
-                        Rechnungen
-                    </TabsTrigger>
+                <TabsList className="bg-white border border-slate-200 flex justify-between">
+                    <div className="flex gap-2">
+                        <TabsTrigger value="invoices" className="gap-2">
+                            <FileText className="w-4 h-4" />
+                            Rechnungen
+                        </TabsTrigger>
                     <TabsTrigger value="cost-types" className="gap-2">
                         <Tag className="w-4 h-4" />
                         Kostenarten
@@ -541,6 +548,14 @@ export default function Invoices() {
                         <Users className="w-4 h-4" />
                         Empfänger
                     </TabsTrigger>
+                    </div>
+                    {activeTab === 'invoices' && dateRangeStart && dateRangeEnd && (
+                        <DATEVExportButton 
+                            buildingId={buildingFilter !== 'all' ? buildingFilter : null}
+                            startDate={dateRangeStart}
+                            endDate={dateRangeEnd}
+                        />
+                    )}
                 </TabsList>
 
                 {/* INVOICES TAB */}
@@ -652,25 +667,33 @@ export default function Invoices() {
                                 </div>
 
                                 {showFilters && (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
-                                        <div>
-                                            <label className="text-xs font-medium mb-2 block">Gebäude</label>
-                                            <Select value={buildingFilter} onValueChange={setBuildingFilter}>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Alle Gebäude" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="all">Alle Gebäude</SelectItem>
-                                                    {buildings.map(building => (
-                                                        <SelectItem key={building.id} value={building.id}>
-                                                            {building.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    </div>
-                                )}
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
+                                                         <div>
+                                                             <label className="text-xs font-medium mb-2 block">Gebäude</label>
+                                                             <Select value={buildingFilter} onValueChange={setBuildingFilter}>
+                                                                 <SelectTrigger>
+                                                                     <SelectValue placeholder="Alle Gebäude" />
+                                                                 </SelectTrigger>
+                                                                 <SelectContent>
+                                                                     <SelectItem value="all">Alle Gebäude</SelectItem>
+                                                                     {buildings.map(building => (
+                                                                         <SelectItem key={building.id} value={building.id}>
+                                                                             {building.name}
+                                                                         </SelectItem>
+                                                                     ))}
+                                                                 </SelectContent>
+                                                             </Select>
+                                                         </div>
+                                                         <div>
+                                                             <label className="text-xs font-medium mb-2 block">Von</label>
+                                                             <Input type="date" value={dateRangeStart} onChange={(e) => setDateRangeStart(e.target.value)} />
+                                                         </div>
+                                                         <div>
+                                                             <label className="text-xs font-medium mb-2 block">Bis</label>
+                                                             <Input type="date" value={dateRangeEnd} onChange={(e) => setDateRangeEnd(e.target.value)} />
+                                                         </div>
+                                                     </div>
+                                                )}
                             </div>
                         </CardContent>
                     </Card>
