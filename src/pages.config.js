@@ -393,6 +393,7 @@ import AutomatedReports from './pages/AutomatedReports';
 import RentIndexManagement from './pages/RentIndexManagement';
 import EnergyPassportManager from './pages/EnergyPassportManager';
 import MandantManagement from './pages/MandantManagement';
+import CommunicationWorkflows from './pages/CommunicationWorkflows';
 import __Layout from './Layout.jsx';
 
 
@@ -792,6 +793,7 @@ export const PAGES = {
     "RentIndexManagement": RentIndexManagement,
     "EnergyPassportManager": EnergyPassportManager,
     "MandantManagement": MandantManagement,
+    "CommunicationWorkflows": CommunicationWorkflows,
 }
 
 export const pagesConfig = {
