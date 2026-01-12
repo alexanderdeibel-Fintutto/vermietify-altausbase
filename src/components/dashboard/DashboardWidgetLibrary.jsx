@@ -14,6 +14,7 @@ import DocumentsWidget from './widgets/DocumentsWidget';
 import RevenueWidget from './widgets/RevenueWidget';
 import OccupancyWidget from './widgets/OccupancyWidget';
 import UpcomingTasksWidget from './widgets/UpcomingTasksWidget';
+import RentOptimizationWidget from './widgets/RentOptimizationWidget';
 
 export const WIDGET_CATEGORIES = {
   overview: {
@@ -181,6 +182,15 @@ export const AVAILABLE_WIDGETS = [
     category: 'activity',
     defaultSize: 'half',
     Component: RecentActivitiesWidget
+  },
+  {
+    id: 'rent-optimization',
+    component: 'RentOptimizationWidget',
+    name: 'Mietoptimierung',
+    description: 'Mieterhöhungspotential',
+    category: 'financial',
+    defaultSize: 'third',
+    Component: RentOptimizationWidget
   }
 ];
 
