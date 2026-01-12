@@ -24,6 +24,7 @@ import InteractiveBuildingMap from '@/components/building-detail/InteractiveBuil
 import MaintenanceCalendarView from '@/components/maintenance/MaintenanceCalendarView';
 import BuildingDocumentsManager from '@/components/building-detail/BuildingDocumentsManager';
 import BuildingMaintenanceOverview from '@/components/building-detail/BuildingMaintenanceOverview';
+import BuildingOwnershipManager from '@/components/buildings/BuildingOwnershipManager';
 
 export default function BuildingDetailPage() {
 
@@ -188,6 +189,7 @@ export default function BuildingDetailPage() {
       <Tabs defaultValue="overview" className="w-full">
         <TabsList>
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
+          <TabsTrigger value="owners">Eigentümer</TabsTrigger>
           <TabsTrigger value="iot-map">IoT-Karte</TabsTrigger>
           <TabsTrigger value="units">Einheiten</TabsTrigger>
           <TabsTrigger value="tenants">Mieter</TabsTrigger>
@@ -204,6 +206,10 @@ export default function BuildingDetailPage() {
             <BuildingDocumentsManager buildingId={buildingId} />
           </div>
           <IoTSensorsPanel buildingId={buildingId} permissionLevel={permissionLevel} />
+        </TabsContent>
+
+        <TabsContent value="owners">
+          <BuildingOwnershipManager buildingId={buildingId} />
         </TabsContent>
 
         <TabsContent value="iot-map">
