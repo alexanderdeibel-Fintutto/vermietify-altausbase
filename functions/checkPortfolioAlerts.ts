@@ -4,76 +4,71 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    console.log("Checking portfolio alerts...");
+    console.log('Checking portfolio alerts...');
 
-    // Ungelöste Alerts laden
-    const openAlerts = await base44.asServiceRole.entities.PortfolioAlert.filter({
-      is_resolved: false
-    });
+    // Alle Portfolios
+    const portfolios = await base44.asServiceRole.entities.Portfolio.list();
 
-    let checkedCount = 0;
-    let resolvedCount = 0;
+    for (const portfolio of portfolios) {
+      // Alerts für dieses Portfolio
+      const alerts = await base44.asServiceRole.entities.PortfolioAlert.filter({
+        portfolio_id: portfolio.id,
+        is_active: true
+      });
 
-    for (const alert of openAlerts) {
-      try {
-        // Prüfen ob Alert abgelaufen ist
-        if (new Date(alert.expires_at) < new Date()) {
-          await base44.asServiceRole.entities.PortfolioAlert.update(alert.id, {
-            is_resolved: true
+      if (alerts.length === 0) continue;
+
+      // Holdings laden
+      const accounts = await base44.asServiceRole.entities.PortfolioAccount.filter({
+        portfolio_id: portfolio.id
+      });
+      const accountIds = accounts.map(a => a.id);
+
+      const allHoldings = await base44.asServiceRole.entities.AssetHolding.list();
+      const holdings = allHoldings.filter(h => accountIds.includes(h.portfolio_account_id));
+
+      // Alerts prüfen
+      for (const alert of alerts) {
+        const holding = holdings.find(h => h.asset_id === alert.asset_id);
+        if (!holding) continue;
+
+        const currentPrice = holding.current_price || 0;
+        let triggered = false;
+        let message = '';
+
+        if (alert.alert_type === 'price_above' && currentPrice >= alert.threshold_value) {
+          triggered = true;
+          message = `${alert.asset_id} erreicht ${currentPrice} (Ziel: ${alert.threshold_value})`;
+        } else if (alert.alert_type === 'price_below' && currentPrice <= alert.threshold_value) {
+          triggered = true;
+          message = `${alert.asset_id} fällt auf ${currentPrice} (Limit: ${alert.threshold_value})`;
+        }
+
+        if (triggered) {
+          // Benachrichtigung senden
+          await base44.asServiceRole.entities.PortfolioNotification.create({
+            portfolio_id: portfolio.id,
+            notification_type: 'price_alert',
+            title: 'Kurs-Alarm',
+            message,
+            is_read: false,
+            priority: 'high'
           });
-          resolvedCount++;
-          continue;
+
+          // Alert als ausgelöst markieren
+          await base44.asServiceRole.entities.PortfolioAlert.update(alert.id, {
+            last_triggered: new Date().toISOString(),
+            is_active: false
+          });
+
+          console.log(`Alert triggered: ${message}`);
         }
-
-        // Für Price-Change Alerts: Aktuelle Preise prüfen
-        if (alert.alert_type === "price_change" && alert.asset_portfolio_id) {
-          const asset = await base44.asServiceRole.entities.AssetPortfolio.get(
-            alert.asset_portfolio_id
-          );
-
-          if (asset) {
-            const currentGain = asset.quantity * (asset.current_value - asset.purchase_price);
-            const gainPercent = ((asset.current_value - asset.purchase_price) / asset.purchase_price) * 100;
-
-            // Wenn Preis sich wieder normalisiert hat: Alert auflösen
-            if (Math.abs(gainPercent) < 10) {
-              await base44.asServiceRole.entities.PortfolioAlert.update(alert.id, {
-                is_resolved: true
-              });
-              resolvedCount++;
-            }
-          }
-        }
-
-        // Für Tax-Optimization Alerts: Nur gegen Jahresende relevant
-        if (alert.alert_type === "tax_optimization") {
-          const now = new Date();
-          const monthsUntilYearEnd = 12 - now.getMonth();
-
-          if (monthsUntilYearEnd > 3 && !alert.action_required) {
-            // Not relevant anymore, resolve it
-            await base44.asServiceRole.entities.PortfolioAlert.update(alert.id, {
-              is_resolved: true
-            });
-            resolvedCount++;
-          }
-        }
-
-        checkedCount++;
-      } catch (error) {
-        console.error(`Error checking alert ${alert.id}:`, error);
       }
     }
 
-    console.log(`Alert check completed: ${checkedCount} checked, ${resolvedCount} resolved`);
-
-    return Response.json({
-      success: true,
-      checked_count: checkedCount,
-      resolved_count: resolvedCount
-    });
+    return Response.json({ success: true, message: 'Alerts checked' });
   } catch (error) {
-    console.error("checkPortfolioAlerts error:", error);
+    console.error('Alert check error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
