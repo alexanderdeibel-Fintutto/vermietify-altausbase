@@ -30,6 +30,7 @@ import BuildingStammdatenTab from '@/components/buildings/BuildingStammdatenTab'
 import BuildingTechnicalTab from '@/components/buildings/BuildingTechnicalTab';
 import BuildingTaxTab from '@/components/buildings/BuildingTaxTab';
 import { ErrorBoundaryWithRetry } from '@/components/shared/ErrorBoundaryWithRetry';
+import EnergyPassportPanel from '@/components/building-detail/EnergyPassportPanel';
 
 export default function BuildingDetailPage() {
 
@@ -212,8 +213,9 @@ export default function BuildingDetailPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <BuildingInfoPanel building={building} permissionLevel={permissionLevel} />
             <BuildingMaintenanceOverview buildingId={buildingId} />
-            <BuildingDocumentsManager buildingId={buildingId} />
+            <EnergyPassportPanel buildingId={buildingId} />
           </div>
+          <BuildingDocumentsManager buildingId={buildingId} />
           <IoTSensorsPanel buildingId={buildingId} permissionLevel={permissionLevel} />
         </TabsContent>
 

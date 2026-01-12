@@ -11,6 +11,7 @@ import { de } from 'date-fns/locale';
 import LeaseContractAnalyzer from '@/components/contracts/LeaseContractAnalyzer';
 import ContractDocumentManager from '@/components/contracts/ContractDocumentManager';
 import ContractRenewalTracker from '@/components/contracts/ContractRenewalTracker';
+import RentIncreaseCalculator from '@/components/contracts/RentIncreaseCalculator';
 
 export default function ContractDetailPage() {
   const { id } = useParams();
@@ -19,6 +20,24 @@ export default function ContractDetailPage() {
   const { data: contract } = useQuery({
     queryKey: ['contract', id],
     queryFn: () => base44.entities.LeaseContract?.read?.(id) || {}
+  });
+
+  const { data: unit } = useQuery({
+    queryKey: ['unit', contract?.unit_id],
+    queryFn: async () => {
+      const units = await base44.entities.Unit.filter({ id: contract.unit_id });
+      return units[0];
+    },
+    enabled: !!contract?.unit_id
+  });
+
+  const { data: building } = useQuery({
+    queryKey: ['building', unit?.gebaeude_id],
+    queryFn: async () => {
+      const buildings = await base44.entities.Building.filter({ id: unit.gebaeude_id });
+      return buildings[0];
+    },
+    enabled: !!unit?.gebaeude_id
   });
 
   if (!contract?.id) {
@@ -110,6 +129,10 @@ export default function ContractDetailPage() {
         <ContractRenewalTracker contractId={contract.id} />
         <ContractDocumentManager contractId={contract.id} />
       </div>
+
+      {building && unit && (
+        <RentIncreaseCalculator contract={contract} building={building} unit={unit} />
+      )}
 
       <Card>
         <CardHeader>
