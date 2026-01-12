@@ -8,7 +8,6 @@ import { Plus, Coins } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
 import EmptyState from '@/components/shared/EmptyState';
 import CryptoFormDialog from '@/components/wealth/CryptoFormDialog';
-import { formatCurrency } from '@/lib/utils';
 
 export default function Cryptocurrencies() {
     const [formOpen, setFormOpen] = useState(false);
@@ -25,7 +24,7 @@ export default function Cryptocurrencies() {
         <div className="space-y-8">
             <PageHeader 
                 title="Kryptowährungen"
-                subtitle={`${cryptos.length} Assets · Gesamtwert: ${formatCurrency(totalValue)}`}
+                subtitle={`${cryptos.length} Assets · Gesamtwert: ${totalValue.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}`}
             />
 
             <motion.div className="flex justify-end">
