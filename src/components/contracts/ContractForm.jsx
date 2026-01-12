@@ -19,9 +19,11 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Loader2, Plus, X, Sparkles } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { generateFinancialItemsForContract, regenerateContractFinancialItems, needsPartialRentDialog, calculatePartialRent } from './generateFinancialItems';
 import PartialRentDialog from './PartialRentDialog';
 import BookingPreviewDialog from '../bookings/BookingPreviewDialog';
+import RentMarketAnalyzer from './RentMarketAnalyzer';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 
@@ -54,6 +56,18 @@ export default function ContractForm({
     const watchUnitId = watch('unit_id');
     const watchTenantId = watch('tenant_id');
     const watchDepositInstallments = watch('deposit_installments');
+
+    const selectedUnit = units.find(u => u.id === watchUnitId);
+    const selectedBuilding = React.useMemo(() => {
+        if (!selectedUnit?.gebaeude_id) return null;
+        return { id: selectedUnit.gebaeude_id }; // Will be enriched by query
+    }, [selectedUnit]);
+
+    const { data: buildingData } = useQuery({
+        queryKey: ['building', selectedBuilding?.id],
+        queryFn: () => base44.entities.Building.filter({ id: selectedBuilding.id }).then(r => r[0]),
+        enabled: !!selectedBuilding?.id
+    });
 
     React.useEffect(() => {
         if (initialData) {
@@ -455,6 +469,15 @@ export default function ContractForm({
                             </div>
                         </div>
                     </div>
+
+                    {/* Market Analysis */}
+                    {watchUnitId && watchBaseRent && buildingData && selectedUnit && (
+                        <RentMarketAnalyzer 
+                            building={buildingData}
+                            unit={selectedUnit}
+                            currentRent={parseFloat(watchBaseRent) || 0}
+                        />
+                    )}
 
                     <div className="border-t pt-4">
                         <h3 className="font-semibold text-slate-800 mb-4">Kaution & Kündigungsfrist</h3>
