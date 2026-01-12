@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { DollarSign, Home, Users, Building2, Calculator, ChevronRight, FileText, MessageSquare, Mail, Bell, Phone, Send, Package } from 'lucide-react';
+import { DollarSign, Home, Users, Building2, Calculator, ChevronRight, FileText, MessageSquare, Mail, Bell, Phone, Send, Package, TrendingUp } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useSelectedBuilding } from '@/components/hooks/useSelectedBuilding';
