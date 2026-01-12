@@ -228,8 +228,8 @@ export default function RentIncreaseCalculator({ contract, building, unit }) {
               </Alert>
             )}
           </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
