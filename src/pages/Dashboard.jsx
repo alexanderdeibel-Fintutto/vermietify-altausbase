@@ -8,6 +8,8 @@ import { Settings, Plus, LayoutDashboard } from 'lucide-react';
 import { WIDGET_COMPONENTS, AVAILABLE_WIDGETS, getAccessibleWidgets } from '@/components/dashboard/DashboardWidgetLibrary';
 import EnhancedWidgetConfig from '@/components/dashboard/EnhancedWidgetConfig';
 import { usePackageAccess } from '@/components/hooks/usePackageAccess';
+import DeadlineWarningSystem from '@/components/shared/DeadlineWarningSystem';
+import OfflineIndicator from '@/components/shared/OfflineIndicator';
 
 const DEFAULT_LAYOUT = AVAILABLE_WIDGETS.slice(0, 7).map((widget, idx) => ({
   id: widget.id,
