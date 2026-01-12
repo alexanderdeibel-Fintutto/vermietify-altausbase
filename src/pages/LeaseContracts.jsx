@@ -9,6 +9,7 @@ import ContractFilterBar from '@/components/contracts/ContractFilterBar';
 import ContractTable from '@/components/contracts/ContractTable';
 import QuickStats from '@/components/shared/QuickStats';
 import PostContractDialog from '@/components/contracts/PostContractDialog';
+import RentIncreaseValidator from '@/components/contracts/RentIncreaseValidator';
 import { toast } from 'sonner';
 
 export default function LeaseContractsPage() {
@@ -39,7 +40,31 @@ export default function LeaseContractsPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.LeaseContract.update(editingContract.id, data),
+    mutationFn: async (data) => {
+      // Track if rent changed
+      const oldRent = editingContract.rent_amount;
+      const newRent = data.rent_amount;
+
+      const updated = await base44.entities.LeaseContract.update(editingContract.id, data);
+
+      // If rent changed, update future bookings
+      if (oldRent && newRent && oldRent !== newRent) {
+        try {
+          await base44.functions.invoke('updateBookingsOnContractChange', {
+            contractId: editingContract.id,
+            oldRent,
+            newRent,
+            changeDate: new Date().toISOString().split('T')[0]
+          });
+          toast.success(`✅ ${newRent - oldRent > 0 ? 'Mieterhöhung' : 'Mietminderung'} angewendet - Buchungen aktualisiert`);
+        } catch (error) {
+          toast.error('Buchungen konnten nicht aktualisiert werden');
+          console.error(error);
+        }
+      }
+
+      return updated;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       setShowDialog(false);
@@ -112,11 +137,11 @@ export default function LeaseContractsPage() {
       />
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editingContract ? 'Vertrag bearbeiten' : 'Neuer Vertrag'}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[70vh] overflow-y-auto">
             <Input
               placeholder="Mieter"
               value={formData.tenant_name || ''}
@@ -139,6 +164,21 @@ export default function LeaseContractsPage() {
               value={formData.start_date || ''}
               onChange={(e) => setFormData({...formData, start_date: e.target.value})}
             />
+
+            {/* Rent increase validator */}
+            {editingContract && editingContract.rent_amount && formData.rent_amount && formData.rent_amount !== editingContract.rent_amount && (
+              <RentIncreaseValidator 
+                contractId={editingContract.id}
+                currentRent={editingContract.rent_amount}
+                onValidationComplete={(result) => {
+                  if (result.recommendation === 'NICHT ERLAUBT - Verstößt gegen Kappungsgrenze') {
+                    toast.error('Mieterhöhung nicht zulässig: ' + result.errors[0]);
+                    setFormData({...formData, rent_amount: editingContract.rent_amount});
+                  }
+                }}
+              />
+            )}
+
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={() => setShowDialog(false)}>Abbrechen</Button>
               <Button 
