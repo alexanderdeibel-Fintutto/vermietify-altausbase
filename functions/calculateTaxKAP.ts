@@ -1,94 +1,122 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+const SPARERPAUSCHBETRAG = 1000; // 2024
+const ABGELTUNGSSTEUER = 0.25;
+const SOLI = 0.055;
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { userId, taxYear, federalState = 'DE' } = await req.json();
+    const user = await base44.auth.me();
 
-    console.log(`Calculating Anlage KAP for ${userId}, year ${taxYear}, state ${federalState}`);
-
-    // Get all investments for this year
-    const investments = await base44.asServiceRole.entities.Investment.filter({
-      created_by: userId,
-      tax_year: taxYear
-    });
-
-    const SPARERPAUSCHBETRAG = 1000; // EUR für 2023+
-    const ABGELTUNGSSTEUER_RATE = 0.25;
-    const SOLIDARITAETSZUSCHLAG_RATE = 0.055;
-    const KIRCHENSTEUER_RATE = ['BY', 'BW'].includes(federalState) ? 0.08 : 0.09;
-
-    // Calculate totals
-    let totalGrossIncome = 0;
-    let totalWithheldTax = 0;
-    let totalForeignTax = 0;
-
-    const incomeByType = {};
-    const investmentDetails = [];
-
-    for (const inv of investments) {
-      totalGrossIncome += inv.gross_income;
-      totalWithheldTax += inv.withheld_tax || 0;
-      totalForeignTax += inv.foreign_tax || 0;
-
-      if (!incomeByType[inv.income_type]) {
-        incomeByType[inv.income_type] = 0;
-      }
-      incomeByType[inv.income_type] += inv.gross_income;
-
-      investmentDetails.push({
-        id: inv.id,
-        title: inv.title,
-        grossIncome: inv.gross_income,
-        incomeType: inv.income_type
-      });
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Distribute Sparerpauschbetrag proportionally
-    let allowanceUsed = 0;
-    const allowanceDistribution = investments.map(inv => {
-      if (totalGrossIncome === 0) return { ...inv, allowancePortion: 0 };
-      const portion = Math.min(
-        inv.gross_income,
-        (inv.gross_income / totalGrossIncome) * SPARERPAUSCHBETRAG
-      );
-      allowanceUsed += portion;
-      return { ...inv, allowancePortion: portion };
-    });
+    const body = await req.json();
+    const { portfolioId, year = new Date().getFullYear() } = body;
 
-    // Calculate taxable income
-    const taxableIncome = Math.max(0, totalGrossIncome - allowanceUsed - totalForeignTax);
-    const abgeltungssteuer = taxableIncome * ABGELTUNGSSTEUER_RATE;
-    const solidaritaetszuschlag = abgeltungssteuer * SOLIDARITAETSZUSCHLAG_RATE;
-    const kirchensteuer = abgeltungssteuer * KIRCHENSTEUER_RATE;
+    if (!portfolioId) {
+      return Response.json({ error: 'portfolioId erforderlich' }, { status: 400 });
+    }
 
-    // Summary
-    const result = {
-      taxYear,
-      federalState,
-      investments: investmentDetails,
-      totals: {
-        grossIncome: totalGrossIncome,
-        allowanceUsed: Math.min(allowanceUsed, SPARERPAUSCHBETRAG),
-        foreignTaxCredit: totalForeignTax,
-        taxableIncome,
-        incomeByType
-      },
-      calculations: {
-        abgeltungssteuer: Math.round(abgeltungssteuer * 100) / 100,
-        solidaritaetszuschlag: Math.round(solidaritaetszuschlag * 100) / 100,
-        kirchensteuer: Math.round(kirchensteuer * 100) / 100,
-        totalTaxWithheld: totalWithheldTax,
-        taxRefund: Math.max(0, totalWithheldTax - (abgeltungssteuer + solidaritaetszuschlag + kirchensteuer))
+    const startDate = `${year}-01-01`;
+    const endDate = `${year}-12-31`;
+
+    // Alle Konten des Portfolios
+    const accounts = await base44.entities.PortfolioAccount.filter({ portfolio_id: portfolioId });
+    const accountIds = accounts.map(a => a.id);
+
+    // Kapitalerträge sammeln
+    let dividends = 0;
+    let realizedGains = 0;
+    let realizedLosses = 0;
+
+    // Dividenden
+    const dividendTxs = await base44.asServiceRole.entities.AssetTransaction.list();
+    for (const tx of dividendTxs) {
+      if (
+        accountIds.includes(tx.portfolio_account_id) &&
+        tx.transaction_type === 'dividend' &&
+        tx.transaction_date >= startDate &&
+        tx.transaction_date <= endDate
+      ) {
+        dividends += tx.net_amount;
       }
-    };
+    }
+
+    // Veräußerungsgewinne/-verluste
+    const sellTxs = await base44.asServiceRole.entities.AssetTransaction.list();
+    for (const tx of sellTxs) {
+      if (
+        accountIds.includes(tx.portfolio_account_id) &&
+        tx.transaction_type === 'sell' &&
+        tx.transaction_date >= startDate &&
+        tx.transaction_date <= endDate
+      ) {
+        // Asset-Info für Teilfreistellung
+        const asset = await base44.entities.Asset.read(tx.asset_id);
+        let teilfreistellung = 0;
+
+        if (asset.tax_category === 'equity_fund_30') {
+          teilfreistellung = 0.30;
+        } else if (asset.tax_category === 'mixed_fund_15') {
+          teilfreistellung = 0.15;
+        } else if (asset.tax_category === 'real_estate_fund_60') {
+          teilfreistellung = 0.60;
+        }
+
+        // Berechne Gewinn/Verlust (vereinfacht - FIFO müsste aus Holdings kommen)
+        const buyTxs = await base44.asServiceRole.entities.AssetTransaction.filter({
+          portfolio_account_id: tx.portfolio_account_id,
+          asset_id: tx.asset_id,
+          transaction_type: 'buy'
+        });
+        
+        if (buyTxs.length > 0) {
+          const avgCost = buyTxs.reduce((sum, b) => sum + b.net_amount, 0) / 
+                         buyTxs.reduce((sum, b) => sum + b.quantity, 0);
+          const gain = tx.net_amount - (Math.abs(tx.quantity) * avgCost);
+          const taxableGain = gain * (1 - teilfreistellung);
+
+          if (taxableGain > 0) {
+            realizedGains += taxableGain;
+          } else {
+            realizedLosses += Math.abs(taxableGain);
+          }
+        }
+      }
+    }
+
+    // Gesamte Kapitalerträge
+    const totalIncome = dividends + realizedGains;
+    const netIncome = totalIncome - realizedLosses;
+    const taxableIncome = Math.max(0, netIncome - SPARERPAUSCHBETRAG);
+    
+    const abgeltungssteuer = taxableIncome * ABGELTUNGSSTEUER;
+    const solidaritaetszuschlag = abgeltungssteuer * SOLI;
+    const totalTax = abgeltungssteuer + solidaritaetszuschlag;
 
     return Response.json({
       success: true,
-      result
+      year,
+      kapitalertraege: {
+        dividenden: dividends,
+        veraeusserungsgewinne: realizedGains,
+        veraeusserungsverluste: realizedLosses,
+        gesamt: totalIncome,
+        netto: netIncome
+      },
+      sparerpauschbetrag: SPARERPAUSCHBETRAG,
+      zu_versteuern: taxableIncome,
+      steuern: {
+        abgeltungssteuer,
+        solidaritaetszuschlag,
+        gesamt: totalTax
+      }
     });
   } catch (error) {
-    console.error('Tax KAP calculation error:', error);
+    console.error('Tax calculation error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
