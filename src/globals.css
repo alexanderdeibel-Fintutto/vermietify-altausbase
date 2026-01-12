@@ -144,23 +144,32 @@
 
 /* ====== COMPONENT CLASSES ====== */
 @layer components {
-  .btn-primary {
-    @apply bg-slate-700 hover:bg-slate-800 text-white font-extralight transition-colors;
-  }
+        .btn-primary {
+          @apply bg-slate-700 hover:bg-slate-800 text-white font-extralight transition-colors;
+        }
 
-  .btn-secondary {
-    @apply bg-slate-100 hover:bg-slate-200 text-slate-700 font-extralight transition-colors;
-  }
+        .btn-secondary {
+          @apply bg-slate-100 hover:bg-slate-200 text-slate-700 font-extralight transition-colors;
+        }
 
-  .card-base {
-    @apply bg-white border border-slate-100 rounded-lg shadow-sm;
-  }
+        .card-base {
+          @apply bg-white border border-slate-100 rounded-lg shadow-sm;
+        }
 
-  .text-input-base {
-    @apply w-full px-3 py-2 border border-slate-200 rounded-lg font-extralight bg-white;
-  }
+        .text-input-base {
+          @apply w-full px-3 py-2 border border-slate-200 rounded-lg font-extralight bg-white;
+        }
 
-  .badge-base {
-    @apply px-2 py-1 text-xs font-extralight rounded-md;
-  }
-}
+        .badge-base {
+          @apply px-2 py-1 text-xs font-extralight rounded-md;
+        }
+
+        /* SOLL vs. IST Unterscheidung */
+        .soll-card {
+          @apply border-2 border-dashed border-slate-300 bg-slate-50;
+        }
+
+        .ist-card {
+          @apply border-2 border-solid border-emerald-500 bg-emerald-50;
+        }
+      }

@@ -1,23 +1,22 @@
-import React from 'react';
 import { Badge } from '@/components/ui/badge';
 
-export default function UmlagefaehigBadge({ status }) {
-  const statusConfig = {
-    true: {
-      label: '🟢 Umlagefähig',
-      className: 'bg-green-100 text-green-800',
+export default function UmlagefaehigBadge({ status = 'umlagefaehig' }) {
+  const config = {
+    umlagefaehig: {
+      label: '🟢 Umlagefähig (BetrKV)',
+      className: 'bg-green-100 text-green-800'
     },
-    false: {
+    nicht_umlagefaehig: {
       label: '🔴 Nicht umlagefähig',
-      className: 'bg-red-100 text-red-800',
+      className: 'bg-red-100 text-red-800'
     },
-    partial: {
+    teilweise_umlagefaehig: {
       label: '🟡 Teilweise umlagefähig',
-      className: 'bg-amber-100 text-amber-800',
-    },
+      className: 'bg-yellow-100 text-yellow-800'
+    }
   };
 
-  const config = statusConfig[status] || statusConfig[false];
+  const { label, className } = config[status] || config.umlagefaehig;
 
-  return <Badge className={config.className}>{config.label}</Badge>;
+  return <Badge className={className}>{label}</Badge>;
 }
