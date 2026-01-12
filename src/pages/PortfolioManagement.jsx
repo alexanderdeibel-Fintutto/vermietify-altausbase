@@ -1,73 +1,98 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Briefcase } from 'lucide-react';
-import PageHeader from '@/components/shared/PageHeader';
-import EmptyState from '@/components/shared/EmptyState';
+import { Plus } from 'lucide-react';
+import PortfolioSummary from '@/components/wealth/PortfolioSummary';
+import AssetFormDialog from '@/components/wealth/AssetFormDialog';
+import CapitalGainCalculator from '@/components/wealth/CapitalGainCalculator';
+import TaxLossHarvestingWidget from '@/components/wealth/TaxLossHarvestingWidget';
 
 export default function PortfolioManagement() {
-    const [formOpen, setFormOpen] = useState(false);
+  const [showAssetDialog, setShowAssetDialog] = useState(false);
+  const [editingAsset, setEditingAsset] = useState(null);
+  const queryClient = useQueryClient();
 
-    const { data: portfolios = [] } = useQuery({
-        queryKey: ['portfolios'],
-        queryFn: () => base44.entities.Portfolio.list('-updated_date')
-    });
+  const { data: portfolios = [] } = useQuery({
+    queryKey: ['portfolios'],
+    queryFn: () => base44.entities.Portfolio.list()
+  });
 
-    return (
-        <div className="space-y-8">
-            <PageHeader 
-                title="Depots & Portfolios"
-                subtitle={`${portfolios.length} Depots`}
-            />
+  const { data: assets = [] } = useQuery({
+    queryKey: ['assets'],
+    queryFn: () => base44.entities.Asset.list()
+  });
 
-            <motion.div className="flex justify-end">
-                <Button 
-                    onClick={() => setFormOpen(true)}
-                    className="gap-2"
-                >
-                    <Plus className="w-4 h-4" />
-                    Depot hinzufügen
-                </Button>
-            </motion.div>
+  const createAssetMutation = useMutation({
+    mutationFn: (data) => base44.entities.Asset.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
+      setShowAssetDialog(false);
+    }
+  });
 
-            <AnimatePresence mode="wait">
-                {portfolios.length === 0 ? (
-                    <EmptyState
-                        icon={Briefcase}
-                        title="Keine Depots erfasst"
-                        description="Erstellen Sie Ihr erstes Depot."
-                        action={() => setFormOpen(true)}
-                        actionLabel="Erstes Depot erstellen"
-                    />
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {portfolios.map((portfolio, idx) => (
-                            <motion.div
-                                key={portfolio.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: idx * 0.05 }}
-                            >
-                                <Card className="hover:shadow-md transition-shadow">
-                                    <CardContent className="p-4">
-                                        <div className="flex items-start justify-between">
-                                            <div>
-                                                <h3 className="font-semibold text-slate-800">{portfolio.name}</h3>
-                                                <p className="text-sm text-slate-500">{portfolio.broker_name}</p>
-                                                <p className="text-xs text-slate-400 mt-1">{portfolio.portfolio_type}</p>
-                                            </div>
-                                            <Briefcase className="w-5 h-5 text-blue-600" />
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </motion.div>
-                        ))}
-                    </div>
-                )}
-            </AnimatePresence>
+  const handleAssetSubmit = (data) => {
+    if (editingAsset) {
+      base44.entities.Asset.update(editingAsset.id, data);
+    } else {
+      createAssetMutation.mutate(data);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">💼 Vermögensmanagement</h1>
+          <p className="text-slate-600 mt-1">Verwalten Sie Ihre Investitionen und Wertpapiere</p>
         </div>
-    );
+        <Button 
+          onClick={() => {
+            setEditingAsset(null);
+            setShowAssetDialog(true);
+          }}
+          className="bg-slate-700 hover:bg-slate-800 gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Neues Asset
+        </Button>
+      </div>
+
+      <PortfolioSummary assets={assets} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TaxLossHarvestingWidget assets={assets} />
+        {assets.length > 0 && (
+          <CapitalGainCalculator assetId={assets[0]?.id} taxYear={new Date().getFullYear()} />
+        )}
+      </div>
+
+      <Card className="p-6">
+        <h2 className="font-semibold mb-4">Assets</h2>
+        <div className="space-y-2">
+          {assets.map(asset => (
+            <div key={asset.id} className="flex justify-between p-3 bg-slate-50 rounded">
+              <div>
+                <p className="font-semibold">{asset.name}</p>
+                <p className="text-sm text-slate-600">{asset.asset_class} • {asset.quantity} Stück</p>
+              </div>
+              <div className="text-right">
+                <p className="font-semibold">€{(asset.current_value || 0).toFixed(2)}</p>
+                <p className="text-sm text-slate-600">€{asset.current_price || 0}/Stück</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <AssetFormDialog 
+        open={showAssetDialog}
+        onOpenChange={setShowAssetDialog}
+        asset={editingAsset}
+        portfolios={portfolios}
+        onSubmit={handleAssetSubmit}
+      />
+    </div>
+  );
 }
