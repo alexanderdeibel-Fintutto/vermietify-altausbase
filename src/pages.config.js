@@ -390,6 +390,9 @@ import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
 import AutomatedReports from './pages/AutomatedReports';
+import RentIndexManagement from './pages/RentIndexManagement';
+import EnergyPassportManager from './pages/EnergyPassportManager';
+import MandantManagement from './pages/MandantManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -786,6 +789,9 @@ export const PAGES = {
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
     "AutomatedReports": AutomatedReports,
+    "RentIndexManagement": RentIndexManagement,
+    "EnergyPassportManager": EnergyPassportManager,
+    "MandantManagement": MandantManagement,
 }
 
 export const pagesConfig = {
