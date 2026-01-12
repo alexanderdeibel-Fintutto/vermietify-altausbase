@@ -10,6 +10,14 @@ import { createPageUrl } from '@/utils';
 import { toast } from 'sonner';
 import AccountFormDialog from '@/components/wealth/AccountFormDialog';
 import TransactionFormDialog from '@/components/wealth/TransactionFormDialog';
+import DividendFormDialog from '@/components/wealth/DividendFormDialog';
+import CSVImportDialog from '@/components/wealth/CSVImportDialog';
+import PortfolioPerformanceChart from '@/components/wealth/PortfolioPerformanceChart';
+import AssetAllocationChart from '@/components/wealth/AssetAllocationChart';
+import DividendCalendar from '@/components/wealth/DividendCalendar';
+import TopPerformersWidget from '@/components/wealth/TopPerformersWidget';
+import TaxSummaryCard from '@/components/wealth/TaxSummaryCard';
+import RebalancingAdvisor from '@/components/wealth/RebalancingAdvisor';
 
 export default function PortfolioDetail() {
   const [searchParams] = useSearchParams();
@@ -17,6 +25,8 @@ export default function PortfolioDetail() {
   const [activeTab, setActiveTab] = useState('overview');
   const [showAccountForm, setShowAccountForm] = useState(false);
   const [showTransactionForm, setShowTransactionForm] = useState(false);
+  const [showDividendForm, setShowDividendForm] = useState(false);
+  const [showCSVImport, setShowCSVImport] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: portfolio, isLoading: portfolioLoading } = useQuery({
@@ -57,6 +67,15 @@ export default function PortfolioDetail() {
       queryClient.invalidateQueries({ queryKey: ['holdings'] });
       setShowTransactionForm(false);
       toast.success('Transaktion erfasst');
+    }
+  });
+
+  const createDividendMutation = useMutation({
+    mutationFn: (data) => base44.entities.Dividend.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dividends'] });
+      setShowDividendForm(false);
+      toast.success('Dividende erfasst');
     }
   });
 
@@ -175,28 +194,47 @@ export default function PortfolioDetail() {
       {/* Tab Content */}
       <div>
         {activeTab === 'overview' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Allokation & Performance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-slate-600">Kurs-Chart und Allokation werden implementiert...</p>
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <AssetAllocationChart holdings={holdings} assets={assets} />
+              <TaxSummaryCard portfolioId={portfolioId} />
+            </div>
+            <TopPerformersWidget />
+            <DividendCalendar />
+            <RebalancingAdvisor portfolio={portfolio} holdings={holdings} assets={assets} />
+          </div>
         )}
 
         {activeTab === 'holdings' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="font-semibold text-slate-900">Bestände</h3>
-              <Button 
-                size="sm" 
-                className="bg-emerald-600 hover:bg-emerald-700"
-                onClick={() => setShowTransactionForm(true)}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Transaktion erfassen
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => setShowCSVImport(true)}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  CSV importieren
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => setShowDividendForm(true)}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Dividende
+                </Button>
+                <Button 
+                  size="sm" 
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                  onClick={() => setShowTransactionForm(true)}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Transaktion
+                </Button>
+              </div>
             </div>
             {holdings.length === 0 ? (
               <Card className="bg-slate-50">
@@ -317,6 +355,21 @@ export default function PortfolioDetail() {
         onOpenChange={setShowTransactionForm}
         portfolioId={portfolioId}
         onSave={(data) => createTransactionMutation.mutate(data)}
+      />
+      <DividendFormDialog
+        open={showDividendForm}
+        onOpenChange={setShowDividendForm}
+        portfolioId={portfolioId}
+        onSave={(data) => createDividendMutation.mutate(data)}
+      />
+      <CSVImportDialog
+        open={showCSVImport}
+        onOpenChange={setShowCSVImport}
+        portfolioId={portfolioId}
+        onComplete={() => {
+          queryClient.invalidateQueries({ queryKey: ['holdings'] });
+          toast.success('Import abgeschlossen');
+        }}
       />
     </div>
   );
