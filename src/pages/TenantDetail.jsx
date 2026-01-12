@@ -11,6 +11,8 @@ import PaymentsList from '@/components/tenant-detail/PaymentsList';
 import CommunicationsList from '@/components/tenant-detail/CommunicationsList';
 import TenantProfileCard from '@/components/tenant-detail/TenantProfileCard';
 import TenantIssuesCard from '@/components/tenant-detail/TenantIssuesCard';
+import TenantDocumentsTab from '@/components/tenant-detail/TenantDocumentsTab';
+import TenantContractsOverview from '@/components/tenant-detail/TenantContractsOverview';
 
 export default function TenantDetail() {
   const [searchParams] = useSearchParams();
@@ -83,15 +85,25 @@ export default function TenantDetail() {
         {/* Right Column - Details */}
         <div className="lg:col-span-2">
 
-          <Tabs defaultValue="contracts" className="w-full">
+          <Tabs defaultValue="overview" className="w-full">
             <TabsList className="w-full justify-start">
+              <TabsTrigger value="overview">Vertragsübersicht</TabsTrigger>
               <TabsTrigger value="contracts">Verträge ({contracts.length})</TabsTrigger>
+              <TabsTrigger value="documents">Dokumente</TabsTrigger>
               <TabsTrigger value="payments">Zahlungen ({payments.length})</TabsTrigger>
               <TabsTrigger value="communications">Kommunikation ({communications.length})</TabsTrigger>
             </TabsList>
 
+            <TabsContent value="overview">
+              <TenantContractsOverview tenantId={tenantId} />
+            </TabsContent>
+
             <TabsContent value="contracts">
               <ContractsList contracts={contracts} />
+            </TabsContent>
+
+            <TabsContent value="documents">
+              <TenantDocumentsTab tenantId={tenantId} />
             </TabsContent>
 
             <TabsContent value="payments">

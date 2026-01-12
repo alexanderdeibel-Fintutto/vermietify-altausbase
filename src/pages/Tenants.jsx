@@ -5,11 +5,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Users } from 'lucide-react';
+import { Users, Search } from 'lucide-react';
 import TenantFilterBar from '@/components/tenants/TenantFilterBar';
 import TenantTable from '@/components/tenants/TenantTable';
 import TenantBulkActionsBar from '@/components/tenants/TenantBulkActionsBar';
 import QuickStats from '@/components/shared/QuickStats';
+import QuickTenantDialog from '@/components/tenants/QuickTenantDialog';
 
 export default function TenantsPage() {
   const [search, setSearch] = useState('');
@@ -17,6 +18,7 @@ export default function TenantsPage() {
   const [portalAccess, setPortalAccess] = useState('all');
   const [sortBy, setSortBy] = useState('name_asc');
   const [showDialog, setShowDialog] = useState(false);
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState(null);
   const [formData, setFormData] = useState({});
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -74,21 +76,28 @@ export default function TenantsPage() {
 
   const filteredTenants = useMemo(() => {
     let filtered = tenants.filter(t => {
-      const nameMatch = (t.full_name || '').toLowerCase().includes(search.toLowerCase());
+      const fullName = `${t.first_name || ''} ${t.last_name || ''}`.toLowerCase();
+      const nameMatch = fullName.includes(search.toLowerCase());
       const emailMatch = (t.email || '').toLowerCase().includes(search.toLowerCase());
-      const statusMatch = status === 'all' || (t.status || 'active') === status;
+      const phoneMatch = (t.phone || '').toLowerCase().includes(search.toLowerCase()) ||
+                         (t.telefon_mobil || '').toLowerCase().includes(search.toLowerCase());
+      const statusMatch = status === 'all' || (t.aktiv ? 'active' : 'inactive') === status;
       const portalMatch = portalAccess === 'all' || 
         (portalAccess === 'with_access' ? t.portal_enabled : !t.portal_enabled);
-      return (nameMatch || emailMatch) && statusMatch && portalMatch;
+      return (nameMatch || emailMatch || phoneMatch) && statusMatch && portalMatch;
     });
 
     // Sort
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'name_asc':
-          return (a.full_name || '').localeCompare(b.full_name || '');
+          const nameA = `${a.last_name || ''} ${a.first_name || ''}`;
+          const nameB = `${b.last_name || ''} ${b.first_name || ''}`;
+          return nameA.localeCompare(nameB);
         case 'name_desc':
-          return (b.full_name || '').localeCompare(a.full_name || '');
+          const nameA2 = `${a.last_name || ''} ${a.first_name || ''}`;
+          const nameB2 = `${b.last_name || ''} ${b.first_name || ''}`;
+          return nameB2.localeCompare(nameA2);
         case 'created_recent':
           return new Date(b.created_date) - new Date(a.created_date);
         case 'created_oldest':
@@ -117,17 +126,38 @@ export default function TenantsPage() {
 
   const stats = [
     { label: 'Gesamt-Mieter', value: tenants.length },
-    { label: 'Aktiv', value: tenants.filter(t => t.status !== 'inactive').length },
-    { label: 'Im Einsatz', value: Math.floor(tenants.length * 0.85) },
-    { label: 'Neue diesen Monat', value: 0 },
+    { label: 'Aktiv', value: tenants.filter(t => t.aktiv).length },
+    { label: 'Mit Verträgen', value: tenants.filter(t => t.aktiv).length },
+    { label: 'Gefiltert', value: filteredTenants.length },
   ];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-light text-slate-900">Mieter</h1>
-        <p className="text-slate-600 mt-1">Verwalten Sie Ihre Mieter und deren Verträge</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-light text-slate-900">Mieter</h1>
+          <p className="text-slate-600 mt-1">Verwalten Sie Ihre Mieter und deren Verträge</p>
+        </div>
+        <Button onClick={() => setQuickCreateOpen(true)} className="bg-emerald-600 hover:bg-emerald-700">
+          <Users className="w-4 h-4 mr-2" />
+          Schnell-Erfassung
+        </Button>
       </div>
+
+      {/* Enhanced Search */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Input
+              placeholder="Suche nach Name, E-Mail oder Telefonnummer..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 h-11 text-base"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       <QuickStats stats={stats} accentColor="green" />
 
@@ -156,6 +186,15 @@ export default function TenantsPage() {
         onClose={() => setSelectedIds(new Set())}
       />
 
+      {/* Quick Create Dialog */}
+      <QuickTenantDialog
+        open={quickCreateOpen}
+        onOpenChange={setQuickCreateOpen}
+        onSubmit={(data) => createMutation.mutate(data)}
+        isLoading={createMutation.isPending}
+      />
+
+      {/* Full Edit Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent>
           <DialogHeader>
@@ -163,9 +202,14 @@ export default function TenantsPage() {
           </DialogHeader>
           <div className="space-y-4">
             <Input
-              placeholder="Name"
-              value={formData.full_name || ''}
-              onChange={(e) => setFormData({...formData, full_name: e.target.value})}
+              placeholder="Vorname"
+              value={formData.first_name || ''}
+              onChange={(e) => setFormData({...formData, first_name: e.target.value})}
+            />
+            <Input
+              placeholder="Nachname"
+              value={formData.last_name || ''}
+              onChange={(e) => setFormData({...formData, last_name: e.target.value})}
             />
             <Input
               placeholder="Email"
