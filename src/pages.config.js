@@ -145,6 +145,7 @@ import EstimatedTaxScheduler from './pages/EstimatedTaxScheduler';
 import FeatureCatalog from './pages/FeatureCatalog';
 import FieldTasksManager from './pages/FieldTasksManager';
 import FinAPICallback from './pages/FinAPICallback';
+import FinanceDashboard from './pages/FinanceDashboard';
 import FinanceManagement from './pages/FinanceManagement';
 import FinanceManagementHub from './pages/FinanceManagementHub';
 import FinancialForecasting from './pages/FinancialForecasting';
@@ -173,6 +174,7 @@ import InternationalTaxStrategy from './pages/InternationalTaxStrategy';
 import InvestmentTaxTracking from './pages/InvestmentTaxTracking';
 import InvestmentsCH from './pages/InvestmentsCH';
 import InvoiceManagement from './pages/InvoiceManagement';
+import InvoiceManagementNew from './pages/InvoiceManagementNew';
 import Invoices from './pages/Invoices';
 import IoTSensorManagement from './pages/IoTSensorManagement';
 import KnowledgeBaseAdmin from './pages/KnowledgeBaseAdmin';
@@ -204,6 +206,7 @@ import NotificationManagement from './pages/NotificationManagement';
 import NotificationPreferences from './pages/NotificationPreferences';
 import Onboarding from './pages/Onboarding';
 import OnboardingWizard from './pages/OnboardingWizard';
+import OperatingCostWizard from './pages/OperatingCostWizard';
 import OperatingCosts from './pages/OperatingCosts';
 import OperatingCostsManagement from './pages/OperatingCostsManagement';
 import OtherIncomeCH from './pages/OtherIncomeCH';
@@ -386,9 +389,7 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import FinanceDashboard from './pages/FinanceDashboard';
-import InvoiceManagementNew from './pages/InvoiceManagementNew';
-import OperatingCostWizard from './pages/OperatingCostWizard';
+import AutomatedReports from './pages/AutomatedReports';
 import __Layout from './Layout.jsx';
 
 
@@ -540,6 +541,7 @@ export const PAGES = {
     "FeatureCatalog": FeatureCatalog,
     "FieldTasksManager": FieldTasksManager,
     "FinAPICallback": FinAPICallback,
+    "FinanceDashboard": FinanceDashboard,
     "FinanceManagement": FinanceManagement,
     "FinanceManagementHub": FinanceManagementHub,
     "FinancialForecasting": FinancialForecasting,
@@ -568,6 +570,7 @@ export const PAGES = {
     "InvestmentTaxTracking": InvestmentTaxTracking,
     "InvestmentsCH": InvestmentsCH,
     "InvoiceManagement": InvoiceManagement,
+    "InvoiceManagementNew": InvoiceManagementNew,
     "Invoices": Invoices,
     "IoTSensorManagement": IoTSensorManagement,
     "KnowledgeBaseAdmin": KnowledgeBaseAdmin,
@@ -599,6 +602,7 @@ export const PAGES = {
     "NotificationPreferences": NotificationPreferences,
     "Onboarding": Onboarding,
     "OnboardingWizard": OnboardingWizard,
+    "OperatingCostWizard": OperatingCostWizard,
     "OperatingCosts": OperatingCosts,
     "OperatingCostsManagement": OperatingCostsManagement,
     "OtherIncomeCH": OtherIncomeCH,
@@ -781,9 +785,7 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "FinanceDashboard": FinanceDashboard,
-    "InvoiceManagementNew": InvoiceManagementNew,
-    "OperatingCostWizard": OperatingCostWizard,
+    "AutomatedReports": AutomatedReports,
 }
 
 export const pagesConfig = {
