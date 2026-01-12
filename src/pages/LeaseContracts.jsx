@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import ContractFilterBar from '@/components/contracts/ContractFilterBar';
 import ContractTable from '@/components/contracts/ContractTable';
 import QuickStats from '@/components/shared/QuickStats';
+import PostContractDialog from '@/components/contracts/PostContractDialog';
+import { toast } from 'sonner';
 
 export default function LeaseContractsPage() {
   const [search, setSearch] = useState('');
@@ -15,6 +17,8 @@ export default function LeaseContractsPage() {
   const [showDialog, setShowDialog] = useState(false);
   const [editingContract, setEditingContract] = useState(null);
   const [formData, setFormData] = useState({});
+  const [showPostContractDialog, setShowPostContractDialog] = useState(false);
+  const [lastCreatedContract, setLastCreatedContract] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: contracts = [] } = useQuery({
@@ -24,10 +28,13 @@ export default function LeaseContractsPage() {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.LeaseContract.create(data),
-    onSuccess: () => {
+    onSuccess: (newContract) => {
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
       setShowDialog(false);
       setFormData({});
+      toast.success('Mietvertrag erstellt');
+      setLastCreatedContract(newContract);
+      setShowPostContractDialog(true);
     }
   });
 
@@ -96,6 +103,12 @@ export default function LeaseContractsPage() {
           setShowDialog(true);
         }}
         onDelete={(contract) => deleteMutation.mutate(contract.id)}
+      />
+
+      <PostContractDialog 
+        open={showPostContractDialog}
+        onOpenChange={setShowPostContractDialog}
+        contract={lastCreatedContract}
       />
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
