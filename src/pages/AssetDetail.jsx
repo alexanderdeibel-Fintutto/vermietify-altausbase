@@ -1,234 +1,265 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { ArrowLeft, TrendingUp, TrendingDown } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
 
 export default function AssetDetail() {
-  const { assetId } = useParams();
+  const location = useLocation();
+  const assetId = location.pathname.split('/').pop();
 
   const { data: asset, isLoading: assetLoading } = useQuery({
     queryKey: ['asset', assetId],
     queryFn: async () => {
       const assets = await base44.entities.Asset.list();
       return assets.find(a => a.id === assetId);
-    }
-  });
-
-  const { data: holdings = [] } = useQuery({
-    queryKey: ['asset-holdings', assetId],
-    queryFn: () => base44.entities.AssetHolding.filter({ asset_id: assetId })
-  });
-
-  const { data: prices = [] } = useQuery({
-    queryKey: ['asset-prices', assetId],
-    queryFn: () => base44.entities.AssetPrice.filter({ asset_id: assetId }, '-price_date', 365)
+    },
   });
 
   const { data: transactions = [] } = useQuery({
-    queryKey: ['asset-transactions', assetId],
+    queryKey: ['transactions', assetId],
     queryFn: async () => {
-      const allTx = await base44.entities.AssetTransaction.list();
-      return allTx.filter(tx => tx.asset_id === assetId).sort((a, b) => 
-        new Date(b.transaction_date) - new Date(a.transaction_date)
-      );
-    }
+      const all = await base44.entities.AssetTransaction.list();
+      return all.filter(tx => tx.asset_id === assetId).sort((a, b) => new Date(b.transaction_date) - new Date(a.transaction_date));
+    },
+    enabled: !!assetId,
+  });
+
+  const { data: valuations = [] } = useQuery({
+    queryKey: ['valuations', assetId],
+    queryFn: async () => {
+      const all = await base44.entities.AssetValuation.list('-valuation_date', 365);
+      return all.filter(v => v.asset_id === assetId).reverse();
+    },
+    enabled: !!assetId,
+  });
+
+  const { data: dividends = [] } = useQuery({
+    queryKey: ['dividends', assetId],
+    queryFn: async () => {
+      const all = await base44.entities.Dividend.list();
+      return all.filter(d => d.asset_id === assetId).sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date));
+    },
+    enabled: !!assetId,
   });
 
   if (assetLoading) {
-    return <div className="p-8 text-center text-slate-500">Lädt...</div>;
+    return <div className="p-6 text-center text-slate-600">Wird geladen...</div>;
   }
 
   if (!asset) {
-    return <div className="p-8 text-center text-slate-500">Asset nicht gefunden</div>;
+    return <div className="p-6 text-center text-red-600">Asset nicht gefunden</div>;
   }
 
-  const totalHoldings = holdings.reduce((sum, h) => sum + h.quantity, 0);
-  const totalValue = holdings.reduce((sum, h) => sum + (h.current_value || 0), 0);
-  const totalCost = holdings.reduce((sum, h) => sum + h.total_cost_basis, 0);
-  const totalGL = totalValue - totalCost;
-  const totalGLPercent = totalCost > 0 ? (totalGL / totalCost) * 100 : 0;
+  const costBasis = asset.purchase_price_avg * asset.quantity;
+  const gainLoss = (asset.current_value || 0) - costBasis;
+  const gainLossPercent = costBasis > 0 ? (gainLoss / costBasis) * 100 : 0;
+  const totalDividends = dividends.reduce((sum, d) => sum + (d.amount_net || 0), 0);
 
-  const chartData = prices.map(p => ({
-    date: p.price_date,
-    price: p.close_price
-  })).reverse();
+  // Performance-Daten
+  const performanceData = valuations.map(v => ({
+    date: new Date(v.valuation_date).toLocaleDateString('de-DE'),
+    price: v.price,
+  }));
 
-  const currentPrice = prices.length > 0 ? prices[0].close_price : 0;
-  const priceChange = prices.length > 1 
-    ? ((prices[0].close_price - prices[1].close_price) / prices[1].close_price) * 100 
-    : 0;
-
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('de-DE', {
-      style: 'currency',
-      currency: asset.currency || 'EUR'
-    }).format(value);
-  };
+  // Buy/Sell Transaktionen
+  const transactionData = transactions.map(tx => ({
+    date: new Date(tx.transaction_date).toLocaleDateString('de-DE'),
+    type: tx.transaction_type,
+    quantity: Math.abs(tx.quantity),
+    price: tx.price_per_unit,
+  }));
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link to={createPageUrl('AssetManagement')}>
-          <ArrowLeft className="w-6 h-6 text-slate-600 hover:text-slate-900" />
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-slate-900">{asset.symbol}</h1>
-          <p className="text-slate-600">{asset.name}</p>
+      <div className="flex items-start gap-4">
+        <Button variant="ghost" size="icon">
+          <ArrowLeft className="w-4 h-4" />
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">{asset.name}</h1>
+          <div className="flex gap-2 mt-2">
+            <Badge>{asset.asset_class}</Badge>
+            {asset.symbol && <Badge variant="outline">{asset.symbol}</Badge>}
+            {asset.isin && <Badge variant="outline">{asset.isin}</Badge>}
+          </div>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid md:grid-cols-4 gap-4">
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardContent className="p-6">
-            <div className="text-sm text-slate-600 mb-1">Aktueller Kurs</div>
-            <div className="text-2xl font-bold text-slate-900">
-              {formatCurrency(currentPrice)}
-            </div>
-            <div className={`text-sm font-medium flex items-center gap-1 ${
-              priceChange >= 0 ? 'text-emerald-600' : 'text-red-600'
-            }`}>
-              {priceChange >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-              {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)}%
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Aktueller Kurs</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {(asset.current_price || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="text-sm text-slate-600 mb-1">Bestände</div>
-            <div className="text-2xl font-bold text-slate-900">
-              {totalHoldings.toFixed(4)}
-            </div>
-            <div className="text-sm text-slate-500">Stück</div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Menge</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{asset.quantity}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="text-sm text-slate-600 mb-1">Gesamtwert</div>
-            <div className="text-2xl font-bold text-slate-900">
-              {formatCurrency(totalValue)}
-            </div>
-            <div className="text-sm text-slate-500">
-              Kosten: {formatCurrency(totalCost)}
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Aktueller Wert</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {(asset.current_value || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <div className="text-sm text-slate-600 mb-1">Gewinn/Verlust</div>
-            <div className={`text-2xl font-bold ${totalGL >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-              {totalGL >= 0 ? '+' : ''}{formatCurrency(totalGL)}
-            </div>
-            <div className={`text-sm font-medium ${totalGL >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-              {totalGLPercent >= 0 ? '+' : ''}{totalGLPercent.toFixed(2)}%
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Performance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold flex items-center gap-1 ${gainLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {gainLoss >= 0 ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+              {gainLossPercent.toFixed(2)}%
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Kurs-Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Kursentwicklung (12 Monate)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {chartData.length === 0 ? (
-            <p className="text-center text-slate-500 py-8">Keine Kursdaten verfügbar</p>
-          ) : (
+      {/* Gain/Loss & Dividends */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Gewinn/Verlust</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${gainLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {gainLoss.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Gesamte Dividenden</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {totalDividends.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Anschaffungskosten</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{costBasis.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Kursverlauf */}
+      {performanceData.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Kursverlauf (letzte 12 Monate)</CardTitle>
+          </CardHeader>
+          <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis 
-                  dataKey="date" 
-                  tickFormatter={(date) => new Date(date).toLocaleDateString('de-DE', { month: 'short' })}
-                  stroke="#64748b"
-                />
-                <YAxis 
-                  tickFormatter={formatCurrency}
-                  stroke="#64748b"
-                />
-                <Tooltip
-                  formatter={(value) => formatCurrency(value)}
-                  labelFormatter={(date) => new Date(date).toLocaleDateString('de-DE')}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="price" 
-                  stroke="#10b981" 
-                  strokeWidth={2}
-                  dot={false}
-                />
+              <LineChart data={performanceData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip formatter={(value) => value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })} />
+                <Line type="monotone" dataKey="price" stroke="#3b82f6" />
               </LineChart>
             </ResponsiveContainer>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Transaktionshistorie */}
+      {/* Transaktionen */}
       <Card>
         <CardHeader>
           <CardTitle>Transaktionshistorie</CardTitle>
         </CardHeader>
         <CardContent>
-          {transactions.length === 0 ? (
-            <p className="text-center text-slate-500 py-8">Keine Transaktionen</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600">Datum</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600">Typ</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-slate-600">Menge</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-slate-600">Kurs</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-slate-600">Betrag</th>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 px-4 font-medium text-slate-600">Datum</th>
+                  <th className="text-left py-2 px-4 font-medium text-slate-600">Typ</th>
+                  <th className="text-right py-2 px-4 font-medium text-slate-600">Menge</th>
+                  <th className="text-right py-2 px-4 font-medium text-slate-600">Preis</th>
+                  <th className="text-right py-2 px-4 font-medium text-slate-600">Gesamtbetrag</th>
+                  {transactions.some(t => t.realized_gain_loss) && (
+                    <th className="text-right py-2 px-4 font-medium text-slate-600">Gewinn/Verlust</th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.map(tx => (
+                  <tr key={tx.id} className="border-b hover:bg-slate-50">
+                    <td className="py-2 px-4">{new Date(tx.transaction_date).toLocaleDateString('de-DE')}</td>
+                    <td className="py-2 px-4">
+                      <Badge variant={tx.transaction_type === 'BUY' ? 'default' : 'secondary'}>
+                        {tx.transaction_type}
+                      </Badge>
+                    </td>
+                    <td className="text-right py-2 px-4">{Math.abs(tx.quantity)}</td>
+                    <td className="text-right py-2 px-4">{(tx.price_per_unit || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</td>
+                    <td className="text-right py-2 px-4 font-medium">{(Math.abs(tx.total_amount) || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</td>
+                    {tx.realized_gain_loss !== undefined && (
+                      <td className={`text-right py-2 px-4 font-medium ${(tx.realized_gain_loss || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {(tx.realized_gain_loss || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                      </td>
+                    )}
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {transactions.map(tx => (
-                    <tr key={tx.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 text-sm text-slate-900">
-                        {new Date(tx.transaction_date).toLocaleDateString('de-DE')}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded ${
-                          tx.transaction_type === 'buy' ? 'bg-emerald-100 text-emerald-700' :
-                          tx.transaction_type === 'sell' ? 'bg-red-100 text-red-700' :
-                          'bg-blue-100 text-blue-700'
-                        }`}>
-                          {tx.transaction_type === 'buy' ? 'Kauf' :
-                           tx.transaction_type === 'sell' ? 'Verkauf' :
-                           tx.transaction_type === 'dividend' ? 'Dividende' : tx.transaction_type}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-900">
-                        {tx.quantity.toFixed(4)}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-right text-slate-900">
-                        {formatCurrency(tx.price_per_unit)}
-                      </td>
-                      <td className={`px-4 py-3 text-sm text-right font-medium ${
-                        tx.transaction_type === 'sell' ? 'text-emerald-600' : 'text-slate-900'
-                      }`}>
-                        {formatCurrency(tx.net_amount)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                ))}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Dividenden */}
+      {dividends.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Dividenden & Ausschüttungen</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {dividends.map(div => (
+                <div key={div.id} className="flex justify-between items-center p-3 bg-slate-50 rounded border">
+                  <div className="text-sm">
+                    <p className="font-medium text-slate-900">{div.dividend_type}</p>
+                    <p className="text-xs text-slate-600">{new Date(div.payment_date).toLocaleDateString('de-DE')}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium">{(div.amount_net || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</p>
+                    <p className="text-xs text-red-600">Steuer: {(div.tax_withheld || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

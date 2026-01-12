@@ -1,94 +1,145 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Scale, ArrowRight } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ArrowRight, TrendingUp, AlertCircle } from 'lucide-react';
 
-export default function RebalancingAdvisor({ portfolio, holdings = [], assets = [] }) {
-  if (!portfolio?.target_allocation) {
-    return (
-      <Card>
-        <CardContent className="p-8 text-center text-slate-500">
-          <p>Definieren Sie zuerst eine Ziel-Allokation für Ihr Portfolio</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const calculateCurrentAllocation = () => {
-    const allocation = {};
-    const total = holdings.reduce((sum, h) => sum + (h.current_value || 0), 0);
-
-    holdings.forEach(holding => {
-      const asset = assets.find(a => a.id === holding.asset_id);
-      if (!asset) return;
-
-      const className = asset.asset_class;
-      if (!allocation[className]) {
-        allocation[className] = 0;
-      }
-      allocation[className] += holding.current_value || 0;
-    });
-
-    Object.keys(allocation).forEach(key => {
-      allocation[key] = total > 0 ? (allocation[key] / total) * 100 : 0;
-    });
-
-    return allocation;
-  };
-
-  const currentAllocation = calculateCurrentAllocation();
-  const targetAllocation = portfolio.target_allocation;
-
-  const suggestions = [];
-  Object.keys(targetAllocation).forEach(assetClass => {
-    const target = targetAllocation[assetClass];
-    const current = currentAllocation[assetClass] || 0;
-    const diff = current - target;
-
-    if (Math.abs(diff) > 5) { // Mehr als 5% Abweichung
-      suggestions.push({
-        assetClass,
-        target,
-        current,
-        diff,
-        action: diff > 0 ? 'Verkaufen' : 'Kaufen'
-      });
-    }
+export default function RebalancingAdvisor() {
+  const [targetAllocation, setTargetAllocation] = useState({
+    STOCK: 40,
+    ETF: 40,
+    CRYPTO: 15,
+    GOLD: 5,
   });
 
+  const { data: assets = [] } = useQuery({
+    queryKey: ['assets'],
+    queryFn: () => base44.entities.Asset.list(),
+  });
+
+  // Berechne aktuelle Allokation
+  const totalValue = assets.reduce((sum, a) => sum + (a.current_value || 0), 0);
+  const currentAllocation = {};
+
+  Object.keys(targetAllocation).forEach(assetClass => {
+    const classAssets = assets.filter(a => a.asset_class === assetClass);
+    const classValue = classAssets.reduce((sum, a) => sum + (a.current_value || 0), 0);
+    currentAllocation[assetClass] = totalValue > 0 ? (classValue / totalValue) * 100 : 0;
+  });
+
+  // Berechne Rebalancing-Vorschläge
+  const rebalancingSuggestions = Object.keys(targetAllocation).map(assetClass => {
+    const current = currentAllocation[assetClass] || 0;
+    const target = targetAllocation[assetClass];
+    const difference = target - current;
+    const amount = (difference / 100) * totalValue;
+
+    return {
+      assetClass,
+      current,
+      target,
+      difference,
+      amount,
+      action: amount > 0 ? 'BUY' : 'SELL',
+    };
+  });
+
+  // Sortiere nach Abweichung
+  const sortedSuggestions = rebalancingSuggestions.sort((a, b) => Math.abs(b.difference) - Math.abs(a.difference));
+  const needsRebalancing = sortedSuggestions.some(s => Math.abs(s.difference) > 5);
+
   return (
-    <Card>
+    <Card className={needsRebalancing ? 'border-amber-200 bg-amber-50' : ''}>
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <Scale className="w-5 h-5 text-slate-600" />
-          Rebalancing-Empfehlungen
+        <CardTitle className="flex items-center gap-2">
+          <TrendingUp className="w-5 h-5" />
+          Umschichtungs-Empfehlungen
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        {suggestions.length === 0 ? (
-          <p className="text-sm text-slate-500">Portfolio ist gut ausbalanciert</p>
-        ) : (
-          <div className="space-y-3">
-            {suggestions.map((sug, idx) => (
-              <div key={idx} className="bg-slate-50 p-3 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium text-slate-900">{sug.assetClass}</span>
-                  <span className={`text-sm font-semibold ${
-                    sug.diff > 0 ? 'text-red-600' : 'text-emerald-600'
-                  }`}>
-                    {sug.diff > 0 ? '+' : ''}{sug.diff.toFixed(1)}%
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-slate-600">
-                  <span>{sug.current.toFixed(1)}%</span>
-                  <ArrowRight className="w-3 h-3" />
-                  <span>{sug.target.toFixed(1)}%</span>
-                  <span className="ml-auto font-medium">{sug.action}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+      <CardContent className="space-y-4">
+        {!needsRebalancing && (
+          <Alert className="bg-green-50 border-green-200">
+            <AlertCircle className="w-4 h-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              Dein Portfolio ist gut ausbalanciert. Keine Umschichtung nötig.
+            </AlertDescription>
+          </Alert>
         )}
+
+        {needsRebalancing && (
+          <Alert className="bg-amber-50 border-amber-200">
+            <AlertCircle className="w-4 h-4 text-amber-600" />
+            <AlertDescription className="text-amber-800">
+              Dein Portfolio weicht von der Zielallokation ab. Folgende Umschichtungen werden empfohlen.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Current vs Target Comparison */}
+        <div className="space-y-3">
+          {sortedSuggestions.map(suggestion => (
+            <div key={suggestion.assetClass} className="p-3 bg-white rounded border border-slate-200">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex-1">
+                  <p className="font-semibold text-slate-900">{suggestion.assetClass}</p>
+                  <p className="text-xs text-slate-600 mt-1">
+                    Aktuell: {suggestion.current.toFixed(1)}% | Ziel: {suggestion.target.toFixed(1)}%
+                  </p>
+                </div>
+                <Badge
+                  className={
+                    suggestion.action === 'BUY'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  }
+                >
+                  {suggestion.action === 'BUY' ? '+' : '-'}
+                  {Math.abs(suggestion.amount).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                </Badge>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-slate-200 rounded-full h-2 overflow-hidden">
+                  <div
+                    className={`h-full ${suggestion.current > suggestion.target ? 'bg-red-500' : 'bg-green-500'}`}
+                    style={{ width: `${Math.min(suggestion.current, 100)}%` }}
+                  ></div>
+                </div>
+                <span className="text-xs font-semibold text-slate-700 w-12 text-right">
+                  {suggestion.current.toFixed(1)}%
+                </span>
+              </div>
+
+              {/* Deviation */}
+              {Math.abs(suggestion.difference) > 0.1 && (
+                <p className={`text-xs mt-2 font-semibold ${suggestion.difference > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {suggestion.difference > 0 ? '↑' : '↓'} {Math.abs(suggestion.difference).toFixed(1)}% Abweichung
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Action Button */}
+        {needsRebalancing && (
+          <Button className="w-full gap-2">
+            <ArrowRight className="w-4 h-4" />
+            Umschichtung durchführen
+          </Button>
+        )}
+
+        {/* Info */}
+        <div className="bg-blue-50 p-3 rounded border border-blue-200 text-xs text-blue-800">
+          <p className="font-semibold mb-1">💡 Tipp:</p>
+          <p>
+            Eine Umschichtung ist sinnvoll, wenn die Abweichung größer als 5% ist. Beachte dabei Steuern auf
+            Kapitalgewinne!
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

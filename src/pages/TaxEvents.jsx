@@ -1,233 +1,264 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Download, Search, Filter } from 'lucide-react';
-import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar, DollarSign, TrendingDown, AlertCircle } from 'lucide-react';
 
 export default function TaxEvents() {
-    const currentYear = new Date().getFullYear();
-    const [selectedYear, setSelectedYear] = useState(currentYear);
-    const [selectedCategory, setSelectedCategory] = useState('all');
-    const [searchTerm, setSearchTerm] = useState('');
+  const [filterYear, setFilterYear] = useState(new Date().getFullYear().toString());
 
-    const { data: taxEvents = [] } = useQuery({
-        queryKey: ['taxEvents', selectedYear],
-        queryFn: async () => {
-            const events = await base44.entities.TaxEvent.list();
-            return events.filter(e => e.tax_year === selectedYear);
-        }
-    });
+  const { data: transactions = [] } = useQuery({
+    queryKey: ['transactions', filterYear],
+    queryFn: async () => {
+      const all = await base44.entities.AssetTransaction.list();
+      return all.filter(tx => {
+        const year = new Date(tx.transaction_date).getFullYear().toString();
+        return year === filterYear && ['SELL'].includes(tx.transaction_type);
+      });
+    },
+  });
 
-    const { data: assets = [] } = useQuery({
-        queryKey: ['assets'],
-        queryFn: () => base44.entities.Asset.list()
-    });
+  const { data: dividends = [] } = useQuery({
+    queryKey: ['dividends', filterYear],
+    queryFn: async () => {
+      const all = await base44.entities.Dividend.list();
+      return all.filter(d => d.tax_year.toString() === filterYear);
+    },
+  });
 
-    const filteredEvents = taxEvents.filter(event => {
-        const matchesCategory = selectedCategory === 'all' || event.tax_category === selectedCategory;
-        const asset = assets.find(a => a.id === event.asset_id);
-        const matchesSearch = !searchTerm || 
-            (asset?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (asset?.symbol || '').toLowerCase().includes(searchTerm.toLowerCase());
-        return matchesCategory && matchesSearch;
-    });
+  const { data: assets = [] } = useQuery({
+    queryKey: ['assets'],
+    queryFn: () => base44.entities.Asset.list(),
+  });
 
-    const handleExportCSV = () => {
-        const headers = ['Datum', 'Asset', 'Typ', 'Brutto', 'Kosten', 'Gewinn/Verlust', 'Steuerpflichtig', 'Steuerfrei', 'Kategorie'];
-        const rows = filteredEvents.map(event => {
-            const asset = assets.find(a => a.id === event.asset_id);
-            return [
-                new Date(event.event_date).toLocaleDateString('de-DE'),
-                asset?.name || '-',
-                event.event_type,
-                event.gross_amount.toFixed(2),
-                (event.cost_basis || 0).toFixed(2),
-                event.gain_loss.toFixed(2),
-                event.taxable_amount.toFixed(2),
-                event.is_tax_exempt ? 'Ja' : 'Nein',
-                event.tax_category
-            ];
-        });
+  // Berechne Statistiken
+  const totalCapitalGains = transactions.reduce((sum, tx) => sum + Math.max(0, tx.realized_gain_loss || 0), 0);
+  const totalCapitalLosses = transactions.reduce((sum, tx) => sum + Math.min(0, tx.realized_gain_loss || 0), 0);
+  const totalDividends = dividends.reduce((sum, d) => sum + (d.amount_gross || 0), 0);
+  const totalTaxesPaid = dividends.reduce((sum, d) => sum + (d.tax_withheld || 0), 0);
 
-        const csv = [headers, ...rows].map(row => row.join(';')).join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `steuer-events-${selectedYear}.csv`;
-        link.click();
-        
-        toast.success('Export erfolgreich erstellt');
-    };
+  // Gruppiere Transaktionen nach Monat
+  const transactionsByMonth = transactions.reduce((acc, tx) => {
+    const month = new Date(tx.transaction_date).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+    if (!acc[month]) acc[month] = [];
+    acc[month].push(tx);
+    return acc;
+  }, {});
 
-    const getCategoryLabel = (category) => {
-        const labels = {
-            'capital_gains_stocks': 'Aktiengewinne',
-            'capital_gains_funds': 'Fondsgewinne',
-            'capital_gains_crypto': 'Kryptogewinne',
-            'capital_gains_precious_metals': 'Edelmetalle',
-            'dividends': 'Dividenden',
-            'interest': 'Zinsen',
-            'other': 'Sonstige'
-        };
-        return labels[category] || category;
-    };
+  const dividendsByMonth = dividends.reduce((acc, div) => {
+    const month = new Date(div.payment_date).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+    if (!acc[month]) acc[month] = [];
+    acc[month].push(div);
+    return acc;
+  }, {});
 
-    const getEventTypeLabel = (type) => {
-        const labels = {
-            'sale': 'Verkauf',
-            'dividend': 'Dividende',
-            'interest': 'Zinsen',
-            'crypto_sale': 'Krypto-Verkauf',
-            'precious_metal_sale': 'Edelmetall-Verkauf',
-            'real_estate_sale': 'Immobilien-Verkauf',
-            'other': 'Sonstige'
-        };
-        return labels[type] || type;
-    };
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900">Steuerereignisse</h1>
+        <p className="text-slate-600 mt-1">Übersicht aller steuerrelevanten Transaktionen und Ereignisse</p>
+      </div>
 
-    return (
-        <div className="p-6 space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-light text-slate-900">Steuer-Events</h1>
-                    <p className="text-slate-500 mt-1">Alle steuerlich relevanten Ereignisse</p>
-                </div>
-                <Button onClick={handleExportCSV} className="gap-2">
-                    <Download className="h-4 w-4" />
-                    CSV Export
-                </Button>
+      {/* Year Filter */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex gap-2">
+            {[new Date().getFullYear(), new Date().getFullYear() - 1, new Date().getFullYear() - 2].map(year => (
+              <Badge
+                key={year}
+                variant={filterYear === year.toString() ? 'default' : 'outline'}
+                className="cursor-pointer"
+                onClick={() => setFilterYear(year.toString())}
+              >
+                {year}
+              </Badge>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
+              <TrendingDown className="w-4 h-4" />
+              Kapitalgewinne
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {totalCapitalGains.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Filter */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-base font-medium flex items-center gap-2">
-                        <Filter className="h-4 w-4" />
-                        Filter
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label className="text-sm text-slate-600 mb-2 block">Jahr</label>
-                            <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {[currentYear - 2, currentYear - 1, currentYear, currentYear + 1].map(year => (
-                                        <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Kapitallverluste</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">
+              {totalCapitalLosses.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+            </div>
+          </CardContent>
+        </Card>
 
-                        <div>
-                            <label className="text-sm text-slate-600 mb-2 block">Kategorie</label>
-                            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Alle Kategorien</SelectItem>
-                                    <SelectItem value="capital_gains_stocks">Aktiengewinne</SelectItem>
-                                    <SelectItem value="capital_gains_funds">Fondsgewinne</SelectItem>
-                                    <SelectItem value="capital_gains_crypto">Kryptogewinne</SelectItem>
-                                    <SelectItem value="dividends">Dividenden</SelectItem>
-                                    <SelectItem value="interest">Zinsen</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600 flex items-center gap-2">
+              <DollarSign className="w-4 h-4" />
+              Dividenden
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {totalDividends.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+            </div>
+          </CardContent>
+        </Card>
 
-                        <div>
-                            <label className="text-sm text-slate-600 mb-2 block">Suche</label>
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                <Input 
-                                    placeholder="Asset suchen..." 
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </CardContent>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Steuern gezahlt</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">
+              {totalTaxesPaid.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Events Tabs */}
+      <Tabs defaultValue="sales" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="sales">Verkäufe ({transactions.length})</TabsTrigger>
+          <TabsTrigger value="dividends">Dividenden ({dividends.length})</TabsTrigger>
+        </TabsList>
+
+        {/* Sales Tab */}
+        <TabsContent value="sales" className="space-y-4">
+          {Object.entries(transactionsByMonth).map(([month, txs]) => (
+            <Card key={month}>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  {month}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2 px-4 font-medium text-slate-600">Datum</th>
+                        <th className="text-left py-2 px-4 font-medium text-slate-600">Asset</th>
+                        <th className="text-right py-2 px-4 font-medium text-slate-600">Menge</th>
+                        <th className="text-right py-2 px-4 font-medium text-slate-600">Verkaufspreis</th>
+                        <th className="text-right py-2 px-4 font-medium text-slate-600">Gewinn/Verlust</th>
+                        <th className="text-center py-2 px-4 font-medium text-slate-600">Haltefrist</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {txs.map(tx => {
+                        const asset = assets.find(a => a.id === tx.asset_id);
+                        const holdingDays = Math.floor(
+                          (new Date(tx.transaction_date) - new Date(asset?.tax_holding_period_start || new Date())) /
+                            (1000 * 60 * 60 * 24)
+                        );
+                        const isTaxFree = holdingDays > 365;
+
+                        return (
+                          <tr key={tx.id} className="border-b hover:bg-slate-50">
+                            <td className="py-2 px-4">{new Date(tx.transaction_date).toLocaleDateString('de-DE')}</td>
+                            <td className="py-2 px-4 font-medium">{asset?.name}</td>
+                            <td className="text-right py-2 px-4">{Math.abs(tx.quantity)}</td>
+                            <td className="text-right py-2 px-4">
+                              {(tx.price_per_unit || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                            </td>
+                            <td className={`text-right py-2 px-4 font-bold ${(tx.realized_gain_loss || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {(tx.realized_gain_loss || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                            </td>
+                            <td className="text-center py-2 px-4">
+                              {isTaxFree ? (
+                                <Badge className="bg-green-100 text-green-800">Steuerfrei</Badge>
+                              ) : (
+                                <span className="text-slate-600">{holdingDays}d</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
             </Card>
+          ))}
 
-            {/* Tabelle */}
-            <Card>
-                <CardContent className="p-0">
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-slate-50 border-b">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500">Datum</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500">Asset</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500">Typ</th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500">Brutto</th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500">Gewinn/Verlust</th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500">Steuerpflichtig</th>
-                                    <th className="px-6 py-3 text-center text-xs font-medium text-slate-500">Status</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500">Kategorie</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-200">
-                                {filteredEvents.map(event => {
-                                    const asset = assets.find(a => a.id === event.asset_id);
-                                    return (
-                                        <tr key={event.id} className="hover:bg-slate-50">
-                                            <td className="px-6 py-4 text-sm text-slate-900">
-                                                {new Date(event.event_date).toLocaleDateString('de-DE')}
-                                            </td>
-                                            <td className="px-6 py-4 text-sm">
-                                                <div className="font-medium text-slate-900">{asset?.name || '-'}</div>
-                                                <div className="text-slate-500">{asset?.symbol || ''}</div>
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-slate-600">
-                                                {getEventTypeLabel(event.event_type)}
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-right text-slate-900">
-                                                {event.gross_amount.toFixed(2)} €
-                                            </td>
-                                            <td className={`px-6 py-4 text-sm text-right font-medium ${
-                                                event.gain_loss >= 0 ? 'text-green-600' : 'text-red-600'
-                                            }`}>
-                                                {event.gain_loss >= 0 ? '+' : ''}{event.gain_loss.toFixed(2)} €
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-right text-slate-900">
-                                                {event.taxable_amount.toFixed(2)} €
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                {event.is_tax_exempt ? (
-                                                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                                        Steuerfrei
-                                                    </Badge>
-                                                ) : (
-                                                    <Badge variant="outline">Steuerpflichtig</Badge>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-slate-600">
-                                                {getCategoryLabel(event.tax_category)}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                        {filteredEvents.length === 0 && (
-                            <div className="text-center py-12 text-slate-400">
-                                Keine Steuer-Events gefunden
-                            </div>
-                        )}
-                    </div>
-                </CardContent>
+          {transactions.length === 0 && (
+            <Card className="text-center py-8">
+              <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+              <p className="text-slate-600">Keine Verkäufe im Jahr {filterYear}</p>
             </Card>
-        </div>
-    );
+          )}
+        </TabsContent>
+
+        {/* Dividends Tab */}
+        <TabsContent value="dividends" className="space-y-4">
+          {Object.entries(dividendsByMonth).map(([month, divs]) => (
+            <Card key={month}>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  {month}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2 px-4 font-medium text-slate-600">Datum</th>
+                        <th className="text-left py-2 px-4 font-medium text-slate-600">Asset</th>
+                        <th className="text-left py-2 px-4 font-medium text-slate-600">Typ</th>
+                        <th className="text-right py-2 px-4 font-medium text-slate-600">Brutto</th>
+                        <th className="text-right py-2 px-4 font-medium text-slate-600">Steuern</th>
+                        <th className="text-right py-2 px-4 font-medium text-slate-600">Netto</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {divs.map(div => (
+                        <tr key={div.id} className="border-b hover:bg-slate-50">
+                          <td className="py-2 px-4">{new Date(div.payment_date).toLocaleDateString('de-DE')}</td>
+                          <td className="py-2 px-4 font-medium">{assets.find(a => a.id === div.asset_id)?.name}</td>
+                          <td className="py-2 px-4">
+                            <Badge variant="outline">{div.dividend_type}</Badge>
+                          </td>
+                          <td className="text-right py-2 px-4">{(div.amount_gross || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</td>
+                          <td className="text-right py-2 px-4 text-red-600">{(div.tax_withheld || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</td>
+                          <td className="text-right py-2 px-4 font-medium">{(div.amount_net || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+
+          {dividends.length === 0 && (
+            <Card className="text-center py-8">
+              <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+              <p className="text-slate-600">Keine Dividenden im Jahr {filterYear}</p>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
 }
