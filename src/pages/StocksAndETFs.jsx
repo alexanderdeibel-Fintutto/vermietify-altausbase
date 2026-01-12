@@ -8,7 +8,6 @@ import { Plus, TrendingUp, DollarSign } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
 import EmptyState from '@/components/shared/EmptyState';
 import StockFormDialog from '@/components/wealth/StockFormDialog';
-import { formatCurrency } from '@/lib/utils';
 
 export default function StocksAndETFs() {
     const [formOpen, setFormOpen] = useState(false);
@@ -25,7 +24,7 @@ export default function StocksAndETFs() {
         <div className="space-y-8">
             <PageHeader 
                 title="Aktien & ETFs"
-                subtitle={`${stocks.length} Positionen · Gesamtwert: ${formatCurrency(totalValue)}`}
+                subtitle={`${stocks.length} Positionen · Gesamtwert: ${totalValue.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}`}
             />
 
             <motion.div className="flex justify-end">
