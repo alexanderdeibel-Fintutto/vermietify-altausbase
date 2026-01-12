@@ -86,6 +86,7 @@ const SECONDARY_CATEGORIES = [
     pages: [
       { name: 'TaxManagement', label: 'Übersicht' },
       { name: 'TaxDocumentManager', label: 'Dokumente' },
+      { name: 'PortfolioManagement', label: 'Kapitalanlagen' },
     ]
   },
   {
