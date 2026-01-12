@@ -1,74 +1,112 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createHash } from 'node:crypto';
 
 Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    try {
+        const base44 = createClientFromRequest(req);
+        const user = await base44.auth.me();
+        if (!user) {
+            return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        }
 
-    if (user?.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+        const formData = await req.formData();
+        const certificateFile = formData.get('certificate_file');
+        const pin = formData.get('pin');
+        const name = formData.get('name');
+
+        if (!certificateFile || !pin || !name) {
+            return Response.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        // Validiere Dateiformat
+        const fileName = certificateFile.name;
+        if (!fileName.endsWith('.pfx') && !fileName.endsWith('.p12')) {
+            return Response.json({ error: 'Invalid file format. Only .pfx or .p12 allowed.' }, { status: 400 });
+        }
+
+        // Speichere Zertifikat in privateStorage
+        const { data: uploadResult } = await base44.integrations.Core.UploadPrivateFile({ file: certificateFile });
+        const certificateFileUri = uploadResult.file_uri;
+
+        // Rufe ERiC-Microservice zur Validierung auf
+        const settings = await base44.asServiceRole.entities.ElsterSettings.filter({ user_email: user.email });
+        const ericServiceUrl = settings[0]?.eric_service_url || Deno.env.get('ERIC_SERVICE_URL');
+        const ericApiKey = Deno.env.get('ERIC_SERVICE_API_KEY');
+
+        if (!ericServiceUrl) {
+            return Response.json({ error: 'ERiC service URL not configured' }, { status: 500 });
+        }
+
+        // Konvertiere Zertifikat zu Base64
+        const certificateBytes = await certificateFile.arrayBuffer();
+        const certificateBase64 = btoa(String.fromCharCode(...new Uint8Array(certificateBytes)));
+
+        const validationResponse = await fetch(`${ericServiceUrl}/certificates/validate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-API-Key': ericApiKey
+            },
+            body: JSON.stringify({
+                certificate_file_base64: certificateBase64,
+                pin: pin
+            })
+        });
+
+        const validationResult = await validationResponse.json();
+
+        if (!validationResult.valid) {
+            // Lösche hochgeladene Datei
+            // await base44.asServiceRole.storage.delete(certificateFileUri);
+            
+            await base44.asServiceRole.entities.ElsterLog.create({
+                action: 'certificate_uploaded',
+                timestamp: new Date().toISOString(),
+                success: false,
+                error_message: validationResult.error || 'Certificate validation failed'
+            });
+
+            return Response.json({ error: validationResult.error || 'Invalid certificate or PIN' }, { status: 400 });
+        }
+
+        // Hash der PIN (für spätere Validierung, NICHT die PIN selbst speichern!)
+        const pinHash = createHash('sha256').update(pin).digest('hex');
+
+        // Erstelle ElsterCertificate Entity
+        const certificate = await base44.asServiceRole.entities.ElsterCertificate.create({
+            name,
+            certificate_type: 'soft_pse',
+            holder_name: validationResult.holder_name,
+            holder_tax_id: validationResult.tax_id,
+            valid_from: validationResult.valid_from,
+            valid_until: validationResult.valid_until,
+            issuer: validationResult.issuer || 'ELSTER',
+            serial_number: validationResult.serial_number,
+            certificate_file_uri: certificateFileUri,
+            pin_hash: pinHash,
+            is_active: true,
+            status: 'active'
+        });
+
+        // Log erfolgreiches Hochladen
+        await base44.asServiceRole.entities.ElsterLog.create({
+            action: 'certificate_uploaded',
+            timestamp: new Date().toISOString(),
+            details: { certificate_id: certificate.id, holder_name: validationResult.holder_name },
+            success: true
+        });
+
+        return Response.json({ 
+            success: true, 
+            certificate: {
+                id: certificate.id,
+                name: certificate.name,
+                holder_name: certificate.holder_name,
+                valid_until: certificate.valid_until
+            }
+        });
+
+    } catch (error) {
+        return Response.json({ error: error.message }, { status: 500 });
     }
-
-    const { 
-      certificate_name, 
-      certificate_file, 
-      certificate_password,
-      certificate_type, 
-      tax_number,
-      valid_from,
-      valid_until,
-      supported_legal_forms
-    } = await req.json();
-
-    console.log('[CERT-UPLOAD] Uploading certificate:', certificate_name);
-
-    // 1. Certificate-File hochladen (Base64 oder Binary)
-    let certificateData;
-    if (certificate_file.startsWith('data:')) {
-      // Base64-encoded
-      certificateData = certificate_file;
-    } else {
-      // Binary Upload via Core.UploadPrivateFile
-      const uploadResponse = await base44.integrations.Core.UploadPrivateFile({
-        file: certificate_file
-      });
-      certificateData = uploadResponse.file_uri;
-    }
-
-    // 2. Passwort verschlüsseln (Simulation - in Production: echte Verschlüsselung)
-    const encryptedPassword = btoa(certificate_password); // Base64 als Platzhalter
-
-    // 3. Zertifikat-Fingerprint berechnen (Simulation)
-    const thumbprint = `SHA256:${Date.now().toString(36)}${Math.random().toString(36).substr(2)}`;
-
-    // 4. ElsterCertificate erstellen
-    const certificate = await base44.asServiceRole.entities.ElsterCertificate.create({
-      certificate_name,
-      certificate_data: certificateData,
-      certificate_password_encrypted: encryptedPassword,
-      certificate_type,
-      tax_number,
-      valid_from,
-      valid_until,
-      supported_legal_forms: supported_legal_forms || ['PRIVATPERSON', 'GBR', 'GMBH', 'UG', 'AG'],
-      is_active: true,
-      certificate_thumbprint: thumbprint
-    });
-
-    // 5. Automatisch Verbindung testen
-    const testResponse = await base44.functions.invoke('testElsterConnection', {
-      certificate_id: certificate.id
-    });
-
-    return Response.json({ 
-      success: true, 
-      certificate_id: certificate.id,
-      test_result: testResponse.data.test_result,
-      message: 'Zertifikat erfolgreich hochgeladen und getestet'
-    });
-
-  } catch (error) {
-    console.error('[ERROR]', error);
-    return Response.json({ error: error.message }, { status: 500 });
-  }
 });

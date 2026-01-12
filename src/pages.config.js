@@ -376,6 +376,9 @@ import WorkflowTemplates from './pages/WorkflowTemplates';
 import TaxEvents from './pages/TaxEvents';
 import TaxHarvesting from './pages/TaxHarvesting';
 import TaxSimulation from './pages/TaxSimulation';
+import ElsterOverview from './pages/ElsterOverview';
+import ElsterCertificates from './pages/ElsterCertificates';
+import TaxReturns from './pages/TaxReturns';
 import __Layout from './Layout.jsx';
 
 
@@ -758,6 +761,9 @@ export const PAGES = {
     "TaxEvents": TaxEvents,
     "TaxHarvesting": TaxHarvesting,
     "TaxSimulation": TaxSimulation,
+    "ElsterOverview": ElsterOverview,
+    "ElsterCertificates": ElsterCertificates,
+    "TaxReturns": TaxReturns,
 }
 
 export const pagesConfig = {

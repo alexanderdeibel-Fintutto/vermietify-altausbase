@@ -1,62 +1,88 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    try {
+        const base44 = createClientFromRequest(req);
+        const user = await base44.auth.me();
+        if (!user) {
+            return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        }
 
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        // Hole ELSTER Settings
+        const settings = await base44.asServiceRole.entities.ElsterSettings.filter({ user_email: user.email });
+        const ericServiceUrl = settings[0]?.eric_service_url || Deno.env.get('ERIC_SERVICE_URL');
+        const ericApiKey = Deno.env.get('ERIC_SERVICE_API_KEY');
+
+        if (!ericServiceUrl) {
+            return Response.json({
+                microservice_online: false,
+                error: 'ERiC service URL not configured'
+            });
+        }
+
+        const result = {
+            microservice_online: false,
+            eric_version: null,
+            elster_reachable: false,
+            test_mode: settings[0]?.test_mode !== false,
+            last_check: new Date().toISOString()
+        };
+
+        // 1. Prüfe Microservice Erreichbarkeit
+        try {
+            const healthResponse = await fetch(`${ericServiceUrl}/health`, {
+                method: 'GET',
+                headers: { 'X-API-Key': ericApiKey }
+            });
+            
+            if (healthResponse.ok) {
+                result.microservice_online = true;
+            }
+        } catch (error) {
+            result.error = 'Microservice not reachable: ' + error.message;
+            return Response.json(result);
+        }
+
+        // 2. Prüfe ERiC-Version
+        try {
+            const versionResponse = await fetch(`${ericServiceUrl}/eric/version`, {
+                method: 'GET',
+                headers: { 'X-API-Key': ericApiKey }
+            });
+            
+            if (versionResponse.ok) {
+                const versionData = await versionResponse.json();
+                result.eric_version = versionData.version;
+            }
+        } catch (error) {
+            result.eric_version_error = error.message;
+        }
+
+        // 3. Prüfe ELSTER-Verbindung
+        try {
+            const elsterTestResponse = await fetch(`${ericServiceUrl}/eric/test-connection`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-Key': ericApiKey
+                },
+                body: JSON.stringify({
+                    test_mode: result.test_mode
+                })
+            });
+            
+            if (elsterTestResponse.ok) {
+                const elsterData = await elsterTestResponse.json();
+                result.elster_reachable = elsterData.success || false;
+                result.elster_server = elsterData.server;
+            }
+        } catch (error) {
+            result.elster_error = error.message;
+        }
+
+        return Response.json(result);
+
+    } catch (error) {
+        return Response.json({ error: error.message }, { status: 500 });
     }
-
-    const { certificate_id } = await req.json();
-
-    console.log('[ELSTER-TEST] Testing connection with certificate:', certificate_id);
-
-    // 1. Zertifikat laden
-    const certificates = await base44.entities.ElsterCertificate.filter({ id: certificate_id });
-    if (!certificates || certificates.length === 0) {
-      return Response.json({ error: 'Certificate not found' }, { status: 404 });
-    }
-
-    const certificate = certificates[0];
-
-    // 2. SIMULATION: Echte Verbindung zu ELSTER testen
-    // In Production: ERiC-Microservice würde Ping/Echo-Request senden
-    
-    const testSuccess = Math.random() > 0.1; // 90% Erfolgsrate simuliert
-
-    const testResult = {
-      success: testSuccess,
-      certificate_valid: testSuccess,
-      elster_reachable: testSuccess,
-      response_time_ms: Math.floor(Math.random() * 500) + 100,
-      server_version: 'ELSTER-Server v41.4',
-      tested_at: new Date().toISOString(),
-      certificate_expires_in_days: Math.floor(
-        (new Date(certificate.valid_until) - new Date()) / (1000 * 60 * 60 * 24)
-      )
-    };
-
-    if (!testSuccess) {
-      testResult.error_message = 'Verbindung zum ELSTER-Server fehlgeschlagen';
-      testResult.error_code = 'ERR_CONNECTION_TIMEOUT';
-    }
-
-    // 3. Test-Ergebnis im Zertifikat speichern
-    await base44.entities.ElsterCertificate.update(certificate_id, {
-      last_tested: new Date().toISOString(),
-      test_result: testResult
-    });
-
-    return Response.json({ 
-      success: testSuccess, 
-      test_result: testResult,
-      message: testSuccess ? 'Verbindung erfolgreich getestet' : 'Verbindungstest fehlgeschlagen'
-    });
-
-  } catch (error) {
-    console.error('[ERROR]', error);
-    return Response.json({ error: error.message }, { status: 500 });
-  }
 });
