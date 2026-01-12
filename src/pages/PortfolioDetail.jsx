@@ -18,6 +18,7 @@ import DividendCalendar from '@/components/wealth/DividendCalendar';
 import TopPerformersWidget from '@/components/wealth/TopPerformersWidget';
 import TaxSummaryCard from '@/components/wealth/TaxSummaryCard';
 import RebalancingAdvisor from '@/components/wealth/RebalancingAdvisor';
+import PerformanceMetricsCard from '@/components/wealth/PerformanceMetricsCard';
 
 export default function PortfolioDetail() {
   const [searchParams] = useSearchParams();
@@ -197,10 +198,13 @@ export default function PortfolioDetail() {
           <div className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <AssetAllocationChart holdings={holdings} assets={assets} />
+              <PerformanceMetricsCard portfolioId={portfolioId} />
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
               <TaxSummaryCard portfolioId={portfolioId} />
+              <DividendCalendar />
             </div>
             <TopPerformersWidget />
-            <DividendCalendar />
             <RebalancingAdvisor portfolio={portfolio} holdings={holdings} assets={assets} />
           </div>
         )}

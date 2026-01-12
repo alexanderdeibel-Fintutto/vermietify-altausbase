@@ -372,6 +372,7 @@ import WorkflowTemplates from './pages/WorkflowTemplates';
 import PortfolioManagement from './pages/PortfolioManagement';
 import PortfolioDetail from './pages/PortfolioDetail';
 import AssetManagement from './pages/AssetManagement';
+import AssetDetail from './pages/AssetDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -750,6 +751,7 @@ export const PAGES = {
     "PortfolioManagement": PortfolioManagement,
     "PortfolioDetail": PortfolioDetail,
     "AssetManagement": AssetManagement,
+    "AssetDetail": AssetDetail,
 }
 
 export const pagesConfig = {
