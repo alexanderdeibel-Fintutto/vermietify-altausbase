@@ -1,257 +1,164 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Plus, TrendingUp, TrendingDown, Clock } from 'lucide-react';
-import { toast } from 'sonner';
-import { differenceInDays, addYears, format } from 'date-fns';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { TrendingUp, TrendingDown, Plus, Lock } from 'lucide-react';
+import CryptoFormDialog from '@/components/wealth/CryptoFormDialog';
 
 export default function Cryptocurrencies() {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [transactionType, setTransactionType] = useState('BUY');
-  const [selectedAsset, setSelectedAsset] = useState(null);
-
+  const [showDialog, setShowDialog] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: cryptoAssets = [] } = useQuery({
-    queryKey: ['assets', 'crypto'],
+  const { data: assets = [], isLoading } = useQuery({
+    queryKey: ['assets_crypto'],
     queryFn: async () => {
       const all = await base44.entities.Asset.list();
-      return all.filter(a => a.asset_class === 'CRYPTO');
-    }
-  });
-
-  const { data: portfolios = [] } = useQuery({
-    queryKey: ['portfolios'],
-    queryFn: () => base44.entities.Portfolio.list()
-  });
-
-  const addMutation = useMutation({
-    mutationFn: async (data) => {
-      if (data.type === 'BUY') {
-        // Asset erstellen oder aktualisieren
-        let asset = cryptoAssets.find(a => a.symbol.toLowerCase() === data.symbol.toLowerCase());
-        
-        if (!asset) {
-          asset = await base44.entities.Asset.create({
-            portfolio_id: data.portfolio_id,
-            asset_class: 'CRYPTO',
-            name: data.name,
-            symbol: data.symbol,
-            quantity: data.quantity,
-            purchase_price_avg: data.price_per_unit,
-            tax_holding_period_start: data.transaction_date,
-            api_source: 'COINGECKO'
-          });
-        } else {
-          const newQuantity = asset.quantity + data.quantity;
-          const newAvgPrice = ((asset.quantity * asset.purchase_price_avg) + (data.quantity * data.price_per_unit)) / newQuantity;
-          
-          await base44.entities.Asset.update(asset.id, {
-            quantity: newQuantity,
-            purchase_price_avg: newAvgPrice
-          });
-        }
-        
-        // Transaktion erfassen
-        await base44.entities.AssetTransaction.create({
-          asset_id: asset.id,
-          transaction_type: 'BUY',
-          transaction_date: data.transaction_date,
-          quantity: data.quantity,
-          price_per_unit: data.price_per_unit,
-          total_amount: (data.quantity * data.price_per_unit) + (data.fees || 0),
-          fees: data.fees || 0,
-          tax_relevant: false,
-          tax_year: new Date(data.transaction_date).getFullYear()
-        });
-      }
-      
-      return true;
+      return all.filter(a => a.asset_class === 'CRYPTO').sort((a, b) => (b.current_value || 0) - (a.current_value || 0));
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['assets']);
-      toast.success('Transaktion erfasst');
-      setDialogOpen(false);
-    }
   });
 
-  const getTaxStatus = (asset) => {
-    if (!asset.tax_holding_period_start) return null;
-    
-    const daysSincePurchase = differenceInDays(new Date(), new Date(asset.tax_holding_period_start));
-    const taxFreeDate = addYears(new Date(asset.tax_holding_period_start), 1);
-    
-    if (daysSincePurchase >= 365) {
-      return { isTaxFree: true, message: 'Steuerfrei' };
-    }
-    
-    return { 
-      isTaxFree: false, 
-      message: `Steuerfrei ab ${format(taxFreeDate, 'dd.MM.yyyy')}`,
-      daysRemaining: 365 - daysSincePurchase
-    };
-  };
+  const createMutation = useMutation({
+    mutationFn: (data) => base44.entities.Asset.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assets_crypto'] });
+      setShowDialog(false);
+    },
+  });
+
+  const totalValue = assets.reduce((sum, a) => sum + (a.current_value || 0), 0);
+
+  if (isLoading) {
+    return <div className="p-6 text-center text-slate-600">Wird geladen...</div>;
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-light text-slate-900">Kryptowährungen</h1>
-          <p className="text-slate-600 mt-1">{cryptoAssets.length} Positionen</p>
+          <h1 className="text-3xl font-bold text-slate-900">Kryptowährungen</h1>
+          <p className="text-slate-600 mt-1">Verwalte deine Krypto-Bestände und Wallets</p>
         </div>
-        <Button onClick={() => {
-          setTransactionType('BUY');
-          setDialogOpen(true);
-        }}>
-          <Plus className="w-4 h-4 mr-2" />
-          Kauf hinzufügen
+        <Button onClick={() => setShowDialog(true)} className="gap-2">
+          <Plus className="w-4 h-4" />
+          Neues Asset
         </Button>
       </div>
 
-      {/* Crypto Grid */}
+      {/* Summary */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-slate-600">Gesamtwert Krypto</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-3xl font-bold">
+            {totalValue.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+          </div>
+          <p className="text-xs text-slate-500 mt-2">{assets.length} verschiedene Coins</p>
+        </CardContent>
+      </Card>
+
+      {/* Assets Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {cryptoAssets.map(asset => {
-          const gainLoss = (asset.current_value || 0) - ((asset.purchase_price_avg || 0) * asset.quantity);
-          const gainLossPercent = asset.purchase_price_avg > 0 
-            ? ((gainLoss / (asset.purchase_price_avg * asset.quantity)) * 100) 
-            : 0;
-          const taxStatus = getTaxStatus(asset);
+        {assets.map(asset => {
+          const costBasis = asset.purchase_price_avg * asset.quantity;
+          const gainLoss = (asset.current_value || 0) - costBasis;
+          const gainLossPercent = costBasis > 0 ? (gainLoss / costBasis) * 100 : 0;
           
+          // Prüfe Haltefrist
+          const holdingDays = asset.tax_holding_period_start 
+            ? Math.floor((new Date() - new Date(asset.tax_holding_period_start)) / (1000 * 60 * 60 * 24))
+            : 0;
+          const isTaxFree = holdingDays > 365;
+
           return (
-            <Card key={asset.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{asset.name}</CardTitle>
-                  {taxStatus?.isTaxFree ? (
-                    <Badge className="bg-emerald-100 text-emerald-700">
-                      <Clock className="w-3 h-3 mr-1" />
-                      Steuerfrei
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-xs">
-                      {taxStatus?.daysRemaining} Tage
-                    </Badge>
+            <Card key={asset.id} className="relative overflow-hidden">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-lg">{asset.symbol.toUpperCase()}</CardTitle>
+                    <p className="text-xs text-slate-600 mt-1">{asset.name}</p>
+                  </div>
+                  {isTaxFree && (
+                    <Badge className="bg-green-100 text-green-800">Steuerfrei</Badge>
                   )}
                 </div>
-                <p className="text-sm text-slate-500">{asset.symbol}</p>
               </CardHeader>
+
               <CardContent className="space-y-3">
-                <div className="grid grid-cols-2 gap-3 text-sm">
+                {/* Menge & Wert */}
+                <div>
+                  <p className="text-xs text-slate-600">Bestand</p>
+                  <p className="font-semibold text-slate-900">{asset.quantity} {asset.symbol.toUpperCase()}</p>
+                </div>
+
+                {/* Kurse */}
+                <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <p className="text-slate-600">Anzahl</p>
-                    <p className="font-medium">{asset.quantity.toFixed(8)}</p>
+                    <p className="text-xs text-slate-600">Aktueller Kurs</p>
+                    <p className="font-semibold">
+                      {(asset.current_price || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-slate-600">Kurs</p>
-                    <p className="font-medium">{(asset.current_price || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</p>
+                    <p className="text-xs text-slate-600">Gesamtwert</p>
+                    <p className="font-bold text-slate-900">
+                      {(asset.current_value || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                    </p>
                   </div>
                 </div>
 
-                <div className="bg-slate-50 p-3 rounded-lg">
-                  <p className="text-xs text-slate-600">Gesamtwert</p>
-                  <p className="text-xl font-bold">{(asset.current_value || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</p>
+                {/* Performance */}
+                <div className={`p-2 rounded-lg ${gainLoss >= 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                  <div className="flex items-center gap-2">
+                    {gainLoss >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                    <span className="font-semibold">{gainLossPercent.toFixed(2)}%</span>
+                  </div>
+                  <p className="text-xs mt-1">
+                    {gainLoss >= 0 ? '+' : ''}{gainLoss.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                  </p>
                 </div>
 
-                <div className={`flex items-center gap-2 ${gainLoss >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {gainLoss >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                  <span className="font-medium">{gainLoss >= 0 ? '+' : ''}{gainLossPercent.toFixed(2)}%</span>
-                  <span className="text-sm">({gainLoss >= 0 ? '+' : ''}{gainLoss.toFixed(2)}€)</span>
+                {/* Haltefrist */}
+                <div className="text-xs text-slate-600 flex items-center gap-1">
+                  <Lock className="w-3 h-3" />
+                  {isTaxFree ? (
+                    <span className="text-green-600">Steuerfrei ab {new Date(asset.tax_holding_period_start).toLocaleDateString('de-DE')}</span>
+                  ) : (
+                    <span>Noch {365 - holdingDays} Tage bis Steuerbefreiung</span>
+                  )}
                 </div>
 
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full"
-                  onClick={() => {
-                    setSelectedAsset(asset);
-                    setTransactionType('SELL');
-                    setDialogOpen(true);
-                  }}
-                >
-                  Verkaufen
-                </Button>
+                {/* Actions */}
+                <div className="flex gap-2 pt-2">
+                  <Button variant="outline" size="sm" className="flex-1 text-xs">Kaufen</Button>
+                  <Button variant="outline" size="sm" className="flex-1 text-xs">Verkaufen</Button>
+                </div>
               </CardContent>
             </Card>
           );
         })}
-
-        {cryptoAssets.length === 0 && (
-          <Card className="col-span-full">
-            <CardContent className="py-12 text-center">
-              <p className="text-slate-500 mb-4">Keine Kryptowährungen vorhanden</p>
-              <Button onClick={() => {
-                setTransactionType('BUY');
-                setDialogOpen(true);
-              }}>
-                <Plus className="w-4 h-4 mr-2" />
-                Erste Position hinzufügen
-              </Button>
-            </CardContent>
-          </Card>
-        )}
       </div>
 
-      {/* Transaction Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{transactionType === 'BUY' ? 'Krypto kaufen' : `Verkaufen: ${selectedAsset?.name}`}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {transactionType === 'BUY' && (
-              <>
-                <div>
-                  <Label>Portfolio *</Label>
-                  <Input placeholder="z.B. Coinbase Wallet" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Name *</Label>
-                    <Input placeholder="Bitcoin" />
-                  </div>
-                  <div>
-                    <Label>Symbol *</Label>
-                    <Input placeholder="BTC" />
-                  </div>
-                </div>
-              </>
-            )}
-            
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Anzahl *</Label>
-                <Input type="number" step="0.00000001" />
-              </div>
-              <div>
-                <Label>Preis/Stück *</Label>
-                <Input type="number" step="0.01" />
-              </div>
-            </div>
+      {assets.length === 0 && (
+        <Card className="text-center py-12">
+          <p className="text-slate-600">Keine Kryptowährungen hinzugefügt</p>
+          <Button onClick={() => setShowDialog(true)} className="mt-4 gap-2">
+            <Plus className="w-4 h-4" />
+            Erste Kryptowährung hinzufügen
+          </Button>
+        </Card>
+      )}
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Gebühren</Label>
-                <Input type="number" step="0.01" defaultValue="0" />
-              </div>
-              <div>
-                <Label>Datum *</Label>
-                <Input type="date" defaultValue={new Date().toISOString().split('T')[0]} />
-              </div>
-            </div>
-
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>Abbrechen</Button>
-              <Button>Erfassen</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Dialog */}
+      <CryptoFormDialog
+        open={showDialog}
+        onOpenChange={setShowDialog}
+        onSubmit={(data) => createMutation.mutate(data)}
+        isLoading={createMutation.isPending}
+      />
     </div>
   );
 }
