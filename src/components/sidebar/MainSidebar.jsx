@@ -84,8 +84,24 @@ const SECONDARY_CATEGORIES = [
     label: 'Steuern',
     icon: Calculator,
     pages: [
-      { name: 'TaxManagement', label: 'Übersicht' },
-      { name: 'TaxDocumentManager', label: 'Dokumente' },
+      { name: 'TaxDashboard', label: 'Dashboard' },
+      { name: 'TaxReturns', label: 'Steuererklärungen' },
+      { name: 'TaxEvents', label: 'Steuer-Events' },
+      { name: 'TaxHarvesting', label: 'Tax-Loss Harvesting' },
+      { name: 'InsuranceManagement', label: 'Versicherungen' },
+      { name: 'TaxSimulation', label: 'Simulation' },
+    ],
+    subMenu: [
+      {
+        id: 'elster',
+        label: 'ELSTER',
+        pages: [
+          { name: 'ElsterOverview', label: 'Übersicht' },
+          { name: 'ElsterCertificates', label: 'Zertifikate' },
+          { name: 'ElsterResponses', label: 'Antworten' },
+          { name: 'ElsterSettings', label: 'Einstellungen' },
+        ]
+      }
     ]
   },
   {
