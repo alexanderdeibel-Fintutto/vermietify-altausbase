@@ -1,23 +1,21 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Calculator, Check, AlertCircle } from 'lucide-react';
+import { Calculator, TrendingUp } from 'lucide-react';
 
 export default function AdminPricingSimulator() {
-  const [selectedProductId, setSelectedProductId] = useState('');
-  const [selectedTierId, setSelectedTierId] = useState('');
-  const [billingCycle, setBillingCycle] = useState('MONTHLY');
-  const [selectedAddons, setSelectedAddons] = useState([]);
-  const [quantities, setQuantities] = useState({});
+  const [selectedProduct, setSelectedProduct] = useState('');
+  const [selectedTier, setSelectedTier] = useState('');
+  const [billingInterval, setBillingInterval] = useState('MONTHLY');
   const [promoCode, setPromoCode] = useState('');
-  const [promoValid, setPromoValid] = useState(null);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
@@ -25,278 +23,138 @@ export default function AdminPricingSimulator() {
   });
 
   const { data: tiers = [] } = useQuery({
-    queryKey: ['tiers', selectedProductId],
-    queryFn: () => base44.entities.PricingTier.filter({ product_id: selectedProductId }),
-    enabled: !!selectedProductId
+    queryKey: ['tiers'],
+    queryFn: () => base44.entities.PricingTier.list()
   });
 
-  const { data: tierFeatures = [] } = useQuery({
-    queryKey: ['tierFeatures', selectedTierId],
-    queryFn: () => base44.entities.TierFeature.filter({ tier_id: selectedTierId }),
-    enabled: !!selectedTierId
-  });
+  const filteredTiers = tiers.filter(t => t.data.product_id === selectedProduct && t.data.is_active);
 
-  const { data: features = [] } = useQuery({
-    queryKey: ['features'],
-    queryFn: () => base44.entities.Feature.list()
-  });
-
-  const calculateMutation = useMutation({
-    mutationFn: async () => {
+  const handleCalculate = async () => {
+    if (!selectedTier) return;
+    
+    setLoading(true);
+    try {
       const response = await base44.functions.invoke('calculatePrice', {
-        tier_id: selectedTierId,
-        billing_cycle: billingCycle,
-        addon_ids: selectedAddons,
-        quantities,
-        promo_code: promoCode
+        product_id: selectedProduct,
+        tier_id: selectedTier,
+        billing_interval: billingInterval,
+        promo_code: promoCode || null
       });
-      return response.data;
+      setResult(response.data);
+    } catch (error) {
+      console.error('Calculation error:', error);
     }
-  });
-
-  const handleCalculate = () => {
-    if (!selectedTierId) return;
-    calculateMutation.mutate();
+    setLoading(false);
   };
-
-  const selectedTier = tiers.find(t => t.id === selectedTierId);
-  const availableAddons = tierFeatures.filter(tf => tf.data.inclusion_type === 'AVAILABLE');
-
-  const formatCurrency = (cents) => {
-    return `${(cents / 100).toFixed(2)}€`;
-  };
-
-  const result = calculateMutation.data;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-light text-slate-900">Pricing-Simulator</h1>
-          <p className="text-slate-600 mt-1">Teste Preisberechnungen mit verschiedenen Szenarien</p>
-        </div>
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-3xl font-light text-slate-900">Preis-Simulator</h1>
+        <p className="text-slate-600 mt-1">Teste Preisberechnungen mit verschiedenen Konfigurationen</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Konfiguration */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-light">Szenario konfigurieren</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Produkt-Auswahl */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calculator className="w-5 h-5" />
+            Konfiguration
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Produkt *</Label>
-              <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+              <Select value={selectedProduct} onValueChange={setSelectedProduct}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Produkt wählen" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {products.map(p => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.data.name}
-                    </SelectItem>
-                  ))}
+                  {products.map(p => <SelectItem key={p.id} value={p.id}>{p.data.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Tarif-Auswahl */}
             <div className="space-y-2">
               <Label>Tarif *</Label>
-              <Select 
-                value={selectedTierId} 
-                onValueChange={setSelectedTierId}
-                disabled={!selectedProductId}
-              >
+              <Select value={selectedTier} onValueChange={setSelectedTier} disabled={!selectedProduct}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Tarif wählen" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {tiers.map(t => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.data.name} - {formatCurrency(t.data.price_monthly)}/Monat
-                    </SelectItem>
-                  ))}
+                  {filteredTiers.map(t => <SelectItem key={t.id} value={t.id}>{t.data.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
+          </div>
 
-            {/* Billing Cycle */}
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Abrechnungsintervall *</Label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    checked={billingCycle === 'MONTHLY'}
-                    onChange={() => setBillingCycle('MONTHLY')}
-                    className="w-4 h-4"
-                  />
-                  <span>Monatlich</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    checked={billingCycle === 'YEARLY'}
-                    onChange={() => setBillingCycle('YEARLY')}
-                    className="w-4 h-4"
-                  />
-                  <span>Jährlich</span>
-                </label>
-              </div>
+              <Label>Abrechnung *</Label>
+              <Select value={billingInterval} onValueChange={setBillingInterval}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MONTHLY">Monatlich</SelectItem>
+                  <SelectItem value="YEARLY">Jährlich</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-
-            {/* Add-Ons */}
-            {availableAddons.length > 0 && (
-              <div className="space-y-2">
-                <Label>Add-Ons hinzufügen</Label>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {availableAddons.map(tf => {
-                    const feature = features.find(f => f.id === tf.data.feature_id);
-                    if (!feature) return null;
-                    
-                    const price = tf.data.price_override || feature.data.standalone_price || 0;
-                    const isSelected = selectedAddons.includes(tf.data.feature_id);
-                    
-                    return (
-                      <div key={tf.id} className="flex items-center gap-2 p-2 border rounded-lg">
-                        <Switch
-                          checked={isSelected}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedAddons([...selectedAddons, tf.data.feature_id]);
-                            } else {
-                              setSelectedAddons(selectedAddons.filter(id => id !== tf.data.feature_id));
-                            }
-                          }}
-                        />
-                        <div className="flex-1">
-                          <div className="font-light">{feature.data.name}</div>
-                          <div className="text-sm text-slate-500">+{formatCurrency(price)}/Monat</div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Promo-Code */}
             <div className="space-y-2">
               <Label>Promo-Code</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                  placeholder="CODE"
-                  className="uppercase"
-                />
-                {promoValid === true && <Check className="w-5 h-5 text-green-600" />}
-                {promoValid === false && <AlertCircle className="w-5 h-5 text-red-600" />}
-              </div>
+              <Input value={promoCode} onChange={(e) => setPromoCode(e.target.value)} placeholder="Optional" />
             </div>
+          </div>
 
-            <Button 
-              onClick={handleCalculate}
-              disabled={!selectedTierId || calculateMutation.isPending}
-              className="w-full"
-            >
-              <Calculator className="w-4 h-4 mr-2" />
-              Preis berechnen
-            </Button>
-          </CardContent>
-        </Card>
+          <Button onClick={handleCalculate} disabled={!selectedTier || loading} className="w-full">
+            <TrendingUp className="w-4 h-4 mr-2" />
+            {loading ? 'Berechne...' : 'Berechnen'}
+          </Button>
+        </CardContent>
+      </Card>
 
-        {/* Ergebnis */}
+      {result && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-light">Preisberechnung</CardTitle>
+            <CardTitle>Ergebnis</CardTitle>
           </CardHeader>
           <CardContent>
-            {!result && (
-              <div className="text-center py-12 text-slate-400">
-                <Calculator className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                <p>Konfiguriere ein Szenario und klicke auf "Preis berechnen"</p>
-              </div>
-            )}
-
-            {calculateMutation.isError && (
-              <div className="text-center py-12 text-red-600">
-                <AlertCircle className="w-12 h-12 mx-auto mb-4" />
-                <p>Fehler bei der Berechnung</p>
-                <p className="text-sm">{calculateMutation.error?.message}</p>
-              </div>
-            )}
-
-            {result && (
-              <div className="space-y-4">
-                {/* Basis-Preis */}
-                <div className="flex justify-between pb-2 border-b">
-                  <span className="text-slate-600">Basis-Preis ({selectedTier?.data.name})</span>
-                  <span className="font-light">{formatCurrency(result.breakdown.base_price)}</span>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-50 p-4 rounded-lg">
+                  <p className="text-slate-600 text-sm">Basis-Preis</p>
+                  <p className="text-2xl font-light">{(result.base_price / 100).toFixed(2)}€</p>
                 </div>
-
-                {/* Add-Ons */}
-                {result.breakdown.addons.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="text-sm text-slate-500">+ Add-Ons</div>
-                    {result.breakdown.addons.map((addon, idx) => (
-                      <div key={idx} className="flex justify-between pl-4 text-sm">
-                        <span className="text-slate-600">{addon.name}</span>
-                        <span>+{formatCurrency(addon.price)}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Zwischensumme */}
-                <div className="flex justify-between pt-2 border-t font-medium">
-                  <span>Zwischensumme</span>
-                  <span>{formatCurrency(result.breakdown.base_price + result.breakdown.addons.reduce((sum, a) => sum + a.price, 0))}</span>
+                <div className="bg-slate-50 p-4 rounded-lg">
+                  <p className="text-slate-600 text-sm">Add-ons</p>
+                  <p className="text-2xl font-light">{(result.addons_price / 100).toFixed(2)}€</p>
                 </div>
-
-                {/* Rabatte */}
-                {result.breakdown.discounts.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="text-sm text-slate-500">- Rabatte</div>
-                    {result.breakdown.discounts.map((discount, idx) => (
-                      <div key={idx} className="flex justify-between pl-4 text-sm text-green-700">
-                        <span>{discount.name}</span>
-                        <span>-{formatCurrency(discount.amount)}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Gesamtpreis */}
-                <div className="flex justify-between pt-4 border-t-2 text-xl font-light">
-                  <span>Gesamtpreis</span>
-                  <span className="text-emerald-600">{formatCurrency(result.breakdown.total)}</span>
-                </div>
-
-                {billingCycle === 'YEARLY' && (
-                  <div className="text-center text-sm text-slate-500">
-                    Das entspricht {formatCurrency(result.monthly_equivalent)}/Monat
-                  </div>
-                )}
-
-                {/* Ersparnis */}
-                {result.savings.amount > 0 && (
-                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-center">
-                    <div className="text-emerald-900 font-medium">
-                      Ersparnis: {formatCurrency(result.savings.amount)}
-                    </div>
-                    <div className="text-sm text-emerald-700">
-                      {result.savings.percent}% günstiger
-                    </div>
-                  </div>
-                )}
               </div>
-            )}
+
+              {result.discount_amount > 0 && (
+                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <p className="text-slate-600 text-sm">Rabatt</p>
+                  <p className="text-2xl font-light text-green-600">-{(result.discount_amount / 100).toFixed(2)}€</p>
+                </div>
+              )}
+
+              <div className="bg-slate-900 text-white p-4 rounded-lg">
+                <p className="text-slate-400 text-sm">Gesamtpreis ({result.billing_interval === 'MONTHLY' ? 'monatlich' : 'jährlich'})</p>
+                <p className="text-3xl font-light">{(result.final_price / 100).toFixed(2)}€</p>
+              </div>
+
+              {result.discounts.length > 0 && (
+                <div>
+                  <p className="text-slate-600 text-sm mb-2">Angewendete Rabatte:</p>
+                  {result.discounts.map((d, i) => (
+                    <Badge key={i} variant="secondary">{d.code}: -{(d.amount / 100).toFixed(2)}€</Badge>
+                  ))}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
-      </div>
+      )}
     </div>
   );
 }
