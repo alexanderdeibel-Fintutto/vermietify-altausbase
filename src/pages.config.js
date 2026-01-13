@@ -26,6 +26,7 @@ import AdminPricingFeatureGroups from './pages/AdminPricingFeatureGroups';
 import AdminPricingFeatures from './pages/AdminPricingFeatures';
 import AdminPricingMatrix from './pages/AdminPricingMatrix';
 import AdminPricingOverview from './pages/AdminPricingOverview';
+import AdminPricingProductFeatures from './pages/AdminPricingProductFeatures';
 import AdminPricingProducts from './pages/AdminPricingProducts';
 import AdminPricingTiers from './pages/AdminPricingTiers';
 import AdminProductFeatures from './pages/AdminProductFeatures';
@@ -106,10 +107,11 @@ import CommunicationWorkflows from './pages/CommunicationWorkflows';
 import CommunityForum from './pages/CommunityForum';
 import Companies from './pages/Companies';
 import CompanyDetailEnhanced from './pages/CompanyDetailEnhanced';
+import Finanzen from './pages/Finanzen';
 import CompleteEnterpriseHub from './pages/CompleteEnterpriseHub';
-import ComplianceAudit from './pages/ComplianceAudit';
 import CompleteFeaturesHub from './pages/CompleteFeaturesHub';
 import ComplexTaxSetupWizard from './pages/ComplexTaxSetupWizard';
+import ComplianceAudit from './pages/ComplianceAudit';
 import ComplianceCenter from './pages/ComplianceCenter';
 import ComplianceMonitoringDashboard from './pages/ComplianceMonitoringDashboard';
 import ComplianceReportingHub from './pages/ComplianceReportingHub';
@@ -174,7 +176,6 @@ import FinancialForecasting from './pages/FinancialForecasting';
 import FinancialItems from './pages/FinancialItems';
 import FinancialReporting from './pages/FinancialReporting';
 import FinancialReports from './pages/FinancialReports';
-import Finanzen from './pages/Finanzen';
 import FullFeatureHub from './pages/FullFeatureHub';
 import GeneratedBookings from './pages/GeneratedBookings';
 import GlobalSettings from './pages/GlobalSettings';
@@ -326,8 +327,8 @@ import TaxFormLibrary from './pages/TaxFormLibrary';
 import TaxForms from './pages/TaxForms';
 import TaxHarvesting from './pages/TaxHarvesting';
 import TaxLawUpdates from './pages/TaxLawUpdates';
-import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import TaxSetup from './pages/TaxSetup';
+import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import TaxLossHarvesting from './pages/TaxLossHarvesting';
 import TaxLossHarvestingAdvisor from './pages/TaxLossHarvestingAdvisor';
 import TaxManagement from './pages/TaxManagement';
@@ -420,7 +421,9 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import AdminPricingProductFeatures from './pages/AdminPricingProductFeatures';
+import AdminPricingTiersV2 from './pages/AdminPricingTiersV2';
+import AdminPricingTierFeatures from './pages/AdminPricingTierFeatures';
+import AdminPricingTierLimits from './pages/AdminPricingTierLimits';
 import __Layout from './Layout.jsx';
 
 
@@ -453,6 +456,7 @@ export const PAGES = {
     "AdminPricingFeatures": AdminPricingFeatures,
     "AdminPricingMatrix": AdminPricingMatrix,
     "AdminPricingOverview": AdminPricingOverview,
+    "AdminPricingProductFeatures": AdminPricingProductFeatures,
     "AdminPricingProducts": AdminPricingProducts,
     "AdminPricingTiers": AdminPricingTiers,
     "AdminProductFeatures": AdminProductFeatures,
@@ -533,10 +537,11 @@ export const PAGES = {
     "CommunityForum": CommunityForum,
     "Companies": Companies,
     "CompanyDetailEnhanced": CompanyDetailEnhanced,
+    "Finanzen": Finanzen,
     "CompleteEnterpriseHub": CompleteEnterpriseHub,
-    "ComplianceAudit": ComplianceAudit,
     "CompleteFeaturesHub": CompleteFeaturesHub,
     "ComplexTaxSetupWizard": ComplexTaxSetupWizard,
+    "ComplianceAudit": ComplianceAudit,
     "ComplianceCenter": ComplianceCenter,
     "ComplianceMonitoringDashboard": ComplianceMonitoringDashboard,
     "ComplianceReportingHub": ComplianceReportingHub,
@@ -601,7 +606,6 @@ export const PAGES = {
     "FinancialItems": FinancialItems,
     "FinancialReporting": FinancialReporting,
     "FinancialReports": FinancialReports,
-    "Finanzen": Finanzen,
     "FullFeatureHub": FullFeatureHub,
     "GeneratedBookings": GeneratedBookings,
     "GlobalSettings": GlobalSettings,
@@ -753,8 +757,8 @@ export const PAGES = {
     "TaxForms": TaxForms,
     "TaxHarvesting": TaxHarvesting,
     "TaxLawUpdates": TaxLawUpdates,
-    "TaxLibraryManagement": TaxLibraryManagement,
     "TaxSetup": TaxSetup,
+    "TaxLibraryManagement": TaxLibraryManagement,
     "TaxLossHarvesting": TaxLossHarvesting,
     "TaxLossHarvestingAdvisor": TaxLossHarvestingAdvisor,
     "TaxManagement": TaxManagement,
@@ -847,7 +851,9 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "AdminPricingProductFeatures": AdminPricingProductFeatures,
+    "AdminPricingTiersV2": AdminPricingTiersV2,
+    "AdminPricingTierFeatures": AdminPricingTierFeatures,
+    "AdminPricingTierLimits": AdminPricingTierLimits,
 }
 
 export const pagesConfig = {
