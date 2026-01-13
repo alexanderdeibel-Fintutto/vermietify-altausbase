@@ -13,6 +13,7 @@ import QuickStats from '@/components/shared/QuickStats';
 import PostContractDialog from '@/components/contracts/PostContractDialog';
 import RentIncreaseValidator from '@/components/contracts/RentIncreaseValidator';
 import RentIncreaseAssistant from '@/components/contracts/RentIncreaseAssistant';
+import { Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function LeaseContractsPage() {
@@ -142,7 +143,12 @@ export default function LeaseContractsPage() {
         }}
         onDelete={(contract) => deleteMutation.mutate(contract.id)}
         renderActions={(contract) => (
-            <RentIncreaseAssistant contract={contract} />
+            <div className="flex gap-2">
+              <RentIncreaseAssistant contract={contract} />
+              <Button variant="ghost" size="sm" title="Schnelle Mieterhöhung">
+                <Zap className="w-4 h-4 text-amber-500" />
+              </Button>
+            </div>
         )}
       />
 
