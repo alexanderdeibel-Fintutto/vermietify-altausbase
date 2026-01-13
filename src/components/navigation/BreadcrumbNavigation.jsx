@@ -1,28 +1,43 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { ChevronRight, Home } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
-export default function BreadcrumbNavigation({ items = [] }) {
-  if (items.length === 0) return null;
+const BreadcrumbNavigation = ({ currentPageName }) => {
+  const location = useLocation();
+  const pathnames = location.pathname.split('/').filter((x) => x);
+
+  const breadcrumbs = pathnames.map((value, index) => {
+    const to = `/${pathnames.slice(0, index + 1).join('/')}`;
+    const name = value.charAt(0).toUpperCase() + value.slice(1);
+    const isLast = index === pathnames.length - 1;
+    
+    return {
+      name: isLast ? currentPageName : name,
+      path: to,
+      isLast: isLast
+    };
+  });
 
   return (
-    <nav className="flex items-center gap-2 text-sm text-slate-600 mb-4">
-      <Link to={createPageUrl('Dashboard')} className="flex items-center gap-1 hover:text-slate-900 transition">
-        <Home className="w-4 h-4" />
-      </Link>
-      {items.map((item, index) => (
-        <React.Fragment key={index}>
-          <ChevronRight className="w-4 h-4 text-slate-400" />
-          {item.href ? (
-            <Link to={item.href} className="hover:text-slate-900 transition">
-              {item.label}
-            </Link>
-          ) : (
-            <span className="text-slate-900 font-medium">{item.label}</span>
-          )}
-        </React.Fragment>
-      ))}
-    </nav>
+    <div className="px-8 py-2 bg-slate-50 border-b border-slate-100">
+      <nav className="flex items-center text-sm text-slate-500">
+        <Link to={createPageUrl('Dashboard')} className="hover:text-slate-800">Dashboard</Link>
+        {breadcrumbs.map((crumb, index) => (
+          <React.Fragment key={index}>
+            <ChevronRight className="w-4 h-4 mx-1" />
+            {
+              crumb.isLast ? (
+                <span className="font-medium text-slate-800">{crumb.name}</span>
+              ) : (
+                <Link to={crumb.path} className="hover:text-slate-800">{crumb.name}</Link>
+              )
+            }
+          </React.Fragment>
+        ))}
+      </nav>
+    </div>
   );
-}
+};
+
+export default BreadcrumbNavigation;

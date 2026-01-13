@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertCircle } from "lucide-react";
+import { useQuery } from '@tanstack/react-query';
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -20,7 +21,6 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Loader2, Plus, X, Sparkles, HelpCircle } from 'lucide-react';
-import HelpTooltip from '@/components/shared/HelpTooltip';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import PostContractDialog from './PostContractDialog';
 import HelpTooltip from '@/components/shared/HelpTooltip';
@@ -62,6 +62,15 @@ export default function ContractForm({
     const watchStatus = watch('status');
     const watchUnitId = watch('unit_id');
     const watchTenantId = watch('tenant_id');
+
+    const { data: existingContracts = [] } = useQuery({
+        queryKey: ['contracts'],
+        queryFn: () => base44.entities.LeaseContract?.list?.() || [],
+    });
+
+    const isUnitOccupied = React.useMemo(() => {
+        return existingContracts.some(c => c.unit_id === watchUnitId && c.status === 'active');
+    }, [watchUnitId, existingContracts]);
     const watchDepositInstallments = watch('deposit_installments');
 
     const selectedUnit = units.find(u => u.id === watchUnitId);
@@ -190,6 +199,13 @@ export default function ContractForm({
                     </DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 mt-4">
+                    {isUnitOccupied && (
+                      <div className="col-span-2 p-3 bg-red-50 border-red-200 rounded-lg flex items-center gap-2">
+                        <AlertCircle className="w-5 h-5 text-red-600" />
+                        <p className="text-xs text-red-800">⚠️ Diese Einheit ist bereits vermietet. Ein neuer Vertrag überschreibt den bestehenden.</p>
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="unit_id">Wohnung *</Label>

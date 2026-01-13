@@ -146,7 +146,7 @@ export default function TenantsPage() {
         >
           <Button onClick={() => setQuickCreateOpen(true)} className="bg-emerald-600 hover:bg-emerald-700">
             <Users className="w-4 h-4 mr-2" />
-            Schnell-Erfassung
+            Neuer Mieter
           </Button>
         </FeatureGateInline>
       </div>
@@ -173,11 +173,7 @@ export default function TenantsPage() {
         onStatusChange={setStatus}
         onPortalAccessChange={setPortalAccess}
         onSortChange={setSortBy}
-        onNewTenant={() => {
-          setEditingTenant(null);
-          setFormData({});
-          setShowDialog(true);
-        }}
+        onNewTenant={() => setQuickCreateOpen(true)}
       />
 
       <TenantTable 

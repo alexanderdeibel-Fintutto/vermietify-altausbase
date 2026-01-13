@@ -17,7 +17,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { CalendarIcon, Upload, Loader2, Sparkles, Info, Plus, HelpCircle } from 'lucide-react';
+import { CalendarIcon, Upload, Loader2, Sparkles, Info, Plus, HelpCircle, AlertCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -282,7 +282,7 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
         }
         
         // Warning (not blocking) for uncategorized invoices
-        if (!data.cost_type_id && !data.cost_category_id) {
+        if (!data.cost_type_id) {
             toast.warning('⚠️ Diese Rechnung ist nicht kategorisiert und wird in BK-Abrechnungen/Anlage V nicht berücksichtigt.');
         }
 
@@ -819,6 +819,13 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                                     className="h-20"
                                 />
                             </div>
+
+                            {!watch('cost_type_id') && (
+                              <div className="md:col-span-2 p-3 bg-yellow-50 border-yellow-200 rounded-lg flex items-center gap-2">
+                                <AlertCircle className="w-5 h-5 text-yellow-600" />
+                                <p className="text-xs text-yellow-800">⚠️ Diese Rechnung ist nicht kategorisiert und wird in BK-Abrechnungen/Anlage V nicht berücksichtigt.</p>
+                              </div>
+                            )}
                         </div>
                     </div>
 

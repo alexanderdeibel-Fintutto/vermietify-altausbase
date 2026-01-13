@@ -62,6 +62,8 @@ import AdvancedTaxReporting from './pages/AdvancedTaxReporting';
 import AdvancedWorkflowAnalytics from './pages/AdvancedWorkflowAnalytics';
 import AlertManagement from './pages/AlertManagement';
 import Analytics from './pages/Analytics';
+import AnalyticsDashboard from './pages/AnalyticsDashboard';
+import AnalyticsHub from './pages/AnalyticsHub';
 import AnalyticsPage from './pages/AnalyticsPage';
 import AnlageE1cAT from './pages/AnlageE1cAT';
 import AnlageE1cPage from './pages/AnlageE1cPage';
@@ -121,6 +123,7 @@ import CompleteFeaturesHub from './pages/CompleteFeaturesHub';
 import ComplexTaxSetupWizard from './pages/ComplexTaxSetupWizard';
 import ComplianceAudit from './pages/ComplianceAudit';
 import ComplianceCenter from './pages/ComplianceCenter';
+import ComplianceHub from './pages/ComplianceHub';
 import ComplianceMonitoringDashboard from './pages/ComplianceMonitoringDashboard';
 import ComplianceReportingHub from './pages/ComplianceReportingHub';
 import ComprehensiveTaxDashboard from './pages/ComprehensiveTaxDashboard';
@@ -186,6 +189,7 @@ import FinancialForecasting from './pages/FinancialForecasting';
 import FinancialItems from './pages/FinancialItems';
 import FinancialReporting from './pages/FinancialReporting';
 import FinancialReports from './pages/FinancialReports';
+import FinancingManagement from './pages/FinancingManagement';
 import Finanzen from './pages/Finanzen';
 import FullFeatureHub from './pages/FullFeatureHub';
 import GeneratedBookings from './pages/GeneratedBookings';
@@ -246,6 +250,7 @@ import OperatingCostAutomationHub from './pages/OperatingCostAutomationHub';
 import OperatingCostWizard from './pages/OperatingCostWizard';
 import OperatingCosts from './pages/OperatingCosts';
 import OperatingCostsManagement from './pages/OperatingCostsManagement';
+import OperatingCostsSimplified from './pages/OperatingCostsSimplified';
 import OtherIncomeCH from './pages/OtherIncomeCH';
 import PackageManager from './pages/PackageManager';
 import PackageTestPage from './pages/PackageTestPage';
@@ -277,6 +282,7 @@ import ReportBuilder from './pages/ReportBuilder';
 import ReportGenerator from './pages/ReportGenerator';
 import ReportScheduling from './pages/ReportScheduling';
 import ReportingDashboard from './pages/ReportingDashboard';
+import ReportingHub from './pages/ReportingHub';
 import ReportsPage from './pages/ReportsPage';
 import RetirementIncomeTaxOptimizer from './pages/RetirementIncomeTaxOptimizer';
 import RetirementTaxPlanning from './pages/RetirementTaxPlanning';
@@ -439,12 +445,7 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import AnalyticsDashboard from './pages/AnalyticsDashboard';
-import AnalyticsHub from './pages/AnalyticsHub';
-import ComplianceHub from './pages/ComplianceHub';
-import ReportingHub from './pages/ReportingHub';
-import OperatingCostsSimplified from './pages/OperatingCostsSimplified';
-import FinancingManagement from './pages/FinancingManagement';
+import BankTransactions from './pages/BankTransactions';
 import __Layout from './Layout.jsx';
 
 
@@ -513,6 +514,8 @@ export const PAGES = {
     "AdvancedWorkflowAnalytics": AdvancedWorkflowAnalytics,
     "AlertManagement": AlertManagement,
     "Analytics": Analytics,
+    "AnalyticsDashboard": AnalyticsDashboard,
+    "AnalyticsHub": AnalyticsHub,
     "AnalyticsPage": AnalyticsPage,
     "AnlageE1cAT": AnlageE1cAT,
     "AnlageE1cPage": AnlageE1cPage,
@@ -572,6 +575,7 @@ export const PAGES = {
     "ComplexTaxSetupWizard": ComplexTaxSetupWizard,
     "ComplianceAudit": ComplianceAudit,
     "ComplianceCenter": ComplianceCenter,
+    "ComplianceHub": ComplianceHub,
     "ComplianceMonitoringDashboard": ComplianceMonitoringDashboard,
     "ComplianceReportingHub": ComplianceReportingHub,
     "ComprehensiveTaxDashboard": ComprehensiveTaxDashboard,
@@ -637,6 +641,7 @@ export const PAGES = {
     "FinancialItems": FinancialItems,
     "FinancialReporting": FinancialReporting,
     "FinancialReports": FinancialReports,
+    "FinancingManagement": FinancingManagement,
     "Finanzen": Finanzen,
     "FullFeatureHub": FullFeatureHub,
     "GeneratedBookings": GeneratedBookings,
@@ -697,6 +702,7 @@ export const PAGES = {
     "OperatingCostWizard": OperatingCostWizard,
     "OperatingCosts": OperatingCosts,
     "OperatingCostsManagement": OperatingCostsManagement,
+    "OperatingCostsSimplified": OperatingCostsSimplified,
     "OtherIncomeCH": OtherIncomeCH,
     "PackageManager": PackageManager,
     "PackageTestPage": PackageTestPage,
@@ -728,6 +734,7 @@ export const PAGES = {
     "ReportGenerator": ReportGenerator,
     "ReportScheduling": ReportScheduling,
     "ReportingDashboard": ReportingDashboard,
+    "ReportingHub": ReportingHub,
     "ReportsPage": ReportsPage,
     "RetirementIncomeTaxOptimizer": RetirementIncomeTaxOptimizer,
     "RetirementTaxPlanning": RetirementTaxPlanning,
@@ -890,12 +897,7 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "AnalyticsDashboard": AnalyticsDashboard,
-    "AnalyticsHub": AnalyticsHub,
-    "ComplianceHub": ComplianceHub,
-    "ReportingHub": ReportingHub,
-    "OperatingCostsSimplified": OperatingCostsSimplified,
-    "FinancingManagement": FinancingManagement,
+    "BankTransactions": BankTransactions,
 }
 
 export const pagesConfig = {

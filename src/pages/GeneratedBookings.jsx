@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Zap, Eye, Trash2, RefreshCw } from 'lucide-react';
+import ISTBookingCard from '@/components/shared/ISTBookingCard';
 import SOLLBookingCard from '@/components/shared/SOLLBookingCard';
 import HelpTooltip from '@/components/shared/HelpTooltip';
 import QuickStats from '@/components/shared/QuickStats';
@@ -16,6 +17,7 @@ export default function GeneratedBookingsPage() {
     { id: 3, description: 'Versicherungsprämie Q1', amount: 2500, date: '2026-01-01', source: 'Insurance', status: 'pending' },
     { id: 4, description: 'Reparatur - Dach', amount: 850, date: '2026-01-03', source: 'Maintenance', status: 'pending' },
     { id: 5, description: 'Hausverwaltungsgebühr', amount: 300, date: '2026-01-10', source: 'Admin', status: 'verified' },
+    { id: 6, description: 'IST Zahlung Miete - WE A1', amount: 1200, date: '2026-01-02', source: 'Bank Transaction', status: 'matched' },
   ];
 
   const stats = [
@@ -42,22 +44,11 @@ export default function GeneratedBookingsPage() {
 
       <div className="space-y-3">
         {bookings.map((booking) => (
-          <SOLLBookingCard booking={booking}>
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                   <h3 className="font-semibold text-slate-900">{booking.description}</h3>
-                   <div className="flex gap-4 text-sm text-slate-600 mt-2">
-                    <span>💶 {booking.amount.toLocaleString('de-DE')} €</span>
-                    <span>📅 {format(new Date(booking.date), 'dd.MM.yyyy', { locale: de })}</span>
-                    <span>🔗 {booking.source}</span>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="icon" variant="ghost"><Eye className="w-4 h-4 text-blue-600" /></Button>
-                  <Button size="icon" variant="ghost"><Trash2 className="w-4 h-4 text-red-600" /></Button>
-                </div>
-              </div>
-          </SOLLBookingCard>
+          {booking.status === 'matched' ? (
+            <ISTBookingCard title={booking.description} amount={booking.amount} date={format(new Date(booking.date), 'dd.MM.yyyy', { locale: de })} />
+          ) : (
+            <SOLLBookingCard title={booking.description} amount={booking.amount} date={format(new Date(booking.date), 'dd.MM.yyyy', { locale: de })} />
+          )}
         ))}
       </div>
     </div>
