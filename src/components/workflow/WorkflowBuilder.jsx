@@ -1,182 +1,177 @@
 import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Trash2, Play, Save } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function WorkflowBuilder({ open, onOpenChange, workflow }) {
-  const [formData, setFormData] = useState(workflow || {
-    name: '',
-    description: '',
-    trigger_type: 'manual',
-    trigger_config: {},
-    steps: [],
-    is_active: true
-  });
+const STEP_TYPES = [
+  { id: 'send_notification', label: '📨 Benachrichtigung senden' },
+  { id: 'update_field', label: '📝 Feld aktualisieren' },
+  { id: 'create_task', label: '✓ Task erstellen' },
+  { id: 'send_email', label: '✉️ Email senden' },
+  { id: 'trigger_webhook', label: '🪝 Webhook auslösen' }
+];
 
+export default function WorkflowBuilder({ workflow = null, onSave = null }) {
+  const [name, setName] = useState(workflow?.name || '');
+  const [description, setDescription] = useState(workflow?.description || '');
+  const [triggerType, setTriggerType] = useState(workflow?.trigger_type || 'event');
+  const [steps, setSteps] = useState(workflow?.steps ? JSON.parse(workflow.steps) : []);
   const queryClient = useQueryClient();
 
   const saveMutation = useMutation({
-    mutationFn: (data) => {
+    mutationFn: async () => {
       if (workflow?.id) {
-        return base44.entities.Workflow.update(workflow.id, data);
+        await base44.entities.Workflow?.update?.(workflow.id, {
+          name: name,
+          description: description,
+          trigger_type: triggerType,
+          steps: JSON.stringify(steps)
+        });
+      } else {
+        await base44.entities.Workflow?.create?.({
+          name: name,
+          description: description,
+          trigger_type: triggerType,
+          steps: JSON.stringify(steps)
+        });
       }
-      return base44.entities.Workflow.create(data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workflows'] });
-      toast.success('Workflow gespeichert');
-      onOpenChange(false);
+      toast.success('✅ Workflow gespeichert');
+      queryClient.invalidateQueries(['workflows']);
+      if (onSave) onSave();
     }
   });
 
-  const addStep = () => {
-    setFormData({
-      ...formData,
-      steps: [...(formData.steps || []), { action_type: 'send_email', config: {} }]
-    });
+  const addStep = (stepType) => {
+    setSteps([
+      ...steps,
+      {
+        id: `step_${Date.now()}`,
+        type: stepType,
+        config: {}
+      }
+    ]);
   };
 
-  const removeStep = (index) => {
-    const newSteps = [...formData.steps];
-    newSteps.splice(index, 1);
-    setFormData({ ...formData, steps: newSteps });
+  const removeStep = (stepId) => {
+    setSteps(steps.filter(s => s.id !== stepId));
   };
 
-  const updateStep = (index, field, value) => {
-    const newSteps = [...formData.steps];
-    newSteps[index] = { ...newSteps[index], [field]: value };
-    setFormData({ ...formData, steps: newSteps });
+  const updateStep = (stepId, updates) => {
+    setSteps(steps.map(s => s.id === stepId ? { ...s, ...updates } : s));
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{workflow ? 'Workflow bearbeiten' : 'Neuer Workflow'}</DialogTitle>
-        </DialogHeader>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="space-y-3">
+        <div>
+          <label className="text-sm font-medium">Workflow Name</label>
+          <Input
+            placeholder="z.B. Invoice Automation"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="mt-1"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium">Beschreibung</label>
+          <Input
+            placeholder="Was tut dieser Workflow?"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="mt-1"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium">Trigger-Typ</label>
+          <Select value={triggerType} onValueChange={setTriggerType}>
+            <SelectTrigger className="mt-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="event">🔔 Event-basiert</SelectItem>
+              <SelectItem value="schedule">⏱️ Zeitgesteuert</SelectItem>
+              <SelectItem value="manual">👆 Manuell</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
-        <div className="space-y-4">
-          <div>
-            <Label>Name</Label>
-            <Input
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="z.B. Automatische Zahlungserinnerung"
-            />
-          </div>
-
-          <div>
-            <Label>Beschreibung</Label>
-            <Textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Was macht dieser Workflow?"
-            />
-          </div>
-
-          <div>
-            <Label>Trigger</Label>
-            <Select 
-              value={formData.trigger_type} 
-              onValueChange={(val) => setFormData({ ...formData, trigger_type: val })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="manual">Manuell</SelectItem>
-                <SelectItem value="schedule">Zeitgesteuert</SelectItem>
-                <SelectItem value="entity_create">Entity erstellt</SelectItem>
-                <SelectItem value="entity_update">Entity aktualisiert</SelectItem>
-                <SelectItem value="email_received">Email empfangen</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="border-t pt-4">
-            <div className="flex items-center justify-between mb-3">
-              <Label>Workflow-Schritte</Label>
-              <Button size="sm" variant="outline" onClick={addStep}>
-                <Plus className="w-4 h-4 mr-2" />
-                Schritt hinzufügen
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              {formData.steps?.map((step, index) => (
-                <div key={index} className="p-4 border rounded-lg">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="font-medium">Schritt {index + 1}</div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => removeStep(index)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+      {/* Steps */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Workflow-Schritte</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {steps.length === 0 ? (
+            <p className="text-sm text-slate-500">Keine Schritte hinzugefügt</p>
+          ) : (
+            steps.map((step, idx) => (
+              <div key={step.id} className="p-3 bg-slate-50 rounded border space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-medium">
+                      {idx + 1}. {STEP_TYPES.find(s => s.id === step.type)?.label}
+                    </p>
                   </div>
-
-                  <div className="space-y-3">
-                    <div>
-                      <Label>Aktion</Label>
-                      <Select
-                        value={step.action_type}
-                        onValueChange={(val) => updateStep(index, 'action_type', val)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="send_email">Email senden</SelectItem>
-                          <SelectItem value="create_task">Task erstellen</SelectItem>
-                          <SelectItem value="update_entity">Entity aktualisieren</SelectItem>
-                          <SelectItem value="call_function">Function aufrufen</SelectItem>
-                          <SelectItem value="wait">Warten</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label>Konfiguration (JSON)</Label>
-                      <Textarea
-                        value={JSON.stringify(step.config || {}, null, 2)}
-                        onChange={(e) => {
-                          try {
-                            const config = JSON.parse(e.target.value);
-                            updateStep(index, 'config', config);
-                          } catch {}
-                        }}
-                        placeholder='{"to": "user@example.com", "subject": "Test"}'
-                        className="font-mono text-sm"
-                      />
-                    </div>
-                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => removeStep(step.id)}
+                  >
+                    <Trash2 className="w-4 h-4 text-red-600" />
+                  </Button>
                 </div>
+              </div>
+            ))
+          )}
+
+          {/* Add Step */}
+          <div className="space-y-2 pt-2 border-t">
+            <p className="text-xs font-medium text-slate-600">Schritt hinzufügen</p>
+            <div className="grid grid-cols-2 gap-2">
+              {STEP_TYPES.map(stepType => (
+                <Button
+                  key={stepType.id}
+                  size="sm"
+                  variant="outline"
+                  onClick={() => addStep(stepType.id)}
+                  className="text-xs justify-start"
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  {stepType.label}
+                </Button>
               ))}
             </div>
           </div>
+        </CardContent>
+      </Card>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Abbrechen
-            </Button>
-            <Button 
-              onClick={() => saveMutation.mutate(formData)}
-              disabled={saveMutation.isPending}
-              className="bg-emerald-600 hover:bg-emerald-700"
-            >
-              Speichern
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+      {/* Actions */}
+      <div className="flex gap-2">
+        <Button
+          onClick={() => saveMutation.mutate()}
+          disabled={!name || steps.length === 0 || saveMutation.isPending}
+          className="gap-2"
+        >
+          <Save className="w-4 h-4" />
+          Speichern
+        </Button>
+        {workflow?.id && (
+          <Button variant="outline" className="gap-2">
+            <Play className="w-4 h-4" />
+            Test ausführen
+          </Button>
+        )}
+      </div>
+    </div>
   );
 }
