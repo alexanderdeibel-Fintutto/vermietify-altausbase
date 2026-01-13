@@ -1,72 +1,61 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Sparkles } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { motion } from 'framer-motion';
 
 export default function CategorySuggestions({ recipient, costTypes, onSelect }) {
-  if (!recipient || !costTypes.length) return null;
+  // Get most frequent cost types for this recipient from localStorage
+  const suggestions = useMemo(() => {
+    try {
+      const history = JSON.parse(localStorage.getItem('invoice_history') || '[]');
+      const recipientHistory = history.filter(h => h.recipient === recipient);
+      
+      if (recipientHistory.length === 0) return [];
 
-  // Get all invoices to find history for this recipient
-  const { data: invoices = [] } = useQuery({
-    queryKey: ['invoices-for-suggestions', recipient],
-    queryFn: () => base44.entities.Invoice.list(),
-    staleTime: 5 * 60 * 1000
-  });
-
-  // Smart suggestions based on invoice history
-  const suggestions = React.useMemo(() => {
-    // Count cost type usage for this recipient
-    const usageCount = {};
-    invoices
-      .filter(inv => inv.recipient === recipient && inv.cost_type_id)
-      .forEach(inv => {
-        usageCount[inv.cost_type_id] = (usageCount[inv.cost_type_id] || 0) + 1;
+      // Count frequency of cost types
+      const frequency = {};
+      recipientHistory.forEach(h => {
+        frequency[h.cost_type_id] = (frequency[h.cost_type_id] || 0) + 1;
       });
 
-    // Sort by frequency and get top 3
-    const topCostTypes = costTypes
-      .filter(ct => ct.type === 'expense')
-      .sort((a, b) => (usageCount[b.id] || 0) - (usageCount[a.id] || 0))
-      .slice(0, 3)
-      .map(ct => ({
-        id: ct.id,
-        category: ct.main_category,
-        sub: ct.sub_category,
-        distributable: ct.distributable,
-        frequency: usageCount[ct.id] || 0
-      }));
-    
-    return topCostTypes;
-  }, [costTypes, invoices, recipient]);
+      // Get top 3 suggestions
+      return Object.entries(frequency)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([costTypeId]) => costTypes.find(ct => ct.id === costTypeId))
+        .filter(Boolean);
+    } catch (error) {
+      console.error('Error getting suggestions:', error);
+      return [];
+    }
+  }, [recipient, costTypes]);
 
   if (suggestions.length === 0) return null;
 
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
-      <div className="flex items-center gap-2">
-        <Sparkles className="w-4 h-4 text-blue-600" />
-        <p className="text-xs font-medium text-blue-900">
-          {suggestions.some(s => s.frequency > 0) ? '✨ Häufig' : 'Kategorien'} für {recipient}:
-        </p>
-      </div>
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="p-3 rounded-lg bg-blue-50 border border-blue-200 space-y-2"
+    >
+      <p className="text-xs font-medium text-blue-900">
+        💡 Häufige Kategorien für "{recipient}":
+      </p>
       <div className="flex flex-wrap gap-2">
-        {suggestions.map(sugg => (
-          <Button
-            key={sugg.id}
-            size="sm"
-            variant="outline"
-            onClick={() => onSelect(sugg.id)}
-            className="text-xs gap-1"
-            title={sugg.frequency > 0 ? `${sugg.frequency}x verwendet` : 'Neue Kategorie'}
+        {suggestions.map((costType) => (
+          <button
+            key={costType.id}
+            onClick={() => onSelect(costType.id)}
+            className="transition-all hover:scale-105"
           >
-            {sugg.sub}
-            {sugg.distributable && <span className="text-blue-600">📦</span>}
-            {sugg.frequency > 0 && <span className="text-blue-600 text-[10px]">×{sugg.frequency}</span>}
-          </Button>
+            <Badge
+              variant="secondary"
+              className="cursor-pointer hover:bg-blue-200 bg-white border border-blue-300"
+            >
+              {costType.sub_category}
+            </Badge>
+          </button>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 }
