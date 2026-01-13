@@ -1,36 +1,35 @@
 import React from 'react';
-import { ChevronRight, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { ChevronRight, Home } from 'lucide-react';
 
-export default function SmartBreadcrumbs({ items = [] }) {
+export default function SmartBreadcrumbs({ 
+  items = [],
+  maxItems = 3
+}) {
   if (items.length === 0) return null;
 
-  return (
-    <nav className="flex items-center gap-1 text-xs sm:text-sm text-slate-600" aria-label="Breadcrumb">
-      <Link
-        to={createPageUrl('Home')}
-        className="flex items-center gap-1 hover:text-slate-900"
-      >
-        <Home className="w-4 h-4" />
-        <span className="hidden sm:inline">Home</span>
-      </Link>
+  let displayItems = items;
+  if (items.length > maxItems) {
+    displayItems = [items[0], { label: '...', disabled: true }, ...items.slice(-maxItems + 2)];
+  }
 
-      {items.map((item, idx) => (
+  return (
+    <nav className="flex items-center gap-1 text-sm">
+      {displayItems.map((item, idx) => (
         <React.Fragment key={idx}>
-          <ChevronRight className="w-4 h-4 text-slate-400" />
-          {item.href ? (
+          {idx > 0 && <ChevronRight className="w-4 h-4 text-slate-400" />}
+          {item.disabled ? (
+            <span className="px-2 text-slate-400">{item.label}</span>
+          ) : item.href ? (
             <Link
               to={item.href}
-              className="hover:text-slate-900 truncate"
-              title={item.label}
+              className="px-2 text-slate-600 hover:text-slate-900 hover:underline"
             >
               {item.label}
             </Link>
           ) : (
-            <span className="text-slate-900 font-medium truncate" title={item.label}>
-              {item.label}
-            </span>
+            <span className="px-2 text-slate-900 font-medium">{item.label}</span>
           )}
         </React.Fragment>
       ))}

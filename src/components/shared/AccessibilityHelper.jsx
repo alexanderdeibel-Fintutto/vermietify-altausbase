@@ -1,44 +1,58 @@
-/**
- * Accessibility helpers for improved usability
- */
+import React from 'react';
+import { Volume2, Eye, EyeOff } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-export const a11y = {
-  // Generate unique IDs for form fields
-  generateId: (prefix = 'field') => `${prefix}-${Math.random().toString(36).substr(2, 9)}`,
+export default function AccessibilityHelper() {
+  const [screenReaderEnabled, setScreenReaderEnabled] = React.useState(false);
+  const [highContrast, setHighContrast] = React.useState(false);
 
-  // Announce messages to screen readers
-  announceToScreenReader: (message) => {
-    const announcement = document.createElement('div');
-    announcement.setAttribute('role', 'status');
-    announcement.setAttribute('aria-live', 'polite');
-    announcement.setAttribute('aria-atomic', 'true');
-    announcement.className = 'sr-only';
-    announcement.textContent = message;
-    document.body.appendChild(announcement);
-    setTimeout(() => announcement.remove(), 1000);
-  },
+  const toggleScreenReader = () => {
+    const enabled = !screenReaderEnabled;
+    setScreenReaderEnabled(enabled);
+    if (enabled) {
+      localStorage.setItem('screenReaderEnabled', 'true');
+      document.documentElement.setAttribute('aria-label', 'Screen reader enabled');
+    } else {
+      localStorage.removeItem('screenReaderEnabled');
+    }
+  };
 
-  // Create accessible label
-  createLabel: (text, htmlFor) => ({
-    htmlFor,
-    children: text,
-  }),
+  const toggleHighContrast = () => {
+    const enabled = !highContrast;
+    setHighContrast(enabled);
+    if (enabled) {
+      document.documentElement.classList.add('high-contrast');
+      localStorage.setItem('highContrast', 'true');
+    } else {
+      document.documentElement.classList.remove('high-contrast');
+      localStorage.removeItem('highContrast');
+    }
+  };
 
-  // Create accessible button attributes
-  createButtonAttrs: (onClick, label) => ({
-    onClick,
-    'aria-label': label,
-  }),
-
-  // Get ARIA attributes for loading state
-  getLoadingAttrs: (isLoading) => ({
-    'aria-busy': isLoading,
-    disabled: isLoading,
-  }),
-
-  // Get ARIA attributes for error state
-  getErrorAttrs: (error, fieldId) => ({
-    'aria-invalid': !!error,
-    'aria-describedby': error ? `${fieldId}-error` : undefined,
-  }),
-};
+  return (
+    <div className="flex gap-2">
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={toggleScreenReader}
+        title="Bildschirmleser"
+        className={screenReaderEnabled ? 'bg-blue-50' : ''}
+      >
+        <Volume2 className="w-4 h-4" />
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={toggleHighContrast}
+        title="Hoher Kontrast"
+        className={highContrast ? 'bg-blue-50' : ''}
+      >
+        {highContrast ? (
+          <Eye className="w-4 h-4" />
+        ) : (
+          <EyeOff className="w-4 h-4" />
+        )}
+      </Button>
+    </div>
+  );
+}
