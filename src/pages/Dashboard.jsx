@@ -13,8 +13,7 @@ import EnhancedWidgetConfig from '@/components/dashboard/EnhancedWidgetConfig';
 import { usePackageAccess } from '@/components/hooks/usePackageAccess';
 import DeadlineWarningSystem from '@/components/shared/DeadlineWarningSystem';
 import OfflineIndicator from '@/components/shared/OfflineIndicator';
-import OnboardingChecklist from '@/components/shared/OnboardingChecklist';
-import ActionRequiredWidget from '@/components/dashboard/ActionRequiredWidget';
+
 import SubscriptionWidget from '@/components/dashboard/widgets/SubscriptionWidget';
 import LimitWarning from '@/components/subscription/LimitWarning';
 

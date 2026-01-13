@@ -1,22 +1,36 @@
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { FileText } from "lucide-react";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import HelpTooltip from '@/components/shared/HelpTooltip';
 
-export default function SOLLBookingCard({ booking }) {
+export default function SOLLBookingCard({ title, amount, description, children, ...props }) {
   return (
-    <Card className="border-dashed border-2 border-slate-300 bg-slate-50">
-      <div className="p-4 space-y-2">
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-slate-100">
-            <FileText className="w-3 h-3 mr-1" />
-            📋 SOLL (Geplant)
+    <Card 
+      className="border-dashed border-2 border-amber-300 bg-amber-50 hover:border-amber-400 transition-colors"
+      {...props}
+    >
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            {title}
+            <HelpTooltip text="SOLL-Buchung: Geplante Einnahme basierend auf Mietvertrag. Wird automatisch aus Verträgen generiert." />
+          </CardTitle>
+          <Badge variant="outline" className="border-amber-300 bg-amber-100 text-amber-800">
+            📋 SOLL (geplant)
           </Badge>
         </div>
-        <div className="space-y-1">
-          <p className="font-medium">{booking.description}</p>
-          <p className="text-sm text-slate-600">{booking.amount}€ • {booking.date}</p>
-        </div>
-      </div>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {amount && (
+          <div className="text-2xl font-semibold text-amber-900">
+            {typeof amount === 'string' ? amount : `€${amount?.toFixed(2)}`}
+          </div>
+        )}
+        {description && (
+          <p className="text-sm text-amber-700">{description}</p>
+        )}
+        {children}
+      </CardContent>
     </Card>
   );
 }
