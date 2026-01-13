@@ -3,20 +3,23 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { AlertCircle, TrendingUp } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
 
 export default function LimitWarning() {
   const { data: user } = useQuery({
-    queryKey: ['currentUser'],
+    queryKey: ['current-user'],
     queryFn: () => base44.auth.me()
   });
 
   const { data: userLimits = [] } = useQuery({
     queryKey: ['userLimits', user?.email],
-    queryFn: () => base44.entities.UserLimit.filter({ user_email: user.email }),
+    queryFn: async () => {
+      return await base44.entities.UserLimit.filter({ 
+        user_email: user.email 
+      });
+    },
     enabled: !!user?.email
   });
 
@@ -26,53 +29,35 @@ export default function LimitWarning() {
   });
 
   const warningLimits = userLimits.filter(ul => {
-    if (ul.limit_value === -1) return false;
-    const percentage = (ul.current_usage / ul.limit_value) * 100;
     const limit = limits.find(l => l.id === ul.limit_id);
-    return percentage >= (limit?.warning_threshold || 80);
+    if (!limit || ul.limit_value === -1) return false;
+    
+    const percentage = (ul.current_usage / ul.limit_value) * 100;
+    return percentage >= (limit.warning_threshold || 80);
   });
 
-  if (warningLimits.length === 0) return null;
+  if (warningLimits.length === 0) {
+    return null;
+  }
+
+  const criticalLimit = warningLimits[0];
+  const limit = limits.find(l => l.id === criticalLimit.limit_id);
+  const percentage = (criticalLimit.current_usage / criticalLimit.limit_value) * 100;
+  const isCritical = percentage >= 95;
 
   return (
-    <div className="space-y-3">
-      {warningLimits.map(ul => {
-        const limit = limits.find(l => l.id === ul.limit_id);
-        if (!limit) return null;
-
-        const percentage = Math.min((ul.current_usage / ul.limit_value) * 100, 100);
-        const isExceeded = ul.current_usage >= ul.limit_value;
-
-        return (
-          <Alert 
-            key={ul.id} 
-            className={isExceeded ? "border-red-200 bg-red-50" : "border-yellow-200 bg-yellow-50"}
-          >
-            <AlertCircle className={cn("h-4 w-4", isExceeded ? "text-red-600" : "text-yellow-600")} />
-            <AlertDescription className="ml-2">
-              <div className="space-y-2">
-                <div>
-                  <strong className={isExceeded ? "text-red-900" : "text-yellow-900"}>
-                    {limit.name}: {ul.current_usage} / {ul.limit_value} {limit.unit}
-                  </strong>
-                  <Progress value={percentage} className="mt-2" />
-                </div>
-                {isExceeded && (
-                  <p className="text-sm text-red-800">
-                    Du hast dein Limit erreicht. Upgrade für mehr Kapazität.
-                  </p>
-                )}
-                <Button size="sm" asChild>
-                  <Link to={createPageUrl('Pricing')}>
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    Upgraden
-                  </Link>
-                </Button>
-              </div>
-            </AlertDescription>
-          </Alert>
-        );
-      })}
-    </div>
+    <Alert className={isCritical ? 'border-red-200 bg-red-50' : 'border-yellow-200 bg-yellow-50'}>
+      <AlertTriangle className={`h-4 w-4 ${isCritical ? 'text-red-600' : 'text-yellow-600'}`} />
+      <AlertDescription className="flex items-center justify-between">
+        <span className={`text-sm ${isCritical ? 'text-red-900' : 'text-yellow-900'}`}>
+          <strong>{limit?.name}:</strong> {criticalLimit.current_usage} von {criticalLimit.limit_value} {limit?.unit || 'Einheiten'} genutzt ({percentage.toFixed(0)}%)
+        </span>
+        <Link to={createPageUrl('MySubscription')}>
+          <Button size="sm" variant="outline" className="ml-4">
+            Upgraden
+          </Button>
+        </Link>
+      </AlertDescription>
+    </Alert>
   );
 }

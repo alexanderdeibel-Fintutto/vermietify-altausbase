@@ -35,6 +35,7 @@ import MainSidebar from '@/components/sidebar/MainSidebar';
 import { useSelectedBuilding } from '@/components/hooks/useSelectedBuilding';
 import ProgressIndicator from '@/components/onboarding/ProgressIndicator';
 import OfflineIndicator from '@/components/shared/OfflineIndicator';
+import SubscriptionInitializer from '@/components/subscription/SubscriptionInitializer';
 
 // Lazy load heavy components
 const TesterTracker = lazy(() => import('@/components/testing/TesterTracker'));
@@ -104,6 +105,7 @@ export default function Layout({ children, currentPageName }) {
 
     return (
                             <ThemeProvider>
+                            <SubscriptionInitializer>
                             <OnboardingRedirect>
                             <Suspense fallback={null}>
                               <TesterTracker>
@@ -189,8 +191,9 @@ export default function Layout({ children, currentPageName }) {
                     </div>
                   </div>
                       </TesterTracker>
-                    </Suspense>
-                </OnboardingRedirect>
-                </ThemeProvider>
+                      </Suspense>
+                      </OnboardingRedirect>
+                      </SubscriptionInitializer>
+                      </ThemeProvider>
                 );
                 }
