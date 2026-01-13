@@ -6,8 +6,8 @@ import { useAllLimits } from '@/components/hooks/useAllLimits';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { UsageMeter } from '@/components/subscription/UsageMeter';
-import { TrialBanner } from '@/components/subscription/TrialBanner';
+import UsageMeter from '@/components/subscription/UsageMeter';
+import TrialBanner from '@/components/subscription/TrialBanner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   CreditCard, 
