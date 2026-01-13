@@ -1,12 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
-  
   try {
+    const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
+
     if (user?.role !== 'admin') {
-      return Response.json({ error: 'Admin access required' }, { status: 403 });
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
     // Feature Groups
@@ -24,17 +24,17 @@ Deno.serve(async (req) => {
       { group_code: "MIETER_APP", name: "Mieter-App Features", icon: "Smartphone", sort_order: 11 }
     ];
 
-    const createdGroups = await base44.asServiceRole.entities.FeatureGroup.bulkCreate(groups);
-    const groupMap = {};
-    createdGroups.forEach((g, i) => {
-      groupMap[groups[i].group_code] = g.id;
-    });
+    const createdGroups = [];
+    for (const group of groups) {
+      const created = await base44.asServiceRole.entities.FeatureGroup.create(group);
+      createdGroups.push(created);
+    }
 
     // Products
     const products = [
-      { 
-        product_code: "VERMIETER_PRO", 
-        name: "Vermieter Pro", 
+      {
+        product_code: "VERMIETER_PRO",
+        name: "Vermieter Pro",
         category: "CORE",
         description: "Die vollintegrierte Vermieterverwaltung für den deutschen Markt",
         target_audience: '["PRIVATVERMIETER", "SEMI_PROFI", "PROFI", "HAUSVERWALTUNG"]',
@@ -43,9 +43,9 @@ Deno.serve(async (req) => {
         is_active: true,
         sort_order: 1
       },
-      { 
-        product_code: "MIETER_APP", 
-        name: "Mieter-App", 
+      {
+        product_code: "MIETER_APP",
+        name: "Mieter-App",
         category: "FREEMIUM",
         description: "Kostenlose App für Mieter mit Premium-Funktionen",
         target_audience: '["MIETER"]',
@@ -54,9 +54,9 @@ Deno.serve(async (req) => {
         is_active: true,
         sort_order: 2
       },
-      { 
-        product_code: "STEUERBERATER_CONNECT", 
-        name: "Steuerberater-Connect", 
+      {
+        product_code: "STEUERBERATER_CONNECT",
+        name: "Steuerberater-Connect",
         category: "STANDALONE",
         description: "Portal für Steuerberater zur Mandantenverwaltung",
         target_audience: '["STEUERBERATER"]',
@@ -68,45 +68,60 @@ Deno.serve(async (req) => {
       }
     ];
 
-    const createdProducts = await base44.asServiceRole.entities.Product.bulkCreate(products);
+    const createdProducts = [];
+    for (const product of products) {
+      const created = await base44.asServiceRole.entities.Product.create(product);
+      createdProducts.push(created);
+    }
+
+    // Find group IDs
+    const objektGroup = createdGroups.find(g => g.group_code === 'OBJEKT');
+    const mieterGroup = createdGroups.find(g => g.group_code === 'MIETER');
+    const finanzenGroup = createdGroups.find(g => g.group_code === 'FINANZEN');
+    const steuerGroup = createdGroups.find(g => g.group_code === 'STEUER');
 
     // Features
     const features = [
       // OBJEKT-MANAGEMENT
-      { feature_code: "OBJ_1", name: "1 Objekt verwalten", group_id: groupMap.OBJEKT, is_quantifiable: true, quantity_unit: "Objekte", price_type: "FREE", is_active: true, sort_order: 1, technical_key: "objects_limit_1" },
-      { feature_code: "OBJ_3", name: "3 Objekte verwalten", group_id: groupMap.OBJEKT, is_quantifiable: true, quantity_unit: "Objekte", standalone_price: 490, price_type: "MONTHLY", is_active: true, sort_order: 2, technical_key: "objects_limit_3" },
-      { feature_code: "OBJ_10", name: "10 Objekte verwalten", group_id: groupMap.OBJEKT, is_quantifiable: true, quantity_unit: "Objekte", standalone_price: 990, price_type: "MONTHLY", is_active: true, sort_order: 3, technical_key: "objects_limit_10" },
-      { feature_code: "OBJ_UNLIM", name: "Unbegrenzt Objekte", group_id: groupMap.OBJEKT, is_quantifiable: true, quantity_unit: "Objekte", standalone_price: 1990, price_type: "MONTHLY", is_active: true, sort_order: 4, technical_key: "objects_unlimited" },
-      { feature_code: "METER_MGMT", name: "Zähler-Verwaltung", group_id: groupMap.OBJEKT, standalone_price: 290, price_type: "MONTHLY", is_active: true, sort_order: 5, technical_key: "meter_management" },
-      
+      { feature_code: "OBJ_1", name: "1 Objekt verwalten", group_id: objektGroup.id, is_quantifiable: true, quantity_unit: "Objekte", price_type: "FREE", is_active: true, sort_order: 1, technical_key: "objects_limit_1" },
+      { feature_code: "OBJ_3", name: "3 Objekte verwalten", group_id: objektGroup.id, is_quantifiable: true, quantity_unit: "Objekte", standalone_price: 490, price_type: "MONTHLY", is_active: true, sort_order: 2, technical_key: "objects_limit_3" },
+      { feature_code: "OBJ_10", name: "10 Objekte verwalten", group_id: objektGroup.id, is_quantifiable: true, quantity_unit: "Objekte", standalone_price: 990, price_type: "MONTHLY", is_active: true, sort_order: 3, technical_key: "objects_limit_10" },
+      { feature_code: "OBJ_UNLIM", name: "Unbegrenzt Objekte", group_id: objektGroup.id, is_quantifiable: true, quantity_unit: "Objekte", standalone_price: 1990, price_type: "MONTHLY", is_active: true, sort_order: 4, technical_key: "objects_unlimited" },
+      { feature_code: "METER_MGMT", name: "Zähler-Verwaltung", group_id: objektGroup.id, standalone_price: 290, price_type: "MONTHLY", is_active: true, sort_order: 5, technical_key: "meter_management" },
+
       // MIETER & VERTRÄGE
-      { feature_code: "TENANT_BASE", name: "Mieter-Stammdaten", group_id: groupMap.MIETER, price_type: "FREE", is_active: true, sort_order: 1, technical_key: "tenant_base" },
-      { feature_code: "LEASE_MGMT", name: "Mietverträge", group_id: groupMap.MIETER, price_type: "FREE", is_active: true, sort_order: 2, technical_key: "lease_management" },
-      { feature_code: "DEPOSIT", name: "Kaution-Verwaltung", group_id: groupMap.MIETER, standalone_price: 190, price_type: "MONTHLY", is_active: true, sort_order: 3, technical_key: "deposit_management" },
-      { feature_code: "RENT_RAISE", name: "Mieterhöhungen (§558)", group_id: groupMap.MIETER, standalone_price: 290, price_type: "MONTHLY", is_active: true, sort_order: 4, technical_key: "rent_increase" },
-      { feature_code: "TENANT_CHK", name: "Mieter-Check (SCHUFA)", group_id: groupMap.MIETER, standalone_price: 990, price_type: "PER_USE", is_active: true, sort_order: 5, technical_key: "tenant_check" },
-      
+      { feature_code: "TENANT_BASE", name: "Mieter-Stammdaten", group_id: mieterGroup.id, price_type: "FREE", is_active: true, sort_order: 1, technical_key: "tenant_base" },
+      { feature_code: "LEASE_MGMT", name: "Mietverträge", group_id: mieterGroup.id, price_type: "FREE", is_active: true, sort_order: 2, technical_key: "lease_management" },
+      { feature_code: "DEPOSIT", name: "Kaution-Verwaltung", group_id: mieterGroup.id, standalone_price: 190, price_type: "MONTHLY", is_active: true, sort_order: 3, technical_key: "deposit_management" },
+      { feature_code: "RENT_RAISE", name: "Mieterhöhungen (§558)", group_id: mieterGroup.id, standalone_price: 290, price_type: "MONTHLY", is_active: true, sort_order: 4, technical_key: "rent_increase" },
+      { feature_code: "TENANT_CHK", name: "Mieter-Check (SCHUFA)", group_id: mieterGroup.id, standalone_price: 990, price_type: "PER_USE", is_active: true, sort_order: 5, technical_key: "tenant_check" },
+
       // FINANZEN
-      { feature_code: "INCOME_EXP", name: "Einnahmen/Ausgaben", group_id: groupMap.FINANZEN, price_type: "FREE", is_active: true, sort_order: 1, technical_key: "income_expenses" },
-      { feature_code: "BANK_CSV", name: "Bank-CSV-Import", group_id: groupMap.FINANZEN, standalone_price: 290, price_type: "MONTHLY", is_active: true, sort_order: 2, technical_key: "bank_csv_import" },
-      { feature_code: "BANK_API", name: "Bank-API (finAPI)", group_id: groupMap.FINANZEN, standalone_price: 490, price_type: "MONTHLY", requires_features: '["BANK_CSV"]', is_active: true, sort_order: 3, technical_key: "bank_api" },
-      { feature_code: "AI_BOOKING", name: "KI-Buchhalter", group_id: groupMap.FINANZEN, standalone_price: 990, price_type: "MONTHLY", is_active: true, sort_order: 4, technical_key: "ai_booking" },
-      
+      { feature_code: "INCOME_EXP", name: "Einnahmen/Ausgaben", group_id: finanzenGroup.id, price_type: "FREE", is_active: true, sort_order: 1, technical_key: "income_expenses" },
+      { feature_code: "BANK_CSV", name: "Bank-CSV-Import", group_id: finanzenGroup.id, standalone_price: 290, price_type: "MONTHLY", is_active: true, sort_order: 2, technical_key: "bank_csv_import" },
+      { feature_code: "BANK_API", name: "Bank-API (finAPI)", group_id: finanzenGroup.id, standalone_price: 490, price_type: "MONTHLY", requires_features: '["BANK_CSV"]', is_active: true, sort_order: 3, technical_key: "bank_api" },
+      { feature_code: "AI_BOOKING", name: "KI-Buchhalter", group_id: finanzenGroup.id, standalone_price: 990, price_type: "MONTHLY", is_active: true, sort_order: 4, technical_key: "ai_booking" },
+
       // STEUERN
-      { feature_code: "ANLAGE_V", name: "Anlage V Generator", group_id: groupMap.STEUER, standalone_price: 490, price_type: "MONTHLY", is_active: true, sort_order: 1, technical_key: "tax_anlage_v" }
+      { feature_code: "ANLAGE_V", name: "Anlage V Generator", group_id: steuerGroup.id, standalone_price: 490, price_type: "MONTHLY", is_active: true, sort_order: 1, technical_key: "tax_anlage_v" }
     ];
 
-    await base44.asServiceRole.entities.Feature.bulkCreate(features);
+    const createdFeatures = [];
+    for (const feature of features) {
+      const created = await base44.asServiceRole.entities.Feature.create(feature);
+      createdFeatures.push(created);
+    }
 
-    return Response.json({ 
+    return Response.json({
       success: true,
-      groups: createdGroups.length,
-      products: createdProducts.length,
-      features: features.length
+      created: {
+        groups: createdGroups.length,
+        products: createdProducts.length,
+        features: createdFeatures.length
+      }
     });
 
   } catch (error) {
-    console.error('Seed error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
