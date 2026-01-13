@@ -23,6 +23,7 @@ import DataExportImport from '../components/shared/DataExportImport';
 import RealtimeSyncIndicator from '../components/documents/RealtimeSyncIndicator';
 import DocumentActivityFeed from '../components/documents/DocumentActivityFeed';
 import SlackShareDialog from '../components/documents/SlackShareDialog';
+import DocumentComments from '../components/documents/DocumentComments';
 
 export default function DocumentsPage() {
     const [importerOpen, setImporterOpen] = useState(false);
@@ -206,6 +207,7 @@ export default function DocumentsPage() {
                                     }}
                                 />
                                 <DocumentActivityFeed documentId={selectedDocumentForVersion.id} />
+                                <DocumentComments documentId={selectedDocumentForVersion.id} />
                                 <Button 
                                     className="w-full"
                                     onClick={() => setApprovalDialogOpen(true)}
