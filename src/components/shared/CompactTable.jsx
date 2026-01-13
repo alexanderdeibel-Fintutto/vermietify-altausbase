@@ -1,60 +1,48 @@
 import React from 'react';
-import { cn } from "@/lib/utils";
 import { ChevronRight } from 'lucide-react';
 
 export default function CompactTable({ 
-  columns, 
-  data, 
-  onRowClick, 
-  rowActions,
-  accentColor = 'purple' 
+  data = [],
+  columns = [],
+  onRowClick,
+  rowKey = 'id'
 }) {
-  const colorMap = {
-    purple: 'hover:bg-purple-50 border-purple-200',
-    green: 'hover:bg-green-50 border-green-200',
-    blue: 'hover:bg-blue-50 border-blue-200',
-    orange: 'hover:bg-orange-50 border-orange-200',
-  };
+  if (data.length === 0) return null;
 
   return (
-    <div className="rounded-xl border border-slate-200 overflow-hidden">
-      <table className="w-full">
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
         <thead>
-          <tr className="bg-slate-50 border-b border-slate-200">
+          <tr className="border-b border-slate-200 bg-slate-50">
             {columns.map(col => (
-              <th 
+              <th
                 key={col.key}
-                className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider"
+                className="px-4 py-3 text-left font-semibold text-slate-700"
+                style={{ width: col.width }}
               >
                 {col.label}
               </th>
             ))}
-            {rowActions && <th className="px-6 py-3"></th>}
+            {onRowClick && <th className="px-4 py-3 w-8" />}
           </tr>
         </thead>
         <tbody>
           {data.map((row, idx) => (
-            <tr 
-              key={idx}
+            <tr
+              key={row[rowKey] || idx}
               onClick={() => onRowClick?.(row)}
-              className={cn(
-                "border-b border-slate-100 transition-colors cursor-pointer",
-                colorMap[accentColor]
-              )}
+              className={`border-b border-slate-100 ${
+                onRowClick ? 'hover:bg-slate-50 cursor-pointer' : ''
+              }`}
             >
               {columns.map(col => (
-                <td 
-                  key={col.key}
-                  className="px-6 py-4 text-sm text-slate-700"
-                >
-                  {col.render ? col.render(row) : row[col.key]}
+                <td key={col.key} className="px-4 py-3 text-slate-900">
+                  {col.format ? col.format(row[col.key], row) : row[col.key]}
                 </td>
               ))}
-              {rowActions && (
-                <td className="px-6 py-4 text-right">
-                  <div className="flex gap-2 justify-end">
-                    {rowActions(row)}
-                  </div>
+              {onRowClick && (
+                <td className="px-4 py-3">
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
                 </td>
               )}
             </tr>

@@ -1,25 +1,34 @@
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-export default function PageHeader({ title, subtitle, action, actionLabel, actionIcon: ActionIcon = Plus }) {
-    return (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-            <div>
-                <h1 className="text-2xl font-extralight text-[var(--color-primary-600)] tracking-wide">{title}</h1>
-                {subtitle && (
-                    <p className="text-sm font-extralight text-[var(--color-primary-400)] mt-1">{subtitle}</p>
-                )}
-            </div>
-            {action && (
-                <Button 
-                    onClick={action}
-                    className="bg-[var(--color-primary-700)] hover:bg-[var(--color-primary-800)] text-white font-extralight gap-2"
-                >
-                    <ActionIcon className="w-4 h-4" />
-                    {actionLabel}
-                </Button>
-            )}
+export default function PageHeader({ 
+  title,
+  description,
+  actionLabel,
+  onAction,
+  children,
+  loading = false
+}) {
+  return (
+    <div className="mb-8">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-3xl font-bold text-slate-900">{title}</h1>
+          {description && (
+            <p className="text-sm text-slate-600 mt-2">{description}</p>
+          )}
         </div>
-    );
+        {actionLabel && (
+          <Button
+            onClick={onAction}
+            disabled={loading}
+            className="bg-blue-600 hover:bg-blue-700 whitespace-nowrap"
+          >
+            {loading ? 'Wird verarbeitet...' : actionLabel}
+          </Button>
+        )}
+      </div>
+      {children}
+    </div>
+  );
 }
