@@ -91,6 +91,7 @@ import BackupRecovery from './pages/BackupRecovery';
 import BankAccounts from './pages/BankAccounts';
 import BankReconciliation from './pages/BankReconciliation';
 import BankStatements from './pages/BankStatements';
+import BankTransactions from './pages/BankTransactions';
 import BankTransfers from './pages/BankTransfers';
 import BankingAutomationHub from './pages/BankingAutomationHub';
 import BankingManagement from './pages/BankingManagement';
@@ -445,7 +446,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import BankTransactions from './pages/BankTransactions';
 import __Layout from './Layout.jsx';
 
 
@@ -543,6 +543,7 @@ export const PAGES = {
     "BankAccounts": BankAccounts,
     "BankReconciliation": BankReconciliation,
     "BankStatements": BankStatements,
+    "BankTransactions": BankTransactions,
     "BankTransfers": BankTransfers,
     "BankingAutomationHub": BankingAutomationHub,
     "BankingManagement": BankingManagement,
@@ -897,7 +898,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "BankTransactions": BankTransactions,
 }
 
 export const pagesConfig = {

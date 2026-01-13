@@ -50,6 +50,7 @@ import IntelligentInvoiceWizard from '@/components/invoices/IntelligentInvoiceWi
 import CostTypeForm from '@/components/cost-types/CostTypeForm';
 import RecipientForm from '@/components/recipients/RecipientForm';
 import DATEVExportButton from '@/components/invoices/DATEVExportButton';
+import EmptyStateWithAction from '@/components/shared/EmptyStateWithAction';
 
 export default function Invoices() {
     const queryClient = useQueryClient();
@@ -747,9 +748,24 @@ export default function Invoices() {
                     <Card>
                         <CardContent className="p-0">
                             {filteredInvoices.length === 0 ? (
-                                <div className="text-center py-12 text-slate-500">
-                                    Keine Rechnungen gefunden
-                                </div>
+                                invoices.length === 0 ? (
+                                    <EmptyStateWithAction
+                                        icon={FileText}
+                                        title="Noch keine Rechnungen"
+                                        description="Beginnen Sie mit der Erfassung Ihrer ersten Rechnung zur Verwaltung von Ausgaben."
+                                        actionLabel="Erste Rechnung hinzufügen"
+                                        onAction={() => setInvoiceFormOpen(true)}
+                                        tips={[
+                                            "Erfassen Sie regelmäßig Rechnungen, um einen Überblick über Ihre Ausgaben zu behalten",
+                                            "Jede Rechnung sollte einer Kostenart zugeordnet werden",
+                                            "Markieren Sie Kosten als 'umlagefähig', um diese auf Mieter zu verteilen"
+                                        ]}
+                                    />
+                                ) : (
+                                    <div className="text-center py-12 text-slate-500">
+                                        Keine Rechnungen mit den aktuellen Filtern gefunden.
+                                    </div>
+                                )
                             ) : (
                                 <div className="overflow-x-auto -mx-6 sm:mx-0 px-6 sm:px-0">
                                     <Table className="text-sm">
