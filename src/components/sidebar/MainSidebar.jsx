@@ -11,10 +11,12 @@ import {
   Settings,
   Tag,
   ChevronDown,
-  Crown
+  Crown,
+  Rocket
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import BuildingSelector from '@/components/sidebar/BuildingSelector';
+import MonsterAppsMenu from '@/components/navigation/MonsterAppsMenu';
 
 const menuItems = [
   { name: 'Dashboard', icon: Home, page: 'Dashboard' },
@@ -74,6 +76,11 @@ export default function MainSidebar() {
             </Link>
           );
         })}
+
+        {/* Monster Apps Section */}
+        <div className="pt-4 mt-4 border-t border-slate-700">
+          <MonsterAppsMenu />
+        </div>
 
         {/* Admin Section */}
         <div className="pt-4 mt-4 border-t border-slate-700">
