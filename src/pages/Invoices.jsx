@@ -53,6 +53,7 @@ import DATEVExportButton from '@/components/invoices/DATEVExportButton';
 export default function Invoices() {
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState('invoices');
+    const [selectedInvoices, setSelectedInvoices] = useState(new Set());
     
     // Invoice state
     const [invoiceFormOpen, setInvoiceFormOpen] = useState(false);
@@ -152,11 +153,26 @@ export default function Invoices() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['invoices'] });
             setDeleteInvoice(null);
+            setSelectedInvoices(new Set());
             toast.success('Rechnung gelöscht');
         },
         onError: (error) => {
             toast.error('Fehler beim Löschen');
             console.error(error);
+        }
+    });
+
+    const bulkDeleteMutation = useMutation({
+        mutationFn: async (ids) => {
+            await Promise.all(ids.map(id => base44.entities.Invoice.delete(id)));
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['invoices'] });
+            setSelectedInvoices(new Set());
+            toast.success(`${selectedInvoices.size} Rechnungen gelöscht`);
+        },
+        onError: () => {
+            toast.error('Fehler beim Löschen');
         }
     });
 
@@ -548,13 +564,42 @@ export default function Invoices() {
                         Empfänger
                     </TabsTrigger>
                     </div>
-                    {activeTab === 'invoices' && dateRangeStart && dateRangeEnd && (
-                        <DATEVExportButton 
-                            buildingId={buildingFilter !== 'all' ? buildingFilter : null}
-                            startDate={dateRangeStart}
-                            endDate={dateRangeEnd}
-                        />
-                    )}
+                    <div className="flex gap-2">
+                        {selectedInvoices.size > 0 && activeTab === 'invoices' && (
+                            <>
+                                <Button 
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => bulkDeleteMutation.mutate(Array.from(selectedInvoices))}
+                                >
+                                    🗑️ Löschen ({selectedInvoices.size})
+                                </Button>
+                                <Button 
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        const data = filteredInvoices.filter(i => selectedInvoices.has(i.id));
+                                        const csv = [['Datum', 'Typ', 'Empfänger', 'Betrag'], ...data.map(i => [i.invoice_date, i.type, i.recipient, i.amount])].map(r => r.join(',')).join('\n');
+                                        const blob = new Blob([csv], { type: 'text/csv' });
+                                        const url = window.URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = 'rechnungen.csv';
+                                        a.click();
+                                    }}
+                                >
+                                    📥 Export ({selectedInvoices.size})
+                                </Button>
+                            </>
+                        )}
+                        {activeTab === 'invoices' && dateRangeStart && dateRangeEnd && (
+                            <DATEVExportButton 
+                                buildingId={buildingFilter !== 'all' ? buildingFilter : null}
+                                startDate={dateRangeStart}
+                                endDate={dateRangeEnd}
+                            />
+                        )}
+                    </div>
                 </TabsList>
 
                 {/* INVOICES TAB */}
@@ -709,6 +754,19 @@ export default function Invoices() {
                                     <Table className="text-sm">
                                         <TableHeader>
                                             <TableRow>
+                                                <TableHead className="w-8">
+                                                    <input 
+                                                        type="checkbox"
+                                                        checked={selectedInvoices.size === filteredInvoices.length && filteredInvoices.length > 0}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setSelectedInvoices(new Set(filteredInvoices.map(i => i.id)));
+                                                            } else {
+                                                                setSelectedInvoices(new Set());
+                                                            }
+                                                        }}
+                                                    />
+                                                </TableHead>
                                                 <TableHead className="hidden sm:table-cell">Datum</TableHead>
                                                 <TableHead>Typ</TableHead>
                                                 <TableHead className="hidden md:table-cell">Empfänger</TableHead>
@@ -728,7 +786,22 @@ export default function Invoices() {
                                                 const costType = getCostType(invoice.cost_type_id);
 
                                                 return (
-                                                    <TableRow key={invoice.id}>
+                                                    <TableRow key={invoice.id} className={selectedInvoices.has(invoice.id) ? 'bg-blue-50' : ''}>
+                                                         <TableCell className="w-8">
+                                                             <input 
+                                                                 type="checkbox"
+                                                                 checked={selectedInvoices.has(invoice.id)}
+                                                                 onChange={(e) => {
+                                                                     const newSelected = new Set(selectedInvoices);
+                                                                     if (e.target.checked) {
+                                                                         newSelected.add(invoice.id);
+                                                                     } else {
+                                                                         newSelected.delete(invoice.id);
+                                                                     }
+                                                                     setSelectedInvoices(newSelected);
+                                                                 }}
+                                                             />
+                                                         </TableCell>
                                                          <TableCell className="hidden sm:table-cell font-medium">
                                                              {invoice.invoice_date ? (() => {
                                                                  try {
