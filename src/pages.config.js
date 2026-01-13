@@ -415,6 +415,8 @@ import AdminPricingFeatures from './pages/AdminPricingFeatures';
 import AdminProductFeatures from './pages/AdminProductFeatures';
 import AdminPricingTiers from './pages/AdminPricingTiers';
 import AdminTierFeatures from './pages/AdminTierFeatures';
+import AdminTierLimits from './pages/AdminTierLimits';
+import AdminUserSubscriptions from './pages/AdminUserSubscriptions';
 import __Layout from './Layout.jsx';
 
 
@@ -836,6 +838,8 @@ export const PAGES = {
     "AdminProductFeatures": AdminProductFeatures,
     "AdminPricingTiers": AdminPricingTiers,
     "AdminTierFeatures": AdminTierFeatures,
+    "AdminTierLimits": AdminTierLimits,
+    "AdminUserSubscriptions": AdminUserSubscriptions,
 }
 
 export const pagesConfig = {

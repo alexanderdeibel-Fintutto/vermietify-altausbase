@@ -5,99 +5,73 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Edit, Trash2, Check, Settings } from 'lucide-react';
+import { Plus, Edit, Trash2, Check, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AdminLimitsConfig() {
   const [editingLimit, setEditingLimit] = useState(null);
-  const [limitDialogOpen, setLimitDialogOpen] = useState(false);
-  const [editingPlanLimit, setEditingPlanLimit] = useState(null);
-  const [planLimitDialogOpen, setPlanLimitDialogOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: limits = [] } = useQuery({
-    queryKey: ['adminLimits'],
-    queryFn: () => base44.entities.UsageLimit.list()
+    queryKey: ['usageLimits'],
+    queryFn: () => base44.entities.UsageLimit.list('-sort_order')
   });
 
-  const { data: plans = [] } = useQuery({
-    queryKey: ['adminPlans'],
-    queryFn: () => base44.entities.SubscriptionPlan.list()
-  });
-
-  const { data: planLimits = [] } = useQuery({
-    queryKey: ['adminPlanLimits'],
-    queryFn: () => base44.entities.PlanLimit.list()
-  });
-
-  const createLimitMutation = useMutation({
+  const createMutation = useMutation({
     mutationFn: (data) => base44.entities.UsageLimit.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminLimits'] });
-      setLimitDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['usageLimits'] });
+      setDialogOpen(false);
       setEditingLimit(null);
       toast.success('Limit erstellt');
     }
   });
 
-  const updateLimitMutation = useMutation({
+  const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.UsageLimit.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminLimits'] });
-      setLimitDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['usageLimits'] });
+      setDialogOpen(false);
       setEditingLimit(null);
       toast.success('Limit aktualisiert');
     }
   });
 
-  const deleteLimitMutation = useMutation({
+  const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.UsageLimit.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminLimits'] });
+      queryClient.invalidateQueries({ queryKey: ['usageLimits'] });
       toast.success('Limit gelöscht');
     }
   });
 
-  const upsertPlanLimitMutation = useMutation({
-    mutationFn: async ({ plan_id, limit_id, limit_value }) => {
-      const existing = planLimits.find(pl => pl.plan_id === plan_id && pl.limit_id === limit_id);
-      if (existing) {
-        return base44.entities.PlanLimit.update(existing.id, { limit_value });
-      } else {
-        return base44.entities.PlanLimit.create({ plan_id, limit_id, limit_value });
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminPlanLimits'] });
-      setPlanLimitDialogOpen(false);
-      setEditingPlanLimit(null);
-      toast.success('Plan-Limit gespeichert');
-    }
-  });
-
-  const getPlanLimit = (planId, limitId) => {
-    return planLimits.find(pl => pl.plan_id === planId && pl.limit_id === limitId);
+  const limitTypeColors = {
+    HARD: 'bg-red-100 text-red-700',
+    SOFT: 'bg-yellow-100 text-yellow-700',
+    FEATURE_FLAG: 'bg-blue-100 text-blue-700'
   };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-light text-slate-900">Limits-Konfiguration</h1>
-          <p className="text-sm text-slate-600">Definiere Nutzungslimits und deren Werte pro Plan</p>
+          <h1 className="text-2xl font-light text-slate-900">Nutzungs-Limits</h1>
+          <p className="text-sm text-slate-600">Definiere globale Limits für alle Tarife</p>
         </div>
-        <Dialog open={limitDialogOpen} onOpenChange={setLimitDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => setEditingLimit(null)}>
               <Plus className="h-4 w-4 mr-2" />
               Neues Limit
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>{editingLimit ? 'Limit bearbeiten' : 'Neues Limit'}</DialogTitle>
             </DialogHeader>
@@ -105,13 +79,13 @@ export default function AdminLimitsConfig() {
               limit={editingLimit}
               onSave={(data) => {
                 if (editingLimit) {
-                  updateLimitMutation.mutate({ id: editingLimit.id, data });
+                  updateMutation.mutate({ id: editingLimit.id, data });
                 } else {
-                  createLimitMutation.mutate(data);
+                  createMutation.mutate(data);
                 }
               }}
               onCancel={() => {
-                setLimitDialogOpen(false);
+                setDialogOpen(false);
                 setEditingLimit(null);
               }}
             />
@@ -119,115 +93,90 @@ export default function AdminLimitsConfig() {
         </Dialog>
       </div>
 
-      {limits.map(limit => (
-        <Card key={limit.id}>
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <CardTitle className="text-base">{limit.name}</CardTitle>
-                  <Badge variant="secondary" className="text-xs">{limit.key}</Badge>
-                  {limit.reset_period !== 'never' && (
-                    <Badge variant="outline" className="text-xs">
-                      Reset: {limit.reset_period}
+      <div className="grid gap-4">
+        {limits.map(limit => (
+          <Card key={limit.id}>
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <CardTitle className="text-lg">{limit.name}</CardTitle>
+                    <code className="text-xs bg-slate-100 px-2 py-1 rounded">{limit.limit_code}</code>
+                    <Badge className={limitTypeColors[limit.limit_type]}>
+                      {limit.limit_type}
                     </Badge>
+                    {!limit.is_active && <Badge variant="outline">Inaktiv</Badge>}
+                  </div>
+                  {limit.description && (
+                    <p className="text-sm text-slate-600">{limit.description}</p>
                   )}
                 </div>
-                <p className="text-sm text-slate-600">{limit.description}</p>
-                <div className="text-xs text-slate-500">
-                  Entity: <code className="bg-slate-100 px-1 rounded">{limit.entity_to_count}</code>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => {
-                    setEditingLimit(limit);
-                    setLimitDialogOpen(true);
-                  }}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => {
-                    if (confirm('Limit wirklich löschen?')) {
-                      deleteLimitMutation.mutate(limit.id);
-                    }
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {plans.map(plan => {
-                const planLimit = getPlanLimit(plan.id, limit.id);
-                return (
-                  <Button
-                    key={plan.id}
-                    variant="outline"
-                    className="h-auto py-3 px-4 flex flex-col items-start"
+                <div className="flex gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
                     onClick={() => {
-                      setEditingPlanLimit({ plan, limit, value: planLimit?.limit_value ?? 0 });
-                      setPlanLimitDialogOpen(true);
+                      setEditingLimit(limit);
+                      setDialogOpen(true);
                     }}
                   >
-                    <span className="text-xs text-slate-600">{plan.name}</span>
-                    <span className="text-lg font-medium mt-1">
-                      {planLimit ? (planLimit.limit_value === -1 ? '∞' : planLimit.limit_value) : '-'}
-                    </span>
+                    <Edit className="h-4 w-4" />
                   </Button>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-
-      <Dialog open={planLimitDialogOpen} onOpenChange={setPlanLimitDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingPlanLimit?.limit?.name} → {editingPlanLimit?.plan?.name}
-            </DialogTitle>
-          </DialogHeader>
-          {editingPlanLimit && (
-            <PlanLimitForm 
-              planLimit={editingPlanLimit}
-              onSave={(value) => {
-                upsertPlanLimitMutation.mutate({
-                  plan_id: editingPlanLimit.plan.id,
-                  limit_id: editingPlanLimit.limit.id,
-                  limit_value: value
-                });
-              }}
-              onCancel={() => {
-                setPlanLimitDialogOpen(false);
-                setEditingPlanLimit(null);
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => {
+                      if (confirm('Limit wirklich löschen?')) {
+                        deleteMutation.mutate(limit.id);
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                {limit.entity_to_count && (
+                  <div>
+                    <span className="text-slate-600">Entity:</span>
+                    <span className="ml-2 font-medium">{limit.entity_to_count}</span>
+                  </div>
+                )}
+                {limit.unit && (
+                  <div>
+                    <span className="text-slate-600">Einheit:</span>
+                    <span className="ml-2 font-medium">{limit.unit}</span>
+                  </div>
+                )}
+                {limit.warning_threshold && (
+                  <div>
+                    <span className="text-slate-600">Warnung bei:</span>
+                    <span className="ml-2 font-medium">{limit.warning_threshold}%</span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
 
 function LimitForm({ limit, onSave, onCancel }) {
   const [formData, setFormData] = useState(limit || {
-    key: '',
+    limit_code: '',
     name: '',
     description: '',
-    entity_to_count: 'Building',
+    limit_type: 'HARD',
+    entity_to_count: '',
     count_filter: '{}',
-    reset_period: 'never',
-    overage_allowed: true,
-    overage_price_per_unit: 0
+    unit: '',
+    warning_threshold: 80,
+    is_active: true,
+    sort_order: 0
   });
 
   const handleSubmit = (e) => {
@@ -236,67 +185,102 @@ function LimitForm({ limit, onSave, onCancel }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Code *</Label>
+            <Input 
+              value={formData.limit_code} 
+              onChange={e => setFormData({...formData, limit_code: e.target.value.toUpperCase()})}
+              placeholder="MAX_OBJECTS"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Name *</Label>
+            <Input 
+              value={formData.name} 
+              onChange={e => setFormData({...formData, name: e.target.value})}
+              placeholder="Max. Objekte"
+              required
+            />
+          </div>
+        </div>
+
         <div className="space-y-2">
-          <Label>Key</Label>
-          <Input 
-            value={formData.key} 
-            onChange={e => setFormData({...formData, key: e.target.value})}
-            placeholder="objects"
-            required
+          <Label>Beschreibung</Label>
+          <Textarea 
+            value={formData.description} 
+            onChange={e => setFormData({...formData, description: e.target.value})}
+            rows={2}
           />
         </div>
+
         <div className="space-y-2">
-          <Label>Name</Label>
+          <Label>Limit-Typ *</Label>
+          <Select value={formData.limit_type} onValueChange={v => setFormData({...formData, limit_type: v})}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="HARD">HARD - Blockiert bei Überschreitung</SelectItem>
+              <SelectItem value="SOFT">SOFT - Warnung bei Überschreitung</SelectItem>
+              <SelectItem value="FEATURE_FLAG">FEATURE_FLAG - Boolean (ja/nein)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {formData.limit_type !== 'FEATURE_FLAG' && (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Entity zum Zählen</Label>
+                <Input 
+                  value={formData.entity_to_count} 
+                  onChange={e => setFormData({...formData, entity_to_count: e.target.value})}
+                  placeholder="Building, Unit, etc."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Einheit</Label>
+                <Input 
+                  value={formData.unit} 
+                  onChange={e => setFormData({...formData, unit: e.target.value})}
+                  placeholder="Objekte, Einheiten, MB"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Warnungs-Schwelle (%)</Label>
+              <Input 
+                type="number"
+                value={formData.warning_threshold} 
+                onChange={e => setFormData({...formData, warning_threshold: Number(e.target.value)})}
+                min="0"
+                max="100"
+              />
+            </div>
+          </>
+        )}
+
+        <div className="space-y-2">
+          <Label>Sort Order</Label>
           <Input 
-            value={formData.name} 
-            onChange={e => setFormData({...formData, name: e.target.value})}
-            placeholder="Objekte"
-            required
+            type="number"
+            value={formData.sort_order} 
+            onChange={e => setFormData({...formData, sort_order: Number(e.target.value)})}
           />
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <Label>Entity zum Zählen</Label>
-        <Input 
-          value={formData.entity_to_count} 
-          onChange={e => setFormData({...formData, entity_to_count: e.target.value})}
-          placeholder="Building"
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label>Reset-Periode</Label>
-        <Select value={formData.reset_period} onValueChange={v => setFormData({...formData, reset_period: v})}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="never">Nie (Absolut)</SelectItem>
-            <SelectItem value="monthly">Monatlich</SelectItem>
-            <SelectItem value="yearly">Jährlich</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Überschreitungs-Preis (Cent/Einheit)</Label>
-        <Input 
-          type="number"
-          value={formData.overage_price_per_unit} 
-          onChange={e => setFormData({...formData, overage_price_per_unit: Number(e.target.value)})}
-        />
-      </div>
-
-      <div className="flex items-center gap-2">
-        <Switch 
-          checked={formData.overage_allowed} 
-          onCheckedChange={v => setFormData({...formData, overage_allowed: v})}
-        />
-        <Label>Überschreitung erlaubt</Label>
+        <div className="flex items-center gap-2">
+          <Switch 
+            checked={formData.is_active} 
+            onCheckedChange={v => setFormData({...formData, is_active: v})}
+          />
+          <Label>Limit ist aktiv</Label>
+        </div>
       </div>
 
       <div className="flex gap-2 pt-4">
@@ -307,37 +291,6 @@ function LimitForm({ limit, onSave, onCancel }) {
           <Check className="h-4 w-4 mr-2" />
           Speichern
         </Button>
-      </div>
-    </form>
-  );
-}
-
-function PlanLimitForm({ planLimit, onSave, onCancel }) {
-  const [value, setValue] = useState(planLimit.value ?? 0);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave(value);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label>Limit-Wert</Label>
-        <Input 
-          type="number"
-          value={value} 
-          onChange={e => setValue(Number(e.target.value))}
-          placeholder="10"
-        />
-        <p className="text-xs text-slate-500">-1 für unbegrenzt</p>
-      </div>
-
-      <div className="flex gap-2">
-        <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
-          Abbrechen
-        </Button>
-        <Button type="submit" className="flex-1">Speichern</Button>
       </div>
     </form>
   );

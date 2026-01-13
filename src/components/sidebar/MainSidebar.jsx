@@ -29,8 +29,9 @@ const adminMenuItems = [
   { name: 'Feature-Gruppen', page: 'AdminPricingFeatureGroups' },
   { name: 'Features', page: 'AdminPricingFeatures' },
   { name: 'Tarife', page: 'AdminPricingTiers' },
+  { name: 'Limits', page: 'AdminLimitsConfig' },
+  { name: 'User-Subscriptions', page: 'AdminUserSubscriptions' },
   { name: 'Pricing-Matrix', page: 'AdminPricingMatrix' },
-  { name: 'Bundles', page: 'AdminPricingBundles', disabled: true },
 ];
 
 export default function MainSidebar() {
