@@ -29,13 +29,18 @@ export default function ActionRequiredWidget() {
   ).length;
 
   const uncategorizedInvoices = invoices.filter(inv => !inv.cost_type_id).length;
-  
-  const unmatchedTransactions = 0; // TODO: Count from bank transactions
+
+  const { data: bankTransactions = [] } = useQuery({
+    queryKey: ['bank-transactions'],
+    queryFn: () => base44.entities.BankTransaction?.list?.() || []
+  });
+
+  const unmatchedTransactions = bankTransactions.filter(bt => !bt.matched_invoice_id).length;
 
   const issues = [
-    { count: contractsWithoutBookings, label: 'Verträge ohne Buchungen', page: 'Contracts', severity: 'high' },
-    { count: uncategorizedInvoices, label: 'Rechnungen ohne Kategorie', page: 'Invoices', severity: 'high' },
-    { count: unmatchedTransactions, label: 'Bank-Zahlungen ohne Zuordnung', page: 'BankTransactions', severity: 'medium' }
+    { count: contractsWithoutBookings, label: 'Verträge ohne Buchungen', page: 'Contracts', severity: 'high', icon: '📋' },
+    { count: uncategorizedInvoices, label: 'Rechnungen ohne Kategorie', page: 'Invoices', severity: 'high', icon: '🏷️' },
+    { count: unmatchedTransactions, label: 'Bank-Zahlungen ohne Zuordnung', page: 'BankTransactions', severity: 'medium', icon: '🏦' }
   ];
 
   const totalIssues = issues.reduce((sum, i) => sum + i.count, 0);
@@ -54,16 +59,19 @@ export default function ActionRequiredWidget() {
       <CardContent className="space-y-2">
         {issues.filter(i => i.count > 0).map((issue, idx) => (
           <Link key={idx} to={createPageUrl(issue.page)}>
-            <div className="flex items-center justify-between p-3 bg-white rounded-lg hover:bg-orange-50 transition">
-              <div>
-                <p className="text-sm font-medium text-slate-900">{issue.label}</p>
-                <Badge 
-                  className={issue.severity === 'high' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}
-                >
-                  {issue.count} {issue.count === 1 ? 'Item' : 'Items'}
-                </Badge>
+            <div className="flex items-center justify-between p-3 bg-white rounded-lg hover:bg-orange-50 transition border-l-4" style={{ borderLeftColor: issue.severity === 'high' ? '#ef4444' : '#f59e0b' }}>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{issue.icon}</span>
+                <div>
+                  <p className="text-sm font-medium text-slate-900">{issue.label}</p>
+                  <Badge 
+                    className={issue.severity === 'high' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}
+                  >
+                    {issue.count}
+                  </Badge>
+                </div>
               </div>
-              <Button size="sm" variant="outline">→</Button>
+              <Button size="sm" variant="outline" className="text-xs">→</Button>
             </div>
           </Link>
         ))}

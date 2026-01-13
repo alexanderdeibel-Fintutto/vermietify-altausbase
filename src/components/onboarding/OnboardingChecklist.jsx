@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle2, Circle, ChevronDown, ChevronUp } from 'lucide-react';
 import { createPageUrl } from '@/utils';
 import { Link } from 'react-router-dom';
+import { base44 } from '@/api/base44Client';
 
 const ONBOARDING_STEPS = [
   { id: 'building', label: 'Erstes Gebäude anlegen', page: 'Buildings', description: 'Starte mit der Erfassung deines ersten Objekts' },
@@ -25,6 +26,10 @@ export default function OnboardingChecklist() {
 
   useEffect(() => {
     localStorage.setItem('onboarding_completed', JSON.stringify(completed));
+    // Also sync to user profile for persistence across devices
+    if (completed.length > 0) {
+      base44.auth.updateMe({ onboarding_completed: completed }).catch(err => console.warn('Onboarding sync failed:', err));
+    }
   }, [completed]);
 
   const toggleStep = (stepId) => {
