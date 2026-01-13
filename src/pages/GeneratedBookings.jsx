@@ -33,7 +33,7 @@ export default function GeneratedBookingsPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-bold text-slate-900">📋 Geplante Einnahmen/Ausgaben (SOLL)</h1>
-            <HelpTooltip text="Erstellt automatische SOLL-Buchungen basierend auf Verträgen. Diese müssen mit tatsächlichen Bank-Zahlungen (IST) abgeglichen werden." />
+            <HelpTooltip text="Erstellt automatische SOLL-Buchungen basierend auf Verträgen. Diese müssen mit tatsächlichen Bank-Zahlungen (IST) abgeglichen werden. SOLL = Geplant, IST = Tatsächlich gezahlt" />
            </div>
           <p className="text-slate-600 mt-1">Automatisch erstellte Finanzbuchungen aus Verträgen und Dokumenten</p>
         </div>
