@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Zap, Eye, Trash2, RefreshCw } from 'lucide-react';
 import ISTBookingCard from '@/components/shared/ISTBookingCard';
+import ISTBookingCard from '@/components/shared/ISTBookingCard';
 import SOLLBookingCard from '@/components/shared/SOLLBookingCard';
 import HelpTooltip from '@/components/shared/HelpTooltip';
 import QuickStats from '@/components/shared/QuickStats';
