@@ -424,6 +424,9 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
+import AdminPricingSimulator from './pages/AdminPricingSimulator';
+import AdminPricingExport from './pages/AdminPricingExport';
+import AdminPricingAuditLog from './pages/AdminPricingAuditLog';
 import __Layout from './Layout.jsx';
 
 
@@ -854,6 +857,9 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
+    "AdminPricingSimulator": AdminPricingSimulator,
+    "AdminPricingExport": AdminPricingExport,
+    "AdminPricingAuditLog": AdminPricingAuditLog,
 }
 
 export const pagesConfig = {
