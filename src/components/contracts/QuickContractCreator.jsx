@@ -4,10 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Plus, AlertTriangle } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import PostContractDialog from './PostContractDialog';
 
 export default function QuickContractCreator({ open, onOpenChange }) {
   const [building, setBuilding] = useState('');
@@ -15,7 +16,12 @@ export default function QuickContractCreator({ open, onOpenChange }) {
   const [tenantName, setTenantName] = useState('');
   const [rent, setRent] = useState('');
   const [startDate, setStartDate] = useState('');
+  const [postDialogOpen, setPostDialogOpen] = useState(false);
+  const [createdContractId, setCreatedContractId] = useState(null);
   const queryClient = useQueryClient();
+  
+  const selectedUnit = units.find(u => u.id === unit);
+  const selectedBuilding = buildings.find(b => b.id === building);
 
   const { data: buildings = [] } = useQuery({
     queryKey: ['buildings'],
@@ -46,6 +52,8 @@ export default function QuickContractCreator({ open, onOpenChange }) {
     onSuccess: (newContract) => {
       toast.success('Mietvertrag erstellt!');
       queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      setCreatedContractId(newContract.id);
+      setPostDialogOpen(true);
       onOpenChange(false);
       
       // Reset form
@@ -59,6 +67,11 @@ export default function QuickContractCreator({ open, onOpenChange }) {
       toast.error('Fehler beim Erstellen des Vertrags');
     }
   });
+  
+  const rentalPrice = parseFloat(rent) || 0;
+  const sqm = selectedUnit?.sqm || 1;
+  const pricePerSqm = sqm > 0 ? rentalPrice / sqm : 0;
+  const showPriceWarning = pricePerSqm > 20;
 
   const canCreate = building && unit && tenantName && rent && startDate;
 
@@ -124,6 +137,12 @@ export default function QuickContractCreator({ open, onOpenChange }) {
               value={rent}
               onChange={(e) => setRent(e.target.value)}
             />
+            {showPriceWarning && sqm && (
+              <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-900 flex gap-2">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>Mietpreis über Durchschnitt ({pricePerSqm.toFixed(2)}€/m²) – Mietpreisbremse prüfen?</span>
+              </div>
+            )}
           </div>
 
           <div>
@@ -147,8 +166,14 @@ export default function QuickContractCreator({ open, onOpenChange }) {
               Erstellen
             </Button>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
+          </div>
+          </DialogContent>
+
+          <PostContractDialog 
+          open={postDialogOpen} 
+          onOpenChange={setPostDialogOpen} 
+          contractId={createdContractId}
+          />
+          </Dialog>
+          );
+          }

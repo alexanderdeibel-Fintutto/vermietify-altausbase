@@ -25,10 +25,13 @@ export default function ActionRequiredWidget() {
 
   // Count issues
   const contractsWithoutBookings = contracts.filter(c => !c.bookings_generated).length;
-  const invoicesWithoutCategory = invoices.filter(i => !i.cost_category).length;
+  const invoicesWithoutCategory = invoices.filter(i => !i.cost_category_id && !i.cost_type_id).length;
   const unmatchedTransactions = bankTransactions.filter(b => !b.matched_invoice_id).length;
+  const contractsWithoutRequiredFields = contracts.filter(c => {
+    return c.status === 'active' && (!c.start_date || !c.total_rent);
+  }).length;
 
-  const totalIssues = contractsWithoutBookings + invoicesWithoutCategory + unmatchedTransactions;
+  const totalIssues = contractsWithoutBookings + invoicesWithoutCategory + unmatchedTransactions + contractsWithoutRequiredFields;
 
   if (totalIssues === 0) return null;
 
@@ -64,14 +67,24 @@ export default function ActionRequiredWidget() {
         {unmatchedTransactions > 0 && (
           <div className="flex items-center justify-between p-2 bg-white rounded">
             <span>{unmatchedTransactions} Bank-Transaktionen unverknüpft</span>
-            <Link to={createPageUrl('BankTransactions')}>
+            <Link to={createPageUrl('BankReconciliation')}>
               <Button size="sm" variant="outline" className="h-7">
                 Verknüpfen
               </Button>
             </Link>
           </div>
         )}
-      </CardContent>
-    </Card>
-  );
-}
+        {contractsWithoutRequiredFields > 0 && (
+          <div className="flex items-center justify-between p-2 bg-white rounded">
+            <span>{contractsWithoutRequiredFields} Verträge mit fehlenden Feldern</span>
+            <Link to={createPageUrl('LeaseContracts')}>
+              <Button size="sm" variant="outline" className="h-7">
+                Prüfen
+              </Button>
+            </Link>
+          </div>
+        )}
+        </CardContent>
+        </Card>
+        );
+        }

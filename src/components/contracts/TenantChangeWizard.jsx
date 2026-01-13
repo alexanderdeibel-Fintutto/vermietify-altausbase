@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, AlertCircle } from "lucide-react";
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { Badge } from "@/components/ui/badge";
 
 export default function TenantChangeWizard({ open, onOpenChange, unitId }) {
   const [step, setStep] = useState(1);
@@ -15,7 +16,24 @@ export default function TenantChangeWizard({ open, onOpenChange, unitId }) {
   const [newTenant, setNewTenant] = useState('');
   const [moveOutDate, setMoveOutDate] = useState('');
   const [moveInDate, setMoveInDate] = useState('');
+  const [terminationValidation, setTerminationValidation] = useState(null);
   const queryClient = useQueryClient();
+  
+  const validateTerminationDate = async (date) => {
+    if (!date || !unitId) return;
+    try {
+      const contracts = await base44.entities.LeaseContract.filter({ unit_id: unitId, status: 'active' });
+      if (contracts.length > 0) {
+        const result = await base44.functions.invoke('calculateKuendigungsfrist', {
+          contract_id: contracts[0].id,
+          termination_date: date
+        });
+        setTerminationValidation(result.data);
+      }
+    } catch (error) {
+      console.error('Validierungsfehler:', error);
+    }
+  };
 
   const processMutation = useMutation({
     mutationFn: async () => {
@@ -82,8 +100,20 @@ export default function TenantChangeWizard({ open, onOpenChange, unitId }) {
                 <Input 
                   type="date"
                   value={moveOutDate}
-                  onChange={(e) => setMoveOutDate(e.target.value)}
+                  onChange={(e) => {
+                    setMoveOutDate(e.target.value);
+                    validateTerminationDate(e.target.value);
+                  }}
                 />
+                {terminationValidation && !terminationValidation.is_valid && (
+                  <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-900 flex gap-2">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>Kündigungsfrist nicht eingehalten. Frühestens: {terminationValidation.earliest_termination}</span>
+                  </div>
+                )}
+                {terminationValidation?.is_valid && (
+                  <Badge className="mt-2 bg-green-100 text-green-700">✓ Kündigungsfrist eingehalten</Badge>
+                )}
               </div>
 
               <div>
