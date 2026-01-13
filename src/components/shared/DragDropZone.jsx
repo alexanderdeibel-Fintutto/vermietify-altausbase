@@ -1,79 +1,99 @@
 import React, { useState } from 'react';
-import { Upload, X } from 'lucide-react';
+import { Upload, FileIcon, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export default function DragDropZone({ 
-  onFilesSelect,
+export default function DragDropZone({
+  onFilesSelected,
   accept = '*',
-  maxFiles = 1,
-  multiple = false
+  maxSize = 10 * 1024 * 1024,
+  multiple = true,
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState([]);
+  const [error, setError] = useState('');
 
-  const handleDrag = (e) => {
+  const handleDragOver = (e) => {
     e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(e.type === 'dragenter' || e.type === 'dragover');
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const validateFiles = (filesToCheck) => {
+    for (let file of filesToCheck) {
+      if (file.size > maxSize) {
+        setError(`${file.name} ist zu groß (max ${maxSize / 1024 / 1024}MB)`);
+        return false;
+      }
+    }
+    return true;
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
-    e.stopPropagation();
     setIsDragging(false);
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    
+    if (!multiple && droppedFiles.length > 1) {
+      setError('Nur eine Datei erlaubt');
+      return;
+    }
 
-    const droppedFiles = Array.from(e.dataTransfer.files).slice(0, maxFiles);
-    setFiles(droppedFiles);
-    onFilesSelect?.(droppedFiles);
+    if (validateFiles(droppedFiles)) {
+      setFiles(multiple ? [...files, ...droppedFiles] : droppedFiles);
+      setError('');
+      onFilesSelected?.(multiple ? [...files, ...droppedFiles] : droppedFiles);
+    }
   };
 
   const removeFile = (index) => {
     const updated = files.filter((_, i) => i !== index);
     setFiles(updated);
-    onFilesSelect?.(updated);
+    onFilesSelected?.(updated);
   };
 
   return (
     <div className="space-y-3">
       <motion.div
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        animate={isDragging ? { scale: 1.02 } : { scale: 1 }}
-        className={`relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-          isDragging
-            ? 'border-blue-400 bg-blue-50'
-            : 'border-slate-300 bg-slate-50 hover:border-slate-400'
-        }`}
+        animate={{
+          borderColor: isDragging ? 'rgb(59, 130, 246)' : 'rgb(226, 232, 240)',
+          backgroundColor: isDragging ? 'rgb(239, 246, 255)' : 'rgb(248, 250, 252)',
+        }}
+        className="border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer"
       >
-        <input
-          type="file"
-          multiple={multiple}
-          accept={accept}
-          onChange={(e) => {
-            setFiles(Array.from(e.target.files));
-            onFilesSelect?.(Array.from(e.target.files));
-          }}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-        />
-        <div className="space-y-2">
-          <Upload className="w-8 h-8 mx-auto text-slate-400" />
-          <p className="text-sm font-medium text-slate-700">Datei hier ablegen</p>
-          <p className="text-xs text-slate-500">oder klicken zum Durchsuchen</p>
-        </div>
+        <Upload className="w-8 h-8 mx-auto mb-2 text-slate-400" />
+        <p className="text-sm font-medium text-slate-700">Datei hierher ziehen</p>
+        <p className="text-xs text-slate-500 mt-1">oder klicken zum Durchsuchen</p>
       </motion.div>
+
+      {error && (
+        <p className="text-sm text-red-600">{error}</p>
+      )}
 
       {files.length > 0 && (
         <div className="space-y-2">
           {files.map((file, idx) => (
-            <div key={idx} className="flex items-center justify-between p-2 bg-slate-100 rounded text-xs">
-              <span className="text-slate-700 truncate">{file.name}</span>
+            <div
+              key={idx}
+              className="flex items-center justify-between p-2 bg-slate-50 rounded-lg"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <FileIcon className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                <span className="text-sm text-slate-700 truncate">{file.name}</span>
+                <span className="text-xs text-slate-500">
+                  ({(file.size / 1024).toFixed(1)}KB)
+                </span>
+              </div>
               <button
                 onClick={() => removeFile(idx)}
-                className="text-slate-500 hover:text-red-600"
+                className="p-1 hover:bg-slate-200 rounded"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 text-slate-400" />
               </button>
             </div>
           ))}

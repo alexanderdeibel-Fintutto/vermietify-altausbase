@@ -1,37 +1,36 @@
 import React, { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function AdvancedOptionsToggle({ children, label = 'Erweiterte Optionen' }) {
-  const [expanded, setExpanded] = useState(false);
+export default function AdvancedOptionsToggle({
+  title = 'Erweiterte Optionen',
+  children,
+}) {
+  const [open, setOpen] = useState(false);
 
   return (
     <div className="space-y-3">
       <Button
-        onClick={() => setExpanded(!expanded)}
-        variant="ghost"
-        size="sm"
-        className="h-8 text-slate-600 hover:text-slate-900 gap-2 text-xs sm:text-sm"
+        onClick={() => setOpen(!open)}
+        variant="outline"
+        className="w-full justify-between"
       >
-        <Settings className="w-4 h-4" />
-        {label}
+        <span className="text-sm font-medium">{title}</span>
         <ChevronDown
-          className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`}
         />
       </Button>
 
       <AnimatePresence>
-        {expanded && (
+        {open && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
+            className="space-y-3 border-l-2 border-slate-200 pl-4 py-2"
           >
-            <div className="p-3 sm:p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
-              {children}
-            </div>
+            {children}
           </motion.div>
         )}
       </AnimatePresence>

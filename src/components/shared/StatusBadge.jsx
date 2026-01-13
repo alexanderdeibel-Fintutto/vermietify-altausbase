@@ -1,27 +1,39 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 
-const STATUS_CONFIG = {
-  success: { bg: 'bg-emerald-100', text: 'text-emerald-800', label: 'Erfolgreich' },
-  error: { bg: 'bg-red-100', text: 'text-red-800', label: 'Fehler' },
-  warning: { bg: 'bg-amber-100', text: 'text-amber-800', label: 'Warnung' },
-  info: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Information' },
-  pending: { bg: 'bg-slate-100', text: 'text-slate-800', label: 'Ausstehend' },
-  active: { bg: 'bg-emerald-100', text: 'text-emerald-800', label: 'Aktiv' },
-  inactive: { bg: 'bg-slate-100', text: 'text-slate-800', label: 'Inaktiv' },
-};
-
 export default function StatusBadge({ 
   status = 'pending',
-  label,
-  dot = false
+  size = 'md'
 }) {
-  const config = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
-  
+  const configs = {
+    pending: {
+      label: 'Ausstehend',
+      className: 'bg-amber-100 text-amber-800 border-amber-200'
+    },
+    active: {
+      label: 'Aktiv',
+      className: 'bg-emerald-100 text-emerald-800 border-emerald-200'
+    },
+    completed: {
+      label: 'Abgeschlossen',
+      className: 'bg-blue-100 text-blue-800 border-blue-200'
+    },
+    failed: {
+      label: 'Fehler',
+      className: 'bg-red-100 text-red-800 border-red-200'
+    },
+    archived: {
+      label: 'Archiviert',
+      className: 'bg-slate-100 text-slate-800 border-slate-200'
+    }
+  };
+
+  const config = configs[status] || configs.pending;
+  const sizeClass = size === 'sm' ? 'text-xs px-2 py-1' : 'text-sm px-3 py-1.5';
+
   return (
-    <Badge className={`${config.bg} ${config.text} border-0 font-medium`}>
-      {dot && <span className="w-2 h-2 bg-current rounded-full inline-block mr-1" />}
-      {label || config.label}
+    <Badge className={`${config.className} ${sizeClass} border`}>
+      {config.label}
     </Badge>
   );
 }

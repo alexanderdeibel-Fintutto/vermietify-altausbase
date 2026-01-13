@@ -1,94 +1,126 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Bell, Mail, MessageSquare, Save } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Bell, Mail, MessageSquare, Clock } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
-export default function NotificationPreferencesPanel({ 
+export default function NotificationPreferencesPanel({
   onSave,
-  initialPreferences = {}
+  loading = false,
 }) {
-  const [prefs, setPrefs] = useState(initialPreferences);
-  const [saving, setSaving] = useState(false);
+  const [preferences, setPreferences] = useState({
+    emailNotifications: true,
+    pushNotifications: true,
+    inAppNotifications: true,
+    dailyDigest: true,
+    quietHoursStart: '22:00',
+    quietHoursEnd: '08:00',
+  });
 
-  const channels = [
-    { id: 'email', label: 'E-Mail', icon: Mail },
-    { id: 'in_app', label: 'In-App', icon: Bell },
-    { id: 'sms', label: 'SMS', icon: MessageSquare }
-  ];
-
-  const categories = [
-    { id: 'invoices', label: 'Rechnungen' },
-    { id: 'contracts', label: 'Verträge' },
-    { id: 'payments', label: 'Zahlungen' },
-    { id: 'system', label: 'System' }
-  ];
+  const handleChange = (key, value) => {
+    setPreferences(prev => ({ ...prev, [key]: value }));
+  };
 
   const handleSave = async () => {
-    setSaving(true);
-    try {
-      await onSave?.(prefs);
-    } finally {
-      setSaving(false);
-    }
+    await onSave?.(preferences);
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Benachrichtigungen</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Bell className="w-5 h-5" />
+          Benachrichtigungseinstellungen
+        </CardTitle>
+        <CardDescription>
+          Verwalten Sie Ihre Benachrichtigungsprefesenzen
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Channels */}
-        <div>
-          <p className="text-sm font-medium text-slate-700 mb-3">Kanäle</p>
-          <div className="space-y-2">
-            {channels.map(channel => {
-              const Icon = channel.icon;
-              return (
-                <div key={channel.id} className="flex items-center justify-between p-2 rounded hover:bg-slate-50">
-                  <div className="flex items-center gap-2">
-                    <Icon className="w-4 h-4 text-slate-500" />
-                    <span className="text-sm text-slate-700">{channel.label}</span>
-                  </div>
-                  <Switch
-                    checked={prefs[`channel_${channel.id}`] ?? true}
-                    onCheckedChange={(checked) =>
-                      setPrefs(p => ({ ...p, [`channel_${channel.id}`]: checked }))
-                    }
-                  />
-                </div>
-              );
-            })}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50">
+            <div className="flex items-center gap-2">
+              <Mail className="w-4 h-4 text-slate-600" />
+              <span className="text-sm font-medium">Email-Benachrichtigungen</span>
+            </div>
+            <Switch
+              checked={preferences.emailNotifications}
+              onCheckedChange={(val) => handleChange('emailNotifications', val)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-slate-600" />
+              <span className="text-sm font-medium">Push-Benachrichtigungen</span>
+            </div>
+            <Switch
+              checked={preferences.pushNotifications}
+              onCheckedChange={(val) => handleChange('pushNotifications', val)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50">
+            <div className="flex items-center gap-2">
+              <Bell className="w-4 h-4 text-slate-600" />
+              <span className="text-sm font-medium">In-App-Benachrichtigungen</span>
+            </div>
+            <Switch
+              checked={preferences.inAppNotifications}
+              onCheckedChange={(val) => handleChange('inAppNotifications', val)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50">
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-slate-600" />
+              <span className="text-sm font-medium">Täglicher Digest</span>
+            </div>
+            <Switch
+              checked={preferences.dailyDigest}
+              onCheckedChange={(val) => handleChange('dailyDigest', val)}
+            />
           </div>
         </div>
 
-        {/* Categories */}
-        <div>
-          <p className="text-sm font-medium text-slate-700 mb-3">Kategorien</p>
-          <div className="space-y-2">
-            {categories.map(category => (
-              <div key={category.id} className="flex items-center justify-between p-2 rounded hover:bg-slate-50">
-                <span className="text-sm text-slate-700">{category.label}</span>
-                <Switch
-                  checked={prefs[`category_${category.id}`] ?? true}
-                  onCheckedChange={(checked) =>
-                    setPrefs(p => ({ ...p, [`category_${category.id}`]: checked }))
-                  }
-                />
-              </div>
-            ))}
+        <div className="border-t pt-4">
+          <h4 className="text-sm font-medium mb-3">Ruhezeiten</h4>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-slate-600">Von</label>
+              <input
+                type="time"
+                value={preferences.quietHoursStart}
+                onChange={(e) => handleChange('quietHoursStart', e.target.value)}
+                className="w-full px-2 py-1 border rounded text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-600">Bis</label>
+              <input
+                type="time"
+                value={preferences.quietHoursEnd}
+                onChange={(e) => handleChange('quietHoursEnd', e.target.value)}
+                className="w-full px-2 py-1 border rounded text-sm"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Save Button */}
         <Button
           onClick={handleSave}
-          disabled={saving}
-          className="w-full bg-blue-600 hover:bg-blue-700 gap-2"
+          disabled={loading}
+          className="w-full bg-blue-600 hover:bg-blue-700"
         >
-          <Save className="w-4 h-4" />
-          {saving ? 'Wird gespeichert...' : 'Speichern'}
+          {loading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Wird gespeichert...
+            </>
+          ) : (
+            'Speichern'
+          )}
         </Button>
       </CardContent>
     </Card>
