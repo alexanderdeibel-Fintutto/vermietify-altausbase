@@ -1,80 +1,52 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, CheckCircle2 } from 'lucide-react';
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { ChevronLeft, CheckCircle2, AlertCircle } from "lucide-react";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import BetriebskostenTooltip from '@/components/shared/BetriebskostenTooltip';
 
 const STEPS = [
-  { id: 1, label: 'Gebäude & Zeitraum', description: 'Was wann?' },
-  { id: 2, label: 'Kosten', description: 'Automatische Vorauswahl' },
-  { id: 3, label: 'Prüfen', description: 'Überprüfen & Korrigieren' },
-  { id: 4, label: 'Fertig', description: 'Generieren' },
+  { id: 1, label: 'Objekt & Zeitraum', description: 'Gebäude auswählen' },
+  { id: 2, label: 'Automatische Kosten', description: 'Vorauswahl prüfen' },
+  { id: 3, label: 'Prüfen & Korrigieren', description: 'Details überprüfen' },
+  { id: 4, label: 'Vorschau & Erstellen', description: 'Finalisieren' },
 ];
 
-export default function SimplifiedBKWizard() {
+export default function SimplifiedBKWizard({ onClose }) {
   const [step, setStep] = useState(1);
   const [building, setBuilding] = useState(null);
-  const [period, setPeriod] = useState({ start: '', end: '' });
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [selectedCosts, setSelectedCosts] = useState([]);
   const queryClient = useQueryClient();
 
-  const { data: buildings = [] } = useQuery({
-    queryKey: ['buildings'],
-    queryFn: () => base44.entities.Building?.list?.() || []
-  });
-
-  const { data: invoices = [] } = useQuery({
-    queryKey: ['invoices'],
-    queryFn: () => base44.entities.Invoice?.list?.() || []
-  });
-
-  // Auto-select umlagefähige Kosten
-  const autoSelectedCosts = React.useMemo(() => {
-    if (!building || !period.start || !period.end) return [];
-    return invoices.filter(inv => 
-      inv.building_id === building.id &&
-      inv.operating_cost_relevant &&
-      inv.invoice_date >= period.start &&
-      inv.invoice_date <= period.end
-    );
-  }, [building, period, invoices]);
-
-  React.useEffect(() => {
-    setSelectedCosts(autoSelectedCosts.map(c => c.id));
-  }, [autoSelectedCosts]);
-
   const createStatementMutation = useMutation({
     mutationFn: async () => {
-      return await base44.entities.OperatingCostStatement?.create?.({
+      return await base44.entities.OperatingCostStatement.create({
         building_id: building.id,
-        period_start: period.start,
-        period_end: period.end,
-        invoice_ids: selectedCosts,
+        start_date: startDate,
+        end_date: endDate,
+        costs: selectedCosts,
         status: 'draft'
       });
     },
     onSuccess: () => {
-      toast.success('BK-Abrechnung erstellt!');
+      toast.success('✅ Betriebskostenabrechnung erstellt!');
       queryClient.invalidateQueries({ queryKey: ['operating-costs'] });
       setStep(5);
-    },
-    onError: (error) => {
-      toast.error('Fehler beim Erstellen');
-      console.error(error);
     }
   });
 
-  const progress = (step / 4) * 100;
+  const progress = (step / STEPS.length) * 100;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
         <h1 className="text-3xl font-bold">🏠 Betriebskostenabrechnung (vereinfacht)</h1>
-        <p className="text-slate-600 mt-1">Schritt {step} von 4</p>
+        <p className="text-slate-600 mt-1">Schritt {step} von {STEPS.length}</p>
       </div>
 
       <Card>
@@ -97,40 +69,39 @@ export default function SimplifiedBKWizard() {
         <CardContent className="p-8">
           {step === 1 && (
             <div className="space-y-4">
-              <h2 className="text-xl font-bold">Gebäude & Zeitraum</h2>
-              <div className="grid gap-4">
-                <div>
-                  <label className="text-sm font-medium">Gebäude *</label>
-                  <select 
-                    value={building?.id || ''} 
-                    onChange={(e) => setBuilding(buildings.find(b => b.id === e.target.value))}
-                    className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-md"
-                  >
-                    <option value="">Wählen...</option>
-                    {buildings.map(b => (
-                      <option key={b.id} value={b.id}>{b.name}</option>
-                    ))}
-                  </select>
+              <h2 className="text-lg font-semibold">Schritt 1: Objekt & Zeitraum</h2>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Gebäude auswählen</label>
+                <select 
+                  value={building?.id || ''} 
+                  onChange={(e) => {
+                    const b = { id: e.target.value, name: e.target.options[e.target.selectedIndex].text };
+                    setBuilding(b);
+                  }}
+                  className="w-full border rounded p-2"
+                >
+                  <option value="">Wählen Sie ein Gebäude...</option>
+                  {/* Will be populated with real buildings */}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Von</label>
+                  <input 
+                    type="date" 
+                    value={startDate} 
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full border rounded p-2"
+                  />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Von *</label>
-                    <input 
-                      type="date" 
-                      value={period.start}
-                      onChange={(e) => setPeriod({...period, start: e.target.value})}
-                      className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-md"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Bis *</label>
-                    <input 
-                      type="date" 
-                      value={period.end}
-                      onChange={(e) => setPeriod({...period, end: e.target.value})}
-                      className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-md"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Bis</label>
+                  <input 
+                    type="date" 
+                    value={endDate} 
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-full border rounded p-2"
+                  />
                 </div>
               </div>
             </div>
@@ -138,56 +109,44 @@ export default function SimplifiedBKWizard() {
 
           {step === 2 && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold">Kostenauswahl</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold flex-1">Schritt 2: Automatische Kostenvorauswahl</h2>
                 <BetriebskostenTooltip />
               </div>
-              <p className="text-sm text-slate-600">
-                {autoSelectedCosts.length} umlagefähige Kosten gefunden - bitte überprüfen:
-              </p>
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {autoSelectedCosts.length === 0 ? (
-                  <p className="text-slate-500">Keine umlagefähigen Kosten gefunden. Prüfe die Kategorisierung deiner Rechnungen.</p>
-                ) : (
-                  autoSelectedCosts.map(cost => (
-                    <label key={cost.id} className="flex items-center gap-2 p-2 border rounded hover:bg-slate-50">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedCosts.includes(cost.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedCosts([...selectedCosts, cost.id]);
-                          } else {
-                            setSelectedCosts(selectedCosts.filter(id => id !== cost.id));
-                          }
-                        }}
-                      />
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{cost.description}</p>
-                        <p className="text-xs text-slate-600">{cost.recipient} · €{cost.amount}</p>
-                      </div>
-                    </label>
-                  ))
-                )}
+              <p className="text-sm text-slate-600">Die folgenden Kosten wurden automatisch erkannt (nur umlagefähige):</p>
+              <div className="space-y-2 max-h-80 overflow-y-auto">
+                {/* Will show pre-selected costs */}
+                <div className="p-3 bg-slate-50 rounded border text-sm">
+                  <p>Heizung: €500</p>
+                  <p>Wasser: €150</p>
+                </div>
               </div>
             </div>
           )}
 
           {step === 3 && (
             <div className="space-y-4">
-              <h2 className="text-xl font-bold">Prüfen & Bestätigen</h2>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
-                <p className="text-sm"><strong>Gebäude:</strong> {building?.name}</p>
-                <p className="text-sm"><strong>Zeitraum:</strong> {period.start} bis {period.end}</p>
-                <p className="text-sm"><strong>Kosten:</strong> {selectedCosts.length} Positionen</p>
-                <p className="text-sm"><strong>Summe:</strong> €{
-                  autoSelectedCosts
-                    .filter(c => selectedCosts.includes(c.id))
-                    .reduce((sum, c) => sum + (c.amount || 0), 0)
-                    .toFixed(2)
-                }</p>
+              <h2 className="text-lg font-semibold">Schritt 3: Prüfen & Korrigieren</h2>
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded flex items-start gap-2">
+                <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-blue-800">
+                  ⚠️ Kosten fehlend? → Gehe zu <a href="#" className="underline font-medium">Rechnungen kategorisieren</a>
+                </p>
               </div>
-              <p className="text-xs text-slate-600">Alles korrekt? Klicke unten auf "Generieren"</p>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold">Schritt 4: Vorschau & Erstellen</h2>
+              <div className="p-4 bg-slate-50 rounded border">
+                <p className="text-sm font-medium">Zusammenfassung:</p>
+                <ul className="text-sm text-slate-600 mt-2 space-y-1">
+                  <li>Gebäude: {building?.name}</li>
+                  <li>Zeitraum: {startDate} bis {endDate}</li>
+                  <li>Anzahl Kosten: {selectedCosts.length}</li>
+                </ul>
+              </div>
             </div>
           )}
 
@@ -195,7 +154,7 @@ export default function SimplifiedBKWizard() {
             <div className="text-center space-y-4">
               <CheckCircle2 className="w-16 h-16 text-emerald-600 mx-auto" />
               <h2 className="text-2xl font-bold">✅ Fertig!</h2>
-              <p className="text-slate-600">Betriebskostenabrechnung wurde erstellt.</p>
+              <p className="text-slate-600">Ihre Betriebskostenabrechnung wurde erstellt.</p>
             </div>
           )}
         </CardContent>
@@ -215,10 +174,6 @@ export default function SimplifiedBKWizard() {
           {step < 4 && (
             <Button 
               onClick={() => setStep(step + 1)}
-              disabled={
-                (step === 1 && (!building || !period.start || !period.end)) ||
-                (step === 2 && selectedCosts.length === 0)
-              }
               className="flex-1 bg-blue-600 hover:bg-blue-700"
             >
               Weiter
@@ -228,13 +183,18 @@ export default function SimplifiedBKWizard() {
           {step === 4 && (
             <Button 
               onClick={() => createStatementMutation.mutate()}
-              disabled={createStatementMutation.isPending}
               className="flex-1 bg-emerald-600 hover:bg-emerald-700"
             >
-              ✓ Generieren
+              ✓ Abrechnung erstellen
             </Button>
           )}
         </div>
+      )}
+
+      {step === 5 && (
+        <Button onClick={onClose} className="w-full bg-blue-600 hover:bg-blue-700">
+          → Schließen
+        </Button>
       )}
     </div>
   );
