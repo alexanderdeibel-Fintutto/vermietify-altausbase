@@ -20,6 +20,8 @@ import DocumentVersionHistory from '../components/documents/DocumentVersionHisto
 import ApprovalWorkflowDialog from '../components/documents/ApprovalWorkflowDialog';
 import AdvancedFilterBar from '../components/shared/AdvancedFilterBar';
 import DataExportImport from '../components/shared/DataExportImport';
+import RealtimeSyncIndicator from '../components/documents/RealtimeSyncIndicator';
+import DocumentActivityFeed from '../components/documents/DocumentActivityFeed';
 
 export default function DocumentsPage() {
     const [importerOpen, setImporterOpen] = useState(false);
@@ -193,6 +195,7 @@ export default function DocumentsPage() {
                         </div>
                         {selectedDocumentForVersion && (
                             <div className="space-y-4">
+                                <RealtimeSyncIndicator documentId={selectedDocumentForVersion.id} />
                                 <DocumentVersionHistory 
                                     documentId={selectedDocumentForVersion.id}
                                     onSelectVersion={(version) => {
@@ -200,6 +203,7 @@ export default function DocumentsPage() {
                                         setApprovalDialogOpen(true);
                                     }}
                                 />
+                                <DocumentActivityFeed documentId={selectedDocumentForVersion.id} />
                                 <Button 
                                     className="w-full"
                                     onClick={() => setApprovalDialogOpen(true)}
