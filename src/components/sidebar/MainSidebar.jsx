@@ -27,20 +27,13 @@ const menuItems = [
 ];
 
 const adminMenuItems = [
-  { name: 'Übersicht', page: 'AdminPricingOverview' },
   { name: 'Produkte', page: 'AdminPricingProducts' },
   { name: 'Feature-Gruppen', page: 'AdminPricingFeatureGroups' },
   { name: 'Features', page: 'AdminPricingFeatures' },
-  { name: 'Tarife', page: 'AdminPricingTiersV2' },
-  { name: 'Limits', page: 'AdminLimitsConfig' },
+  { name: 'Tarife', page: 'AdminPricingTiers' },
   { name: 'Bundles', page: 'AdminPricingBundles' },
   { name: 'Rabatte', page: 'AdminPricingDiscounts' },
   { name: 'Upsell-Trigger', page: 'AdminPricingUpsellTriggers' },
-  { name: 'Simulator', page: 'AdminPricingSimulator' },
-  { name: 'Export', page: 'AdminPricingExport' },
-  { name: 'Audit-Log', page: 'AdminPricingAuditLog' },
-  { name: 'User-Subscriptions', page: 'AdminUserSubscriptions' },
-  { name: 'Pricing-Matrix', page: 'AdminPricingMatrix' },
 ];
 
 export default function MainSidebar() {
