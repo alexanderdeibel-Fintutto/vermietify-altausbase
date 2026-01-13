@@ -261,6 +261,7 @@ import SteuerApp from './pages/SteuerApp';
 import SteuerVermoegenApp from './pages/SteuerVermoegenApp';
 import StocksAndETFs from './pages/StocksAndETFs';
 import SubmissionDashboard from './pages/SubmissionDashboard';
+import SubscriptionSettings from './pages/SubscriptionSettings';
 import SuiteManagement from './pages/SuiteManagement';
 import SuppliersManagement from './pages/SuppliersManagement';
 import SupportCenter from './pages/SupportCenter';
@@ -326,8 +327,8 @@ import TaxReturnDetail from './pages/TaxReturnDetail';
 import TaxReturnFilingManager from './pages/TaxReturnFilingManager';
 import TaxReturns from './pages/TaxReturns';
 import TaxRiskAssessment from './pages/TaxRiskAssessment';
-import TaxRiskAssessmentPanel from './pages/TaxRiskAssessmentPanel';
 import TaxRuleAdmin from './pages/TaxRuleAdmin';
+import TaxRiskAssessmentPanel from './pages/TaxRiskAssessmentPanel';
 import TaxSavingsOpportunities from './pages/TaxSavingsOpportunities';
 import TaxScenarioComparison from './pages/TaxScenarioComparison';
 import TaxScenarioSimulator from './pages/TaxScenarioSimulator';
@@ -401,7 +402,7 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import SubscriptionSettings from './pages/SubscriptionSettings';
+import Pricing from './pages/Pricing';
 import __Layout from './Layout.jsx';
 
 
@@ -669,6 +670,7 @@ export const PAGES = {
     "SteuerVermoegenApp": SteuerVermoegenApp,
     "StocksAndETFs": StocksAndETFs,
     "SubmissionDashboard": SubmissionDashboard,
+    "SubscriptionSettings": SubscriptionSettings,
     "SuiteManagement": SuiteManagement,
     "SuppliersManagement": SuppliersManagement,
     "SupportCenter": SupportCenter,
@@ -734,8 +736,8 @@ export const PAGES = {
     "TaxReturnFilingManager": TaxReturnFilingManager,
     "TaxReturns": TaxReturns,
     "TaxRiskAssessment": TaxRiskAssessment,
-    "TaxRiskAssessmentPanel": TaxRiskAssessmentPanel,
     "TaxRuleAdmin": TaxRuleAdmin,
+    "TaxRiskAssessmentPanel": TaxRiskAssessmentPanel,
     "TaxSavingsOpportunities": TaxSavingsOpportunities,
     "TaxScenarioComparison": TaxScenarioComparison,
     "TaxScenarioSimulator": TaxScenarioSimulator,
@@ -809,7 +811,7 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "SubscriptionSettings": SubscriptionSettings,
+    "Pricing": Pricing,
 }
 
 export const pagesConfig = {
