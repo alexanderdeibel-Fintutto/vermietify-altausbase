@@ -2,7 +2,7 @@ import React from 'react';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export default class ErrorBoundaryWithRetry extends React.Component {
+export class ErrorBoundaryWithRetry extends React.Component {
   constructor(props) {
     super(props);
     this.state = { hasError: false, error: null, retryCount: 0 };
