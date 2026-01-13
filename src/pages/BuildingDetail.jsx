@@ -35,7 +35,6 @@ import BuildingTransfersOverview from '@/components/building-detail/BuildingTran
 import QuickContractCreator from '@/components/contracts/QuickContractCreator';
 import AutoCreateUnitsDialog from '@/components/units/AutoCreateUnitsDialog';
 import BreadcrumbNavigation from '@/components/navigation/BreadcrumbNavigation';
-import BreadcrumbNavigation from '@/components/navigation/BreadcrumbNavigation';
 
 export default function BuildingDetailPage() {
 
@@ -124,9 +123,8 @@ export default function BuildingDetailPage() {
   return (
     <ErrorBoundaryWithRetry>
     <div className="space-y-6">
-      <BreadcrumbNavigation crumbs={[
-          { label: 'Dashboard', link: createPageUrl('Dashboard') },
-          { label: 'Gebäude', link: createPageUrl('Buildings') },
+      <BreadcrumbNavigation items={[
+          { label: 'Gebäude', href: createPageUrl('Buildings') },
           { label: building.name }
       ]} />
 
