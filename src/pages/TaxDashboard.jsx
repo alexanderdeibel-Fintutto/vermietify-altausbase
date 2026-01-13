@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
@@ -70,6 +71,7 @@ export default function TaxDashboard() {
     const highPriority = suggestions.filter(s => s.priority === 'high').length;
 
     return (
+        <FeatureGate featureKey="tax_automation" requiredPlanLevel={3}>
         <div className="p-6 space-y-6">
             <div className="flex items-center justify-between">
                 <div>
@@ -235,5 +237,6 @@ export default function TaxDashboard() {
                 </CardContent>
             </Card>
         </div>
+        </FeatureGate>
     );
 }

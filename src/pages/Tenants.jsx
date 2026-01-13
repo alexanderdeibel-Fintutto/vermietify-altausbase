@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Users, Search } from 'lucide-react';
+import { FeatureGateInline } from '@/components/subscription/FeatureGateInline';
 import TenantFilterBar from '@/components/tenants/TenantFilterBar';
 import TenantTable from '@/components/tenants/TenantTable';
 import TenantBulkActionsBar from '@/components/tenants/TenantBulkActionsBar';
@@ -138,10 +139,16 @@ export default function TenantsPage() {
           <h1 className="text-3xl font-light text-slate-900">Mieter</h1>
           <p className="text-slate-600 mt-1">Verwalten Sie Ihre Mieter und deren Verträge</p>
         </div>
-        <Button onClick={() => setQuickCreateOpen(true)} className="bg-emerald-600 hover:bg-emerald-700">
-          <Users className="w-4 h-4 mr-2" />
-          Schnell-Erfassung
-        </Button>
+        <FeatureGateInline 
+          featureKey="tenant_management"
+          currentCount={tenants?.length || 0}
+          limitKey="objects"
+        >
+          <Button onClick={() => setQuickCreateOpen(true)} className="bg-emerald-600 hover:bg-emerald-700">
+            <Users className="w-4 h-4 mr-2" />
+            Schnell-Erfassung
+          </Button>
+        </FeatureGateInline>
       </div>
 
       {/* Enhanced Search */}

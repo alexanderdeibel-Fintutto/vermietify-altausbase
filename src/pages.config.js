@@ -408,6 +408,7 @@ import AdminSubscriptionAddons from './pages/AdminSubscriptionAddons';
 import AdminPricingMatrix from './pages/AdminPricingMatrix';
 import AdminSubscriptions from './pages/AdminSubscriptions';
 import AdminStripeSetup from './pages/AdminStripeSetup';
+import AdminLimitsConfig from './pages/AdminLimitsConfig';
 import __Layout from './Layout.jsx';
 
 
@@ -822,6 +823,7 @@ export const PAGES = {
     "AdminPricingMatrix": AdminPricingMatrix,
     "AdminSubscriptions": AdminSubscriptions,
     "AdminStripeSetup": AdminStripeSetup,
+    "AdminLimitsConfig": AdminLimitsConfig,
 }
 
 export const pagesConfig = {
