@@ -36,6 +36,8 @@ import { useSelectedBuilding } from '@/components/hooks/useSelectedBuilding';
 import ProgressIndicator from '@/components/onboarding/ProgressIndicator';
 import OfflineIndicator from '@/components/shared/OfflineIndicator';
 import SubscriptionInitializer from '@/components/subscription/SubscriptionInitializer';
+import KeyboardShortcutsHandler from '@/components/shortcuts/KeyboardShortcutsHandler';
+import KeyboardShortcutsHelp from '@/components/shortcuts/KeyboardShortcutsHelp';
 
 // Lazy load heavy components
 const TesterTracker = lazy(() => import('@/components/testing/TesterTracker'));
@@ -104,14 +106,16 @@ export default function Layout({ children, currentPageName }) {
     const themeColor = currentBuilding?.theme_color || '#1e293b';
 
     return (
-                            <ThemeProvider>
-                            <SubscriptionInitializer>
-                            <OnboardingRedirect>
-                            <Suspense fallback={null}>
-                              <TesterTracker>
-                                <Suspense fallback={null}>
-                                   <FeatureUnlockNotification />
-                                 </Suspense>
+                                    <ThemeProvider>
+                                    <SubscriptionInitializer>
+                                    <OnboardingRedirect>
+                                    <KeyboardShortcutsHandler />
+                                    <KeyboardShortcutsHelp />
+                                    <Suspense fallback={null}>
+                                      <TesterTracker>
+                                        <Suspense fallback={null}>
+                                           <FeatureUnlockNotification />
+                                         </Suspense>
                                  <div className="min-h-screen flex" style={{ backgroundColor: `${themeColor}04` }}>
                                    {/* Sidebar */}
                                    <MainSidebar />
