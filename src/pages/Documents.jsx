@@ -27,6 +27,8 @@ import DocumentComments from '../components/documents/DocumentComments';
 import DocumentTagManager from '../components/documents/DocumentTagManager';
 import DocumentRelationshipGraph from '../components/documents/DocumentRelationshipGraph';
 import DocumentPermissionManager from '../components/documents/DocumentPermissionManager';
+import DocumentSearchBar from '../components/documents/DocumentSearchBar';
+import DocumentTemplateManager from '../components/documents/DocumentTemplateManager';
 
 export default function DocumentsPage() {
     const [importerOpen, setImporterOpen] = useState(false);
@@ -37,6 +39,7 @@ export default function DocumentsPage() {
     const [approvalDialogOpen, setApprovalDialogOpen] = useState(false);
     const [selectedVersionId, setSelectedVersionId] = useState(null);
     const [slackShareOpen, setSlackShareOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const queryClient = useQueryClient();
 
     // Fetch data for upload dialog

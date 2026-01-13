@@ -1,28 +1,54 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, X } from 'lucide-react';
+import { debounce } from 'lodash';
 
-export default function DocumentSearchBar() {
+export default function DocumentSearchBar({ onSearch, loading = false }) {
   const [query, setQuery] = useState('');
-  const navigate = useNavigate();
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (query.trim()) {
-      navigate(`/DocumentSearch?q=${encodeURIComponent(query)}`);
-    }
+  const debouncedSearch = useCallback(
+    debounce((searchQuery) => {
+      onSearch(searchQuery);
+    }, 300),
+    [onSearch]
+  );
+
+  const handleChange = (e) => {
+    const value = e.target.value;
+    setQuery(value);
+    debouncedSearch(value);
+  };
+
+  const handleClear = () => {
+    setQuery('');
+    onSearch('');
   };
 
   return (
-    <form onSubmit={handleSearch} className="relative flex-1 max-w-md">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-      <Input
-        placeholder="Dokumente durchsuchen..."
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        className="pl-10 bg-slate-50"
-      />
-    </form>
+    <div className="flex gap-2">
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Input
+          value={query}
+          onChange={handleChange}
+          placeholder="Dokumente durchsuchen..."
+          className="pl-9 text-sm"
+        />
+        {query && (
+          <button
+            onClick={handleClear}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+      {loading && (
+        <div className="flex items-center text-xs text-slate-500">
+          Suche...
+        </div>
+      )}
+    </div>
   );
 }
