@@ -40,7 +40,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Search, MoreVertical, Pencil, Trash2, FileText, Building2, TrendingUp, TrendingDown, Filter, Download, Tag, Users, Sparkles, HelpCircle } from 'lucide-react';
+import { Plus, Search, MoreVertical, Pencil, Trash2, FileText, Building2, TrendingUp, TrendingDown, Filter, Download, Tag, Users, Sparkles, HelpCircle, Smartphone } from 'lucide-react';
 import UmlagefaehigBadge from '@/components/shared/UmlagefaehigBadge';
 import InvoiceCategoryAssistant from '@/components/invoices/InvoiceCategoryAssistant';
 import { toast } from 'sonner';
@@ -51,10 +51,32 @@ import CostTypeForm from '@/components/cost-types/CostTypeForm';
 import RecipientForm from '@/components/recipients/RecipientForm';
 import DATEVExportButton from '@/components/invoices/DATEVExportButton';
 import EmptyStateWithAction from '@/components/shared/EmptyStateWithAction';
+import { useKeyboardShortcuts } from '@/components/hooks/useKeyboardShortcuts';
+import FloatingActionMenu from '@/components/shared/FloatingActionMenu';
+import ContextHelp from '@/components/shared/ContextHelp';
 
 export default function Invoices() {
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState('invoices');
+
+    // Keyboard shortcuts
+    useKeyboardShortcuts({
+      onNew: () => {
+        if (activeTab === 'invoices') {
+          setEditingInvoice(null);
+          setInvoiceFormOpen(true);
+        }
+      },
+      onSearch: () => {
+        // Focus search field (implementation depends on structure)
+        document.querySelector('[data-search-input]')?.focus();
+      },
+      onEscape: () => {
+        setInvoiceFormOpen(false);
+        setCostTypeFormOpen(false);
+        setRecipientFormOpen(false);
+      }
+    });
     const [selectedInvoices, setSelectedInvoices] = useState(new Set());
     
     // Invoice state
@@ -490,6 +512,25 @@ export default function Invoices() {
         return <div className="p-8">Lädt...</div>;
     }
 
+    const floatingActions = [
+      {
+        id: 'new-invoice',
+        label: 'Neue Rechnung',
+        icon: FileText,
+        onClick: () => {
+          setEditingInvoice(null);
+          setInvoiceFormOpen(true);
+        }
+      },
+      {
+        id: 'smart-invoice',
+        label: 'Smart-Erfassung',
+        icon: Sparkles,
+        onClick: () => setIntelligentWizardOpen(true),
+        className: 'bg-blue-600 hover:bg-blue-700'
+      }
+    ];
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -673,7 +714,8 @@ export default function Invoices() {
                                     <div className="flex-1 relative">
                                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                                         <Input
-                                            placeholder="Suche nach Beschreibung, Referenz, Empfänger..."
+                                            data-search-input
+                                            placeholder="Suche nach Beschreibung, Referenz, Empfänger... (Ctrl+F)"
                                             value={invoiceSearchTerm}
                                             onChange={(e) => setInvoiceSearchTerm(e.target.value)}
                                             className="pl-10"
@@ -767,8 +809,8 @@ export default function Invoices() {
                                     </div>
                                 )
                             ) : (
-                                <div className="overflow-x-auto -mx-6 sm:mx-0 px-6 sm:px-0">
-                                    <Table className="text-sm">
+                                <div className="overflow-x-auto -mx-6 sm:mx-0 px-4 sm:px-0">
+                                    <Table className="text-xs sm:text-sm">
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead className="w-8">
