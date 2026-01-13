@@ -1,95 +1,100 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Circle, ChevronDown, ChevronUp } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Progress } from '@/components/ui/progress';
+import { CheckCircle2, Circle, ChevronRight } from 'lucide-react';
 import { createPageUrl } from '@/utils';
 
-const CHECKLIST_ITEMS = [
-  { id: 'building', label: 'Erstes Gebäude anlegen', link: createPageUrl('Buildings') },
-  { id: 'units', label: 'Einheiten zum Gebäude hinzufügen', link: createPageUrl('Buildings') },
-  { id: 'purchase', label: 'Kaufvertrag mit Grundstücksanteil', link: createPageUrl('Buildings') },
-  { id: 'owners', label: 'Eigentümer mit Anteilen zuordnen', link: createPageUrl('Buildings') },
-  { id: 'lease', label: 'Ersten Mietvertrag erstellen', link: createPageUrl('Tenants') },
-  { id: 'bookings', label: 'Buchungen generieren', link: createPageUrl('GeneratedBookings') },
-  { id: 'bank', label: 'Bankverbindung einrichten', link: createPageUrl('BankAccounts') },
-  { id: 'invoice', label: 'Erste Rechnung kategorisieren', link: createPageUrl('Invoices') },
-];
-
 export default function OnboardingChecklist() {
-  const [completed, setCompleted] = useState([]);
-  const [collapsed, setCollapsed] = useState(false);
+  const [progress, setProgress] = useState({});
+  const [user, setUser] = useState(null);
 
-  // Load from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('onboarding_checklist');
-    if (saved) {
-      setCompleted(JSON.parse(saved));
-    }
+    const loadUser = async () => {
+      try {
+        const u = await base44.auth.me();
+        setUser(u);
+        const saved = localStorage.getItem(`onboarding_${u?.id}`);
+        if (saved) {
+          setProgress(JSON.parse(saved));
+        }
+      } catch (error) {
+        console.error('Error loading user:', error);
+      }
+    };
+    loadUser();
   }, []);
 
-  // Save to localStorage
+  const checklist = [
+    { id: 'building', label: 'Erstes Gebäude anlegen', page: 'Buildings' },
+    { id: 'units', label: 'Einheiten zum Gebäude hinzufügen', page: 'UnitsManagement' },
+    { id: 'contract', label: 'Kaufvertrag mit Grundstücksanteil', page: 'Buildings' },
+    { id: 'owner', label: 'Eigentümer mit Anteilen zuordnen', page: 'Buildings' },
+    { id: 'lease', label: 'Ersten Mietvertrag erstellen', page: 'Contracts' },
+    { id: 'bookings', label: 'Buchungen generieren', page: 'GeneratedBookings' },
+    { id: 'bank', label: 'Bankverbindung einrichten', page: 'BankAccounts' },
+    { id: 'invoice', label: 'Erste Rechnung kategorisieren', page: 'Invoices' }
+  ];
+
+  const completed = Object.values(progress).filter(Boolean).length;
+  const completionPercent = (completed / checklist.length) * 100;
+
   const toggleItem = (id) => {
-    const newCompleted = completed.includes(id)
-      ? completed.filter(c => c !== id)
-      : [...completed, id];
-    setCompleted(newCompleted);
-    localStorage.setItem('onboarding_checklist', JSON.stringify(newCompleted));
+    const newProgress = { ...progress, [id]: !progress[id] };
+    setProgress(newProgress);
+    if (user?.id) {
+      localStorage.setItem(`onboarding_${user.id}`, JSON.stringify(newProgress));
+    }
   };
 
-  const progress = Math.round((completed.length / CHECKLIST_ITEMS.length) * 100);
+  if (completionPercent === 100) {
+    return null;
+  }
 
   return (
-    <Card className="border-blue-200 bg-blue-50">
-      <CardHeader className="pb-2 cursor-pointer" onClick={() => setCollapsed(!collapsed)}>
+    <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <CardTitle className="text-sm">🎯 Onboarding</CardTitle>
-            <Badge variant="outline" className="text-xs">
-              {completed.length}/{CHECKLIST_ITEMS.length} ({progress}%)
-            </Badge>
+          <div>
+            <CardTitle className="text-lg">🚀 Onboarding-Fortschritt</CardTitle>
+            <p className="text-sm text-slate-600 mt-1">{completed}/{checklist.length} Schritte</p>
           </div>
-          {collapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+          <div className="text-2xl font-light text-slate-700">{Math.round(completionPercent)}%</div>
         </div>
-        <div className="h-1.5 bg-blue-200 rounded-full mt-2">
-          <div
-            className="h-full bg-blue-600 rounded-full transition-all"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+        <Progress value={completionPercent} className="mt-3" />
       </CardHeader>
-      {!collapsed && (
-        <CardContent className="space-y-2">
-          {CHECKLIST_ITEMS.map((item) => (
-            <Link key={item.id} to={item.link}>
-              <div className="flex items-center gap-2 p-2 rounded hover:bg-blue-100 transition cursor-pointer">
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    toggleItem(item.id);
-                  }}
-                  className="focus:outline-none"
-                >
-                  {completed.includes(item.id) ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  ) : (
-                    <Circle className="h-4 w-4 text-slate-400" />
-                  )}
-                </button>
-                <span
-                  className={`text-xs flex-1 ${
-                    completed.includes(item.id) ? 'line-through text-slate-500' : ''
-                  }`}
-                >
-                  {item.label}
-                </span>
-                <span className="text-slate-300 text-xs">→</span>
-              </div>
-            </Link>
-          ))}
-        </CardContent>
-      )}
+      <CardContent className="space-y-2">
+        {checklist.map(item => (
+          <button
+            key={item.id}
+            onClick={() => toggleItem(item.id)}
+            className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/50 transition-colors text-left"
+          >
+            {progress[item.id] ? (
+              <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+            ) : (
+              <Circle className="w-5 h-5 text-slate-300 flex-shrink-0" />
+            )}
+            <span className={progress[item.id] ? 'line-through text-slate-500 text-sm' : 'text-sm text-slate-700'}>
+              {item.label}
+            </span>
+          </button>
+        ))}
+        {completed < checklist.length && (
+          <Button
+            asChild
+            variant="secondary"
+            size="sm"
+            className="w-full mt-3"
+          >
+            <a href={createPageUrl(checklist.find(c => !progress[c.id])?.page || 'Dashboard')}>
+              Nächster Schritt
+              <ChevronRight className="w-4 h-4 ml-2" />
+            </a>
+          </Button>
+        )}
+      </CardContent>
     </Card>
   );
 }
