@@ -12,6 +12,8 @@ import DeadlineWarningSystem from '@/components/shared/DeadlineWarningSystem';
 import OfflineIndicator from '@/components/shared/OfflineIndicator';
 import OnboardingChecklist from '@/components/shared/OnboardingChecklist';
 import ActionRequiredWidget from '@/components/dashboard/ActionRequiredWidget';
+import SubscriptionWidget from '@/components/dashboard/widgets/SubscriptionWidget';
+import LimitWarning from '@/components/subscription/LimitWarning';
 
 const DEFAULT_LAYOUT = AVAILABLE_WIDGETS.slice(0, 7).map((widget, idx) => ({
   id: widget.id,
@@ -111,6 +113,9 @@ export default function Dashboard() {
       {/* Offline Indicator */}
       <OfflineIndicator />
 
+      {/* Limit Warnings */}
+      <LimitWarning />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -162,6 +167,7 @@ export default function Dashboard() {
 
         {/* Right Sidebar */}
         <div className="space-y-6">
+          <SubscriptionWidget />
           <ActionRequiredWidget />
           <OnboardingChecklist />
         </div>
