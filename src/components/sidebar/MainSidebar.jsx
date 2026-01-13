@@ -29,6 +29,7 @@ const adminMenuItems = [
   { name: 'Feature-Gruppen', page: 'AdminPricingFeatureGroups' },
   { name: 'Features', page: 'AdminPricingFeatures' },
   { name: 'Tarife', page: 'AdminPricingTiers' },
+  { name: 'Bundles', page: 'AdminPricingBundles' },
   { name: 'Limits', page: 'AdminLimitsConfig' },
   { name: 'User-Subscriptions', page: 'AdminUserSubscriptions' },
   { name: 'Pricing-Matrix', page: 'AdminPricingMatrix' },
