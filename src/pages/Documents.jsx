@@ -19,6 +19,7 @@ import DocumentArchivePanel from '../components/documents/DocumentArchivePanel';
 import DocumentVersionHistory from '../components/documents/DocumentVersionHistory';
 import ApprovalWorkflowDialog from '../components/documents/ApprovalWorkflowDialog';
 import AdvancedFilterBar from '../components/shared/AdvancedFilterBar';
+import DataExportImport from '../components/shared/DataExportImport';
 
 export default function DocumentsPage() {
     const [importerOpen, setImporterOpen] = useState(false);
@@ -137,6 +138,11 @@ export default function DocumentsPage() {
             >
             <Tabs defaultValue="documents" className="w-full">
                 <div className="flex justify-between items-center mb-4">
+                    <DataExportImport 
+                        data={documents}
+                        filename={`documents-export-${new Date().toISOString().split('T')[0]}.json`}
+                        dataType="Dokumente"
+                    />
                     <Button
                         onClick={() => setUploadOpen(true)}
                         className="bg-blue-600 hover:bg-blue-700 font-light gap-2"
