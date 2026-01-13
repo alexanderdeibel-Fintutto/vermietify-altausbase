@@ -444,6 +444,7 @@ import AnalyticsHub from './pages/AnalyticsHub';
 import ComplianceHub from './pages/ComplianceHub';
 import ReportingHub from './pages/ReportingHub';
 import OperatingCostsSimplified from './pages/OperatingCostsSimplified';
+import FinancingManagement from './pages/FinancingManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -894,6 +895,7 @@ export const PAGES = {
     "ComplianceHub": ComplianceHub,
     "ReportingHub": ReportingHub,
     "OperatingCostsSimplified": OperatingCostsSimplified,
+    "FinancingManagement": FinancingManagement,
 }
 
 export const pagesConfig = {

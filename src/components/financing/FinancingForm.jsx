@@ -1,320 +1,170 @@
-import React from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import { Loader2, Sparkles } from 'lucide-react';
-import BookingPreviewDialog from '../bookings/BookingPreviewDialog';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format, parseISO } from 'date-fns';
+import { de } from 'date-fns/locale';
+import { CalendarIcon, Loader2 } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-export default function FinancingForm({ open, onOpenChange, onSubmit, initialData, isLoading, buildingId }) {
-    const [bookingPreviewOpen, setBookingPreviewOpen] = React.useState(false);
-    const [savedFinancingId, setSavedFinancingId] = React.useState(null);
-    const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
-        defaultValues: { 
-            building_id: buildingId,
-            sondertilgung_moeglich: false
-        }
-    });
+export default function FinancingForm({ open, onOpenChange, financing, onSuccess }) {
+  const queryClient = useQueryClient();
+  const [formData, setFormData] = useState(financing || {
+    building_id: '',
+    lender: '',
+    loan_amount: '',
+    interest_rate: '',
+    term_years: '',
+    start_date: null,
+    loan_type: 'mortgage',
+    status: 'active'
+  });
 
-    React.useEffect(() => {
-        if (open) {
-            if (initialData) {
-                reset({
-                    ...initialData,
-                    sondertilgung_moeglich: initialData.sondertilgung_moeglich || false
-                });
-            } else {
-                reset({ 
-                    building_id: buildingId,
-                    sondertilgung_moeglich: false
-                });
-            }
-        }
-    }, [initialData, reset, buildingId, open]);
+  const [startDate, setStartDate] = useState(financing?.start_date ? parseISO(financing.start_date) : null);
 
-    const handleFormSubmit = async (data) => {
-        try {
-            const result = await onSubmit({
-                ...data,
-                kreditbetrag: data.kreditbetrag ? parseFloat(data.kreditbetrag) : null,
-                zinssatz: data.zinssatz ? parseFloat(data.zinssatz) : null,
-                tilgungssatz: data.tilgungssatz ? parseFloat(data.tilgungssatz) : null,
-                laufzeit_monate: data.laufzeit_monate ? parseInt(data.laufzeit_monate) : null,
-                monatsrate: data.monatsrate ? parseFloat(data.monatsrate) : null,
-                restschuld: data.restschuld ? parseFloat(data.restschuld) : null,
-                sondertilgung_betrag: data.sondertilgung_betrag ? parseFloat(data.sondertilgung_betrag) : null,
-                bereitstellungszins: data.bereitstellungszins ? parseFloat(data.bereitstellungszins) : null,
-            });
-            
-            if (result?.id) {
-                setSavedFinancingId(result.id);
-                setBookingPreviewOpen(true);
-            }
-        } catch (error) {
-            console.error('Error submitting financing:', error);
-            toast.error('Fehler beim Speichern');
-        }
+  const mutation = useMutation({
+    mutationFn: (data) => financing 
+      ? base44.entities.Financing.update(financing.id, data)
+      : base44.entities.Financing.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['financing'] });
+      toast.success(financing ? 'Kreditvertrag aktualisiert' : 'Kreditvertrag erstellt');
+      onOpenChange(false);
+      onSuccess?.();
+    }
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const submissionData = {
+      ...formData,
+      start_date: startDate ? format(startDate, 'yyyy-MM-dd') : null,
+      loan_amount: parseFloat(formData.loan_amount),
+      interest_rate: parseFloat(formData.interest_rate),
+      term_years: parseInt(formData.term_years)
     };
+    mutation.mutate(submissionData);
+  };
 
-    const sondertilgungMoeglich = watch('sondertilgung_moeglich');
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>{financing ? 'Kreditvertrag bearbeiten' : 'Neuer Kreditvertrag'}</DialogTitle>
+        </DialogHeader>
 
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>
-                        {initialData ? 'Finanzierung bearbeiten' : 'Finanzierung anlegen'}
-                    </DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6 mt-4">
-                    <div className="space-y-4">
-                        <h3 className="font-semibold text-slate-800">Kreditgeber</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="col-span-2">
-                                <Label htmlFor="kreditgeber">Kreditgeber/Bank *</Label>
-                                <Input 
-                                    id="kreditgeber"
-                                    {...register('kreditgeber', { required: true })}
-                                    placeholder="Deutsche Bank"
-                                    className={errors.kreditgeber ? 'border-red-500' : ''}
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="ansprechpartner">Ansprechpartner</Label>
-                                <Input 
-                                    id="ansprechpartner"
-                                    {...register('ansprechpartner')}
-                                    placeholder="Max Mustermann"
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="kontonummer">Konto-/Vertragsnummer</Label>
-                                <Input 
-                                    id="kontonummer"
-                                    {...register('kontonummer')}
-                                    placeholder="12345678"
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="telefon">Telefon</Label>
-                                <Input 
-                                    id="telefon"
-                                    {...register('telefon')}
-                                    placeholder="+49 123 456789"
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="email">E-Mail</Label>
-                                <Input 
-                                    id="email"
-                                    type="email"
-                                    {...register('email')}
-                                    placeholder="kontakt@bank.de"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="space-y-4 pt-4 border-t border-slate-200">
-                        <h3 className="font-semibold text-slate-800">Kreditkonditionen</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label htmlFor="kreditbetrag">Kreditbetrag (€) *</Label>
-                                <Input 
-                                    id="kreditbetrag"
-                                    type="number"
-                                    step="0.01"
-                                    {...register('kreditbetrag', { required: true })}
-                                    placeholder="500000.00"
-                                    className={errors.kreditbetrag ? 'border-red-500' : ''}
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="restschuld">Restschuld (€)</Label>
-                                <Input 
-                                    id="restschuld"
-                                    type="number"
-                                    step="0.01"
-                                    {...register('restschuld')}
-                                    placeholder="450000.00"
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="zinssatz">Zinssatz (%)</Label>
-                                <Input 
-                                    id="zinssatz"
-                                    type="number"
-                                    step="0.01"
-                                    {...register('zinssatz')}
-                                    placeholder="2.50"
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="tilgungssatz">Tilgungssatz (%)</Label>
-                                <Input 
-                                    id="tilgungssatz"
-                                    type="number"
-                                    step="0.01"
-                                    {...register('tilgungssatz')}
-                                    placeholder="2.00"
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="zinsbindung_bis">Zinsbindung bis</Label>
-                                <Input 
-                                    id="zinsbindung_bis"
-                                    type="date"
-                                    {...register('zinsbindung_bis')}
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="bereitstellungszins">Bereitstellungszins (%)</Label>
-                                <Input 
-                                    id="bereitstellungszins"
-                                    type="number"
-                                    step="0.01"
-                                    {...register('bereitstellungszins')}
-                                    placeholder="0.25"
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="monatsrate">Monatsrate (€)</Label>
-                                <Input 
-                                    id="monatsrate"
-                                    type="number"
-                                    step="0.01"
-                                    {...register('monatsrate')}
-                                    placeholder="1875.00"
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="laufzeit_monate">Laufzeit (Monate)</Label>
-                                <Input 
-                                    id="laufzeit_monate"
-                                    type="number"
-                                    {...register('laufzeit_monate')}
-                                    placeholder="360"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="space-y-4 pt-4 border-t border-slate-200">
-                        <h3 className="font-semibold text-slate-800">Vertragsdaten</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label htmlFor="vertragsbeginn">Vertragsbeginn</Label>
-                                <Input 
-                                    id="vertragsbeginn"
-                                    type="date"
-                                    {...register('vertragsbeginn')}
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="vertragsende">Vertragsende</Label>
-                                <Input 
-                                    id="vertragsende"
-                                    type="date"
-                                    {...register('vertragsende')}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="space-y-4 pt-4 border-t border-slate-200">
-                        <h3 className="font-semibold text-slate-800">Sondertilgung</h3>
-                        <div className="space-y-3">
-                            <div className="flex items-center space-x-2">
-                                <Checkbox 
-                                    id="sondertilgung_moeglich"
-                                    checked={sondertilgungMoeglich}
-                                    onCheckedChange={(checked) => setValue('sondertilgung_moeglich', checked)}
-                                />
-                                <Label htmlFor="sondertilgung_moeglich">Sondertilgung möglich</Label>
-                            </div>
-                            {sondertilgungMoeglich && (
-                                <div>
-                                    <Label htmlFor="sondertilgung_betrag">Max. Sondertilgung pro Jahr (€)</Label>
-                                    <Input 
-                                        id="sondertilgung_betrag"
-                                        type="number"
-                                        step="0.01"
-                                        {...register('sondertilgung_betrag')}
-                                        placeholder="10000.00"
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="space-y-4 pt-4 border-t border-slate-200">
-                        <h3 className="font-semibold text-slate-800">Weitere Angaben</h3>
-                        <div className="space-y-3">
-                            <div>
-                                <Label htmlFor="verwendungszweck">Verwendungszweck</Label>
-                                <Textarea 
-                                    id="verwendungszweck"
-                                    {...register('verwendungszweck')}
-                                    placeholder="Kauf und Sanierung des Mehrfamilienhauses"
-                                    rows={2}
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="sicherheiten">Sicherheiten</Label>
-                                <Textarea 
-                                    id="sicherheiten"
-                                    {...register('sicherheiten')}
-                                    placeholder="Grundschuld in Höhe von..."
-                                    rows={2}
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor="notizen">Notizen</Label>
-                                <Textarea 
-                                    id="notizen"
-                                    {...register('notizen')}
-                                    placeholder="Zusätzliche Informationen..."
-                                    rows={3}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex justify-end gap-3 pt-4">
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                            Abbrechen
-                        </Button>
-                        <Button 
-                            type="submit" 
-                            className="bg-emerald-600 hover:bg-emerald-700"
-                            disabled={isLoading}
-                        >
-                            {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            {initialData ? 'Speichern' : 'Anlegen'}
-                        </Button>
-                    </div>
-                </form>
-            </DialogContent>
-
-            <BookingPreviewDialog
-                open={bookingPreviewOpen}
-                onOpenChange={setBookingPreviewOpen}
-                sourceType="Kredit"
-                sourceId={savedFinancingId}
-                onSuccess={() => {
-                    setBookingPreviewOpen(false);
-                    onOpenChange(false);
-                }}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label>Kreditgeber *</Label>
+            <Input 
+              value={formData.lender}
+              onChange={(e) => setFormData({...formData, lender: e.target.value})}
+              placeholder="z.B. Deutsche Bank"
             />
-        </Dialog>
-    );
+          </div>
+
+          <div>
+            <Label>Kredittype</Label>
+            <Select value={formData.loan_type} onValueChange={(val) => setFormData({...formData, loan_type: val})}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="mortgage">Hypothek</SelectItem>
+                <SelectItem value="building_loan">Bauspardarlehen</SelectItem>
+                <SelectItem value="line_of_credit">Kreditlinie</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Kreditbetrag (€) *</Label>
+              <Input 
+                type="number" 
+                step="1000"
+                value={formData.loan_amount}
+                onChange={(e) => setFormData({...formData, loan_amount: e.target.value})}
+              />
+            </div>
+            <div>
+              <Label>Zinssatz (%) *</Label>
+              <Input 
+                type="number" 
+                step="0.01"
+                value={formData.interest_rate}
+                onChange={(e) => setFormData({...formData, interest_rate: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Laufzeit (Jahre)</Label>
+              <Input 
+                type="number"
+                value={formData.term_years}
+                onChange={(e) => setFormData({...formData, term_years: e.target.value})}
+              />
+            </div>
+            <div>
+              <Label>Startdatum</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, 'dd.MM.yyyy', { locale: de }) : 'Datum'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    locale={de}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          <div>
+            <Label>Status</Label>
+            <Select value={formData.status} onValueChange={(val) => setFormData({...formData, status: val})}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Aktiv</SelectItem>
+                <SelectItem value="completed">Abgelöst</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex gap-3 justify-end pt-4 border-t">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Abbrechen
+            </Button>
+            <Button type="submit" disabled={mutation.isPending} className="bg-blue-600">
+              {mutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Speichern
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
 }
