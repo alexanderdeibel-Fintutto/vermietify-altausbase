@@ -163,7 +163,10 @@ export default function DocumentsPage() {
                     </Button>
                 </div>
 
-                <div className="mb-6">
+                <div className="mb-6 space-y-3">
+                    <DocumentSearchBar onSearch={(query) => {
+                        setSearchFilters({ ...searchFilters, searchText: query });
+                    }} />
                     <AdvancedFilterBar 
                         filters={searchFilters}
                         onFilterChange={setSearchFilters}
@@ -239,7 +242,14 @@ export default function DocumentsPage() {
                 </TabsContent>
 
                 <TabsContent value="templates" className="mt-6">
-                    <DocumentTemplateManager />
+                    <div className="mb-4">
+                        <DocumentTemplateManager 
+                            onUseTemplate={(template) => {
+                                // Can be extended to create document from template
+                            }}
+                        />
+                    </div>
+                    <TemplatesList />
                 </TabsContent>
 
                 <TabsContent value="textblocks" className="mt-6">
