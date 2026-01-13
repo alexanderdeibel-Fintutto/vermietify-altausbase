@@ -25,6 +25,8 @@ import DocumentActivityFeed from '../components/documents/DocumentActivityFeed';
 import SlackShareDialog from '../components/documents/SlackShareDialog';
 import DocumentComments from '../components/documents/DocumentComments';
 import DocumentTagManager from '../components/documents/DocumentTagManager';
+import DocumentRelationshipGraph from '../components/documents/DocumentRelationshipGraph';
+import DocumentPermissionManager from '../components/documents/DocumentPermissionManager';
 
 export default function DocumentsPage() {
     const [importerOpen, setImporterOpen] = useState(false);
@@ -200,6 +202,11 @@ export default function DocumentsPage() {
                         {selectedDocumentForVersion && (
                             <div className="space-y-4">
                                 <DocumentTagManager documentId={selectedDocumentForVersion.id} />
+                                <DocumentPermissionManager documentId={selectedDocumentForVersion.id} />
+                                <DocumentRelationshipGraph 
+                                    documentId={selectedDocumentForVersion.id}
+                                    allDocuments={documents}
+                                />
                                 <RealtimeSyncIndicator documentId={selectedDocumentForVersion.id} />
                                 <DocumentVersionHistory 
                                     documentId={selectedDocumentForVersion.id}
