@@ -1,52 +1,36 @@
 import React from 'react';
-import { CheckCircle2, AlertCircle, Info } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { AlertCircle, CheckCircle2, Info } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-export default function InlineValidationFeedback({ 
-  status = 'idle',
-  message = '',
-  autoHide = true,
-  duration = 3000
+export default function InlineValidationFeedback({
+  type = 'info', // info, success, error, warning
+  message,
+  visible = true,
+  icon: CustomIcon = null,
 }) {
-  const [visible, setVisible] = React.useState(!!message);
-
-  React.useEffect(() => {
-    if (message && autoHide) {
-      setVisible(true);
-      const timer = setTimeout(() => setVisible(false), duration);
-      return () => clearTimeout(timer);
-    }
-  }, [message, autoHide, duration]);
-
-  if (!visible || !message) return null;
-
   const config = {
-    success: {
-      icon: CheckCircle2,
-      color: 'text-emerald-600 bg-emerald-50 border-emerald-200',
-    },
-    error: {
-      icon: AlertCircle,
-      color: 'text-red-600 bg-red-50 border-red-200',
-    },
-    info: {
-      icon: Info,
-      color: 'text-blue-600 bg-blue-50 border-blue-200',
-    },
+    info: { icon: Info, color: 'text-blue-600', bg: 'bg-blue-50' },
+    success: { icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    error: { icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50' },
+    warning: { icon: AlertCircle, color: 'text-amber-600', bg: 'bg-amber-50' },
   };
 
-  const cfg = config[status] || config.info;
-  const Icon = cfg.icon;
+  const { icon: Icon, color, bg } = config[type];
+  const DisplayIcon = CustomIcon || Icon;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm ${cfg.color}`}
-    >
-      <Icon className="w-4 h-4 flex-shrink-0" />
-      <span>{message}</span>
-    </motion.div>
+    <AnimatePresence>
+      {visible && message && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          className={`flex items-start gap-2 p-3 rounded-lg ${bg}`}
+        >
+          <DisplayIcon className={`w-4 h-4 ${color} flex-shrink-0 mt-0.5`} />
+          <p className={`text-sm ${color}`}>{message}</p>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
