@@ -3,8 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mail, MessageCircle, Phone, Send } from 'lucide-react';
+import { Mail, MessageCircle, Phone, Send, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import QuickStats from '@/components/shared/QuickStats';
+import BreadcrumbNavigation from '@/components/navigation/BreadcrumbNavigation';
+import { createPageUrl } from '@/utils';
 import ModuleGuard from '@/components/package/ModuleGuard';
 
 export default function KommunikationPage() {
@@ -33,10 +36,24 @@ export default function KommunikationPage() {
   return (
     <ModuleGuard moduleName="kommunikation">
     <div className="space-y-6">
+      <BreadcrumbNavigation items={[
+        { label: 'Kommunikation' }
+      ]} />
+
       <div>
         <h1 className="text-3xl font-light text-slate-900">Kommunikation</h1>
         <p className="text-slate-600 mt-1">Zentrale Verwaltung aller Kommunikationskanäle</p>
       </div>
+
+      {messages.filter(m => m.status === 'unread').length > 5 && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Viele ungelesene Nachrichten</AlertTitle>
+          <AlertDescription>
+            Sie haben {messages.filter(m => m.status === 'unread').length} ungelesene Nachrichten. Lesen Sie diese bald durch.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <QuickStats stats={stats} accentColor="blue" />
 

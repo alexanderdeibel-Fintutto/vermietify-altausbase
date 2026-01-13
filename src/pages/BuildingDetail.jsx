@@ -35,6 +35,7 @@ import BuildingTransfersOverview from '@/components/building-detail/BuildingTran
 import QuickContractCreator from '@/components/contracts/QuickContractCreator';
 import AutoCreateUnitsDialog from '@/components/units/AutoCreateUnitsDialog';
 import BreadcrumbNavigation from '@/components/navigation/BreadcrumbNavigation';
+import BreadcrumbNavigation from '@/components/navigation/BreadcrumbNavigation';
 
 export default function BuildingDetailPage() {
 
