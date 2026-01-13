@@ -5,70 +5,64 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
-    if (user?.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    if (!user || user.role !== 'admin') {
+      return Response.json({ error: 'Admin access required' }, { status: 403 });
     }
 
+    // Get all subscriptions
     const subscriptions = await base44.asServiceRole.entities.UserSubscription.list();
-    const limits = await base44.asServiceRole.entities.UsageLimit.list();
-    
-    let updated = 0;
+    let syncedCount = 0;
+    let errorCount = 0;
 
-    for (const sub of subscriptions) {
-      const tierLimits = await base44.asServiceRole.entities.TierLimit.filter({ 
-        tier_id: sub.tier_id 
-      });
-
-      for (const tl of tierLimits) {
-        const limit = limits.find(l => l.id === tl.limit_id);
-        if (!limit) continue;
-
-        let currentUsage = 0;
-
-        // Count current usage
-        if (limit.entity_to_count) {
-          const filter = limit.count_filter ? JSON.parse(limit.count_filter) : {};
-          filter.created_by = sub.user_email;
-          
-          const entities = await base44.asServiceRole.entities[limit.entity_to_count].filter(filter);
-          currentUsage = entities.length;
-        }
-
-        // Update or create UserLimit
-        const userLimits = await base44.asServiceRole.entities.UserLimit.filter({
-          user_email: sub.user_email,
-          limit_id: limit.id
+    for (const subscription of subscriptions) {
+      try {
+        // Get tier limits
+        const tierLimits = await base44.asServiceRole.entities.TierLimit.filter({
+          tier_id: subscription.tier_id
         });
 
-        const isWarning = tl.limit_value !== -1 && 
-          (currentUsage / tl.limit_value) >= ((limit.warning_threshold || 80) / 100);
+        // Get existing user limits
+        const existingLimits = await base44.asServiceRole.entities.UserLimit.filter({
+          user_email: subscription.user_email
+        });
 
-        if (userLimits[0]) {
-          await base44.asServiceRole.entities.UserLimit.update(userLimits[0].id, {
-            current_usage: currentUsage,
-            limit_value: tl.limit_value,
-            last_checked: new Date().toISOString(),
-            warning_sent: isWarning
-          });
-        } else {
-          await base44.asServiceRole.entities.UserLimit.create({
-            user_email: sub.user_email,
-            limit_id: limit.id,
-            current_usage: currentUsage,
-            limit_value: tl.limit_value,
-            last_checked: new Date().toISOString(),
-            warning_sent: isWarning
-          });
+        // Update or create limits
+        for (const tierLimit of tierLimits) {
+          const existing = existingLimits.find(ul => ul.limit_id === tierLimit.limit_id);
+          
+          if (existing) {
+            // Update limit value if changed
+            if (existing.limit_value !== tierLimit.limit_value) {
+              await base44.asServiceRole.entities.UserLimit.update(existing.id, {
+                limit_value: tierLimit.limit_value,
+                last_checked: new Date().toISOString()
+              });
+            }
+          } else {
+            // Create new limit
+            await base44.asServiceRole.entities.UserLimit.create({
+              user_email: subscription.user_email,
+              limit_id: tierLimit.limit_id,
+              current_usage: 0,
+              limit_value: tierLimit.limit_value,
+              last_checked: new Date().toISOString(),
+              warning_sent: false
+            });
+          }
         }
 
-        updated++;
+        syncedCount++;
+      } catch (error) {
+        console.error(`Error syncing limits for ${subscription.user_email}:`, error);
+        errorCount++;
       }
     }
 
-    return Response.json({ 
+    return Response.json({
       success: true,
-      subscriptions_processed: subscriptions.length,
-      limits_updated: updated
+      synced: syncedCount,
+      errors: errorCount,
+      total: subscriptions.length
     });
 
   } catch (error) {

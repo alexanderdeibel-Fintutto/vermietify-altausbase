@@ -15,107 +15,64 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'limit_code required' }, { status: 400 });
     }
 
-    // Get user subscription
-    const subscriptions = await base44.asServiceRole.entities.UserSubscription.filter({ 
-      user_email: user.email 
-    });
-    const subscription = subscriptions[0];
-
-    if (!subscription) {
-      return Response.json({ 
-        allowed: false, 
-        reason: 'No active subscription' 
-      });
-    }
-
-    // Get usage limit definition
+    // Get the limit definition
     const limits = await base44.asServiceRole.entities.UsageLimit.filter({ 
-      limit_code 
+      limit_code,
+      is_active: true 
     });
-    const usageLimit = limits[0];
+    const limit = limits[0];
 
-    if (!usageLimit) {
-      return Response.json({ 
-        allowed: true, 
-        reason: 'Limit not found - allowing' 
-      });
+    if (!limit) {
+      return Response.json({ error: 'Limit not found' }, { status: 404 });
     }
 
-    // Get tier limit
-    const tierLimits = await base44.asServiceRole.entities.TierLimit.filter({ 
-      tier_id: subscription.tier_id,
-      limit_id: usageLimit.id
-    });
-    const tierLimit = tierLimits[0];
-
-    if (!tierLimit) {
-      return Response.json({ 
-        allowed: false, 
-        reason: 'Limit not configured for tier' 
-      });
-    }
-
-    // Check if feature flag
-    if (usageLimit.limit_type === 'FEATURE_FLAG') {
-      return Response.json({ 
-        allowed: tierLimit.limit_value === 1,
-        reason: tierLimit.limit_value === 1 ? 'Feature enabled' : 'Feature not available in plan'
-      });
-    }
-
-    // Check quantifiable limit
-    if (tierLimit.limit_value === -1) {
-      return Response.json({ 
-        allowed: true,
-        unlimited: true,
-        reason: 'Unlimited'
-      });
-    }
-
-    // Get current usage
-    let currentUsage = 0;
-    if (usageLimit.entity_to_count) {
-      const filter = usageLimit.count_filter ? JSON.parse(usageLimit.count_filter) : {};
-      filter.created_by = user.email;
-      
-      const entities = await base44.asServiceRole.entities[usageLimit.entity_to_count].filter(filter);
-      currentUsage = entities.length;
-    }
-
-    const allowed = currentUsage < tierLimit.limit_value;
-    const isWarning = !allowed || (currentUsage / tierLimit.limit_value) >= ((usageLimit.warning_threshold || 80) / 100);
-
-    // Update or create UserLimit record
+    // Get user's limit
     const userLimits = await base44.asServiceRole.entities.UserLimit.filter({
       user_email: user.email,
-      limit_id: usageLimit.id
+      limit_id: limit.id
     });
+    const userLimit = userLimits[0];
 
-    if (userLimits[0]) {
-      await base44.asServiceRole.entities.UserLimit.update(userLimits[0].id, {
-        current_usage: currentUsage,
-        limit_value: tierLimit.limit_value,
-        last_checked: new Date().toISOString(),
-        warning_sent: isWarning
-      });
-    } else {
-      await base44.asServiceRole.entities.UserLimit.create({
-        user_email: user.email,
-        limit_id: usageLimit.id,
-        current_usage: currentUsage,
-        limit_value: tierLimit.limit_value,
-        last_checked: new Date().toISOString(),
-        warning_sent: isWarning
-      });
+    if (!userLimit) {
+      return Response.json({ error: 'User limit not initialized' }, { status: 404 });
     }
 
-    return Response.json({ 
-      allowed,
-      current_usage: currentUsage,
-      limit_value: tierLimit.limit_value,
+    // Calculate current usage if entity_to_count is specified
+    let actualUsage = userLimit.current_usage;
+    if (limit.entity_to_count) {
+      try {
+        const filter = limit.count_filter ? JSON.parse(limit.count_filter) : {};
+        const entities = await base44.entities[limit.entity_to_count].filter(filter);
+        actualUsage = entities.length;
+
+        // Update stored usage if different
+        if (actualUsage !== userLimit.current_usage) {
+          await base44.asServiceRole.entities.UserLimit.update(userLimit.id, {
+            current_usage: actualUsage,
+            last_checked: new Date().toISOString()
+          });
+        }
+      } catch (error) {
+        console.error('Error counting entities:', error);
+      }
+    }
+
+    const isUnlimited = userLimit.limit_value === -1;
+    const isAllowed = isUnlimited || actualUsage < userLimit.limit_value;
+    const percentage = isUnlimited ? 0 : (actualUsage / userLimit.limit_value) * 100;
+    const isWarning = !isUnlimited && percentage >= (limit.warning_threshold || 80);
+
+    return Response.json({
+      allowed: isAllowed,
+      current_usage: actualUsage,
+      limit_value: userLimit.limit_value,
+      is_unlimited: isUnlimited,
+      remaining: isUnlimited ? -1 : userLimit.limit_value - actualUsage,
+      percentage,
       is_warning: isWarning,
-      limit_type: usageLimit.limit_type,
-      reason: allowed ? 'Within limit' : 'Limit exceeded'
+      limit_name: limit.name,
+      limit_unit: limit.unit,
+      limit_type: limit.limit_type
     });
 
   } catch (error) {

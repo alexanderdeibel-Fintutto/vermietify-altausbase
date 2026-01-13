@@ -9,7 +9,7 @@ import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import DeleteConfirmDialog from '@/components/buildings/DeleteConfirmDialog';
-import { useLimitCheck } from '@/components/hooks/useLimitCheck';
+import { useLimitCheck } from '@/components/subscription/LimitChecker';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import BuildingCreationWizard from '@/components/buildings/BuildingCreationWizard';
