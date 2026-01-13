@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Zap, Eye, Trash2, RefreshCw } from 'lucide-react';
 import ISTBookingCard from '@/components/shared/ISTBookingCard';
-import ISTBookingCard from '@/components/shared/ISTBookingCard';
-import ISTBookingCard from '@/components/shared/ISTBookingCard';
 import SOLLBookingCard from '@/components/shared/SOLLBookingCard';
 import HelpTooltip from '@/components/shared/HelpTooltip';
 import QuickStats from '@/components/shared/QuickStats';
@@ -46,11 +44,13 @@ export default function GeneratedBookingsPage() {
 
       <div className="space-y-3">
         {bookings.map((booking) => (
-          {booking.status === 'matched' ? (
-            <ISTBookingCard title={booking.description} amount={booking.amount} date={format(new Date(booking.date), 'dd.MM.yyyy', { locale: de })} />
-          ) : (
-            <SOLLBookingCard title={booking.description} amount={booking.amount} date={format(new Date(booking.date), 'dd.MM.yyyy', { locale: de })} />
-          )}
+          <div key={booking.id}>
+            {booking.status === 'matched' ? (
+              <ISTBookingCard title={booking.description} amount={booking.amount} date={format(new Date(booking.date), 'dd.MM.yyyy', { locale: de })} />
+            ) : (
+              <SOLLBookingCard title={booking.description} amount={booking.amount} date={format(new Date(booking.date), 'dd.MM.yyyy', { locale: de })} />
+            )}
+          </div>
         ))}
       </div>
     </div>

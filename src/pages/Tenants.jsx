@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Users, Search } from 'lucide-react';
+import { toast } from 'sonner';
 import { FeatureGateInline } from '@/components/subscription/FeatureGateInline';
 import TenantFilterBar from '@/components/tenants/TenantFilterBar';
 import TenantTable from '@/components/tenants/TenantTable';
