@@ -1,60 +1,91 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
+  const base44 = createClientFromRequest(req);
+  
+  console.log('Starting daily usage sync...');
+  
   try {
-    const base44 = createClientFromRequest(req);
-
-    console.log('[SYNC] Starting usage limits sync...');
-
-    // Get all usage limits with entity counting
-    const limits = await base44.asServiceRole.entities.UsageLimit.filter({
-      is_active: true
+    // Alle aktiven Subscriptions laden
+    const subscriptions = await base44.asServiceRole.entities.UserSubscription.filter({
+      status: 'ACTIVE'
     });
-
-    const limitsWithCounting = limits.filter(l => l.entity_to_count);
-
-    console.log(`[SYNC] Found ${limitsWithCounting.length} limits with entity counting`);
-
-    // Get all user limits
-    const userLimits = await base44.asServiceRole.entities.UserLimit.list();
-
-    let updatedCount = 0;
-
-    for (const userLimit of userLimits) {
-      const limit = limits.find(l => l.id === userLimit.limit_id);
+    
+    console.log(`Processing ${subscriptions.length} active subscriptions`);
+    
+    // Alle Limits laden
+    const limits = await base44.asServiceRole.entities.UsageLimit.list();
+    
+    const today = new Date();
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    
+    let processed = 0;
+    
+    for (const sub of subscriptions) {
+      const userEmail = sub.data.user_email;
       
-      if (!limit || !limit.entity_to_count) continue;
-
-      try {
-        const filter = limit.count_filter ? JSON.parse(limit.count_filter) : {};
-        filter.created_by = userLimit.user_email;
-
-        const entities = await base44.asServiceRole.entities[limit.entity_to_count].filter(filter);
-        const actualCount = entities.length;
-
-        if (actualCount !== userLimit.current_usage) {
-          await base44.asServiceRole.entities.UserLimit.update(userLimit.id, {
-            current_usage: actualCount,
+      // Plan-Limits für diesen User laden
+      const tierLimits = await base44.asServiceRole.entities.TierLimit.filter({
+        tier_id: sub.data.tier_id
+      });
+      
+      for (const limit of limits) {
+        if (!limit.data.is_active) continue;
+        
+        // Plan-Limit für dieses Limit finden
+        const tierLimit = tierLimits.find(tl => tl.data.limit_id === limit.id);
+        const maxValue = tierLimit?.data.limit_value ?? 0;
+        
+        // Aktuelle Nutzung zählen
+        let currentCount = 0;
+        
+        const entityName = limit.data.entity_to_count;
+        if (!entityName) continue;
+        
+        try {
+          // Entities des Users zählen
+          const entities = await base44.asServiceRole.entities[entityName].filter({
+            created_by: userEmail
+          });
+          currentCount = entities.length;
+        } catch (err) {
+          console.error(`Error counting ${entityName} for ${userEmail}:`, err.message);
+          continue;
+        }
+        
+        // UsageLog erstellen oder aktualisieren
+        const existingLogs = await base44.asServiceRole.entities.UserLimit.filter({
+          user_email: userEmail,
+          limit_id: limit.id
+        });
+        
+        if (existingLogs.length > 0) {
+          await base44.asServiceRole.entities.UserLimit.update(existingLogs[0].id, {
+            current_usage: currentCount,
+            limit_value: maxValue,
             last_checked: new Date().toISOString()
           });
-          updatedCount++;
-          console.log(`[SYNC] Updated ${userLimit.user_email} - ${limit.name}: ${actualCount}`);
+        } else {
+          await base44.asServiceRole.entities.UserLimit.create({
+            user_email: userEmail,
+            limit_id: limit.id,
+            current_usage: currentCount,
+            limit_value: maxValue,
+            last_checked: new Date().toISOString(),
+            warning_sent: false
+          });
         }
-      } catch (error) {
-        console.error(`[SYNC] Error counting for ${userLimit.user_email}:`, error);
+        
+        processed++;
       }
     }
-
-    console.log(`[SYNC] Completed. Updated ${updatedCount} user limits.`);
-
-    return Response.json({
-      success: true,
-      checked: userLimits.length,
-      updated: updatedCount
-    });
-
+    
+    console.log(`Usage sync completed. Processed ${processed} limit checks for ${subscriptions.length} users`);
+    return Response.json({ success: true, processed, subscriptions: subscriptions.length });
+    
   } catch (error) {
-    console.error('[SYNC] Fatal error:', error);
+    console.error('Usage sync error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
