@@ -26,6 +26,7 @@ import { toast } from 'sonner';
 import RecipientForm from '@/components/recipients/RecipientForm';
 import SaveTemplateDialog from '@/components/invoices/SaveTemplateDialog';
 import TemplateQuickSelect from '@/components/invoices/TemplateQuickSelect';
+import CategorySuggestions from '@/components/invoices/CategorySuggestions';
 
 export default function InvoiceForm({ open, onOpenChange, invoice, buildings, units, contracts, onSuccess }) {
     const queryClient = useQueryClient();
@@ -546,6 +547,15 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                                     </div>
                                 </div>
                             </Card>
+                        )}
+
+                        {/* Quick Category Suggestions */}
+                        {watch('recipient') && (
+                            <CategorySuggestions 
+                                recipient={watch('recipient')}
+                                costTypes={filteredCostTypes}
+                                onSelect={(id) => setValue('cost_type_id', id)}
+                            />
                         )}
 
                         <div className="grid grid-cols-1 gap-4">

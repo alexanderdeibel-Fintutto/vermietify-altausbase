@@ -9,6 +9,7 @@ import CreateTransferDialog from "@/components/banking/CreateTransferDialog";
 import ApproveTransferDialog from "@/components/banking/ApproveTransferDialog";
 import TanInputDialog from "@/components/banking/TanInputDialog";
 import TransferStatusBadge from "@/components/banking/TransferStatusBadge";
+import BankTransactionMatcher from "@/components/banking/BankTransactionMatcher";
 import { toast } from "sonner";
 
 export default function BankTransfersPage() {
@@ -22,6 +23,11 @@ export default function BankTransfersPage() {
   const { data: transfers = [] } = useQuery({
     queryKey: ["bank_transfers"],
     queryFn: () => base44.entities.BankTransfer.list('-created_date', 100)
+  });
+
+  const { data: invoices = [] } = useQuery({
+    queryKey: ["invoices"],
+    queryFn: () => base44.entities.Invoice?.list?.() || []
   });
 
   const filteredTransfers = transfers.filter(t => 
@@ -166,6 +172,21 @@ export default function BankTransfersPage() {
           </table>
         </div>
       </Card>
+
+      {/* Bank Transaction Matcher - Auto-matching suggestions */}
+      {selectedTransfer && (
+        <div className="mt-6">
+          <BankTransactionMatcher 
+            transaction={selectedTransfer}
+            invoices={invoices}
+            onMatch={(invoiceId) => {
+              toast.success('Rechnung zugeordnet');
+              setSelectedTransfer(null);
+            }}
+            onIgnore={() => setSelectedTransfer(null)}
+          />
+        </div>
+      )}
 
       <CreateTransferDialog open={createOpen} onOpenChange={setCreateOpen} />
       <ApproveTransferDialog open={approveOpen} onOpenChange={setApproveOpen} transfer={selectedTransfer} />
