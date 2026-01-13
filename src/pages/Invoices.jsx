@@ -42,7 +42,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Plus, Search, MoreVertical, Pencil, Trash2, FileText, Building2, TrendingUp, TrendingDown, Filter, Download, Tag, Users, Sparkles, HelpCircle } from 'lucide-react';
 import UmlagefaehigBadge from '@/components/shared/UmlagefaehigBadge';
-import InfoTooltip from '@/components/shared/InfoTooltip';
 import { toast } from 'sonner';
 import InvoiceForm from '@/components/invoices/InvoiceForm';
 import InvoiceFormWithTaxLibrary from '@/components/invoices/InvoiceFormWithTaxLibrary';
@@ -770,17 +769,20 @@ export default function Invoices() {
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="text-sm">
-                                                            {invoice.cost_category_id ? (
-                                                                <Badge variant="outline" className="bg-emerald-50 text-emerald-700">
-                                                                    Tax: {invoice.cost_category_id}
-                                                                </Badge>
-                                                            ) : costType ? (
-                                                                <div>
-                                                                    <p className="font-medium">{costType.main_category}</p>
-                                                                    <p className="text-xs text-slate-500">{costType.sub_category}</p>
-                                                                </div>
-                                                            ) : '-'}
-                                                        </TableCell>
+                                                             {invoice.cost_category_id ? (
+                                                                 <Badge variant="outline" className="bg-emerald-50 text-emerald-700">
+                                                                     Tax: {invoice.cost_category_id}
+                                                                 </Badge>
+                                                             ) : costType ? (
+                                                                 <div>
+                                                                     <p className="font-medium">{costType.main_category}</p>
+                                                                     <p className="text-xs text-slate-500">{costType.sub_category}</p>
+                                                                 </div>
+                                                             ) : '-'}
+                                                             {invoice.operating_cost_relevant && (
+                                                                 <UmlagefaehigBadge type={invoice.operating_cost_relevant ? 'umlagefaehig' : 'nicht_umlagefaehig'} />
+                                                             )}
+                                                         </TableCell>
                                                         <TableCell className="text-right font-semibold">
                                                             <span className={invoice.type === 'expense' ? 'text-red-600' : 'text-emerald-600'}>
                                                                 {invoice.type === 'expense' ? '-' : '+'}€{invoice.amount?.toFixed(2)}

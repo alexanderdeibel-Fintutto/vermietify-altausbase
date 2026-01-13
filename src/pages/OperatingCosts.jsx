@@ -39,7 +39,7 @@ export default function OperatingCosts() {
             <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Betriebskosten</h1>
-                  <InfoTooltip content="Abrechnung aller umlagefähigen Kosten an Mieter gemäß Mietvertrag und BetrKV. Umfasst: Nebenkosten, Betriebskosten, Makler- und Verwaltungsgebühren." />
+                  <InfoTooltip text="Nur Kosten mit Status 'Umlagefähig' werden hier berücksichtigt. Fehlende Kosten? Prüfe die Kategorisierung deiner Rechnungen." />
                 </div>
                 <p className="text-sm font-extralight text-slate-400 mt-1">{statements.length} Abrechnungen</p>
             </div>
