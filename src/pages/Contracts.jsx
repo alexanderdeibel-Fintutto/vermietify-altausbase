@@ -35,12 +35,15 @@ import TenantsList from '@/components/contracts/TenantsList';
 import FinancialItemsList from '@/components/contracts/FinancialItemsList';
 import { regenerateContractFinancialItems } from '@/components/contracts/generateFinancialItems';
 import AddFinancialItemDialog from '@/components/contracts/AddFinancialItemDialog';
+import PostContractDialog from '@/components/contracts/PostContractDialog';
 
 export default function Contracts() {
     const [formOpen, setFormOpen] = useState(false);
     const [editingContract, setEditingContract] = useState(null);
     const [deleteContract, setDeleteContract] = useState(null);
     const [addFinancialItemOpen, setAddFinancialItemOpen] = useState(false);
+    const [postContractOpen, setPostContractOpen] = useState(false);
+    const [newContract, setNewContract] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: contracts = [], isLoading } = useQuery({
@@ -78,6 +81,8 @@ export default function Contracts() {
             queryClient.invalidateQueries({ queryKey: ['payments'] });
             queryClient.invalidateQueries({ queryKey: ['financial-items'] });
             setFormOpen(false);
+            setNewContract(result);
+            setPostContractOpen(true);
             if (result && !result.needsPartialRentConfirmation) {
                 await regenerateContractFinancialItems(result.id);
             }
@@ -491,6 +496,12 @@ export default function Contracts() {
                 units={units}
                 buildings={buildings}
                 tenants={tenants}
+            />
+
+            <PostContractDialog
+                open={postContractOpen}
+                onOpenChange={setPostContractOpen}
+                contract={newContract}
             />
         </div>
     );
