@@ -5,6 +5,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Settings, Plus, LayoutDashboard } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+import { CardHeader, CardTitle } from '@/components/ui/card';
 import { WIDGET_COMPONENTS, AVAILABLE_WIDGETS, getAccessibleWidgets } from '@/components/dashboard/DashboardWidgetLibrary';
 import EnhancedWidgetConfig from '@/components/dashboard/EnhancedWidgetConfig';
 import { usePackageAccess } from '@/components/hooks/usePackageAccess';
@@ -215,6 +218,35 @@ export default function Dashboard() {
         onSave={saveLayout}
         user={user}
       />
-    </div>
-  );
-}
+      </div>
+      );
+      }
+
+      const BuildingsWidget = () => {
+      const { data: buildings = [] } = useQuery({ queryKey: ['buildings'], queryFn: () => base44.entities.Building.list() });
+      const { data: units = [] } = useQuery({ queryKey: ['units'], queryFn: () => base44.entities.Unit.list() });
+
+      return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {buildings.slice(0, 3).map(b => {
+              const buildingUnits = units.filter(u => u.building_id === b.id).length;
+              return (
+                  <Card key={b.id}>
+                      <CardHeader>
+                          <CardTitle className="flex items-center justify-between text-base">
+                              {b.name}
+                              <Link to={createPageUrl(`BuildingDetail?id=${b.id}`)} className="text-xs font-normal text-blue-600 hover:underline">Details</Link>
+                          </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                          <p className="text-sm text-slate-600">{b.address}</p>
+                          <Link to={createPageUrl(`BuildingDetail?id=${b.id}&tab=units`)} className="text-blue-600 text-xs font-semibold block hover:underline">
+                              → {buildingUnits} Einheiten
+                          </Link>
+                      </CardContent>
+                  </Card>
+              );
+          })}
+      </div>
+      );
+      };
