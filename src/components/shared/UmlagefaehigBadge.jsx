@@ -1,40 +1,30 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-export default function UmlagefaehigBadge({ type = 'umlagefaehig' }) {
-  const configs = {
+export default function UmlagefaehigBadge({ status = 'umlagefaehig' }) {
+  const config = {
     umlagefaehig: {
-      label: '🟢 Umlagefähig',
-      tooltip: 'Diese Kosten können an Mieter weitergegeben werden (§556 BGB, BetrKV). Beispiele: Müllabfuhr, Hausmeister, Gärtner.',
-      className: 'bg-green-100 text-green-800'
+      icon: '🟢',
+      label: 'Umlagefähig (BetrKV)',
+      className: 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200',
     },
     nicht_umlagefaehig: {
-      label: '🔴 Nicht umlagefähig',
-      tooltip: 'Diese Kosten können NICHT an Mieter weitergegeben werden. Beispiele: Verwaltungskosten, Reparaturen, Instandhaltung.',
-      className: 'bg-red-100 text-red-800'
+      icon: '🔴',
+      label: 'Nicht umlagefähig',
+      className: 'bg-red-100 text-red-800 hover:bg-red-200',
     },
-    teilweise_umlagefaehig: {
-      label: '🟡 Teilweise umlagefähig',
-      tooltip: 'Nur ein Teil dieser Kosten kann umgelegt werden. Manuell anteilig aufteilen.',
-      className: 'bg-amber-100 text-amber-800'
-    }
+    teilweise: {
+      icon: '🟡',
+      label: 'Teilweise umlagefähig',
+      className: 'bg-amber-100 text-amber-800 hover:bg-amber-200',
+    },
   };
 
-  const config = configs[type];
+  const selected = config[status] || config.umlagefaehig;
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Badge className={config.className} variant="secondary">
-            {config.label}
-          </Badge>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-xs">
-          <p className="text-sm">{config.tooltip}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Badge className={selected.className}>
+      {selected.icon} {selected.label}
+    </Badge>
   );
 }

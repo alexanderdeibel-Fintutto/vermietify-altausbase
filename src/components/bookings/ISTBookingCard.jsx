@@ -1,22 +1,25 @@
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { CheckCircle } from "lucide-react";
+import React from 'react';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { motion } from 'framer-motion';
 
-export default function ISTBookingCard({ booking }) {
+export default function ISTBookingCard({ transaction, children }) {
   return (
-    <Card className="border-solid border-2 border-emerald-500 bg-emerald-50">
-      <div className="p-4 space-y-2">
-        <div className="flex items-center gap-2">
-          <Badge className="bg-emerald-600">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            ✓ IST (Tatsächlich)
-          </Badge>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
+      <Card className="border-solid border-2 border-emerald-500 bg-emerald-50">
+        <div className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Badge className="bg-emerald-600 hover:bg-emerald-700">
+              ✓ IST (Tatsächlich)
+            </Badge>
+            <span className="text-xs text-emerald-700">Aus Banktransaktionen</span>
+          </div>
+          {children}
         </div>
-        <div className="space-y-1">
-          <p className="font-medium">{booking.description}</p>
-          <p className="text-sm text-slate-600">{booking.amount}€ • {booking.date}</p>
-        </div>
-      </div>
-    </Card>
+      </Card>
+    </motion.div>
   );
 }

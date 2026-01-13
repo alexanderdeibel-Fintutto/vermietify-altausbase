@@ -1,24 +1,25 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { motion } from 'framer-motion';
 
-export default function SOLLBookingCard({ title, amount, date, description, children }) {
+export default function SOLLBookingCard({ booking, children }) {
   return (
-    <Card className="border-2 border-dashed border-slate-300 bg-slate-50">
-      <div className="p-4">
-        <div className="flex items-start justify-between mb-2">
-          <div>
-            <p className="font-semibold text-slate-900">{title}</p>
-            <p className="text-xs text-slate-600 mt-1">{description}</p>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
+      <Card className="border-dashed border-2 border-slate-300 bg-slate-50">
+        <div className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="bg-white">
+              📋 SOLL (Geplant)
+            </Badge>
+            <span className="text-xs text-slate-600">Automatisch generiert</span>
           </div>
-          <Badge variant="outline" className="text-xs">📋 SOLL</Badge>
+          {children}
         </div>
-        <div className="flex items-baseline gap-2 mt-3">
-          <p className="text-2xl font-bold text-slate-700">€{amount.toFixed(2)}</p>
-          <p className="text-xs text-slate-500">{date}</p>
-        </div>
-        {children}
-      </div>
-    </Card>
+      </Card>
+    </motion.div>
   );
 }
