@@ -95,7 +95,7 @@ export default function PortfolioManagement() {
         portfolios={portfolios}
         onSubmit={handleAssetSubmit}
       />
-    </div>
-    </FeatureGate>
+      </div>
+      </FeatureGate>
   );
 }
