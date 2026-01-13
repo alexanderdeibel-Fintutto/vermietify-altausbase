@@ -18,6 +18,7 @@ import DocumentTemplateManager from '../components/documents/DocumentTemplateMan
 import DocumentArchivePanel from '../components/documents/DocumentArchivePanel';
 import DocumentVersionHistory from '../components/documents/DocumentVersionHistory';
 import ApprovalWorkflowDialog from '../components/documents/ApprovalWorkflowDialog';
+import AdvancedFilterBar from '../components/shared/AdvancedFilterBar';
 
 export default function DocumentsPage() {
     const [importerOpen, setImporterOpen] = useState(false);
@@ -36,6 +37,33 @@ export default function DocumentsPage() {
     });
 
     // Filter documents based on search
+    const filterConfig = [
+      { key: 'searchText', label: 'Suche', type: 'text', placeholder: 'Titel/Beschreibung' },
+      { 
+        key: 'documentType', 
+        label: 'Typ', 
+        type: 'select', 
+        options: [
+          { value: '', label: 'Alle' },
+          { value: 'contract', label: 'Vertrag' },
+          { value: 'invoice', label: 'Rechnung' },
+          { value: 'other', label: 'Sonstiges' }
+        ]
+      },
+      { 
+        key: 'status', 
+        label: 'Status', 
+        type: 'select', 
+        options: [
+          { value: '', label: 'Alle' },
+          { value: 'draft', label: 'Entwurf' },
+          { value: 'active', label: 'Aktiv' },
+          { value: 'archived', label: 'Archiviert' }
+        ]
+      },
+      { key: 'dateFrom', label: 'Ab Datum', type: 'date' }
+    ];
+
     const documents = React.useMemo(() => {
       let filtered = [...allDocuments];
 
@@ -47,33 +75,17 @@ export default function DocumentsPage() {
         );
       }
 
-      if (searchFilters.documentType && searchFilters.documentType !== 'all') {
+      if (searchFilters.documentType) {
         filtered = filtered.filter(doc => doc.document_type === searchFilters.documentType);
       }
 
-      if (searchFilters.status && searchFilters.status !== 'all') {
+      if (searchFilters.status) {
         filtered = filtered.filter(doc => doc.status === searchFilters.status);
       }
 
       if (searchFilters.dateFrom) {
         filtered = filtered.filter(doc => 
-          new Date(doc.created_at) >= new Date(searchFilters.dateFrom)
-        );
-      }
-
-      if (searchFilters.dateTo) {
-        filtered = filtered.filter(doc => 
-          new Date(doc.created_at) <= new Date(searchFilters.dateTo)
-        );
-      }
-
-      if (searchFilters.tags?.length > 0) {
-        filtered = filtered.filter(doc => 
-          searchFilters.tags.some(tag => 
-            doc.tags?.includes(tag) || 
-            doc.title?.includes(tag) ||
-            doc.description?.includes(tag)
-          )
+          new Date(doc.created_date || doc.created_at) >= new Date(searchFilters.dateFrom)
         );
       }
 
@@ -126,14 +138,6 @@ export default function DocumentsPage() {
             <Tabs defaultValue="documents" className="w-full">
                 <div className="flex justify-between items-center mb-4">
                     <Button
-                        onClick={() => setShowSearch(!showSearch)}
-                        variant="outline"
-                        className="gap-2"
-                    >
-                        <Search className="w-4 h-4" />
-                        Erweiterte Suche
-                    </Button>
-                    <Button
                         onClick={() => setUploadOpen(true)}
                         className="bg-blue-600 hover:bg-blue-700 font-light gap-2"
                     >
@@ -142,11 +146,13 @@ export default function DocumentsPage() {
                     </Button>
                 </div>
 
-                {showSearch && (
-                    <div className="mb-6">
-                        <AdvancedDocumentSearch onSearch={setSearchFilters} />
-                    </div>
-                )}
+                <div className="mb-6">
+                    <AdvancedFilterBar 
+                        filters={searchFilters}
+                        onFilterChange={setSearchFilters}
+                        filterConfig={filterConfig}
+                    />
+                </div>
                 <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="documents">
                         <FileText className="w-4 h-4 mr-2" />
