@@ -1,125 +1,81 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Bell, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
 export default function RealtimeNotificationCenter() {
   const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    // Subscribe to real-time updates
-    const setupSubscriptions = async () => {
-      // Invoice updates
-      const unsubInvoices = base44.entities.Invoice.subscribe((event) => {
+    // Subscribe to real-time entity changes
+    const unsubscribes = [
+      base44.entities.Invoice.subscribe((event) => {
         if (event.type === 'create') {
-          addNotification({
-            type: 'invoice_created',
-            title: '🧾 Neue Rechnung',
-            message: `${event.data.title || 'Rechnung'} erstellt`,
-            icon: '🧾'
-          });
+          addNotification('🧾 Neue Rechnung', `Rechnung ${event.data.number} erstellt`);
+        } else if (event.type === 'update' && event.data.status === 'overdue') {
+          addNotification('⚠️ Rechnung fällig', `Rechnung ${event.data.number} ist fällig`, 'warning');
         }
-      });
+      }),
 
-      // Building updates
-      const unsubBuildings = base44.entities.Building.subscribe((event) => {
-        if (event.type === 'update') {
-          addNotification({
-            type: 'building_updated',
-            title: '🏢 Gebäude aktualisiert',
-            message: event.data.name,
-            icon: '🏢'
-          });
+      base44.entities.Contract.subscribe((event) => {
+        if (event.type === 'update' && event.data.status === 'ending_soon') {
+          addNotification('📋 Vertrag endet bald', `${event.data.tenant_name} - ${event.data.end_date}`, 'info');
         }
-      });
+      }),
 
-      // Contract updates
-      const unsubContracts = base44.entities.LeaseContract.subscribe((event) => {
+      base44.entities.MaintenanceTask.subscribe((event) => {
         if (event.type === 'create') {
-          addNotification({
-            type: 'contract_created',
-            title: '📋 Neuer Vertrag',
-            message: `Vertrag für ${event.data.title || 'Unit'}`,
-            icon: '📋'
-          });
+          addNotification('🔧 Wartungsaufgabe', `Neue Aufgabe: ${event.data.title}`);
         }
-      });
+      })
+    ];
 
-      return () => {
-        unsubInvoices();
-        unsubBuildings();
-        unsubContracts();
-      };
-    };
-
-    setupSubscriptions();
+    return () => unsubscribes.forEach(unsub => unsub?.());
   }, []);
 
-  const addNotification = (notif) => {
+  const addNotification = (title, message, type = 'info') => {
     const id = Date.now();
-    const notification = { ...notif, id, read: false };
-    
-    setNotifications(prev => [notification, ...prev].slice(0, 10));
-    setUnreadCount(prev => prev + 1);
+    setNotifications(prev => [...prev, { id, title, message, type, timestamp: new Date() }]);
 
-    // Auto-dismiss after 5 seconds
+    // Auto-remove after 5 seconds
     setTimeout(() => {
-      removeNotification(id);
+      setNotifications(prev => prev.filter(n => n.id !== id));
     }, 5000);
-
-    // Also show toast
-    toast.success(notif.message);
   };
 
   const removeNotification = (id) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    setUnreadCount(0);
-  };
-
   return (
-    <div className="fixed bottom-4 right-4 w-full md:w-96 space-y-2 max-h-96 overflow-y-auto z-50">
-      {/* Notification List */}
+    <div className="fixed top-20 right-4 z-50 space-y-2 max-w-sm">
       {notifications.map(notif => (
-        <Card key={notif.id} className={notif.read ? 'bg-slate-50' : 'bg-blue-50 border-blue-200'}>
-          <CardContent className="p-3 flex items-start justify-between gap-2">
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">{notif.icon}</span>
+        <Card
+          key={notif.id}
+          className={`shadow-lg border-l-4 animate-in slide-in-from-top-2 ${
+            notif.type === 'warning' ? 'border-l-orange-500 bg-orange-50' :
+            notif.type === 'error' ? 'border-l-red-500 bg-red-50' :
+            'border-l-blue-500 bg-blue-50'
+          }`}
+        >
+          <CardContent className="p-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1">
                 <p className="font-medium text-sm">{notif.title}</p>
+                <p className="text-xs text-slate-600 mt-0.5">{notif.message}</p>
               </div>
-              <p className="text-xs text-slate-600 mt-1">{notif.message}</p>
+              <button
+                onClick={() => removeNotification(notif.id)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => removeNotification(notif.id)}
-              className="h-6 w-6"
-            >
-              <X className="w-4 h-4" />
-            </Button>
           </CardContent>
         </Card>
       ))}
-
-      {/* Mark as read button */}
-      {unreadCount > 0 && (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={markAllAsRead}
-          className="w-full"
-        >
-          ✓ Alle als gelesen
-        </Button>
-      )}
     </div>
   );
 }

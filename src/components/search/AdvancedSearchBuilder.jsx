@@ -4,57 +4,69 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Save, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Save, Search } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-const SEARCH_FIELDS = {
-  Building: ['name', 'address', 'city', 'owner'],
-  Invoice: ['title', 'amount', 'status', 'due_date'],
-  LeaseContract: ['tenant_name', 'unit', 'status', 'start_date'],
-  Tenant: ['name', 'email', 'phone', 'status']
+const FILTER_FIELDS = {
+  Invoice: ['status', 'amount', 'date', 'tenant'],
+  Contract: ['status', 'start_date', 'end_date', 'tenant'],
+  Building: ['city', 'status', 'units', 'owner'],
+  Task: ['status', 'priority', 'assigned_to', 'due_date']
 };
 
 const OPERATORS = {
-  text: ['enthält', 'ist genau', 'beginnt mit'],
-  number: ['=', '>', '<', '>=', '<='],
-  date: ['nach', 'vor', 'zwischen']
+  text: ['contains', 'equals', 'starts_with', 'ends_with'],
+  number: ['equals', 'greater_than', 'less_than', 'between'],
+  date: ['equals', 'before', 'after', 'between'],
+  select: ['equals', 'in']
 };
 
-export default function AdvancedSearchBuilder({ open, onOpenChange, onSearch }) {
-  const [entityType, setEntityType] = useState('Building');
-  const [filters, setFilters] = useState([{ field: '', operator: 'enthält', value: '' }]);
+export default function AdvancedSearchBuilder({ open, onOpenChange, entityType = 'Invoice' }) {
+  const [filters, setFilters] = useState([]);
   const [searchName, setSearchName] = useState('');
   const [saveSearch, setSaveSearch] = useState(false);
+  const queryClient = useQueryClient();
 
-  const searchMutation = useMutation({
-    mutationFn: async () => {
-      const validFilters = filters.filter(f => f.field && f.value);
-      
-      // Build query
-      const query = {};
-      validFilters.forEach(f => {
-        if (f.operator === 'enthält') {
-          query[f.field] = { $regex: f.value };
-        } else if (f.operator === '=') {
-          query[f.field] = f.value;
-        } else if (f.operator === '>') {
-          query[f.field] = { $gt: f.value };
-        }
+  const { data: savedSearches = [] } = useQuery({
+    queryKey: ['saved-searches'],
+    queryFn: () => base44.entities.SavedSearch?.list?.() || []
+  });
+
+  const addFilterMutation = useMutation({
+    mutationFn: async (query) => {
+      const response = await base44.functions.invoke('advancedSearch', {
+        entityType: entityType,
+        filters: query
       });
-
-      return base44.entities[entityType].filter(query, '-updated_date', 50);
+      return response.data;
     },
     onSuccess: (results) => {
       toast.success(`✅ ${results.length} Ergebnisse gefunden`);
-      onSearch?.(results);
-      onOpenChange(false);
+    }
+  });
+
+  const saveSearchMutation = useMutation({
+    mutationFn: async () => {
+      return base44.entities.SavedSearch.create({
+        name: searchName,
+        entity_type: entityType,
+        filters: filters,
+        created_by: (await base44.auth.me()).email
+      });
+    },
+    onSuccess: () => {
+      toast.success('💾 Suche gespeichert');
+      queryClient.invalidateQueries(['saved-searches']);
+      setSaveSearch(false);
+      setSearchName('');
     }
   });
 
   const handleAddFilter = () => {
-    setFilters([...filters, { field: '', operator: 'enthält', value: '' }]);
+    setFilters([...filters, { field: '', operator: '', value: '' }]);
   };
 
   const handleRemoveFilter = (idx) => {
@@ -67,118 +79,150 @@ export default function AdvancedSearchBuilder({ open, onOpenChange, onSearch }) 
     setFilters(updated);
   };
 
+  const handleSearch = () => {
+    addFilterMutation.mutate(filters);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Erweiterte Suche</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Search className="w-5 h-5" />
+            Erweiterte Suche
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Entity Type */}
-          <div>
-            <label className="text-sm font-medium">Entität</label>
-            <Select value={entityType} onValueChange={setEntityType}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.keys(SEARCH_FIELDS).map(et => (
-                  <SelectItem key={et} value={et}>{et}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Filter Builder */}
+          <div className="space-y-3">
+            {filters.length === 0 ? (
+              <p className="text-sm text-slate-500">Keine Filter hinzugefügt</p>
+            ) : (
+              filters.map((filter, idx) => (
+                <div key={idx} className="flex gap-2 items-end">
+                  <Select value={filter.field} onValueChange={(val) => handleUpdateFilter(idx, 'field', val)}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Feld" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FILTER_FIELDS[entityType]?.map(field => (
+                        <SelectItem key={field} value={field}>{field}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-          {/* Filters */}
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Filter</p>
-            {filters.map((filter, idx) => (
-              <div key={idx} className="flex gap-2">
-                <Select value={filter.field} onValueChange={(v) => handleUpdateFilter(idx, 'field', v)}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Feld" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SEARCH_FIELDS[entityType]?.map(f => (
-                      <SelectItem key={f} value={f}>{f}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <Select value={filter.operator} onValueChange={(val) => handleUpdateFilter(idx, 'operator', val)}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Operator" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {OPERATORS.text?.map(op => (
+                        <SelectItem key={op} value={op}>{op}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-                <Select value={filter.operator} onValueChange={(v) => handleUpdateFilter(idx, 'operator', v)}>
-                  <SelectTrigger className="w-28">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {OPERATORS.text?.map(op => (
-                      <SelectItem key={op} value={op}>{op}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <Input
+                    placeholder="Wert"
+                    value={filter.value}
+                    onChange={(e) => handleUpdateFilter(idx, 'value', e.target.value)}
+                    className="flex-1"
+                  />
 
-                <Input
-                  placeholder="Wert"
-                  value={filter.value}
-                  onChange={(e) => handleUpdateFilter(idx, 'value', e.target.value)}
-                  className="flex-1"
-                />
-
-                {filters.length > 1 && (
                   <Button
-                    size="icon"
+                    size="sm"
                     variant="ghost"
                     onClick={() => handleRemoveFilter(idx)}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    ✕
                   </Button>
-                )}
-              </div>
-            ))}
-
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleAddFilter}
-              className="gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Filter hinzufügen
-            </Button>
-          </div>
-
-          {/* Save Search */}
-          <div className="border-t pt-3">
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <input
-                type="checkbox"
-                checked={saveSearch}
-                onChange={(e) => setSaveSearch(e.target.checked)}
-              />
-              Suche speichern
-            </label>
-            {saveSearch && (
-              <Input
-                placeholder="Suchname"
-                value={searchName}
-                onChange={(e) => setSearchName(e.target.value)}
-                className="mt-2"
-              />
+                </div>
+              ))
             )}
           </div>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleAddFilter}
+            className="gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Filter hinzufügen
+          </Button>
+
+          {/* Saved Searches */}
+          {savedSearches.length > 0 && (
+            <div>
+              <p className="text-xs font-medium mb-2">Gespeicherte Suchen:</p>
+              <div className="flex flex-wrap gap-2">
+                {savedSearches.map(search => (
+                  <Badge
+                    key={search.id}
+                    variant="outline"
+                    className="cursor-pointer hover:bg-slate-100"
+                    onClick={() => setFilters(search.filters)}
+                  >
+                    {search.name}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex gap-2 justify-end pt-4 border-t">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Abbrechen
+              Schließen
             </Button>
+            {filters.length > 0 && (
+              <Button
+                variant="outline"
+                onClick={() => setSaveSearch(!saveSearch)}
+                className="gap-2"
+              >
+                <Save className="w-4 h-4" />
+                Speichern
+              </Button>
+            )}
             <Button
-              onClick={() => searchMutation.mutate()}
-              disabled={!filters.some(f => f.field && f.value) || searchMutation.isPending}
+              onClick={handleSearch}
+              disabled={filters.length === 0 || addFilterMutation.isPending}
+              className="gap-2"
             >
-              {searchMutation.isPending ? 'Suche...' : 'Suchen'}
+              <Search className="w-4 h-4" />
+              Suchen
             </Button>
           </div>
+
+          {/* Save Search Dialog */}
+          {saveSearch && (
+            <div className="p-3 bg-blue-50 rounded border border-blue-200 space-y-2">
+              <Input
+                placeholder="Name für diese Suche"
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}
+                className="text-sm"
+              />
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => setSaveSearch(false)}
+                  variant="outline"
+                >
+                  Abbrechen
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => saveSearchMutation.mutate()}
+                  disabled={!searchName || saveSearchMutation.isPending}
+                >
+                  Speichern
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
