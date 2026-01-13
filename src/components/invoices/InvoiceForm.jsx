@@ -23,6 +23,8 @@ import { Card } from "@/components/ui/card";
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import RecipientForm from '@/components/recipients/RecipientForm';
+import SaveTemplateDialog from '@/components/invoices/SaveTemplateDialog';
+import TemplateQuickSelect from '@/components/invoices/TemplateQuickSelect';
 
 export default function InvoiceForm({ open, onOpenChange, invoice, buildings, units, contracts, onSuccess }) {
     const queryClient = useQueryClient();
@@ -32,6 +34,7 @@ export default function InvoiceForm({ open, onOpenChange, invoice, buildings, un
     const [invoiceDate, setInvoiceDate] = useState(invoice?.invoice_date ? parseISO(invoice.invoice_date) : null);
     const [dueDate, setDueDate] = useState(invoice?.due_date ? parseISO(invoice.due_date) : null);
     const [recipientFormOpen, setRecipientFormOpen] = useState(false);
+    const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
     const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm({
         defaultValues: invoice || {
             type: 'expense',
@@ -245,6 +248,14 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
 
     const handleRecipientSubmit = (data) => {
         createRecipientMutation.mutate(data);
+    };
+
+    const handleLoadTemplate = (templateData) => {
+        setValue('recipient', templateData.recipient);
+        setValue('cost_type_id', templateData.cost_type_id);
+        setValue('type', templateData.type);
+        setValue('operating_cost_relevant', templateData.operating_cost_relevant);
+        setValue('building_id', templateData.building_id);
     };
 
     const onSubmit = async (data) => {
@@ -788,17 +799,30 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                     </div>
 
                     {/* Form Actions */}
-                    <div className="flex justify-end gap-3 pt-4 border-t">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => onOpenChange(false)}
-                        >
-                            Abbrechen
-                        </Button>
-                        <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">
-                            {invoice ? 'Speichern' : 'Erstellen'}
-                        </Button>
+                    <div className="flex justify-between gap-3 pt-4 border-t">
+                        <div className="flex gap-2">
+                            <TemplateQuickSelect onSelect={handleLoadTemplate} />
+                            <Button 
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSaveTemplateOpen(true)}
+                            >
+                                💾 Als Template
+                            </Button>
+                        </div>
+                        <div className="flex gap-3">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => onOpenChange(false)}
+                            >
+                                Abbrechen
+                            </Button>
+                            <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">
+                                {invoice ? 'Speichern' : 'Erstellen'}
+                            </Button>
+                        </div>
                     </div>
                 </form>
             </DialogContent>
@@ -810,6 +834,19 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                 recipient={null}
                 onSuccess={handleRecipientSubmit}
                 isLoading={createRecipientMutation.isPending}
+            />
+
+            {/* Save Template Dialog */}
+            <SaveTemplateDialog
+                open={saveTemplateOpen}
+                onOpenChange={setSaveTemplateOpen}
+                invoiceData={{
+                    recipient: watch('recipient'),
+                    cost_type_id: watch('cost_type_id'),
+                    type: watch('type'),
+                    operating_cost_relevant: watch('operating_cost_relevant'),
+                    building_id: watch('building_id')
+                }}
             />
         </Dialog>
     );
