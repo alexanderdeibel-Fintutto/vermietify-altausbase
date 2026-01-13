@@ -427,6 +427,8 @@ import WorkflowTemplates from './pages/WorkflowTemplates';
 import AdminPricingSimulator from './pages/AdminPricingSimulator';
 import AdminPricingExport from './pages/AdminPricingExport';
 import AdminPricingAuditLog from './pages/AdminPricingAuditLog';
+import AdminPricingDiscounts from './pages/AdminPricingDiscounts';
+import AdminPricingUpsellTriggers from './pages/AdminPricingUpsellTriggers';
 import __Layout from './Layout.jsx';
 
 
@@ -860,6 +862,8 @@ export const PAGES = {
     "AdminPricingSimulator": AdminPricingSimulator,
     "AdminPricingExport": AdminPricingExport,
     "AdminPricingAuditLog": AdminPricingAuditLog,
+    "AdminPricingDiscounts": AdminPricingDiscounts,
+    "AdminPricingUpsellTriggers": AdminPricingUpsellTriggers,
 }
 
 export const pagesConfig = {
