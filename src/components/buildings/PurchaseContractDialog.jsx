@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 const GRUNDERWERBSTEUER_SAETZE = {
@@ -157,10 +159,18 @@ export default function PurchaseContractDialog({ open, onClose, buildingId, buil
               />
             </div>
             <div>
-              <Label className="flex items-center gap-2">Grundstückswert * 
-                <span title="Der Grundstücksanteil wird NICHT abgeschrieben. Typisch: 20-30% des Kaufpreises. Ohne Trennung: Falsche AfA-Berechnung!">
-                  <HelpCircle className="w-4 h-4 text-slate-400 cursor-help" />
-                </span>
+              <Label className="flex items-center gap-2">
+                Grundstückswert * 
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="w-4 h-4 text-slate-400 cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">Der Grundstücksanteil wird NICHT abgeschrieben. Typisch: 20-30% des Kaufpreises. Ohne Trennung führt zu falscher AfA-Berechnung!</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </Label>
               <Input
                 type="number"
