@@ -24,6 +24,7 @@ import RealtimeSyncIndicator from '../components/documents/RealtimeSyncIndicator
 import DocumentActivityFeed from '../components/documents/DocumentActivityFeed';
 import SlackShareDialog from '../components/documents/SlackShareDialog';
 import DocumentComments from '../components/documents/DocumentComments';
+import DocumentTagManager from '../components/documents/DocumentTagManager';
 
 export default function DocumentsPage() {
     const [importerOpen, setImporterOpen] = useState(false);
@@ -198,6 +199,7 @@ export default function DocumentsPage() {
                         </div>
                         {selectedDocumentForVersion && (
                             <div className="space-y-4">
+                                <DocumentTagManager documentId={selectedDocumentForVersion.id} />
                                 <RealtimeSyncIndicator documentId={selectedDocumentForVersion.id} />
                                 <DocumentVersionHistory 
                                     documentId={selectedDocumentForVersion.id}
