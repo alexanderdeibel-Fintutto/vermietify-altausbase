@@ -63,6 +63,8 @@ import AutomationRules from './pages/AutomationRules';
 import BackupRecovery from './pages/BackupRecovery';
 import BankAccounts from './pages/BankAccounts';
 import BankReconciliation from './pages/BankReconciliation';
+import BankStatements from './pages/BankStatements';
+import BankTransfers from './pages/BankTransfers';
 import BankingManagement from './pages/BankingManagement';
 import BudgetAnalysis from './pages/BudgetAnalysis';
 import BudgetPlanning from './pages/BudgetPlanning';
@@ -106,9 +108,9 @@ import Cryptocurrencies from './pages/Cryptocurrencies';
 import CustomDashboard from './pages/CustomDashboard';
 import DACHComplianceChecklist from './pages/DACHComplianceChecklist';
 import DACHTaxComparison from './pages/DACHTaxComparison';
+import Finanzen from './pages/Finanzen';
 import Dashboard from './pages/Dashboard';
 import DataImportExport from './pages/DataImportExport';
-import Finanzen from './pages/Finanzen';
 import DataImportExportHub from './pages/DataImportExportHub';
 import DeductionMaximizationTool from './pages/DeductionMaximizationTool';
 import DeveloperDocumentation from './pages/DeveloperDocumentation';
@@ -327,9 +329,9 @@ import TaxRiskAssessment from './pages/TaxRiskAssessment';
 import TaxRiskAssessmentPanel from './pages/TaxRiskAssessmentPanel';
 import TaxRuleAdmin from './pages/TaxRuleAdmin';
 import TaxSavingsOpportunities from './pages/TaxSavingsOpportunities';
-import TaxSetup from './pages/TaxSetup';
 import TaxScenarioComparison from './pages/TaxScenarioComparison';
 import TaxScenarioSimulator from './pages/TaxScenarioSimulator';
+import TaxSetup from './pages/TaxSetup';
 import TaxSetupWizard from './pages/TaxSetupWizard';
 import TaxSimulation from './pages/TaxSimulation';
 import TaxStrategyAdvisor from './pages/TaxStrategyAdvisor';
@@ -399,8 +401,7 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import BankTransfers from './pages/BankTransfers';
-import BankStatements from './pages/BankStatements';
+import SubscriptionSettings from './pages/SubscriptionSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -470,6 +471,8 @@ export const PAGES = {
     "BackupRecovery": BackupRecovery,
     "BankAccounts": BankAccounts,
     "BankReconciliation": BankReconciliation,
+    "BankStatements": BankStatements,
+    "BankTransfers": BankTransfers,
     "BankingManagement": BankingManagement,
     "BudgetAnalysis": BudgetAnalysis,
     "BudgetPlanning": BudgetPlanning,
@@ -513,9 +516,9 @@ export const PAGES = {
     "CustomDashboard": CustomDashboard,
     "DACHComplianceChecklist": DACHComplianceChecklist,
     "DACHTaxComparison": DACHTaxComparison,
+    "Finanzen": Finanzen,
     "Dashboard": Dashboard,
     "DataImportExport": DataImportExport,
-    "Finanzen": Finanzen,
     "DataImportExportHub": DataImportExportHub,
     "DeductionMaximizationTool": DeductionMaximizationTool,
     "DeveloperDocumentation": DeveloperDocumentation,
@@ -734,9 +737,9 @@ export const PAGES = {
     "TaxRiskAssessmentPanel": TaxRiskAssessmentPanel,
     "TaxRuleAdmin": TaxRuleAdmin,
     "TaxSavingsOpportunities": TaxSavingsOpportunities,
-    "TaxSetup": TaxSetup,
     "TaxScenarioComparison": TaxScenarioComparison,
     "TaxScenarioSimulator": TaxScenarioSimulator,
+    "TaxSetup": TaxSetup,
     "TaxSetupWizard": TaxSetupWizard,
     "TaxSimulation": TaxSimulation,
     "TaxStrategyAdvisor": TaxStrategyAdvisor,
@@ -806,8 +809,7 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "BankTransfers": BankTransfers,
-    "BankStatements": BankStatements,
+    "SubscriptionSettings": SubscriptionSettings,
 }
 
 export const pagesConfig = {
