@@ -21,15 +21,21 @@ export default function BuildingsWidget() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-2">
+        <div className="space-y-3">
           {buildings.slice(0, 5).map(building => (
             <Link key={building.id} to={createPageUrl('BuildingDetail') + `?id=${building.id}`}>
-              <div className="p-2 border rounded hover:bg-slate-50">
-                <p className="text-sm font-semibold">{building.name}</p>
-                <p className="text-xs text-slate-600">{building.city}</p>
+              <div className="p-3 border rounded-lg hover:bg-slate-50 transition-all flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">{building.name}</p>
+                  <p className="text-xs text-slate-500">{building.city}</p>
+                </div>
+                <Link to={createPageUrl(`Units?building_id=${building.id}`)} className="text-sm text-blue-600 font-medium flex items-center gap-1 hover:gap-2 transition-all">
+                  Einheiten <ArrowRight className="w-4 h-4" />
+                </Link>
               </div>
             </Link>
           ))}
+
           {buildings.length === 0 && (
             <p className="text-sm text-slate-500 text-center py-4">Keine Gebäude</p>
           )}

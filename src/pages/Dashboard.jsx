@@ -162,6 +162,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Main Content Area */}
         <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+          <BuildingsWidget />
           {/* Widgets Grid */}
           {enabledWidgets.map((widget) => {
             const WidgetComponent = WIDGET_COMPONENTS[widget.component];
@@ -229,32 +230,3 @@ export default function Dashboard() {
       </div>
       );
       }
-
-      const BuildingsWidget = () => {
-      const { data: buildings = [] } = useQuery({ queryKey: ['buildings'], queryFn: () => base44.entities.Building.list() });
-      const { data: units = [] } = useQuery({ queryKey: ['units'], queryFn: () => base44.entities.Unit.list() });
-
-      return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {buildings.slice(0, 3).map(b => {
-              const buildingUnits = units.filter(u => u.building_id === b.id).length;
-              return (
-                  <Card key={b.id}>
-                      <CardHeader>
-                          <CardTitle className="flex items-center justify-between text-base">
-                              {b.name}
-                              <Link to={createPageUrl(`BuildingDetail?id=${b.id}`)} className="text-xs font-normal text-blue-600 hover:underline">Details</Link>
-                          </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                          <p className="text-sm text-slate-600">{b.address}</p>
-                          <Link to={createPageUrl(`BuildingDetail?id=${b.id}&tab=units`)} className="text-blue-600 text-xs font-semibold block hover:underline">
-                              → {buildingUnits} Einheiten
-                          </Link>
-                      </CardContent>
-                  </Card>
-              );
-          })}
-      </div>
-      );
-      };

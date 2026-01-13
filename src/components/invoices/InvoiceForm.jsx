@@ -820,19 +820,9 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                                 />
                             </div>
 
-                            {!watch('cost_type_id') && (
-                              <div className="md:col-span-2 p-3 bg-yellow-50 border-yellow-200 rounded-lg flex items-center gap-2">
-                                <AlertCircle className="w-5 h-5 text-yellow-600" />
-                                <p className="text-xs text-yellow-800">⚠️ Diese Rechnung ist nicht kategorisiert und wird in BK-Abrechnungen/Anlage V nicht berücksichtigt.</p>
-                              </div>
-                            )}
 
-                            {!watch('cost_type_id') && (
-                              <div className="md:col-span-2 p-3 bg-yellow-50 border-yellow-200 rounded-lg flex items-center gap-2">
-                                <AlertCircle className="w-5 h-5 text-yellow-600" />
-                                <p className="text-xs text-yellow-800">⚠️ Diese Rechnung ist nicht kategorisiert und wird in BK-Abrechnungen/Anlage V nicht berücksichtigt.</p>
-                              </div>
-                            )}
+
+
                         </div>
                     </div>
 

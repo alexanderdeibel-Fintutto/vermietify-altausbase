@@ -173,7 +173,9 @@ export default function TenantsPage() {
         onStatusChange={setStatus}
         onPortalAccessChange={setPortalAccess}
         onSortChange={setSortBy}
-        onNewTenant={() => setQuickCreateOpen(true)}
+        onNewTenant={() => {
+          toast.error('Neue Mietverträge können nur über eine Einheit erstellt werden.');
+        }}
       />
 
       <TenantTable 
