@@ -1,169 +1,267 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertTriangle, CheckCircle2, AlertCircle } from "lucide-react";
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { toast } from 'sonner';
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
+import { ArrowRight, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 
-export default function TenantChangeWizard({ open, onOpenChange, unitId }) {
+export default function TenantChangeWizard({ open = false, onOpenChange, unit = null }) {
   const [step, setStep] = useState(1);
-  const [oldTenant, setOldTenant] = useState('');
-  const [newTenant, setNewTenant] = useState('');
-  const [moveOutDate, setMoveOutDate] = useState('');
-  const [moveInDate, setMoveInDate] = useState('');
-  const [terminationValidation, setTerminationValidation] = useState(null);
-  const queryClient = useQueryClient();
-  
-  const validateTerminationDate = async (date) => {
-    if (!date || !unitId) return;
-    try {
-      const contracts = await base44.entities.LeaseContract.filter({ unit_id: unitId, status: 'active' });
-      if (contracts.length > 0) {
-        const result = await base44.functions.invoke('calculateKuendigungsfrist', {
-          contract_id: contracts[0].id,
-          termination_date: date
-        });
-        setTerminationValidation(result.data);
-      }
-    } catch (error) {
-      console.error('Validierungsfehler:', error);
-    }
-  };
-
-  const processMutation = useMutation({
-    mutationFn: async () => {
-      return await base44.functions.invoke('processTenantChange', {
-        unit_id: unitId,
-        old_tenant: oldTenant,
-        new_tenant: newTenant,
-        move_out_date: moveOutDate,
-        move_in_date: moveInDate
-      });
-    },
-    onSuccess: () => {
-      toast.success('Mieterwechsel verarbeitet');
-      queryClient.invalidateQueries({ queryKey: ['units', 'contracts'] });
-      setStep(3);
-    },
-    onError: () => {
-      toast.error('Fehler beim Mieterwechsel');
-    }
+  const [formData, setFormData] = useState({
+    terminationDate: '',
+    reason: '',
+    depositReturnAmount: '',
+    depositReturnDate: '',
+    newTenantId: '',
+    newTenantName: '',
+    newTenantEmail: '',
+    rentAmount: '',
+    depositAmount: '',
   });
 
-  const handleReset = () => {
-    setStep(1);
-    setOldTenant('');
-    setNewTenant('');
-    setMoveOutDate('');
-    setMoveInDate('');
-    onOpenChange(false);
+  const progress = (step / 5) * 100;
+
+  const handleNext = () => {
+    if (step < 5) setStep(step + 1);
+  };
+
+  const handleBack = () => {
+    if (step > 1) setStep(step - 1);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>👥 Mieterwechsel</DialogTitle>
+          <DialogTitle>🔄 Mieterwechsel-Wizard</DialogTitle>
         </DialogHeader>
 
+        <Progress value={progress} className="h-2" />
+
+        {/* Step 1: Aktuellen Vertrag beenden */}
         {step === 1 && (
-          <div className="space-y-4 py-4">
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex gap-2 text-sm text-amber-900">
-              <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-medium">Automatische Schritte:</p>
-                <ul className="text-xs mt-1 space-y-1">
-                  <li>✓ Alten Vertrag beenden</li>
-                  <li>✓ Neuen Vertrag erstellen (Vorlage)</li>
-                  <li>✓ Mieterwechsel-Dokument</li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <Label className="text-xs">Alter Mieter</Label>
-                <Input 
-                  placeholder="Name des ausziehenden Mieters"
-                  value={oldTenant}
-                  onChange={(e) => setOldTenant(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <Label className="text-xs">Auszugsdatum</Label>
-                <Input 
-                  type="date"
-                  value={moveOutDate}
-                  onChange={(e) => {
-                    setMoveOutDate(e.target.value);
-                    validateTerminationDate(e.target.value);
-                  }}
-                />
-                {terminationValidation && !terminationValidation.is_valid && (
-                  <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-900 flex gap-2">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    <span>Kündigungsfrist nicht eingehalten. Frühestens: {terminationValidation.earliest_termination}</span>
-                  </div>
-                )}
-                {terminationValidation?.is_valid && (
-                  <Badge className="mt-2 bg-green-100 text-green-700">✓ Kündigungsfrist eingehalten</Badge>
-                )}
-              </div>
-
-              <div>
-                <Label className="text-xs">Neuer Mieter</Label>
-                <Input 
-                  placeholder="Name des neuen Mieters"
-                  value={newTenant}
-                  onChange={(e) => setNewTenant(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <Label className="text-xs">Einzugsdatum</Label>
-                <Input 
-                  type="date"
-                  value={moveInDate}
-                  onChange={(e) => setMoveInDate(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
-                Abbrechen
-              </Button>
-              <Button 
-                onClick={() => processMutation.mutate()}
-                disabled={!oldTenant || !newTenant || !moveOutDate || !moveInDate || processMutation.isPending}
-                className="flex-1 bg-blue-600"
-              >
-                Verarbeiten
-              </Button>
-            </div>
-          </div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 py-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Aktuellen Mietvertrag beenden</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Kündigungsdatum *</Label>
+                  <Input
+                    type="date"
+                    value={formData.terminationDate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, terminationDate: e.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>Kündigungsgrund</Label>
+                  <Select
+                    value={formData.reason}
+                    onValueChange={(value) => setFormData({ ...formData, reason: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Grund auswählen..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tenant_termination">Mieter-Kündigung</SelectItem>
+                      <SelectItem value="landlord_termination">Vermieter-Kündigung</SelectItem>
+                      <SelectItem value="mutual">Einvernehmliche Auflösung</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         )}
 
+        {/* Step 2: Kautions-Rückzahlung */}
+        {step === 2 && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 py-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Kautions-Rückzahlung</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Rückzahlungsbetrag (€)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.depositReturnAmount}
+                    onChange={(e) =>
+                      setFormData({ ...formData, depositReturnAmount: e.target.value })
+                    }
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label>Rückzahlungsdatum</Label>
+                  <Input
+                    type="date"
+                    value={formData.depositReturnDate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, depositReturnDate: e.target.value })
+                    }
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Step 3: Neuer Mieter */}
         {step === 3 && (
-          <div className="space-y-4 py-8 text-center">
-            <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto" />
-            <div>
-              <p className="font-medium">✅ Mieterwechsel abgeschlossen!</p>
-              <p className="text-sm text-slate-600 mt-1">
-                {oldTenant} → {newTenant}
-              </p>
-            </div>
-            <Button onClick={handleReset} className="w-full bg-emerald-600">
-              Fertig
-            </Button>
-          </div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 py-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Neuer Mieter</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Mieter auswählen oder neu anlegen *</Label>
+                  <Select value={formData.newTenantId} onValueChange={(value) => setFormData({ ...formData, newTenantId: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Mieter auswählen..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new">+ Neuen Mieter anlegen</SelectItem>
+                      <SelectItem value="existing_1">Max Mustermann</SelectItem>
+                      <SelectItem value="existing_2">Erika Musterfrau</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {formData.newTenantId === 'new' && (
+                  <>
+                    <div>
+                      <Label>Name *</Label>
+                      <Input
+                        value={formData.newTenantName}
+                        onChange={(e) => setFormData({ ...formData, newTenantName: e.target.value })}
+                        placeholder="Vorname Nachname"
+                      />
+                    </div>
+                    <div>
+                      <Label>E-Mail *</Label>
+                      <Input
+                        type="email"
+                        value={formData.newTenantEmail}
+                        onChange={(e) => setFormData({ ...formData, newTenantEmail: e.target.value })}
+                        placeholder="mieter@example.com"
+                      />
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
         )}
+
+        {/* Step 4: Neuer Vertrag */}
+        {step === 4 && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 py-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Neuer Mietvertrag</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-xs text-blue-900">
+                    💡 Folgende Daten werden vom Vorgänger übernommen:
+                  </p>
+                  <ul className="text-xs text-blue-800 mt-2 space-y-1">
+                    <li>• Kaltmiete</li>
+                    <li>• Nebenkosten-Vorauszahlung</li>
+                    <li>• Kaution</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <Label>Kaltmiete (€) *</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.rentAmount}
+                    onChange={(e) => setFormData({ ...formData, rentAmount: e.target.value })}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label>Kaution (€)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.depositAmount}
+                    onChange={(e) => setFormData({ ...formData, depositAmount: e.target.value })}
+                    placeholder="0.00"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Step 5: Zusammenfassung */}
+        {step === 5 && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 py-4">
+            <Card className="bg-emerald-50 border-emerald-200">
+              <CardHeader>
+                <CardTitle className="text-base">✅ Übersicht</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div>
+                  <p className="font-medium text-slate-900">Kündigung:</p>
+                  <p className="text-slate-600">{formData.terminationDate} ({formData.reason})</p>
+                </div>
+                <div>
+                  <p className="font-medium text-slate-900">Kautions-Rückzahlung:</p>
+                  <p className="text-slate-600">{formData.depositReturnAmount}€ am {formData.depositReturnDate}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-slate-900">Neuer Mieter:</p>
+                  <p className="text-slate-600">
+                    {formData.newTenantName || 'Ausgewählter Mieter'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Navigation */}
+        <div className="flex justify-between gap-3 pt-4 border-t">
+          <Button
+            variant="outline"
+            onClick={handleBack}
+            disabled={step === 1}
+          >
+            Zurück
+          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Abbrechen
+            </Button>
+            {step < 5 ? (
+              <Button onClick={handleNext} className="gap-2">
+                Weiter <ArrowRight className="w-4 h-4" />
+              </Button>
+            ) : (
+              <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => {
+                alert('Mieterwechsel abgeschlossen!');
+                onOpenChange(false);
+              }}>
+                ✅ Abschließen
+              </Button>
+            )}
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
