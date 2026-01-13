@@ -1,117 +1,66 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { X, Save, RotateCcw } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { X } from 'lucide-react';
 
 export default function PersistentQuickFilters({ 
-  filters = [], 
-  onFiltersChange,
-  storageKey = 'quick-filters'
+  filters = [],
+  onFilterChange,
+  storageKey = 'quickFilters'
 }) {
-  const [activeFilters, setActiveFilters] = useState({});
-  const [saved, setSaved] = useState(false);
+  const [activeFilters, setActiveFilters] = useState([]);
 
-  // Load filters from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem(storageKey);
-    if (stored) {
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
       try {
-        setActiveFilters(JSON.parse(stored));
+        setActiveFilters(JSON.parse(saved));
       } catch (e) {
         console.error('Error loading filters:', e);
       }
     }
   }, [storageKey]);
 
-  // Notify parent of filter changes
-  useEffect(() => {
-    onFiltersChange?.(activeFilters);
-  }, [activeFilters, onFiltersChange]);
-
-  const updateFilter = (key, value) => {
-    setActiveFilters(prev => ({
-      ...prev,
-      [key]: value || undefined
-    }));
-    setSaved(false);
+  const toggleFilter = (filterId) => {
+    const updated = activeFilters.includes(filterId)
+      ? activeFilters.filter(f => f !== filterId)
+      : [...activeFilters, filterId];
+    
+    setActiveFilters(updated);
+    localStorage.setItem(storageKey, JSON.stringify(updated));
+    onFilterChange?.(updated);
   };
 
-  const saveFilters = () => {
-    localStorage.setItem(storageKey, JSON.stringify(activeFilters));
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
-
-  const resetFilters = () => {
-    setActiveFilters({});
+  const clearAll = () => {
+    setActiveFilters([]);
     localStorage.removeItem(storageKey);
+    onFilterChange?.([]);
   };
-
-  const hasFilters = Object.values(activeFilters).some(v => v);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-3 p-3 sm:p-4 bg-slate-50 rounded-lg border border-slate-200"
-    >
-      <div className="flex items-center justify-between">
-        <p className="text-xs sm:text-sm font-medium text-slate-700">Schnellfilter</p>
-        {hasFilters && (
-          <Button
-            onClick={resetFilters}
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1 text-xs"
-          >
-            <RotateCcw className="w-3 h-3" />
-            Zurücksetzen
-          </Button>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {filters.map(filter => (
-          <div key={filter.key} className="flex items-center gap-2">
-            {filter.type === 'text' ? (
-              <Input
-                placeholder={filter.label}
-                value={activeFilters[filter.key] || ''}
-                onChange={(e) => updateFilter(filter.key, e.target.value)}
-                className="h-8 text-xs"
-              />
-            ) : (
-              <select
-                value={activeFilters[filter.key] || ''}
-                onChange={(e) => updateFilter(filter.key, e.target.value)}
-                className="flex h-8 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium"
-              >
-                <option value="">{filter.label}</option>
-                {filter.options?.map(opt => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {hasFilters && (
-        <div className="flex gap-2">
-          <Button
-            onClick={saveFilters}
-            size="sm"
-            className="flex-1 bg-blue-600 hover:bg-blue-700 gap-1 h-7 text-xs"
-          >
-            <Save className="w-3 h-3" />
-            Speichern
-            {saved && <span className="ml-auto">✓</span>}
-          </Button>
-        </div>
+    <div className="flex flex-wrap gap-2 items-center">
+      {filters.map(filter => (
+        <button
+          key={filter.id}
+          onClick={() => toggleFilter(filter.id)}
+          className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+            activeFilters.includes(filter.id)
+              ? 'bg-blue-600 text-white'
+              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+          }`}
+        >
+          {filter.label}
+        </button>
+      ))}
+      
+      {activeFilters.length > 0 && (
+        <button
+          onClick={clearAll}
+          className="px-2 py-1.5 text-xs text-slate-500 hover:text-red-600 transition-colors"
+          title="Alle Filter löschen"
+        >
+          <X className="w-4 h-4" />
+        </button>
       )}
-    </motion.div>
+    </div>
   );
 }
