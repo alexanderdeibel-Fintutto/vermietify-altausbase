@@ -1,36 +1,33 @@
 import React from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Crown, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Crown, ArrowRight } from 'lucide-react';
 
 export default function UpgradePrompt({ 
   title = 'Upgrade erforderlich',
-  message = 'Dieses Feature ist in deinem aktuellen Plan nicht verfügbar.',
-  tierName
+  message = 'Diese Funktion ist in Ihrem aktuellen Plan nicht verfügbar.',
+  featureName,
+  className = ''
 }) {
   return (
-    <Alert className="border-amber-200 bg-amber-50">
-      <Crown className="h-4 w-4 text-amber-600" />
-      <AlertDescription className="ml-2">
-        <div className="space-y-3">
-          <div>
-            <strong className="text-amber-900">{title}</strong>
-            <p className="text-sm text-amber-800 mt-1">{message}</p>
-            {tierName && (
-              <p className="text-xs text-amber-700 mt-1">
-                Verfügbar ab Plan: <strong>{tierName}</strong>
-              </p>
-            )}
+    <Alert className={`border-blue-200 bg-blue-50 ${className}`}>
+      <Sparkles className="h-4 w-4 text-blue-600" />
+      <AlertDescription className="flex items-center justify-between">
+        <div>
+          <div className="font-medium text-blue-900">{title}</div>
+          <div className="text-sm text-blue-700 mt-1">
+            {message}
+            {featureName && <span className="font-medium"> {featureName}</span>}
           </div>
-          <Button size="sm" asChild className="bg-amber-600 hover:bg-amber-700">
-            <Link to={createPageUrl('Pricing')}>
-              Jetzt upgraden
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Link>
-          </Button>
         </div>
+        <Link to={createPageUrl('Pricing')}>
+          <Button size="sm" className="ml-4 bg-blue-600 hover:bg-blue-700">
+            <Crown className="h-4 w-4 mr-2" />
+            Upgraden
+          </Button>
+        </Link>
       </AlertDescription>
     </Alert>
   );
