@@ -277,6 +277,11 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
             toast.error('Bitte füllen Sie alle Pflichtfelder aus');
             return;
         }
+        
+        // Warning (not blocking) for uncategorized invoices
+        if (!data.cost_type_id && !data.cost_category_id) {
+            toast.warning('⚠️ Diese Rechnung ist nicht kategorisiert und wird in BK-Abrechnungen/Anlage V nicht berücksichtigt.');
+        }
 
         const amount = parseFloat(data.amount);
         const submissionData = {
@@ -545,7 +550,10 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                         <div className="grid grid-cols-1 gap-4">
                             {/* Cost Type Selection */}
                             <div>
-                                <Label>Kostenart *</Label>
+                                <Label className="flex items-center gap-2">
+                                    Kostenart *
+                                    <span title="Umlagefähige Kosten können an Mieter weitergegeben werden (§556 BGB, BetrKV). Beispiele: Müllabfuhr, Hausmeister. Nicht umlagefähig: Verwaltungskosten, Reparaturen." className="text-xs text-blue-500 cursor-help">ℹ️</span>
+                                </Label>
                                 <Select 
                                     value={watch('cost_type_id')} 
                                     onValueChange={(value) => setValue('cost_type_id', value)}
