@@ -16,6 +16,7 @@ import OfflineIndicator from '@/components/shared/OfflineIndicator';
 
 import SubscriptionWidget from '@/components/dashboard/widgets/SubscriptionWidget';
 import LimitWarning from '@/components/subscription/LimitWarning';
+import QuickActionCards from '@/components/dashboard/QuickActionCards';
 
 const DEFAULT_LAYOUT = AVAILABLE_WIDGETS.slice(0, 7).map((widget, idx) => ({
   id: widget.id,
@@ -117,6 +118,12 @@ export default function Dashboard() {
 
       {/* Limit Warnings */}
       <LimitWarning />
+
+      {/* Quick Actions */}
+      <div>
+        <h2 className="text-sm font-semibold text-slate-700 mb-3">Schnellzugriff</h2>
+        <QuickActionCards />
+      </div>
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
