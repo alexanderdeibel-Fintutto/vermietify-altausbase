@@ -429,6 +429,16 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
+import ContractorMarketplace from './pages/ContractorMarketplace';
+import RentIncreaseOptimizer from './pages/RentIncreaseOptimizer';
+import TenantVettingSystem from './pages/TenantVettingSystem';
+import OperatingCostAutomationHub from './pages/OperatingCostAutomationHub';
+import BankingAutomationHub from './pages/BankingAutomationHub';
+import PropertyValuationEngine from './pages/PropertyValuationEngine';
+import WhiteLabelSaaS from './pages/WhiteLabelSaaS';
+import TenantAISupport from './pages/TenantAISupport';
+import PortfolioOptimizer from './pages/PortfolioOptimizer';
+import ElsterAutomationHub from './pages/ElsterAutomationHub';
 import __Layout from './Layout.jsx';
 
 
@@ -864,6 +874,16 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
+    "ContractorMarketplace": ContractorMarketplace,
+    "RentIncreaseOptimizer": RentIncreaseOptimizer,
+    "TenantVettingSystem": TenantVettingSystem,
+    "OperatingCostAutomationHub": OperatingCostAutomationHub,
+    "BankingAutomationHub": BankingAutomationHub,
+    "PropertyValuationEngine": PropertyValuationEngine,
+    "WhiteLabelSaaS": WhiteLabelSaaS,
+    "TenantAISupport": TenantAISupport,
+    "PortfolioOptimizer": PortfolioOptimizer,
+    "ElsterAutomationHub": ElsterAutomationHub,
 }
 
 export const pagesConfig = {
