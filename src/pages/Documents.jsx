@@ -16,12 +16,17 @@ import ModuleGuard from '@/components/package/ModuleGuard';
 import AdvancedDocumentSearch from '../components/documents/AdvancedDocumentSearch';
 import DocumentTemplateManager from '../components/documents/DocumentTemplateManager';
 import DocumentArchivePanel from '../components/documents/DocumentArchivePanel';
+import DocumentVersionHistory from '../components/documents/DocumentVersionHistory';
+import ApprovalWorkflowDialog from '../components/documents/ApprovalWorkflowDialog';
 
 export default function DocumentsPage() {
     const [importerOpen, setImporterOpen] = useState(false);
     const [uploadOpen, setUploadOpen] = useState(false);
     const [searchFilters, setSearchFilters] = useState({});
     const [showSearch, setShowSearch] = useState(false);
+    const [selectedDocumentForVersion, setSelectedDocumentForVersion] = useState(null);
+    const [approvalDialogOpen, setApprovalDialogOpen] = useState(false);
+    const [selectedVersionId, setSelectedVersionId] = useState(null);
     const queryClient = useQueryClient();
 
     // Fetch data for upload dialog
@@ -166,10 +171,32 @@ export default function DocumentsPage() {
                 </TabsList>
 
                 <TabsContent value="documents" className="mt-6">
-                    <DocumentListEnhanced 
-                        documents={documents}
-                        onDelete={(docId) => deleteMutation.mutate(docId)}
-                    />
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2">
+                            <DocumentListEnhanced 
+                                documents={documents}
+                                onDelete={(docId) => deleteMutation.mutate(docId)}
+                                onSelectDocument={(doc) => setSelectedDocumentForVersion(doc)}
+                            />
+                        </div>
+                        {selectedDocumentForVersion && (
+                            <div className="space-y-4">
+                                <DocumentVersionHistory 
+                                    documentId={selectedDocumentForVersion.id}
+                                    onSelectVersion={(version) => {
+                                        setSelectedVersionId(version.id);
+                                        setApprovalDialogOpen(true);
+                                    }}
+                                />
+                                <Button 
+                                    className="w-full"
+                                    onClick={() => setApprovalDialogOpen(true)}
+                                >
+                                    Genehmigung anfordern
+                                </Button>
+                            </div>
+                        )}
+                    </div>
                 </TabsContent>
 
                 <TabsContent value="templates" className="mt-6">
@@ -200,6 +227,13 @@ export default function DocumentsPage() {
                     onSuccess={() => {
                         queryClient.invalidateQueries({ queryKey: ['documents'] });
                     }}
+                />
+
+                <ApprovalWorkflowDialog
+                    open={approvalDialogOpen}
+                    onOpenChange={setApprovalDialogOpen}
+                    documentId={selectedDocumentForVersion?.id}
+                    versionId={selectedVersionId}
                 />
                 </div>
                 </ModuleGuard>
