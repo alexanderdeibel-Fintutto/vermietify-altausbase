@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import BankTransactionMatches from "@/components/banking/BankTransactionMatches";
 import ISTBookingCard from "@/components/shared/ISTBookingCard";
 
-export default function BankTransfersPage() {
+export default function BankTransactionsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [approveOpen, setApproveOpen] = useState(false);
   const [tanOpen, setTanOpen] = useState(false);

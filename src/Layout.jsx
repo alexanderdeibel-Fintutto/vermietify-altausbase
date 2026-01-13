@@ -21,6 +21,7 @@ import HorizontalMainNavigation from '@/components/navigation/HorizontalMainNavi
 import DynamicSubNavigation from '@/components/navigation/DynamicSubNavigation';
 import BreadcrumbNavigation from '@/components/navigation/BreadcrumbNavigation';
 import BreadcrumbNavigation from '@/components/navigation/BreadcrumbNavigation';
+import BreadcrumbNavigation from '@/components/navigation/BreadcrumbNavigation';
 import MobileBottomNav from '@/components/navigation/MobileBottomNav';
 import DeepSubNavigation from '@/components/navigation/DeepSubNavigation';
 import IntelligentOnboardingWizardButton from '@/components/onboarding/IntelligentOnboardingWizardButton';
@@ -169,6 +170,9 @@ export default function Layout({ children, currentPageName }) {
 
                 {/* Sub-Navigation */}
                 {mainSection && <DynamicSubNavigation mainSection={mainSection} visibleFeatures={visibleFeatures} />}
+
+                {/* Breadcrumbs */}
+                <BreadcrumbNavigation currentPageName={currentPageName} />
 
                 {/* Breadcrumbs */}
                 <BreadcrumbNavigation currentPageName={currentPageName} />
