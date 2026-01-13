@@ -7,10 +7,28 @@ import { Badge } from '@/components/ui/badge';
 import { Check, X, Zap, Crown, Rocket } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
 export default function Pricing() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [billingCycle, setBillingCycle] = useState('MONTHLY');
+
+  const { data: user } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me()
+  });
+
+  const { data: currentSubscription } = useQuery({
+    queryKey: ['userSubscription', user?.email],
+    queryFn: async () => {
+      const subs = await base44.entities.UserSubscription.filter({ 
+        user_email: user.email 
+      });
+      return subs[0] || null;
+    },
+    enabled: !!user?.email
+  });
 
   const { data: products = [] } = useQuery({
     queryKey: ['activeProducts'],
@@ -68,7 +86,21 @@ export default function Pricing() {
   };
 
   const handleSelectPlan = async (tier) => {
-    toast.success(`${tier.name} ausgewählt - Weiterleitung zur Zahlung...`);
+    if (!user) {
+      base44.auth.redirectToLogin(window.location.href);
+      return;
+    }
+
+    if (currentSubscription?.tier_id === tier.id) {
+      toast.info('Sie haben bereits diesen Plan');
+      return;
+    }
+
+    toast.success(`${tier.name} ausgewählt - Upgrade wird vorbereitet...`);
+  };
+
+  const isCurrentPlan = (tierId) => {
+    return currentSubscription?.tier_id === tierId;
   };
 
   if (!selectedProduct) {
@@ -228,13 +260,28 @@ export default function Pricing() {
                 </CardContent>
 
                 <CardFooter>
-                  <Button 
-                    className="w-full"
-                    variant={isPopular ? 'default' : 'outline'}
-                    onClick={() => handleSelectPlan(tier)}
-                  >
-                    {tier.trial_days > 0 ? `${tier.trial_days} Tage kostenlos testen` : 'Plan wählen'}
-                  </Button>
+                  {isCurrentPlan(tier.id) ? (
+                    <Button 
+                      className="w-full"
+                      variant="outline"
+                      disabled
+                    >
+                      <Crown className="h-4 w-4 mr-2" />
+                      Aktueller Plan
+                    </Button>
+                  ) : (
+                    <Button 
+                      className="w-full"
+                      variant={isPopular ? 'default' : 'outline'}
+                      onClick={() => handleSelectPlan(tier)}
+                    >
+                      {currentSubscription 
+                        ? 'Upgraden' 
+                        : tier.trial_days > 0 
+                          ? `${tier.trial_days} Tage kostenlos testen` 
+                          : 'Plan wählen'}
+                    </Button>
+                  )}
                 </CardFooter>
               </Card>
             );

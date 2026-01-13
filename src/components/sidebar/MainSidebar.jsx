@@ -10,7 +10,8 @@ import {
   TrendingUp,
   Settings,
   Tag,
-  ChevronDown
+  ChevronDown,
+  Crown
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import BuildingSelector from '@/components/sidebar/BuildingSelector';
@@ -22,9 +23,11 @@ const menuItems = [
   { name: 'Finanzen', icon: FileText, page: 'FinanceDashboard' },
   { name: 'Steuern', icon: Calculator, page: 'TaxDashboard' },
   { name: 'Vermögen', icon: TrendingUp, page: 'PortfolioDashboard', badge: 'NEU' },
+  { name: 'Abonnement', icon: Crown, page: 'MySubscription' },
 ];
 
 const adminMenuItems = [
+  { name: 'Übersicht', page: 'AdminPricingOverview' },
   { name: 'Produkte', page: 'AdminPricingProducts' },
   { name: 'Feature-Gruppen', page: 'AdminPricingFeatureGroups' },
   { name: 'Features', page: 'AdminPricingFeatures' },
