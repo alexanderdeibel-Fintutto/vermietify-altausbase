@@ -3,10 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ChevronLeft, CheckCircle2, AlertCircle } from "lucide-react";
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import BetriebskostenTooltip from '@/components/shared/BetriebskostenTooltip';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const STEPS = [
   { id: 1, label: 'Objekt & Zeitraum', description: 'Gebäude auswählen' },
@@ -23,13 +24,28 @@ export default function SimplifiedBKWizard({ onClose }) {
   const [selectedCosts, setSelectedCosts] = useState([]);
   const queryClient = useQueryClient();
 
+  const { data: buildings = [] } = useQuery({
+    queryKey: ['buildings'],
+    queryFn: () => base44.entities.Building.list(),
+  });
+
+  const { data: invoices = [] } = useQuery({
+    queryKey: ['invoices', building?.id],
+    queryFn: () => building ? base44.entities.Invoice.filter({ building_id: building.id }) : [],
+    enabled: !!building,
+  });
+
   const createStatementMutation = useMutation({
     mutationFn: async () => {
+      const costItems = invoices
+        .filter(inv => selectedCosts.includes(inv.id))
+        .map(inv => ({ invoice_id: inv.id, amount: inv.amount }));
+      
       return await base44.entities.OperatingCostStatement.create({
         building_id: building.id,
         start_date: startDate,
         end_date: endDate,
-        costs: selectedCosts,
+        cost_items: costItems,
         status: 'draft'
       });
     },
@@ -75,13 +91,15 @@ export default function SimplifiedBKWizard({ onClose }) {
                 <select 
                   value={building?.id || ''} 
                   onChange={(e) => {
-                    const b = { id: e.target.value, name: e.target.options[e.target.selectedIndex].text };
-                    setBuilding(b);
+                    const selected = buildings.find(b => b.id === e.target.value);
+                    setBuilding(selected);
                   }}
                   className="w-full border rounded p-2"
                 >
                   <option value="">Wählen Sie ein Gebäude...</option>
-                  {/* Will be populated with real buildings */}
+                  {buildings.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -115,11 +133,26 @@ export default function SimplifiedBKWizard({ onClose }) {
               </div>
               <p className="text-sm text-slate-600">Die folgenden Kosten wurden automatisch erkannt (nur umlagefähige):</p>
               <div className="space-y-2 max-h-80 overflow-y-auto">
-                {/* Will show pre-selected costs */}
-                <div className="p-3 bg-slate-50 rounded border text-sm">
-                  <p>Heizung: €500</p>
-                  <p>Wasser: €150</p>
-                </div>
+                {invoices
+                  .filter(inv => inv.operating_cost_relevant)
+                  .map(inv => (
+                    <div key={inv.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded border">
+                      <Checkbox 
+                        checked={selectedCosts.includes(inv.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedCosts([...selectedCosts, inv.id]);
+                          } else {
+                            setSelectedCosts(selectedCosts.filter(id => id !== inv.id));
+                          }
+                        }}
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{inv.description}</p>
+                        <p className="text-xs text-slate-600">€{inv.amount} - {inv.invoice_date}</p>
+                      </div>
+                    </div>
+                  ))}
               </div>
             </div>
           )}
