@@ -38,6 +38,8 @@ import OfflineIndicator from '@/components/shared/OfflineIndicator';
 import SubscriptionInitializer from '@/components/subscription/SubscriptionInitializer';
 import KeyboardShortcutsHandler from '@/components/shortcuts/KeyboardShortcutsHandler';
 import KeyboardShortcutsHelp from '@/components/shortcuts/KeyboardShortcutsHelp';
+import ThemeToggle from '@/components/theme/ThemeToggle';
+import OfflineModeInitializer from '@/components/offline/OfflineModeInitializer';
 
 // Lazy load heavy components
 const TesterTracker = lazy(() => import('@/components/testing/TesterTracker'));
@@ -140,6 +142,7 @@ export default function Layout({ children, currentPageName }) {
 
                                         {/* Right Actions */}
                                         <div className="flex items-center gap-3">
+                                            <ThemeToggle />
                                             <MandantSwitcher />
                                             <NotificationCenter />
                                             <SuiteSwitcher />
@@ -188,7 +191,10 @@ export default function Layout({ children, currentPageName }) {
                 <PWAInstallPrompt />
 
                 {/* Offline Indicator */}
-                <OfflineIndicator />
+                                <OfflineIndicator />
+
+                                {/* Offline Mode Support */}
+                                <OfflineModeInitializer />
 
                 {/* Mobile Bottom Navigation */}
                 <MobileBottomNav visibleFeatures={visibleFeatures} />
