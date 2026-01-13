@@ -28,7 +28,10 @@ import AdminPricingMatrix from './pages/AdminPricingMatrix';
 import AdminPricingOverview from './pages/AdminPricingOverview';
 import AdminPricingProductFeatures from './pages/AdminPricingProductFeatures';
 import AdminPricingProducts from './pages/AdminPricingProducts';
+import AdminPricingTierFeatures from './pages/AdminPricingTierFeatures';
+import AdminPricingTierLimits from './pages/AdminPricingTierLimits';
 import AdminPricingTiers from './pages/AdminPricingTiers';
+import AdminPricingTiersV2 from './pages/AdminPricingTiersV2';
 import AdminProductFeatures from './pages/AdminProductFeatures';
 import AdminRoleManagement from './pages/AdminRoleManagement';
 import AdminSettings from './pages/AdminSettings';
@@ -107,7 +110,6 @@ import CommunicationWorkflows from './pages/CommunicationWorkflows';
 import CommunityForum from './pages/CommunityForum';
 import Companies from './pages/Companies';
 import CompanyDetailEnhanced from './pages/CompanyDetailEnhanced';
-import Finanzen from './pages/Finanzen';
 import CompleteEnterpriseHub from './pages/CompleteEnterpriseHub';
 import CompleteFeaturesHub from './pages/CompleteFeaturesHub';
 import ComplexTaxSetupWizard from './pages/ComplexTaxSetupWizard';
@@ -176,6 +178,7 @@ import FinancialForecasting from './pages/FinancialForecasting';
 import FinancialItems from './pages/FinancialItems';
 import FinancialReporting from './pages/FinancialReporting';
 import FinancialReports from './pages/FinancialReports';
+import Finanzen from './pages/Finanzen';
 import FullFeatureHub from './pages/FullFeatureHub';
 import GeneratedBookings from './pages/GeneratedBookings';
 import GlobalSettings from './pages/GlobalSettings';
@@ -327,7 +330,6 @@ import TaxFormLibrary from './pages/TaxFormLibrary';
 import TaxForms from './pages/TaxForms';
 import TaxHarvesting from './pages/TaxHarvesting';
 import TaxLawUpdates from './pages/TaxLawUpdates';
-import TaxSetup from './pages/TaxSetup';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import TaxLossHarvesting from './pages/TaxLossHarvesting';
 import TaxLossHarvestingAdvisor from './pages/TaxLossHarvestingAdvisor';
@@ -352,6 +354,7 @@ import TaxRuleAdmin from './pages/TaxRuleAdmin';
 import TaxSavingsOpportunities from './pages/TaxSavingsOpportunities';
 import TaxScenarioComparison from './pages/TaxScenarioComparison';
 import TaxScenarioSimulator from './pages/TaxScenarioSimulator';
+import TaxSetup from './pages/TaxSetup';
 import TaxSetupWizard from './pages/TaxSetupWizard';
 import TaxSimulation from './pages/TaxSimulation';
 import TaxStrategyAdvisor from './pages/TaxStrategyAdvisor';
@@ -421,9 +424,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import AdminPricingTiersV2 from './pages/AdminPricingTiersV2';
-import AdminPricingTierFeatures from './pages/AdminPricingTierFeatures';
-import AdminPricingTierLimits from './pages/AdminPricingTierLimits';
 import __Layout from './Layout.jsx';
 
 
@@ -458,7 +458,10 @@ export const PAGES = {
     "AdminPricingOverview": AdminPricingOverview,
     "AdminPricingProductFeatures": AdminPricingProductFeatures,
     "AdminPricingProducts": AdminPricingProducts,
+    "AdminPricingTierFeatures": AdminPricingTierFeatures,
+    "AdminPricingTierLimits": AdminPricingTierLimits,
     "AdminPricingTiers": AdminPricingTiers,
+    "AdminPricingTiersV2": AdminPricingTiersV2,
     "AdminProductFeatures": AdminProductFeatures,
     "AdminRoleManagement": AdminRoleManagement,
     "AdminSettings": AdminSettings,
@@ -537,7 +540,6 @@ export const PAGES = {
     "CommunityForum": CommunityForum,
     "Companies": Companies,
     "CompanyDetailEnhanced": CompanyDetailEnhanced,
-    "Finanzen": Finanzen,
     "CompleteEnterpriseHub": CompleteEnterpriseHub,
     "CompleteFeaturesHub": CompleteFeaturesHub,
     "ComplexTaxSetupWizard": ComplexTaxSetupWizard,
@@ -606,6 +608,7 @@ export const PAGES = {
     "FinancialItems": FinancialItems,
     "FinancialReporting": FinancialReporting,
     "FinancialReports": FinancialReports,
+    "Finanzen": Finanzen,
     "FullFeatureHub": FullFeatureHub,
     "GeneratedBookings": GeneratedBookings,
     "GlobalSettings": GlobalSettings,
@@ -757,7 +760,6 @@ export const PAGES = {
     "TaxForms": TaxForms,
     "TaxHarvesting": TaxHarvesting,
     "TaxLawUpdates": TaxLawUpdates,
-    "TaxSetup": TaxSetup,
     "TaxLibraryManagement": TaxLibraryManagement,
     "TaxLossHarvesting": TaxLossHarvesting,
     "TaxLossHarvestingAdvisor": TaxLossHarvestingAdvisor,
@@ -782,6 +784,7 @@ export const PAGES = {
     "TaxSavingsOpportunities": TaxSavingsOpportunities,
     "TaxScenarioComparison": TaxScenarioComparison,
     "TaxScenarioSimulator": TaxScenarioSimulator,
+    "TaxSetup": TaxSetup,
     "TaxSetupWizard": TaxSetupWizard,
     "TaxSimulation": TaxSimulation,
     "TaxStrategyAdvisor": TaxStrategyAdvisor,
@@ -851,9 +854,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "AdminPricingTiersV2": AdminPricingTiersV2,
-    "AdminPricingTierFeatures": AdminPricingTierFeatures,
-    "AdminPricingTierLimits": AdminPricingTierLimits,
 }
 
 export const pagesConfig = {
