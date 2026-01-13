@@ -157,9 +157,20 @@ export default function AdminPricingTiers() {
                       variant="ghost" 
                       size="icon"
                       asChild
+                      title="Features"
                     >
                       <Link to={createPageUrl(`AdminTierFeatures?tier=${tier.id}`)}>
                         <Settings className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      asChild
+                      title="Limits"
+                    >
+                      <Link to={createPageUrl(`AdminTierLimits?tier=${tier.id}`)}>
+                        <Zap className="h-4 w-4" />
                       </Link>
                     </Button>
                     <Button 
