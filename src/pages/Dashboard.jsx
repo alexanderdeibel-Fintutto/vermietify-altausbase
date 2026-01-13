@@ -117,17 +117,17 @@ export default function Dashboard() {
       <LimitWarning />
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-          <p className="text-slate-600 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Dashboard</h1>
+          <p className="text-slate-600 mt-1 text-sm sm:text-base">
             Willkommen zurück, {user?.full_name || 'Benutzer'}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {userProfiles.length > 1 && (
             <Select value={selectedProfile || savedConfig?.id} onValueChange={switchProfile}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <LayoutDashboard className="w-4 h-4 mr-2" />
                 <SelectValue placeholder="Profil wählen" />
               </SelectTrigger>
@@ -140,25 +140,24 @@ export default function Dashboard() {
               </SelectContent>
             </Select>
           )}
-          <Button variant="outline" onClick={() => setConfigOpen(true)}>
+          <Button variant="outline" onClick={() => setConfigOpen(true)} className="flex-1 sm:flex-initial">
             <Settings className="w-4 h-4 mr-2" />
-            Anpassen
+            <span className="hidden sm:inline">Anpassen</span>
+            <span className="sm:hidden">⚙️</span>
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Main Content Area */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           {/* Widgets Grid */}
           {enabledWidgets.map((widget) => {
             const WidgetComponent = WIDGET_COMPONENTS[widget.component];
             if (!WidgetComponent) return null;
             
             return (
-              <div 
-                key={widget.id}
-              >
+              <div key={widget.id}>
                 <WidgetComponent />
               </div>
             );
@@ -166,7 +165,7 @@ export default function Dashboard() {
         </div>
 
         {/* Right Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <SubscriptionWidget />
           <ActionRequiredWidget />
           <OnboardingChecklist />

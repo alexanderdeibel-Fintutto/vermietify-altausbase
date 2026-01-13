@@ -21,17 +21,22 @@ import AdminLimitsConfig from './pages/AdminLimitsConfig';
 import AdminMasterDashboard from './pages/AdminMasterDashboard';
 import AdminMessagingCenter from './pages/AdminMessagingCenter';
 import AdminPackageSetup from './pages/AdminPackageSetup';
+import AdminPricingAuditLog from './pages/AdminPricingAuditLog';
 import AdminPricingBundles from './pages/AdminPricingBundles';
+import AdminPricingDiscounts from './pages/AdminPricingDiscounts';
+import AdminPricingExport from './pages/AdminPricingExport';
 import AdminPricingFeatureGroups from './pages/AdminPricingFeatureGroups';
 import AdminPricingFeatures from './pages/AdminPricingFeatures';
 import AdminPricingMatrix from './pages/AdminPricingMatrix';
 import AdminPricingOverview from './pages/AdminPricingOverview';
 import AdminPricingProductFeatures from './pages/AdminPricingProductFeatures';
 import AdminPricingProducts from './pages/AdminPricingProducts';
+import AdminPricingSimulator from './pages/AdminPricingSimulator';
 import AdminPricingTierFeatures from './pages/AdminPricingTierFeatures';
 import AdminPricingTierLimits from './pages/AdminPricingTierLimits';
 import AdminPricingTiers from './pages/AdminPricingTiers';
 import AdminPricingTiersV2 from './pages/AdminPricingTiersV2';
+import AdminPricingUpsellTriggers from './pages/AdminPricingUpsellTriggers';
 import AdminProductFeatures from './pages/AdminProductFeatures';
 import AdminRoleManagement from './pages/AdminRoleManagement';
 import AdminSettings from './pages/AdminSettings';
@@ -209,13 +214,13 @@ import Kommunikation from './pages/Kommunikation';
 import KommunikationDashboard from './pages/KommunikationDashboard';
 import LeaseContracts from './pages/LeaseContracts';
 import LetterShipmentManagement from './pages/LetterShipmentManagement';
+import MeterApp from './pages/MeterApp';
 import LetterXpressManagement from './pages/LetterXpressManagement';
 import MaintenanceManager from './pages/MaintenanceManager';
 import MaintenanceScheduling from './pages/MaintenanceScheduling';
 import MaintenanceTasks from './pages/MaintenanceTasks';
 import MandantManagement from './pages/MandantManagement';
 import MarketAnalytics from './pages/MarketAnalytics';
-import MeterApp from './pages/MeterApp';
 import MeterDashboard from './pages/MeterDashboard';
 import MieterSelfServicePortal from './pages/MieterSelfServicePortal';
 import MobileApp from './pages/MobileApp';
@@ -320,6 +325,7 @@ import TaxDeadlines from './pages/TaxDeadlines';
 import TaxDeductionOptimizer from './pages/TaxDeductionOptimizer';
 import TaxDocumentManager from './pages/TaxDocumentManager';
 import TaxDocumentProcessor from './pages/TaxDocumentProcessor';
+import TaxForms from './pages/TaxForms';
 import TaxEvents from './pages/TaxEvents';
 import TaxExportHub from './pages/TaxExportHub';
 import TaxFilingTimeline from './pages/TaxFilingTimeline';
@@ -327,7 +333,6 @@ import TaxFilingWizard from './pages/TaxFilingWizard';
 import TaxForecastPlanner from './pages/TaxForecastPlanner';
 import TaxFormGuide from './pages/TaxFormGuide';
 import TaxFormLibrary from './pages/TaxFormLibrary';
-import TaxForms from './pages/TaxForms';
 import TaxHarvesting from './pages/TaxHarvesting';
 import TaxLawUpdates from './pages/TaxLawUpdates';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
@@ -424,11 +429,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import AdminPricingSimulator from './pages/AdminPricingSimulator';
-import AdminPricingExport from './pages/AdminPricingExport';
-import AdminPricingAuditLog from './pages/AdminPricingAuditLog';
-import AdminPricingDiscounts from './pages/AdminPricingDiscounts';
-import AdminPricingUpsellTriggers from './pages/AdminPricingUpsellTriggers';
 import __Layout from './Layout.jsx';
 
 
@@ -456,17 +456,22 @@ export const PAGES = {
     "AdminMasterDashboard": AdminMasterDashboard,
     "AdminMessagingCenter": AdminMessagingCenter,
     "AdminPackageSetup": AdminPackageSetup,
+    "AdminPricingAuditLog": AdminPricingAuditLog,
     "AdminPricingBundles": AdminPricingBundles,
+    "AdminPricingDiscounts": AdminPricingDiscounts,
+    "AdminPricingExport": AdminPricingExport,
     "AdminPricingFeatureGroups": AdminPricingFeatureGroups,
     "AdminPricingFeatures": AdminPricingFeatures,
     "AdminPricingMatrix": AdminPricingMatrix,
     "AdminPricingOverview": AdminPricingOverview,
     "AdminPricingProductFeatures": AdminPricingProductFeatures,
     "AdminPricingProducts": AdminPricingProducts,
+    "AdminPricingSimulator": AdminPricingSimulator,
     "AdminPricingTierFeatures": AdminPricingTierFeatures,
     "AdminPricingTierLimits": AdminPricingTierLimits,
     "AdminPricingTiers": AdminPricingTiers,
     "AdminPricingTiersV2": AdminPricingTiersV2,
+    "AdminPricingUpsellTriggers": AdminPricingUpsellTriggers,
     "AdminProductFeatures": AdminProductFeatures,
     "AdminRoleManagement": AdminRoleManagement,
     "AdminSettings": AdminSettings,
@@ -644,13 +649,13 @@ export const PAGES = {
     "KommunikationDashboard": KommunikationDashboard,
     "LeaseContracts": LeaseContracts,
     "LetterShipmentManagement": LetterShipmentManagement,
+    "MeterApp": MeterApp,
     "LetterXpressManagement": LetterXpressManagement,
     "MaintenanceManager": MaintenanceManager,
     "MaintenanceScheduling": MaintenanceScheduling,
     "MaintenanceTasks": MaintenanceTasks,
     "MandantManagement": MandantManagement,
     "MarketAnalytics": MarketAnalytics,
-    "MeterApp": MeterApp,
     "MeterDashboard": MeterDashboard,
     "MieterSelfServicePortal": MieterSelfServicePortal,
     "MobileApp": MobileApp,
@@ -755,6 +760,7 @@ export const PAGES = {
     "TaxDeductionOptimizer": TaxDeductionOptimizer,
     "TaxDocumentManager": TaxDocumentManager,
     "TaxDocumentProcessor": TaxDocumentProcessor,
+    "TaxForms": TaxForms,
     "TaxEvents": TaxEvents,
     "TaxExportHub": TaxExportHub,
     "TaxFilingTimeline": TaxFilingTimeline,
@@ -762,7 +768,6 @@ export const PAGES = {
     "TaxForecastPlanner": TaxForecastPlanner,
     "TaxFormGuide": TaxFormGuide,
     "TaxFormLibrary": TaxFormLibrary,
-    "TaxForms": TaxForms,
     "TaxHarvesting": TaxHarvesting,
     "TaxLawUpdates": TaxLawUpdates,
     "TaxLibraryManagement": TaxLibraryManagement,
@@ -859,11 +864,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "AdminPricingSimulator": AdminPricingSimulator,
-    "AdminPricingExport": AdminPricingExport,
-    "AdminPricingAuditLog": AdminPricingAuditLog,
-    "AdminPricingDiscounts": AdminPricingDiscounts,
-    "AdminPricingUpsellTriggers": AdminPricingUpsellTriggers,
 }
 
 export const pagesConfig = {

@@ -478,7 +478,7 @@ export default function Invoices() {
             <motion.div 
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
             >
                 <div>
                     <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">
@@ -705,19 +705,19 @@ export default function Invoices() {
                                     Keine Rechnungen gefunden
                                 </div>
                             ) : (
-                                <div className="overflow-x-auto">
-                                    <Table>
+                                <div className="overflow-x-auto -mx-6 sm:mx-0 px-6 sm:px-0">
+                                    <Table className="text-sm">
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead>Datum</TableHead>
+                                                <TableHead className="hidden sm:table-cell">Datum</TableHead>
                                                 <TableHead>Typ</TableHead>
-                                                <TableHead>Empfänger</TableHead>
-                                                <TableHead>Beschreibung</TableHead>
-                                                <TableHead>Objekt</TableHead>
-                                                <TableHead>Kostenart</TableHead>
+                                                <TableHead className="hidden md:table-cell">Empfänger</TableHead>
+                                                <TableHead className="hidden lg:table-cell">Beschreibung</TableHead>
+                                                <TableHead className="hidden xl:table-cell">Objekt</TableHead>
+                                                <TableHead className="hidden xl:table-cell">Kostenart</TableHead>
                                                 <TableHead className="text-right">Betrag</TableHead>
-                                                <TableHead>Status</TableHead>
-                                                <TableHead>NK</TableHead>
+                                                <TableHead className="hidden sm:table-cell">Status</TableHead>
+                                                <TableHead className="hidden md:table-cell">NK</TableHead>
                                                 <TableHead className="text-right">Aktionen</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -729,72 +729,69 @@ export default function Invoices() {
 
                                                 return (
                                                     <TableRow key={invoice.id}>
-                                                        <TableCell className="font-medium">
-                                                            {invoice.invoice_date ? (() => {
-                                                                try {
-                                                                    return format(parseISO(invoice.invoice_date), 'dd.MM.yyyy', { locale: de });
-                                                                } catch {
-                                                                    return invoice.invoice_date;
-                                                                }
-                                                            })() : '-'}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            {invoice.type === 'expense' ? (
-                                                                <Badge variant="outline" className="border-red-300 text-red-700">
-                                                                    Ausgabe
-                                                                </Badge>
-                                                            ) : (
-                                                                <Badge variant="outline" className="border-emerald-300 text-emerald-700">
-                                                                    Einnahme
-                                                                </Badge>
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell className="text-sm">
-                                                            {invoice.recipient || '-'}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <div>
-                                                                <p className="font-medium">{invoice.description}</p>
-                                                                {invoice.reference && (
-                                                                    <p className="text-xs text-slate-500">{invoice.reference}</p>
-                                                                )}
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <div className="text-sm">
-                                                                <p className="font-medium">{building?.name || '-'}</p>
-                                                                {unit && (
-                                                                    <p className="text-xs text-slate-500">{unit.unit_number}</p>
-                                                                )}
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="text-sm">
+                                                         <TableCell className="hidden sm:table-cell font-medium">
+                                                             {invoice.invoice_date ? (() => {
+                                                                 try {
+                                                                     return format(parseISO(invoice.invoice_date), 'dd.MM.yyyy', { locale: de });
+                                                                 } catch {
+                                                                     return invoice.invoice_date;
+                                                                 }
+                                                             })() : '-'}
+                                                         </TableCell>
+                                                         <TableCell>
+                                                             {invoice.type === 'expense' ? (
+                                                                 <Badge variant="outline" className="border-red-300 text-red-700 text-xs">
+                                                                     Ausgabe
+                                                                 </Badge>
+                                                             ) : (
+                                                                 <Badge variant="outline" className="border-emerald-300 text-emerald-700 text-xs">
+                                                                     Einnahme
+                                                                 </Badge>
+                                                             )}
+                                                         </TableCell>
+                                                         <TableCell className="hidden md:table-cell text-sm">
+                                                             {invoice.recipient || '-'}
+                                                         </TableCell>
+                                                         <TableCell className="hidden lg:table-cell">
+                                                             <div className="text-sm">
+                                                                 <p className="font-medium">{invoice.description}</p>
+                                                                 {invoice.reference && (
+                                                                     <p className="text-xs text-slate-500">{invoice.reference}</p>
+                                                                 )}
+                                                             </div>
+                                                         </TableCell>
+                                                         <TableCell className="hidden xl:table-cell">
+                                                             <div className="text-sm">
+                                                                 <p className="font-medium">{building?.name || '-'}</p>
+                                                                 {unit && (
+                                                                     <p className="text-xs text-slate-500">{unit.unit_number}</p>
+                                                                 )}
+                                                             </div>
+                                                         </TableCell>
+                                                         <TableCell className="hidden xl:table-cell text-sm">
                                                              {invoice.cost_category_id ? (
-                                                                 <Badge variant="outline" className="bg-emerald-50 text-emerald-700">
+                                                                 <Badge variant="outline" className="bg-emerald-50 text-emerald-700 text-xs">
                                                                      Tax: {invoice.cost_category_id}
                                                                  </Badge>
                                                              ) : costType ? (
                                                                  <div>
-                                                                     <p className="font-medium">{costType.main_category}</p>
+                                                                     <p className="font-medium text-xs">{costType.main_category}</p>
                                                                      <p className="text-xs text-slate-500">{costType.sub_category}</p>
                                                                  </div>
                                                              ) : '-'}
-                                                             {invoice.operating_cost_relevant && (
-                                                                 <UmlagefaehigBadge type={invoice.operating_cost_relevant ? 'umlagefaehig' : 'nicht_umlagefaehig'} />
-                                                             )}
                                                          </TableCell>
-                                                        <TableCell className="text-right font-semibold">
-                                                            <span className={invoice.type === 'expense' ? 'text-red-600' : 'text-emerald-600'}>
-                                                                {invoice.type === 'expense' ? '-' : '+'}€{invoice.amount?.toFixed(2)}
-                                                            </span>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            {getStatusBadge(invoice.status)}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <UmlagefaehigBadge status={invoice.operating_cost_relevant} />
-                                                        </TableCell>
-                                                        <TableCell className="text-right">
+                                                         <TableCell className="text-right font-semibold text-sm">
+                                                             <span className={invoice.type === 'expense' ? 'text-red-600' : 'text-emerald-600'}>
+                                                                 {invoice.type === 'expense' ? '-' : '+'}€{invoice.amount?.toFixed(2)}
+                                                             </span>
+                                                         </TableCell>
+                                                         <TableCell className="hidden sm:table-cell">
+                                                             {getStatusBadge(invoice.status)}
+                                                         </TableCell>
+                                                         <TableCell className="hidden md:table-cell">
+                                                             <UmlagefaehigBadge status={invoice.operating_cost_relevant} />
+                                                         </TableCell>
+                                                         <TableCell className="text-right">
                                                             <DropdownMenu>
                                                                 <DropdownMenuTrigger asChild>
                                                                     <Button variant="ghost" size="icon">
