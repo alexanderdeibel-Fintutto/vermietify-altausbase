@@ -33,11 +33,13 @@ import { ErrorBoundaryWithRetry } from '@/components/shared/ErrorBoundaryWithRet
 import EnergyPassportPanel from '@/components/building-detail/EnergyPassportPanel';
 import BuildingTransfersOverview from '@/components/building-detail/BuildingTransfersOverview';
 import QuickContractCreator from '@/components/contracts/QuickContractCreator';
+import AutoCreateUnitsDialog from '@/components/units/AutoCreateUnitsDialog';
 import BreadcrumbNavigation from '@/components/navigation/BreadcrumbNavigation';
 
 export default function BuildingDetailPage() {
 
   const [contractCreatorOpen, setContractCreatorOpen] = React.useState(false);
+  const [autoCreateUnitsOpen, setAutoCreateUnitsOpen] = React.useState(false);
   const buildingId = new URLSearchParams(window.location.search).get('id');
 
   const { data: currentUser } = useQuery({ 
@@ -246,7 +248,10 @@ export default function BuildingDetailPage() {
         </TabsContent>
 
         <TabsContent value="units">
-          <BuildingUnitsManager buildingId={buildingId} units={units} permissionLevel={permissionLevel} />
+          <div className="space-y-4">
+            <Button onClick={() => setAutoCreateUnitsOpen(true)} className="bg-blue-600">+ Automatisch Einheiten erstellen</Button>
+            <BuildingUnitsManager buildingId={buildingId} units={units} permissionLevel={permissionLevel} />
+          </div>
         </TabsContent>
 
         <TabsContent value="tenants">
@@ -301,6 +306,12 @@ export default function BuildingDetailPage() {
       <QuickContractCreator 
         open={contractCreatorOpen}
         onOpenChange={setContractCreatorOpen}
+      />
+      
+      <AutoCreateUnitsDialog
+        buildingId={buildingId}
+        open={autoCreateUnitsOpen}
+        onOpenChange={setAutoCreateUnitsOpen}
       />
     </div>
     </ErrorBoundaryWithRetry>
