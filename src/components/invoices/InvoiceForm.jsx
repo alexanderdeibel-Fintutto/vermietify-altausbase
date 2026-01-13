@@ -628,18 +628,22 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                             {selectedCostType && (
                                 <div>
                                     <div className="flex flex-wrap gap-2">
+                                        {selectedCostType.distributable ? (
+                                            <Badge className="bg-green-100 text-green-700 flex items-center gap-1">
+                                                🟢 Umlagefähig
+                                            </Badge>
+                                        ) : (
+                                            <Badge className="bg-red-100 text-red-700 flex items-center gap-1">
+                                                🔴 Nicht umlagefähig
+                                            </Badge>
+                                        )}
                                         {selectedCostType.vat_rate > 0 && (
                                             <Badge variant="outline">
                                                 MwSt: {(selectedCostType.vat_rate * 100).toFixed(0)}%
                                             </Badge>
                                         )}
-                                        {selectedCostType.distributable && (
-                                            <Badge className="bg-blue-100 text-blue-700">
-                                                Umlagefähig ({selectedCostType.distribution_key})
-                                            </Badge>
-                                        )}
                                         {selectedCostType.tax_deductible && (
-                                            <Badge className="bg-green-100 text-green-700">
+                                            <Badge className="bg-blue-100 text-blue-700">
                                                 Steuerlich absetzbar
                                             </Badge>
                                         )}

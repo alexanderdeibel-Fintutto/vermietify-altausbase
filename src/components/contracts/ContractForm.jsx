@@ -23,6 +23,7 @@ import { Loader2, Plus, X, Sparkles, HelpCircle } from 'lucide-react';
 import HelpTooltip from '@/components/shared/HelpTooltip';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import PostContractDialog from './PostContractDialog';
+import HelpTooltip from '@/components/shared/HelpTooltip';
 import { useQuery } from '@tanstack/react-query';
 import { generateFinancialItemsForContract, regenerateContractFinancialItems, needsPartialRentDialog, calculatePartialRent } from './generateFinancialItems';
 import PartialRentDialog from './PartialRentDialog';
@@ -153,6 +154,7 @@ export default function ContractForm({
         if (submittedContract) {
             setSavedContractId(submittedContract.id);
             setSavedContractData(submittedContract);
+            setPostContractDialogOpen(true); // Always show post-contract dialog
             if (needsPartialRentDialog(contractData)) {
                 const partialAmount = calculatePartialRent(contractData, new Date(contractData.start_date));
                 setSuggestedPartialRent(partialAmount);
@@ -365,7 +367,10 @@ export default function ContractForm({
 
                     <div className="grid grid-cols-3 gap-4">
                         <div>
-                            <Label htmlFor="start_date">Mietbeginn *</Label>
+                            <div className="flex items-center gap-2">
+                              <Label htmlFor="start_date">Mietbeginn *</Label>
+                              <HelpTooltip text="Das Datum, ab dem der Mieter die Wohnung beziehen darf und Miete fällig wird." />
+                            </div>
                             <Input 
                                 id="start_date"
                                 type="date"
@@ -485,7 +490,10 @@ export default function ContractForm({
                         <h3 className="font-semibold text-slate-800 mb-4">Kaution & Kündigungsfrist</h3>
                         <div className="grid grid-cols-3 gap-4">
                             <div>
-                                <Label htmlFor="deposit">Kaution (€)</Label>
+                                <div className="flex items-center gap-2">
+                              <Label htmlFor="deposit">Kaution (€)</Label>
+                              <HelpTooltip text="Die Kaution wird vom Mieter hinterlegt als Sicherheit für Schäden. Maximal 3 Monatsmieten erlaubt." />
+                            </div>
                                 <Input 
                                     id="deposit"
                                     type="number"
@@ -512,7 +520,10 @@ export default function ContractForm({
                                 </Select>
                             </div>
                             <div>
-                                <Label htmlFor="notice_period_months">Kündigungsfrist (Monate)</Label>
+                                <div className="flex items-center gap-2">
+                              <Label htmlFor="notice_period_months">Kündigungsfrist (Monate)</Label>
+                              <HelpTooltip text="Die gesetzliche Kündigungsfrist beträgt 3 Monate zum 15. oder Ende eines Kalendermonats (§573 BGB)." />
+                            </div>
                                 <Input 
                                     id="notice_period_months"
                                     type="number"
