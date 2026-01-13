@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 import { HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import GrundstuckswertTooltip from '@/components/shared/GrundstuckswertTooltip';
 
 const GRUNDERWERBSTEUER_SAETZE = {
   'Baden-Württemberg': 5.0,
@@ -161,16 +162,9 @@ export default function PurchaseContractDialog({ open, onClose, buildingId, buil
             <div>
               <Label className="flex items-center gap-2">
                 Grundstückswert * 
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <HelpCircle className="w-4 h-4 text-slate-400 cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">Der Grundstücksanteil wird NICHT abgeschrieben. Typisch: 20-30% des Kaufpreises. Ohne Trennung führt zu falscher AfA-Berechnung!</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <GrundstuckswertTooltip>
+                  <HelpCircle className="w-4 h-4 text-slate-400 cursor-help" />
+                </GrundstuckswertTooltip>
               </Label>
               <Input
                 type="number"
