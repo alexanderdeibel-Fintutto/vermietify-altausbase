@@ -41,7 +41,8 @@ export default function PortfolioManagement() {
   };
 
   return (
-    <div className="space-y-6">
+      <FeatureGate featureKey="portfolio_management" requiredPlanLevel={2}>
+      <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">💼 Vermögensmanagement</h1>

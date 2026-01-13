@@ -10,12 +10,14 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Edit, Trash2, Check } from 'lucide-react';
+import { Plus, Edit, Trash2, Check, Zap } from 'lucide-react';
 import { toast } from 'sonner';
+import { base44 } from '@/api/base44Client';
 
 export default function AdminSubscriptionPlans() {
   const [editingPlan, setEditingPlan] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: plans = [] } = useQuery({
@@ -51,6 +53,23 @@ export default function AdminSubscriptionPlans() {
     }
   });
 
+  const handleStripeSync = async () => {
+    setSyncing(true);
+    try {
+      const response = await base44.functions.invoke('stripe/syncPlansToStripe', {});
+      if (response.data.success) {
+        toast.success(`${response.data.synced} von ${response.data.total} Plänen synchronisiert`);
+        queryClient.invalidateQueries({ queryKey: ['adminPlans'] });
+      } else {
+        toast.error('Sync fehlgeschlagen');
+      }
+    } catch (error) {
+      toast.error(error.message || 'Sync fehlgeschlagen');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -58,13 +77,20 @@ export default function AdminSubscriptionPlans() {
           <h1 className="text-2xl font-light text-slate-900">Subscription-Pläne</h1>
           <p className="text-sm text-slate-600">Verwalte Tarife und Preise</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleStripeSync} disabled={syncing}>
+            <Zap className="h-4 w-4 mr-2" />
+            {syncing ? 'Sync läuft...' : 'Mit Stripe syncen'}
+          </Button>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => setEditingPlan(null)}>
               <Plus className="h-4 w-4 mr-2" />
               Neuer Plan
             </Button>
           </DialogTrigger>
+          </Dialog>
+        </div>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingPlan ? 'Plan bearbeiten' : 'Neuer Plan'}</DialogTitle>
@@ -84,8 +110,6 @@ export default function AdminSubscriptionPlans() {
               }}
             />
           </DialogContent>
-        </Dialog>
-      </div>
 
       <div className="grid gap-4">
         {plans.map(plan => (
