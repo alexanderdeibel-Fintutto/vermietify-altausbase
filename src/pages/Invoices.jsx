@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Plus, Search, MoreVertical, Pencil, Trash2, FileText, Building2, TrendingUp, TrendingDown, Filter, Download, Tag, Users, Sparkles, HelpCircle } from 'lucide-react';
 import UmlagefaehigBadge from '@/components/shared/UmlagefaehigBadge';
+import InvoiceCategoryAssistant from '@/components/invoices/InvoiceCategoryAssistant';
 import { toast } from 'sonner';
 import InvoiceForm from '@/components/invoices/InvoiceForm';
 import InvoiceFormWithTaxLibrary from '@/components/invoices/InvoiceFormWithTaxLibrary';

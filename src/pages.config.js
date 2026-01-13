@@ -90,6 +90,7 @@ import BankAccounts from './pages/BankAccounts';
 import BankReconciliation from './pages/BankReconciliation';
 import BankStatements from './pages/BankStatements';
 import BankTransfers from './pages/BankTransfers';
+import BankingAutomationHub from './pages/BankingAutomationHub';
 import BankingManagement from './pages/BankingManagement';
 import BudgetAnalysis from './pages/BudgetAnalysis';
 import BudgetPlanning from './pages/BudgetPlanning';
@@ -126,6 +127,7 @@ import ComprehensiveTaxDashboard from './pages/ComprehensiveTaxDashboard';
 import ConsolidatedTaxSummary from './pages/ConsolidatedTaxSummary';
 import ContractAutomationHub from './pages/ContractAutomationHub';
 import ContractDetail from './pages/ContractDetail';
+import ContractorMarketplace from './pages/ContractorMarketplace';
 import Contracts from './pages/Contracts';
 import CostTypes from './pages/CostTypes';
 import CrossBorderTaxDashboard from './pages/CrossBorderTaxDashboard';
@@ -158,6 +160,7 @@ import DocumentSecurityHub from './pages/DocumentSecurityHub';
 import DocumentTemplateManager from './pages/DocumentTemplateManager';
 import DocumentUltimateHub from './pages/DocumentUltimateHub';
 import Documents from './pages/Documents';
+import ElsterAutomationHub from './pages/ElsterAutomationHub';
 import ElsterCertificates from './pages/ElsterCertificates';
 import ElsterIntegration from './pages/ElsterIntegration';
 import ElsterOverview from './pages/ElsterOverview';
@@ -214,13 +217,13 @@ import Kommunikation from './pages/Kommunikation';
 import KommunikationDashboard from './pages/KommunikationDashboard';
 import LeaseContracts from './pages/LeaseContracts';
 import LetterShipmentManagement from './pages/LetterShipmentManagement';
-import MeterApp from './pages/MeterApp';
 import LetterXpressManagement from './pages/LetterXpressManagement';
 import MaintenanceManager from './pages/MaintenanceManager';
 import MaintenanceScheduling from './pages/MaintenanceScheduling';
 import MaintenanceTasks from './pages/MaintenanceTasks';
 import MandantManagement from './pages/MandantManagement';
 import MarketAnalytics from './pages/MarketAnalytics';
+import MeterApp from './pages/MeterApp';
 import MeterDashboard from './pages/MeterDashboard';
 import MieterSelfServicePortal from './pages/MieterSelfServicePortal';
 import MobileApp from './pages/MobileApp';
@@ -239,6 +242,7 @@ import NotificationManagement from './pages/NotificationManagement';
 import NotificationPreferences from './pages/NotificationPreferences';
 import Onboarding from './pages/Onboarding';
 import OnboardingWizard from './pages/OnboardingWizard';
+import OperatingCostAutomationHub from './pages/OperatingCostAutomationHub';
 import OperatingCostWizard from './pages/OperatingCostWizard';
 import OperatingCosts from './pages/OperatingCosts';
 import OperatingCostsManagement from './pages/OperatingCostsManagement';
@@ -253,6 +257,7 @@ import PersonalizedTaxCockpit from './pages/PersonalizedTaxCockpit';
 import PortfolioDashboard from './pages/PortfolioDashboard';
 import PortfolioDetail from './pages/PortfolioDetail';
 import PortfolioManagement from './pages/PortfolioManagement';
+import PortfolioOptimizer from './pages/PortfolioOptimizer';
 import PreciousMetals from './pages/PreciousMetals';
 import Pricing from './pages/Pricing';
 import ProjectManagement from './pages/ProjectManagement';
@@ -260,11 +265,13 @@ import PropertyManagementHub from './pages/PropertyManagementHub';
 import PropertyManagerDashboard from './pages/PropertyManagerDashboard';
 import PropertyPortfolio from './pages/PropertyPortfolio';
 import PropertyValuation from './pages/PropertyValuation';
+import PropertyValuationEngine from './pages/PropertyValuationEngine';
 import QuarterlyTaxEstimator from './pages/QuarterlyTaxEstimator';
 import ROIDashboard from './pages/ROIDashboard';
 import RealEstateCH from './pages/RealEstateCH';
 import RealEstateTaxPlanning from './pages/RealEstateTaxPlanning';
 import RealTimeTaxCalculator from './pages/RealTimeTaxCalculator';
+import RentIncreaseOptimizer from './pages/RentIncreaseOptimizer';
 import RentIndexManagement from './pages/RentIndexManagement';
 import ReportBuilder from './pages/ReportBuilder';
 import ReportGenerator from './pages/ReportGenerator';
@@ -325,7 +332,6 @@ import TaxDeadlines from './pages/TaxDeadlines';
 import TaxDeductionOptimizer from './pages/TaxDeductionOptimizer';
 import TaxDocumentManager from './pages/TaxDocumentManager';
 import TaxDocumentProcessor from './pages/TaxDocumentProcessor';
-import TaxForms from './pages/TaxForms';
 import TaxEvents from './pages/TaxEvents';
 import TaxExportHub from './pages/TaxExportHub';
 import TaxFilingTimeline from './pages/TaxFilingTimeline';
@@ -333,6 +339,7 @@ import TaxFilingWizard from './pages/TaxFilingWizard';
 import TaxForecastPlanner from './pages/TaxForecastPlanner';
 import TaxFormGuide from './pages/TaxFormGuide';
 import TaxFormLibrary from './pages/TaxFormLibrary';
+import TaxForms from './pages/TaxForms';
 import TaxHarvesting from './pages/TaxHarvesting';
 import TaxLawUpdates from './pages/TaxLawUpdates';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
@@ -367,6 +374,7 @@ import TaxTreatyExplorer from './pages/TaxTreatyExplorer';
 import TaxYearClosingChecklist from './pages/TaxYearClosingChecklist';
 import TaxYearPlannerPage from './pages/TaxYearPlannerPage';
 import TechnicianManagement from './pages/TechnicianManagement';
+import TenantAISupport from './pages/TenantAISupport';
 import TenantCommunication from './pages/TenantCommunication';
 import TenantCommunicationCenter from './pages/TenantCommunicationCenter';
 import TenantCommunicationHub from './pages/TenantCommunicationHub';
@@ -384,6 +392,7 @@ import TenantPortal from './pages/TenantPortal';
 import TenantPortalAdminDashboard from './pages/TenantPortalAdminDashboard';
 import TenantPortalDashboard from './pages/TenantPortalDashboard';
 import TenantPortalPage from './pages/TenantPortalPage';
+import TenantVettingSystem from './pages/TenantVettingSystem';
 import Tenants from './pages/Tenants';
 import TesterAcceptInvitation from './pages/TesterAcceptInvitation';
 import TesterActivityAnalytics from './pages/TesterActivityAnalytics';
@@ -417,6 +426,7 @@ import WealthTeam from './pages/WealthTeam';
 import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
+import WhiteLabelSaaS from './pages/WhiteLabelSaaS';
 import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
 import WorkflowAI from './pages/WorkflowAI';
 import WorkflowAutomation from './pages/WorkflowAutomation';
@@ -429,16 +439,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import ContractorMarketplace from './pages/ContractorMarketplace';
-import RentIncreaseOptimizer from './pages/RentIncreaseOptimizer';
-import TenantVettingSystem from './pages/TenantVettingSystem';
-import OperatingCostAutomationHub from './pages/OperatingCostAutomationHub';
-import BankingAutomationHub from './pages/BankingAutomationHub';
-import PropertyValuationEngine from './pages/PropertyValuationEngine';
-import WhiteLabelSaaS from './pages/WhiteLabelSaaS';
-import TenantAISupport from './pages/TenantAISupport';
-import PortfolioOptimizer from './pages/PortfolioOptimizer';
-import ElsterAutomationHub from './pages/ElsterAutomationHub';
 import __Layout from './Layout.jsx';
 
 
@@ -535,6 +535,7 @@ export const PAGES = {
     "BankReconciliation": BankReconciliation,
     "BankStatements": BankStatements,
     "BankTransfers": BankTransfers,
+    "BankingAutomationHub": BankingAutomationHub,
     "BankingManagement": BankingManagement,
     "BudgetAnalysis": BudgetAnalysis,
     "BudgetPlanning": BudgetPlanning,
@@ -571,6 +572,7 @@ export const PAGES = {
     "ConsolidatedTaxSummary": ConsolidatedTaxSummary,
     "ContractAutomationHub": ContractAutomationHub,
     "ContractDetail": ContractDetail,
+    "ContractorMarketplace": ContractorMarketplace,
     "Contracts": Contracts,
     "CostTypes": CostTypes,
     "CrossBorderTaxDashboard": CrossBorderTaxDashboard,
@@ -603,6 +605,7 @@ export const PAGES = {
     "DocumentTemplateManager": DocumentTemplateManager,
     "DocumentUltimateHub": DocumentUltimateHub,
     "Documents": Documents,
+    "ElsterAutomationHub": ElsterAutomationHub,
     "ElsterCertificates": ElsterCertificates,
     "ElsterIntegration": ElsterIntegration,
     "ElsterOverview": ElsterOverview,
@@ -659,13 +662,13 @@ export const PAGES = {
     "KommunikationDashboard": KommunikationDashboard,
     "LeaseContracts": LeaseContracts,
     "LetterShipmentManagement": LetterShipmentManagement,
-    "MeterApp": MeterApp,
     "LetterXpressManagement": LetterXpressManagement,
     "MaintenanceManager": MaintenanceManager,
     "MaintenanceScheduling": MaintenanceScheduling,
     "MaintenanceTasks": MaintenanceTasks,
     "MandantManagement": MandantManagement,
     "MarketAnalytics": MarketAnalytics,
+    "MeterApp": MeterApp,
     "MeterDashboard": MeterDashboard,
     "MieterSelfServicePortal": MieterSelfServicePortal,
     "MobileApp": MobileApp,
@@ -684,6 +687,7 @@ export const PAGES = {
     "NotificationPreferences": NotificationPreferences,
     "Onboarding": Onboarding,
     "OnboardingWizard": OnboardingWizard,
+    "OperatingCostAutomationHub": OperatingCostAutomationHub,
     "OperatingCostWizard": OperatingCostWizard,
     "OperatingCosts": OperatingCosts,
     "OperatingCostsManagement": OperatingCostsManagement,
@@ -698,6 +702,7 @@ export const PAGES = {
     "PortfolioDashboard": PortfolioDashboard,
     "PortfolioDetail": PortfolioDetail,
     "PortfolioManagement": PortfolioManagement,
+    "PortfolioOptimizer": PortfolioOptimizer,
     "PreciousMetals": PreciousMetals,
     "Pricing": Pricing,
     "ProjectManagement": ProjectManagement,
@@ -705,11 +710,13 @@ export const PAGES = {
     "PropertyManagerDashboard": PropertyManagerDashboard,
     "PropertyPortfolio": PropertyPortfolio,
     "PropertyValuation": PropertyValuation,
+    "PropertyValuationEngine": PropertyValuationEngine,
     "QuarterlyTaxEstimator": QuarterlyTaxEstimator,
     "ROIDashboard": ROIDashboard,
     "RealEstateCH": RealEstateCH,
     "RealEstateTaxPlanning": RealEstateTaxPlanning,
     "RealTimeTaxCalculator": RealTimeTaxCalculator,
+    "RentIncreaseOptimizer": RentIncreaseOptimizer,
     "RentIndexManagement": RentIndexManagement,
     "ReportBuilder": ReportBuilder,
     "ReportGenerator": ReportGenerator,
@@ -770,7 +777,6 @@ export const PAGES = {
     "TaxDeductionOptimizer": TaxDeductionOptimizer,
     "TaxDocumentManager": TaxDocumentManager,
     "TaxDocumentProcessor": TaxDocumentProcessor,
-    "TaxForms": TaxForms,
     "TaxEvents": TaxEvents,
     "TaxExportHub": TaxExportHub,
     "TaxFilingTimeline": TaxFilingTimeline,
@@ -778,6 +784,7 @@ export const PAGES = {
     "TaxForecastPlanner": TaxForecastPlanner,
     "TaxFormGuide": TaxFormGuide,
     "TaxFormLibrary": TaxFormLibrary,
+    "TaxForms": TaxForms,
     "TaxHarvesting": TaxHarvesting,
     "TaxLawUpdates": TaxLawUpdates,
     "TaxLibraryManagement": TaxLibraryManagement,
@@ -812,6 +819,7 @@ export const PAGES = {
     "TaxYearClosingChecklist": TaxYearClosingChecklist,
     "TaxYearPlannerPage": TaxYearPlannerPage,
     "TechnicianManagement": TechnicianManagement,
+    "TenantAISupport": TenantAISupport,
     "TenantCommunication": TenantCommunication,
     "TenantCommunicationCenter": TenantCommunicationCenter,
     "TenantCommunicationHub": TenantCommunicationHub,
@@ -829,6 +837,7 @@ export const PAGES = {
     "TenantPortalAdminDashboard": TenantPortalAdminDashboard,
     "TenantPortalDashboard": TenantPortalDashboard,
     "TenantPortalPage": TenantPortalPage,
+    "TenantVettingSystem": TenantVettingSystem,
     "Tenants": Tenants,
     "TesterAcceptInvitation": TesterAcceptInvitation,
     "TesterActivityAnalytics": TesterActivityAnalytics,
@@ -862,6 +871,7 @@ export const PAGES = {
     "WhatsAppCommunication": WhatsAppCommunication,
     "WhatsAppSettings": WhatsAppSettings,
     "WhatsAppSetup": WhatsAppSetup,
+    "WhiteLabelSaaS": WhiteLabelSaaS,
     "WithholdingTaxCalculator": WithholdingTaxCalculator,
     "WorkflowAI": WorkflowAI,
     "WorkflowAutomation": WorkflowAutomation,
@@ -874,16 +884,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "ContractorMarketplace": ContractorMarketplace,
-    "RentIncreaseOptimizer": RentIncreaseOptimizer,
-    "TenantVettingSystem": TenantVettingSystem,
-    "OperatingCostAutomationHub": OperatingCostAutomationHub,
-    "BankingAutomationHub": BankingAutomationHub,
-    "PropertyValuationEngine": PropertyValuationEngine,
-    "WhiteLabelSaaS": WhiteLabelSaaS,
-    "TenantAISupport": TenantAISupport,
-    "PortfolioOptimizer": PortfolioOptimizer,
-    "ElsterAutomationHub": ElsterAutomationHub,
 }
 
 export const pagesConfig = {

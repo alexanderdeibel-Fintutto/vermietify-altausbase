@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { 
-    Home, ArrowLeft, Building2, MapPin, Pencil, User, Droplet
+    Home, ArrowLeft, Building2, MapPin, Pencil, User, Droplet, RefreshCw
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UnitForm from '@/components/units/UnitForm';
 import UnitLeaseHistory from '@/components/units/UnitLeaseHistory';
 import UnitAvailabilityCalendar from '@/components/units/UnitAvailabilityCalendar';
+import TenantChangeWizard from '@/components/contracts/TenantChangeWizard';
 
 export default function UnitDetail() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -21,6 +22,7 @@ export default function UnitDetail() {
     const queryClient = useQueryClient();
     
     const [unitFormOpen, setUnitFormOpen] = useState(false);
+    const [tenantChangeOpen, setTenantChangeOpen] = useState(false);
 
     const { data: unit, isLoading: loadingUnit } = useQuery({
         queryKey: ['unit', unitId],
@@ -242,6 +244,12 @@ export default function UnitDetail() {
                 initialData={unit}
                 buildingId={unit.building_id}
                 isLoading={updateUnitMutation.isPending}
+            />
+
+            <TenantChangeWizard 
+                open={tenantChangeOpen}
+                onOpenChange={setTenantChangeOpen}
+                unitId={unitId}
             />
         </div>
     );

@@ -32,9 +32,11 @@ import BuildingTaxTab from '@/components/buildings/BuildingTaxTab';
 import { ErrorBoundaryWithRetry } from '@/components/shared/ErrorBoundaryWithRetry';
 import EnergyPassportPanel from '@/components/building-detail/EnergyPassportPanel';
 import BuildingTransfersOverview from '@/components/building-detail/BuildingTransfersOverview';
+import QuickContractCreator from '@/components/contracts/QuickContractCreator';
 
 export default function BuildingDetailPage() {
 
+  const [contractCreatorOpen, setContractCreatorOpen] = React.useState(false);
   const buildingId = new URLSearchParams(window.location.search).get('id');
 
   const { data: currentUser } = useQuery({ 
@@ -250,7 +252,12 @@ export default function BuildingDetailPage() {
         </TabsContent>
 
         <TabsContent value="contracts">
-          <BuildingContractsOverview buildingId={buildingId} contracts={contracts} />
+          <div className="space-y-4">
+            <Button onClick={() => setContractCreatorOpen(true)} className="bg-emerald-600">
+              + Neuer Mietvertrag
+            </Button>
+            <BuildingContractsOverview buildingId={buildingId} contracts={contracts} />
+          </div>
         </TabsContent>
 
         <TabsContent value="board">
@@ -288,6 +295,11 @@ export default function BuildingDetailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <QuickContractCreator 
+        open={contractCreatorOpen}
+        onOpenChange={setContractCreatorOpen}
+      />
     </div>
     </ErrorBoundaryWithRetry>
   );
