@@ -22,6 +22,7 @@ import AdvancedFilterBar from '../components/shared/AdvancedFilterBar';
 import DataExportImport from '../components/shared/DataExportImport';
 import RealtimeSyncIndicator from '../components/documents/RealtimeSyncIndicator';
 import DocumentActivityFeed from '../components/documents/DocumentActivityFeed';
+import SlackShareDialog from '../components/documents/SlackShareDialog';
 
 export default function DocumentsPage() {
     const [importerOpen, setImporterOpen] = useState(false);
@@ -31,6 +32,7 @@ export default function DocumentsPage() {
     const [selectedDocumentForVersion, setSelectedDocumentForVersion] = useState(null);
     const [approvalDialogOpen, setApprovalDialogOpen] = useState(false);
     const [selectedVersionId, setSelectedVersionId] = useState(null);
+    const [slackShareOpen, setSlackShareOpen] = useState(false);
     const queryClient = useQueryClient();
 
     // Fetch data for upload dialog
@@ -210,6 +212,13 @@ export default function DocumentsPage() {
                                 >
                                     Genehmigung anfordern
                                 </Button>
+                                <Button 
+                                    variant="outline"
+                                    className="w-full gap-2"
+                                    onClick={() => setSlackShareOpen(true)}
+                                >
+                                    💬 Zu Slack teilen
+                                </Button>
                             </div>
                         )}
                     </div>
@@ -250,6 +259,12 @@ export default function DocumentsPage() {
                     onOpenChange={setApprovalDialogOpen}
                     documentId={selectedDocumentForVersion?.id}
                     versionId={selectedVersionId}
+                />
+
+                <SlackShareDialog
+                    open={slackShareOpen}
+                    onOpenChange={setSlackShareOpen}
+                    document={selectedDocumentForVersion}
                 />
                 </div>
                 </ModuleGuard>
