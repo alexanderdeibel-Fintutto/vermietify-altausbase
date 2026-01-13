@@ -88,7 +88,12 @@ export default function AdminSubscriptionPlans() {
               Neuer Plan
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          </Dialog>
+        </div>
+      </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingPlan ? 'Plan bearbeiten' : 'Neuer Plan'}</DialogTitle>
             </DialogHeader>
@@ -107,9 +112,7 @@ export default function AdminSubscriptionPlans() {
               }}
             />
           </DialogContent>
-        </Dialog>
-        </div>
-      </div>
+      </Dialog>
 
       <div className="grid gap-4">
         {plans.map(plan => (
