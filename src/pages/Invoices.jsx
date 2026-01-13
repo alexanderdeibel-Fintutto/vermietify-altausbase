@@ -1324,6 +1324,9 @@ export default function Invoices() {
                 isLoading={createRecipientMutation.isPending || updateRecipientMutation.isPending}
             />
 
+            {/* Floating Action Menu */}
+            <FloatingActionMenu actions={floatingActions} />
+
             {/* Delete Invoice Dialog */}
             <AlertDialog open={!!deleteInvoice} onOpenChange={() => setDeleteInvoice(null)}>
                 <AlertDialogContent>
