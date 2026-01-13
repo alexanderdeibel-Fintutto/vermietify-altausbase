@@ -1,84 +1,70 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
-  
-  console.log('Generating monthly usage report...');
-  
   try {
-    const allSubs = await base44.asServiceRole.entities.UserSubscription.list();
-    const activeSubs = allSubs.filter(s => ['active', 'trialing'].includes(s.status));
-    const trialSubs = allSubs.filter(s => s.status === 'trialing');
-    
-    const now = new Date();
-    const canceledThisMonth = allSubs.filter(s => {
-      if (s.status !== 'canceled' || !s.canceled_at) return false;
-      const cancelDate = new Date(s.canceled_at);
-      return cancelDate.getMonth() === now.getMonth() && cancelDate.getFullYear() === now.getFullYear();
+    const base44 = createClientFromRequest(req);
+
+    console.log('[USAGE_REPORT] Starting monthly usage report generation...');
+
+    const subscriptions = await base44.asServiceRole.entities.UserSubscription.filter({
+      status: 'ACTIVE'
     });
 
-    let totalMRR = 0;
-    const planDistribution = {};
-    
-    for (const sub of activeSubs) {
-      const plans = await base44.asServiceRole.entities.SubscriptionPlan.filter({ id: sub.plan_id });
-      const plan = plans[0];
-      
-      if (plan) {
-        planDistribution[plan.name] = (planDistribution[plan.name] || 0) + 1;
-        
-        if (sub.billing_cycle === 'yearly') {
-          totalMRR += plan.price_yearly / 12;
-        } else {
-          totalMRR += plan.price_monthly;
-        }
-      }
+    const tiers = await base44.asServiceRole.entities.PricingTier.list();
+    const limits = await base44.asServiceRole.entities.UsageLimit.list();
 
-      const addons = await base44.asServiceRole.entities.UserAddOn.filter({
-        subscription_id: sub.id,
-        status: 'active',
-        is_included_in_plan: false
-      });
-      
-      for (const addon of addons) {
-        totalMRR += addon.price_at_purchase;
+    let sentCount = 0;
+
+    for (const sub of subscriptions) {
+      try {
+        const tier = tiers.find(t => t.id === sub.tier_id);
+        
+        const userLimits = await base44.asServiceRole.entities.UserLimit.filter({
+          user_email: sub.user_email
+        });
+
+        let reportLines = [`Ihr monatlicher Nutzungsbericht für ${tier?.name || 'Ihr Plan'}:\n`];
+
+        for (const ul of userLimits) {
+          const limit = limits.find(l => l.id === ul.limit_id);
+          if (!limit) continue;
+
+          const percentage = ul.limit_value === -1 
+            ? 0 
+            : (ul.current_usage / ul.limit_value) * 100;
+
+          reportLines.push(
+            `• ${limit.name}: ${ul.current_usage}${ul.limit_value !== -1 ? `/${ul.limit_value}` : ''} ${limit.unit || 'Einheiten'} (${percentage.toFixed(0)}%)`
+          );
+        }
+
+        if (sub.next_billing_date) {
+          reportLines.push(`\nNächste Abrechnung: ${sub.next_billing_date}`);
+        }
+
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          to: sub.user_email,
+          subject: 'Ihr monatlicher Nutzungsbericht',
+          body: reportLines.join('\n')
+        });
+
+        sentCount++;
+        console.log(`[USAGE_REPORT] Sent report to ${sub.user_email}`);
+      } catch (error) {
+        console.error(`[USAGE_REPORT] Error for ${sub.user_email}:`, error);
       }
     }
 
-    const reportDate = now.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+    console.log(`[USAGE_REPORT] Completed. Sent ${sentCount} reports.`);
 
-    await base44.asServiceRole.integrations.Core.SendEmail({
-      to: 'alexander@fintutto.de',
-      subject: `📊 FinTutto Monatsreport - ${reportDate}`,
-      body: `
-FinTutto Subscription Report - ${reportDate}
-============================================
-
-ÜBERSICHT
----------
-Aktive Abonnements: ${activeSubs.length}
-Davon in Testphase: ${trialSubs.length}
-Kündigungen diesen Monat: ${canceledThisMonth.length}
-
-UMSATZ
-------
-MRR (Monthly Recurring Revenue): ${(totalMRR / 100).toFixed(2)}€
-ARR (Annual Recurring Revenue): ${((totalMRR * 12) / 100).toFixed(2)}€
-
-PLAN-VERTEILUNG
----------------
-${Object.entries(planDistribution).map(([name, count]) => `${name}: ${count} (${Math.round(count / activeSubs.length * 100)}%)`).join('\n')}
-
----
-Automatisch generiert von FinTutto
-      `.trim()
+    return Response.json({
+      success: true,
+      sent: sentCount,
+      total: subscriptions.length
     });
 
-    console.log('Monthly report sent');
-    return Response.json({ success: true, mrr: totalMRR, active: activeSubs.length });
-    
   } catch (error) {
-    console.error('Monthly report error:', error);
+    console.error('[USAGE_REPORT] Fatal error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

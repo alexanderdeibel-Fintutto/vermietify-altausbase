@@ -1,57 +1,69 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { useFeatureAccess } from '@/components/hooks/useFeatureAccess';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Lock, Sparkles } from 'lucide-react';
-import { createPageUrl } from '@/utils';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import UpgradePrompt from './UpgradePrompt';
 
-export function FeatureGate({ feature, children, fallback, showUpgradePrompt = true }) {
-  const { data: access, isLoading } = useFeatureAccess(feature);
+export default function FeatureGate({ 
+  featureCode, 
+  children, 
+  fallback = null,
+  showUpgradePrompt = true 
+}) {
+  const { data: user } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me()
+  });
 
-  if (isLoading) {
-    return <div className="animate-pulse h-20 bg-slate-100 rounded-lg" />;
-  }
+  const { data: subscription } = useQuery({
+    queryKey: ['userSubscription', user?.email],
+    queryFn: async () => {
+      const subs = await base44.entities.UserSubscription.filter({ 
+        user_email: user.email 
+      });
+      return subs[0] || null;
+    },
+    enabled: !!user?.email
+  });
 
-  if (access?.hasAccess) {
-    return children;
-  }
+  const { data: feature } = useQuery({
+    queryKey: ['feature', featureCode],
+    queryFn: async () => {
+      const features = await base44.entities.Feature.filter({ feature_code: featureCode });
+      return features[0] || null;
+    },
+    enabled: !!featureCode
+  });
 
-  if (fallback) {
-    return fallback;
-  }
+  const { data: tierFeature } = useQuery({
+    queryKey: ['tierFeature', subscription?.tier_id, feature?.id],
+    queryFn: async () => {
+      const tfs = await base44.entities.TierFeature.filter({
+        tier_id: subscription.tier_id,
+        feature_id: feature.id
+      });
+      return tfs[0] || null;
+    },
+    enabled: !!subscription?.tier_id && !!feature?.id
+  });
 
-  if (!showUpgradePrompt) {
+  const hasAccess = tierFeature && tierFeature.inclusion_type === 'INCLUDED';
+
+  if (!user || !subscription) {
     return null;
   }
 
-  const getMessage = () => {
-    if (access?.reason === 'addon_required') {
-      return `Aktiviere das "${access.requiredAddon}"-Add-On für diese Funktion`;
+  if (!hasAccess) {
+    if (showUpgradePrompt) {
+      return (
+        <UpgradePrompt
+          title="Feature nicht verfügbar"
+          message="Upgraden Sie Ihren Plan um dieses Feature freizuschalten:"
+          featureName={feature?.name}
+        />
+      );
     }
-    if (access?.reason === 'plan_upgrade_required') {
-      const planNames = { 1: 'Starter', 2: 'Pro', 3: 'Enterprise' };
-      return `Diese Funktion erfordert mindestens den ${planNames[access.requiredPlanLevel] || 'höheren'}-Plan`;
-    }
-    if (access?.reason === 'no_subscription') {
-      return 'Abonnement erforderlich für diese Funktion';
-    }
-    return 'Upgrade erforderlich';
-  };
+    return fallback;
+  }
 
-  return (
-    <Alert className="border-amber-200 bg-amber-50">
-      <Lock className="h-4 w-4 text-amber-600" />
-      <AlertTitle className="text-amber-900 font-medium">Feature nicht verfügbar</AlertTitle>
-      <AlertDescription className="flex items-center justify-between gap-4 mt-2">
-        <span className="text-amber-800 text-sm">{getMessage()}</span>
-        <Button size="sm" variant="outline" asChild className="shrink-0">
-          <Link to={createPageUrl('SubscriptionSettings')}>
-            <Sparkles className="h-4 w-4 mr-2" />
-            Upgrade
-          </Link>
-        </Button>
-      </AlertDescription>
-    </Alert>
-  );
+  return <>{children}</>;
 }
