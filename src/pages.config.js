@@ -403,6 +403,10 @@ import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
 import Pricing from './pages/Pricing';
+import AdminSubscriptionPlans from './pages/AdminSubscriptionPlans';
+import AdminSubscriptionAddons from './pages/AdminSubscriptionAddons';
+import AdminPricingMatrix from './pages/AdminPricingMatrix';
+import AdminSubscriptions from './pages/AdminSubscriptions';
 import __Layout from './Layout.jsx';
 
 
@@ -812,6 +816,10 @@ export const PAGES = {
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
     "Pricing": Pricing,
+    "AdminSubscriptionPlans": AdminSubscriptionPlans,
+    "AdminSubscriptionAddons": AdminSubscriptionAddons,
+    "AdminPricingMatrix": AdminPricingMatrix,
+    "AdminSubscriptions": AdminSubscriptions,
 }
 
 export const pagesConfig = {
