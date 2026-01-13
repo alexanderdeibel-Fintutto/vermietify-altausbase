@@ -13,7 +13,7 @@ import { Card } from '@/components/ui/card';
 import { Plus, Edit, Eye, GripVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from './utils';
+import { createPageUrl } from '@/utils';
 
 const CATEGORIES = [
   { value: 'CORE', label: 'Core' },
