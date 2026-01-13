@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertCircle } from "lucide-react";
 import { useQuery } from '@tanstack/react-query';
-import { useQuery } from '@tanstack/react-query';
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -24,7 +23,6 @@ import {
 import { Loader2, Plus, X, Sparkles, HelpCircle } from 'lucide-react';
 import PostContractDialog from './PostContractDialog';
 import HelpTooltip from '@/components/shared/HelpTooltip';
-import { useQuery } from '@tanstack/react-query';
 import { generateFinancialItemsForContract, regenerateContractFinancialItems, needsPartialRentDialog, calculatePartialRent } from './generateFinancialItems';
 import PartialRentDialog from './PartialRentDialog';
 import BookingPreviewDialog from '../bookings/BookingPreviewDialog';
@@ -62,15 +60,6 @@ export default function ContractForm({
     const watchStatus = watch('status');
     const watchUnitId = watch('unit_id');
     const watchTenantId = watch('tenant_id');
-
-    const { data: existingContracts = [] } = useQuery({
-        queryKey: ['contracts'],
-        queryFn: () => base44.entities.LeaseContract?.list?.() || [],
-    });
-
-    const isUnitOccupied = React.useMemo(() => {
-        return existingContracts.some(c => c.unit_id === watchUnitId && c.status === 'active');
-    }, [watchUnitId, existingContracts]);
 
     const { data: existingContracts = [] } = useQuery({
         queryKey: ['contracts'],
