@@ -8,7 +8,9 @@ import {
   FileText, 
   Calculator, 
   TrendingUp,
-  Settings 
+  Settings,
+  Tag,
+  ChevronDown
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import BuildingSelector from '@/components/sidebar/BuildingSelector';
@@ -22,8 +24,17 @@ const menuItems = [
   { name: 'Vermögen', icon: TrendingUp, page: 'PortfolioDashboard', badge: 'NEU' },
 ];
 
+const adminMenuItems = [
+  { name: 'Produkte', page: 'AdminPricingProducts' },
+  { name: 'Feature-Gruppen', page: 'AdminPricingFeatureGroups' },
+  { name: 'Features', page: 'AdminPricingFeatures' },
+  { name: 'Tarife', page: 'AdminPricingTiers', disabled: true },
+  { name: 'Bundles', page: 'AdminPricingBundles', disabled: true },
+];
+
 export default function MainSidebar() {
   const currentPath = window.location.pathname;
+  const [adminOpen, setAdminOpen] = React.useState(false);
 
   return (
     <aside className="w-64 bg-slate-900 text-white flex flex-col">
@@ -33,7 +44,7 @@ export default function MainSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {menuItems.map(item => {
           const Icon = item.icon;
           const isActive = currentPath.includes(item.page);
@@ -59,6 +70,43 @@ export default function MainSidebar() {
             </Link>
           );
         })}
+
+        {/* Admin Section */}
+        <div className="pt-4 mt-4 border-t border-slate-700">
+          <button
+            onClick={() => setAdminOpen(!adminOpen)}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+          >
+            <Tag className="w-5 h-5" />
+            <span className="font-light">Pricing-Konfigurator</span>
+            <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform", adminOpen && "rotate-180")} />
+          </button>
+          
+          {adminOpen && (
+            <div className="ml-4 mt-1 space-y-1">
+              {adminMenuItems.map(item => {
+                const isActive = currentPath.includes(item.page);
+                
+                return (
+                  <Link
+                    key={item.page}
+                    to={item.disabled ? '#' : createPageUrl(item.page)}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors",
+                      item.disabled && "opacity-40 cursor-not-allowed",
+                      !item.disabled && isActive && "bg-slate-700 text-white",
+                      !item.disabled && !isActive && "text-slate-400 hover:bg-slate-800 hover:text-white"
+                    )}
+                    onClick={e => item.disabled && e.preventDefault()}
+                  >
+                    {item.name}
+                    {item.disabled && <span className="ml-auto text-xs">Phase 2</span>}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </nav>
 
       {/* Footer */}

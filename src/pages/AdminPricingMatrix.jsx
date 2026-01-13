@@ -1,260 +1,227 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Switch } from '@/components/ui/switch';
-import { Check, Edit } from 'lucide-react';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Check, X, Plus, Zap } from 'lucide-react';
 
 export default function AdminPricingMatrix() {
-  const [editingPricing, setEditingPricing] = useState(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const queryClient = useQueryClient();
+  const [selectedProduct, setSelectedProduct] = useState('');
 
-  const { data: plans = [] } = useQuery({
-    queryKey: ['adminPlans'],
-    queryFn: () => base44.entities.SubscriptionPlan.list('-sort_order')
+  const { data: products = [] } = useQuery({
+    queryKey: ['adminProducts'],
+    queryFn: () => base44.entities.Product.list('-sort_order')
   });
 
-  const { data: addons = [] } = useQuery({
-    queryKey: ['adminAddons'],
-    queryFn: () => base44.entities.SubscriptionAddOn.list('-sort_order')
+  const { data: groups = [] } = useQuery({
+    queryKey: ['featureGroups'],
+    queryFn: () => base44.entities.FeatureGroup.list('-sort_order')
   });
 
-  const { data: pricings = [] } = useQuery({
-    queryKey: ['adminPricings'],
-    queryFn: () => base44.entities.PlanAddOnPricing.list()
+  const { data: allFeatures = [] } = useQuery({
+    queryKey: ['allFeatures'],
+    queryFn: () => base44.entities.Feature.list('-sort_order')
   });
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.PlanAddOnPricing.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminPricings'] });
-      setDialogOpen(false);
-      setEditingPricing(null);
-      toast.success('Preis aktualisiert');
-    }
+  const { data: tiers = [] } = useQuery({
+    queryKey: ['pricingTiers'],
+    queryFn: () => base44.entities.PricingTier.list('-tier_level'),
+    enabled: !!selectedProduct
   });
 
-  const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.PlanAddOnPricing.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminPricings'] });
-      setDialogOpen(false);
-      setEditingPricing(null);
-      toast.success('Preis erstellt');
-    }
+  const { data: tierFeatures = [] } = useQuery({
+    queryKey: ['allTierFeatures'],
+    queryFn: () => base44.entities.TierFeature.list()
   });
 
-  const getPricing = (planId, addonId) => {
-    return pricings.find(p => p.plan_id === planId && p.addon_id === addonId);
+  const { data: productFeatures = [] } = useQuery({
+    queryKey: ['productFeatures', selectedProduct],
+    queryFn: () => base44.entities.ProductFeature.filter({ product_id: selectedProduct }),
+    enabled: !!selectedProduct
+  });
+
+  const product = products.find(p => p.id === selectedProduct);
+  const productTiers = tiers.filter(t => t.product_id === selectedProduct);
+  
+  const productFeatureIds = new Set(productFeatures.map(pf => pf.feature_id));
+  const availableFeatures = allFeatures.filter(f => productFeatureIds.has(f.id));
+
+  const getFeatureInTier = (tierId, featureId) => {
+    return tierFeatures.find(tf => tf.tier_id === tierId && tf.feature_id === featureId);
   };
 
-  const handleCellClick = (plan, addon) => {
-    const existing = getPricing(plan.id, addon.id);
-    if (existing) {
-      setEditingPricing({ ...existing, plan, addon });
-    } else {
-      setEditingPricing({
-        plan_id: plan.id,
-        addon_id: addon.id,
-        price_monthly: addon.base_price_monthly,
-        stripe_price_id: '',
-        is_included: false,
-        is_available: true,
-        discount_percent: 0,
-        plan,
-        addon
-      });
+  const renderCell = (tier, feature) => {
+    const tf = getFeatureInTier(tier.id, feature.id);
+    
+    if (!tf || tf.inclusion_type === 'EXCLUDED') {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <X className="h-4 w-4 text-slate-300" />
+        </div>
+      );
     }
-    setDialogOpen(true);
+
+    if (tf.inclusion_type === 'INCLUDED') {
+      return (
+        <div className="flex flex-col items-center justify-center h-full text-center">
+          <Check className="h-5 w-5 text-green-600 mb-1" />
+          {feature.is_quantifiable && tf.quantity_limit && (
+            <span className="text-xs text-slate-600">
+              {tf.quantity_limit === -1 ? '∞' : tf.quantity_limit} {feature.quantity_unit}
+            </span>
+          )}
+        </div>
+      );
+    }
+
+    if (tf.inclusion_type === 'AVAILABLE') {
+      return (
+        <div className="flex flex-col items-center justify-center h-full text-center">
+          <Plus className="h-4 w-4 text-blue-600 mb-1" />
+          {tf.price_override && (
+            <span className="text-xs text-slate-600">
+              +{(tf.price_override / 100).toFixed(2)}€
+            </span>
+          )}
+        </div>
+      );
+    }
   };
+
+  if (!selectedProduct) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <Card>
+          <CardHeader>
+            <CardTitle>Pricing-Matrix</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-slate-600 mb-4">Wähle ein Produkt aus:</p>
+            <Select value={selectedProduct} onValueChange={setSelectedProduct}>
+              <SelectTrigger className="w-64">
+                <SelectValue placeholder="Produkt auswählen..." />
+              </SelectTrigger>
+              <SelectContent>
+                {products.map(p => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-light text-slate-900">Pricing Matrix</h1>
-        <p className="text-sm text-slate-600">Add-On Preise pro Plan konfigurieren</p>
+    <div className="max-w-full mx-auto space-y-6 pb-12">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-light text-slate-900">Pricing-Matrix</h1>
+          <p className="text-sm text-slate-600">
+            Feature-Vergleich: {product?.name}
+          </p>
+        </div>
+        <Select value={selectedProduct} onValueChange={setSelectedProduct}>
+          <SelectTrigger className="w-64">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {products.map(p => (
+              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      <Card>
-        <CardContent className="p-6 overflow-x-auto">
-          <table className="w-full border-collapse">
+      {productTiers.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-slate-500">Noch keine Tarife für dieses Produkt definiert.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse bg-white rounded-lg overflow-hidden shadow-sm">
             <thead>
-              <tr>
-                <th className="text-left p-3 border-b font-medium text-sm">Add-On</th>
-                {plans.map(plan => (
-                  <th key={plan.id} className="text-center p-3 border-b font-medium text-sm">
-                    {plan.name}
+              <tr className="bg-slate-50 border-b">
+                <th className="text-left p-4 font-medium text-slate-900 sticky left-0 bg-slate-50 z-10 min-w-[240px]">
+                  Feature
+                </th>
+                {productTiers.map(tier => (
+                  <th key={tier.id} className="p-4 text-center min-w-[180px]">
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="font-medium text-slate-900">{tier.name}</span>
+                        {tier.is_popular && <Badge className="bg-yellow-500 text-slate-900 text-xs">⭐</Badge>}
+                      </div>
+                      <div className="text-lg font-bold text-slate-900">
+                        {tier.price_monthly === 0 ? 'Kostenlos' : `${(tier.price_monthly / 100).toFixed(2)}€`}
+                      </div>
+                      {tier.price_monthly > 0 && (
+                        <div className="text-xs text-slate-500">/Monat</div>
+                      )}
+                    </div>
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {addons.map(addon => (
-                <tr key={addon.id} className="border-b hover:bg-slate-50">
-                  <td className="p-3">
-                    <div className="space-y-1">
-                      <div className="font-medium text-sm">{addon.name}</div>
-                      <Badge variant="secondary" className="text-xs">
-                        {addon.category}
-                      </Badge>
-                    </div>
-                  </td>
-                  {plans.map(plan => {
-                    const pricing = getPricing(plan.id, addon.id);
-                    return (
-                      <td 
-                        key={plan.id} 
-                        className="p-3 text-center cursor-pointer hover:bg-slate-100"
-                        onClick={() => handleCellClick(plan, addon)}
-                      >
-                        {pricing ? (
-                          <div className="space-y-1">
-                            {pricing.is_included ? (
-                              <Badge className="bg-emerald-100 text-emerald-700">Inklusive</Badge>
-                            ) : pricing.is_available ? (
-                              <>
-                                <div className="text-sm font-medium">
-                                  {(pricing.price_monthly / 100).toFixed(2)}€
-                                </div>
-                                {pricing.discount_percent > 0 && (
-                                  <div className="text-xs text-emerald-600">
-                                    -{pricing.discount_percent}%
-                                  </div>
-                                )}
-                              </>
-                            ) : (
-                              <Badge variant="outline" className="text-xs">N/A</Badge>
+              {groups.map(group => {
+                const groupFeatures = availableFeatures.filter(f => f.group_id === group.id);
+                if (groupFeatures.length === 0) return null;
+
+                return (
+                  <React.Fragment key={group.id}>
+                    <tr className="bg-slate-100">
+                      <td colSpan={productTiers.length + 1} className="p-3 font-medium text-sm text-slate-700 sticky left-0 bg-slate-100 z-10">
+                        {group.name}
+                      </td>
+                    </tr>
+                    {groupFeatures.map(feature => (
+                      <tr key={feature.id} className="border-b hover:bg-slate-50">
+                        <td className="p-4 sticky left-0 bg-white z-10">
+                          <div>
+                            <div className="font-medium text-sm">{feature.name}</div>
+                            {feature.description && (
+                              <div className="text-xs text-slate-500 mt-1">{feature.description}</div>
                             )}
                           </div>
-                        ) : (
-                          <Button variant="ghost" size="sm" className="text-xs">
-                            <Plus className="h-3 w-3 mr-1" />
-                            Preis
-                          </Button>
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
+                        </td>
+                        {productTiers.map(tier => (
+                          <td key={tier.id} className="p-4 border-l">
+                            {renderCell(tier, feature)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </React.Fragment>
+                );
+              })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      <Card className="bg-slate-50">
+        <CardContent className="py-4">
+          <div className="flex items-center gap-6 text-sm">
+            <div className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-600" />
+              <span className="text-slate-600">Inkludiert</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Plus className="h-4 w-4 text-blue-600" />
+              <span className="text-slate-600">Hinzubuchbar</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <X className="h-4 w-4 text-slate-300" />
+              <span className="text-slate-600">Nicht verfügbar</span>
+            </div>
+          </div>
         </CardContent>
       </Card>
-
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingPricing?.addon?.name} → {editingPricing?.plan?.name}
-            </DialogTitle>
-          </DialogHeader>
-          {editingPricing && (
-            <PricingForm 
-              pricing={editingPricing}
-              onSave={(data) => {
-                if (editingPricing.id) {
-                  updateMutation.mutate({ id: editingPricing.id, data });
-                } else {
-                  createMutation.mutate(data);
-                }
-              }}
-              onCancel={() => {
-                setDialogOpen(false);
-                setEditingPricing(null);
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
-  );
-}
-
-function PricingForm({ pricing, onSave, onCancel }) {
-  const [formData, setFormData] = useState({
-    plan_id: pricing.plan_id,
-    addon_id: pricing.addon_id,
-    price_monthly: pricing.price_monthly,
-    stripe_price_id: pricing.stripe_price_id || '',
-    is_included: pricing.is_included,
-    is_available: pricing.is_available,
-    discount_percent: pricing.discount_percent || 0
-  });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave(formData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label>Preis Monatlich (Cent)</Label>
-        <Input 
-          type="number"
-          value={formData.price_monthly} 
-          onChange={e => setFormData({...formData, price_monthly: Number(e.target.value)})}
-          required
-          disabled={formData.is_included}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label>Stripe Price ID</Label>
-        <Input 
-          value={formData.stripe_price_id} 
-          onChange={e => setFormData({...formData, stripe_price_id: e.target.value})}
-          placeholder="price_..."
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label>Rabatt (%)</Label>
-        <Input 
-          type="number"
-          value={formData.discount_percent} 
-          onChange={e => setFormData({...formData, discount_percent: Number(e.target.value)})}
-          min="0"
-          max="100"
-        />
-      </div>
-
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Switch 
-            checked={formData.is_included} 
-            onCheckedChange={v => setFormData({...formData, is_included: v, price_monthly: v ? 0 : pricing.addon.base_price_monthly})}
-          />
-          <Label>Im Plan inklusive</Label>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Switch 
-            checked={formData.is_available} 
-            onCheckedChange={v => setFormData({...formData, is_available: v})}
-          />
-          <Label>Für diesen Plan verfügbar</Label>
-        </div>
-      </div>
-
-      <div className="flex gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
-          Abbrechen
-        </Button>
-        <Button type="submit" className="flex-1">
-          <Check className="h-4 w-4 mr-2" />
-          Speichern
-        </Button>
-      </div>
-    </form>
   );
 }
