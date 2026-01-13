@@ -1,100 +1,93 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { CheckCircle2, Circle, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronUp, CheckCircle2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+
+const CHECKLIST_ITEMS = [
+  { id: 'building', label: 'Erstes Gebäude anlegen', page: 'Buildings', icon: '🏢' },
+  { id: 'units', label: 'Einheiten zum Gebäude hinzufügen', page: 'UnitsManagement', icon: '🏠' },
+  { id: 'purchase', label: 'Kaufvertrag mit Grundstücksanteil erfassen', page: 'BuildingDetail', icon: '📋' },
+  { id: 'owners', label: 'Eigentümer mit Anteilen zuordnen', page: 'PortfolioManagement', icon: '👤' },
+  { id: 'lease', label: 'Ersten Mietvertrag erstellen', page: 'Contracts', icon: '📑' },
+  { id: 'bookings', label: '"Buchungen generieren" klicken', page: 'GeneratedBookings', icon: '📊' },
+  { id: 'bank', label: 'Bankverbindung einrichten', page: 'BankAccounts', icon: '🏦' },
+  { id: 'invoice', label: 'Erste Rechnung kategorisieren', page: 'Invoices', icon: '💰' },
+];
 
 export default function OnboardingChecklist() {
-  const [progress, setProgress] = useState({});
-  const [user, setUser] = useState(null);
+  const [completed, setCompleted] = useState({});
+  const [collapsed, setCollapsed] = useState(true);
 
+  // Load from localStorage
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const u = await base44.auth.me();
-        setUser(u);
-        const saved = localStorage.getItem(`onboarding_${u?.id}`);
-        if (saved) {
-          setProgress(JSON.parse(saved));
-        }
-      } catch (error) {
-        console.error('Error loading user:', error);
-      }
-    };
-    loadUser();
+    const saved = localStorage.getItem('onboarding_checklist');
+    if (saved) setCompleted(JSON.parse(saved));
   }, []);
 
-  const checklist = [
-    { id: 'building', label: 'Erstes Gebäude anlegen', page: 'Buildings' },
-    { id: 'units', label: 'Einheiten zum Gebäude hinzufügen', page: 'UnitsManagement' },
-    { id: 'contract', label: 'Kaufvertrag mit Grundstücksanteil', page: 'Buildings' },
-    { id: 'owner', label: 'Eigentümer mit Anteilen zuordnen', page: 'Buildings' },
-    { id: 'lease', label: 'Ersten Mietvertrag erstellen', page: 'Contracts' },
-    { id: 'bookings', label: 'Buchungen generieren', page: 'GeneratedBookings' },
-    { id: 'bank', label: 'Bankverbindung einrichten', page: 'BankAccounts' },
-    { id: 'invoice', label: 'Erste Rechnung kategorisieren', page: 'Invoices' }
-  ];
-
-  const completed = Object.values(progress).filter(Boolean).length;
-  const completionPercent = (completed / checklist.length) * 100;
-
+  // Save to localStorage
   const toggleItem = (id) => {
-    const newProgress = { ...progress, [id]: !progress[id] };
-    setProgress(newProgress);
-    if (user?.id) {
-      localStorage.setItem(`onboarding_${user.id}`, JSON.stringify(newProgress));
-    }
+    const updated = { ...completed, [id]: !completed[id] };
+    setCompleted(updated);
+    localStorage.setItem('onboarding_checklist', JSON.stringify(updated));
   };
 
-  if (completionPercent === 100) {
-    return null;
-  }
+  const completedCount = Object.values(completed).filter(Boolean).length;
+  const progress = (completedCount / CHECKLIST_ITEMS.length) * 100;
+  const allDone = completedCount === CHECKLIST_ITEMS.length;
+
+  if (allDone && collapsed) return null;
 
   return (
-    <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
+    <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-lg">🚀 Onboarding-Fortschritt</CardTitle>
-            <p className="text-sm text-slate-600 mt-1">{completed}/{checklist.length} Schritte</p>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-blue-600" />
+            <CardTitle className="text-lg">🚀 Onboarding-Checkliste</CardTitle>
           </div>
-          <div className="text-2xl font-light text-slate-700">{Math.round(completionPercent)}%</div>
-        </div>
-        <Progress value={completionPercent} className="mt-3" />
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {checklist.map(item => (
-          <button
-            key={item.id}
-            onClick={() => toggleItem(item.id)}
-            className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-white/50 transition-colors text-left"
-          >
-            {progress[item.id] ? (
-              <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-            ) : (
-              <Circle className="w-5 h-5 text-slate-300 flex-shrink-0" />
-            )}
-            <span className={progress[item.id] ? 'line-through text-slate-500 text-sm' : 'text-sm text-slate-700'}>
-              {item.label}
-            </span>
-          </button>
-        ))}
-        {completed < checklist.length && (
           <Button
-            asChild
-            variant="secondary"
+            variant="ghost"
             size="sm"
-            className="w-full mt-3"
+            onClick={() => setCollapsed(!collapsed)}
           >
-            <a href={createPageUrl(checklist.find(c => !progress[c.id])?.page || 'Dashboard')}>
-              Nächster Schritt
-              <ChevronRight className="w-4 h-4 ml-2" />
-            </a>
+            {collapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
           </Button>
-        )}
-      </CardContent>
+        </div>
+        <div className="mt-2">
+          <div className="flex items-center gap-2">
+            <Progress value={progress} className="flex-1" />
+            <span className="text-sm font-medium">{completedCount}/{CHECKLIST_ITEMS.length}</span>
+          </div>
+        </div>
+      </CardHeader>
+
+      {!collapsed && (
+        <CardContent className="space-y-3">
+          {CHECKLIST_ITEMS.map(item => (
+            <div key={item.id} className="flex items-center gap-3 p-2 hover:bg-white/50 rounded-lg transition-colors">
+              <Checkbox
+                id={item.id}
+                checked={completed[item.id] || false}
+                onCheckedChange={() => toggleItem(item.id)}
+              />
+              <label htmlFor={item.id} className={`flex-1 cursor-pointer ${completed[item.id] ? 'line-through text-slate-500' : ''}`}>
+                {item.icon} {item.label}
+              </label>
+              {!completed[item.id] && (
+                <Link to={createPageUrl(item.page)}>
+                  <Button size="sm" variant="outline" className="h-7 text-xs">
+                    Jetzt erledigen →
+                  </Button>
+                </Link>
+              )}
+            </div>
+          ))}
+        </CardContent>
+      )}
     </Card>
   );
 }
