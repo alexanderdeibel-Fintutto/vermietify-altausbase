@@ -1,65 +1,83 @@
-/**
- * Simple in-memory cache manager with TTL support
- */
-export class DataCacheManager {
-  constructor(defaultTTL = 5 * 60 * 1000) {
-    this.cache = new Map();
-    this.timers = new Map();
-    this.defaultTTL = defaultTTL;
-  }
+import React, { useEffect, useState } from 'react';
+import { Database, Trash2, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-  set(key, data, ttl = this.defaultTTL) {
-    // Clear existing timer
-    if (this.timers.has(key)) {
-      clearTimeout(this.timers.get(key));
+export default function DataCacheManager() {
+  const [cacheSize, setCacheSize] = useState('0 MB');
+  const [cacheEntries, setCacheEntries] = useState(0);
+  const [clearing, setClearing] = useState(false);
+
+  useEffect(() => {
+    const calculateCacheSize = () => {
+      let total = 0;
+      let count = 0;
+
+      for (let key in localStorage) {
+        if (localStorage.hasOwnProperty(key)) {
+          total += localStorage[key].length + key.length;
+          count++;
+        }
+      }
+
+      const sizeInMB = (total / 1024 / 1024).toFixed(2);
+      setCacheSize(`${sizeInMB} MB`);
+      setCacheEntries(count);
+    };
+
+    calculateCacheSize();
+  }, []);
+
+  const handleClear = async () => {
+    setClearing(true);
+    try {
+      localStorage.clear();
+      setCacheSize('0 MB');
+      setCacheEntries(0);
+    } finally {
+      setClearing(false);
     }
+  };
 
-    // Store data with timestamp
-    this.cache.set(key, {
-      data,
-      timestamp: Date.now(),
-    });
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Database className="w-5 h-5" />
+          Cache-Verwaltung
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-xs text-slate-600 mb-1">Größe</p>
+            <p className="text-2xl font-bold text-slate-900">{cacheSize}</p>
+          </div>
+          <div>
+            <p className="text-xs text-slate-600 mb-1">Einträge</p>
+            <p className="text-2xl font-bold text-slate-900">{cacheEntries}</p>
+          </div>
+        </div>
 
-    // Set expiration timer
-    if (ttl > 0) {
-      const timer = setTimeout(() => this.remove(key), ttl);
-      this.timers.set(key, timer);
-    }
-  }
-
-  get(key, maxAge = null) {
-    const entry = this.cache.get(key);
-    if (!entry) return null;
-
-    // Check max age if specified
-    if (maxAge && Date.now() - entry.timestamp > maxAge) {
-      this.remove(key);
-      return null;
-    }
-
-    return entry.data;
-  }
-
-  has(key) {
-    return this.cache.has(key);
-  }
-
-  remove(key) {
-    this.cache.delete(key);
-    if (this.timers.has(key)) {
-      clearTimeout(this.timers.get(key));
-      this.timers.delete(key);
-    }
-  }
-
-  clear() {
-    this.cache.forEach((_, key) => this.remove(key));
-  }
-
-  size() {
-    return this.cache.size;
-  }
+        <Button
+          onClick={handleClear}
+          disabled={clearing || cacheEntries === 0}
+          variant="outline"
+          className="w-full gap-2 text-red-600 hover:text-red-700"
+        >
+          {clearing ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Wird geleert...
+            </>
+          ) : (
+            <>
+              <Trash2 className="w-4 h-4" />
+              Cache leeren
+            </>
+          )}
+        </Button>
+      </CardContent>
+    </Card>
+  );
 }
-
-// Global cache instance
-export const globalCache = new DataCacheManager();

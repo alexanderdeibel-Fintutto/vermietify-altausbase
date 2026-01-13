@@ -1,63 +1,74 @@
-import React, { useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
+import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
-export default function ToastNotificationCenter() {
-  const [toasts, setToasts] = useState([]);
-
-  const addToast = useCallback((message, type = 'info', duration = 3000) => {
-    const id = Math.random();
-    setToasts(prev => [...prev, { id, message, type }]);
-
-    if (duration) {
-      setTimeout(() => {
-        setToasts(prev => prev.filter(t => t.id !== id));
-      }, duration);
-    }
-
-    return id;
-  }, []);
-
-  const removeToast = (id) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  };
-
-  // Export via window for global access
-  React.useEffect(() => {
-    window.showToast = addToast;
-  }, [addToast]);
-
-  const config = {
-    success: { icon: CheckCircle2, bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700' },
-    error: { icon: AlertCircle, bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700' },
-    info: { icon: Info, bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700' }
-  };
+export default function ToastNotificationCenter({
+  notifications = [],
+  onDismiss,
+  maxNotifications = 3,
+}) {
+  const visibleNotifications = notifications.slice(0, maxNotifications);
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 max-w-sm space-y-2">
-      <AnimatePresence>
-        {toasts.map(toast => {
-          const { icon: Icon, bg, border, text } = config[toast.type] || config.info;
-          return (
-            <motion.div
-              key={toast.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className={`flex items-start gap-3 p-3 rounded-lg border ${bg} ${border} shadow-lg`}
-            >
-              <Icon className={`w-5 h-5 ${text} flex-shrink-0 mt-0.5`} />
-              <p className={`flex-1 text-sm ${text} font-medium`}>{toast.message}</p>
-              <button
-                onClick={() => removeToast(toast.id)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </motion.div>
-          );
-        })}
+    <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
+      <AnimatePresence mode="popLayout">
+        {visibleNotifications.map((notification) => (
+          <Toast
+            key={notification.id}
+            notification={notification}
+            onDismiss={onDismiss}
+          />
+        ))}
       </AnimatePresence>
     </div>
+  );
+}
+
+function Toast({ notification, onDismiss }) {
+  useEffect(() => {
+    if (notification.duration !== Infinity) {
+      const timer = setTimeout(
+        () => onDismiss?.(notification.id),
+        notification.duration || 5000
+      );
+      return () => clearTimeout(timer);
+    }
+  }, [notification, onDismiss]);
+
+  const iconConfig = {
+    success: { icon: CheckCircle2, color: 'bg-emerald-50 border-emerald-200 text-emerald-700' },
+    error: { icon: AlertTriangle, color: 'bg-red-50 border-red-200 text-red-700' },
+    warning: { icon: AlertCircle, color: 'bg-amber-50 border-amber-200 text-amber-700' },
+    info: { icon: Info, color: 'bg-blue-50 border-blue-200 text-blue-700' },
+  };
+
+  const config = iconConfig[notification.type] || iconConfig.info;
+  const Icon = config.icon;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 400 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 400 }}
+      className={`flex items-start gap-3 p-4 rounded-lg border ${config.color}`}
+    >
+      <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" />
+      
+      <div className="flex-1">
+        {notification.title && (
+          <p className="font-medium mb-1">{notification.title}</p>
+        )}
+        {notification.message && (
+          <p className="text-sm opacity-90">{notification.message}</p>
+        )}
+      </div>
+
+      <button
+        onClick={() => onDismiss?.(notification.id)}
+        className="flex-shrink-0 p-1 hover:bg-black/10 rounded transition-colors"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </motion.div>
   );
 }
