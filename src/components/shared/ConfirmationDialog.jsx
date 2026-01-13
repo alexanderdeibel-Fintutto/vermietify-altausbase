@@ -1,52 +1,49 @@
 import React from 'react';
+import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
+  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { AlertTriangle, Trash2 } from 'lucide-react';
 
 export default function ConfirmationDialog({
   open = false,
-  onOpenChange,
+  title,
+  description,
+  confirmLabel = 'Bestätigen',
+  cancelLabel = 'Abbrechen',
   onConfirm,
-  title = 'Bestätigung erforderlich',
-  description = 'Dieser Vorgang kann nicht rückgängig gemacht werden.',
-  confirmText = 'Bestätigen',
-  cancelText = 'Abbrechen',
-  destructive = false,
-  loading = false
+  onCancel,
+  isDestructive = false,
+  loading = false,
 }) {
-  const Icon = destructive ? Trash2 : AlertTriangle;
-  const iconColor = destructive ? 'text-red-600' : 'text-amber-600';
-
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog open={open} onOpenChange={onCancel}>
       <AlertDialogContent>
-        <div className="flex items-start gap-4">
-          <Icon className={`w-6 h-6 ${iconColor} flex-shrink-0 mt-0.5`} />
-          <div className="flex-1">
-            <AlertDialogHeader>
-              <AlertDialogTitle>{title}</AlertDialogTitle>
-              <AlertDialogDescription>{description}</AlertDialogDescription>
-            </AlertDialogHeader>
-          </div>
-        </div>
+        <AlertDialogHeader>
+          <AlertDialogTitle className={isDestructive ? 'text-red-600' : ''}>
+            {title}
+          </AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
 
-        <div className="flex gap-2 justify-end">
-          <AlertDialogCancel disabled={loading}>{cancelText}</AlertDialogCancel>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={loading}>
+            {cancelLabel}
+          </AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
             disabled={loading}
-            className={destructive ? 'bg-red-600 hover:bg-red-700' : ''}
+            className={isDestructive ? 'bg-red-600 hover:bg-red-700' : ''}
           >
-            {loading ? 'Wird verarbeitet...' : confirmText}
+            {loading ? 'Wird verarbeitet...' : confirmLabel}
           </AlertDialogAction>
-        </div>
+        </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );

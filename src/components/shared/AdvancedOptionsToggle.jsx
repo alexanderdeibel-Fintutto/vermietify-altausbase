@@ -3,34 +3,37 @@ import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function AdvancedOptionsToggle({
-  title = 'Erweiterte Optionen',
-  children,
-}) {
-  const [open, setOpen] = useState(false);
+export default function AdvancedOptionsToggle({ children, label = 'Erweiterte Optionen' }) {
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <Button
-        onClick={() => setOpen(!open)}
+        onClick={() => setIsOpen(!isOpen)}
         variant="outline"
-        className="w-full justify-between"
+        size="sm"
+        className="gap-2 w-full justify-between"
       >
-        <span className="text-sm font-medium">{title}</span>
-        <ChevronDown
-          className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`}
-        />
+        <span>{label}</span>
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronDown className="w-4 h-4" />
+        </motion.div>
       </Button>
 
       <AnimatePresence>
-        {open && (
+        {isOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="space-y-3 border-l-2 border-slate-200 pl-4 py-2"
+            className="overflow-hidden"
           >
-            {children}
+            <div className="p-4 rounded-lg border border-slate-200 bg-slate-50">
+              {children}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
