@@ -12,7 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Plus, Edit, Trash2, Check, Zap } from 'lucide-react';
 import { toast } from 'sonner';
-import { base44 } from '@/api/base44Client';
 
 export default function AdminSubscriptionPlans() {
   const [editingPlan, setEditingPlan] = useState(null);
@@ -89,8 +88,6 @@ export default function AdminSubscriptionPlans() {
               Neuer Plan
             </Button>
           </DialogTrigger>
-          </Dialog>
-        </div>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingPlan ? 'Plan bearbeiten' : 'Neuer Plan'}</DialogTitle>
@@ -110,6 +107,9 @@ export default function AdminSubscriptionPlans() {
               }}
             />
           </DialogContent>
+        </Dialog>
+        </div>
+      </div>
 
       <div className="grid gap-4">
         {plans.map(plan => (
