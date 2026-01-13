@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from 'lucide-react';
@@ -95,5 +96,6 @@ export default function PortfolioManagement() {
         onSubmit={handleAssetSubmit}
       />
     </div>
+    </FeatureGate>
   );
 }

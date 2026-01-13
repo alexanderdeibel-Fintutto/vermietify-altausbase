@@ -13,6 +13,7 @@ import LimitGuard from '@/components/package/LimitGuard';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import BuildingCreationWizard from '@/components/buildings/BuildingCreationWizard';
+import { FeatureGateInline } from '@/components/subscription/FeatureGateInline';
 
 export default function BuildingsPage() {
   const [filters, setFilters] = useState({ status: 'all', city: 'all', search: '' });

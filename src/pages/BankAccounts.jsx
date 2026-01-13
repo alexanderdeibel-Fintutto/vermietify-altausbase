@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
+import { FeatureGate } from '@/components/subscription/FeatureGate';
 import { Landmark, Plus, MoreVertical, Pencil, Trash2, Upload, TrendingUp, TrendingDown, Link2, RefreshCw, Undo2, CreditCard, ArrowLeftRight, FileText } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'sonner';
@@ -454,6 +455,7 @@ export default function BankAccounts() {
     }
 
     return (
+        <FeatureGate featureKey="banking_import" requiredPlanLevel={2}>
         <div className="space-y-8">
             <motion.div 
                 initial={{ opacity: 0, y: -20 }}
@@ -826,6 +828,7 @@ export default function BankAccounts() {
                                         </AlertDialogFooter>
                                         </AlertDialogContent>
                                         </AlertDialog>
-        </div>
-    );
-}
+                                        </div>
+                                        </FeatureGate>
+                                        );
+                                        }
