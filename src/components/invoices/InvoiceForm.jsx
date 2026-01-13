@@ -551,13 +551,13 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                         )}
 
                         {/* Quick Category Suggestions */}
-                        {watch('recipient') && (
-                            <CategorySuggestions 
-                                recipient={watch('recipient')}
-                                costTypes={filteredCostTypes}
-                                onSelect={(id) => setValue('cost_type_id', id)}
-                            />
-                        )}
+                         {watch('recipient') && costTypes.length > 0 && (
+                             <CategorySuggestions 
+                                 recipient={watch('recipient')}
+                                 costTypes={costTypes}
+                                 onSelect={(id) => setValue('cost_type_id', id)}
+                             />
+                         )}
 
                         <div className="grid grid-cols-1 gap-4">
                             {/* Cost Type Selection */}

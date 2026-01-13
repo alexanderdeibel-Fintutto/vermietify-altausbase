@@ -12,6 +12,7 @@ import TransferStatusBadge from "@/components/banking/TransferStatusBadge";
 import { toast } from "sonner";
 import BankTransactionMatches from "@/components/banking/BankTransactionMatches";
 import ISTBookingCard from "@/components/shared/ISTBookingCard";
+import AIMatchSuggestions from "@/components/banking/AIMatchSuggestions";
 
 export default function BankTransactionsPage() {
   const [createOpen, setCreateOpen] = useState(false);
@@ -80,8 +81,9 @@ export default function BankTransactionsPage() {
             date={new Date(transfer.created_date).toLocaleDateString('de-DE')}
             description={transfer.description || 'Keine Beschreibung'}
           >
-            <div className="mt-4 pt-4 border-t">
-              <BankTransactionMatches transaction={transfer} onMatch={handleMatch} />
+            <div className="mt-4 pt-4 border-t space-y-3">
+              <AIMatchSuggestions transaction={transfer} />
+              <BankTransactionMatches transaction={transfer} invoices={invoices} onMatch={handleMatch} onIgnore={() => {}} />
             </div>
           </ISTBookingCard>
         ))}
