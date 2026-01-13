@@ -1,71 +1,50 @@
 import React from 'react';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default function ComparisonView({ 
+export default function ComparisonView({
   items = [],
-  columns = [],
-  highlightDifferences = true
+  fields = [],
+  labels = [],
 }) {
-  if (items.length < 2 || columns.length === 0) return null;
-
-  const getDifferences = () => {
-    const diffs = new Set();
-    const [first, second] = items;
-
-    columns.forEach(col => {
-      if (first[col.key] !== second[col.key]) {
-        diffs.add(col.key);
-      }
-    });
-
-    return diffs;
-  };
-
-  const differences = getDifferences();
-
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm border-collapse">
-        <thead>
-          <tr className="bg-slate-100 border-b border-slate-300">
-            <th className="p-3 text-left font-medium text-slate-700">Feld</th>
-            {items.map((item, idx) => (
-              <th key={idx} className="p-3 text-left font-medium text-slate-700">
-                {item.label || `Version ${idx + 1}`}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {columns.map((col) => {
-            const isDifferent = differences.has(col.key);
-            return (
-              <tr
-                key={col.key}
-                className={`border-b border-slate-200 ${
-                  isDifferent && highlightDifferences ? 'bg-amber-50' : ''
-                }`}
-              >
-                <td className="p-3 font-medium text-slate-700">{col.label}</td>
-                {items.map((item, idx) => (
-                  <td
-                    key={idx}
-                    className={`p-3 ${
-                      isDifferent && highlightDifferences
-                        ? 'bg-amber-100 text-amber-900 font-semibold'
-                        : ''
+    <div className="space-y-4">
+      {fields.map((field, idx) => (
+        <Card key={idx} className="border-slate-100">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">{field.label || field}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4">
+              {items.map((item, itemIdx) => {
+                const value = typeof field === 'string' 
+                  ? item[field] 
+                  : item[field.key];
+                
+                const hasChanged = items.length > 1 && itemIdx > 0 && 
+                  value !== (typeof items[0] === 'object' && items[0][typeof field === 'string' ? field : field.key]);
+                
+                return (
+                  <div
+                    key={itemIdx}
+                    className={`p-2 rounded text-sm ${
+                      hasChanged
+                        ? 'bg-amber-50 border border-amber-200'
+                        : 'bg-slate-50'
                     }`}
                   >
-                    {col.format
-                      ? col.format(item[col.key])
-                      : item[col.key] || '—'}
-                  </td>
-                ))}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                    <p className="text-xs text-slate-500 mb-1">
+                      {labels[itemIdx] || `Item ${itemIdx + 1}`}
+                    </p>
+                    <p className="font-medium text-slate-900">
+                      {value || '—'}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }

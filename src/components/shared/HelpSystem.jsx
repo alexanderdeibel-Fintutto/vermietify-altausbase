@@ -1,97 +1,79 @@
 import React, { useState } from 'react';
-import { Card } from '@/components/ui/card';
+import { HelpCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { HelpCircle, X, ChevronRight } from 'lucide-react';
-import { motion } from 'framer-motion';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
-export default function HelpSystem({ 
-  articles = [],
-  searchable = true
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const [selectedId, setSelectedId] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
+const HELP_CONTENT = {
+  dashboard_overview: {
+    title: 'Dashboard Übersicht',
+    description: 'Das Dashboard zeigt einen schnellen Überblick über alle wichtigen Metriken und Aktivitäten.',
+    tips: [
+      'Nutzen Sie die Filter, um die Ansicht nach Ihren Bedürfnissen anzupassen',
+      'Klicken Sie auf die Statistiken, um mehr Details zu erhalten',
+      'Sie können die Widgets nach Ihren Vorlieben anordnen',
+    ],
+  },
+};
 
-  const selected = articles.find(a => a.id === selectedId);
-  
-  const filtered = searchable
-    ? articles.filter(a =>
-        a.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        a.content.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : articles;
+export default function HelpSystem() {
+  const [openContexts, setOpenContexts] = useState({});
 
-  if (!expanded) {
-    return (
+  const openHelp = (context) => {
+    setOpenContexts(prev => ({ ...prev, [context]: true }));
+  };
+
+  const closeHelp = (context) => {
+    setOpenContexts(prev => ({ ...prev, [context]: false }));
+  };
+
+  return {
+    HelpButton: ({ context = 'general' }) => (
       <Button
-        onClick={() => setExpanded(true)}
+        variant="ghost"
         size="icon"
-        className="fixed bottom-6 right-6 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 h-12 w-12"
+        onClick={() => openHelp(context)}
+        className="text-slate-400 hover:text-slate-600"
+        title="Hilfe"
       >
-        <HelpCircle className="w-6 h-6" />
+        <HelpCircle className="w-4 h-4" />
       </Button>
-    );
-  }
+    ),
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="fixed bottom-6 right-6 w-96 max-h-96 bg-white rounded-lg shadow-2xl flex flex-col border border-slate-200 z-50"
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-200">
-        <h3 className="font-semibold text-slate-900">Hilfe & Support</h3>
-        <Button
-          onClick={() => {
-            setExpanded(false);
-            setSelectedId(null);
-          }}
-          size="sm"
-          variant="ghost"
-          className="h-6 w-6 p-0"
-        >
-          <X className="w-4 h-4" />
-        </Button>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        {selected ? (
-          <div className="p-4">
-            <button
-              onClick={() => setSelectedId(null)}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1 mb-4"
-            >
-              ← Zurück
-            </button>
-            <h4 className="font-semibold text-slate-900 mb-3">{selected.title}</h4>
-            <p className="text-sm text-slate-700 whitespace-pre-wrap">{selected.content}</p>
-          </div>
-        ) : (
-          <div className="p-4 space-y-2">
-            {searchable && (
-              <input
-                type="text"
-                placeholder="Suchen..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500"
-              />
+    HelpDialog: ({ context = 'general' }) => {
+      const content = HELP_CONTENT[context] || { title: 'Hilfe', description: '', tips: [] };
+      
+      return (
+        <Dialog open={openContexts[context]} onOpenChange={(open) => {
+          if (!open) closeHelp(context);
+        }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{content.title}</DialogTitle>
+              <DialogDescription>{content.description}</DialogDescription>
+            </DialogHeader>
+            
+            {content.tips && content.tips.length > 0 && (
+              <div className="space-y-2 mt-4">
+                <h4 className="font-medium text-sm">Tipps:</h4>
+                <ul className="space-y-1">
+                  {content.tips.map((tip, idx) => (
+                    <li key={idx} className="text-sm text-slate-600 flex gap-2">
+                      <span className="text-blue-600">•</span>
+                      {tip}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
-            {filtered.map(article => (
-              <button
-                key={article.id}
-                onClick={() => setSelectedId(article.id)}
-                className="w-full text-left p-3 hover:bg-slate-50 rounded-lg transition-colors flex items-center justify-between"
-              >
-                <span className="text-sm font-medium text-slate-900">{article.title}</span>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
+          </DialogContent>
+        </Dialog>
+      );
+    },
+  };
 }

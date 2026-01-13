@@ -1,96 +1,106 @@
-import React, { useState, useMemo } from 'react';
-import { Input } from '@/components/ui/input';
+import React, { useState } from 'react';
+import { Link as LinkIcon, Unlink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Link2, X } from 'lucide-react';
-import { motion } from 'framer-motion';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
-export default function SmartLinking({ 
-  availableItems = [],
+export default function SmartLinking({
+  entityId,
+  entityType,
   linkedItems = [],
+  availableEntities = [],
   onLink,
   onUnlink,
-  searchFields = ['name', 'label'],
-  placeholder = 'Verlinken...'
 }) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState([]);
 
-  const suggestions = useMemo(() => {
-    if (!searchTerm) return [];
-    
-    const term = searchTerm.toLowerCase();
-    return availableItems
-      .filter(item => 
-        !linkedItems.find(l => l.id === item.id) &&
-        searchFields.some(field => 
-          String(item[field] || '').toLowerCase().includes(term)
-        )
-      )
-      .slice(0, 5);
-  }, [searchTerm, availableItems, linkedItems, searchFields]);
-
-  const handleLink = (item) => {
-    onLink?.(item);
-    setSearchTerm('');
-    setShowSuggestions(false);
+  const handleLink = async () => {
+    for (const entityId of selected) {
+      await onLink?.(entityId);
+    }
+    setSelected([]);
+    setOpen(false);
   };
 
   return (
-    <div className="space-y-3">
-      <div className="relative">
-        <Input
-          placeholder={placeholder}
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setShowSuggestions(true);
-          }}
-          onFocus={() => setShowSuggestions(true)}
-          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-          className="pl-10"
-        />
-        <Link2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+    <>
+      <Button
+        onClick={() => setOpen(true)}
+        variant="outline"
+        size="sm"
+        className="gap-2"
+      >
+        <LinkIcon className="w-4 h-4" />
+        Verknüpfen ({linkedItems.length})
+      </Button>
 
-        {showSuggestions && suggestions.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-10"
-          >
-            {suggestions.map(item => (
-              <button
-                key={item.id}
-                onClick={() => handleLink(item)}
-                className="w-full text-left px-3 py-2 hover:bg-slate-50 text-sm border-b last:border-b-0"
-              >
-                {item.name || item.label}
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Entitäten verknüpfen</DialogTitle>
+            <DialogDescription>
+              Wählen Sie die Entitäten aus, die verknüpft werden sollen
+            </DialogDescription>
+          </DialogHeader>
 
-      {linkedItems.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-slate-600">Verlinkt ({linkedItems.length})</p>
-          <div className="flex flex-wrap gap-2">
-            {linkedItems.map(item => (
-              <div
-                key={item.id}
-                className="flex items-center gap-2 px-2 py-1 bg-blue-100 text-blue-700 rounded text-sm"
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {availableEntities.map((entity) => (
+              <label
+                key={entity.id}
+                className="flex items-center gap-2 p-2 rounded hover:bg-slate-50 cursor-pointer"
               >
-                <span>{item.name || item.label}</span>
-                <button
-                  onClick={() => onUnlink?.(item.id)}
-                  className="hover:text-blue-900"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
+                <input
+                  type="checkbox"
+                  checked={selected.includes(entity.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelected([...selected, entity.id]);
+                    } else {
+                      setSelected(selected.filter(id => id !== entity.id));
+                    }
+                  }}
+                  className="rounded"
+                />
+                <span className="text-sm text-slate-700">{entity.name}</span>
+              </label>
             ))}
           </div>
+
+          <div className="flex gap-2 justify-end">
+            <Button onClick={() => setOpen(false)} variant="outline">
+              Abbrechen
+            </Button>
+            <Button onClick={handleLink}>Verknüpfen</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {linkedItems.length > 0 && (
+        <div className="space-y-2 mt-4">
+          {linkedItems.map((item) => (
+            <div
+              key={item.id}
+              className="flex items-center justify-between p-2 bg-slate-50 rounded"
+            >
+              <span className="text-sm text-slate-700">{item.name}</span>
+              <Button
+                onClick={() => onUnlink?.(item.id)}
+                variant="ghost"
+                size="sm"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <Unlink className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
         </div>
       )}
-    </div>
+    </>
   );
 }

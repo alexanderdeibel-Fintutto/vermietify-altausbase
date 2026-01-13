@@ -1,111 +1,90 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
+import { Search, X, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Search, Clock, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export default function SmartSearch({ 
-  onSearch,
+export default function SmartSearch({
+  items = [],
+  onSelect,
+  searchFields = ['name', 'description'],
   placeholder = 'Suchen...',
-  storageKey = 'search-history'
+  loading = false,
+  renderItem,
 }) {
   const [query, setQuery] = useState('');
-  const [history, setHistory] = useState([]);
-  const [showHistory, setShowHistory] = useState(false);
+  const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    const stored = localStorage.getItem(storageKey);
-    if (stored) {
-      try {
-        setHistory(JSON.parse(stored));
-      } catch (e) {
-        console.error('Error loading search history:', e);
-      }
-    }
-  }, [storageKey]);
+  const results = useMemo(() => {
+    if (!query.trim()) return [];
 
-  const handleSearch = (value) => {
-    setQuery(value);
-    onSearch?.(value);
-  };
+    const lowerQuery = query.toLowerCase();
+    return items.filter(item => 
+      searchFields.some(field => {
+        const value = item[field];
+        return value && value.toString().toLowerCase().includes(lowerQuery);
+      })
+    ).slice(0, 8);
+  }, [query, items, searchFields]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (query.trim()) {
-      addToHistory(query);
-      handleSearch(query);
-    }
-  };
-
-  const addToHistory = (q) => {
-    const updated = [q, ...history.filter(h => h !== q)].slice(0, 5);
-    setHistory(updated);
-    localStorage.setItem(storageKey, JSON.stringify(updated));
-  };
-
-  const removeFromHistory = (item) => {
-    const updated = history.filter(h => h !== item);
-    setHistory(updated);
-    localStorage.setItem(storageKey, JSON.stringify(updated));
+  const handleSelect = (item) => {
+    onSelect?.(item);
+    setQuery('');
+    setOpen(false);
   };
 
   return (
-    <div className="relative flex-1">
-      <form onSubmit={handleSubmit}>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-          <Input
-            type="text"
-            placeholder={placeholder}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onFocus={() => setShowHistory(true)}
-            onBlur={() => setTimeout(() => setShowHistory(false), 200)}
-            className="pl-10 pr-8"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => {
-                setQuery('');
-                onSearch?.('');
-              }}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      </form>
+    <div className="relative">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Input
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+          }}
+          placeholder={placeholder}
+          className="pl-10 pr-8"
+          onFocus={() => setOpen(true)}
+        />
+        {query && (
+          <button
+            onClick={() => {
+              setQuery('');
+              setOpen(false);
+            }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded"
+          >
+            <X className="w-4 h-4 text-slate-400" />
+          </button>
+        )}
+      </div>
 
-      {/* Search History */}
-      {showHistory && history.length > 0 && (
+      {open && (
         <motion.div
-          initial={{ opacity: 0, y: -5 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-lg shadow-lg z-10"
+          exit={{ opacity: 0, y: -10 }}
+          className="absolute top-full left-0 right-0 mt-2 bg-white border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto"
         >
-          <div className="p-2">
-            {history.map((item, idx) => (
-              <div key={idx} className="flex items-center justify-between p-2 hover:bg-slate-50 rounded cursor-pointer">
-                <div
-                  className="flex items-center gap-2 flex-1"
-                  onClick={() => {
-                    setQuery(item);
-                    handleSearch(item);
-                  }}
-                >
-                  <Clock className="w-3 h-3 text-slate-400" />
-                  <span className="text-sm text-slate-700">{item}</span>
-                </div>
-                <button
-                  onClick={() => removeFromHistory(item)}
-                  className="text-slate-400 hover:text-red-600"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
-          </div>
+          {loading ? (
+            <div className="p-4 flex items-center justify-center">
+              <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+            </div>
+          ) : results.length > 0 ? (
+            results.map((item, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleSelect(item)}
+                className="w-full text-left px-4 py-2 hover:bg-slate-50 border-b last:border-0"
+              >
+                {renderItem ? renderItem(item) : (
+                  <p className="text-sm text-slate-900">{item.name}</p>
+                )}
+              </button>
+            ))
+          ) : query ? (
+            <p className="p-4 text-sm text-slate-500 text-center">Keine Ergebnisse</p>
+          ) : null}
         </motion.div>
       )}
     </div>

@@ -1,29 +1,25 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
-export default function useSmartFormDefaults(storageKey = 'form-defaults') {
-  const [defaults, setDefaults] = React.useState({});
+export default function SmartFormDefaults({ 
+  formData = {},
+  onDefaultsApplied,
+  getDefaults
+}) {
+  const [applied, setApplied] = useState(false);
 
-  // Load defaults from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem(storageKey);
-    if (stored) {
-      try {
-        setDefaults(JSON.parse(stored));
-      } catch (e) {
-        console.error('Error loading form defaults:', e);
+    const applyDefaults = async () => {
+      if (!applied) {
+        const defaults = await getDefaults?.();
+        if (defaults) {
+          onDefaultsApplied?.({ ...formData, ...defaults });
+          setApplied(true);
+        }
       }
-    }
-  }, [storageKey]);
+    };
 
-  const saveDefaults = React.useCallback((formData) => {
-    localStorage.setItem(storageKey, JSON.stringify(formData));
-    setDefaults(formData);
-  }, [storageKey]);
+    applyDefaults();
+  }, [applied, formData, getDefaults, onDefaultsApplied]);
 
-  const clearDefaults = React.useCallback(() => {
-    localStorage.removeItem(storageKey);
-    setDefaults({});
-  }, [storageKey]);
-
-  return { defaults, saveDefaults, clearDefaults };
+  return null;
 }
