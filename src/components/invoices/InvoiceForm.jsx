@@ -17,7 +17,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { CalendarIcon, Upload, Loader2, Sparkles, Info, Plus } from 'lucide-react';
+import { CalendarIcon, Upload, Loader2, Sparkles, Info, Plus, HelpCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { base44 } from '@/api/base44Client';
@@ -552,7 +553,16 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                             <div>
                                 <Label className="flex items-center gap-2">
                                     Kostenart *
-                                    <span title="Umlagefähige Kosten können an Mieter weitergegeben werden (§556 BGB, BetrKV). Beispiele: Müllabfuhr, Hausmeister. Nicht umlagefähig: Verwaltungskosten, Reparaturen." className="text-xs text-blue-500 cursor-help">ℹ️</span>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <HelpCircle className="w-4 h-4 text-slate-400 cursor-help" />
+                                            </TooltipTrigger>
+                                            <TooltipContent className="max-w-xs">
+                                                <p>Umlagefähige Kosten können an Mieter weitergegeben werden (§556 BGB, BetrKV). Beispiele: Müllabfuhr, Hausmeister. Nicht umlagefähig: Verwaltungskosten, Reparaturen.</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                 </Label>
                                 <Select 
                                     value={watch('cost_type_id')} 
