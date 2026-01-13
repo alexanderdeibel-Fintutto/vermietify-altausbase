@@ -157,7 +157,11 @@ export default function PurchaseContractDialog({ open, onClose, buildingId, buil
               />
             </div>
             <div>
-              <Label>Grundstückswert *</Label>
+              <Label className="flex items-center gap-2">Grundstückswert * 
+                <span title="Der Grundstücksanteil wird NICHT abgeschrieben. Typisch: 20-30% des Kaufpreises. Ohne Trennung: Falsche AfA-Berechnung!">
+                  <HelpCircle className="w-4 h-4 text-slate-400 cursor-help" />
+                </span>
+              </Label>
               <Input
                 type="number"
                 step="0.01"

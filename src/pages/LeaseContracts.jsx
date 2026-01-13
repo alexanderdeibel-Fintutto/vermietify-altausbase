@@ -5,11 +5,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 import ContractFilterBar from '@/components/contracts/ContractFilterBar';
 import ContractTable from '@/components/contracts/ContractTable';
 import QuickStats from '@/components/shared/QuickStats';
 import PostContractDialog from '@/components/contracts/PostContractDialog';
 import RentIncreaseValidator from '@/components/contracts/RentIncreaseValidator';
+import RentIncreaseAssistant from '@/components/contracts/RentIncreaseAssistant';
 import { toast } from 'sonner';
 
 export default function LeaseContractsPage() {
@@ -108,6 +111,16 @@ export default function LeaseContractsPage() {
         <p className="text-slate-600 mt-1">Verwalten Sie Ihre Mietverträge und Mietzahlungen</p>
       </div>
 
+      {contracts.some(c => !c.bookings_generated) && (
+          <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Handlungsbedarf</AlertTitle>
+              <AlertDescription>
+                  Für einen oder mehrere Verträge wurden noch keine Buchungen generiert. Mieteinnahmen fehlen in der Finanzübersicht!
+              </AlertDescription>
+          </Alert>
+      )}
+
       <QuickStats stats={stats} accentColor="blue" />
 
       <ContractFilterBar 
@@ -128,6 +141,9 @@ export default function LeaseContractsPage() {
           setShowDialog(true);
         }}
         onDelete={(contract) => deleteMutation.mutate(contract.id)}
+        renderActions={(contract) => (
+            <RentIncreaseAssistant contract={contract} />
+        )}
       />
 
       <PostContractDialog 

@@ -33,6 +33,7 @@ import { ErrorBoundaryWithRetry } from '@/components/shared/ErrorBoundaryWithRet
 import EnergyPassportPanel from '@/components/building-detail/EnergyPassportPanel';
 import BuildingTransfersOverview from '@/components/building-detail/BuildingTransfersOverview';
 import QuickContractCreator from '@/components/contracts/QuickContractCreator';
+import BreadcrumbNavigation from '@/components/navigation/BreadcrumbNavigation';
 
 export default function BuildingDetailPage() {
 
@@ -120,13 +121,14 @@ export default function BuildingDetailPage() {
   return (
     <ErrorBoundaryWithRetry>
     <div className="space-y-6">
+      <BreadcrumbNavigation crumbs={[
+          { label: 'Dashboard', link: createPageUrl('Dashboard') },
+          { label: 'Gebäude', link: createPageUrl('Buildings') },
+          { label: building.name }
+      ]} />
+
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link to={createPageUrl('Buildings')}>
-          <Button variant="outline" size="icon">
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-        </Link>
         <div className="flex-1">
           <h1 className="text-3xl font-light text-slate-900">{building.name}</h1>
           <p className="text-slate-600 flex items-center gap-2 mt-1">
