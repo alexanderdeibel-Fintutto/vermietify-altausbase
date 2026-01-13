@@ -1,11 +1,8 @@
-import HelpTooltip from './HelpTooltip';
+import React from 'react';
+import HelpTooltip from '@/components/shared/HelpTooltip';
 
-export default function BetriebskostenTooltip({ children }) {
+export default function BetriebskostenTooltip() {
   return (
-    <HelpTooltip 
-      text="Betriebskostenabrechnung: Jährliche Abrechnung von umlagefähigen Nebenkosten mit Mietern nach §556 BGB und BetrKV. Automatisch auf m² der Wohneinheit verteilt."
-    >
-      {children}
-    </HelpTooltip>
+    <HelpTooltip text="Nur Kosten mit Status 'Umlagefähig' werden in der BK-Abrechnung berücksichtigt. Fehlende Kosten? Prüfe die Kategorisierung deiner Rechnungen und den Umlagefähig-Status." />
   );
 }

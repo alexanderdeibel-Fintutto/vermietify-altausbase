@@ -1,11 +1,8 @@
-import HelpTooltip from './HelpTooltip';
+import React from 'react';
+import HelpTooltip from '@/components/shared/HelpTooltip';
 
-export default function GrundstuckswertTooltip({ children }) {
+export default function GrundstuckswertTooltip() {
   return (
-    <HelpTooltip 
-      text="Grundstückswert: Nicht abschreibbarer Anteil des Kaufpreises. Typisch 20-30%. Ohne korrekte Trennung: falsche AfA-Berechnung! Beratung: Steuerberater."
-    >
-      {children}
-    </HelpTooltip>
+    <HelpTooltip text="Der Grundstücksanteil wird NICHT abgeschrieben. Typisch: 20-30% des Kaufpreises. Ohne Trennung: Falsche AfA-Berechnung! Zu Buchwert-Buchungskonten zählen." />
   );
 }
