@@ -1,206 +1,93 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Search, X, Save, Bookmark } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { base44 } from '@/api/base44Client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { Filter, X, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function SmartFilterBar({ 
-  onFilterChange, 
-  filters = {}, 
-  filterOptions = [],
-  entityName = 'Item'
+  filters = [],
+  onFilterChange,
+  onClear,
+  searchPlaceholder = 'Filtern...'
 }) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilters, setActiveFilters] = useState(filters);
-  const [saveOpen, setSaveOpen] = useState(false);
-  const [filterName, setFilterName] = useState('');
-  const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeFilters, setActiveFilters] = useState({});
 
-  const { data: savedFilters = [] } = useQuery({
-    queryKey: ['saved-filters', entityName],
-    queryFn: () => base44.entities.SavedSearch.filter({ 
-      entity_type: entityName 
-    })
-  });
-
-  const saveMutation = useMutation({
-    mutationFn: (data) => base44.entities.SavedSearch.create({
-      entity_type: entityName,
-      filter_name: filterName,
-      filter_config: activeFilters,
-      is_favorite: false
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['saved-filters']);
-      toast.success('Filter gespeichert');
-      setSaveOpen(false);
-      setFilterName('');
-    }
-  });
-
-  const toggleFilter = (filterKey, value) => {
-    const updated = { ...activeFilters };
-    if (updated[filterKey] === value) {
-      delete updated[filterKey];
-    } else {
-      updated[filterKey] = value;
-    }
+  const handleFilterChange = (filterId, value) => {
+    const updated = { ...activeFilters, [filterId]: value };
     setActiveFilters(updated);
-    onFilterChange(updated);
+    onFilterChange?.(updated);
   };
 
-  const applySearchFilter = (query) => {
-    setSearchQuery(query);
-    if (query) {
-      onFilterChange({ ...activeFilters, search: query });
-    } else {
-      const { search, ...rest } = activeFilters;
-      onFilterChange(rest);
-    }
-  };
-
-  const applySavedFilter = (savedFilter) => {
-    setActiveFilters(savedFilter.filter_config);
-    onFilterChange(savedFilter.filter_config);
-    toast.success(`Filter "${savedFilter.filter_name}" angewendet`);
-  };
-
-  const clearAllFilters = () => {
+  const handleClear = () => {
     setActiveFilters({});
-    setSearchQuery('');
-    onFilterChange({});
+    setSearchTerm('');
+    onClear?.();
   };
 
-  const activeFilterCount = Object.keys(activeFilters).length;
+  const activeCount = Object.values(activeFilters).filter(v => v).length;
 
   return (
-    <div className="space-y-3">
-      {/* Search & Quick Actions */}
-      <div className="flex gap-2 flex-wrap items-center">
-        <div className="relative flex-1 min-w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            placeholder="Schnellsuche..."
-            value={searchQuery}
-            onChange={(e) => applySearchFilter(e.target.value)}
-            className="pl-10"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => applySearchFilter('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2"
+    <div className="flex flex-wrap items-center gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+      <Filter className="w-4 h-4 text-slate-500" />
+      
+      <Input
+        type="text"
+        placeholder={searchPlaceholder}
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="h-8 text-sm flex-1 min-w-[150px]"
+      />
+
+      {filters.map(filter => (
+        <DropdownMenu key={filter.id}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1"
             >
-              <X className="w-4 h-4 text-slate-400" />
-            </button>
-          )}
-        </div>
+              {filter.label}
+              <ChevronDown className="w-3 h-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            {filter.options.map(option => (
+              <DropdownMenuCheckboxItem
+                key={option.value}
+                checked={activeFilters[filter.id] === option.value}
+                onCheckedChange={() => 
+                  handleFilterChange(filter.id, option.value)
+                }
+              >
+                {option.label}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ))}
 
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={() => setSaveOpen(true)}
-          disabled={activeFilterCount === 0}
-          className="gap-2"
-        >
-          <Save className="w-4 h-4" />
-          Speichern
-        </Button>
-
-        {activeFilterCount > 0 && (
-          <Button 
-            variant="ghost" 
+      {activeCount > 0 && (
+        <div className="flex items-center gap-2 ml-auto">
+          <span className="text-xs text-slate-600">
+            {activeCount} Filter aktiv
+          </span>
+          <Button
+            onClick={handleClear}
+            variant="ghost"
             size="sm"
-            onClick={clearAllFilters}
-            className="gap-2"
+            className="h-8 px-2"
           >
             <X className="w-4 h-4" />
-            Löschen
           </Button>
-        )}
-      </div>
-
-      {/* Filter Options */}
-      <div className="flex flex-wrap gap-2">
-        {filterOptions.map((option) => (
-          <Button
-            key={`${option.key}-${option.value}`}
-            variant={activeFilters[option.key] === option.value ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => toggleFilter(option.key, option.value)}
-            className="gap-2"
-          >
-            {option.label}
-            {activeFilters[option.key] === option.value && (
-              <X className="w-3 h-3" />
-            )}
-          </Button>
-        ))}
-      </div>
-
-      {/* Saved Filters */}
-      {savedFilters.length > 0 && (
-        <div className="flex flex-wrap gap-2 pt-2 border-t">
-          {savedFilters.slice(0, 5).map((saved) => (
-            <Badge
-              key={saved.id}
-              variant="outline"
-              className="cursor-pointer hover:bg-slate-100"
-              onClick={() => applySavedFilter(saved)}
-            >
-              <Bookmark className="w-3 h-3 mr-1" />
-              {saved.filter_name}
-            </Badge>
-          ))}
         </div>
       )}
-
-      {/* Active Filters Display */}
-      {activeFilterCount > 0 && (
-        <div className="flex flex-wrap gap-1 text-xs text-slate-600">
-          <span className="font-medium">Aktive Filter ({activeFilterCount}):</span>
-          {Object.entries(activeFilters).map(([key, value]) => (
-            <Badge key={key} variant="secondary" className="text-xs">
-              {key}: {value}
-            </Badge>
-          ))}
-        </div>
-      )}
-
-      {/* Save Filter Dialog */}
-      <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Filter speichern</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Input
-              placeholder="z.B. 'Offene Rechnungen 2024'"
-              value={filterName}
-              onChange={(e) => setFilterName(e.target.value)}
-            />
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setSaveOpen(false)}
-                className="flex-1"
-              >
-                Abbrechen
-              </Button>
-              <Button
-                onClick={() => saveMutation.mutate()}
-                disabled={!filterName || saveMutation.isPending}
-                className="flex-1"
-              >
-                Speichern
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

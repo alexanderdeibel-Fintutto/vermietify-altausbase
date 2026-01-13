@@ -1,31 +1,53 @@
 import React from 'react';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 
-export default function MobileActionSheet({ open, onOpenChange, title, actions = [] }) {
+export default function MobileActionSheet({ 
+  open = false,
+  onOpenChange,
+  title = 'Aktionen',
+  description = '',
+  actions = [],
+  isLoading = false
+}) {
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
-        <DrawerHeader>
-          <DrawerTitle>{title}</DrawerTitle>
-        </DrawerHeader>
-        <div className="p-4 space-y-2 pb-8">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className="rounded-t-2xl">
+        <SheetHeader>
+          <SheetTitle>{title}</SheetTitle>
+          {description && <SheetDescription>{description}</SheetDescription>}
+        </SheetHeader>
+
+        <div className="space-y-2 mt-6">
           {actions.map((action, idx) => (
             <Button
               key={idx}
-              variant={action.variant || 'outline'}
-              className="w-full justify-start h-12"
               onClick={() => {
                 action.onClick?.();
-                onOpenChange(false);
+                if (!action.keepOpen) onOpenChange(false);
               }}
+              disabled={isLoading || action.disabled}
+              className={`w-full justify-start ${
+                action.variant === 'destructive'
+                  ? 'bg-red-600 hover:bg-red-700'
+                  : action.variant === 'secondary'
+                  ? 'bg-slate-200 hover:bg-slate-300 text-slate-900'
+                  : ''
+              }`}
+              variant={action.variant === 'outline' ? 'outline' : 'default'}
             >
-              {action.icon && <span className="mr-2">{action.icon}</span>}
+              {action.icon && <action.icon className="w-4 h-4 mr-2" />}
               {action.label}
             </Button>
           ))}
         </div>
-      </DrawerContent>
-    </Drawer>
+      </SheetContent>
+    </Sheet>
   );
 }

@@ -1,194 +1,96 @@
-import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
-import { ArrowRight, FileText, Users, Home, DollarSign, Calendar } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Link2, X } from 'lucide-react';
+import { motion } from 'framer-motion';
 
-const ENTITY_ICONS = {
-  Building: <Home className="w-4 h-4" />,
-  Unit: <Home className="w-4 h-4" />,
-  LeaseContract: <Calendar className="w-4 h-4" />,
-  Invoice: <FileText className="w-4 h-4" />,
-  Tenant: <Users className="w-4 h-4" />,
-  Payment: <DollarSign className="w-4 h-4" />
-};
+export default function SmartLinking({ 
+  availableItems = [],
+  linkedItems = [],
+  onLink,
+  onUnlink,
+  searchFields = ['name', 'label'],
+  placeholder = 'Verlinken...'
+}) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
-const ENTITY_COLORS = {
-  Building: 'bg-slate-100',
-  Unit: 'bg-blue-100',
-  LeaseContract: 'bg-green-100',
-  Invoice: 'bg-orange-100',
-  Tenant: 'bg-purple-100',
-  Payment: 'bg-yellow-100'
-};
+  const suggestions = useMemo(() => {
+    if (!searchTerm) return [];
+    
+    const term = searchTerm.toLowerCase();
+    return availableItems
+      .filter(item => 
+        !linkedItems.find(l => l.id === item.id) &&
+        searchFields.some(field => 
+          String(item[field] || '').toLowerCase().includes(term)
+        )
+      )
+      .slice(0, 5);
+  }, [searchTerm, availableItems, linkedItems, searchFields]);
 
-export default function SmartLinking({ entity, entityType = 'Building' }) {
-  const getRelatedEntities = () => {
-    const relations = [];
-
-    switch (entityType) {
-      case 'Building':
-        if (entity.id) {
-          relations.push({
-            type: 'Unit',
-            label: `Einheiten`,
-            count: entity.unit_count || 0,
-            icon: ENTITY_ICONS.Unit
-          });
-          relations.push({
-            type: 'Invoice',
-            label: 'Rechnungen',
-            count: entity.invoice_count || 0,
-            icon: ENTITY_ICONS.Invoice
-          });
-          relations.push({
-            type: 'LeaseContract',
-            label: 'Mietverträge',
-            count: entity.contract_count || 0,
-            icon: ENTITY_ICONS.LeaseContract
-          });
-        }
-        break;
-
-      case 'Unit':
-        if (entity.building_id) {
-          relations.push({
-            type: 'Building',
-            label: 'Gebäude',
-            id: entity.building_id,
-            name: entity.building_name,
-            icon: ENTITY_ICONS.Building
-          });
-        }
-        if (entity.id) {
-          relations.push({
-            type: 'LeaseContract',
-            label: 'Mietverträge',
-            count: entity.contract_count || 0,
-            icon: ENTITY_ICONS.LeaseContract
-          });
-          relations.push({
-            type: 'Invoice',
-            label: 'Rechnungen',
-            count: entity.invoice_count || 0,
-            icon: ENTITY_ICONS.Invoice
-          });
-        }
-        break;
-
-      case 'LeaseContract':
-        if (entity.unit_id) {
-          relations.push({
-            type: 'Unit',
-            label: 'Einheit',
-            id: entity.unit_id,
-            name: entity.unit_number,
-            icon: ENTITY_ICONS.Unit
-          });
-        }
-        if (entity.tenant_id) {
-          relations.push({
-            type: 'Tenant',
-            label: 'Mieter',
-            id: entity.tenant_id,
-            name: entity.tenant_name,
-            icon: ENTITY_ICONS.Tenant
-          });
-        }
-        if (entity.id) {
-          relations.push({
-            type: 'Invoice',
-            label: 'Rechnungen',
-            count: entity.invoice_count || 0,
-            icon: ENTITY_ICONS.Invoice
-          });
-        }
-        break;
-
-      case 'Invoice':
-        if (entity.building_id) {
-          relations.push({
-            type: 'Building',
-            label: 'Gebäude',
-            id: entity.building_id,
-            name: entity.building_name,
-            icon: ENTITY_ICONS.Building
-          });
-        }
-        if (entity.contract_id) {
-          relations.push({
-            type: 'LeaseContract',
-            label: 'Mietvertrag',
-            id: entity.contract_id,
-            name: entity.contract_number,
-            icon: ENTITY_ICONS.LeaseContract
-          });
-        }
-        if (entity.id) {
-          relations.push({
-            type: 'Payment',
-            label: 'Zahlungen',
-            count: entity.payment_count || 0,
-            icon: ENTITY_ICONS.Payment
-          });
-        }
-        break;
-
-      default:
-        break;
-    }
-
-    return relations;
+  const handleLink = (item) => {
+    onLink?.(item);
+    setSearchTerm('');
+    setShowSuggestions(false);
   };
 
-  const relations = getRelatedEntities();
-
-  if (relations.length === 0) {
-    return null;
-  }
-
   return (
-    <Card>
-      <CardContent className="p-4">
-        <h4 className="font-semibold mb-3 text-sm flex items-center gap-2">
-          <ArrowRight className="w-4 h-4" />
-          Verknüpfungen
-        </h4>
+    <div className="space-y-3">
+      <div className="relative">
+        <Input
+          placeholder={placeholder}
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setShowSuggestions(true);
+          }}
+          onFocus={() => setShowSuggestions(true)}
+          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+          className="pl-10"
+        />
+        <Link2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
 
-        <div className="grid grid-cols-2 gap-2">
-          {relations.map((relation, idx) => (
-            <Link
-              key={idx}
-              to={
-                relation.id
-                  ? createPageUrl(`${relation.type}Detail`, { id: relation.id })
-                  : createPageUrl(relation.type + 's')
-              }
-              className="group"
-            >
-              <div className={`p-3 rounded-lg transition-all cursor-pointer ${ENTITY_COLORS[relation.type]} group-hover:shadow-md`}>
-                <div className="flex items-center gap-2 mb-1">
-                  {relation.icon}
-                  <span className="text-xs font-medium text-slate-700">
-                    {relation.label}
-                  </span>
-                </div>
-                {relation.count !== undefined && (
-                  <Badge variant="secondary" className="text-xs">
-                    {relation.count}
-                  </Badge>
-                )}
-                {relation.name && (
-                  <p className="text-xs text-slate-600 truncate mt-1">
-                    {relation.name}
-                  </p>
-                )}
+        {showSuggestions && suggestions.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-10"
+          >
+            {suggestions.map(item => (
+              <button
+                key={item.id}
+                onClick={() => handleLink(item)}
+                className="w-full text-left px-3 py-2 hover:bg-slate-50 text-sm border-b last:border-b-0"
+              >
+                {item.name || item.label}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </div>
+
+      {linkedItems.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-slate-600">Verlinkt ({linkedItems.length})</p>
+          <div className="flex flex-wrap gap-2">
+            {linkedItems.map(item => (
+              <div
+                key={item.id}
+                className="flex items-center gap-2 px-2 py-1 bg-blue-100 text-blue-700 rounded text-sm"
+              >
+                <span>{item.name || item.label}</span>
+                <button
+                  onClick={() => onUnlink?.(item.id)}
+                  className="hover:text-blue-900"
+                >
+                  <X className="w-3 h-3" />
+                </button>
               </div>
-            </Link>
-          ))}
+            ))}
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }
