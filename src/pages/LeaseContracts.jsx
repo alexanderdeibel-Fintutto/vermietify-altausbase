@@ -155,7 +155,7 @@ export default function LeaseContractsPage() {
       <PostContractDialog 
         open={showPostContractDialog}
         onOpenChange={setShowPostContractDialog}
-        contract={lastCreatedContract}
+        contractId={lastCreatedContract?.id}
       />
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>

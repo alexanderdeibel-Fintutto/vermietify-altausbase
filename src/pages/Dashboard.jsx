@@ -17,6 +17,8 @@ import OfflineIndicator from '@/components/shared/OfflineIndicator';
 import SubscriptionWidget from '@/components/dashboard/widgets/SubscriptionWidget';
 import LimitWarning from '@/components/subscription/LimitWarning';
 import QuickActionCards from '@/components/dashboard/QuickActionCards';
+import ActionRequiredWidget from '@/components/dashboard/ActionRequiredWidget';
+import OnboardingChecklist from '@/components/onboarding/OnboardingChecklist';
 
 const DEFAULT_LAYOUT = AVAILABLE_WIDGETS.slice(0, 7).map((widget, idx) => ({
   id: widget.id,
