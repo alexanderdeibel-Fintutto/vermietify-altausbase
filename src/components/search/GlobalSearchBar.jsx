@@ -16,6 +16,12 @@ export default function GlobalSearchBar({ compact = false }) {
   const [filters, setFilters] = useState({});
   const [isOpen, setIsOpen] = useState(false);
 
+  useEffect(() => {
+    const handleOpenSearch = () => setIsOpen(true);
+    window.addEventListener('openGlobalSearch', handleOpenSearch);
+    return () => window.removeEventListener('openGlobalSearch', handleOpenSearch);
+  }, []);
+
   const searchMutation = useMutation({
     mutationFn: () =>
       base44.functions.invoke('advancedSearch', {
