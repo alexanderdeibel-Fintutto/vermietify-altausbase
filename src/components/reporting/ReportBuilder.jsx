@@ -1,176 +1,128 @@
 import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Plus, FileDown } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
-const reportTypes = {
-  rent_income: { name: 'Mieteingänge', icon: '💰' },
-  maintenance_history: { name: 'Wartungshistorie', icon: '🔧' },
-  tenant_overview: { name: 'Mietüberblick', icon: '👥' },
-  building_occupancy: { name: 'Gebäudeauslastung', icon: '🏢' },
-  financial_summary: { name: 'Finanzzusammenfassung', icon: '📊' },
-  communication_log: { name: 'Kommunikationslog', icon: '💬' },
-  equipment_status: { name: 'Gerätestatus', icon: '⚙️' },
-  custom: { name: 'Benutzerdefiniert', icon: '✨' }
-};
+const REPORT_TYPES = [
+  { id: 'financial', label: 'Finanzbericht', icon: '💰' },
+  { id: 'occupancy', label: 'Belegung', icon: '🏢' },
+  { id: 'performance', label: 'Leistung', icon: '📈' },
+  { id: 'compliance', label: 'Compliance', icon: '✅' }
+];
 
-const chartOptions = ['line', 'bar', 'pie', 'area', 'table'];
-const groupingOptions = {
-  daily: 'Täglich',
-  weekly: 'Wöchentlich',
-  monthly: 'Monatlich',
-  quarterly: 'Quartalsweise',
-  yearly: 'Jährlich',
-  by_building: 'Nach Gebäude',
-  by_tenant: 'Nach Mieter',
-  none: 'Keine Gruppierung'
-};
+export default function ReportBuilder() {
+  const [name, setName] = useState('');
+  const [type, setType] = useState('financial');
+  const [format, setFormat] = useState('PDF');
+  const [scheduled, setScheduled] = useState(false);
+  const [frequency, setFrequency] = useState('monthly');
+  const [recipients, setRecipients] = useState('');
+  const queryClient = useQueryClient();
 
-export default function ReportBuilder({ onSave, initialData = null }) {
-  const [formData, setFormData] = useState(initialData || {
-    name: '',
-    description: '',
-    report_type: 'custom',
-    grouping: 'monthly',
-    chart_types: [],
-    schedule: 'manual',
-    metrics: [],
-    filters: {}
+  const generateMutation = useMutation({
+    mutationFn: async () => {
+      await base44.entities.Report?.create?.({
+        name: name,
+        type: type,
+        format: format,
+        is_scheduled: scheduled,
+        schedule: scheduled ? frequency : null,
+        recipients: JSON.stringify(recipients.split(',').map(e => e.trim())),
+        content: `Report: ${name}`,
+        generated_at: new Date().toISOString()
+      });
+    },
+    onSuccess: () => {
+      toast.success('✅ Report erstellt');
+      queryClient.invalidateQueries(['reports']);
+      setName('');
+      setRecipients('');
+    }
   });
 
-  const handleChartToggle = (chart) => {
-    setFormData(prev => ({
-      ...prev,
-      chart_types: prev.chart_types.includes(chart)
-        ? prev.chart_types.filter(c => c !== chart)
-        : [...prev.chart_types, chart]
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave(formData);
-  };
-
   return (
-    <Card className="p-6">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Basic Info */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-light text-slate-900">Grundinformationen</h3>
-          
-          <div>
-            <label className="text-sm font-light text-slate-700">Name *</label>
-            <Input
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="z.B. Monatliche Mieteingänge"
-              className="mt-1 font-light"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-light text-slate-700">Beschreibung</label>
-            <Textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Optionale Beschreibung..."
-              className="mt-1 font-light"
-              rows={3}
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-light text-slate-700">Berichtstyp *</label>
-            <Select value={formData.report_type} onValueChange={(value) => setFormData({ ...formData, report_type: value })}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(reportTypes).map(([key, val]) => (
-                  <SelectItem key={key} value={key}>
-                    {val.icon} {val.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Display Options */}
-        <div className="space-y-4 border-t border-slate-200 pt-4">
-          <h3 className="text-lg font-light text-slate-900">Anzeigeoptionen</h3>
-
-          <div>
-            <label className="text-sm font-light text-slate-700">Diagrammtypen</label>
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-2">
-              {chartOptions.map(chart => (
-                <label key={chart} className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox
-                    checked={formData.chart_types.includes(chart)}
-                    onCheckedChange={() => handleChartToggle(chart)}
-                  />
-                  <span className="text-sm font-light text-slate-700 capitalize">{chart}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="text-sm font-light text-slate-700">Gruppierung</label>
-            <Select value={formData.grouping} onValueChange={(value) => setFormData({ ...formData, grouping: value })}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(groupingOptions).map(([key, val]) => (
-                  <SelectItem key={key} value={key}>{val}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Schedule */}
-        <div className="space-y-4 border-t border-slate-200 pt-4">
-          <h3 className="text-lg font-light text-slate-900">Zeitplan</h3>
-          
-          <div>
-            <label className="text-sm font-light text-slate-700">Generierungsplan</label>
-            <Select value={formData.schedule} onValueChange={(value) => setFormData({ ...formData, schedule: value })}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="manual">📋 Manuell</SelectItem>
-                <SelectItem value="daily">📅 Täglich</SelectItem>
-                <SelectItem value="weekly">📅 Wöchentlich</SelectItem>
-                <SelectItem value="monthly">📅 Monatlich</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-2 border-t border-slate-200 pt-4">
-          <Button
-            type="submit"
-            className="flex-1 bg-blue-600 hover:bg-blue-700 font-light"
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3">
+        {REPORT_TYPES.map(rt => (
+          <button
+            key={rt.id}
+            onClick={() => setType(rt.id)}
+            className={`p-3 rounded-lg border-2 transition ${
+              type === rt.id ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'
+            }`}
           >
-            {initialData ? 'Aktualisieren' : 'Bericht erstellen'}
+            <div className="text-lg">{rt.icon}</div>
+            <p className="text-xs font-medium mt-1">{rt.label}</p>
+          </button>
+        ))}
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Report Details</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Input
+            placeholder="Report Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+
+          <Select value={format} onValueChange={setFormat}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="PDF">PDF</SelectItem>
+              <SelectItem value="Excel">Excel</SelectItem>
+              <SelectItem value="CSV">CSV</SelectItem>
+              <SelectItem value="Email">Email</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Input
+            placeholder="Empfänger (Email, getrennt mit Komma)"
+            value={recipients}
+            onChange={(e) => setRecipients(e.target.value)}
+          />
+
+          <label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox
+              checked={scheduled}
+              onCheckedChange={setScheduled}
+            />
+            <span className="text-sm">Wiederkehrend planen</span>
+          </label>
+
+          {scheduled && (
+            <Select value={frequency} onValueChange={setFrequency}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="daily">Täglich</SelectItem>
+                <SelectItem value="weekly">Wöchentlich</SelectItem>
+                <SelectItem value="monthly">Monatlich</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+
+          <Button
+            onClick={() => generateMutation.mutate()}
+            disabled={!name || generateMutation.isPending}
+            className="w-full gap-2"
+          >
+            <FileDown className="w-4 h-4" />
+            Erstellen
           </Button>
-        </div>
-      </form>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

@@ -440,6 +440,9 @@ import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
+import AnalyticsHub from './pages/AnalyticsHub';
+import ComplianceHub from './pages/ComplianceHub';
+import ReportingHub from './pages/ReportingHub';
 import __Layout from './Layout.jsx';
 
 
@@ -886,6 +889,9 @@ export const PAGES = {
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
     "AnalyticsDashboard": AnalyticsDashboard,
+    "AnalyticsHub": AnalyticsHub,
+    "ComplianceHub": ComplianceHub,
+    "ReportingHub": ReportingHub,
 }
 
 export const pagesConfig = {
