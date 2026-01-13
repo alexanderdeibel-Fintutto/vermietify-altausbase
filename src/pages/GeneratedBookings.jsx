@@ -3,9 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Zap, Eye, Trash2, RefreshCw } from 'lucide-react';
-import ISTBookingCard from '@/components/shared/ISTBookingCard';
+import ISTBookingCard from '@/components/bookings/ISTBookingCard';
 import SOLLBookingCard from '@/components/shared/SOLLBookingCard';
-import HelpTooltip from '@/components/shared/HelpTooltip';
+import InfoTooltip from '@/components/shared/InfoTooltip';
 import QuickStats from '@/components/shared/QuickStats';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -31,28 +31,47 @@ export default function GeneratedBookingsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold text-slate-900">📋 Geplante Einnahmen/Ausgaben (SOLL)</h1>
-            <HelpTooltip text="Erstellt automatische SOLL-Buchungen basierend auf Verträgen. Diese müssen mit tatsächlichen Bank-Zahlungen (IST) abgeglichen werden. SOLL = Geplant, IST = Tatsächlich gezahlt" />
-           </div>
+           <div className="flex items-center gap-2">
+             <h1 className="text-3xl font-bold text-slate-900">📋 Geplante Einnahmen/Ausgaben (SOLL)</h1>
+             <InfoTooltip text="Erstellt automatische SOLL-Buchungen basierend auf Verträgen. Diese müssen mit tatsächlichen Bank-Zahlungen (IST) abgeglichen werden." />
+            </div>
           <p className="text-slate-600 mt-1">Automatisch erstellte Finanzbuchungen aus Verträgen und Dokumenten</p>
         </div>
-        <Button className="bg-violet-600 hover:bg-violet-700"><RefreshCw className="w-4 h-4 mr-2" />Buchungen generieren</Button>
+        <div className="flex items-center gap-2">
+          <Button className="bg-violet-600 hover:bg-violet-700"><RefreshCw className="w-4 h-4 mr-2" />Buchungen generieren</Button>
+          <InfoTooltip text="Erstellt automatische SOLL-Buchungen basierend auf dem Vertrag. Diese müssen mit tatsächlichen Bank-Zahlungen abgeglichen werden." />
+        </div>
       </div>
 
       <QuickStats stats={stats} accentColor="violet" />
 
       <div className="space-y-3">
-        {bookings.map((booking) => (
-          <div key={booking.id}>
-            {booking.status === 'matched' ? (
-              <ISTBookingCard title={booking.description} amount={booking.amount} date={format(new Date(booking.date), 'dd.MM.yyyy', { locale: de })} />
-            ) : (
-              <SOLLBookingCard title={booking.description} amount={booking.amount} date={format(new Date(booking.date), 'dd.MM.yyyy', { locale: de })} />
-            )}
-          </div>
-        ))}
-      </div>
+         {bookings.map((booking) => (
+           <div key={booking.id}>
+             {booking.status === 'matched' ? (
+               <ISTBookingCard transaction={booking}>
+                 <div className="flex justify-between items-start">
+                   <div>
+                     <p className="font-medium text-slate-900">{booking.description}</p>
+                     <p className="text-sm text-emerald-700 mt-1">{format(new Date(booking.date), 'dd.MM.yyyy', { locale: de })}</p>
+                   </div>
+                   <p className="font-bold text-emerald-900">+{booking.amount.toLocaleString('de-DE')}€</p>
+                 </div>
+               </ISTBookingCard>
+             ) : (
+               <SOLLBookingCard booking={booking}>
+                 <div className="flex justify-between items-start">
+                   <div>
+                     <p className="font-medium text-slate-900">{booking.description}</p>
+                     <p className="text-sm text-slate-600 mt-1">{format(new Date(booking.date), 'dd.MM.yyyy', { locale: de })}</p>
+                   </div>
+                   <p className="font-bold text-slate-900">{booking.amount.toLocaleString('de-DE')}€</p>
+                 </div>
+               </SOLLBookingCard>
+             )}
+           </div>
+         ))}
+       </div>
     </div>
   );
 }

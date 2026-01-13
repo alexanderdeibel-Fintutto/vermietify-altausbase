@@ -28,6 +28,7 @@ import SaveTemplateDialog from '@/components/invoices/SaveTemplateDialog';
 import TemplateQuickSelect from '@/components/invoices/TemplateQuickSelect';
 import CategorySuggestions from '@/components/invoices/CategorySuggestions';
 import HelpTooltip from '@/components/shared/HelpTooltip';
+import UmlagefaehigBadge from '@/components/shared/UmlagefaehigBadge';
 
 export default function InvoiceForm({ open, onOpenChange, invoice, buildings, units, contracts, onSuccess }) {
     const queryClient = useQueryClient();
@@ -625,18 +626,12 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                             )}
 
                             {/* Cost Type Details */}
-                            {selectedCostType && (
-                                <div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {selectedCostType.distributable ? (
-                                            <Badge className="bg-green-100 text-green-700 flex items-center gap-1">
-                                                🟢 Umlagefähig
-                                            </Badge>
-                                        ) : (
-                                            <Badge className="bg-red-100 text-red-700 flex items-center gap-1">
-                                                🔴 Nicht umlagefähig
-                                            </Badge>
-                                        )}
+                             {selectedCostType && (
+                                 <div>
+                                     <div className="flex flex-wrap gap-2">
+                                         <UmlagefaehigBadge 
+                                             status={selectedCostType.distributable ? 'umlagefaehig' : 'nicht_umlagefaehig'}
+                                         />
                                         {selectedCostType.vat_rate > 0 && (
                                             <Badge variant="outline">
                                                 MwSt: {(selectedCostType.vat_rate * 100).toFixed(0)}%
