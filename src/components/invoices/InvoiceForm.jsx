@@ -27,6 +27,7 @@ import RecipientForm from '@/components/recipients/RecipientForm';
 import SaveTemplateDialog from '@/components/invoices/SaveTemplateDialog';
 import TemplateQuickSelect from '@/components/invoices/TemplateQuickSelect';
 import CategorySuggestions from '@/components/invoices/CategorySuggestions';
+import HelpTooltip from '@/components/shared/HelpTooltip';
 
 export default function InvoiceForm({ open, onOpenChange, invoice, buildings, units, contracts, onSuccess }) {
     const queryClient = useQueryClient();
@@ -563,16 +564,7 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                             <div>
                                 <Label className="flex items-center gap-2">
                                     Kostenart *
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <HelpCircle className="w-4 h-4 text-slate-400 cursor-help" />
-                                            </TooltipTrigger>
-                                            <TooltipContent className="max-w-xs">
-                                                <p>Umlagefähige Kosten können an Mieter weitergegeben werden (§556 BGB, BetrKV). Beispiele: Müllabfuhr, Hausmeister. Nicht umlagefähig: Verwaltungskosten, Reparaturen.</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
+                                    <HelpTooltip text="Umlagefähige Kosten können an Mieter weitergegeben werden (§556 BGB, BetrKV). Beispiele: Müllabfuhr, Hausmeister. Nicht umlagefähig: Verwaltungskosten, Reparaturen." />
                                 </Label>
                                 <Select 
                                     value={watch('cost_type_id')} 

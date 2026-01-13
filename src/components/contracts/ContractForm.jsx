@@ -20,6 +20,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Loader2, Plus, X, Sparkles, HelpCircle } from 'lucide-react';
+import HelpTooltip from '@/components/shared/HelpTooltip';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import PostContractDialog from './PostContractDialog';
 import { useQuery } from '@tanstack/react-query';
@@ -426,7 +427,10 @@ export default function ContractForm({
                         <h3 className="font-semibold text-slate-800 mb-4">Mietkonditionen</h3>
                         <div className="grid grid-cols-3 gap-4">
                             <div>
-                                <Label htmlFor="base_rent">Kaltmiete (€) *</Label>
+                                <div className="flex items-center gap-2">
+                              <Label htmlFor="base_rent">Kaltmiete (€) *</Label>
+                              <HelpTooltip text="Die monatliche Nettomiete (Kaltmiete) ohne Nebenkosten und Heizung." />
+                            </div>
                                 <Input 
                                     id="base_rent"
                                     type="number"
