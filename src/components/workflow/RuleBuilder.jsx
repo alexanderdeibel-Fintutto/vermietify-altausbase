@@ -88,8 +88,8 @@ export default function RuleBuilder({ rule = null }) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="equals">=</SelectItem>
-                <SelectItem value="gt">&gt;</SelectItem>
-                <SelectItem value="lt">&lt;</SelectItem>
+                <SelectItem value="gt">{'>'}</SelectItem>
+                <SelectItem value="lt">{'<'}</SelectItem>
               </SelectContent>
             </Select>
             <Input
