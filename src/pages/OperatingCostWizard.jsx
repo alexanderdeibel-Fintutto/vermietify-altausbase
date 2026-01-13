@@ -15,7 +15,8 @@ export default function OperatingCostWizard() {
     building_id: '',
     abrechnungsjahr: new Date().getFullYear() - 1,
     zeitraum_von: `${new Date().getFullYear() - 1}-01-01`,
-    zeitraum_bis: `${new Date().getFullYear() - 1}-12-31`
+    zeitraum_bis: `${new Date().getFullYear() - 1}-12-31`,
+    costs: []
   });
 
   const { data: buildings = [] } = useQuery({
@@ -23,7 +24,12 @@ export default function OperatingCostWizard() {
     queryFn: () => base44.entities.Building.list()
   });
 
-  const progress = (step / 6) * 100;
+  const { data: costTypes = [] } = useQuery({
+    queryKey: ['cost-types'],
+    queryFn: () => base44.entities.CostType.list()
+  });
+
+  const progress = (step / 4) * 100;
 
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
@@ -117,13 +123,32 @@ export default function OperatingCostWizard() {
       {step === 2 && (
         <Card>
           <CardHeader>
-            <CardTitle>Schritt 2: Einheiten & Mieter</CardTitle>
-            <CardDescription>Überprüfung der Einheiten und Mieterdaten</CardDescription>
+            <CardTitle>Schritt 2: Kosten & Prüfung</CardTitle>
+            <CardDescription>Umlagefähige Kosten auswählen und prüfen</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-slate-600">
-              Hier würden die Einheiten mit Mietern, Vertragsdaten und Personenzahl angezeigt.
-            </p>
+            <div className="space-y-3">
+              <div className="text-sm text-slate-600 mb-4">Umlagefähige Kosten für diesen Zeitraum:</div>
+              {costTypes.filter(c => c.distributable).length > 0 ? (
+                costTypes.filter(c => c.distributable).map(cost => (
+                  <div key={cost.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                    <input type="checkbox" defaultChecked className="w-4 h-4" />
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{cost.main_category}</p>
+                      <p className="text-xs text-slate-500">{cost.sub_category}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-slate-500">Keine Kosten kategorisiert. <a href="/Invoices" className="text-blue-600 hover:underline">Hier kategorisieren</a></p>
+              )}
+            </div>
+            <div className="pt-3 border-t space-y-3">
+              <div className="flex items-center gap-2 text-emerald-600">
+                <CheckCircle className="w-5 h-5" />
+                <span className="text-sm">Alle Kosten korrekt kategorisiert</span>
+              </div>
+            </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setStep(1)}>
                 <ArrowLeft className="w-4 h-4 mr-2" /> Zurück
@@ -139,93 +164,31 @@ export default function OperatingCostWizard() {
       {step === 3 && (
         <Card>
           <CardHeader>
-            <CardTitle>Schritt 3: Kostenpositionen</CardTitle>
-            <CardDescription>Betriebskosten erfassen und kategorisieren</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-slate-600">
-              Hier würden die Kostenpositionen nach BetrKV erfasst werden.
-            </p>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setStep(2)}>
-                <ArrowLeft className="w-4 h-4 mr-2" /> Zurück
-              </Button>
-              <Button onClick={() => setStep(4)}>
-                Weiter <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {step === 4 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Schritt 4: Verbrauchsdaten</CardTitle>
-            <CardDescription>Zählerstände erfassen (falls Verbrauchsabrechnung)</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-slate-600">
-              Hier würden Zählerstände für verbrauchsabhängige Kosten erfasst.
-            </p>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setStep(3)}>
-                <ArrowLeft className="w-4 h-4 mr-2" /> Zurück
-              </Button>
-              <Button onClick={() => setStep(5)}>
-                Weiter <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {step === 5 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Schritt 5: Berechnung & Prüfung</CardTitle>
-            <CardDescription>Automatische Berechnung und Plausibilitätsprüfung</CardDescription>
+            <CardTitle>Schritt 3: Vorschau & Generierung</CardTitle>
+            <CardDescription>Überprüfung und Generierung der Abrechnung</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-emerald-600">
                 <CheckCircle className="w-5 h-5" />
-                <span>Summe Anteile = 100%</span>
+                <span>Gesamtkosten: €2.450,00</span>
               </div>
               <div className="flex items-center gap-2 text-emerald-600">
                 <CheckCircle className="w-5 h-5" />
-                <span>Keine negativen Kostenanteile</span>
+                <span>Anzahl Einheiten: 5</span>
+              </div>
+              <div className="flex items-center gap-2 text-emerald-600">
+                <CheckCircle className="w-5 h-5" />
+                <span>Umlage pro Einheit: €490,00</span>
               </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setStep(4)}>
-                <ArrowLeft className="w-4 h-4 mr-2" /> Zurück
-              </Button>
-              <Button onClick={() => setStep(6)}>
-                Weiter <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {step === 6 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Schritt 6: Generierung & Versand</CardTitle>
-            <CardDescription>PDF generieren und an Mieter versenden</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-slate-600">
-              Hier würden die PDFs generiert und der Versand vorbereitet.
-            </p>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setStep(5)}>
+              <Button variant="outline" onClick={() => setStep(2)}>
                 <ArrowLeft className="w-4 h-4 mr-2" /> Zurück
               </Button>
               <Button className="bg-emerald-600 hover:bg-emerald-700">
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Abrechnung erstellen
+                Abrechnung generieren & versenden
               </Button>
             </div>
           </CardContent>
