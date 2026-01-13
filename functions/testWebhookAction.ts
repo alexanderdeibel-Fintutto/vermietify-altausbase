@@ -1,89 +1,56 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
-  const user = await base44.auth.me();
-  
-  if (!user) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { webhook_config, test_data } = await req.json();
-
-  const { url, method = 'POST', headers = [], body, auth_type } = webhook_config;
-
-  const requestHeaders = {
-    'Content-Type': 'application/json'
-  };
-
-  headers.forEach(h => {
-    if (h.key && h.value) {
-      requestHeaders[h.key] = h.value;
-    }
-  });
-
-  if (auth_type === 'bearer' && webhook_config.auth_token) {
-    requestHeaders['Authorization'] = `Bearer ${webhook_config.auth_token}`;
-  } else if (auth_type === 'basic' && webhook_config.auth_username && webhook_config.auth_password) {
-    const credentials = btoa(`${webhook_config.auth_username}:${webhook_config.auth_password}`);
-    requestHeaders['Authorization'] = `Basic ${credentials}`;
-  } else if (auth_type === 'api_key' && webhook_config.api_key_header && webhook_config.api_key_value) {
-    requestHeaders[webhook_config.api_key_header] = webhook_config.api_key_value;
-  }
-
-  const requestBody = body ? replacePlaceholders(body, {
-    ...test_data,
-    entity_id: 'test-123',
-    timestamp: new Date().toISOString(),
-    user_email: user.email
-  }) : JSON.stringify({ test: true });
-
   try {
-    const response = await fetch(url, {
-      method,
-      headers: requestHeaders,
-      body: method !== 'GET' ? requestBody : undefined
-    });
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
 
-    const responseText = await response.text();
-    let responseData;
-    try {
-      responseData = JSON.parse(responseText);
-    } catch {
-      responseData = responseText;
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    return Response.json({
-      success: response.ok,
-      status: response.status,
-      statusText: response.statusText,
-      response: responseData,
-      request: {
-        url,
-        method,
-        headers: requestHeaders,
-        body: requestBody
+    const { webhookId } = await req.json();
+
+    // Get webhook
+    const webhooks = await base44.entities.Webhook?.list?.('', 1, { id: webhookId });
+    const webhook = webhooks?.[0];
+
+    if (!webhook) {
+      return Response.json({ error: 'Webhook not found' }, { status: 404 });
+    }
+
+    // Send test payload
+    const testPayload = {
+      event: webhook.event,
+      timestamp: new Date().toISOString(),
+      data: {
+        id: 'test_123',
+        message: 'This is a test webhook'
       }
+    };
+
+    const response = await fetch(webhook.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(testPayload)
     });
-  } catch (error) {
+
+    const status = response.status;
+
+    // Update webhook with last triggered time
+    await base44.entities.Webhook?.update?.(webhookId, {
+      last_triggered: new Date(),
+      last_status: status
+    });
+
     return Response.json({
-      success: false,
-      error: error.message
-    }, { status: 500 });
+      success: status >= 200 && status < 300,
+      status: status,
+      message: status >= 200 && status < 300 ? 'Test successful' : 'Test failed'
+    });
+
+  } catch (error) {
+    console.error('Webhook test error:', error);
+    return Response.json({ error: error.message }, { status: 500 });
   }
 });
-
-function replacePlaceholders(template, data) {
-  if (!template) return template;
-  
-  let result = template;
-  
-  Object.keys(data).forEach(key => {
-    const regex = new RegExp(`{{${key}}}`, 'g');
-    result = result.replace(regex, data[key] || '');
-  });
-
-  result = result.replace(/{{data}}/g, JSON.stringify(data));
-  
-  return result;
-}
