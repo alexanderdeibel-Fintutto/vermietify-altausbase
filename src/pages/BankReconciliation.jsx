@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreditCard, Check, AlertCircle, RefreshCw } from 'lucide-react';
 import QuickStats from '@/components/shared/QuickStats';
+import AIMatchSuggestions from '@/components/banking/AIMatchSuggestions';
 
 export default function BankReconciliationPage() {
   const [reconciled, setReconciled] = useState(0);
@@ -63,9 +64,11 @@ export default function BankReconciliationPage() {
                     </div>
                   </div>
                   {tx.status === 'unmatched' && (
-                    <Button size="sm" className="bg-slate-700 hover:bg-slate-800 font-extralight">
-                      <Check className="w-4 h-4 mr-1" /> Zuordnen
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" className="bg-slate-700 hover:bg-slate-800 font-extralight">
+                        <Check className="w-4 h-4 mr-1" /> Zuordnen
+                      </Button>
+                    </div>
                   )}
                 </div>
               </CardContent>
@@ -90,23 +93,26 @@ export default function BankReconciliationPage() {
         </TabsContent>
 
         <TabsContent value="unmatched" className="space-y-3">
-          {transactions.filter(t => t.status === 'unmatched').map((tx, idx) => (
-            <Card key={idx} className="border border-orange-200 bg-orange-50">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 flex-1">
-                    <AlertCircle className="w-5 h-5 text-orange-600" />
-                    <div>
-                      <p className="font-semibold text-slate-900">{tx.description}</p>
-                      <p className="text-sm text-slate-600">{tx.date} • {tx.amount.toLocaleString('de-DE')} €</p>
-                    </div>
-                  </div>
-                  <Button size="sm" className="bg-slate-700 hover:bg-slate-800 font-extralight">Zuordnen</Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
+           {transactions.filter(t => t.status === 'unmatched').map((tx, idx) => (
+             <div key={idx} className="space-y-2">
+               <Card className="border border-orange-200 bg-orange-50">
+                 <CardContent className="pt-6">
+                   <div className="flex items-center justify-between">
+                     <div className="flex items-center gap-3 flex-1">
+                       <AlertCircle className="w-5 h-5 text-orange-600" />
+                       <div>
+                         <p className="font-semibold text-slate-900">{tx.description}</p>
+                         <p className="text-sm text-slate-600">{tx.date} • {tx.amount.toLocaleString('de-DE')} €</p>
+                       </div>
+                     </div>
+                     <Button size="sm" className="bg-slate-700 hover:bg-slate-800 font-extralight">Zuordnen</Button>
+                   </div>
+                 </CardContent>
+               </Card>
+               <AIMatchSuggestions transaction={tx} />
+             </div>
+           ))}
+         </TabsContent>
       </Tabs>
     </div>
   );
