@@ -18,7 +18,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Plus, X, Sparkles } from 'lucide-react';
+import { Loader2, Plus, X, Sparkles, HelpCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import PostContractDialog from './PostContractDialog';
 import { useQuery } from '@tanstack/react-query';
 import { generateFinancialItemsForContract, regenerateContractFinancialItems, needsPartialRentDialog, calculatePartialRent } from './generateFinancialItems';
 import PartialRentDialog from './PartialRentDialog';
@@ -43,6 +45,8 @@ export default function ContractForm({
     const [newSecondTenantMode, setNewSecondTenantMode] = React.useState(false);
     const [bookingPreviewOpen, setBookingPreviewOpen] = React.useState(false);
     const [savedContractId, setSavedContractId] = React.useState(null);
+    const [postContractDialogOpen, setPostContractDialogOpen] = React.useState(false);
+    const [savedContractData, setSavedContractData] = React.useState(null);
     
     const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
         defaultValues: initialData || { status: 'active', is_unlimited: true, deposit_paid: false, deposit_installments: 1 }
@@ -146,18 +150,15 @@ export default function ContractForm({
 
         if (submittedContract) {
             setSavedContractId(submittedContract.id);
+            setSavedContractData(submittedContract);
             if (needsPartialRentDialog(contractData)) {
                 const partialAmount = calculatePartialRent(contractData, new Date(contractData.start_date));
                 setSuggestedPartialRent(partialAmount);
                 setPendingContract({ ...submittedContract, partialRentAmount: partialAmount, needsPartialRentConfirmation: true });
                 setPartialRentDialogOpen(true);
             } else {
-                toast.success('Mietvertrag gespeichert', {
-                    action: {
-                        label: 'Buchungen generieren',
-                        onClick: () => setBookingPreviewOpen(true)
-                    }
-                });
+                // Show post-contract dialog instead of toast
+                setPostContractDialogOpen(true);
             }
         }
     };
@@ -167,15 +168,11 @@ export default function ContractForm({
             try {
                 await generateFinancialItemsForContract(pendingContract, [], partialAmount);
                 setPendingContract(null);
-                
-                toast.success('Mietvertrag gespeichert', {
-                    action: {
-                        label: 'Buchungen generieren',
-                        onClick: () => setBookingPreviewOpen(true)
-                    }
-                });
+                // Show post-contract dialog
+                setPostContractDialogOpen(true);
             } catch (error) {
                 console.error('Error generating financial items with partial rent:', error);
+                toast.error('Fehler beim Generieren der Buchungen');
             }
         }
     };
@@ -585,6 +582,12 @@ export default function ContractForm({
                     setBookingPreviewOpen(false);
                     onOpenChange(false);
                 }}
+            />
+
+            <PostContractDialog
+                open={postContractDialogOpen}
+                onOpenChange={setPostContractDialogOpen}
+                contract={savedContractData}
             />
         </Dialog>
     );
