@@ -33,7 +33,6 @@ import ActivityLogViewer from '@/components/tasks/ActivityLogViewer';
 import PerformanceMonitor from '@/components/tasks/PerformanceMonitor';
 import SetupWizard from '@/components/tasks/SetupWizard';
 import TestingPanel from '@/components/tasks/TestingPanel';
-import { HelpButton } from '@/components/shared/HelpSystem';
 import ModuleGuard from '@/components/package/ModuleGuard';
 
 export default function Tasks() {
@@ -127,7 +126,6 @@ export default function Tasks() {
                     <p className="text-sm font-extralight text-slate-400 mt-1">Verwalten Sie alle Tasks und Workflows</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <HelpButton context="dashboard_overview" />
                     <Button 
                         onClick={handleAddNew}
                         className="bg-slate-700 hover:bg-slate-800 font-extralight"
