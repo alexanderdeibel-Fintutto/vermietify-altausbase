@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
 import { Crown } from 'lucide-react';
 
-export default function FeatureGateInline({ 
+export function FeatureGateInline({ 
   featureCode, 
   children,
   showBadge = true
@@ -66,3 +66,5 @@ export default function FeatureGateInline({
 
   return <>{children}</>;
 }
+
+export default FeatureGateInline;
