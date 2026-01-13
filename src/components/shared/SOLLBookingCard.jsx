@@ -1,19 +1,32 @@
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
-export default function SOLLBookingCard({ booking, children }) {
+export default function SOLLBookingCard({ title, amount, description, children, ...props }) {
   return (
-    <Card className="border-dashed border-2 border-slate-300 bg-slate-50 hover:border-slate-400 transition-colors">
-      <div className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <Badge variant="outline" className="bg-slate-100 text-slate-700">
-            📋 SOLL (Geplant)
+    <Card 
+      className="border-dashed border-2 border-amber-300 bg-amber-50 hover:border-amber-400 transition-colors"
+      {...props}
+    >
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <CardTitle className="text-base">{title}</CardTitle>
+          <Badge variant="outline" className="border-amber-300 bg-amber-100 text-amber-800">
+            📋 SOLL (geplant)
           </Badge>
-          {booking?.status && <span className="text-xs text-slate-600">{booking.status}</span>}
         </div>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {amount && (
+          <div className="text-2xl font-semibold text-amber-900">
+            {typeof amount === 'string' ? amount : `€${amount?.toFixed(2)}`}
+          </div>
+        )}
+        {description && (
+          <p className="text-sm text-amber-700">{description}</p>
+        )}
         {children}
-      </div>
+      </CardContent>
     </Card>
   );
 }
