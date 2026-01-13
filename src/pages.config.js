@@ -17,17 +17,31 @@ import AdminAnalyticsDashboard from './pages/AdminAnalyticsDashboard';
 import AdminAnnouncementCenter from './pages/AdminAnnouncementCenter';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminIssueReports from './pages/AdminIssueReports';
+import AdminLimitsConfig from './pages/AdminLimitsConfig';
 import AdminMasterDashboard from './pages/AdminMasterDashboard';
 import AdminMessagingCenter from './pages/AdminMessagingCenter';
 import AdminPackageSetup from './pages/AdminPackageSetup';
+import AdminPricingFeatureGroups from './pages/AdminPricingFeatureGroups';
+import AdminPricingFeatures from './pages/AdminPricingFeatures';
+import AdminPricingMatrix from './pages/AdminPricingMatrix';
+import AdminPricingProducts from './pages/AdminPricingProducts';
+import AdminPricingTiers from './pages/AdminPricingTiers';
+import AdminProductFeatures from './pages/AdminProductFeatures';
 import AdminRoleManagement from './pages/AdminRoleManagement';
 import AdminSettings from './pages/AdminSettings';
 import AdminSetupGuide from './pages/AdminSetupGuide';
+import AdminStripeSetup from './pages/AdminStripeSetup';
+import AdminSubscriptionAddons from './pages/AdminSubscriptionAddons';
+import AdminSubscriptionPlans from './pages/AdminSubscriptionPlans';
+import AdminSubscriptions from './pages/AdminSubscriptions';
 import AdminTenantDashboard from './pages/AdminTenantDashboard';
 import AdminTestCleanup from './pages/AdminTestCleanup';
 import AdminTesterAnalytics from './pages/AdminTesterAnalytics';
 import AdminTesterAnalyticsLazy from './pages/AdminTesterAnalyticsLazy';
+import AdminTierFeatures from './pages/AdminTierFeatures';
+import AdminTierLimits from './pages/AdminTierLimits';
 import AdminUserManagement from './pages/AdminUserManagement';
+import AdminUserSubscriptions from './pages/AdminUserSubscriptions';
 import AdvancedAnalytics from './pages/AdvancedAnalytics';
 import AdvancedFeatures from './pages/AdvancedFeatures';
 import AdvancedReportBuilder from './pages/AdvancedReportBuilder';
@@ -108,7 +122,6 @@ import Cryptocurrencies from './pages/Cryptocurrencies';
 import CustomDashboard from './pages/CustomDashboard';
 import DACHComplianceChecklist from './pages/DACHComplianceChecklist';
 import DACHTaxComparison from './pages/DACHTaxComparison';
-import Finanzen from './pages/Finanzen';
 import Dashboard from './pages/Dashboard';
 import DataImportExport from './pages/DataImportExport';
 import DataImportExportHub from './pages/DataImportExportHub';
@@ -159,6 +172,7 @@ import FinancialForecasting from './pages/FinancialForecasting';
 import FinancialItems from './pages/FinancialItems';
 import FinancialReporting from './pages/FinancialReporting';
 import FinancialReports from './pages/FinancialReports';
+import Finanzen from './pages/Finanzen';
 import FullFeatureHub from './pages/FullFeatureHub';
 import GeneratedBookings from './pages/GeneratedBookings';
 import GlobalSettings from './pages/GlobalSettings';
@@ -228,6 +242,7 @@ import PortfolioDashboard from './pages/PortfolioDashboard';
 import PortfolioDetail from './pages/PortfolioDetail';
 import PortfolioManagement from './pages/PortfolioManagement';
 import PreciousMetals from './pages/PreciousMetals';
+import Pricing from './pages/Pricing';
 import ProjectManagement from './pages/ProjectManagement';
 import PropertyManagementHub from './pages/PropertyManagementHub';
 import PropertyManagerDashboard from './pages/PropertyManagerDashboard';
@@ -312,6 +327,7 @@ import TaxLibraryManagement from './pages/TaxLibraryManagement';
 import TaxLossHarvesting from './pages/TaxLossHarvesting';
 import TaxLossHarvestingAdvisor from './pages/TaxLossHarvestingAdvisor';
 import TaxManagement from './pages/TaxManagement';
+import TaxSetup from './pages/TaxSetup';
 import TaxMonitoringDashboard from './pages/TaxMonitoringDashboard';
 import TaxOptimizationAnalyzer from './pages/TaxOptimizationAnalyzer';
 import TaxOptimizationStrategy from './pages/TaxOptimizationStrategy';
@@ -327,12 +343,11 @@ import TaxReturnDetail from './pages/TaxReturnDetail';
 import TaxReturnFilingManager from './pages/TaxReturnFilingManager';
 import TaxReturns from './pages/TaxReturns';
 import TaxRiskAssessment from './pages/TaxRiskAssessment';
-import TaxRuleAdmin from './pages/TaxRuleAdmin';
 import TaxRiskAssessmentPanel from './pages/TaxRiskAssessmentPanel';
+import TaxRuleAdmin from './pages/TaxRuleAdmin';
 import TaxSavingsOpportunities from './pages/TaxSavingsOpportunities';
 import TaxScenarioComparison from './pages/TaxScenarioComparison';
 import TaxScenarioSimulator from './pages/TaxScenarioSimulator';
-import TaxSetup from './pages/TaxSetup';
 import TaxSetupWizard from './pages/TaxSetupWizard';
 import TaxSimulation from './pages/TaxSimulation';
 import TaxStrategyAdvisor from './pages/TaxStrategyAdvisor';
@@ -402,21 +417,7 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import Pricing from './pages/Pricing';
-import AdminSubscriptionPlans from './pages/AdminSubscriptionPlans';
-import AdminSubscriptionAddons from './pages/AdminSubscriptionAddons';
-import AdminPricingMatrix from './pages/AdminPricingMatrix';
-import AdminSubscriptions from './pages/AdminSubscriptions';
-import AdminStripeSetup from './pages/AdminStripeSetup';
-import AdminLimitsConfig from './pages/AdminLimitsConfig';
-import AdminPricingProducts from './pages/AdminPricingProducts';
-import AdminPricingFeatureGroups from './pages/AdminPricingFeatureGroups';
-import AdminPricingFeatures from './pages/AdminPricingFeatures';
-import AdminProductFeatures from './pages/AdminProductFeatures';
-import AdminPricingTiers from './pages/AdminPricingTiers';
-import AdminTierFeatures from './pages/AdminTierFeatures';
-import AdminTierLimits from './pages/AdminTierLimits';
-import AdminUserSubscriptions from './pages/AdminUserSubscriptions';
+import MySubscription from './pages/MySubscription';
 import __Layout from './Layout.jsx';
 
 
@@ -440,17 +441,31 @@ export const PAGES = {
     "AdminAnnouncementCenter": AdminAnnouncementCenter,
     "AdminDashboard": AdminDashboard,
     "AdminIssueReports": AdminIssueReports,
+    "AdminLimitsConfig": AdminLimitsConfig,
     "AdminMasterDashboard": AdminMasterDashboard,
     "AdminMessagingCenter": AdminMessagingCenter,
     "AdminPackageSetup": AdminPackageSetup,
+    "AdminPricingFeatureGroups": AdminPricingFeatureGroups,
+    "AdminPricingFeatures": AdminPricingFeatures,
+    "AdminPricingMatrix": AdminPricingMatrix,
+    "AdminPricingProducts": AdminPricingProducts,
+    "AdminPricingTiers": AdminPricingTiers,
+    "AdminProductFeatures": AdminProductFeatures,
     "AdminRoleManagement": AdminRoleManagement,
     "AdminSettings": AdminSettings,
     "AdminSetupGuide": AdminSetupGuide,
+    "AdminStripeSetup": AdminStripeSetup,
+    "AdminSubscriptionAddons": AdminSubscriptionAddons,
+    "AdminSubscriptionPlans": AdminSubscriptionPlans,
+    "AdminSubscriptions": AdminSubscriptions,
     "AdminTenantDashboard": AdminTenantDashboard,
     "AdminTestCleanup": AdminTestCleanup,
     "AdminTesterAnalytics": AdminTesterAnalytics,
     "AdminTesterAnalyticsLazy": AdminTesterAnalyticsLazy,
+    "AdminTierFeatures": AdminTierFeatures,
+    "AdminTierLimits": AdminTierLimits,
     "AdminUserManagement": AdminUserManagement,
+    "AdminUserSubscriptions": AdminUserSubscriptions,
     "AdvancedAnalytics": AdvancedAnalytics,
     "AdvancedFeatures": AdvancedFeatures,
     "AdvancedReportBuilder": AdvancedReportBuilder,
@@ -531,7 +546,6 @@ export const PAGES = {
     "CustomDashboard": CustomDashboard,
     "DACHComplianceChecklist": DACHComplianceChecklist,
     "DACHTaxComparison": DACHTaxComparison,
-    "Finanzen": Finanzen,
     "Dashboard": Dashboard,
     "DataImportExport": DataImportExport,
     "DataImportExportHub": DataImportExportHub,
@@ -582,6 +596,7 @@ export const PAGES = {
     "FinancialItems": FinancialItems,
     "FinancialReporting": FinancialReporting,
     "FinancialReports": FinancialReports,
+    "Finanzen": Finanzen,
     "FullFeatureHub": FullFeatureHub,
     "GeneratedBookings": GeneratedBookings,
     "GlobalSettings": GlobalSettings,
@@ -651,6 +666,7 @@ export const PAGES = {
     "PortfolioDetail": PortfolioDetail,
     "PortfolioManagement": PortfolioManagement,
     "PreciousMetals": PreciousMetals,
+    "Pricing": Pricing,
     "ProjectManagement": ProjectManagement,
     "PropertyManagementHub": PropertyManagementHub,
     "PropertyManagerDashboard": PropertyManagerDashboard,
@@ -735,6 +751,7 @@ export const PAGES = {
     "TaxLossHarvesting": TaxLossHarvesting,
     "TaxLossHarvestingAdvisor": TaxLossHarvestingAdvisor,
     "TaxManagement": TaxManagement,
+    "TaxSetup": TaxSetup,
     "TaxMonitoringDashboard": TaxMonitoringDashboard,
     "TaxOptimizationAnalyzer": TaxOptimizationAnalyzer,
     "TaxOptimizationStrategy": TaxOptimizationStrategy,
@@ -750,12 +767,11 @@ export const PAGES = {
     "TaxReturnFilingManager": TaxReturnFilingManager,
     "TaxReturns": TaxReturns,
     "TaxRiskAssessment": TaxRiskAssessment,
-    "TaxRuleAdmin": TaxRuleAdmin,
     "TaxRiskAssessmentPanel": TaxRiskAssessmentPanel,
+    "TaxRuleAdmin": TaxRuleAdmin,
     "TaxSavingsOpportunities": TaxSavingsOpportunities,
     "TaxScenarioComparison": TaxScenarioComparison,
     "TaxScenarioSimulator": TaxScenarioSimulator,
-    "TaxSetup": TaxSetup,
     "TaxSetupWizard": TaxSetupWizard,
     "TaxSimulation": TaxSimulation,
     "TaxStrategyAdvisor": TaxStrategyAdvisor,
@@ -825,21 +841,7 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "Pricing": Pricing,
-    "AdminSubscriptionPlans": AdminSubscriptionPlans,
-    "AdminSubscriptionAddons": AdminSubscriptionAddons,
-    "AdminPricingMatrix": AdminPricingMatrix,
-    "AdminSubscriptions": AdminSubscriptions,
-    "AdminStripeSetup": AdminStripeSetup,
-    "AdminLimitsConfig": AdminLimitsConfig,
-    "AdminPricingProducts": AdminPricingProducts,
-    "AdminPricingFeatureGroups": AdminPricingFeatureGroups,
-    "AdminPricingFeatures": AdminPricingFeatures,
-    "AdminProductFeatures": AdminProductFeatures,
-    "AdminPricingTiers": AdminPricingTiers,
-    "AdminTierFeatures": AdminTierFeatures,
-    "AdminTierLimits": AdminTierLimits,
-    "AdminUserSubscriptions": AdminUserSubscriptions,
+    "MySubscription": MySubscription,
 }
 
 export const pagesConfig = {
