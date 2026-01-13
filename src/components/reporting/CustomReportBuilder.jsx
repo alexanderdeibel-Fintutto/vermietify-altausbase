@@ -1,217 +1,172 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { BarChart3, LineChart as LineChartIcon, Download } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
-const entities = [
-  { value: 'FinancialItem', label: 'Finanzielle Positionen' },
-  { value: 'BuildingTask', label: 'Aufgaben' },
-  { value: 'Unit', label: 'Einheiten' },
-  { value: 'Tenant', label: 'Mieter' },
-  { value: 'Payment', label: 'Zahlungen' },
-  { value: 'Building', label: 'Gebäude' },
-  { value: 'LeaseContract', label: 'Mietverträge' }
-];
-
-const metricsByEntity = {
-  FinancialItem: ['amount', 'category', 'date', 'created_by'],
-  BuildingTask: ['status', 'priority', 'due_date', 'assigned_to'],
-  Unit: ['occupancy_status', 'rent_amount', 'building_id'],
-  Tenant: ['move_in_date', 'status', 'email'],
-  Payment: ['amount', 'date', 'status', 'tenant_id'],
-  Building: ['address', 'units_count', 'created_date'],
-  LeaseContract: ['start_date', 'end_date', 'monthly_rent', 'tenant_id']
+const REPORT_METRICS = {
+  financial: ['Gesamteinnahmen', 'Gesamtausgaben', 'Nettomarge', 'ROI'],
+  occupancy: ['Belegungsquote', 'Freie Einheiten', 'Mieten ausstehend'],
+  maintenance: ['Offene Tasks', 'Durchschnittliche Dauer', 'Kosten'],
+  tenant: ['Anzahl Mieter', 'Zahlungsmoral', 'Vertragsdauer']
 };
 
-export default function CustomReportBuilder({ onGenerateReport, isLoading }) {
-  const [reportName, setReportName] = useState('');
-  const [selectedEntity, setSelectedEntity] = useState('FinancialItem');
-  const [selectedMetrics, setSelectedMetrics] = useState(['amount']);
-  const [groupBy, setGroupBy] = useState('date');
-  const [period, setPeriod] = useState('monthly');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+const CHART_TYPES = [
+  { id: 'bar', label: '📊 Balkendiagramm', icon: <BarChart3 className="w-4 h-4" /> },
+  { id: 'line', label: '📈 Liniendiagramm', icon: <LineChartIcon className="w-4 h-4" /> },
+  { id: 'pie', label: '🥧 Tortendiagramm' },
+  { id: 'table', label: '📋 Tabelle' }
+];
 
-  const currentMetrics = metricsByEntity[selectedEntity] || [];
+export default function CustomReportBuilder({ open, onOpenChange }) {
+  const [name, setName] = useState('');
+  const [reportType, setReportType] = useState('financial');
+  const [selectedMetrics, setSelectedMetrics] = useState(['Gesamteinnahmen']);
+  const [chartType, setChartType] = useState('bar');
+  const [dateRange, setDateRange] = useState('monthly');
 
-  const handleMetricToggle = (metric) => {
+  const generateMutation = useMutation({
+    mutationFn: async () => {
+      // Call backend to generate report
+      const response = await base44.functions.invoke('generateAdvancedReport', {
+        name: name,
+        type: reportType,
+        metrics: selectedMetrics,
+        chartType: chartType,
+        dateRange: dateRange
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success('📊 Report erstellt');
+      handleReset();
+      onOpenChange(false);
+    },
+    onError: () => toast.error('Fehler beim Erstellen')
+  });
+
+  const handleToggleMetric = (metric) => {
     setSelectedMetrics(prev =>
-      prev.includes(metric)
-        ? prev.filter(m => m !== metric)
-        : [...prev, metric]
+      prev.includes(metric) ? prev.filter(m => m !== metric) : [...prev, metric]
     );
   };
 
-  const handleGenerateReport = () => {
-    if (!reportName) {
-      alert('Bitte geben Sie einen Namen für den Bericht ein');
-      return;
-    }
-
-    onGenerateReport({
-      title: reportName,
-      entity: selectedEntity,
-      metrics: selectedMetrics,
-      groupBy,
-      period,
-      startDate: startDate || undefined,
-      endDate: endDate || undefined
-    });
+  const handleReset = () => {
+    setName('');
+    setReportType('financial');
+    setSelectedMetrics(['Gesamteinnahmen']);
+    setChartType('bar');
+    setDateRange('monthly');
   };
 
+  const isValid = name && selectedMetrics.length > 0;
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Benutzerdefinierten Bericht erstellen</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Benutzerdefinierten Report erstellen</DialogTitle>
+        </DialogHeader>
+
+        <div className="grid grid-cols-2 gap-4">
           {/* Report Name */}
-          <div>
-            <Label htmlFor="report-name" className="text-sm font-medium text-slate-700 mb-2 block">
-              Berichtname
-            </Label>
+          <div className="col-span-2">
+            <label className="text-sm font-medium">Report-Name</label>
             <Input
-              id="report-name"
-              placeholder="z.B. Quartalsbericht Q4 2025"
-              value={reportName}
-              onChange={(e) => setReportName(e.target.value)}
+              placeholder="z.B. 'Quartalsübersicht'"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="mt-1"
             />
           </div>
 
-          {/* Entity Selection */}
+          {/* Report Type */}
           <div>
-            <Label htmlFor="entity" className="text-sm font-medium text-slate-700 mb-2 block">
-              Datenquelle
-            </Label>
-            <Select value={selectedEntity} onValueChange={setSelectedEntity}>
-              <SelectTrigger id="entity">
+            <label className="text-sm font-medium">Typ</label>
+            <Select value={reportType} onValueChange={setReportType}>
+              <SelectTrigger className="mt-1">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {entities.map(entity => (
-                  <SelectItem key={entity.value} value={entity.value}>
-                    {entity.label}
+                <SelectItem value="financial">💰 Finanzen</SelectItem>
+                <SelectItem value="occupancy">🏠 Belegung</SelectItem>
+                <SelectItem value="maintenance">🔧 Wartung</SelectItem>
+                <SelectItem value="tenant">👥 Mieter</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Chart Type */}
+          <div>
+            <label className="text-sm font-medium">Diagrammtyp</label>
+            <Select value={chartType} onValueChange={setChartType}>
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CHART_TYPES.map(ct => (
+                  <SelectItem key={ct.id} value={ct.id}>
+                    {ct.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Metrics Selection */}
+          {/* Date Range */}
           <div>
-            <Label className="text-sm font-medium text-slate-700 mb-3 block">
-              Metriken (Mindestens 1 erforderlich)
-            </Label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {currentMetrics.map(metric => (
-                <div key={metric} className="flex items-center gap-2">
+            <label className="text-sm font-medium">Zeitraum</label>
+            <Select value={dateRange} onValueChange={setDateRange}>
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="weekly">Diese Woche</SelectItem>
+                <SelectItem value="monthly">Diesen Monat</SelectItem>
+                <SelectItem value="quarterly">Dieses Quartal</SelectItem>
+                <SelectItem value="yearly">Dieses Jahr</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Metrics Selection */}
+          <div className="col-span-2">
+            <label className="text-sm font-medium mb-2 block">Metriken</label>
+            <div className="grid grid-cols-2 gap-2">
+              {REPORT_METRICS[reportType]?.map(metric => (
+                <label key={metric} className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded cursor-pointer">
                   <Checkbox
-                    id={metric}
                     checked={selectedMetrics.includes(metric)}
-                    onCheckedChange={() => handleMetricToggle(metric)}
+                    onCheckedChange={() => handleToggleMetric(metric)}
                   />
-                  <label
-                    htmlFor={metric}
-                    className="text-sm text-slate-700 cursor-pointer"
-                  >
-                    {metric.replace(/_/g, ' ')}
-                  </label>
-                </div>
+                  <span className="text-sm">{metric}</span>
+                </label>
               ))}
             </div>
-            {selectedMetrics.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {selectedMetrics.map(metric => (
-                  <Badge key={metric} variant="secondary" className="text-xs">
-                    {metric.replace(/_/g, ' ')}
-                  </Badge>
-                ))}
-              </div>
-            )}
           </div>
+        </div>
 
-          {/* Grouping and Period */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="groupby" className="text-sm font-medium text-slate-700 mb-2 block">
-                Gruppieren nach
-              </Label>
-              <Select value={groupBy} onValueChange={setGroupBy}>
-                <SelectTrigger id="groupby">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="date">Datum</SelectItem>
-                  <SelectItem value="category">Kategorie</SelectItem>
-                  <SelectItem value="status">Status</SelectItem>
-                  <SelectItem value="building">Gebäude</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="period" className="text-sm font-medium text-slate-700 mb-2 block">
-                Zeitraum
-              </Label>
-              <Select value={period} onValueChange={setPeriod}>
-                <SelectTrigger id="period">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Täglich</SelectItem>
-                  <SelectItem value="weekly">Wöchentlich</SelectItem>
-                  <SelectItem value="monthly">Monatlich</SelectItem>
-                  <SelectItem value="quarterly">Vierteljährlich</SelectItem>
-                  <SelectItem value="yearly">Jährlich</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Date Range (Optional) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="start-date" className="text-sm font-medium text-slate-700 mb-2 block">
-                Startdatum (Optional)
-              </Label>
-              <Input
-                id="start-date"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="end-date" className="text-sm font-medium text-slate-700 mb-2 block">
-                Enddatum (Optional)
-              </Label>
-              <Input
-                id="end-date"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Generate Button */}
+        {/* Actions */}
+        <div className="flex gap-2 justify-end pt-4 border-t">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Abbrechen
+          </Button>
           <Button
-            className="w-full"
-            onClick={handleGenerateReport}
-            disabled={isLoading || selectedMetrics.length === 0}
+            onClick={() => generateMutation.mutate()}
+            disabled={!isValid || generateMutation.isPending}
+            className="gap-2"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Bericht generieren
+            <Download className="w-4 h-4" />
+            {generateMutation.isPending ? 'Generiere...' : 'Report generieren'}
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 }
