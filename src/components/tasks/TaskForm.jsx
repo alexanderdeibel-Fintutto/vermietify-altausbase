@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { useActivityLogger } from './useActivityLogger';
-import { HelpButton } from '@/components/shared/HelpSystem';
 
 export default function TaskForm({ open, onOpenChange, onSubmit, initialData, priorities, isLoading }) {
     const [suggestedWorkflow, setSuggestedWorkflow] = useState(null);
@@ -134,12 +133,9 @@ export default function TaskForm({ open, onOpenChange, onSubmit, initialData, pr
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <div className="flex items-center justify-between">
-                        <DialogTitle>
-                            {initialData ? 'Task bearbeiten' : 'Neuer Task'}
-                        </DialogTitle>
-                        <HelpButton context="task_creation" />
-                    </div>
+                    <DialogTitle>
+                        {initialData ? 'Task bearbeiten' : 'Neuer Task'}
+                    </DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 mt-4">
