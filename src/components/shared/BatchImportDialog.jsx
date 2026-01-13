@@ -1,226 +1,137 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
-import { toast } from 'sonner';
+import { AlertCircle, CheckCircle2, FileUp } from 'lucide-react';
+import DragDropZone from './DragDropZone';
+import ProgressIndicatorBar from './ProgressIndicatorBar';
 
-export default function BatchImportDialog({ open, onOpenChange, importType = 'invoices' }) {
-  const [file, setFile] = useState(null);
+export default function BatchImportDialog({ 
+  open, 
+  onOpenChange,
+  onImport,
+  title = 'Daten importieren',
+  description = 'Laden Sie eine CSV- oder JSON-Datei hoch'
+}) {
+  const [files, setFiles] = useState([]);
   const [importing, setImporting] = useState(false);
-  const [results, setResults] = useState(null);
+  const [progress, setProgress] = useState(0);
+  const [result, setResult] = useState(null);
 
-  const templates = {
-    invoices: {
-      name: 'Rechnungen (CSV)',
-      columns: ['Datum', 'Empfänger', 'Betrag', 'Beschreibung', 'Kostenart'],
-      example: 'invoice_template.csv'
-    },
-    meter: {
-      name: 'Messwerte (CSV)',
-      columns: ['Meter-ID', 'Gebäude', 'Messwert', 'Einheit', 'Datum'],
-      example: 'meter_template.csv'
-    },
-    tenants: {
-      name: 'Mieter (CSV)',
-      columns: ['Vorname', 'Nachname', 'Email', 'Telefon', 'Einzugsdatum'],
-      example: 'tenant_template.csv'
-    }
-  };
+  const handleImport = async () => {
+    if (files.length === 0) return;
 
-  const handleFileUpload = async (e) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) return;
-
-    setFile(selectedFile);
     setImporting(true);
+    setProgress(0);
+    setResult(null);
 
     try {
-      // Upload file
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: selectedFile });
+      const file = files[0];
+      const reader = new FileReader();
 
-      // Extract and validate data
-      const extractedData = await base44.integrations.Core.ExtractDataFromUploadedFile({
-        file_url,
-        json_schema: {
-          type: 'object',
-          properties: {
-            rows: {
-              type: 'array',
-              items: { type: 'object' }
-            }
+      reader.onload = async (e) => {
+        setProgress(50);
+        
+        try {
+          let data;
+          if (file.name.endsWith('.json')) {
+            data = JSON.parse(e.target.result);
+          } else if (file.name.endsWith('.csv')) {
+            data = parseCSV(e.target.result);
           }
+
+          await onImport(Array.isArray(data) ? data : [data]);
+          setProgress(100);
+          setResult({ success: true, count: Array.isArray(data) ? data.length : 1 });
+          setTimeout(() => onOpenChange(false), 1500);
+        } catch (error) {
+          setResult({ success: false, error: error.message });
         }
-      });
+      };
 
-      // Mock processing - in real scenario, process and create entities
-      const successCount = extractedData.output?.rows?.length || 0;
-      
-      setResults({
-        success: true,
-        total: successCount,
-        created: Math.floor(successCount * 0.95),
-        failed: Math.ceil(successCount * 0.05),
-        message: `${successCount} Einträge verarbeitet`
-      });
-
-      toast.success(`✅ ${successCount} Einträge erfolgreich importiert`);
-    } catch (error) {
-      console.error('Import error:', error);
-      setResults({
-        success: false,
-        error: 'Fehler beim Importieren. Prüfen Sie das CSV-Format.'
-      });
-      toast.error('Import fehlgeschlagen');
+      reader.readAsText(file);
     } finally {
       setImporting(false);
     }
   };
 
-  const downloadTemplate = (templateName) => {
-    const content = templates[importType].columns.join(',');
-    const blob = new Blob([content], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = templates[importType].example;
-    a.click();
-    toast.success('Template heruntergeladen');
+  const parseCSV = (text) => {
+    const lines = text.split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    return lines.slice(1).map(line => {
+      const values = line.split(',');
+      return headers.reduce((obj, header, i) => {
+        obj[header] = values[i]?.trim() || '';
+        return obj;
+      }, {});
+    }).filter(row => Object.values(row).some(v => v));
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Massenimport: {templates[importType]?.name}</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="upload" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="upload">Importieren</TabsTrigger>
-            <TabsTrigger value="template">Template</TabsTrigger>
-            <TabsTrigger value="results">Ergebnisse</TabsTrigger>
-          </TabsList>
-
-          {/* Upload Tab */}
-          <TabsContent value="upload" className="space-y-4">
-            <Alert>
-              <AlertCircle className="w-4 h-4" />
-              <AlertDescription>
-                CSV-Datei mit Spalten: {templates[importType]?.columns.join(', ')}
-              </AlertDescription>
-            </Alert>
-
-            <div className="border-2 border-dashed border-slate-200 rounded-lg p-8 text-center">
-              <input
-                type="file"
-                accept=".csv"
-                onChange={handleFileUpload}
-                disabled={importing}
-                className="hidden"
-                id="file-input"
-              />
-              <label htmlFor="file-input" className="cursor-pointer">
-                <div className="space-y-2">
-                  <Upload className="w-8 h-8 mx-auto text-slate-400" />
-                  <p className="font-medium text-slate-700">
-                    {file ? file.name : 'CSV-Datei hier ablegen'}
-                  </p>
-                  <p className="text-xs text-slate-500">oder klicken zum Auswählen</p>
-                </div>
-              </label>
-            </div>
-
-            {importing && (
-              <div className="flex items-center justify-center gap-2 py-4">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Importiere...</span>
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => downloadTemplate(importType)}
-                className="flex-1"
-              >
-                📥 Template
-              </Button>
-              <Button
-                onClick={() => onOpenChange(false)}
-                className="flex-1"
-              >
-                Fertig
-              </Button>
-            </div>
-          </TabsContent>
-
-          {/* Template Tab */}
-          <TabsContent value="template" className="space-y-4">
-            <div className="bg-slate-50 p-4 rounded-lg space-y-2">
-              <p className="font-medium">Erforderliche Spalten:</p>
-              <ul className="space-y-1">
-                {templates[importType]?.columns.map((col, idx) => (
-                  <li key={idx} className="text-sm text-slate-600">
-                    • {col}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <Button
-              onClick={() => downloadTemplate(importType)}
-              className="w-full gap-2"
-            >
-              📥 Template herunterladen
-            </Button>
-          </TabsContent>
-
-          {/* Results Tab */}
-          <TabsContent value="results" className="space-y-4">
-            {results ? (
-              <div className="space-y-3">
-                {results.success ? (
-                  <Alert className="border-emerald-200 bg-emerald-50">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <AlertDescription className="text-emerald-800">
-                      ✅ {results.message}
-                    </AlertDescription>
-                  </Alert>
+        <div className="space-y-4">
+          {result ? (
+            <div className={`p-4 rounded-lg border ${
+              result.success 
+                ? 'bg-emerald-50 border-emerald-200' 
+                : 'bg-red-50 border-red-200'
+            }`}>
+              <div className="flex items-start gap-3">
+                {result.success ? (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
                 ) : (
-                  <Alert className="border-red-200 bg-red-50">
-                    <AlertCircle className="w-4 h-4 text-red-600" />
-                    <AlertDescription className="text-red-800">
-                      {results.error}
-                    </AlertDescription>
-                  </Alert>
+                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                 )}
-
-                {results.success && (
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="p-3 bg-slate-50 rounded">
-                      <p className="text-xs text-slate-600">Gesamt</p>
-                      <p className="text-lg font-bold">{results.total}</p>
-                    </div>
-                    <div className="p-3 bg-emerald-50 rounded">
-                      <p className="text-xs text-emerald-600">Erstellt</p>
-                      <p className="text-lg font-bold text-emerald-700">{results.created}</p>
-                    </div>
-                    <div className="p-3 bg-red-50 rounded">
-                      <p className="text-xs text-red-600">Fehler</p>
-                      <p className="text-lg font-bold text-red-700">{results.failed}</p>
-                    </div>
-                  </div>
-                )}
+                <div>
+                  <p className={`font-medium ${result.success ? 'text-emerald-900' : 'text-red-900'}`}>
+                    {result.success ? `${result.count} Einträge importiert` : 'Fehler beim Import'}
+                  </p>
+                  {result.error && <p className="text-xs text-red-700 mt-1">{result.error}</p>}
+                </div>
               </div>
-            ) : (
-              <p className="text-center text-slate-500 py-8">Noch kein Import durchgeführt</p>
-            )}
-          </TabsContent>
-        </Tabs>
+            </div>
+          ) : (
+            <>
+              <DragDropZone
+                onFilesSelect={setFiles}
+                accept=".csv,.json"
+                maxFiles={1}
+              />
+
+              {importing && (
+                <ProgressIndicatorBar
+                  current={progress}
+                  total={100}
+                  label="Wird importiert..."
+                  animated
+                />
+              )}
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleImport}
+                  disabled={files.length === 0 || importing}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 gap-2"
+                >
+                  <FileUp className="w-4 h-4" />
+                  Importieren
+                </Button>
+                <Button
+                  onClick={() => onOpenChange(false)}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Abbrechen
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
