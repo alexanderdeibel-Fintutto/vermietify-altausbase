@@ -21,9 +21,11 @@ import AdminLimitsConfig from './pages/AdminLimitsConfig';
 import AdminMasterDashboard from './pages/AdminMasterDashboard';
 import AdminMessagingCenter from './pages/AdminMessagingCenter';
 import AdminPackageSetup from './pages/AdminPackageSetup';
+import AdminPricingBundles from './pages/AdminPricingBundles';
 import AdminPricingFeatureGroups from './pages/AdminPricingFeatureGroups';
 import AdminPricingFeatures from './pages/AdminPricingFeatures';
 import AdminPricingMatrix from './pages/AdminPricingMatrix';
+import AdminPricingOverview from './pages/AdminPricingOverview';
 import AdminPricingProducts from './pages/AdminPricingProducts';
 import AdminPricingTiers from './pages/AdminPricingTiers';
 import AdminProductFeatures from './pages/AdminProductFeatures';
@@ -105,9 +107,9 @@ import CommunityForum from './pages/CommunityForum';
 import Companies from './pages/Companies';
 import CompanyDetailEnhanced from './pages/CompanyDetailEnhanced';
 import CompleteEnterpriseHub from './pages/CompleteEnterpriseHub';
+import ComplianceAudit from './pages/ComplianceAudit';
 import CompleteFeaturesHub from './pages/CompleteFeaturesHub';
 import ComplexTaxSetupWizard from './pages/ComplexTaxSetupWizard';
-import ComplianceAudit from './pages/ComplianceAudit';
 import ComplianceCenter from './pages/ComplianceCenter';
 import ComplianceMonitoringDashboard from './pages/ComplianceMonitoringDashboard';
 import ComplianceReportingHub from './pages/ComplianceReportingHub';
@@ -219,6 +221,7 @@ import MultiCountryTaxComparison from './pages/MultiCountryTaxComparison';
 import MultiYearTaxComparison from './pages/MultiYearTaxComparison';
 import MultiYearTaxStrategy from './pages/MultiYearTaxStrategy';
 import MyAccount from './pages/MyAccount';
+import MySubscription from './pages/MySubscription';
 import NavigationDemo from './pages/NavigationDemo';
 import NotificationCenter from './pages/NotificationCenter';
 import NotificationHistory from './pages/NotificationHistory';
@@ -324,10 +327,10 @@ import TaxForms from './pages/TaxForms';
 import TaxHarvesting from './pages/TaxHarvesting';
 import TaxLawUpdates from './pages/TaxLawUpdates';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
+import TaxSetup from './pages/TaxSetup';
 import TaxLossHarvesting from './pages/TaxLossHarvesting';
 import TaxLossHarvestingAdvisor from './pages/TaxLossHarvestingAdvisor';
 import TaxManagement from './pages/TaxManagement';
-import TaxSetup from './pages/TaxSetup';
 import TaxMonitoringDashboard from './pages/TaxMonitoringDashboard';
 import TaxOptimizationAnalyzer from './pages/TaxOptimizationAnalyzer';
 import TaxOptimizationStrategy from './pages/TaxOptimizationStrategy';
@@ -417,8 +420,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import MySubscription from './pages/MySubscription';
-import AdminPricingOverview from './pages/AdminPricingOverview';
 import __Layout from './Layout.jsx';
 
 
@@ -446,9 +447,11 @@ export const PAGES = {
     "AdminMasterDashboard": AdminMasterDashboard,
     "AdminMessagingCenter": AdminMessagingCenter,
     "AdminPackageSetup": AdminPackageSetup,
+    "AdminPricingBundles": AdminPricingBundles,
     "AdminPricingFeatureGroups": AdminPricingFeatureGroups,
     "AdminPricingFeatures": AdminPricingFeatures,
     "AdminPricingMatrix": AdminPricingMatrix,
+    "AdminPricingOverview": AdminPricingOverview,
     "AdminPricingProducts": AdminPricingProducts,
     "AdminPricingTiers": AdminPricingTiers,
     "AdminProductFeatures": AdminProductFeatures,
@@ -530,9 +533,9 @@ export const PAGES = {
     "Companies": Companies,
     "CompanyDetailEnhanced": CompanyDetailEnhanced,
     "CompleteEnterpriseHub": CompleteEnterpriseHub,
+    "ComplianceAudit": ComplianceAudit,
     "CompleteFeaturesHub": CompleteFeaturesHub,
     "ComplexTaxSetupWizard": ComplexTaxSetupWizard,
-    "ComplianceAudit": ComplianceAudit,
     "ComplianceCenter": ComplianceCenter,
     "ComplianceMonitoringDashboard": ComplianceMonitoringDashboard,
     "ComplianceReportingHub": ComplianceReportingHub,
@@ -644,6 +647,7 @@ export const PAGES = {
     "MultiYearTaxComparison": MultiYearTaxComparison,
     "MultiYearTaxStrategy": MultiYearTaxStrategy,
     "MyAccount": MyAccount,
+    "MySubscription": MySubscription,
     "NavigationDemo": NavigationDemo,
     "NotificationCenter": NotificationCenter,
     "NotificationHistory": NotificationHistory,
@@ -749,10 +753,10 @@ export const PAGES = {
     "TaxHarvesting": TaxHarvesting,
     "TaxLawUpdates": TaxLawUpdates,
     "TaxLibraryManagement": TaxLibraryManagement,
+    "TaxSetup": TaxSetup,
     "TaxLossHarvesting": TaxLossHarvesting,
     "TaxLossHarvestingAdvisor": TaxLossHarvestingAdvisor,
     "TaxManagement": TaxManagement,
-    "TaxSetup": TaxSetup,
     "TaxMonitoringDashboard": TaxMonitoringDashboard,
     "TaxOptimizationAnalyzer": TaxOptimizationAnalyzer,
     "TaxOptimizationStrategy": TaxOptimizationStrategy,
@@ -842,8 +846,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "MySubscription": MySubscription,
-    "AdminPricingOverview": AdminPricingOverview,
 }
 
 export const pagesConfig = {

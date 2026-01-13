@@ -9,7 +9,7 @@ import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import DeleteConfirmDialog from '@/components/buildings/DeleteConfirmDialog';
-import LimitGuard from '@/components/package/LimitGuard';
+import { useLimitCheck } from '@/components/hooks/useLimitCheck';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import BuildingCreationWizard from '@/components/buildings/BuildingCreationWizard';
@@ -132,18 +132,20 @@ export default function BuildingsPage() {
         onCityChange={(city) => setFilters({ ...filters, city })}
         onSearchChange={(search) => setFilters({ ...filters, search })}
         onNewBuilding={handleNewBuilding}
-        renderNewButton={() => (
-          <LimitGuard limitType="buildings" currentCount={totalBuildings}>
+        renderNewButton={() => {
+          const { allowed } = useLimitCheck('MAX_OBJECTS');
+          return (
             <Button
               onClick={handleNewBuilding}
               size="sm"
               className="bg-slate-700 hover:bg-slate-800 font-extralight h-9 whitespace-nowrap"
+              disabled={!allowed}
             >
               <Plus className="w-4 h-4 mr-1" />
               Neu
             </Button>
-          </LimitGuard>
-        )}
+          );
+        }}
       />
 
       {/* Content */}

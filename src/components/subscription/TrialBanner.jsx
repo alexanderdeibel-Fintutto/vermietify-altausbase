@@ -1,48 +1,54 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { useSubscription } from '@/components/hooks/useSubscription';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Clock } from 'lucide-react';
+import { Clock, Crown } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { cn } from '@/lib/utils';
 
-export function TrialBanner({ className }) {
-  const { data: subscription } = useSubscription();
+export default function TrialBanner() {
+  const { data: user } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me()
+  });
 
-  if (!subscription?.isTrial || subscription.daysLeftInTrial > 7) {
+  const { data: subscription } = useQuery({
+    queryKey: ['userSubscription', user?.email],
+    queryFn: async () => {
+      const subs = await base44.entities.UserSubscription.filter({ 
+        user_email: user.email 
+      });
+      return subs[0] || null;
+    },
+    enabled: !!user?.email
+  });
+
+  if (!subscription || subscription.status !== 'TRIAL') {
     return null;
   }
 
-  const daysLeft = subscription.daysLeftInTrial;
-  const isUrgent = daysLeft <= 2;
+  const trialEnd = new Date(subscription.trial_end_date);
+  const today = new Date();
+  const daysRemaining = Math.ceil((trialEnd - today) / (1000 * 60 * 60 * 24));
 
-  const getMessage = () => {
-    if (daysLeft === 0) return 'Deine Testphase endet heute!';
-    if (daysLeft === 1) return 'Deine Testphase endet morgen';
-    return `Noch ${daysLeft} Tage in deiner Testphase`;
-  };
+  if (daysRemaining < 0) {
+    return null;
+  }
 
   return (
-    <Alert className={cn(
-      "border-blue-200 bg-blue-50",
-      isUrgent && "border-orange-200 bg-orange-50",
-      className
-    )}>
-      <Clock className={cn("h-4 w-4", isUrgent ? "text-orange-600" : "text-blue-600")} />
-      <AlertDescription className="flex items-center justify-between gap-4">
-        <span className={cn(
-          "font-medium",
-          isUrgent ? "text-orange-900" : "text-blue-900"
-        )}>
-          {getMessage()}
+    <Alert className="border-blue-200 bg-blue-50">
+      <Clock className="h-4 w-4 text-blue-600" />
+      <AlertDescription className="flex items-center justify-between">
+        <span className="text-sm text-blue-900">
+          Noch <strong>{daysRemaining} Tage</strong> in Ihrer Testphase
         </span>
-        <Button size="sm" asChild>
-          <Link to={createPageUrl('SubscriptionSettings')}>
-            <Sparkles className="h-4 w-4 mr-2" />
+        <Link to={createPageUrl('Pricing')}>
+          <Button size="sm" variant="outline" className="ml-4">
+            <Crown className="h-4 w-4 mr-2" />
             Jetzt upgraden
-          </Link>
-        </Button>
+          </Button>
+        </Link>
       </AlertDescription>
     </Alert>
   );

@@ -1,83 +1,61 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { useUsageLimit } from '@/components/hooks/useUsageLimit';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Infinity, ArrowUpCircle } from 'lucide-react';
-import { createPageUrl } from '@/utils';
-import { cn } from '@/lib/utils';
+import { AlertTriangle } from 'lucide-react';
 
-export function UsageMeter({ 
-  limitKey, 
-  label, 
-  showLabel = true, 
-  showUpgradeHint = true, 
-  size = 'md',
-  className 
-}) {
-  const { data: usage, isLoading } = useUsageLimit(limitKey);
-
-  if (isLoading) {
-    return <div className="animate-pulse h-8 bg-slate-100 rounded" />;
-  }
-
-  if (!usage) return null;
-
-  const displayLabel = label || usage.limitName;
-
-  if (usage.unlimited) {
+export default function UsageMeter({ limitCode, title, icon: Icon, current, limit }) {
+  if (limit === -1) {
     return (
-      <div className={cn("flex items-center gap-2 text-sm text-slate-600", className)}>
-        {showLabel && <span>{displayLabel}:</span>}
-        <Badge variant="secondary" className="gap-1">
-          <Infinity className="h-3 w-3" />
-          Unbegrenzt
-        </Badge>
-      </div>
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {Icon && <Icon className="h-4 w-4 text-slate-500" />}
+              <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            </div>
+            <Badge variant="outline" className="bg-green-50 text-green-700">
+              Unbegrenzt
+            </Badge>
+          </div>
+        </CardHeader>
+      </Card>
     );
   }
 
-  const progressHeight = { sm: 'h-1', md: 'h-2', lg: 'h-3' }[size] || 'h-2';
+  const percentage = limit > 0 ? (current / limit) * 100 : 0;
+  const isWarning = percentage >= 80;
+  const isCritical = percentage >= 95;
 
   return (
-    <div className={cn("space-y-2", className)}>
-      {showLabel && (
-        <div className="flex justify-between text-sm">
-          <span className="text-slate-700">{displayLabel}</span>
-          <span className={cn(
-            "font-medium",
-            usage.isAtLimit ? 'text-red-600' : 'text-slate-600'
-          )}>
-            {usage.current} / {usage.max}
-          </span>
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {Icon && <Icon className="h-4 w-4 text-slate-500" />}
+            <CardTitle className="text-sm font-medium">{title}</CardTitle>
+          </div>
+          {(isWarning || isCritical) && (
+            <AlertTriangle className={`h-4 w-4 ${isCritical ? 'text-red-500' : 'text-yellow-500'}`} />
+          )}
         </div>
-      )}
-
-      <Progress
-        value={usage.percentage}
-        className={cn(
-          progressHeight,
-          usage.isAtLimit && '[&>div]:bg-red-500',
-          usage.isNearLimit && !usage.isAtLimit && '[&>div]:bg-amber-500'
-        )}
-      />
-
-      {usage.isAtLimit && showUpgradeHint && (
-        <div className="flex items-center justify-between gap-2 text-xs text-red-600">
-          <span>
-            {usage.overageAllowed
-              ? `Limit erreicht. Weitere: ${(usage.overagePrice / 100).toFixed(2)}€/Stück`
-              : 'Limit erreicht. Bitte upgraden.'}
-          </span>
-          <Button size="sm" variant="outline" asChild className="h-7 text-xs">
-            <Link to={createPageUrl('SubscriptionSettings')}>
-              <ArrowUpCircle className="h-3 w-3 mr-1" />
-              Upgrade
-            </Link>
-          </Button>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          <Progress 
+            value={percentage} 
+            className={
+              isCritical ? '[&>div]:bg-red-500' :
+              isWarning ? '[&>div]:bg-yellow-500' :
+              '[&>div]:bg-green-500'
+            }
+          />
+          <div className="flex items-center justify-between text-xs text-slate-600">
+            <span>{current} von {limit} genutzt</span>
+            <span>{percentage.toFixed(0)}%</span>
+          </div>
         </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 }
