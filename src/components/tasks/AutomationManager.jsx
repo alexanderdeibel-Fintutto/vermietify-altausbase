@@ -9,7 +9,6 @@ import { Plus, Edit, Trash2, Zap, Clock, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import AutomationForm from './AutomationForm';
 import { useActivityLogger } from './useActivityLogger';
-import { HelpButton } from '@/components/shared/HelpSystem';
 
 export default function AutomationManager() {
     const [formOpen, setFormOpen] = useState(false);
@@ -137,7 +136,6 @@ export default function AutomationManager() {
                     <p className="text-sm text-slate-600">Automatische Aktionen basierend auf Triggern</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <HelpButton context="automation_rules" />
                     <Button
                         onClick={() => {
                             setEditingAutomation(null);
