@@ -1,69 +1,74 @@
-import React, { useEffect, useState } from 'react';
-import { CheckCircle2, Clock, AlertCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Cloud, CloudOff, Loader2, CheckCircle2 } from 'lucide-react';
 
-export default function AutoSaveIndicator({
-  status = 'idle', // idle, saving, saved, error
-  lastSavedAt = null,
-  errorMessage = null,
+export default function AutoSaveIndicator({ 
+  status = 'idle', // 'idle' | 'saving' | 'saved' | 'error'
+  lastSaved = null 
 }) {
-  const [showSaved, setShowSaved] = useState(false);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    if (status === 'saving' || status === 'saved' || status === 'error') {
+      setVisible(true);
+    }
+
     if (status === 'saved') {
-      setShowSaved(true);
-      const timer = setTimeout(() => setShowSaved(false), 2000);
+      const timer = setTimeout(() => setVisible(false), 2000);
       return () => clearTimeout(timer);
     }
   }, [status]);
 
-  const getContent = () => {
-    switch (status) {
-      case 'saving':
-        return (
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className="flex items-center gap-2 text-sm text-slate-600"
-          >
-            <Clock className="w-4 h-4" />
-            <span>Wird gespeichert...</span>
-          </motion.div>
-        );
-      case 'saved':
-        return (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            className="flex items-center gap-2 text-sm text-emerald-600"
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Gespeichert</span>
-          </motion.div>
-        );
-      case 'error':
-        return (
-          <div className="flex items-center gap-2 text-sm text-red-600">
-            <AlertCircle className="w-4 h-4" />
-            <span>{errorMessage || 'Fehler beim Speichern'}</span>
-          </div>
-        );
-      default:
-        return lastSavedAt ? (
-          <span className="text-xs text-slate-500">
-            Zuletzt gespeichert: {lastSavedAt.toLocaleTimeString('de-DE', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </span>
-        ) : null;
+  const config = {
+    saving: {
+      icon: Loader2,
+      text: 'Speichern...',
+      color: 'text-slate-500',
+      spin: true
+    },
+    saved: {
+      icon: CheckCircle2,
+      text: 'Gespeichert',
+      color: 'text-emerald-600',
+      spin: false
+    },
+    error: {
+      icon: CloudOff,
+      text: 'Fehler',
+      color: 'text-red-600',
+      spin: false
+    },
+    idle: {
+      icon: Cloud,
+      text: '',
+      color: 'text-slate-400',
+      spin: false
     }
   };
 
+  const { icon: Icon, text, color, spin } = config[status];
+
   return (
-    <div className="flex items-center justify-end">
-      {getContent()}
-    </div>
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          className="flex items-center gap-2 text-xs"
+        >
+          <Icon className={`w-4 h-4 ${color} ${spin ? 'animate-spin' : ''}`} />
+          <span className={color}>{text}</span>
+          {lastSaved && status === 'saved' && (
+            <span className="text-slate-400">
+              ({new Date(lastSaved).toLocaleTimeString('de-DE', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+              })})
+            </span>
+          )}
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

@@ -1,82 +1,135 @@
 import React, { useState } from 'react';
-import { Upload, FileIcon } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Upload, FileText, X, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 
-export default function DragDropZone({
-  onFilesSelected,
-  accept = '.pdf,.doc,.docx',
-  maxSize = 10 * 1024 * 1024, // 10MB
-  multiple = true,
+export default function DragDropZone({ 
+  onFileSelect, 
+  acceptedTypes = '.pdf,.jpg,.jpeg,.png',
+  maxSizeMB = 10,
+  loading = false 
 }) {
   const [isDragging, setIsDragging] = useState(false);
-  const [errors, setErrors] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
 
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
-    processFiles(e.dataTransfer.files);
-  };
-
-  const handleFileChange = (e) => {
-    processFiles(e.target.files);
-  };
-
-  const processFiles = (fileList) => {
-    const newErrors = [];
-    const validFiles = [];
-
-    Array.from(fileList).forEach((file) => {
-      if (file.size > maxSize) {
-        newErrors.push(`${file.name}: Datei zu groß`);
-      } else {
-        validFiles.push(file);
-      }
-    });
-
-    setErrors(newErrors);
-    if (validFiles.length > 0) {
-      onFilesSelected(validFiles);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      handleFile(files[0]);
     }
   };
 
+  const handleFileInput = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      handleFile(e.target.files[0]);
+    }
+  };
+
+  const handleFile = (file) => {
+    const maxSize = maxSizeMB * 1024 * 1024;
+    if (file.size > maxSize) {
+      alert(`Datei zu groß! Maximum: ${maxSizeMB}MB`);
+      return;
+    }
+
+    setSelectedFile(file);
+    if (onFileSelect) onFileSelect(file);
+  };
+
   return (
-    <motion.div
-      onDragOver={(e) => {
-        e.preventDefault();
-        setIsDragging(true);
-      }}
-      onDragLeave={() => setIsDragging(false)}
-      onDrop={handleDrop}
-      animate={{ scale: isDragging ? 1.02 : 1 }}
-      className={`relative p-8 rounded-lg border-2 border-dashed transition-colors cursor-pointer ${
-        isDragging
-          ? 'border-blue-500 bg-blue-50'
-          : 'border-slate-300 bg-slate-50 hover:bg-slate-100'
-      }`}
-    >
-      <input
-        type="file"
-        onChange={handleFileChange}
-        accept={accept}
-        multiple={multiple}
-        className="absolute inset-0 opacity-0 cursor-pointer"
-      />
+    <div>
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-all ${
+          isDragging 
+            ? 'border-blue-500 bg-blue-50' 
+            : 'border-slate-300 hover:border-slate-400 bg-slate-50'
+        }`}
+      >
+        <input
+          type="file"
+          onChange={handleFileInput}
+          accept={acceptedTypes}
+          className="absolute inset-0 opacity-0 cursor-pointer"
+          disabled={loading}
+        />
 
-      <div className="flex flex-col items-center gap-2">
-        <Upload className="w-8 h-8 text-slate-400" />
-        <p className="font-medium text-slate-700">Dateien hier ablegen</p>
-        <p className="text-sm text-slate-500">oder klicken zum Auswählen</p>
+        <AnimatePresence mode="wait">
+          {loading ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center gap-3"
+            >
+              <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+              <p className="text-sm text-slate-600">Wird hochgeladen...</p>
+            </motion.div>
+          ) : selectedFile ? (
+            <motion.div
+              key="selected"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="flex flex-col items-center gap-3"
+            >
+              <FileText className="w-8 h-8 text-emerald-600" />
+              <div>
+                <p className="text-sm font-medium text-slate-800">{selectedFile.name}</p>
+                <p className="text-xs text-slate-500">
+                  {(selectedFile.size / 1024).toFixed(0)} KB
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedFile(null);
+                }}
+                className="gap-2"
+              >
+                <X className="w-4 h-4" />
+                Entfernen
+              </Button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center gap-3"
+            >
+              <Upload className="w-8 h-8 text-slate-400" />
+              <div>
+                <p className="text-sm font-medium text-slate-700">
+                  Datei hierher ziehen oder klicken
+                </p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Max. {maxSizeMB}MB · {acceptedTypes}
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-
-      {errors.length > 0 && (
-        <div className="mt-4 p-3 bg-red-50 rounded-lg">
-          {errors.map((error, idx) => (
-            <p key={idx} className="text-sm text-red-600">
-              {error}
-            </p>
-          ))}
-        </div>
-      )}
-    </motion.div>
+    </div>
   );
 }
