@@ -1,55 +1,88 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Copy, Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { FileText, Clock, Star } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function QuickTemplateSelector({ 
   templates = [],
   onSelect,
-  loading = false,
-  showCopyFeedback = true
+  recentlyUsed = []
 }) {
-  const [copied, setCopied] = React.useState(null);
+  const popularTemplates = templates.filter(t => t.isPopular);
+  const recent = recentlyUsed.slice(0, 3);
 
-  const handleSelect = (template) => {
-    onSelect?.(template);
-    if (showCopyFeedback) {
-      setCopied(template.id);
-      setTimeout(() => setCopied(null), 2000);
-    }
-  };
+  if (templates.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-      {templates.map(template => (
-        <Card
-          key={template.id}
-          className="p-3 cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-colors"
-        >
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="font-medium text-sm text-slate-900">{template.name}</p>
-              {template.description && (
-                <p className="text-xs text-slate-600 mt-1 line-clamp-2">
-                  {template.description}
-                </p>
-              )}
-            </div>
-            <Button
-              onClick={() => handleSelect(template)}
-              disabled={loading}
-              size="sm"
-              className="h-7 w-7 p-0 flex-shrink-0 bg-blue-600 hover:bg-blue-700"
-            >
-              {copied === template.id ? (
-                <Check className="w-3 h-3" />
-              ) : (
-                <Copy className="w-3 h-3" />
-              )}
-            </Button>
+    <div className="space-y-4">
+      {recent.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Clock className="w-4 h-4 text-slate-400" />
+            <span className="text-sm font-medium text-slate-700">
+              Zuletzt verwendet
+            </span>
           </div>
-        </Card>
-      ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            {recent.map((template, idx) => (
+              <motion.div
+                key={template.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+              >
+                <Card
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => onSelect?.(template)}
+                >
+                  <div className="p-3">
+                    <div className="flex items-start gap-2">
+                      <FileText className="w-4 h-4 text-blue-600 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">
+                          {template.name}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {template.description}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {popularTemplates.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Star className="w-4 h-4 text-amber-400" />
+            <span className="text-sm font-medium text-slate-700">
+              Beliebte Vorlagen
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+            {popularTemplates.map((template, idx) => (
+              <Button
+                key={template.id}
+                variant="outline"
+                className="h-auto py-3 justify-start"
+                onClick={() => onSelect?.(template)}
+              >
+                <div className="text-left">
+                  <p className="text-sm font-medium">{template.name}</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {template.usage || 0} mal verwendet
+                  </p>
+                </div>
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

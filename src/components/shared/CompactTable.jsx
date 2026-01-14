@@ -1,65 +1,65 @@
 import React from 'react';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { ChevronRight } from 'lucide-react';
 
-export default function CompactTable({
-  columns = [],
+export default function CompactTable({ 
   data = [],
+  columns = [],
   onRowClick,
-  loading = false,
+  emptyMessage = "Keine Daten vorhanden"
 }) {
-  if (loading) {
+  if (data.length === 0) {
     return (
-      <div className="space-y-2">
-        {[...Array(3)].map((_, idx) => (
-          <div key={idx} className="h-10 bg-slate-200 rounded animate-pulse" />
-        ))}
-      </div>
+      <Card>
+        <div className="p-8 text-center text-slate-500">
+          {emptyMessage}
+        </div>
+      </Card>
     );
   }
 
   return (
-    <div className="border rounded-lg overflow-hidden">
-      <div className="grid gap-px bg-slate-200">
-        {/* Header */}
-        <div
-          className="grid gap-4 p-3 bg-slate-50 font-medium text-xs text-slate-700"
-          style={{
-            gridTemplateColumns: columns.map(c => c.width || '1fr').join(' '),
-          }}
-        >
-          {columns.map((col, idx) => (
-            <div key={idx}>{col.label}</div>
-          ))}
-        </div>
-
-        {/* Rows */}
-        {data.map((row, rowIdx) => (
-          <div
-            key={rowIdx}
-            onClick={() => onRowClick?.(row)}
-            className="grid gap-4 p-3 bg-white hover:bg-slate-50 cursor-pointer transition-colors group"
-            style={{
-              gridTemplateColumns: columns.map(c => c.width || '1fr').join(' '),
-            }}
-          >
-            {columns.map((col, colIdx) => (
-              <div
-                key={colIdx}
-                className="text-sm text-slate-700 flex items-center gap-2"
+    <Card className="overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-slate-50 border-b border-slate-200">
+            <tr>
+              {columns.map((col) => (
+                <th
+                  key={col.key}
+                  className="text-left p-3 text-xs font-medium text-slate-700 uppercase tracking-wider"
+                >
+                  {col.label}
+                </th>
+              ))}
+              {onRowClick && <th className="w-8"></th>}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {data.map((row, idx) => (
+              <tr
+                key={idx}
+                onClick={() => onRowClick?.(row)}
+                className={`${
+                  onRowClick ? 'cursor-pointer hover:bg-slate-50' : ''
+                } transition-colors`}
               >
-                {col.render ? col.render(row[col.field], row) : row[col.field]}
-              </div>
+                {columns.map((col) => (
+                  <td key={col.key} className="p-3 text-sm text-slate-700">
+                    {col.render ? col.render(row[col.key], row) : row[col.key]}
+                  </td>
+                ))}
+                {onRowClick && (
+                  <td className="p-3">
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                  </td>
+                )}
+              </tr>
             ))}
-            <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 ml-auto" />
-          </div>
-        ))}
+          </tbody>
+        </table>
       </div>
-
-      {data.length === 0 && (
-        <div className="p-8 text-center text-slate-500 text-sm">
-          Keine Daten vorhanden
-        </div>
-      )}
-    </div>
+    </Card>
   );
 }
