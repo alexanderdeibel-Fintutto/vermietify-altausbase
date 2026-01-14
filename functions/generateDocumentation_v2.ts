@@ -504,7 +504,18 @@ Deno.serve(async (req) => {
                 content_markdown = userIssuesDoc.content_markdown;
                 content_json = userIssuesDoc.content_json || {};
             } else {
-                const allEntities = { ...KNOWN_ENTITY_SCHEMAS };
+                // Dynamisch alle Entity-Schemas laden
+                let allEntities = { ...KNOWN_ENTITY_SCHEMAS };
+                
+                try {
+                    const schemasResult = await base44.asServiceRole.functions.invoke('getAllEntitySchemas', {});
+                    if (schemasResult.data?.schemas && Object.keys(schemasResult.data.schemas).length > 0) {
+                        allEntities = schemasResult.data.schemas;
+                        console.log(`Dynamisch ${Object.keys(allEntities).length} Schemas geladen`);
+                    }
+                } catch (error) {
+                    console.error('Fallback zu KNOWN_ENTITY_SCHEMAS:', error);
+                }
                 
                 switch (documentation_type) {
                     case 'database_structure':
@@ -624,20 +635,60 @@ async function generateDatabaseStructureDoc(entities, changes = [], versionNumbe
     
     doc += '---\n\n';
     
+    // Intelligente Gruppierung basierend auf Entity-Namen
     const groups = {
-        '1. OBJEKTE & GEBÄUDE': ['Building', 'Unit'],
-        '2. MIETER & VERTRÄGE': ['Tenant', 'LeaseContract'],
+        '1. OBJEKTE & GEBÄUDE': ['Building', 'Unit', 'Gebaeude', 'BuildingOwnership', 'BuildingPermission', 'BuildingTask', 'BuildingManager', 'BuildingInspection', 'InspectionChecklist', 'InspectionFinding', 'BuildingBoardPost', 'BuildingBoardComment', 'BuildingTaxLibrary', 'EnergyPassport', 'IoTSensor', 'SensorReading', 'SmartDevice', 'HeatingOptimization', 'EnergyAnalysis'],
+        '2. EIGENTÜMER & ANTEILE': ['Owner', 'Shareholder', 'OwnerRelationship', 'BuildingOwnership', 'OwnerAssetLink'],
+        '3. MIETER & VERTRÄGE': ['Tenant', 'CoTenant', 'LeaseContract', 'Termination', 'ContractTermination', 'ContractRenewal', 'RentChange', 'RentIncrease', 'RentIncreaseProposal', 'IndexRentAdjustment', 'HandoverProtocol', 'Deposit', 'RentDebt', 'Applicant', 'Viewing'],
+        '4. MIETER-KOMMUNIKATION': ['TenantMessage', 'TenantNotification', 'TenantCommunication', 'TenantIssueReport', 'TenantSupportTicket', 'TenantFeedback', 'TenantSurvey', 'SurveyResponse', 'TenantOnboarding', 'TenantAppSession', 'TenantFavorite', 'TenantAccessControl', 'TenantAdministrationLock'],
+        '5. FINANZEN ALLGEMEIN': ['Invoice', 'FinancialItem', 'GeneratedFinancialBooking', 'Payment', 'ActualPayment', 'CostCategory', 'CostType', 'CustomCostCategory', 'EuerCategory', 'TaxCategory', 'CostTaxLink', 'CostCenter', 'FinancialItemTransactionLink', 'PaymentTransactionLink'],
+        '6. BANKING': ['BankAccount', 'BankTransaction', 'BankStatement', 'BankTransfer', 'TransferDraft', 'SEPAMandate', 'BankingAutomationRule', 'FinAPISync', 'CategorizationRule'],
+        '7. STEUERN': ['PropertyTax', 'PropertyTaxDecree', 'TaxReturnV', 'TaxReturnVLine', 'AnlageVSubmission', 'TaxReturn', 'TaxForm', 'TaxFormField', 'TaxFormAttachment', 'ElsterSubmission', 'ElsterResponse', 'ElsterLog', 'ElsterCertificate', 'ElsterSettings', 'ElsterComplianceAudit', 'ElsterFormTemplate', 'AnlageKAP', 'AnlageSO', 'AnlageG', 'AnlageVorsorgeaufwand', 'EstMantelbogen', 'TaxEvent', 'TaxOptimization', 'TaxOptimizationScenario', 'TaxSettings', 'TaxSummary', 'TaxLot', 'TaxHarvestingSuggestion', 'TaxConfig', 'TaxProfile', 'TaxLawUpdate', 'TaxRule', 'TaxRuleCategory', 'TaxRuleAuditLog', 'TaxDeadline', 'TaxReminder', 'TaxCalculation', 'TaxCompliance', 'TaxScenario', 'TaxAlert', 'TaxDocument', 'TaxPlanning', 'TaxFiling', 'TaxLossCarryforward', 'TaxAuditFile', 'TaxCategoryMaster', 'UserTaxSettings'],
+        '8. VERMÖGENSVERWALTUNG': ['Portfolio', 'Asset', 'AssetTransaction', 'AssetValuation', 'AssetHolding', 'AssetPrice', 'AssetApiConfig', 'AssetPerformanceHistory', 'AssetPortfolio', 'PortfolioAccount', 'PortfolioShare', 'PortfolioAlert', 'PortfolioNotification', 'PortfolioMetrics', 'PortfolioComment', 'PortfolioBenchmark', 'PortfolioAnalysis', 'Stock', 'Crypto', 'CryptoHolding', 'PreciousMetal', 'OtherAsset', 'FreistellungsauftragBank', 'Dividend', 'StakingReward', 'Investment', 'InvestmentAT', 'InvestmentCH', 'CapitalGain', 'CapitalGainAT', 'CapitalGainCH', 'OtherIncome', 'OtherIncomeAT', 'OtherIncomeCH', 'RealEstateCH', 'CrossBorderTransaction', 'PriceHistory', 'RebalancingStrategy', 'ScenarioSimulation', 'AdvisorPortal', 'ImportBatchLog', 'ImportMapping'],
+        '9. VERSICHERUNGEN & FINANZIERUNG': ['Insurance', 'InsurancePolicy', 'InsuranceContract', 'Financing', 'LoanPayment', 'AfaSchedule', 'AfASchedule'],
+        '10. BETRIEBSKOSTEN': ['OperatingCostStatement', 'OperatingCostStatementItem', 'OperatingCostItem', 'OperatingCostUnitResult', 'OperatingCostUnitDetail', 'OperatingCostAutomation', 'UtilitySettlement'],
+        '11. DOKUMENTE': ['Document', 'DocumentTemplate', 'DocumentOriginal', 'UploadedDocument', 'GeneratedDocument', 'DocumentVersion', 'DocumentInbox', 'DocumentComment', 'DocumentRelationship', 'DocumentPermission', 'DocumentActivity', 'DocumentTag', 'DocumentWorkflow', 'DocumentWorkflowRule', 'DocumentTask', 'DocumentArchive', 'DocumentAnalytics', 'DocumentAnalysis', 'DocumentExpiry', 'DocumentLock', 'DocumentEncryption', 'DocumentRights', 'DocumentSignature', 'DocumentCollaborationSession', 'DocumentClassificationRule', 'DocumentRetentionPolicy', 'TextBlock', 'Template', 'InvoiceTemplate'],
+        '12. KOMMUNIKATION & BRIEFE': ['LetterShipment', 'LetterXpressCredential', 'Email', 'EmailTemplate', 'CommunicationLog', 'CommunicationTemplate', 'CommunicationWorkflow', 'MessageThread', 'WhatsAppMessage', 'WhatsAppTemplate', 'WhatsAppAccount', 'WhatsAppContact', 'WhatsAppOptIn', 'WhatsAppWebhookLog'],
+        '13. AUFGABEN & WORKFLOWS': ['Task', 'TaskStatus', 'TaskPriority', 'FieldTask', 'MaintenanceTask', 'BuildingTask', 'Workflow', 'WorkflowStep', 'WorkflowExecution', 'WorkflowComment', 'WorkflowCollaborationSession', 'WorkflowCondition', 'WorkflowRoleAssignment', 'WorkflowTrigger', 'WorkflowRole', 'WorkflowIntegration', 'WorkflowTemplate', 'WorkflowPermission', 'WorkflowVersion', 'WorkflowAutomation', 'Automation', 'BookingGenerationRule'],
+        '14. LIEFERANTEN & DIENSTLEISTER': ['Supplier', 'SupplierContract', 'Contractor', 'ServiceProvider', 'ServiceRating', 'Vendor', 'VendorRating', 'VendorTask', 'VendorDocument'],
+        '15. ZÄHLER & VERBRÄUCHE': ['Meter', 'MeterReading', 'MeterReadingSchedule', 'MeterReadingRoute'],
+        '16. BENACHRICHTIGUNGEN & ALERTS': ['Notification', 'NotificationPreference', 'AlertRule', 'AlertPreference', 'PaymentReminder', 'PortfolioAlert', 'PortfolioNotification', 'BudgetAlert'],
+        '17. BERECHTIGUNGEN & ROLLEN': ['BuildingPermission', 'FieldPermission', 'RoleDefinition', 'Role', 'UserRole', 'UserRoleAssignment', 'CustomRole', 'Permission', 'UserPermission', 'WorkflowPermission', 'PermissionAuditLog', 'DocumentPermission', 'DocumentRights', 'TenantAccessControl'],
+        '18. REPORTS & ANALYTICS': ['Report', 'ReportConfig', 'ReportSchedule', 'FinancialReport', 'Analytics', 'DocumentAnalytics', 'TesterAnalytics', 'ProblemStatistics', 'ComplianceReport'],
+        '19. AUDIT & LOGS': ['AuditLog', 'ActivityLog', 'UserAuditLog', 'OnboardingAuditLog', 'PricingAuditLog', 'SyncAuditLog', 'TaxRuleAuditLog', 'ElsterLog', 'DocumentActivity', 'TeamActivityLog', 'UserActivity'],
+        '20. APPROVALS & GENEHMIGUNGEN': ['Approval', 'ApprovalWorkflow', 'SignatureRequest'],
+        '21. PRICING & SUBSCRIPTIONS': ['Product', 'Feature', 'FeatureGroup', 'ProductFeature', 'PricingTier', 'TierFeature', 'TierLimit', 'Bundle', 'BundleItem', 'Discount', 'UpsellTrigger', 'SubscriptionPlan', 'SubscriptionAddOn', 'UserSubscription', 'SubscriptionInvoice', 'PlanLimit', 'PlanAddOnPricing', 'UserAddOn', 'UsageLimit', 'UserLimit', 'PricingSnapshot', 'ModulePricing'],
+        '22. SUCHE & FAVORITEN': ['SavedSearch', 'UserFavorite', 'TenantFavorite'],
+        '23. WEBHOOKS & API': ['Webhook', 'APIKey'],
+        '24. BUDGET & PLANUNG': ['Budget', 'BudgetRequest', 'BudgetScenario', 'RollingBudget', 'PropertyBudget', 'BudgetAlert', 'CashflowForecast', 'ExpenseReport', 'CostOptimizationAnalysis'],
+        '25. ORGANISATION': ['Mandant', 'UserMandantAccess', 'Company', 'Department', 'DepartmentMember'],
+        '26. MODULE & PAKETE': ['AppSuite', 'ModuleDefinition', 'ModuleAccess', 'UserModuleAccess', 'UserSuiteSubscription', 'UserPackageConfiguration', 'UserPackageConfig', 'PackageTemplate', 'ProjectFeature', 'FeatureUnlock'],
+        '27. ONBOARDING & TESTING': ['UserOnboarding', 'OnboardingProgress', 'OnboardingWorkflow', 'OnboardingScenario', 'TestAccount', 'TestSession', 'TestAssignment', 'TestPhase', 'TesterInvitation', 'TesterActivity', 'TesterCommunication'],
+        '28. PROBLEME & SUPPORT': ['UserProblem', 'ProblemSummary', 'ProblemReportSummary', 'ProblemCategory', 'ProblemSolution', 'SupportTicket', 'UserJourney', 'UXPattern', 'AIInsight', 'ArchivedInsights', 'UserSegment'],
+        '29. DOKUMENTATION & WISSEN': ['GeneratedDocumentation', 'DocumentationChange', 'KnowledgeBaseArticle', 'LegalKnowledgeBase', 'LegalUpdateMonitor', 'KnowledgeGap', 'ClaudeAnalysisReport'],
+        '30. DASHBOARDS & WIDGETS': ['DashboardConfig', 'DashboardTemplate', 'DashboardWidget', 'WidgetInteraction'],
+        '31. THEMES & UI': ['Theme', 'NavigationState', 'UserPreferences'],
+        '32. COMPLIANCE & SICHERHEIT': ['ComplianceCheck', 'ComplianceReport', 'ComplianceAudit', 'HeritageProtection', 'DLPRule', 'DLPViolation'],
+        '33. WARTUNG & INSTANDHALTUNG': ['MaintenanceTask', 'MaintenanceRoute', 'MaintenancePrediction', 'Equipment', 'EmergencyContact'],
+        '34. COMMUNITY & SOZIALES': ['CommunityPost', 'CommunityComment', 'Announcement'],
+        '35. DIGITALE DIENSTE': ['DigitalKey', 'ARViewing', 'SmartContract'],
+        '36. SONSTIGE FINANZENTITIES': ['PropertyROI', 'IncomeVariance', 'RentOptimization', 'PropertyValuation', 'Vacancy', 'Reserve', 'IndustryBenchmark', 'PurchaseContract'],
+        '37. SYNC & INTEGRATION': ['SyncJob', 'SyncAuditLog', 'CantonConfig', 'AutomationConfig'],
+        '38. WEITERE ENTITIES': Object.keys(entities).filter(name => 
+            !Object.values(groups).flat().includes(name) &&
+            !['User'].includes(name) // User ist built-in
+        )
     };
 
     for (const [groupName, entityNames] of Object.entries(groups)) {
         const groupEntities = entityNames.filter(name => entities[name]);
         if (groupEntities.length === 0) continue;
 
-        doc += `# ${groupName}\n\n`;
+        doc += `## ${groupName}\n\n`;
 
         for (const name of groupEntities) {
             const schema = entities[name];
-            doc += `## Tabelle: ${name}\n\n`;
+            doc += `### Tabelle: ${name}\n\n`;
 
             if (schema?.properties) {
                 doc += '| Feldname | Datentyp | Pflichtfeld | Beschreibung |\n';
@@ -647,8 +698,8 @@ async function generateDatabaseStructureDoc(entities, changes = [], versionNumbe
                     const required = schema.required?.includes(fieldName) ? 'Ja' : 'Nein';
                     let type = field.type || 'unknown';
                     if (field.format) type += ` (${field.format})`;
-                    if (field.enum) type = `enum: ${field.enum.join(', ')}`;
-                    const description = (field.description || '-').replace(/\n/g, ' ');
+                    if (field.enum) type = `enum: ${field.enum.slice(0, 3).join(', ')}${field.enum.length > 3 ? '...' : ''}`;
+                    const description = (field.description || '-').replace(/\n/g, ' ').substring(0, 100);
                     doc += `| ${fieldName} | ${type} | ${required} | ${description} |\n`;
                 }
             }
