@@ -29,7 +29,6 @@ import TemplateQuickSelect from '@/components/invoices/TemplateQuickSelect';
 import CategorySuggestions from '@/components/invoices/CategorySuggestions';
 import HelpTooltip from '@/components/shared/HelpTooltip';
 import UmlagefaehigBadge from '@/components/shared/UmlagefaehigBadge';
-import CategorySuggestions from '@/components/invoices/CategorySuggestions';
 
 export default function InvoiceForm({ open, onOpenChange, invoice, buildings, units, contracts, onSuccess }) {
     const queryClient = useQueryClient();
