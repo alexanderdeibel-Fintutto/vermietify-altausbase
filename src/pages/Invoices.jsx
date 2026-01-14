@@ -921,7 +921,7 @@ export default function Invoices() {
                                                              {getStatusBadge(invoice.status)}
                                                          </TableCell>
                                                          <TableCell className="hidden md:table-cell">
-                                                             <UmlagefaehigBadge umlagefaehig={invoice.operating_cost_relevant} />
+                                                             <UmlagefaehigBadge value={invoice.operating_cost_relevant ? 'yes' : 'no'} showIcon={false} />
                                                          </TableCell>
                                                          <TableCell className="text-right">
                                                             <DropdownMenu>

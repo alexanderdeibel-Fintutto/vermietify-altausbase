@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Plus, X, Sparkles, HelpCircle } from 'lucide-react';
 import PostContractDialog from './PostContractDialog';
+import BuchungenGenerierenTooltip from '@/components/shared/BuchungenGenerierenTooltip';
+import { ContractWithoutBookingsWarning, HighRentWarning } from '@/components/shared/PlausibilityWarnings';
 import HelpTooltip from '@/components/shared/HelpTooltip';
 import { generateFinancialItemsForContract, regenerateContractFinancialItems, needsPartialRentDialog, calculatePartialRent } from './generateFinancialItems';
 import PartialRentDialog from './PartialRentDialog';
@@ -198,11 +200,16 @@ export default function ContractForm({
                 </DialogHeader>
                 <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 mt-4">
                     {isUnitOccupied && (
-                      <div className="col-span-2 p-3 bg-red-50 border-red-200 rounded-lg flex items-center gap-2">
+                      <div className="p-3 bg-red-50 border-red-200 rounded-lg flex items-center gap-2">
                         <AlertCircle className="w-5 h-5 text-red-600" />
                         <p className="text-xs text-red-800">⚠️ Diese Einheit ist bereits vermietet. Ein neuer Vertrag überschreibt den bestehenden.</p>
                       </div>
                     )}
+                    
+                    <HighRentWarning 
+                        rentPerSqm={selectedUnit?.sqm ? (parseFloat(watchBaseRent) || 0) / selectedUnit.sqm : 0}
+                        show={selectedUnit?.sqm && parseFloat(watchBaseRent) > 0}
+                    />
 
                     {isUnitOccupied && (
                       <div className="col-span-2 p-3 bg-red-50 border-red-200 rounded-lg flex items-center gap-2">
@@ -625,6 +632,17 @@ export default function ContractForm({
                 open={postContractDialogOpen}
                 onOpenChange={setPostContractDialogOpen}
                 contract={savedContractData}
+                onGenerateBookings={async () => {
+                    if (savedContractData) {
+                        try {
+                            await generateFinancialItemsForContract(savedContractData, []);
+                            toast.success('Buchungen erfolgreich generiert');
+                            setPostContractDialogOpen(false);
+                        } catch (error) {
+                            toast.error('Fehler beim Generieren der Buchungen');
+                        }
+                    }
+                }}
             />
         </Dialog>
     );

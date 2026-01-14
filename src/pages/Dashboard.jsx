@@ -178,8 +178,8 @@ export default function Dashboard() {
 
         {/* Right Sidebar */}
         <div className="space-y-4 sm:space-y-6">
-          <SubscriptionWidget />
           <ActionRequiredWidget />
+          <SubscriptionWidget />
           <OnboardingChecklist />
         </div>
       </div>
