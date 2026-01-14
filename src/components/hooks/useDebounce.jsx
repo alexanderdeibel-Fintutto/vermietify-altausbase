@@ -1,9 +1,5 @@
 import { useState, useEffect } from 'react';
 
-/**
- * Debounce Hook für Performance-Optimierung
- * Verzögert Updates um delay ms
- */
 export function useDebounce(value, delay = 500) {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -19,3 +15,5 @@ export function useDebounce(value, delay = 500) {
 
   return debouncedValue;
 }
+
+export default useDebounce;
