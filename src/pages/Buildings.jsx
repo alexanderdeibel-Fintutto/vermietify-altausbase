@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useBuildingStats } from '@/components/buildings/useBuildingStats';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import BuildingFilterBar from '@/components/buildings/BuildingFilterBar';
 import BuildingTable from '@/components/buildings/BuildingTable';
 import BuildingSummary from '@/components/buildings/BuildingSummary';

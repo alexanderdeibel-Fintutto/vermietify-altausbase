@@ -29,6 +29,8 @@ import TemplateQuickSelect from '@/components/invoices/TemplateQuickSelect';
 import CategorySuggestions from '@/components/invoices/CategorySuggestions';
 import HelpTooltip from '@/components/shared/HelpTooltip';
 import UmlagefaehigBadge from '@/components/shared/UmlagefaehigBadge';
+import BetriebskostenTooltip from '@/components/shared/BetriebskostenTooltip';
+import { InvoiceWithoutCategoryWarning } from '@/components/shared/PlausibilityWarnings';
 
 export default function InvoiceForm({ open, onOpenChange, invoice, buildings, units, contracts, onSuccess }) {
     const queryClient = useQueryClient();
@@ -317,6 +319,8 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                     </DialogTitle>
                 </DialogHeader>
 
+                <InvoiceWithoutCategoryWarning show={!watch('cost_type_id')} />
+
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                     {/* Section 1: Grundlegende Informationen */}
                     <div className="space-y-4">
@@ -565,7 +569,7 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                             <div>
                                 <Label className="flex items-center gap-2">
                                     Kostenart *
-                                    <HelpTooltip text="Umlagefähige Kosten können an Mieter weitergegeben werden (§556 BGB, BetrKV). Beispiele: Müllabfuhr, Hausmeister. Nicht umlagefähig: Verwaltungskosten, Reparaturen." />
+                                    <BetriebskostenTooltip />
                                 </Label>
                                 <Select 
                                     value={watch('cost_type_id')} 
@@ -630,7 +634,7 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                                  <div>
                                      <div className="flex flex-wrap gap-2">
                                          <UmlagefaehigBadge 
-                                             status={selectedCostType.distributable ? 'umlagefaehig' : 'nicht_umlagefaehig'}
+                                             value={selectedCostType.distributable ? 'yes' : 'no'}
                                          />
                                         {selectedCostType.vat_rate > 0 && (
                                             <Badge variant="outline">
