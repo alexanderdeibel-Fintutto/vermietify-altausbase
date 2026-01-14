@@ -1,110 +1,128 @@
-import React from 'react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { CheckCircle2, FileText, DollarSign, Calendar } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { CheckCircle, FileText, Wallet, Calendar } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { motion } from 'framer-motion';
 
-export default function PostContractDialog({
-  open = false,
-  contract = null,
-  onClose,
-  onGenerateBookings,
-}) {
-  const steps = [
+export default function PostContractDialog({ open, onClose, contract, onGenerateBookings }) {
+  const [tasks, setTasks] = useState({
+    bookings: false,
+    document: false,
+    deposit: false
+  });
+
+  const nextSteps = [
     {
-      id: 'bookings',
-      icon: '📊',
-      label: 'Buchungen generieren (12 Monate)',
-      description: 'Erstellt automatische Mieteinnahmen',
-      action: 'Jetzt generieren',
-      color: 'bg-blue-50',
+      key: 'bookings',
+      icon: Calendar,
+      title: 'Buchungen generieren',
+      description: `${contract?.duration_months || 12} Monate Mieteinnahmen (SOLL) erstellen`,
+      action: onGenerateBookings,
+      actionLabel: 'Jetzt generieren',
+      primary: true
     },
     {
-      id: 'document',
-      icon: '📄',
-      label: 'Mietvertrag-Dokument erstellen',
-      description: 'Erzeugt ein druckfertiges PDF',
-      action: 'Dokument erstellen',
-      color: 'bg-purple-50',
+      key: 'document',
+      icon: FileText,
+      title: 'Mietvertrag-Dokument erstellen',
+      description: 'Vertragsdokument für Unterschrift generieren',
+      link: createPageUrl('DocumentGeneration'),
+      actionLabel: 'Dokument erstellen'
     },
     {
-      id: 'deposit',
-      icon: '💰',
-      label: 'Kaution als Zahlung erfassen',
-      description: 'Optional: Kaution registrieren',
-      action: 'Zur Kautionsverwaltung',
-      color: 'bg-emerald-50',
-    },
+      key: 'deposit',
+      icon: Wallet,
+      title: 'Kaution erfassen',
+      description: 'Kautionszahlung als Transaktion erfassen',
+      link: createPageUrl('BankTransactions'),
+      actionLabel: 'Zur Kautionsverwaltung'
+    }
   ];
 
-  return (
-    <AlertDialog open={open} onOpenChange={onClose}>
-      <AlertDialogContent className="max-w-md">
-        <AlertDialogHeader>
-          <div className="flex items-center gap-2 mb-2">
-            <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-            <AlertDialogTitle>✅ Vertrag erfolgreich erstellt!</AlertDialogTitle>
-          </div>
-        </AlertDialogHeader>
+  const handleComplete = () => {
+    onClose?.();
+  };
 
-        <div className="space-y-4 py-4">
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-green-700">
+            <CheckCircle className="w-6 h-6" />
+            Vertrag erfolgreich erstellt!
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="py-4 space-y-4">
           <p className="text-sm text-slate-600">
-            Folgende Nächste Schritte werden empfohlen:
+            Der Mietvertrag wurde gespeichert. Hier sind die empfohlenen nächsten Schritte:
           </p>
 
           <div className="space-y-3">
-            {steps.map((step, idx) => (
-              <motion.div
-                key={step.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                className={`p-3 rounded-lg ${step.color} border border-opacity-30`}
-              >
-                <div className="flex items-start gap-3">
-                  <span className="text-lg flex-shrink-0">{step.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-slate-900">{step.label}</p>
-                    <p className="text-xs text-slate-600 mt-1">{step.description}</p>
+            {nextSteps.map((step, idx) => {
+              const Icon = step.icon;
+              return (
+                <motion.div
+                  key={step.key}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="border border-slate-200 rounded-lg p-4 bg-white"
+                >
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      checked={tasks[step.key]}
+                      onCheckedChange={(checked) => 
+                        setTasks(prev => ({ ...prev, [step.key]: checked }))
+                      }
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Icon className="w-4 h-4 text-slate-600" />
+                        <span className="font-medium text-slate-900">{step.title}</span>
+                        {step.primary && (
+                          <Badge variant="default" className="bg-blue-600 text-xs">
+                            Empfohlen
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-600">{step.description}</p>
+                    </div>
+                    {step.action ? (
+                      <Button 
+                        size="sm" 
+                        onClick={() => {
+                          step.action?.();
+                          setTasks(prev => ({ ...prev, [step.key]: true }));
+                        }}
+                        className={step.primary ? 'bg-blue-600 hover:bg-blue-700' : ''}
+                      >
+                        {step.actionLabel}
+                      </Button>
+                    ) : step.link ? (
+                      <Link to={step.link}>
+                        <Button size="sm" variant="outline">
+                          {step.actionLabel}
+                        </Button>
+                      </Link>
+                    ) : null}
                   </div>
-                </div>
-
-                {step.id === 'bookings' && (
-                  <button
-                    onClick={() => {
-                      onGenerateBookings(contract);
-                      onClose(false);
-                    }}
-                    className="mt-2 w-full px-3 py-1.5 text-xs bg-white border border-blue-300 rounded-md hover:bg-blue-50 transition-colors font-medium text-blue-700"
-                  >
-                    {step.action} →
-                  </button>
-                )}
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </div>
         </div>
 
-        <div className="flex gap-3 pt-4 border-t">
-          <AlertDialogCancel className="flex-1">Später erledigen</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={() => {
-              onGenerateBookings(contract);
-              onClose(false);
-            }}
-            className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-          >
-            Jetzt Buchungen generieren
-          </AlertDialogAction>
-        </div>
-      </AlertDialogContent>
-    </AlertDialog>
+        <DialogFooter>
+          <Button onClick={handleComplete} variant="outline">
+            Später erledigen
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
