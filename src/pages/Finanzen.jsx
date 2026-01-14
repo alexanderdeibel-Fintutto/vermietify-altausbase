@@ -26,8 +26,24 @@ export default function FinanzenPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-slate-900">💰 Finanzen</h1>
-        <p className="text-slate-600 mt-1">Finanzübersicht und Analysen</p>
+        <p className="text-slate-600 mt-1">Gegenüberstellung von SOLL (geplant) und IST (tatsächlich)</p>
       </div>
+
+      {/* SOLL vs IST Legend */}
+      <Card className="bg-slate-50 border-slate-200">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-6 flex-wrap">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-dashed border-slate-400 bg-slate-100 rounded"></div>
+              <span className="text-sm text-slate-700">📋 SOLL = Geplante Buchungen aus Verträgen</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-solid border-emerald-500 bg-emerald-100 rounded"></div>
+              <span className="text-sm text-slate-700">✓ IST = Tatsächliche Zahlungen aus Bank</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <QuickStats stats={stats} accentColor="green" />
 
