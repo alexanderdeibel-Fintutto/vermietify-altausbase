@@ -58,7 +58,7 @@ export default function BankTransactionsPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Tatsächliche Zahlungen (IST)</h1>
-          <p className="text-gray-600 mt-1">Verwalten Sie Ihre Banktransaktionen</p>
+          <p className="text-gray-600 mt-1">Importierte Banktransaktionen und manuelle Zahlungen</p>
         </div>
         <Button onClick={() => setCreateOpen(true)} className="gap-2">
           <Plus className="w-4 h-4" />
