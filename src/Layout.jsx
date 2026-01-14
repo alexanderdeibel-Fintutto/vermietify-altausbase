@@ -42,6 +42,7 @@ import KeyboardShortcutsHelp from '@/components/shortcuts/KeyboardShortcutsHelp'
 import ThemeToggle from '@/components/theme/ThemeToggle';
 import OfflineModeInitializer from '@/components/offline/OfflineModeInitializer';
 import { FloatingFeedbackButton } from '@/components/feedback/UserFeedbackCollector';
+import ErrorBoundaryWithLogging from '@/components/errors/ErrorBoundaryWithLogging';
 
 // Lazy load heavy components
 const TesterTracker = lazy(() => import('@/components/testing/TesterTracker'));
@@ -110,16 +111,17 @@ export default function Layout({ children, currentPageName }) {
     const themeColor = currentBuilding?.theme_color || '#1e293b';
 
     return (
-                                    <ThemeProvider>
-                                    <SubscriptionInitializer>
-                                    <OnboardingRedirect>
-                                    <KeyboardShortcutsHandler />
-                                    <KeyboardShortcutsHelp />
-                                    <Suspense fallback={null}>
-                                      <TesterTracker>
-                                        <Suspense fallback={null}>
-                                           <FeatureUnlockNotification />
-                                         </Suspense>
+                                            <ErrorBoundaryWithLogging componentName="Layout">
+                                            <ThemeProvider>
+                                            <SubscriptionInitializer>
+                                            <OnboardingRedirect>
+                                            <KeyboardShortcutsHandler />
+                                            <KeyboardShortcutsHelp />
+                                            <Suspense fallback={null}>
+                                              <TesterTracker>
+                                                <Suspense fallback={null}>
+                                                   <FeatureUnlockNotification />
+                                                 </Suspense>
                                  <div className="min-h-screen flex" style={{ backgroundColor: `${themeColor}04` }}>
                                    {/* Sidebar */}
                                    <MainSidebar />
@@ -213,5 +215,6 @@ export default function Layout({ children, currentPageName }) {
                       </OnboardingRedirect>
                       </SubscriptionInitializer>
                       </ThemeProvider>
-                );
+                      </ErrorBoundaryWithLogging>
+                      );
                 }
