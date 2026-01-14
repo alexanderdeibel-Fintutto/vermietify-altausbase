@@ -12,10 +12,13 @@ import LeaseContractAnalyzer from '@/components/contracts/LeaseContractAnalyzer'
 import ContractDocumentManager from '@/components/contracts/ContractDocumentManager';
 import ContractRenewalTracker from '@/components/contracts/ContractRenewalTracker';
 import RentIncreaseCalculator from '@/components/contracts/RentIncreaseCalculator';
+import ContractQuickActionBar from '@/components/contracts/ContractQuickActionBar';
+import TenantChangeWizard from '@/components/contracts/TenantChangeWizard';
 
 export default function ContractDetailPage() {
   const { id } = useParams();
   const [editMode, setEditMode] = useState(false);
+  const [tenantChangeOpen, setTenantChangeOpen] = useState(false);
 
   const { data: contract } = useQuery({
     queryKey: ['contract', id],
@@ -61,6 +64,14 @@ export default function ContractDetailPage() {
           <Button onClick={() => setEditMode(!editMode)}><Edit className="w-4 h-4 mr-2" />{editMode ? 'Fertig' : 'Bearbeiten'}</Button>
         </div>
       </div>
+
+      <ContractQuickActionBar
+        contract={contract}
+        onGenerateBookings={() => console.log('Generate bookings for', contract.id)}
+        onGenerateDocument={() => console.log('Generate document for', contract.id)}
+        onTenantChange={() => setTenantChangeOpen(true)}
+        onRecordPayment={() => console.log('Record payment for', contract.id)}
+      />
 
       <div className="grid grid-cols-3 gap-6">
         <Card className="border border-blue-200 bg-blue-50">
@@ -146,6 +157,12 @@ export default function ContractDetailPage() {
       <LeaseContractAnalyzer 
         contractId={contract.id} 
         contractText={contract.contract_text || contract.notes}
+      />
+
+      <TenantChangeWizard
+        open={tenantChangeOpen}
+        onOpenChange={setTenantChangeOpen}
+        unit={unit}
       />
     </div>
   );
