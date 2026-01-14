@@ -65,11 +65,11 @@ export default function BuildingCard({ building, units = [] }) {
                     {buildingUnits.length > 0 && (
                         <Link 
                             to={createPageUrl(`BuildingDetail?id=${building.id}&tab=units`)}
-                            className="mt-3 flex items-center justify-center gap-2 text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                            className="mt-3 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 rounded-lg transition-all font-medium border border-blue-200"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <Home className="w-4 h-4" />
-                            → {buildingUnits.length} Einheiten anzeigen
+                            {buildingUnits.length} {buildingUnits.length === 1 ? 'Einheit' : 'Einheiten'} verwalten
                             <ChevronRight className="w-4 h-4" />
                         </Link>
                     )}

@@ -17,10 +17,22 @@ import { createPageUrl } from '@/utils';
 import ProgressTracker from '@/components/shared/ProgressTracker';
 
 const WIZARD_STEPS = [
-  { label: 'Objekt & Zeitraum' },
-  { label: 'Kosten auswählen' },
-  { label: 'Prüfen' },
-  { label: 'Erstellen' }
+  { 
+    label: 'Objekt & Zeitraum', 
+    description: 'Wählen Sie das Gebäude und den Abrechnungszeitraum' 
+  },
+  { 
+    label: 'Kosten-Vorauswahl', 
+    description: 'Automatisch vorausgewählte umlagefähige Kosten prüfen und anpassen' 
+  },
+  { 
+    label: 'Prüfen & Korrigieren', 
+    description: 'Zusammenfassung prüfen und bei Bedarf anpassen' 
+  },
+  { 
+    label: 'Vorschau & Generieren', 
+    description: 'Abrechnung erstellen und als Entwurf speichern' 
+  }
 ];
 
 export default function SimplifiedBKWizard({ open, onClose }) {
@@ -88,7 +100,14 @@ export default function SimplifiedBKWizard({ open, onClose }) {
           <DialogTitle>Betriebskostenabrechnung erstellen</DialogTitle>
         </DialogHeader>
 
-        <ProgressTracker steps={WIZARD_STEPS} currentStep={currentStep} />
+        <ProgressTracker steps={WIZARD_STEPS.map(s => s.label)} currentStep={currentStep} />
+        
+        {/* Step Description */}
+        <div className="bg-slate-50 rounded-lg p-3 mb-4">
+          <p className="text-sm text-slate-700">
+            <span className="font-medium">Schritt {currentStep + 1}:</span> {WIZARD_STEPS[currentStep].description}
+          </p>
+        </div>
 
         <div className="py-6">
           {/* Step 1: Objekt & Zeitraum */}
@@ -132,46 +151,70 @@ export default function SimplifiedBKWizard({ open, onClose }) {
           {/* Step 2: Kosten-Vorauswahl */}
           {currentStep === 1 && (
             <div className="space-y-4">
-              <BKWithNoCostsWarning show costsCount={relevantCosts.length} />
-              
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-slate-600">
-                  {relevantCosts.length} umlagefähige Kosten automatisch ausgewählt
-                </p>
-                {relevantCosts.length === 0 && (
-                  <Link to={createPageUrl('Invoices')}>
-                    <Button size="sm" variant="outline">
-                      Rechnungen kategorisieren
-                    </Button>
-                  </Link>
-                )}
-              </div>
-
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {relevantCosts.map(cost => (
-                  <Card key={cost.id} className="p-3">
-                    <div className="flex items-center gap-3">
-                      <Checkbox
-                        checked={selectedCosts.has(cost.id)}
-                        onCheckedChange={(checked) => {
-                          const newSelected = new Set(selectedCosts);
-                          if (checked) {
-                            newSelected.add(cost.id);
-                          } else {
-                            newSelected.delete(cost.id);
-                          }
-                          setSelectedCosts(newSelected);
-                        }}
-                      />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{cost.description}</p>
-                        <p className="text-xs text-slate-500">{cost.recipient}</p>
-                      </div>
-                      <p className="font-semibold">€{cost.amount?.toFixed(2)}</p>
+              {relevantCosts.length === 0 ? (
+                <Card className="p-6 bg-amber-50 border-amber-200">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-medium text-amber-900">Keine umlagefähigen Kosten gefunden</p>
+                      <p className="text-sm text-amber-700 mt-1">
+                        Für den gewählten Zeitraum wurden keine Rechnungen mit "Umlagefähig" markiert gefunden.
+                      </p>
+                      <p className="text-sm text-amber-700 mt-2">
+                        <strong>Lösung:</strong> Gehen Sie zu Rechnungen und kategorisieren Sie Ihre Kosten korrekt.
+                      </p>
+                    </div>
+                    <Link to={createPageUrl('Invoices')} onClick={() => onClose()}>
+                      <Button size="sm" className="bg-amber-600 hover:bg-amber-700">
+                        Zur Kategorisierung →
+                      </Button>
+                    </Link>
+                  </div>
+                </Card>
+              ) : (
+                <>
+                  <Card className="p-4 bg-green-50 border-green-200">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                      <p className="text-sm text-green-800">
+                        <strong>{relevantCosts.length} umlagefähige Kosten</strong> automatisch vorausgewählt
+                      </p>
                     </div>
                   </Card>
-                ))}
-              </div>
+
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {relevantCosts.map(cost => (
+                      <Card key={cost.id} className="p-3">
+                        <div className="flex items-center gap-3">
+                          <Checkbox
+                            checked={selectedCosts.has(cost.id)}
+                            onCheckedChange={(checked) => {
+                              const newSelected = new Set(selectedCosts);
+                              if (checked) {
+                                newSelected.add(cost.id);
+                              } else {
+                                newSelected.delete(cost.id);
+                              }
+                              setSelectedCosts(newSelected);
+                            }}
+                          />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{cost.description}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <p className="text-xs text-slate-500">{cost.recipient}</p>
+                              <Badge variant="outline" className="text-xs">
+                                {cost.cost_category || 'Keine Kategorie'}
+                              </Badge>
+                            </div>
+                          </div>
+                          <p className="font-semibold">€{cost.amount?.toFixed(2)}</p>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </>
+              )}
+
             </div>
           )}
 
