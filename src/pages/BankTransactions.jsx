@@ -14,6 +14,7 @@ import BankTransactionMatches from "@/components/banking/BankTransactionMatches"
 import ISTBookingCard from "@/components/shared/ISTBookingCard";
 import AIMatchSuggestions from "@/components/banking/AIMatchSuggestions";
 import BankTransactionMatchSuggestions from "@/components/banking/BankTransactionMatchSuggestions";
+import BatchMatchButton from "@/components/banking/BatchMatchButton";
 
 export default function BankTransactionsPage() {
   const [createOpen, setCreateOpen] = useState(false);
@@ -78,8 +79,14 @@ export default function BankTransactionsPage() {
         {/* ... (filter badges) ... */}
       </div>
 
+      {/* Batch Accept Button */}
+      <BatchMatchButton 
+        transactions={filteredTransfers}
+        invoices={invoices}
+      />
+
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {transfers.map(transfer => (
+        {filteredTransfers.map(transfer => (
           <ISTBookingCard 
             key={transfer.id}
             title={transfer.recipient_name || 'Unbekannt'}
@@ -88,12 +95,7 @@ export default function BankTransactionsPage() {
             description={transfer.description || 'Keine Beschreibung'}
           >
             <div className="mt-4 pt-4 border-t space-y-3">
-              <BankTransactionMatchSuggestions 
-                transaction={transfer}
-                invoices={invoices}
-                contracts={contracts}
-                onMatch={(suggestion) => console.log('Matched:', suggestion)}
-              />
+              <AIMatchSuggestions transaction={transfer} />
               <BankTransactionMatches transaction={transfer} invoices={invoices} onMatch={handleMatch} onIgnore={() => {}} />
             </div>
           </ISTBookingCard>

@@ -31,6 +31,7 @@ import HelpTooltip from '@/components/shared/HelpTooltip';
 import UmlagefaehigBadge from '@/components/shared/UmlagefaehigBadge';
 import BetriebskostenTooltip from '@/components/shared/BetriebskostenTooltip';
 import { InvoiceWithoutCategoryWarning } from '@/components/shared/PlausibilityWarnings';
+import SmartCategorySelector from '@/components/invoices/SmartCategorySelector';
 
 export default function InvoiceForm({ open, onOpenChange, invoice, buildings, units, contracts, onSuccess }) {
     const queryClient = useQueryClient();
@@ -41,6 +42,7 @@ export default function InvoiceForm({ open, onOpenChange, invoice, buildings, un
     const [dueDate, setDueDate] = useState(invoice?.due_date ? parseISO(invoice.due_date) : null);
     const [recipientFormOpen, setRecipientFormOpen] = useState(false);
     const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
+    const [formData, setFormData] = useState({});
     const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm({
         defaultValues: invoice || {
             type: 'expense',
@@ -477,92 +479,24 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
 
                     {/* Section 2: Kostenart & Kategorisierung */}
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between border-b pb-2">
+                        <div className="border-b pb-2">
                             <h3 className="text-sm font-semibold text-slate-700">
                                 Kostenart & Kategorisierung
                             </h3>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={getAISuggestions}
-                                disabled={analyzingAI || (!watchedDescription && !watchedReference)}
-                                className="gap-2"
-                            >
-                                {analyzingAI ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                        Analysiere...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Sparkles className="w-4 h-4" />
-                                        KI-Vorschlag
-                                    </>
-                                )}
-                            </Button>
                         </div>
 
-                        {/* AI Suggestions Card */}
-                        {aiSuggestions && (
-                            <Card className="p-4 bg-blue-50 border-blue-200">
-                                <div className="flex items-start gap-3">
-                                    <Sparkles className="w-5 h-5 text-blue-600 mt-0.5" />
-                                    <div className="flex-1">
-                                        <p className="font-medium text-sm text-slate-800 mb-1">
-                                            KI-Vorschlag
-                                        </p>
-                                        <div className="space-y-2">
-                                            <div className="flex items-center gap-2">
-                                                <Badge variant="outline" className="bg-white">
-                                                    {aiSuggestions.costType.main_category}
-                                                </Badge>
-                                                <span className="text-sm">→</span>
-                                                <Badge className="bg-blue-600">
-                                                    {aiSuggestions.costType.sub_category}
-                                                </Badge>
-                                                <Badge variant="outline" className="ml-auto">
-                                                    {Math.round(aiSuggestions.confidence)}% sicher
-                                                </Badge>
-                                            </div>
-                                            {aiSuggestions.reasoning && (
-                                                <p className="text-xs text-slate-600 mt-2">
-                                                    <Info className="w-3 h-3 inline mr-1" />
-                                                    {aiSuggestions.reasoning}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            onClick={applySuggestion}
-                                            className="bg-blue-600 hover:bg-blue-700"
-                                        >
-                                            Übernehmen
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            variant="ghost"
-                                            onClick={() => setAiSuggestions(null)}
-                                        >
-                                            Ignorieren
-                                        </Button>
-                                    </div>
-                                </div>
-                            </Card>
-                        )}
-
-                        {/* Quick Category Suggestions */}
-                         {watch('recipient') && costTypes.length > 0 && (
-                             <CategorySuggestions 
-                                 recipient={watch('recipient')}
-                                 costTypes={costTypes}
-                                 onSelect={(id) => setValue('cost_type_id', id)}
-                             />
-                         )}
+                        {/* Smart Category Selector with AI + History */}
+                        <SmartCategorySelector
+                          description={watchedDescription}
+                          reference={watchedReference}
+                          recipient={watch('recipient')}
+                          type={watchedType}
+                          costTypes={filteredCostTypes}
+                          onSelect={(id) => {
+                            setValue('cost_type_id', id);
+                            setAiSuggestions(null);
+                          }}
+                        />
 
                         <div className="grid grid-cols-1 gap-4">
                             {/* Cost Type Selection */}
