@@ -36,11 +36,16 @@ import QuickContractCreator from '@/components/contracts/QuickContractCreator';
 import AutoCreateUnitsDialog from '@/components/units/AutoCreateUnitsDialog';
 import BreadcrumbNavigation from '@/components/navigation/BreadcrumbNavigation';
 import AutoCreateUnitsHint from '@/components/units/AutoCreateUnitsHint';
+import BulkRentIncreaseDialog from '@/components/bulk/BulkRentIncreaseDialog';
+import BulkBookingsGeneratorDialog from '@/components/bulk/BulkBookingsGeneratorDialog';
+import ContextualQuickActions from '@/components/help/ContextualQuickActions';
 
 export default function BuildingDetailPage() {
 
   const [contractCreatorOpen, setContractCreatorOpen] = React.useState(false);
   const [autoCreateUnitsOpen, setAutoCreateUnitsOpen] = React.useState(false);
+  const [bulkRentIncreaseOpen, setBulkRentIncreaseOpen] = React.useState(false);
+  const [bulkBookingsOpen, setBulkBookingsOpen] = React.useState(false);
   const buildingId = new URLSearchParams(window.location.search).get('id');
 
   const { data: currentUser } = useQuery({ 
@@ -265,9 +270,25 @@ export default function BuildingDetailPage() {
 
         <TabsContent value="contracts">
           <div className="space-y-4">
-            <Button onClick={() => setContractCreatorOpen(true)} className="bg-emerald-600">
-              + Neuer Mietvertrag
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => setContractCreatorOpen(true)} className="bg-emerald-600">
+                + Neuer Mietvertrag
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setBulkRentIncreaseOpen(true)}
+                disabled={contracts.filter(c => c.status === 'active').length === 0}
+              >
+                📈 Batch-Mieterhöhung
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setBulkBookingsOpen(true)}
+                disabled={contracts.filter(c => c.status === 'active').length === 0}
+              >
+                ⚡ Buchungen generieren (alle)
+              </Button>
+            </div>
             <BuildingContractsOverview buildingId={buildingId} contracts={contracts} />
           </div>
         </TabsContent>
@@ -317,6 +338,35 @@ export default function BuildingDetailPage() {
         buildingId={buildingId}
         open={autoCreateUnitsOpen}
         onOpenChange={setAutoCreateUnitsOpen}
+      />
+
+      <BulkRentIncreaseDialog
+        open={bulkRentIncreaseOpen}
+        onOpenChange={setBulkRentIncreaseOpen}
+        buildingId={buildingId}
+        onSuccess={() => {
+          window.location.reload();
+        }}
+      />
+
+      <BulkBookingsGeneratorDialog
+        open={bulkBookingsOpen}
+        onOpenChange={setBulkBookingsOpen}
+        selectedContracts={contracts.filter(c => c.status === 'active')}
+        onSuccess={() => {
+          toast.success('Buchungen generiert');
+        }}
+      />
+
+      <ContextualQuickActions
+        context={{
+          type: 'building_detail',
+          buildingId: buildingId,
+          onBulkCategorize: () => {
+            // Will be triggered from context
+          },
+          onBulkBookings: () => setBulkBookingsOpen(true)
+        }}
       />
     </div>
     </ErrorBoundaryWithRetry>

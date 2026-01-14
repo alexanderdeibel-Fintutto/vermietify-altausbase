@@ -54,10 +54,14 @@ import EmptyStateWithAction from '@/components/shared/EmptyStateWithAction';
 import { useKeyboardShortcuts } from '@/components/hooks/useKeyboardShortcuts';
 import FloatingActionMenu from '@/components/shared/FloatingActionMenu';
 import ContextHelp from '@/components/shared/ContextHelp';
+import BulkInvoiceCategorizationDialog from '@/components/bulk/BulkInvoiceCategorizationDialog';
+import BulkExportDialog from '@/components/bulk/BulkExportDialog';
 
 export default function Invoices() {
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState('invoices');
+    const [bulkCategorizationOpen, setBulkCategorizationOpen] = useState(false);
+    const [bulkExportOpen, setBulkExportOpen] = useState(false);
 
     // Keyboard shortcuts
     useKeyboardShortcuts({
@@ -611,27 +615,30 @@ export default function Invoices() {
                         {selectedInvoices.size > 0 && activeTab === 'invoices' && (
                             <>
                                 <Button 
-                                    variant="destructive"
+                                    variant="outline"
                                     size="sm"
-                                    onClick={() => bulkDeleteMutation.mutate(Array.from(selectedInvoices))}
+                                    onClick={() => setBulkCategorizationOpen(true)}
+                                    className="gap-2"
                                 >
-                                    🗑️ Löschen ({selectedInvoices.size})
+                                    <Tag className="w-4 h-4" />
+                                    Kategorisieren ({selectedInvoices.size})
                                 </Button>
                                 <Button 
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => {
-                                        const data = filteredInvoices.filter(i => selectedInvoices.has(i.id));
-                                        const csv = [['Datum', 'Typ', 'Empfänger', 'Betrag'], ...data.map(i => [i.invoice_date, i.type, i.recipient, i.amount])].map(r => r.join(',')).join('\n');
-                                        const blob = new Blob([csv], { type: 'text/csv' });
-                                        const url = window.URL.createObjectURL(blob);
-                                        const a = document.createElement('a');
-                                        a.href = url;
-                                        a.download = 'rechnungen.csv';
-                                        a.click();
-                                    }}
+                                    onClick={() => setBulkExportOpen(true)}
+                                    className="gap-2"
                                 >
-                                    📥 Export ({selectedInvoices.size})
+                                    <Download className="w-4 h-4" />
+                                    Export ({selectedInvoices.size})
+                                </Button>
+                                <Button 
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => bulkDeleteMutation.mutate(Array.from(selectedInvoices))}
+                                >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Löschen ({selectedInvoices.size})
                                 </Button>
                             </>
                         )}
@@ -1326,6 +1333,26 @@ export default function Invoices() {
 
             {/* Floating Action Menu */}
             <FloatingActionMenu actions={floatingActions} />
+
+            {/* Bulk Categorization Dialog */}
+            <BulkInvoiceCategorizationDialog
+                open={bulkCategorizationOpen}
+                onOpenChange={setBulkCategorizationOpen}
+                selectedInvoices={filteredInvoices.filter(i => selectedInvoices.has(i.id))}
+                onSuccess={() => {
+                    queryClient.invalidateQueries({ queryKey: ['invoices'] });
+                    setSelectedInvoices(new Set());
+                }}
+            />
+
+            {/* Bulk Export Dialog */}
+            <BulkExportDialog
+                open={bulkExportOpen}
+                onOpenChange={setBulkExportOpen}
+                data={filteredInvoices.filter(i => selectedInvoices.has(i.id))}
+                entityType="Rechnungen"
+                filename="rechnungen_export"
+            />
 
             {/* Delete Invoice Dialog */}
             <AlertDialog open={!!deleteInvoice} onOpenChange={() => setDeleteInvoice(null)}>
