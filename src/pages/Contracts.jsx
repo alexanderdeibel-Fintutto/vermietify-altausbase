@@ -36,6 +36,7 @@ import FinancialItemsList from '@/components/contracts/FinancialItemsList';
 import { regenerateContractFinancialItems } from '@/components/contracts/generateFinancialItems';
 import AddFinancialItemDialog from '@/components/contracts/AddFinancialItemDialog';
 import PostContractDialog from '@/components/contracts/PostContractDialog';
+import TenantChangeWizard from '@/components/contracts/TenantChangeWizard';
 
 export default function Contracts() {
     const [formOpen, setFormOpen] = useState(false);
@@ -44,6 +45,8 @@ export default function Contracts() {
     const [addFinancialItemOpen, setAddFinancialItemOpen] = useState(false);
     const [postContractOpen, setPostContractOpen] = useState(false);
     const [newContract, setNewContract] = useState(null);
+    const [tenantChangeOpen, setTenantChangeOpen] = useState(false);
+    const [selectedUnit, setSelectedUnit] = useState(null);
     const queryClient = useQueryClient();
 
     const { data: contracts = [], isLoading } = useQuery({
@@ -362,6 +365,13 @@ export default function Contracts() {
                                                             <Pencil className="w-4 h-4 mr-2" />
                                                             Bearbeiten
                                                         </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={(e) => {
+                                                            e.preventDefault();
+                                                            setSelectedUnit(unit);
+                                                            setTenantChangeOpen(true);
+                                                        }}>
+                                                            🔄 Mieterwechsel
+                                                        </DropdownMenuItem>
                                                         <DropdownMenuItem 
                                                             onClick={() => setDeleteContract(contract)}
                                                             className="text-red-600"
@@ -502,6 +512,16 @@ export default function Contracts() {
                 open={postContractOpen}
                 onOpenChange={setPostContractOpen}
                 contract={newContract}
+                onClose={() => setPostContractOpen(false)}
+                onGenerateBookings={(contract) => {
+                    console.log('Generating bookings for contract:', contract);
+                }}
+            />
+
+            <TenantChangeWizard
+                open={tenantChangeOpen}
+                onOpenChange={setTenantChangeOpen}
+                unit={selectedUnit}
             />
         </div>
     );
