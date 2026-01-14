@@ -1,17 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
-import { Check, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Check, X, Edit2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function InlineEditCell({ 
   value,
   onSave,
   type = 'text',
-  placeholder = 'Bearbeiten...'
+  validate
 }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [inputValue, setInputValue] = useState(value);
-  const [isSaving, setIsSaving] = useState(false);
+  const [editValue, setEditValue] = useState(value);
+  const [error, setError] = useState('');
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -22,23 +22,27 @@ export default function InlineEditCell({
   }, [isEditing]);
 
   const handleSave = async () => {
-    if (inputValue === value) {
-      setIsEditing(false);
-      return;
+    if (validate) {
+      const validationError = validate(editValue);
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
     }
 
-    setIsSaving(true);
     try {
-      await onSave?.(inputValue);
+      await onSave(editValue);
       setIsEditing(false);
-    } finally {
-      setIsSaving(false);
+      setError('');
+    } catch (err) {
+      setError(err.message || 'Fehler beim Speichern');
     }
   };
 
   const handleCancel = () => {
-    setInputValue(value);
+    setEditValue(value);
     setIsEditing(false);
+    setError('');
   };
 
   const handleKeyDown = (e) => {
@@ -53,42 +57,45 @@ export default function InlineEditCell({
     return (
       <div
         onClick={() => setIsEditing(true)}
-        className="px-2 py-1 rounded hover:bg-slate-100 cursor-pointer"
+        className="group flex items-center gap-2 cursor-pointer hover:bg-slate-50 px-2 py-1 rounded-md transition-colors"
       >
-        {value || <span className="text-slate-400">Klicken zum Bearbeiten</span>}
+        <span className="text-sm text-slate-700">
+          {value || <span className="text-slate-400">Leer</span>}
+        </span>
+        <Edit2 className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <motion.div
+      initial={{ scale: 0.95 }}
+      animate={{ scale: 1 }}
+      className="flex items-center gap-2"
+    >
       <Input
         ref={inputRef}
         type={type}
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        className="h-8 text-sm"
-        disabled={isSaving}
+        className={`h-8 text-sm ${error ? 'border-red-500' : ''}`}
       />
-      <Button
+      <button
         onClick={handleSave}
-        disabled={isSaving}
-        size="sm"
-        className="h-8 w-8 p-0 bg-green-600 hover:bg-green-700"
+        className="p-1 rounded hover:bg-green-100 text-green-600 transition-colors"
       >
         <Check className="w-4 h-4" />
-      </Button>
-      <Button
+      </button>
+      <button
         onClick={handleCancel}
-        disabled={isSaving}
-        size="sm"
-        variant="outline"
-        className="h-8 w-8 p-0"
+        className="p-1 rounded hover:bg-red-100 text-red-600 transition-colors"
       >
         <X className="w-4 h-4" />
-      </Button>
-    </div>
+      </button>
+      {error && (
+        <span className="text-xs text-red-600">{error}</span>
+      )}
+    </motion.div>
   );
 }

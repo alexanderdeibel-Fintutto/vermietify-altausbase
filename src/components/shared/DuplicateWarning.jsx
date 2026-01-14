@@ -1,58 +1,66 @@
 import React from 'react';
-import { AlertTriangle, Link2 } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { AlertTriangle, Eye } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function DuplicateWarning({ 
   duplicates = [],
-  onMerge,
-  onIgnore
+  onView,
+  onIgnore 
 }) {
   if (duplicates.length === 0) return null;
 
   return (
-    <Card className="border-amber-200 bg-amber-50">
-      <div className="p-4">
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-amber-900">
-              {duplicates.length} mögliche Duplikate gefunden
-            </h3>
-            <p className="text-sm text-amber-800 mt-1">
-              Es wurden ähnliche Einträge gefunden. Möchten Sie diese zusammenführen?
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
+      <Alert variant="warning" className="border-amber-200 bg-amber-50">
+        <AlertTriangle className="w-4 h-4 text-amber-600" />
+        <AlertDescription className="ml-2">
+          <div className="space-y-2">
+            <p className="text-sm text-amber-900 font-medium">
+              {duplicates.length === 1 
+                ? 'Mögliches Duplikat gefunden'
+                : `${duplicates.length} mögliche Duplikate gefunden`
+              }
             </p>
-            
-            <div className="mt-3 space-y-1">
-              {duplicates.map((dup, idx) => (
-                <div key={idx} className="text-xs text-amber-700 flex items-center gap-2">
-                  <span className="w-1 h-1 bg-amber-600 rounded-full" />
-                  {dup.label}
-                </div>
+            <p className="text-xs text-amber-700">
+              Es existieren bereits ähnliche Einträge. Möchten Sie diese überprüfen?
+            </p>
+            <div className="flex gap-2 mt-2">
+              {duplicates.slice(0, 3).map((duplicate, idx) => (
+                <Button
+                  key={idx}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onView?.(duplicate)}
+                  className="gap-2 bg-white"
+                >
+                  <Eye className="w-3 h-3" />
+                  {duplicate.name || duplicate.title || `Eintrag ${idx + 1}`}
+                </Button>
               ))}
+              {duplicates.length > 3 && (
+                <span className="text-xs text-amber-700 self-center">
+                  +{duplicates.length - 3} weitere
+                </span>
+              )}
             </div>
-
-            <div className="flex gap-2 mt-4">
+            {onIgnore && (
               <Button
-                onClick={onMerge}
+                variant="ghost"
                 size="sm"
-                className="bg-amber-600 hover:bg-amber-700 gap-2 text-xs"
-              >
-                <Link2 className="w-3 h-3" />
-                Zusammenführen
-              </Button>
-              <Button
                 onClick={onIgnore}
-                size="sm"
-                variant="outline"
-                className="text-xs"
+                className="text-amber-700 hover:text-amber-900"
               >
-                Ignorieren
+                Ignorieren und fortfahren
               </Button>
-            </div>
+            )}
           </div>
-        </div>
-      </div>
-    </Card>
+        </AlertDescription>
+      </Alert>
+    </motion.div>
   );
 }
