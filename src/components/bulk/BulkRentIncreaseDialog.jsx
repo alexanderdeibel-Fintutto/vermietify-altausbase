@@ -9,6 +9,7 @@ import { Loader2, TrendingUp, AlertTriangle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { trackFeatureUsage } from '@/components/analytics/FeatureUsageTracker';
 
 export default function BulkRentIncreaseDialog({ open, onOpenChange, buildingId, onSuccess }) {
   const [increasePercent, setIncreasePercent] = useState(3);
@@ -78,6 +79,7 @@ export default function BulkRentIncreaseDialog({ open, onOpenChange, buildingId,
         setProgress(((i + 1) / total) * 100);
       }
 
+      trackFeatureUsage.bulkOperationExecuted('rent_increase', total, true);
       toast.success(`${total} Verträge erhöht`);
       onSuccess();
       onOpenChange(false);

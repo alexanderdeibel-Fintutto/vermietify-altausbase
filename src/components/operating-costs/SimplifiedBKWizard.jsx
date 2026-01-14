@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useOnboardingFunnelTracking } from '@/components/analytics/OnboardingFunnelTracker';
+import { trackFeatureUsage } from '@/components/analytics/FeatureUsageTracker';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +43,24 @@ export default function SimplifiedBKWizard({ open, onClose }) {
   const [selectedPeriodStart, setSelectedPeriodStart] = useState('');
   const [selectedPeriodEnd, setSelectedPeriodEnd] = useState('');
   const [selectedCosts, setSelectedCosts] = useState(new Set());
+  const [wizardStartTime, setWizardStartTime] = useState(null);
+  
+  const { trackWizardStart, trackWizardComplete, trackWizardAbandoned } = useOnboardingFunnelTracking(
+    currentStep,
+    4,
+    'bk_wizard'
+  );
+
+  React.useEffect(() => {
+    if (open) {
+      setWizardStartTime(Date.now());
+      trackWizardStart();
+      trackFeatureUsage.wizardOpened('bk_wizard');
+    } else if (wizardStartTime && currentStep < 3) {
+      // Wizard was closed before completion
+      trackWizardAbandoned(currentStep);
+    }
+  }, [open]);
 
   const { data: buildings = [] } = useQuery({
     queryKey: ['buildings'],
@@ -78,6 +98,10 @@ export default function SimplifiedBKWizard({ open, onClose }) {
   };
 
   const handleFinish = async () => {
+    const duration = wizardStartTime ? Date.now() - wizardStartTime : 0;
+    trackWizardComplete();
+    trackFeatureUsage.wizardCompleted('bk_wizard', duration);
+    
     try {
       await base44.entities.OperatingCostStatement.create({
         building_id: selectedBuilding,
