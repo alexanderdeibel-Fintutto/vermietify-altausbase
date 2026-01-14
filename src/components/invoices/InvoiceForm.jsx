@@ -32,6 +32,7 @@ import UmlagefaehigBadge from '@/components/shared/UmlagefaehigBadge';
 import BetriebskostenTooltip from '@/components/shared/BetriebskostenTooltip';
 import { InvoiceWithoutCategoryWarning } from '@/components/shared/PlausibilityWarnings';
 import SmartCategorySelector from '@/components/invoices/SmartCategorySelector';
+import InvoiceDuplicateWarning from '@/components/shared/InvoiceDuplicateWarning';
 
 export default function InvoiceForm({ open, onOpenChange, invoice, buildings, units, contracts, onSuccess }) {
     const queryClient = useQueryClient();
@@ -322,6 +323,13 @@ Analysiere die Rechnung und gib die ID der am besten passenden Kostenart zurück
                 </DialogHeader>
 
                 <InvoiceWithoutCategoryWarning show={!watch('cost_type_id')} />
+
+                <InvoiceDuplicateWarning
+                    amount={parseFloat(watch('amount'))}
+                    recipient={watch('recipient')}
+                    invoiceDate={invoiceDate ? format(invoiceDate, 'yyyy-MM-dd') : null}
+                    excludeId={invoice?.id}
+                />
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                     {/* Section 1: Grundlegende Informationen */}

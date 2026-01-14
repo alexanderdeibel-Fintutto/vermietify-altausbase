@@ -12,6 +12,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2 } from 'lucide-react';
+import TenantDuplicateWarning from '@/components/shared/TenantDuplicateWarning';
 
 export default function TenantForm({ open, onOpenChange, onSubmit, initialData, isLoading }) {
     const { register, handleSubmit, reset, setValue, watch } = useForm({
@@ -44,6 +45,13 @@ export default function TenantForm({ open, onOpenChange, onSubmit, initialData, 
                     </DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 mt-4">
+                    <TenantDuplicateWarning
+                        firstName={watch('first_name')}
+                        lastName={watch('last_name')}
+                        dateOfBirth={watch('date_of_birth')}
+                        excludeId={initialData?.id}
+                    />
+
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="first_name">Vorname *</Label>

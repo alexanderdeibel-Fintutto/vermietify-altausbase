@@ -31,6 +31,8 @@ import BookingPreviewDialog from '../bookings/BookingPreviewDialog';
 import RentMarketAnalyzer from './RentMarketAnalyzer';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
+import ContractOverlapWarning from '@/components/shared/ContractOverlapWarning';
+import { DepositTooHighWarning, RentAboveAverageWarning, OperatingCostsRatioWarning } from '@/components/shared/AdvancedPlausibilityChecks';
 
 export default function ContractForm({ 
     open, 
@@ -199,6 +201,29 @@ export default function ContractForm({
                     </DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 mt-4">
+                    <ContractOverlapWarning
+                        unitId={watchUnitId}
+                        startDate={watch('start_date')}
+                        endDate={watchIsUnlimited ? null : watch('end_date')}
+                        excludeId={initialData?.id}
+                    />
+
+                    <DepositTooHighWarning
+                        deposit={parseFloat(watch('deposit'))}
+                        monthlyRent={parseFloat(watchBaseRent)}
+                    />
+
+                    <RentAboveAverageWarning
+                        rentPerSqm={selectedUnit?.sqm ? (parseFloat(watchBaseRent) || 0) / selectedUnit.sqm : 0}
+                        area={selectedUnit?.sqm}
+                        city={buildingData?.city}
+                    />
+
+                    <OperatingCostsRatioWarning
+                        operatingCosts={parseFloat(watchUtilities) + parseFloat(watchHeating)}
+                        area={selectedUnit?.sqm}
+                    />
+
                     {isUnitOccupied && (
                       <div className="p-3 bg-red-50 border-red-200 rounded-lg flex items-center gap-2">
                         <AlertCircle className="w-5 h-5 text-red-600" />
