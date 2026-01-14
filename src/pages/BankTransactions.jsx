@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import BankTransactionMatches from "@/components/banking/BankTransactionMatches";
 import ISTBookingCard from "@/components/shared/ISTBookingCard";
 import AIMatchSuggestions from "@/components/banking/AIMatchSuggestions";
+import BankTransactionMatchSuggestions from "@/components/banking/BankTransactionMatchSuggestions";
 
 export default function BankTransactionsPage() {
   const [createOpen, setCreateOpen] = useState(false);
@@ -30,6 +31,11 @@ export default function BankTransactionsPage() {
   const { data: invoices = [] } = useQuery({
     queryKey: ["invoices"],
     queryFn: () => base44.entities.Invoice?.list?.() || []
+  });
+
+  const { data: contracts = [] } = useQuery({
+    queryKey: ["contracts"],
+    queryFn: () => base44.entities.LeaseContract?.list?.() || []
   });
 
   const filteredTransfers = transfers.filter(t => 
@@ -82,7 +88,12 @@ export default function BankTransactionsPage() {
             description={transfer.description || 'Keine Beschreibung'}
           >
             <div className="mt-4 pt-4 border-t space-y-3">
-              <AIMatchSuggestions transaction={transfer} />
+              <BankTransactionMatchSuggestions 
+                transaction={transfer}
+                invoices={invoices}
+                contracts={contracts}
+                onMatch={(suggestion) => console.log('Matched:', suggestion)}
+              />
               <BankTransactionMatches transaction={transfer} invoices={invoices} onMatch={handleMatch} onIgnore={() => {}} />
             </div>
           </ISTBookingCard>
