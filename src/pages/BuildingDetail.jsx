@@ -29,7 +29,7 @@ import BuildingFinanceTab from '@/components/buildings/BuildingFinanceTab';
 import BuildingStammdatenTab from '@/components/buildings/BuildingStammdatenTab';
 import BuildingTechnicalTab from '@/components/buildings/BuildingTechnicalTab';
 import BuildingTaxTab from '@/components/buildings/BuildingTaxTab';
-import { ErrorBoundaryWithRetry } from '@/components/shared/ErrorBoundaryWithRetry';
+import ErrorBoundaryWithRetry from '@/components/shared/ErrorBoundaryWithRetry';
 import EnergyPassportPanel from '@/components/building-detail/EnergyPassportPanel';
 import BuildingTransfersOverview from '@/components/building-detail/BuildingTransfersOverview';
 import QuickContractCreator from '@/components/contracts/QuickContractCreator';
