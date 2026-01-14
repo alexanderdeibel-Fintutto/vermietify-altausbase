@@ -1,5 +1,32 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+// Helper: Lade alle Entity-Dateien aus dem entities-Verzeichnis
+async function loadAllEntitySchemas() {
+    const schemas = {};
+    const entityPath = './entities';
+    
+    try {
+        for await (const entry of Deno.readDir(entityPath)) {
+            if (entry.isFile && entry.name.endsWith('.json')) {
+                const entityName = entry.name.replace('.json', '');
+                try {
+                    const content = await Deno.readTextFile(`${entityPath}/${entry.name}`);
+                    const schema = JSON.parse(content);
+                    if (schema && schema.properties) {
+                        schemas[entityName] = schema;
+                    }
+                } catch (err) {
+                    console.error(`Fehler beim Laden von ${entry.name}:`, err.message);
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Fehler beim Lesen des entities-Verzeichnisses:', err.message);
+    }
+    
+    return schemas;
+}
+
 // Fallback: Bekannte Entity-Schemas aus dem System
 const KNOWN_ENTITY_SCHEMAS = {
   "Building": {
