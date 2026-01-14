@@ -35,6 +35,7 @@ import BuildingTransfersOverview from '@/components/building-detail/BuildingTran
 import QuickContractCreator from '@/components/contracts/QuickContractCreator';
 import AutoCreateUnitsDialog from '@/components/units/AutoCreateUnitsDialog';
 import BreadcrumbNavigation from '@/components/navigation/BreadcrumbNavigation';
+import AutoCreateUnitsHint from '@/components/units/AutoCreateUnitsHint';
 
 export default function BuildingDetailPage() {
 
@@ -248,7 +249,12 @@ export default function BuildingDetailPage() {
 
         <TabsContent value="units">
           <div className="space-y-4">
-            <Button onClick={() => setAutoCreateUnitsOpen(true)} className="bg-blue-600">+ Automatisch Einheiten erstellen</Button>
+            {units.length === 0 && (
+              <AutoCreateUnitsHint 
+                buildingId={buildingId}
+                onAutoCreate={() => setAutoCreateUnitsOpen(true)}
+              />
+            )}
             <BuildingUnitsManager buildingId={buildingId} units={units} permissionLevel={permissionLevel} />
           </div>
         </TabsContent>

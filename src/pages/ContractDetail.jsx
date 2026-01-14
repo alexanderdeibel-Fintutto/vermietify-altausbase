@@ -18,6 +18,7 @@ import RentIncreaseCalculator from '@/components/contracts/RentIncreaseCalculato
 import ContractQuickActionBar from '@/components/contracts/ContractQuickActionBar';
 import TenantChangeWizard from '@/components/contracts/TenantChangeWizard';
 import ContractTermCalculator from '@/components/contracts/ContractTermCalculator';
+import RentIncreaseAutomation from '@/components/contracts/RentIncreaseAutomation';
 
 export default function ContractDetailPage() {
   const { id } = useParams();
@@ -177,7 +178,10 @@ export default function ContractDetailPage() {
       </div>
 
       {building && unit && (
-        <RentIncreaseCalculator contract={contract} building={building} unit={unit} />
+        <>
+          <RentIncreaseCalculator contract={contract} building={building} unit={unit} />
+          <RentIncreaseAutomation contract={contract} building={building} unit={unit} />
+        </>
       )}
 
       <Card>
