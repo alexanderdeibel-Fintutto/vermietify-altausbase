@@ -19,6 +19,8 @@ import LimitWarning from '@/components/subscription/LimitWarning';
 import QuickActionCards from '@/components/dashboard/QuickActionCards';
 import ActionRequiredWidget from '@/components/dashboard/ActionRequiredWidget';
 import OnboardingChecklist from '@/components/onboarding/OnboardingChecklist';
+import OnboardingChecklistWidget from '@/components/onboarding/OnboardingChecklistWidget';
+import BuildingsWidget from '@/components/dashboard/widgets/BuildingsWidget';
 
 const DEFAULT_LAYOUT = AVAILABLE_WIDGETS.slice(0, 7).map((widget, idx) => ({
   id: widget.id,
@@ -178,9 +180,9 @@ export default function Dashboard() {
 
         {/* Right Sidebar */}
         <div className="space-y-4 sm:space-y-6">
+          <OnboardingChecklistWidget />
           <ActionRequiredWidget />
           <SubscriptionWidget />
-          <OnboardingChecklist />
         </div>
       </div>
 
