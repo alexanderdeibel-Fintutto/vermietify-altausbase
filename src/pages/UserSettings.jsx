@@ -3,11 +3,12 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Bell, Shield, Key, Palette } from 'lucide-react';
+import { User, Bell, Shield, Key, Palette, Database } from 'lucide-react';
 import ProfileSettings from '@/components/settings/ProfileSettings';
 import SecuritySettings from '@/components/settings/SecuritySettings';
 import NotificationSettings from '@/components/settings/NotificationSettings';
 import AppearanceSettings from '@/components/settings/AppearanceSettings';
+import AutoBackupSystem from '@/components/backup/AutoBackupSystem';
 
 export default function UserSettings() {
   const { data: user } = useQuery({
@@ -51,7 +52,7 @@ export default function UserSettings() {
         <Card className="md:col-span-3">
           <CardContent className="p-6">
             <Tabs defaultValue="profile" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="profile">
                   <User className="w-4 h-4 mr-2" />
                   Profil
@@ -67,6 +68,10 @@ export default function UserSettings() {
                 <TabsTrigger value="appearance">
                   <Palette className="w-4 h-4 mr-2" />
                   Darstellung
+                </TabsTrigger>
+                <TabsTrigger value="backup">
+                  <Database className="w-4 h-4 mr-2" />
+                  Backup
                 </TabsTrigger>
               </TabsList>
 
@@ -84,6 +89,10 @@ export default function UserSettings() {
 
               <TabsContent value="appearance">
                 <AppearanceSettings user={user} />
+              </TabsContent>
+
+              <TabsContent value="backup">
+                <AutoBackupSystem />
               </TabsContent>
             </Tabs>
           </CardContent>
