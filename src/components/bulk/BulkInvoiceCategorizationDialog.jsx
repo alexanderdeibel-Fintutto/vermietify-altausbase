@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Loader2, CheckCircle2, Sparkles } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { trackFeatureUsage } from '@/components/analytics/FeatureUsageTracker';
 
 export default function BulkInvoiceCategorizationDialog({ open, onOpenChange, selectedInvoices, onSuccess }) {
   const [selectedCostTypeId, setSelectedCostTypeId] = useState('');
@@ -65,6 +66,7 @@ export default function BulkInvoiceCategorizationDialog({ open, onOpenChange, se
         setProgress(((i + 1) / total) * 100);
       }
 
+      trackFeatureUsage.bulkOperationExecuted('invoice_categorization', total, true);
       toast.success(`${total} Rechnungen kategorisiert`);
       onSuccess();
       onOpenChange(false);

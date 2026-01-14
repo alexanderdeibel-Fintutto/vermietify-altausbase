@@ -41,6 +41,7 @@ import KeyboardShortcutsHandler from '@/components/shortcuts/KeyboardShortcutsHa
 import KeyboardShortcutsHelp from '@/components/shortcuts/KeyboardShortcutsHelp';
 import ThemeToggle from '@/components/theme/ThemeToggle';
 import OfflineModeInitializer from '@/components/offline/OfflineModeInitializer';
+import { FloatingFeedbackButton } from '@/components/feedback/UserFeedbackCollector';
 
 // Lazy load heavy components
 const TesterTracker = lazy(() => import('@/components/testing/TesterTracker'));
@@ -198,9 +199,12 @@ export default function Layout({ children, currentPageName }) {
                                 <OfflineIndicator />
 
                                 {/* Offline Mode Support */}
-                                <OfflineModeInitializer />
+                                                <OfflineModeInitializer />
 
-                {/* Mobile Bottom Navigation */}
+                                {/* Floating Feedback Button */}
+                                <FloatingFeedbackButton />
+
+                                {/* Mobile Bottom Navigation */}
                 <MobileBottomNav visibleFeatures={visibleFeatures} />
                     </div>
                   </div>
