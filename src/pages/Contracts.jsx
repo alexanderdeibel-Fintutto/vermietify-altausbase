@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { ContractWithoutBookingsWarning } from '@/components/shared/PlausibilityWarnings';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { FileText, MoreVertical, Pencil, Trash2, User, Users, Building2, Calendar, AlertCircle, Eye, CheckCircle, XCircle, Clock } from 'lucide-react';

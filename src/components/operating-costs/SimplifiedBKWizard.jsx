@@ -1,234 +1,251 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { ChevronLeft, CheckCircle2, AlertCircle } from "lucide-react";
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { toast } from 'sonner';
-import BetriebskostenTooltip from '@/components/shared/BetriebskostenTooltip';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CheckCircle, AlertCircle, ArrowRight, ArrowLeft, FileText } from 'lucide-react';
+import { toast } from 'sonner';
+import { BKWithNoCostsWarning } from '@/components/shared/PlausibilityWarnings';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+import ProgressTracker from '@/components/shared/ProgressTracker';
 
-const STEPS = [
-  { id: 1, label: 'Objekt & Zeitraum', description: 'Gebäude auswählen' },
-  { id: 2, label: 'Automatische Kosten', description: 'Vorauswahl prüfen' },
-  { id: 3, label: 'Prüfen & Korrigieren', description: 'Details überprüfen' },
-  { id: 4, label: 'Vorschau & Erstellen', description: 'Finalisieren' },
+const WIZARD_STEPS = [
+  { label: 'Objekt & Zeitraum' },
+  { label: 'Kosten auswählen' },
+  { label: 'Prüfen' },
+  { label: 'Erstellen' }
 ];
 
-export default function SimplifiedBKWizard({ onClose }) {
-  const [step, setStep] = useState(1);
-  const [building, setBuilding] = useState(null);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [selectedCosts, setSelectedCosts] = useState([]);
-  const queryClient = useQueryClient();
+export default function SimplifiedBKWizard({ open, onClose }) {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [selectedBuilding, setSelectedBuilding] = useState('');
+  const [selectedPeriodStart, setSelectedPeriodStart] = useState('');
+  const [selectedPeriodEnd, setSelectedPeriodEnd] = useState('');
+  const [selectedCosts, setSelectedCosts] = useState(new Set());
 
   const { data: buildings = [] } = useQuery({
     queryKey: ['buildings'],
-    queryFn: () => base44.entities.Building.list(),
+    queryFn: () => base44.entities.Building.list()
   });
 
   const { data: invoices = [] } = useQuery({
-    queryKey: ['invoices', building?.id],
-    queryFn: () => building ? base44.entities.Invoice.filter({ building_id: building.id }) : [],
-    enabled: !!building,
+    queryKey: ['invoices'],
+    queryFn: () => base44.entities.Invoice.list(),
+    enabled: !!selectedBuilding
   });
 
-  const createStatementMutation = useMutation({
-    mutationFn: async () => {
-      const costItems = invoices
-        .filter(inv => selectedCosts.includes(inv.id))
-        .map(inv => ({ invoice_id: inv.id, amount: inv.amount }));
-      
-      return await base44.entities.OperatingCostStatement.create({
-        building_id: building.id,
-        start_date: startDate,
-        end_date: endDate,
-        cost_items: costItems,
+  // Auto-select umlagefähige Kosten
+  const relevantCosts = invoices.filter(inv => 
+    inv.building_id === selectedBuilding &&
+    inv.operating_cost_relevant &&
+    inv.invoice_date >= selectedPeriodStart &&
+    inv.invoice_date <= selectedPeriodEnd
+  );
+
+  const handleNext = () => {
+    if (currentStep === 0) {
+      if (!selectedBuilding || !selectedPeriodStart || !selectedPeriodEnd) {
+        toast.error('Bitte alle Felder ausfüllen');
+        return;
+      }
+      // Auto-select all relevant costs
+      setSelectedCosts(new Set(relevantCosts.map(c => c.id)));
+    }
+    setCurrentStep(prev => Math.min(prev + 1, WIZARD_STEPS.length - 1));
+  };
+
+  const handleBack = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 0));
+  };
+
+  const handleFinish = async () => {
+    try {
+      await base44.entities.OperatingCostStatement.create({
+        building_id: selectedBuilding,
+        period_start: selectedPeriodStart,
+        period_end: selectedPeriodEnd,
+        selected_invoice_ids: Array.from(selectedCosts),
         status: 'draft'
       });
-    },
-    onSuccess: () => {
-      toast.success('✅ Betriebskostenabrechnung erstellt!');
-      queryClient.invalidateQueries({ queryKey: ['operating-costs'] });
-      setStep(5);
+      toast.success('BK-Abrechnung erstellt');
+      onClose();
+    } catch (error) {
+      toast.error('Fehler beim Erstellen');
     }
-  });
-
-  const progress = (step / STEPS.length) * 100;
+  };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">🏠 Betriebskostenabrechnung (vereinfacht)</h1>
-        <p className="text-slate-600 mt-1">Schritt {step} von {STEPS.length}</p>
-      </div>
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Betriebskostenabrechnung erstellen</DialogTitle>
+        </DialogHeader>
 
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex gap-2 mb-4">
-            {STEPS.map((s) => (
-              <div key={s.id} className="flex-1">
-                <div className={`text-xs text-center font-medium mb-1 ${step >= s.id ? 'text-blue-600' : 'text-slate-400'}`}>
-                  {s.label}
-                </div>
-                <div className={`h-1 rounded ${step > s.id ? 'bg-blue-600' : step === s.id ? 'bg-blue-400' : 'bg-slate-200'}`} />
-              </div>
-            ))}
-          </div>
-          <Progress value={progress} className="h-1" />
-        </CardContent>
-      </Card>
+        <ProgressTracker steps={WIZARD_STEPS} currentStep={currentStep} />
 
-      <Card>
-        <CardContent className="p-8">
-          {step === 1 && (
+        <div className="py-6">
+          {/* Step 1: Objekt & Zeitraum */}
+          {currentStep === 0 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Schritt 1: Objekt & Zeitraum</h2>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Gebäude auswählen</label>
-                <select 
-                  value={building?.id || ''} 
-                  onChange={(e) => {
-                    const selected = buildings.find(b => b.id === e.target.value);
-                    setBuilding(selected);
-                  }}
-                  className="w-full border rounded p-2"
-                >
-                  <option value="">Wählen Sie ein Gebäude...</option>
-                  {buildings.map(b => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                  ))}
-                </select>
+              <div>
+                <Label>Gebäude auswählen *</Label>
+                <Select value={selectedBuilding} onValueChange={setSelectedBuilding}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Gebäude wählen..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {buildings.map(b => (
+                      <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Von</label>
-                  <input 
+                <div>
+                  <Label>Abrechnungszeitraum von *</Label>
+                  <Input 
                     type="date" 
-                    value={startDate} 
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full border rounded p-2"
+                    value={selectedPeriodStart}
+                    onChange={(e) => setSelectedPeriodStart(e.target.value)}
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Bis</label>
-                  <input 
+                <div>
+                  <Label>bis *</Label>
+                  <Input 
                     type="date" 
-                    value={endDate} 
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full border rounded p-2"
+                    value={selectedPeriodEnd}
+                    onChange={(e) => setSelectedPeriodEnd(e.target.value)}
                   />
                 </div>
               </div>
             </div>
           )}
 
-          {step === 2 && (
+          {/* Step 2: Kosten-Vorauswahl */}
+          {currentStep === 1 && (
             <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold flex-1">Schritt 2: Automatische Kostenvorauswahl</h2>
-                <BetriebskostenTooltip />
+              <BKWithNoCostsWarning show costsCount={relevantCosts.length} />
+              
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-slate-600">
+                  {relevantCosts.length} umlagefähige Kosten automatisch ausgewählt
+                </p>
+                {relevantCosts.length === 0 && (
+                  <Link to={createPageUrl('Invoices')}>
+                    <Button size="sm" variant="outline">
+                      Rechnungen kategorisieren
+                    </Button>
+                  </Link>
+                )}
               </div>
-              <p className="text-sm text-slate-600">Die folgenden Kosten wurden automatisch erkannt (nur umlagefähige):</p>
-              <div className="space-y-2 max-h-80 overflow-y-auto">
-                {invoices
-                  .filter(inv => inv.operating_cost_relevant)
-                  .map(inv => (
-                    <div key={inv.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded border">
-                      <Checkbox 
-                        checked={selectedCosts.includes(inv.id)}
+
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {relevantCosts.map(cost => (
+                  <Card key={cost.id} className="p-3">
+                    <div className="flex items-center gap-3">
+                      <Checkbox
+                        checked={selectedCosts.has(cost.id)}
                         onCheckedChange={(checked) => {
+                          const newSelected = new Set(selectedCosts);
                           if (checked) {
-                            setSelectedCosts([...selectedCosts, inv.id]);
+                            newSelected.add(cost.id);
                           } else {
-                            setSelectedCosts(selectedCosts.filter(id => id !== inv.id));
+                            newSelected.delete(cost.id);
                           }
+                          setSelectedCosts(newSelected);
                         }}
                       />
                       <div className="flex-1">
-                        <p className="text-sm font-medium">{inv.description}</p>
-                        <p className="text-xs text-slate-600">€{inv.amount} - {inv.invoice_date}</p>
+                        <p className="text-sm font-medium">{cost.description}</p>
+                        <p className="text-xs text-slate-500">{cost.recipient}</p>
                       </div>
+                      <p className="font-semibold">€{cost.amount?.toFixed(2)}</p>
                     </div>
-                  ))}
+                  </Card>
+                ))}
               </div>
             </div>
           )}
 
-          {step === 3 && (
+          {/* Step 3: Prüfen */}
+          {currentStep === 2 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Schritt 3: Prüfen & Korrigieren</h2>
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded flex items-start gap-2">
-                <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-blue-800">
-                  ⚠️ Kosten fehlend? → Gehe zu <a href="#" className="underline font-medium">Rechnungen kategorisieren</a>
+              <Card className="p-4 bg-blue-50 border-blue-200">
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-blue-900">Bereit zur Erstellung</p>
+                    <p className="text-sm text-blue-700 mt-1">
+                      {selectedCosts.size} Kosten für {buildings.find(b => b.id === selectedBuilding)?.name}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+
+              <div className="space-y-2">
+                <h3 className="font-semibold">Zusammenfassung</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-slate-600">Zeitraum:</p>
+                    <p className="font-medium">{selectedPeriodStart} bis {selectedPeriodEnd}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-600">Gesamtbetrag:</p>
+                    <p className="font-medium">
+                      €{relevantCosts
+                        .filter(c => selectedCosts.has(c.id))
+                        .reduce((sum, c) => sum + (c.amount || 0), 0)
+                        .toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Vorschau */}
+          {currentStep === 3 && (
+            <div className="space-y-4 text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">Fertig zum Erstellen</h3>
+                <p className="text-sm text-slate-600 mt-2">
+                  Die BK-Abrechnung wird als Entwurf gespeichert und kann später bearbeitet werden.
                 </p>
               </div>
             </div>
           )}
+        </div>
 
-          {step === 4 && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Schritt 4: Vorschau & Erstellen</h2>
-              <div className="p-4 bg-slate-50 rounded border">
-                <p className="text-sm font-medium">Zusammenfassung:</p>
-                <ul className="text-sm text-slate-600 mt-2 space-y-1">
-                  <li>Gebäude: {building?.name}</li>
-                  <li>Zeitraum: {startDate} bis {endDate}</li>
-                  <li>Anzahl Kosten: {selectedCosts.length}</li>
-                </ul>
-              </div>
-            </div>
-          )}
-
-          {step === 5 && (
-            <div className="text-center space-y-4">
-              <CheckCircle2 className="w-16 h-16 text-emerald-600 mx-auto" />
-              <h2 className="text-2xl font-bold">✅ Fertig!</h2>
-              <p className="text-slate-600">Ihre Betriebskostenabrechnung wurde erstellt.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {step < 5 && (
-        <div className="flex gap-3">
-          <Button 
-            variant="outline" 
-            onClick={() => setStep(Math.max(1, step - 1))}
-            disabled={step === 1}
-            className="flex-1"
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" /> Zurück
+        <div className="flex justify-between pt-4 border-t">
+          <Button variant="outline" onClick={handleBack} disabled={currentStep === 0}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Zurück
           </Button>
           
-          {step < 4 && (
-            <Button 
-              onClick={() => setStep(step + 1)}
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
-            >
+          {currentStep < WIZARD_STEPS.length - 1 ? (
+            <Button onClick={handleNext}>
               Weiter
+              <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-          )}
-          
-          {step === 4 && (
-            <Button 
-              onClick={() => createStatementMutation.mutate()}
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-            >
-              ✓ Abrechnung erstellen
+          ) : (
+            <Button onClick={handleFinish} className="bg-green-600 hover:bg-green-700">
+              <FileText className="w-4 h-4 mr-2" />
+              Abrechnung erstellen
             </Button>
           )}
         </div>
-      )}
-
-      {step === 5 && (
-        <Button onClick={onClose} className="w-full bg-blue-600 hover:bg-blue-700">
-          → Schließen
-        </Button>
-      )}
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

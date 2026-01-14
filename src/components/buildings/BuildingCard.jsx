@@ -61,6 +61,18 @@ export default function BuildingCard({ building, units = [] }) {
                             <span className="text-sm text-slate-400 ml-auto">{totalSqm} m²</span>
                         )}
                     </div>
+                    
+                    {buildingUnits.length > 0 && (
+                        <Link 
+                            to={createPageUrl(`BuildingDetail?id=${building.id}&tab=units`)}
+                            className="mt-3 flex items-center justify-center gap-2 text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <Home className="w-4 h-4" />
+                            → {buildingUnits.length} Einheiten anzeigen
+                            <ChevronRight className="w-4 h-4" />
+                        </Link>
+                    )}
                 </CardContent>
             </Card>
         </Link>
