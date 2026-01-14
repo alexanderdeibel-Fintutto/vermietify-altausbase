@@ -5,9 +5,12 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Edit, Download, FileText } from 'lucide-react';
+import { ArrowLeft, Edit, Download, FileText, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { toast } from 'sonner';
+import { regenerateContractFinancialItems } from '@/components/contracts/generateFinancialItems';
+import BuchungenGenerierenTooltip from '@/components/shared/BuchungenGenerierenTooltip';
 import LeaseContractAnalyzer from '@/components/contracts/LeaseContractAnalyzer';
 import ContractDocumentManager from '@/components/contracts/ContractDocumentManager';
 import ContractRenewalTracker from '@/components/contracts/ContractRenewalTracker';
@@ -19,6 +22,7 @@ export default function ContractDetailPage() {
   const { id } = useParams();
   const [editMode, setEditMode] = useState(false);
   const [tenantChangeOpen, setTenantChangeOpen] = useState(false);
+  const [generatingBookings, setGeneratingBookings] = useState(false);
 
   const { data: contract } = useQuery({
     queryKey: ['contract', id],
@@ -43,6 +47,18 @@ export default function ContractDetailPage() {
     enabled: !!unit?.gebaeude_id
   });
 
+  const handleGenerateBookings = async () => {
+    setGeneratingBookings(true);
+    try {
+      await regenerateContractFinancialItems(contract.id);
+      toast.success('Buchungen erfolgreich generiert');
+    } catch (error) {
+      toast.error('Fehler beim Generieren der Buchungen');
+    } finally {
+      setGeneratingBookings(false);
+    }
+  };
+
   if (!contract?.id) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -60,6 +76,21 @@ export default function ContractDetailPage() {
           <p className="text-slate-600 mt-1">{contract.tenant_name || 'Vertrag'} - {contract.unit_name || 'Einheit'}</p>
         </div>
         <div className="ml-auto flex gap-2">
+          <Button 
+            onClick={handleGenerateBookings} 
+            disabled={generatingBookings}
+            className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+          >
+            {generatingBookings ? (
+              <>Generiere...</>
+            ) : (
+              <>
+                <Zap className="w-4 h-4" />
+                Buchungen generieren
+              </>
+            )}
+            <BuchungenGenerierenTooltip />
+          </Button>
           <Button variant="outline"><Download className="w-4 h-4 mr-2" />PDF</Button>
           <Button onClick={() => setEditMode(!editMode)}><Edit className="w-4 h-4 mr-2" />{editMode ? 'Fertig' : 'Bearbeiten'}</Button>
         </div>

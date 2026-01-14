@@ -5,7 +5,8 @@ import { base44 } from '@/api/base44Client';
 import { ContractWithoutBookingsWarning } from '@/components/shared/PlausibilityWarnings';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { FileText, MoreVertical, Pencil, Trash2, User, Users, Building2, Calendar, AlertCircle, Eye, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { FileText, MoreVertical, Pencil, Trash2, User, Users, Building2, Calendar, AlertCircle, Eye, CheckCircle, XCircle, Clock, Zap } from 'lucide-react';
+import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
@@ -359,6 +360,16 @@ export default function Contracts() {
                                                                 Details anzeigen
                                                             </Link>
                                                         </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={(e) => {
+                                                            e.preventDefault();
+                                                            regenerateContractFinancialItems(contractId).then(() => {
+                                                                toast.success('Buchungen generiert');
+                                                                queryClient.invalidateQueries({ queryKey: ['financial-items'] });
+                                                            }).catch(() => toast.error('Fehler beim Generieren'));
+                                                        }}>
+                                                            <CheckCircle className="w-4 h-4 mr-2" />
+                                                            Buchungen generieren
+                                                        </DropdownMenuItem>
                                                         <DropdownMenuItem onClick={() => {
                                                             setEditingContract(contract);
                                                             setFormOpen(true);
@@ -371,7 +382,8 @@ export default function Contracts() {
                                                             setSelectedUnit(unit);
                                                             setTenantChangeOpen(true);
                                                         }}>
-                                                            🔄 Mieterwechsel
+                                                            <User className="w-4 h-4 mr-2" />
+                                                            Mieterwechsel
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem 
                                                             onClick={() => setDeleteContract(contract)}
@@ -421,7 +433,7 @@ export default function Contracts() {
                                             </div>
 
                                             <div className="mt-4 pt-4 border-t border-slate-100">
-                                                <div className="flex justify-between items-center">
+                                                <div className="flex justify-between items-center mb-3">
                                                     <div>
                                                         <p className="text-sm text-slate-500">Warmmiete</p>
                                                         <p className="text-2xl font-bold text-slate-800">
@@ -439,6 +451,37 @@ export default function Contracts() {
                                                             </p>
                                                         </div>
                                                     )}
+                                                </div>
+                                                
+                                                {/* Quick Actions */}
+                                                <div className="flex gap-2" onClick={(e) => e.preventDefault()}>
+                                                    <Button 
+                                                        size="sm" 
+                                                        variant="outline"
+                                                        className="flex-1 text-xs"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            regenerateContractFinancialItems(contractId).then(() => {
+                                                                toast.success('Buchungen generiert');
+                                                                queryClient.invalidateQueries({ queryKey: ['financial-items'] });
+                                                            }).catch(() => toast.error('Fehler'));
+                                                        }}
+                                                    >
+                                                        <Zap className="w-3 h-3 mr-1" />
+                                                        Buchungen
+                                                    </Button>
+                                                    <Button 
+                                                        size="sm" 
+                                                        variant="outline"
+                                                        className="flex-1 text-xs"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            toast.info('Dokument-Generierung folgt');
+                                                        }}
+                                                    >
+                                                        <FileText className="w-3 h-3 mr-1" />
+                                                        Dokument
+                                                    </Button>
                                                 </div>
                                             </div>
                                         </CardContent>
