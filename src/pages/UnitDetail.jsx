@@ -195,7 +195,18 @@ export default function UnitDetail() {
                     {/* Current Tenant */}
                     {currentTenant && activeContract && (
                         <div className="mt-6 pt-6 border-t border-slate-100">
-                            <p className="text-sm font-medium text-slate-600 mb-3">Aktueller Mieter</p>
+                            <div className="flex items-center justify-between mb-3">
+                                <p className="text-sm font-medium text-slate-600">Aktueller Mieter</p>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setTenantChangeOpen(true)}
+                                    className="gap-2"
+                                >
+                                    <RefreshCw className="w-4 h-4" />
+                                    Mieterwechsel
+                                </Button>
+                            </div>
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
                                     <User className="w-5 h-5 text-slate-500" />
@@ -249,7 +260,8 @@ export default function UnitDetail() {
             <TenantChangeWizard 
                 open={tenantChangeOpen}
                 onOpenChange={setTenantChangeOpen}
-                unitId={unitId}
+                currentContract={activeContract}
+                unit={unit}
             />
         </div>
     );
