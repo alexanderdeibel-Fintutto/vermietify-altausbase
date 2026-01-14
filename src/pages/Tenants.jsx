@@ -5,8 +5,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Users, Search } from 'lucide-react';
+import { Users, Search, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FeatureGateInline } from '@/components/subscription/FeatureGateInline';
 import TenantFilterBar from '@/components/tenants/TenantFilterBar';
 import TenantTable from '@/components/tenants/TenantTable';
@@ -169,14 +170,19 @@ export default function TenantsPage() {
 
       <QuickStats stats={stats} accentColor="green" />
 
+      <Alert className="bg-blue-50 border-blue-200">
+        <AlertCircle className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-blue-800">
+          <strong>Hinweis:</strong> Neue Mietverträge erstellen Sie über: Gebäude → Einheit auswählen → "Neuer Vertrag"
+        </AlertDescription>
+      </Alert>
+
       <TenantFilterBar 
         onSearchChange={setSearch}
         onStatusChange={setStatus}
         onPortalAccessChange={setPortalAccess}
         onSortChange={setSortBy}
-        onNewTenant={() => {
-          toast.error('Neue Mietverträge können nur über eine Einheit erstellt werden.');
-        }}
+        hideNewButton={true}
       />
 
       <TenantTable 
