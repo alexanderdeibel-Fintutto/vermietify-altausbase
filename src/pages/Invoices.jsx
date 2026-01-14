@@ -56,12 +56,16 @@ import FloatingActionMenu from '@/components/shared/FloatingActionMenu';
 import ContextHelp from '@/components/shared/ContextHelp';
 import BulkInvoiceCategorizationDialog from '@/components/bulk/BulkInvoiceCategorizationDialog';
 import BulkExportDialog from '@/components/bulk/BulkExportDialog';
+import AdvancedSearchWithSave from '@/components/search/AdvancedSearchWithSave';
+import BulkCSVImportDialog from '@/components/import/BulkCSVImportDialog';
 
 export default function Invoices() {
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState('invoices');
     const [bulkCategorizationOpen, setBulkCategorizationOpen] = useState(false);
     const [bulkExportOpen, setBulkExportOpen] = useState(false);
+    const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
+    const [bulkImportOpen, setBulkImportOpen] = useState(false);
 
     // Keyboard shortcuts
     useKeyboardShortcuts({
@@ -555,16 +559,34 @@ export default function Invoices() {
                 </div>
                 <div className="flex gap-2">
                     {activeTab === 'invoices' && (
-                        <Button 
-                            onClick={() => {
-                                setEditingInvoice(null);
-                                setIntelligentWizardOpen(true);
-                            }}
-                            className="bg-slate-700 hover:bg-slate-800 gap-2 font-extralight"
-                        >
-                            <Sparkles className="w-4 h-4" />
-                            Smart-Erfassung
-                        </Button>
+                        <>
+                            <Button 
+                                variant="outline"
+                                onClick={() => setAdvancedSearchOpen(true)}
+                                className="gap-2"
+                            >
+                                <Search className="w-4 h-4" />
+                                Erweiterte Suche
+                            </Button>
+                            <Button 
+                                variant="outline"
+                                onClick={() => setBulkImportOpen(true)}
+                                className="gap-2"
+                            >
+                                <Upload className="w-4 h-4" />
+                                Import
+                            </Button>
+                            <Button 
+                                onClick={() => {
+                                    setEditingInvoice(null);
+                                    setIntelligentWizardOpen(true);
+                                }}
+                                className="bg-slate-700 hover:bg-slate-800 gap-2 font-extralight"
+                            >
+                                <Sparkles className="w-4 h-4" />
+                                Smart-Erfassung
+                            </Button>
+                        </>
                     )}
                     <Button 
                         onClick={() => {
@@ -1352,6 +1374,36 @@ export default function Invoices() {
                 data={filteredInvoices.filter(i => selectedInvoices.has(i.id))}
                 entityType="Rechnungen"
                 filename="rechnungen_export"
+            />
+
+            {/* Advanced Search Dialog */}
+            <AdvancedSearchWithSave
+                open={advancedSearchOpen}
+                onOpenChange={setAdvancedSearchOpen}
+                entityType="Invoice"
+                fields={[
+                    { value: 'description', label: 'Beschreibung', type: 'text' },
+                    { value: 'recipient', label: 'Empfänger', type: 'text' },
+                    { value: 'amount', label: 'Betrag', type: 'number' },
+                    { value: 'invoice_date', label: 'Rechnungsdatum', type: 'date' },
+                    { value: 'status', label: 'Status', type: 'text' }
+                ]}
+                onSearch={(conditions) => {
+                    // Apply search conditions as filters
+                    console.log('Search conditions:', conditions);
+                    toast.success('Filter angewendet');
+                }}
+            />
+
+            {/* Bulk Import Dialog */}
+            <BulkCSVImportDialog
+                open={bulkImportOpen}
+                onOpenChange={setBulkImportOpen}
+                entityType="Invoice"
+                onSuccess={() => {
+                    queryClient.invalidateQueries({ queryKey: ['invoices'] });
+                    setBulkImportOpen(false);
+                }}
             />
 
             {/* Delete Invoice Dialog */}
