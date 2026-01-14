@@ -636,7 +636,7 @@ async function generateDatabaseStructureDoc(entities, changes = [], versionNumbe
     doc += '---\n\n';
     
     // Intelligente Gruppierung basierend auf Entity-Namen
-    const groups = {
+    const groupsDefinition = {
         '1. OBJEKTE & GEBÄUDE': ['Building', 'Unit', 'Gebaeude', 'BuildingOwnership', 'BuildingPermission', 'BuildingTask', 'BuildingManager', 'BuildingInspection', 'InspectionChecklist', 'InspectionFinding', 'BuildingBoardPost', 'BuildingBoardComment', 'BuildingTaxLibrary', 'EnergyPassport', 'IoTSensor', 'SensorReading', 'SmartDevice', 'HeatingOptimization', 'EnergyAnalysis'],
         '2. EIGENTÜMER & ANTEILE': ['Owner', 'Shareholder', 'OwnerRelationship', 'BuildingOwnership', 'OwnerAssetLink'],
         '3. MIETER & VERTRÄGE': ['Tenant', 'CoTenant', 'LeaseContract', 'Termination', 'ContractTermination', 'ContractRenewal', 'RentChange', 'RentIncrease', 'RentIncreaseProposal', 'IndexRentAdjustment', 'HandoverProtocol', 'Deposit', 'RentDebt', 'Applicant', 'Viewing'],
@@ -673,14 +673,21 @@ async function generateDatabaseStructureDoc(entities, changes = [], versionNumbe
         '34. COMMUNITY & SOZIALES': ['CommunityPost', 'CommunityComment', 'Announcement'],
         '35. DIGITALE DIENSTE': ['DigitalKey', 'ARViewing', 'SmartContract'],
         '36. SONSTIGE FINANZENTITIES': ['PropertyROI', 'IncomeVariance', 'RentOptimization', 'PropertyValuation', 'Vacancy', 'Reserve', 'IndustryBenchmark', 'PurchaseContract'],
-        '37. SYNC & INTEGRATION': ['SyncJob', 'SyncAuditLog', 'CantonConfig', 'AutomationConfig'],
-        '38. WEITERE ENTITIES': Object.keys(entities).filter(name => 
-            !Object.values(groups).flat().includes(name) &&
-            !['User'].includes(name) // User ist built-in
-        )
+        '37. SYNC & INTEGRATION': ['SyncJob', 'SyncAuditLog', 'CantonConfig', 'AutomationConfig']
     };
+    
+    // Finde alle Entities, die noch keiner Gruppe zugeordnet sind
+    const assignedEntities = Object.values(groupsDefinition).flat();
+    const unassignedEntities = Object.keys(entities).filter(name => 
+        !assignedEntities.includes(name) &&
+        !['User'].includes(name) // User ist built-in
+    );
+    
+    if (unassignedEntities.length > 0) {
+        groupsDefinition['38. WEITERE ENTITIES'] = unassignedEntities;
+    }
 
-    for (const [groupName, entityNames] of Object.entries(groups)) {
+    for (const [groupName, entityNames] of Object.entries(groupsDefinition)) {
         const groupEntities = entityNames.filter(name => entities[name]);
         if (groupEntities.length === 0) continue;
 
