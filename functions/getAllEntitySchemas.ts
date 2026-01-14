@@ -145,31 +145,39 @@ Deno.serve(async (req) => {
             'ProblemStatistics', 'ProblemSolution', 'DocumentationChange', 'TaskPriority', 'Email', 'Automation',
             'WorkflowStep', 'PaymentTransactionLink', 'AfASchedule', 'BookingGenerationRule', 'Recipient',
             'TaxForm', 'TaxFormField', 'TaskStatus', 'Payment', 'CategorizationRule', 'FinancialItemTransactionLink',
-            'EuerCategory', 'CostType', 'Gebaeude', 'TaxCategory', 'CostTaxLink', 'CustomCostCategory',
-            'PortfolioAnalysis', 'WhiteLabelInstance', 'Contractor', 'RentIncreaseProposal', 'TenantSupportTicket',
-            'BankingAutomationRule', 'PropertyValuation', 'OperatingCostAutomation', 'TenantVettingReport',
-            'ElsterComplianceAudit', 'DocumentComment', 'DocumentRelationship', 'DocumentPermission', 'DocumentActivity',
-            'DocumentTag', 'PricingTier', 'TierFeature', 'TierLimit'
+            'EuerCategory', 'CostType', 'Gebaeude', 'TaxCategory', 'CostTaxLink', 'CustomCostCategory'
         ];
 
         logDebug(`Versuche ${allEntityNames.length} Entity-Schemas zu laden...`);
 
-        // Versuche für jede Entity das Schema zu laden
-        for (const entityName of allEntityNames) {
-            try {
-                const schemaMethod = base44.asServiceRole?.entities?.[entityName]?.schema;
-                if (typeof schemaMethod === 'function') {
-                    const schema = await schemaMethod();
-                    if (schema && schema.properties) {
-                        schemas[entityName] = schema;
-                        logDebug(`✓ ${entityName}: ${Object.keys(schema.properties).length} Felder`);
+        // Lese Entity-Schemas direkt aus dem Dateisystem
+        const entityFilesPath = '/var/task/entities';
+        
+        try {
+            // Versuche Dateisystem-Zugriff (falls verfügbar)
+            for await (const dirEntry of Deno.readDir(entityFilesPath)) {
+                if (dirEntry.isFile && dirEntry.name.endsWith('.json')) {
+                    try {
+                        const entityName = dirEntry.name.replace('.json', '');
+                        const filePath = `${entityFilesPath}/${dirEntry.name}`;
+                        const fileContent = await Deno.readTextFile(filePath);
+                        const schema = JSON.parse(fileContent);
+                        
+                        if (schema && schema.properties) {
+                            schemas[entityName] = schema;
+                            logDebug(`✓ ${entityName}: ${Object.keys(schema.properties).length} Felder (aus Datei)`);
+                        }
+                    } catch (error) {
+                        logDebug(`✗ ${dirEntry.name}: Fehler beim Laden - ${error.message}`);
                     }
-                } else {
-                    logDebug(`✗ ${entityName}: Keine schema() Methode verfügbar`);
                 }
-            } catch (error) {
-                logDebug(`✗ ${entityName}: Fehler beim Laden - ${error.message}`);
             }
+        } catch (fsError) {
+            logDebug(`Dateisystem-Zugriff nicht möglich: ${fsError.message}`);
+            logDebug(`Fallback zu KNOWN_ENTITY_SCHEMAS`);
+            
+            // Fallback zu den bekannten Schemas
+            Object.assign(schemas, KNOWN_ENTITY_SCHEMAS);
         }
 
         logDebug(`Schemas geladen: ${Object.keys(schemas).length}`);
@@ -182,7 +190,7 @@ Deno.serve(async (req) => {
             count: Object.keys(schemas).length,
             schemas,
             debugLogs,
-            note: `Dynamisch ${Object.keys(schemas).length} Schemas geladen`
+            note: `Geladen: ${Object.keys(schemas).length} Entity-Schemas`
         });
 
     } catch (error) {
