@@ -17,6 +17,7 @@ import ContractRenewalTracker from '@/components/contracts/ContractRenewalTracke
 import RentIncreaseCalculator from '@/components/contracts/RentIncreaseCalculator';
 import ContractQuickActionBar from '@/components/contracts/ContractQuickActionBar';
 import TenantChangeWizard from '@/components/contracts/TenantChangeWizard';
+import ContractTermCalculator from '@/components/contracts/ContractTermCalculator';
 
 export default function ContractDetailPage() {
   const { id } = useParams();
@@ -167,6 +168,9 @@ export default function ContractDetailPage() {
         </CardContent>
       </Card>
 
+      {/* Kündigungsfrist Calculator */}
+      <ContractTermCalculator contract={contract} />
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ContractRenewalTracker contractId={contract.id} />
         <ContractDocumentManager contractId={contract.id} />
@@ -193,6 +197,7 @@ export default function ContractDetailPage() {
       <TenantChangeWizard
         open={tenantChangeOpen}
         onOpenChange={setTenantChangeOpen}
+        currentContract={contract}
         unit={unit}
       />
     </div>
