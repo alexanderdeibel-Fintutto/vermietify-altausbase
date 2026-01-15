@@ -18,20 +18,31 @@ Deno.serve(async (req) => {
         logDebug("=== getAllEntitySchemas START ===");
         logDebug(`User: ${user?.email}`);
 
-        // Lade alle verfügbaren Entities direkt aus Base44
+        // Liste der bekannten Entities
+        const knownEntities = [
+            'Building', 'Unit', 'Tenant', 'LeaseContract', 'Invoice', 'BankAccount', 
+            'BankTransaction', 'OperatingCostStatement', 'Document', 'Task', 'Owner',
+            'UploadedDocument', 'GeneratedDocument', 'UserProblem', 'TestAssignment',
+            'Report', 'Financing', 'PurchaseContract', 'Asset', 'Portfolio',
+            'TaxReturnV', 'ElsterSubmission', 'Feature', 'Product', 'FeatureGroup'
+        ];
+
         const schemas = {};
+        let successCount = 0;
         
-        // Nutze getAllEntitySchemas API direkt
-        try {
-            const allSchemas = await base44.asServiceRole.entities._getAllSchemas();
-            Object.assign(schemas, allSchemas);
-            logDebug(`✓ Geladen via _getAllSchemas: ${Object.keys(allSchemas).length} Entities`);
-        } catch (err) {
-            logDebug(`✗ _getAllSchemas nicht verfügbar: ${err.message}`);
+        // Lade Schemas für bekannte Entities
+        for (const entityName of knownEntities) {
+            try {
+                const schema = await base44.asServiceRole.entities[entityName].schema();
+                schemas[entityName] = schema;
+                successCount++;
+            } catch (err) {
+                logDebug(`Überspringe ${entityName}: ${err.message}`);
+            }
         }
 
-        logDebug(`Schemas geladen: ${Object.keys(schemas).length}`);
-        logDebug(`Schema names: ${Object.keys(schemas).join(', ')}`);
+        logDebug(`✓ ${successCount} von ${knownEntities.length} Schemas erfolgreich geladen`);
+        logDebug(`Schemas: ${Object.keys(schemas).join(', ')}`);
 
         return Response.json({
             success: true,
