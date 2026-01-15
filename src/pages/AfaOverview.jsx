@@ -1,143 +1,116 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Eye } from 'lucide-react';
-import { createPageUrl } from '@/utils';
-import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useQuery } from '@tanstack/react-query';
+import { Plus, Building2, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { useSelectedBuilding } from '@/components/hooks/useSelectedBuilding';
+import AfaAssetForm from '@/components/tax-property/AfaAssetForm';
+import AfaScheduleViewer from '@/components/tax-property/AfaScheduleViewer';
 
 export default function AfaOverview() {
-    const navigate = useNavigate();
+  const { selectedBuilding } = useSelectedBuilding();
+  const [showForm, setShowForm] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState(null);
 
-    const { data: user } = useQuery({
-        queryKey: ['currentUser'],
-        queryFn: () => base44.auth.me(),
-        initialData: null
-    });
+  const { data: assets, refetch, isLoading } = useQuery({
+    queryKey: ['afaAssets', selectedBuilding],
+    queryFn: async () => {
+      if (!selectedBuilding) return [];
+      return base44.entities.AfaAsset.filter({
+        building_id: selectedBuilding
+      });
+    },
+    enabled: !!selectedBuilding
+  });
 
-    const { data: assets } = useQuery({
-        queryKey: ['afaAssets', user?.email],
-        queryFn: () => {
-            if (!user?.email) return [];
-            return base44.entities.AfaAsset.filter({ created_by: user.email });
-        },
-        enabled: !!user?.email,
-        initialData: []
-    });
+  const handleDelete = async (assetId) => {
+    if (!confirm('Wirklich löschen?')) return;
+    try {
+      // Zugehörige Einträge löschen
+      const entries = await base44.entities.AfaYearlyEntry.filter({
+        afa_asset_id: assetId
+      });
+      for (const entry of entries) {
+        await base44.entities.AfaYearlyEntry.delete(entry.id);
+      }
+      // Asset löschen
+      await base44.entities.AfaAsset.delete(assetId);
+      toast.success('AfA-Anlage gelöscht');
+      refetch();
+    } catch (error) {
+      toast.error('Fehler beim Löschen');
+    }
+  };
 
-    const totalInitialCost = assets.reduce((sum, a) => sum + a.acquisition_cost, 0);
-    const totalCumulativeAfa = assets.reduce((sum, a) => sum + (a.afa_amount || 0), 0);
-    const totalRemainingValue = assets.reduce((sum, a) => sum + a.remaining_value, 0);
+  if (!selectedBuilding) {
+    return <div className="p-6 text-center text-gray-500">Bitte wählen Sie ein Gebäude</div>;
+  }
 
-    return (
-        <div className="min-h-screen bg-gray-50 p-6">
-            <div className="max-w-6xl mx-auto space-y-6">
-                {/* Header */}
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">AfA-Übersicht</h1>
-                        <p className="text-gray-600 mt-1">Verwalte deine Abschreibungen</p>
+  return (
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">AfA-Verwaltung</h1>
+        <Button onClick={() => setShowForm(!showForm)} className="bg-indigo-600 hover:bg-indigo-700">
+          <Plus className="w-4 h-4 mr-2" />
+          Neue Anlage
+        </Button>
+      </div>
+
+      {showForm && (
+        <AfaAssetForm
+          buildingId={selectedBuilding}
+          onAssetCreated={() => {
+            setShowForm(false);
+            refetch();
+          }}
+        />
+      )}
+
+      <div className="grid gap-4">
+        {isLoading ? (
+          <div>Lädt...</div>
+        ) : assets?.length ? (
+          assets.map((asset) => (
+            <Card key={asset.id}>
+              <CardHeader className="flex flex-row justify-between items-start">
+                <div className="flex items-center gap-3">
+                  <Building2 className="w-5 h-5 text-indigo-600" />
+                  <div>
+                    <CardTitle>{asset.description}</CardTitle>
+                    <div className="text-sm text-gray-500 mt-1">
+                      {asset.asset_type} • Kauf: {new Date(asset.acquisition_date).toLocaleDateString('de-DE')} • {asset.acquisition_cost.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
                     </div>
-                    <Button onClick={() => navigate(createPageUrl('AfaAssetForm'))}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Neues Asset
-                    </Button>
+                  </div>
                 </div>
-
-                {/* Summary Cards */}
-                <div className="grid md:grid-cols-3 gap-4">
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm text-gray-600">Gesamt-Anschaffung</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-gray-900">
-                                €{(totalInitialCost / 1000).toFixed(0)}k
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">{assets.length} Assets</p>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm text-gray-600">Kumulierte AfA</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-green-600">
-                                €{(totalCumulativeAfa / 1000).toFixed(0)}k
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                                {totalInitialCost > 0 ? ((totalCumulativeAfa / totalInitialCost) * 100).toFixed(1) : 0}%
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm text-gray-600">Restbuchwert</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-blue-600">
-                                €{(totalRemainingValue / 1000).toFixed(0)}k
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                                {totalInitialCost > 0 ? ((totalRemainingValue / totalInitialCost) * 100).toFixed(1) : 0}%
-                            </p>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Assets List */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Assets</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {assets.length === 0 ? (
-                            <div className="text-center py-12">
-                                <p className="text-gray-500 mb-4">Noch keine Assets erfasst</p>
-                                <Button onClick={() => navigate(createPageUrl('AfaAssetForm'))}>
-                                    Erstes Asset erstellen
-                                </Button>
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {assets.map((asset) => (
-                                    <div key={asset.id} className="border rounded-lg p-4 hover:bg-gray-50">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <h3 className="font-semibold text-gray-900">{asset.description}</h3>
-                                                <div className="text-sm text-gray-600 mt-2 space-y-1">
-                                                    <p>Anschaffung: {new Date(asset.acquisition_date).toLocaleDateString('de-DE')} | €{asset.acquisition_cost.toLocaleString()}</p>
-                                                    <p>AfA: {asset.afa_rate}% {asset.afa_method === 'LINEAR' ? 'linear' : asset.afa_method.toLowerCase()} | {asset.afa_duration_years} Jahre</p>
-                                                </div>
-                                                <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-                                                    <div
-                                                        className="bg-blue-600 h-2 rounded-full"
-                                                        style={{
-                                                            width: `${Math.min((asset.cumulative_afa / asset.acquisition_cost) * 100, 100)}%`
-                                                        }}
-                                                    />
-                                                </div>
-                                                <p className="text-xs text-gray-500 mt-1">
-                                                    €{asset.cumulative_afa?.toLocaleString() || 0} / €{asset.acquisition_cost.toLocaleString()} ({asset.cumulative_afa ? ((asset.cumulative_afa / asset.acquisition_cost) * 100).toFixed(1) : 0}%)
-                                                </p>
-                                            </div>
-                                            <Button
-                                                variant="ghost"
-                                                onClick={() => navigate(createPageUrl(`AfaAssetDetail?id=${asset.id}`))}
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
-    );
+                <button
+                  onClick={() => handleDelete(asset.id)}
+                  className="text-red-500 hover:text-red-700"
+                  title="Löschen"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </CardHeader>
+              <CardContent>
+                <button
+                  onClick={() => setSelectedAsset(selectedAsset === asset.id ? null : asset.id)}
+                  className="text-indigo-600 hover:underline text-sm font-medium"
+                >
+                  {selectedAsset === asset.id ? 'Plan ausblenden' : 'Abschreibungsplan anzeigen'}
+                </button>
+                {selectedAsset === asset.id && (
+                  <div className="mt-4">
+                    <AfaScheduleViewer assetId={asset.id} />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <div className="text-center text-gray-500 py-10">Keine AfA-Anlagen vorhanden</div>
+        )}
+      </div>
+    </div>
+  );
 }
