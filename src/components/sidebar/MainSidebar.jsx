@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import BuildingSelector from '@/components/sidebar/BuildingSelector';
 
 const menuItems = [
-  { name: 'Dashboard', icon: Home, page: 'Dashboard' },
+  { name: 'Dashboard', icon: Home, page: 'AICommunicationHub' },
   { name: 'Immobilien', icon: Building2, page: 'Buildings' },
   { name: 'Mieter', icon: Users, page: 'Tenants' },
   { name: 'Finanzen', icon: FileText, page: 'FinanceDashboard' },
