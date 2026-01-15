@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { base44 } from '@/api/base44Client';
-import { Plus, Trash2, Loader2, FileDown } from 'lucide-react';
+import { Plus, Trash2, Loader2, FileDown, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AnlageVForm({ buildingId, taxYear, onGenerated }) {
@@ -180,6 +180,37 @@ export default function AnlageVForm({ buildingId, taxYear, onGenerated }) {
     }
   };
 
+  const handleExportDATEV = async () => {
+    if (!anlageVId) {
+      toast.error('Bitte erst Anlage V berechnen');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await base44.functions.invoke('exportAnlageVDATEV', {
+        anlageVId
+      });
+      
+      // Download CSV
+      const blob = new Blob([response.data], { type: 'text/csv; charset=utf-8' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `AnlageV_DATEV_${taxYear}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+      
+      toast.success('DATEV-Export heruntergeladen');
+    } catch (error) {
+      toast.error('Fehler: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const totalEinnahmen = einnahmen.reduce((sum, e) => sum + e.amount, 0);
   const totalKosten = kosten.reduce((sum, k) => sum + k.amount, 0);
 
@@ -343,10 +374,15 @@ export default function AnlageVForm({ buildingId, taxYear, onGenerated }) {
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Berechnen
             </Button>
-            <Button onClick={handleGeneratePDF} disabled={loading || !anlageVId} variant="outline" className="flex-1">
+            <Button onClick={handleGeneratePDF} disabled={loading || !anlageVId} variant="outline">
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               <FileDown className="w-4 h-4 mr-2" />
               PDF
+            </Button>
+            <Button onClick={handleExportDATEV} disabled={loading || !anlageVId} variant="outline">
+              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              <Share2 className="w-4 h-4 mr-2" />
+              DATEV
             </Button>
           </div>
         </CardContent>
