@@ -86,7 +86,7 @@
   body {
     font-family: var(--font-family-primary);
     font-weight: var(--font-weight-extralight);
-    background-color: var(--color-primary-50);
+    background-color: #ffffff;
     color: var(--color-primary-900);
   }
   

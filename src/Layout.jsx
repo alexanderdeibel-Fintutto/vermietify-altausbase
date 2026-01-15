@@ -128,7 +128,7 @@ export default function Layout({ children, currentPageName }) {
                                                 <Suspense fallback={null}>
                                                    <FeatureUnlockNotification />
                                                  </Suspense>
-                                 <div className="min-h-screen flex" style={{ backgroundColor: `${themeColor}04` }}>
+                                 <div className="min-h-screen flex" style={{ backgroundColor: '#ffffff' }}>
                                    {/* Sidebar */}
                                    <MainSidebar />
 
