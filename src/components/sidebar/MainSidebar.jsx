@@ -42,9 +42,9 @@ export default function MainSidebar() {
   const [adminOpen, setAdminOpen] = React.useState(false);
 
   return (
-    <aside className="w-64 bg-slate-900 text-white flex flex-col">
+    <aside className="w-64 bg-purple-50 text-slate-900 flex flex-col">
       {/* Gebäude-Auswahl */}
-      <div className="p-4 border-b border-slate-700">
+      <div className="p-4 border-b border-purple-100">
         <BuildingSelector />
       </div>
 
@@ -61,8 +61,8 @@ export default function MainSidebar() {
               className={cn(
                 "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
                 isActive 
-                  ? "bg-emerald-600 text-white" 
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                  ? "bg-purple-200 text-purple-900" 
+                  : "text-slate-700 hover:bg-purple-100 hover:text-purple-900"
               )}
             >
               <Icon className="w-5 h-5" />
@@ -77,10 +77,10 @@ export default function MainSidebar() {
         })}
 
         {/* Admin Section */}
-        <div className="pt-4 mt-4 border-t border-slate-700">
+        <div className="pt-4 mt-4 border-t border-purple-100">
           <button
             onClick={() => setAdminOpen(!adminOpen)}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-700 hover:bg-purple-100 hover:text-purple-900 transition-colors"
           >
             <Tag className="w-5 h-5" />
             <span className="font-light">Pricing-Konfigurator</span>
@@ -99,8 +99,8 @@ export default function MainSidebar() {
                     className={cn(
                       "flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors",
                       item.disabled && "opacity-40 cursor-not-allowed",
-                      !item.disabled && isActive && "bg-slate-700 text-white",
-                      !item.disabled && !isActive && "text-slate-400 hover:bg-slate-800 hover:text-white"
+                      !item.disabled && isActive && "bg-purple-200 text-purple-900",
+                      !item.disabled && !isActive && "text-slate-600 hover:bg-purple-100 hover:text-purple-900"
                     )}
                     onClick={e => item.disabled && e.preventDefault()}
                   >
@@ -115,10 +115,10 @@ export default function MainSidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-slate-700">
+      <div className="p-4 border-t border-purple-100">
         <Link
           to={createPageUrl('UserSettings')}
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+          className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-700 hover:bg-purple-100 hover:text-purple-900 transition-colors"
         >
           <Settings className="w-5 h-5" />
           <span className="font-light">Einstellungen</span>
