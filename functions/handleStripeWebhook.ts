@@ -1,97 +1,124 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import Stripe from 'npm:stripe@15.0.0';
-
-const stripe = new Stripe(Deno.env.get('STRIPE_API_KEY'));
 
 Deno.serve(async (req) => {
-  try {
     const base44 = createClientFromRequest(req);
-    const signature = req.headers.get('stripe-signature');
-    const body = await req.text();
 
-    let event;
     try {
-      event = await stripe.webhooks.constructEventAsync(
-        body,
-        signature,
-        Deno.env.get('STRIPE_WEBHOOK_SECRET')
-      );
-    } catch (err) {
-      return Response.json({ error: 'Webhook signature verification failed' }, { status: 400 });
-    }
+        const rawBody = await req.text();
+        const signature = req.headers.get('stripe-signature');
 
-    // Handle subscription events
-    switch (event.type) {
-      case 'customer.subscription.created':
-      case 'customer.subscription.updated': {
-        const subscription = event.data.object;
-        const userId = subscription.metadata?.userId;
-        const packageType = subscription.metadata?.package_type;
-        const addonId = subscription.metadata?.addon_id;
-
-        if (!userId) break;
-
-        if (packageType) {
-          // Paket Update
-          const userPackage = await base44.asServiceRole.entities.UserPackageConfiguration.filter({
-            user_id: userId
-          });
-
-          if (userPackage.length > 0) {
-            await base44.asServiceRole.entities.UserPackageConfiguration.update(userPackage[0].id, {
-              is_active: subscription.status === 'active'
-            });
-          }
+        if (!signature) {
+            return new Response(JSON.stringify({ error: 'Keine Webhook-Signatur' }), { status: 400 });
         }
 
-        if (addonId) {
-          // Add-on hinzufügen
-          const userPackage = await base44.asServiceRole.entities.UserPackageConfiguration.filter({
-            user_id: userId
-          });
+        const stripe = (await import('npm:stripe@13.0.0')).default;
+        const stripeClient = stripe(Deno.env.get('STRIPE_SECRET_KEY'));
 
-          if (userPackage.length > 0) {
-            const current = userPackage[0];
-            const modules = current.additional_modules || [];
-            if (!modules.includes(addonId)) {
-              modules.push(addonId);
-              await base44.asServiceRole.entities.UserPackageConfiguration.update(current.id, {
-                additional_modules: modules
-              });
+        let event;
+        try {
+            event = await stripeClient.webhooks.constructEventAsync(
+                rawBody,
+                signature,
+                Deno.env.get('STRIPE_WEBHOOK_SECRET')
+            );
+        } catch (err) {
+            console.error('Webhook signature verification failed:', err);
+            return new Response(JSON.stringify({ error: 'Signature verification failed' }), { status: 400 });
+        }
+
+        // Event speichern (Idempotenz)
+        const existingEvent = await base44.asServiceRole.entities.StripeEvent.filter({
+            stripe_event_id: event.id
+        });
+
+        if (existingEvent && existingEvent.length > 0 && existingEvent[0].processed) {
+            return new Response(JSON.stringify({ status: 'already_processed' }), { status: 200 });
+        }
+
+        const storedEvent = await base44.asServiceRole.entities.StripeEvent.create({
+            stripe_event_id: event.id,
+            event_type: event.type,
+            event_data: JSON.stringify(event.data),
+            processed: false
+        });
+
+        // Event verarbeiten
+        switch (event.type) {
+            case 'checkout.session.completed': {
+                const session = event.data.object;
+                const userEmail = session.metadata.user_email;
+                const planId = session.metadata.plan_id;
+                const billingCycle = session.metadata.billing_cycle;
+
+                const subscription = await stripeClient.subscriptions.retrieve(session.subscription);
+
+                const existingSub = await base44.asServiceRole.entities.UserSubscription.filter({
+                    user_email: userEmail
+                });
+
+                const subData = {
+                    user_email: userEmail,
+                    plan_id: planId,
+                    status: subscription.status === 'trialing' ? 'TRIAL' : 'ACTIVE',
+                    billing_cycle: billingCycle,
+                    start_date: new Date(),
+                    next_billing_date: new Date(subscription.current_period_end * 1000),
+                    stripe_subscription_id: subscription.id,
+                    stripe_customer_id: session.customer
+                };
+
+                if (existingSub && existingSub.length > 0) {
+                    await base44.asServiceRole.entities.UserSubscription.update(existingSub[0].id, subData);
+                } else {
+                    await base44.asServiceRole.entities.UserSubscription.create(subData);
+                }
+                break;
             }
-          }
+
+            case 'invoice.paid': {
+                const invoice = event.data.object;
+                const subscription = await stripeClient.subscriptions.retrieve(invoice.subscription);
+
+                const userSub = await base44.asServiceRole.entities.UserSubscription.filter({
+                    stripe_subscription_id: invoice.subscription
+                });
+
+                if (userSub && userSub.length > 0) {
+                    await base44.asServiceRole.entities.UserSubscription.update(userSub[0].id, {
+                        status: 'ACTIVE',
+                        next_billing_date: new Date(subscription.current_period_end * 1000)
+                    });
+                }
+                break;
+            }
+
+            case 'customer.subscription.deleted': {
+                const subscription = event.data.object;
+
+                const userSub = await base44.asServiceRole.entities.UserSubscription.filter({
+                    stripe_subscription_id: subscription.id
+                });
+
+                if (userSub && userSub.length > 0) {
+                    await base44.asServiceRole.entities.UserSubscription.update(userSub[0].id, {
+                        status: 'CANCELLED',
+                        end_date: new Date()
+                    });
+                }
+                break;
+            }
         }
-        break;
-      }
 
-      case 'customer.subscription.deleted': {
-        const subscription = event.data.object;
-        const userId = subscription.metadata?.userId;
-        const addonId = subscription.metadata?.addon_id;
+        // Event als verarbeitet markieren
+        await base44.asServiceRole.entities.StripeEvent.update(storedEvent.id, {
+            processed: true,
+            processed_at: new Date()
+        });
 
-        if (!userId) break;
+        return new Response(JSON.stringify({ status: 'processed', eventType: event.type }), { status: 200 });
 
-        if (addonId) {
-          // Add-on entfernen
-          const userPackage = await base44.asServiceRole.entities.UserPackageConfiguration.filter({
-            user_id: userId
-          });
-
-          if (userPackage.length > 0) {
-            const current = userPackage[0];
-            const modules = (current.additional_modules || []).filter(m => m !== addonId);
-            await base44.asServiceRole.entities.UserPackageConfiguration.update(current.id, {
-              additional_modules: modules
-            });
-          }
-        }
-        break;
-      }
+    } catch (error) {
+        console.error('Error handling webhook:', error);
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
-
-    return Response.json({ received: true });
-  } catch (error) {
-    console.error('Webhook Error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
-  }
 });
