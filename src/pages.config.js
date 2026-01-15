@@ -1,5 +1,6 @@
 import AICommunicationHub from './pages/AICommunicationHub';
 import AIDocumentAnalysis from './pages/AIDocumentAnalysis';
+import AIDocumentAnalysisPage from './pages/AIDocumentAnalysisPage';
 import AIDocumentManagement from './pages/AIDocumentManagement';
 import AIInsightsDashboard from './pages/AIInsightsDashboard';
 import AIMaintenanceDashboard from './pages/AIMaintenanceDashboard';
@@ -106,8 +107,8 @@ import BuildingBoard from './pages/BuildingBoard';
 import BuildingDetail from './pages/BuildingDetail';
 import BuildingDetailEnhanced from './pages/BuildingDetailEnhanced';
 import BuildingInspections from './pages/BuildingInspections';
-import BuildingWorkflowManager from './pages/BuildingWorkflowManager';
 import Buildings from './pages/Buildings';
+import BuildingWorkflowManager from './pages/BuildingWorkflowManager';
 import BuildingsMap from './pages/BuildingsMap';
 import BulkMessaging from './pages/BulkMessaging';
 import BulkOperations from './pages/BulkOperations';
@@ -460,13 +461,14 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import AIDocumentAnalysisPage from './pages/AIDocumentAnalysisPage';
+import AdvancedReportingDashboard from './pages/AdvancedReportingDashboard';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "AICommunicationHub": AICommunicationHub,
     "AIDocumentAnalysis": AIDocumentAnalysis,
+    "AIDocumentAnalysisPage": AIDocumentAnalysisPage,
     "AIDocumentManagement": AIDocumentManagement,
     "AIInsightsDashboard": AIInsightsDashboard,
     "AIMaintenanceDashboard": AIMaintenanceDashboard,
@@ -573,8 +575,8 @@ export const PAGES = {
     "BuildingDetail": BuildingDetail,
     "BuildingDetailEnhanced": BuildingDetailEnhanced,
     "BuildingInspections": BuildingInspections,
-    "BuildingWorkflowManager": BuildingWorkflowManager,
     "Buildings": Buildings,
+    "BuildingWorkflowManager": BuildingWorkflowManager,
     "BuildingsMap": BuildingsMap,
     "BulkMessaging": BulkMessaging,
     "BulkOperations": BulkOperations,
@@ -927,7 +929,7 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "AIDocumentAnalysisPage": AIDocumentAnalysisPage,
+    "AdvancedReportingDashboard": AdvancedReportingDashboard,
 }
 
 export const pagesConfig = {
