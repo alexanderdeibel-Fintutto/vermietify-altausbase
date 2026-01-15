@@ -1,82 +1,82 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    const { buildingId1, buildingId2 } = await req.json();
 
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    try {
+        const user = await base44.auth.me();
+        if (!user) {
+            return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+        }
 
-    const { year1, year2, building_id } = await req.json();
+        // Sammle Daten für beide Gebäude
+        const buildings = await base44.entities.Building.list();
+        const units = await base44.entities.Unit.list();
+        const leases = await base44.entities.LeaseContract.list();
 
-    console.log(`[COMPARISON] ${year1} vs ${year2}`);
+        const building1 = buildings.find(b => b.id === buildingId1);
+        const building2 = buildings.find(b => b.id === buildingId2);
 
-    const year1Subs = await base44.entities.ElsterSubmission.filter({
-      tax_year: year1,
-      ...(building_id ? { building_id } : {})
-    });
+        const units1 = units.filter(u => u.building_id === buildingId1);
+        const units2 = units.filter(u => u.building_id === buildingId2);
 
-    const year2Subs = await base44.entities.ElsterSubmission.filter({
-      tax_year: year2,
-      ...(building_id ? { building_id } : {})
-    });
+        const leases1 = leases.filter(l => units1.some(u => u.id === l.unit_id));
+        const leases2 = leases.filter(l => units2.some(u => u.id === l.unit_id));
 
-    const comparison = {
-      year1: { year: year1, data: {} },
-      year2: { year: year2, data: {} },
-      changes: {}
-    };
+        const response = await base44.integrations.Core.InvokeLLM({
+            prompt: `Vergleiche diese beiden Immobilien:
 
-    // Aggregiere Jahr 1
-    year1Subs.forEach(sub => {
-      if (!sub.form_data) return;
-      comparison.year1.data.einnahmen = (comparison.year1.data.einnahmen || 0) + parseFloat(sub.form_data.einnahmen_gesamt || 0);
-      comparison.year1.data.ausgaben = (comparison.year1.data.ausgaben || 0) + parseFloat(sub.form_data.werbungskosten_gesamt || 0);
-    });
+Gebäude 1: ${building1?.name}
+- Einheiten: ${units1.length}
+- Belegung: ${(leases1.length / units1.length * 100).toFixed(0)}%
+- Durchschnittsmiete: €${(leases1.reduce((sum, l) => sum + l.monthly_rent, 0) / leases1.length || 0).toFixed(2)}
 
-    // Aggregiere Jahr 2
-    year2Subs.forEach(sub => {
-      if (!sub.form_data) return;
-      comparison.year2.data.einnahmen = (comparison.year2.data.einnahmen || 0) + parseFloat(sub.form_data.einnahmen_gesamt || 0);
-      comparison.year2.data.ausgaben = (comparison.year2.data.ausgaben || 0) + parseFloat(sub.form_data.werbungskosten_gesamt || 0);
-    });
+Gebäude 2: ${building2?.name}
+- Einheiten: ${units2.length}
+- Belegung: ${(leases2.length / units2.length * 100).toFixed(0)}%
+- Durchschnittsmiete: €${(leases2.reduce((sum, l) => sum + l.monthly_rent, 0) / leases2.length || 0).toFixed(2)}
 
-    // Berechne Änderungen
-    comparison.changes.einnahmen = {
-      absolute: comparison.year2.data.einnahmen - comparison.year1.data.einnahmen,
-      percentage: comparison.year1.data.einnahmen > 0 
-        ? Math.round(((comparison.year2.data.einnahmen - comparison.year1.data.einnahmen) / comparison.year1.data.einnahmen) * 100)
-        : 0
-    };
-
-    comparison.changes.ausgaben = {
-      absolute: comparison.year2.data.ausgaben - comparison.year1.data.ausgaben,
-      percentage: comparison.year1.data.ausgaben > 0 
-        ? Math.round(((comparison.year2.data.ausgaben - comparison.year1.data.ausgaben) / comparison.year1.data.ausgaben) * 100)
-        : 0
-    };
-
-    comparison.year1.data.nettoertrag = comparison.year1.data.einnahmen - comparison.year1.data.ausgaben;
-    comparison.year2.data.nettoertrag = comparison.year2.data.einnahmen - comparison.year2.data.ausgaben;
-    
-    comparison.changes.nettoertrag = {
-      absolute: comparison.year2.data.nettoertrag - comparison.year1.data.nettoertrag,
-      percentage: comparison.year1.data.nettoertrag > 0 
-        ? Math.round(((comparison.year2.data.nettoertrag - comparison.year1.data.nettoertrag) / comparison.year1.data.nettoertrag) * 100)
-        : 0
-    };
-
-    console.log(`[COMPARISON] Complete`);
-
-    return Response.json({
-      success: true,
-      comparison
-    });
-
-  } catch (error) {
-    console.error('[ERROR]', error);
-    return Response.json({ error: error.message }, { status: 500 });
+Erstelle einen detaillierten Vergleichsbericht:
+{
+  "comparison": [
+    {"metric": "Metrik", "building_1": "Wert", "building_2": "Wert", "winner": "Name", "analysis": "Text"}
+  ],
+  "strengths": {
+    "building_1": ["Stärke 1"],
+    "building_2": ["Stärke 1"]
+  },
+  "weaknesses": {
+    "building_1": ["Schwäche 1"],
+    "building_2": ["Schwäche 1"]
+  },
+  "insights": ["Einsicht 1"],
+  "recommendations": {
+    "building_1": ["Empfehlung"],
+    "building_2": ["Empfehlung"]
   }
+}`,
+            response_json_schema: {
+                type: 'object',
+                properties: {
+                    comparison: { type: 'array', items: { type: 'object', additionalProperties: true } },
+                    strengths: { type: 'object', additionalProperties: { type: 'array' } },
+                    weaknesses: { type: 'object', additionalProperties: { type: 'array' } },
+                    insights: { type: 'array', items: { type: 'string' } },
+                    recommendations: { type: 'object', additionalProperties: { type: 'array' } }
+                }
+            }
+        });
+
+        return new Response(JSON.stringify({
+            success: true,
+            building_1: building1?.name,
+            building_2: building2?.name,
+            report: response
+        }), { status: 200 });
+
+    } catch (error) {
+        console.error('Comparison error:', error);
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    }
 });
