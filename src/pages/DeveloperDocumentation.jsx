@@ -1697,9 +1697,9 @@ export default function DeveloperDocumentation() {
                                 </Card>
                             );
                         })}
-                        </div>
-                        </div>
-                        </div>
+                    </div>
+                </div>
+            </div>
 
             {/* Preview Dialog */}
             <Dialog open={!!previewDoc} onOpenChange={(open) => !open && setPreviewDoc(null)}>
