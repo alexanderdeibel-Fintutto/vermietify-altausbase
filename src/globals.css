@@ -105,7 +105,7 @@
   button {
     transition: all var(--transition-fast);
     font-weight: var(--font-weight-extralight);
-    filter: saturate(0.7);
+    filter: saturate(0.4);
   }
 
   input, textarea, select {
@@ -163,6 +163,7 @@
 
         .badge-base {
           @apply px-1.8 py-0.9 text-xs font-extralight rounded-md;
+          filter: saturate(0.4);
         }
 
         /* COMPREHENSIVE dark color desaturation - 30% saturation */
