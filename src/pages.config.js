@@ -458,6 +458,7 @@ import WorkflowTemplates from './pages/WorkflowTemplates';
 import PropertyManagementDashboard from './pages/PropertyManagementDashboard';
 import RentCollectionDashboard from './pages/RentCollectionDashboard';
 import MaintenanceTracking from './pages/MaintenanceTracking';
+import LeaseManagement from './pages/LeaseManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -922,6 +923,7 @@ export const PAGES = {
     "PropertyManagementDashboard": PropertyManagementDashboard,
     "RentCollectionDashboard": RentCollectionDashboard,
     "MaintenanceTracking": MaintenanceTracking,
+    "LeaseManagement": LeaseManagement,
 }
 
 export const pagesConfig = {
