@@ -227,11 +227,13 @@ import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
 import Kommunikation from './pages/Kommunikation';
 import KommunikationDashboard from './pages/KommunikationDashboard';
 import LeaseContracts from './pages/LeaseContracts';
+import LeaseManagement from './pages/LeaseManagement';
 import LetterShipmentManagement from './pages/LetterShipmentManagement';
 import LetterXpressManagement from './pages/LetterXpressManagement';
 import MaintenanceManager from './pages/MaintenanceManager';
 import MaintenanceScheduling from './pages/MaintenanceScheduling';
 import MaintenanceTasks from './pages/MaintenanceTasks';
+import MaintenanceTracking from './pages/MaintenanceTracking';
 import MandantManagement from './pages/MandantManagement';
 import MarketAnalytics from './pages/MarketAnalytics';
 import MeterApp from './pages/MeterApp';
@@ -273,6 +275,7 @@ import PortfolioOptimizer from './pages/PortfolioOptimizer';
 import PreciousMetals from './pages/PreciousMetals';
 import Pricing from './pages/Pricing';
 import ProjectManagement from './pages/ProjectManagement';
+import PropertyManagementDashboard from './pages/PropertyManagementDashboard';
 import PropertyManagementHub from './pages/PropertyManagementHub';
 import PropertyManagerDashboard from './pages/PropertyManagerDashboard';
 import PropertyPortfolio from './pages/PropertyPortfolio';
@@ -283,6 +286,7 @@ import ROIDashboard from './pages/ROIDashboard';
 import RealEstateCH from './pages/RealEstateCH';
 import RealEstateTaxPlanning from './pages/RealEstateTaxPlanning';
 import RealTimeTaxCalculator from './pages/RealTimeTaxCalculator';
+import RentCollectionDashboard from './pages/RentCollectionDashboard';
 import RentIncreaseOptimizer from './pages/RentIncreaseOptimizer';
 import RentIndexManagement from './pages/RentIndexManagement';
 import ReportBuilder from './pages/ReportBuilder';
@@ -325,7 +329,6 @@ import TaxAdminPanel from './pages/TaxAdminPanel';
 import TaxAdvisorCollaborationHub from './pages/TaxAdvisorCollaborationHub';
 import TaxAdvisorPortal from './pages/TaxAdvisorPortal';
 import TaxAdvisorPortalPage from './pages/TaxAdvisorPortalPage';
-import TaxForms from './pages/TaxForms';
 import TaxAnalyticsReporting from './pages/TaxAnalyticsReporting';
 import TaxAuditPreparation from './pages/TaxAuditPreparation';
 import TaxAuthoritySubmissions from './pages/TaxAuthoritySubmissions';
@@ -354,6 +357,7 @@ import TaxFilingWizard from './pages/TaxFilingWizard';
 import TaxForecastPlanner from './pages/TaxForecastPlanner';
 import TaxFormGuide from './pages/TaxFormGuide';
 import TaxFormLibrary from './pages/TaxFormLibrary';
+import TaxForms from './pages/TaxForms';
 import TaxHarvesting from './pages/TaxHarvesting';
 import TaxLawUpdates from './pages/TaxLawUpdates';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
@@ -391,6 +395,7 @@ import TaxYearClosingChecklist from './pages/TaxYearClosingChecklist';
 import TaxYearPlannerPage from './pages/TaxYearPlannerPage';
 import TechnicianManagement from './pages/TechnicianManagement';
 import TenantAISupport from './pages/TenantAISupport';
+import TenantChatbotPage from './pages/TenantChatbotPage';
 import TenantCommunication from './pages/TenantCommunication';
 import TenantCommunicationCenter from './pages/TenantCommunicationCenter';
 import TenantCommunicationHub from './pages/TenantCommunicationHub';
@@ -437,8 +442,8 @@ import WealthIntegrations from './pages/WealthIntegrations';
 import WealthManagement from './pages/WealthManagement';
 import WealthMobile from './pages/WealthMobile';
 import WealthTaxCalculator from './pages/WealthTaxCalculator';
-import WealthTeam from './pages/WealthTeam';
 import WealthTaxIntegration from './pages/WealthTaxIntegration';
+import WealthTeam from './pages/WealthTeam';
 import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
@@ -455,11 +460,7 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import PropertyManagementDashboard from './pages/PropertyManagementDashboard';
-import RentCollectionDashboard from './pages/RentCollectionDashboard';
-import MaintenanceTracking from './pages/MaintenanceTracking';
-import LeaseManagement from './pages/LeaseManagement';
-import TenantChatbotPage from './pages/TenantChatbotPage';
+import AIDocumentAnalysisPage from './pages/AIDocumentAnalysisPage';
 import __Layout from './Layout.jsx';
 
 
@@ -693,11 +694,13 @@ export const PAGES = {
     "Kommunikation": Kommunikation,
     "KommunikationDashboard": KommunikationDashboard,
     "LeaseContracts": LeaseContracts,
+    "LeaseManagement": LeaseManagement,
     "LetterShipmentManagement": LetterShipmentManagement,
     "LetterXpressManagement": LetterXpressManagement,
     "MaintenanceManager": MaintenanceManager,
     "MaintenanceScheduling": MaintenanceScheduling,
     "MaintenanceTasks": MaintenanceTasks,
+    "MaintenanceTracking": MaintenanceTracking,
     "MandantManagement": MandantManagement,
     "MarketAnalytics": MarketAnalytics,
     "MeterApp": MeterApp,
@@ -739,6 +742,7 @@ export const PAGES = {
     "PreciousMetals": PreciousMetals,
     "Pricing": Pricing,
     "ProjectManagement": ProjectManagement,
+    "PropertyManagementDashboard": PropertyManagementDashboard,
     "PropertyManagementHub": PropertyManagementHub,
     "PropertyManagerDashboard": PropertyManagerDashboard,
     "PropertyPortfolio": PropertyPortfolio,
@@ -749,6 +753,7 @@ export const PAGES = {
     "RealEstateCH": RealEstateCH,
     "RealEstateTaxPlanning": RealEstateTaxPlanning,
     "RealTimeTaxCalculator": RealTimeTaxCalculator,
+    "RentCollectionDashboard": RentCollectionDashboard,
     "RentIncreaseOptimizer": RentIncreaseOptimizer,
     "RentIndexManagement": RentIndexManagement,
     "ReportBuilder": ReportBuilder,
@@ -791,7 +796,6 @@ export const PAGES = {
     "TaxAdvisorCollaborationHub": TaxAdvisorCollaborationHub,
     "TaxAdvisorPortal": TaxAdvisorPortal,
     "TaxAdvisorPortalPage": TaxAdvisorPortalPage,
-    "TaxForms": TaxForms,
     "TaxAnalyticsReporting": TaxAnalyticsReporting,
     "TaxAuditPreparation": TaxAuditPreparation,
     "TaxAuthoritySubmissions": TaxAuthoritySubmissions,
@@ -820,6 +824,7 @@ export const PAGES = {
     "TaxForecastPlanner": TaxForecastPlanner,
     "TaxFormGuide": TaxFormGuide,
     "TaxFormLibrary": TaxFormLibrary,
+    "TaxForms": TaxForms,
     "TaxHarvesting": TaxHarvesting,
     "TaxLawUpdates": TaxLawUpdates,
     "TaxLibraryManagement": TaxLibraryManagement,
@@ -857,6 +862,7 @@ export const PAGES = {
     "TaxYearPlannerPage": TaxYearPlannerPage,
     "TechnicianManagement": TechnicianManagement,
     "TenantAISupport": TenantAISupport,
+    "TenantChatbotPage": TenantChatbotPage,
     "TenantCommunication": TenantCommunication,
     "TenantCommunicationCenter": TenantCommunicationCenter,
     "TenantCommunicationHub": TenantCommunicationHub,
@@ -903,8 +909,8 @@ export const PAGES = {
     "WealthManagement": WealthManagement,
     "WealthMobile": WealthMobile,
     "WealthTaxCalculator": WealthTaxCalculator,
-    "WealthTeam": WealthTeam,
     "WealthTaxIntegration": WealthTaxIntegration,
+    "WealthTeam": WealthTeam,
     "WhatsAppCommunication": WhatsAppCommunication,
     "WhatsAppSettings": WhatsAppSettings,
     "WhatsAppSetup": WhatsAppSetup,
@@ -921,11 +927,7 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "PropertyManagementDashboard": PropertyManagementDashboard,
-    "RentCollectionDashboard": RentCollectionDashboard,
-    "MaintenanceTracking": MaintenanceTracking,
-    "LeaseManagement": LeaseManagement,
-    "TenantChatbotPage": TenantChatbotPage,
+    "AIDocumentAnalysisPage": AIDocumentAnalysisPage,
 }
 
 export const pagesConfig = {
