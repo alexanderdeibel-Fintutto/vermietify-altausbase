@@ -9,12 +9,15 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Forbidden' }, { status: 403 });
         }
 
+        const startTime = Date.now();
+        const { documentation_type } = await req.json();
+
         // Hole alle Entity-Schemas
-        const schemasResponse = await base44.functions.invoke('getAllEntitySchemas', {});
+        const schemasResponse = await base44.asServiceRole.functions.invoke('getAllEntitySchemas', {});
         const schemas = schemasResponse.data.schemas || {};
 
-        // Generiere Markdown-Dokumentation
-        let markdown = `# Datenbank-Struktur Dokumentation\n\n`;
+        // Generiere Markdown-Dokumentation basierend auf Typ
+        let markdown = `# ${documentation_type || 'Datenbank-Struktur'} Dokumentation\n\n`;
         markdown += `Generiert am: ${new Date().toLocaleDateString('de-DE')}\n\n`;
         markdown += `Anzahl Entities: ${Object.keys(schemas).length}\n\n`;
         markdown += `---\n\n`;
@@ -86,11 +89,26 @@ Deno.serve(async (req) => {
             }
         }
 
+        const duration = (Date.now() - startTime) / 1000;
+
+        // Speichere die Dokumentation
+        const doc = await base44.asServiceRole.entities.GeneratedDocumentation.create({
+            documentation_type: documentation_type || 'database_structure',
+            title: documentation_type || 'Datenbank-Struktur',
+            description: 'Vollständige Datenbank-Dokumentation',
+            content_markdown: markdown,
+            content_json: { schemas, entity_count: Object.keys(schemas).length },
+            file_size_bytes: new Blob([markdown]).size,
+            generation_duration_seconds: duration,
+            last_generated_at: new Date().toISOString(),
+            status: 'completed'
+        });
+
         return Response.json({
             success: true,
-            documentation: markdown,
-            entity_count: Object.keys(schemas).length,
-            timestamp: new Date().toISOString()
+            documentation_id: doc.id,
+            file_size_bytes: doc.file_size_bytes,
+            generation_duration_seconds: duration
         });
 
     } catch (error) {
