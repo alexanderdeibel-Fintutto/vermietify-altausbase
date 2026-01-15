@@ -1,49 +1,87 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    const { leaseContractId, calculationMethod, indexValue, marketRent, percentageIncrease } = await req.json();
 
-    const { contract_id, proposed_rent, reason, local_reference_rent } = await req.json();
+    try {
+        const user = await base44.auth.me();
+        if (!user) {
+            return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+        }
 
-    const contract = await base44.asServiceRole.entities.LeaseContract.read(contract_id);
-    const currentRent = contract.monthly_rent;
+        // LeaseContract laden
+        const contracts = await base44.entities.LeaseContract.list();
+        const lease = contracts.find(c => c.id === leaseContractId);
+        if (!lease) {
+            return new Response(JSON.stringify({ error: 'LeaseContract not found' }), { status: 404 });
+        }
 
-    const increaseAmount = proposed_rent - currentRent;
-    const increasePercentage = (increaseAmount / currentRent) * 100;
+        const currentRent = lease.rent_amount || 0;
+        let newRent = currentRent;
+        let calculationDetails = {};
 
-    // Kappungsgrenze: Max 15% in 3 Jahren (vereinfacht: 5% pro Jahr)
-    const threeYearCap = currentRent * 0.15;
-    const isCompliant = increaseAmount <= threeYearCap;
-    const maxAllowed = currentRent + threeYearCap;
+        // Berechnung nach Methode
+        if (calculationMethod === 'INDEX' && indexValue) {
+            // Indexabhängig (z.B. Mietindex)
+            const increase = currentRent * (indexValue / 100);
+            newRent = currentRent + increase;
+            calculationDetails = {
+                method: 'Indexabhängige Mieterhöhung',
+                indexValue,
+                calculation: `${currentRent} € × (${indexValue}% / 100)`
+            };
+        } else if (calculationMethod === 'PERCENTAGE' && percentageIncrease) {
+            // Prozentuale Erhöhung
+            const increase = currentRent * (percentageIncrease / 100);
+            newRent = currentRent + increase;
+            calculationDetails = {
+                method: 'Prozentuale Mieterhöhung',
+                percentage: percentageIncrease,
+                calculation: `${currentRent} € × ${percentageIncrease}%`
+            };
+        } else if (calculationMethod === 'MARKET' && marketRent) {
+            // An ortsübliche Vergleichsmiete anpassen
+            // Max. Erhöhung: 20% in 3 Jahren (BGB §558 Abs. 3)
+            const allowedIncrease = currentRent * 0.20;
+            const marketIncrease = Math.min(marketRent - currentRent, allowedIncrease);
+            newRent = currentRent + Math.max(0, marketIncrease);
+            calculationDetails = {
+                method: 'Ortsübliche Vergleichsmiete',
+                marketRent,
+                legalCap: '20% in 3 Jahren (BGB §558)',
+                calculation: `Marktmiete ${marketRent} € (gekürzt auf max. ${allowedIncrease.toFixed(2)} € Erhöhung)`
+            };
+        }
 
-    const rentIncrease = await base44.asServiceRole.entities.RentIncrease.create({
-      contract_id,
-      tenant_id: contract.tenant_id,
-      company_id: contract.company_id,
-      current_rent: currentRent,
-      proposed_rent,
-      increase_amount: Math.round(increaseAmount * 100) / 100,
-      increase_percentage: Math.round(increasePercentage * 100) / 100,
-      reason,
-      local_reference_rent,
-      cap_limit_check: {
-        three_year_cap: Math.round(threeYearCap * 100) / 100,
-        is_compliant: isCompliant,
-        max_allowed: Math.round(maxAllowed * 100) / 100
-      },
-      notice_date: new Date().toISOString().split('T')[0],
-      status: 'planned'
-    });
+        newRent = parseFloat(newRent.toFixed(2));
+        const increaseAmount = parseFloat((newRent - currentRent).toFixed(2));
+        const increasePercentage = parseFloat(((increaseAmount / currentRent) * 100).toFixed(2));
 
-    return Response.json({ 
-      success: true, 
-      rent_increase: rentIncrease,
-      warning: !isCompliant ? 'Kappungsgrenze überschritten!' : null
-    });
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
-  }
+        // Kündigungsfristen beachten (2 Monate zum Ende eines Kalendermonats)
+        const today = new Date();
+        const noticeDate = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+        const effectiveDate = new Date(today.getFullYear(), today.getMonth() + 3, 1);
+
+        return new Response(JSON.stringify({
+            success: true,
+            currentRent,
+            newRent,
+            increaseAmount,
+            increasePercentage,
+            calculationMethod,
+            calculationDetails,
+            noticeDate: noticeDate.toISOString().split('T')[0],
+            effectiveDate: effectiveDate.toISOString().split('T')[0],
+            legalValidation: {
+                meetsMinimumNotice: true,
+                meetsLegalLimits: increasePercentage <= 20,
+                warning: increasePercentage > 20 ? 'Erhöhung überschreitet 20% Limit in 3 Jahren' : null
+            }
+        }), { status: 200 });
+
+    } catch (error) {
+        console.error('Error calculating rent increase:', error);
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    }
 });
