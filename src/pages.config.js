@@ -58,6 +58,7 @@ import AdvancedAnalytics from './pages/AdvancedAnalytics';
 import AdvancedFeatures from './pages/AdvancedFeatures';
 import AdvancedReportBuilder from './pages/AdvancedReportBuilder';
 import AdvancedReporting from './pages/AdvancedReporting';
+import AdvancedReportingDashboard from './pages/AdvancedReportingDashboard';
 import AdvancedSearch from './pages/AdvancedSearch';
 import AdvancedTaxReporting from './pages/AdvancedTaxReporting';
 import AdvancedWorkflowAnalytics from './pages/AdvancedWorkflowAnalytics';
@@ -106,9 +107,10 @@ import BudgetPlanning from './pages/BudgetPlanning';
 import BuildingBoard from './pages/BuildingBoard';
 import BuildingDetail from './pages/BuildingDetail';
 import BuildingDetailEnhanced from './pages/BuildingDetailEnhanced';
+import Finanzen from './pages/Finanzen';
 import BuildingInspections from './pages/BuildingInspections';
-import Buildings from './pages/Buildings';
 import BuildingWorkflowManager from './pages/BuildingWorkflowManager';
+import Buildings from './pages/Buildings';
 import BuildingsMap from './pages/BuildingsMap';
 import BulkMessaging from './pages/BulkMessaging';
 import BulkOperations from './pages/BulkOperations';
@@ -198,7 +200,6 @@ import FinancialItems from './pages/FinancialItems';
 import FinancialReporting from './pages/FinancialReporting';
 import FinancialReports from './pages/FinancialReports';
 import FinancingManagement from './pages/FinancingManagement';
-import Finanzen from './pages/Finanzen';
 import FullFeatureHub from './pages/FullFeatureHub';
 import GeneratedBookings from './pages/GeneratedBookings';
 import GlobalSettings from './pages/GlobalSettings';
@@ -461,7 +462,7 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import AdvancedReportingDashboard from './pages/AdvancedReportingDashboard';
+import ReportManagementCenter from './pages/ReportManagementCenter';
 import __Layout from './Layout.jsx';
 
 
@@ -526,6 +527,7 @@ export const PAGES = {
     "AdvancedFeatures": AdvancedFeatures,
     "AdvancedReportBuilder": AdvancedReportBuilder,
     "AdvancedReporting": AdvancedReporting,
+    "AdvancedReportingDashboard": AdvancedReportingDashboard,
     "AdvancedSearch": AdvancedSearch,
     "AdvancedTaxReporting": AdvancedTaxReporting,
     "AdvancedWorkflowAnalytics": AdvancedWorkflowAnalytics,
@@ -574,9 +576,10 @@ export const PAGES = {
     "BuildingBoard": BuildingBoard,
     "BuildingDetail": BuildingDetail,
     "BuildingDetailEnhanced": BuildingDetailEnhanced,
+    "Finanzen": Finanzen,
     "BuildingInspections": BuildingInspections,
-    "Buildings": Buildings,
     "BuildingWorkflowManager": BuildingWorkflowManager,
+    "Buildings": Buildings,
     "BuildingsMap": BuildingsMap,
     "BulkMessaging": BulkMessaging,
     "BulkOperations": BulkOperations,
@@ -666,7 +669,6 @@ export const PAGES = {
     "FinancialReporting": FinancialReporting,
     "FinancialReports": FinancialReports,
     "FinancingManagement": FinancingManagement,
-    "Finanzen": Finanzen,
     "FullFeatureHub": FullFeatureHub,
     "GeneratedBookings": GeneratedBookings,
     "GlobalSettings": GlobalSettings,
@@ -929,7 +931,7 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "AdvancedReportingDashboard": AdvancedReportingDashboard,
+    "ReportManagementCenter": ReportManagementCenter,
 }
 
 export const pagesConfig = {
