@@ -365,6 +365,8 @@ import TaxOptimizationAnalyzer from './pages/TaxOptimizationAnalyzer';
 import TaxOptimizationStrategy from './pages/TaxOptimizationStrategy';
 import TaxPerformanceDashboard from './pages/TaxPerformanceDashboard';
 import TaxPlanningAdvisor from './pages/TaxPlanningAdvisor';
+import TaxPropertyDashboard from './pages/TaxPropertyDashboard';
+import TaxPropertyModule from './pages/TaxPropertyModule';
 import TaxRemindersCenter from './pages/TaxRemindersCenter';
 import TaxReport from './pages/TaxReport';
 import TaxReportExport from './pages/TaxReportExport';
@@ -435,8 +437,8 @@ import WealthIntegrations from './pages/WealthIntegrations';
 import WealthManagement from './pages/WealthManagement';
 import WealthMobile from './pages/WealthMobile';
 import WealthTaxCalculator from './pages/WealthTaxCalculator';
-import WealthTaxIntegration from './pages/WealthTaxIntegration';
 import WealthTeam from './pages/WealthTeam';
+import WealthTaxIntegration from './pages/WealthTaxIntegration';
 import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
@@ -453,8 +455,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import TaxPropertyDashboard from './pages/TaxPropertyDashboard';
-import TaxPropertyModule from './pages/TaxPropertyModule';
 import __Layout from './Layout.jsx';
 
 
@@ -826,6 +826,8 @@ export const PAGES = {
     "TaxOptimizationStrategy": TaxOptimizationStrategy,
     "TaxPerformanceDashboard": TaxPerformanceDashboard,
     "TaxPlanningAdvisor": TaxPlanningAdvisor,
+    "TaxPropertyDashboard": TaxPropertyDashboard,
+    "TaxPropertyModule": TaxPropertyModule,
     "TaxRemindersCenter": TaxRemindersCenter,
     "TaxReport": TaxReport,
     "TaxReportExport": TaxReportExport,
@@ -896,8 +898,8 @@ export const PAGES = {
     "WealthManagement": WealthManagement,
     "WealthMobile": WealthMobile,
     "WealthTaxCalculator": WealthTaxCalculator,
-    "WealthTaxIntegration": WealthTaxIntegration,
     "WealthTeam": WealthTeam,
+    "WealthTaxIntegration": WealthTaxIntegration,
     "WhatsAppCommunication": WhatsAppCommunication,
     "WhatsAppSettings": WhatsAppSettings,
     "WhatsAppSetup": WhatsAppSetup,
@@ -914,8 +916,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "TaxPropertyDashboard": TaxPropertyDashboard,
-    "TaxPropertyModule": TaxPropertyModule,
 }
 
 export const pagesConfig = {

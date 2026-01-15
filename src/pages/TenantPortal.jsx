@@ -1,185 +1,211 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Bot } from 'lucide-react';
-import LeaseDetailsCard from '@/components/tenant-portal/LeaseDetailsCard';
-import PaymentHistoryWidget from '@/components/tenant-portal/PaymentHistoryWidget';
-import MaintenanceRequestForm from '@/components/tenant-portal/MaintenanceRequestForm';
-import MaintenanceRequestList from '@/components/tenant-portal/MaintenanceRequestList';
-import MaintenanceRequestTracker from '@/components/tenant-portal/MaintenanceRequestTracker';
-import KnowledgeBaseWidget from '@/components/tenant-portal/KnowledgeBaseWidget';
-import PaymentForm from '@/components/tenant-portal/PaymentForm';
-import PaymentReceiptViewer from '@/components/tenant-portal/PaymentReceiptViewer';
-import EnhancedTenantChat from '@/components/tenant-portal/EnhancedTenantChat';
-import TenantDocumentUpload from '@/components/tenant-portal/TenantDocumentUpload';
-import UpcomingMaintenanceView from '@/components/tenant-portal/UpcomingMaintenanceView';
-import TenantPaymentManagement from '@/components/tenant-portal/TenantPaymentManagement';
-import KnowledgeBaseViewer from '@/components/tenant-portal/KnowledgeBaseViewer';
-import TenantIssueReporter from '@/components/tenant-portal/TenantIssueReporter';
-import ContractDocumentsWidget from '@/components/tenant-portal/ContractDocumentsWidget';
-import TenantPortalQuickActions from '@/components/tenant-portal/TenantPortalQuickActions';
-import RecentIssuesWidget from '@/components/tenant-portal/RecentIssuesWidget';
-import TenantAIChatbot from '@/components/tenant-portal/TenantAIChatbot';
-import TenantOnboardingFlow from '@/components/tenant-portal/TenantOnboardingFlow';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
+import { LogOut, FileText, DollarSign, AlertCircle, MessageSquare } from 'lucide-react';
+import TenantPaymentHistory from '@/components/tenant-portal/TenantPaymentHistory';
+import TenantDocuments from '@/components/tenant-portal/TenantDocuments';
+import TenantCommunication from '@/components/tenant-portal/TenantCommunication';
+import MaintenanceRequestForm from '@/components/maintenance/MaintenanceRequestForm';
 
 export default function TenantPortal() {
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('overview');
-  const [showChatbot, setShowChatbot] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [portalUser, setPortalUser] = useState(null);
 
-  const { data: currentUser } = useQuery({
-    queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me(),
-  });
+  const token = searchParams.get('token');
+  const email = searchParams.get('email');
 
-  // Check if onboarding is needed
-  React.useEffect(() => {
-    if (currentUser && !currentUser.tenant_onboarding_completed) {
-      setShowOnboarding(true);
-    }
-  }, [currentUser]);
-
-  const { data: tenantRecord } = useQuery({
-    queryKey: ['tenant', currentUser?.email],
+  const { data: leaseData } = useQuery({
+    queryKey: ['tenantLeaseData', email],
     queryFn: async () => {
-      if (!currentUser?.email) return null;
-      const results = await base44.entities.Tenant.filter(
-        { email: currentUser.email },
-        '-created_date',
-        1
-      );
-      return results[0];
+      if (!email) return null;
+      const leases = await base44.entities.LeaseContract.list();
+      return leases.find(l => l.tenant_email === email);
     },
-    enabled: !!currentUser?.email,
+    enabled: !!email
   });
 
-  const { data: contract } = useQuery({
-    queryKey: ['tenant-contract', tenantRecord?.id],
+  const { data: maintenanceRequests = [] } = useQuery({
+    queryKey: ['maintenanceRequests', leaseData?.id],
     queryFn: async () => {
-      const contracts = await base44.entities.LeaseContract.filter({ 
-        tenant_id: tenantRecord.id,
-        status: 'active'
-      });
-      return contracts[0];
+      if (!leaseData?.id) return [];
+      const requests = await base44.entities.MaintenanceRequest.list();
+      return requests.filter(r => r.lease_contract_id === leaseData.id);
     },
-    enabled: !!tenantRecord
+    enabled: !!leaseData?.id
   });
 
-  if (!currentUser) {
+  const pendingMaintenance = maintenanceRequests.filter(r => !['COMPLETED', 'CLOSED'].includes(r.status));
+
+  if (!email || !leaseData) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="p-8 max-w-md">
-          <AlertCircle className="w-8 h-8 text-red-500 mb-4" />
-          <h2 className="text-xl font-light text-slate-900">Nicht authentifiziert</h2>
-          <p className="text-sm font-light text-slate-600 mt-2">
-            Bitte melden Sie sich an, um auf das Mieterportal zuzugreifen.
-          </p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <Card className="max-w-md">
+          <CardContent className="pt-6 text-center">
+            <p className="text-gray-600 mb-4">Ungültige Anmeldedaten oder Session abgelaufen.</p>
+            <Button className="bg-blue-600 hover:bg-blue-700">Erneut anmelden</Button>
+          </CardContent>
         </Card>
       </div>
     );
   }
 
   return (
-    <>
-      <TenantOnboardingFlow 
-        open={showOnboarding} 
-        onComplete={() => setShowOnboarding(false)} 
-      />
-      
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-light text-slate-900">Mieterportal</h1>
-          <p className="text-sm font-light text-slate-600 mt-1">
-            Verwalten Sie Ihren Mietvertrag, Zahlungen und Wartungsanfragen
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Mietportal</h1>
+            <p className="text-gray-600 mt-1">Willkommen, {leaseData.tenant_name}</p>
+          </div>
+          <Button variant="outline" className="flex items-center gap-2">
+            <LogOut className="w-4 h-4" />
+            Abmelden
+          </Button>
         </div>
-        <Button 
-          onClick={() => setShowChatbot(!showChatbot)}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          <Bot className="w-5 h-5 mr-2" />
-          KI-Assistent {showChatbot ? 'schließen' : 'öffnen'}
-        </Button>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Aktuelle Miete</p>
+                  <p className="text-2xl font-bold">€{leaseData.monthly_rent?.toFixed(2) || 0}</p>
+                </div>
+                <DollarSign className="w-8 h-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Mietbeginn</p>
+                  <p className="text-xl font-bold">{new Date(leaseData.start_date).toLocaleDateString('de-DE')}</p>
+                </div>
+                <FileText className="w-8 h-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Wartungsanfragen</p>
+                  <p className="text-2xl font-bold">{pendingMaintenance.length}</p>
+                </div>
+                <AlertCircle className="w-8 h-8 text-amber-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Navigation Tabs */}
+        <div className="flex flex-wrap gap-2 mb-8 bg-white rounded-lg p-2 shadow">
+          {[
+            { id: 'overview', label: 'Übersicht', icon: FileText },
+            { id: 'payments', label: 'Zahlungen', icon: DollarSign },
+            { id: 'documents', label: 'Dokumente', icon: FileText },
+            { id: 'maintenance', label: 'Wartung', icon: AlertCircle },
+            { id: 'messages', label: 'Nachrichten', icon: MessageSquare }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded transition-colors ${
+                activeTab === tab.id
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Content Areas */}
+        {activeTab === 'overview' && (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Mietvertraginformationen</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-600">Wohneinheit</p>
+                    <p className="font-medium">{leaseData.unit_id}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Mietdauer</p>
+                    <p className="font-medium">
+                      {leaseData.end_date 
+                        ? new Date(leaseData.end_date).toLocaleDateString('de-DE')
+                        : 'Unbefristet'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Kaution</p>
+                    <p className="font-medium">€{leaseData.security_deposit?.toFixed(2) || 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Nebenkosten</p>
+                    <p className="font-medium">€{leaseData.operating_cost_advance?.toFixed(2) || 0}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'payments' && (
+          <TenantPaymentHistory leaseId={leaseData.id} tenantEmail={email} />
+        )}
+
+        {activeTab === 'documents' && (
+          <TenantDocuments leaseId={leaseData.id} />
+        )}
+
+        {activeTab === 'maintenance' && (
+          <div className="space-y-6">
+            <MaintenanceRequestForm
+              leaseContractId={leaseData.id}
+              unitId={leaseData.unit_id}
+              tenantEmail={email}
+            />
+            {maintenanceRequests.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Meine Anfragen</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {maintenanceRequests.map(req => (
+                    <div key={req.id} className="p-3 border rounded flex justify-between items-center">
+                      <div>
+                        <p className="font-medium">{req.title}</p>
+                        <p className="text-sm text-gray-600">{req.category} • {req.status}</p>
+                      </div>
+                      <span className="text-xs bg-gray-200 px-2 py-1 rounded">{req.urgency}</span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'messages' && (
+          <TenantCommunication leaseId={leaseData.id} tenantEmail={email} />
+        )}
       </div>
-
-      {showChatbot && (
-        <TenantAIChatbot 
-          tenantId={tenantRecord?.id} 
-          onClose={() => setShowChatbot(false)}
-        />
-      )}
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
-          <TabsTrigger value="overview" className="font-light text-xs">
-            Übersicht
-          </TabsTrigger>
-          <TabsTrigger value="payments" className="font-light text-xs">
-            Zahlungen
-          </TabsTrigger>
-          <TabsTrigger value="documents" className="font-light text-xs">
-            Dokumente
-          </TabsTrigger>
-          <TabsTrigger value="maintenance" className="font-light text-xs">
-            Wartung
-          </TabsTrigger>
-          <TabsTrigger value="messages" className="font-light text-xs">
-            Nachrichten
-          </TabsTrigger>
-          <TabsTrigger value="help" className="font-light text-xs">
-            Hilfe
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          <TenantPortalQuickActions onTabChange={setActiveTab} />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <LeaseDetailsCard tenantId={tenantRecord?.id} />
-            <PaymentHistoryWidget tenantId={tenantRecord?.id} />
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ContractDocumentsWidget contractId={contract?.id} />
-            <RecentIssuesWidget tenantId={tenantRecord?.id} />
-          </div>
-          <UpcomingMaintenanceView unitId={tenantRecord?.unit_id} />
-        </TabsContent>
-
-        <TabsContent value="payments" className="space-y-6">
-          <TenantPaymentManagement 
-            tenantId={tenantRecord?.id} 
-            contractId={contract?.id}
-          />
-        </TabsContent>
-
-        <TabsContent value="documents" className="space-y-6">
-          <TenantDocumentUpload 
-            tenantId={tenantRecord?.id}
-            contractId={contract?.id}
-          />
-        </TabsContent>
-
-        <TabsContent value="maintenance" className="space-y-6">
-          <TenantIssueReporter 
-            tenantId={tenantRecord?.id}
-            unitId={tenantRecord?.unit_id}
-            buildingId={tenantRecord?.building_id}
-          />
-          <MaintenanceRequestTracker />
-        </TabsContent>
-
-        <TabsContent value="messages">
-          <EnhancedTenantChat />
-        </TabsContent>
-
-        <TabsContent value="help">
-          <KnowledgeBaseViewer />
-        </TabsContent>
-      </Tabs>
     </div>
-    </>
   );
 }
