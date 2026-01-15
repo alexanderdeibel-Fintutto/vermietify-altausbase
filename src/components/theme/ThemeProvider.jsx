@@ -30,6 +30,9 @@ export function ThemeProvider({ children }) {
   useEffect(() => {
     if (user?.theme_preference) {
       setCurrentThemeKey(user.theme_preference);
+    } else {
+      // Force light theme by default
+      setCurrentThemeKey('light');
     }
   }, [user]);
 
