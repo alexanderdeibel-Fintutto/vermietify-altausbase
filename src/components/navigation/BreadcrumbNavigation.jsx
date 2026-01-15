@@ -91,14 +91,14 @@ const BreadcrumbNavigation = ({ currentPageName }) => {
     <div className="px-8 py-2 bg-slate-50 border-b border-slate-100">
       <nav className="flex items-center text-sm text-slate-500">
         {breadcrumbs.map((crumb, index) => (
-          <React.Fragment key={index}>
+          <span key={index} className="flex items-center">
             {index > 0 && <ChevronRight className="w-4 h-4 mx-1" />}
             {crumb.isLast ? (
               <span className="font-medium text-slate-800">{crumb.name}</span>
             ) : (
               <Link to={crumb.path} className="hover:text-slate-800">{crumb.name}</Link>
             )}
-          </React.Fragment>
+          </span>
         ))}
       </nav>
     </div>
