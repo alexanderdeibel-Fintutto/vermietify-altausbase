@@ -48,6 +48,7 @@ import ErrorBoundaryWithLogging from '@/components/errors/ErrorBoundaryWithLoggi
 const TesterTracker = lazy(() => import('@/components/testing/TesterTracker'));
 const SmartProblemReportButton = lazy(() => import('@/components/testing/SmartProblemReportButton'));
 const FeatureUnlockNotification = lazy(() => import('@/components/navigation/FeatureUnlockNotification'));
+const AIChatWidget = lazy(() => import('@/components/ai/AIChatWidget'));
 
 // Lazy load admin pages (loaded only when needed)
 const AdminAIAnalytics = lazy(() => import('@/pages/AdminAIAnalytics'));
@@ -211,6 +212,11 @@ export default function Layout({ children, currentPageName }) {
 
                                 {/* Floating Feedback Button */}
                                 <FloatingFeedbackButton />
+
+                                {/* AI Chat Widget */}
+                                <Suspense fallback={<LoadingFallback />}>
+                                  <AIChatWidget />
+                                </Suspense>
 
                                 {/* Mobile Bottom Navigation */}
                 <MobileBottomNav visibleFeatures={visibleFeatures} />
