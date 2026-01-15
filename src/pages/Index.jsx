@@ -1,7 +1,7 @@
 import React from 'react';
-import Dashboard from './Dashboard';
+import AICommunicationHub from './AICommunicationHub';
 
-// Index page redirects to Dashboard - ensures Dashboard is the default landing page
+// Index page redirects to AICommunicationHub - ensures AICommunicationHub is the default landing page
 export default function Index() {
-  return <Dashboard />;
+  return <AICommunicationHub />;
 }
