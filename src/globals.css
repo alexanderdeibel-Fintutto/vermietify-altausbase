@@ -153,15 +153,15 @@
         }
 
         .card-base {
-          @apply bg-white border border-slate-100 rounded-lg shadow-sm;
+          @apply bg-white border border-slate-100 rounded-lg shadow-sm p-5;
         }
 
         .text-input-base {
-          @apply w-full px-3 py-2 border border-slate-200 rounded-lg font-extralight bg-white;
+          @apply w-full px-2.7 py-1.8 border border-slate-200 rounded-lg font-extralight bg-white;
         }
 
         .badge-base {
-          @apply px-2 py-1 text-xs font-extralight rounded-md;
+          @apply px-1.8 py-0.9 text-xs font-extralight rounded-md;
         }
 
         /* COMPREHENSIVE dark color desaturation - 30% saturation */
