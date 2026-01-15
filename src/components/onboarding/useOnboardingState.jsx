@@ -27,16 +27,21 @@ export function useOnboardingState(shouldAutoTrigger = false) {
     evaluateState();
   }, [evaluateState]);
 
-  // Re-evaluate periodically every 30s or on visibility change
+  // Re-evaluate only on visibility change (removed interval to reduce API calls)
   useEffect(() => {
-    const interval = setInterval(evaluateState, 30000);
     const handleVisibility = () => {
-      if (!document.hidden) evaluateState();
+      if (!document.hidden) {
+        // Debounce: only re-evaluate if last check was > 2 minutes ago
+        const lastCheck = window._lastOnboardingCheck || 0;
+        if (Date.now() - lastCheck > 120000) {
+          window._lastOnboardingCheck = Date.now();
+          evaluateState();
+        }
+      }
     };
     document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
-      clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [evaluateState]);

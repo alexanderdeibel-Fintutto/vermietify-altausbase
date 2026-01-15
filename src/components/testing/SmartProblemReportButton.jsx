@@ -11,6 +11,13 @@ const SmartProblemReportButton = React.memo(function SmartProblemReportButton() 
   const handleOpenDialog = useCallback(() => setDialogOpen(true), []);
 
   useEffect(() => {
+    // Only fetch once and cache result
+    const cachedId = sessionStorage.getItem('testAccountId');
+    if (cachedId) {
+      setTestAccountId(cachedId);
+      return;
+    }
+
     const getTesterInfo = async () => {
       try {
         const user = await base44.auth.me();
@@ -22,6 +29,7 @@ const SmartProblemReportButton = React.memo(function SmartProblemReportButton() 
           );
           if (testAccounts[0]) {
             setTestAccountId(testAccounts[0].id);
+            sessionStorage.setItem('testAccountId', testAccounts[0].id);
           }
         }
       } catch (err) {

@@ -11,7 +11,9 @@ export default function MandantSwitcher() {
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me()
+    queryFn: () => base44.auth.me(),
+    staleTime: 10 * 60 * 1000,
+    cacheTime: 15 * 60 * 1000
   });
 
   const { data: userAccess = [] } = useQuery({
@@ -20,7 +22,9 @@ export default function MandantSwitcher() {
       user_email: user.email,
       ist_aktiv: true 
     }),
-    enabled: !!user?.email
+    enabled: !!user?.email,
+    staleTime: 10 * 60 * 1000,
+    cacheTime: 15 * 60 * 1000
   });
 
   const { data: mandanten = [] } = useQuery({
@@ -34,7 +38,9 @@ export default function MandantSwitcher() {
       const accessibleMandantIds = userAccess.map(a => a.mandant_id);
       return allMandanten.filter(m => accessibleMandantIds.includes(m.id));
     },
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 10 * 60 * 1000,
+    cacheTime: 15 * 60 * 1000
   });
 
   const { data: currentMandant } = useQuery({
@@ -46,7 +52,9 @@ export default function MandantSwitcher() {
       }
       return mandanten[0] || null;
     },
-    enabled: mandanten.length > 0
+    enabled: mandanten.length > 0,
+    staleTime: 10 * 60 * 1000,
+    cacheTime: 15 * 60 * 1000
   });
 
   const switchMutation = useMutation({
