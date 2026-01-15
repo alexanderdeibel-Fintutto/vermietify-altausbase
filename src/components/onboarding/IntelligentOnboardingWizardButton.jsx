@@ -69,16 +69,6 @@ const IntelligentOnboardingWizardButton = React.memo(function IntelligentOnboard
           </div>
         </div>
 
-        {/* Mini Preview */}
-        {onboardingState.next_step && (
-          <div className="absolute bottom-20 left-0 bg-white border border-slate-200 rounded-lg p-3 w-48 shadow-lg">
-            <Badge className="bg-blue-100 text-blue-800 font-light text-xs mb-2">
-              {Math.round((onboardingState.completed_steps.length / onboardingState.all_steps.length) * 100)}% Fertig
-            </Badge>
-            <p className="text-sm font-light text-slate-900">{onboardingState.next_step.title}</p>
-            <p className="text-xs font-light text-slate-600 mt-1">{onboardingState.next_step.description}</p>
-          </div>
-        )}
       </div>
 
       {/* Dialog */}
