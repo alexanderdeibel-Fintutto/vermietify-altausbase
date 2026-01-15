@@ -1,7 +1,13 @@
-import React from 'react';
-import Dashboard from './Dashboard';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
-// Index page redirects to Dashboard - ensures Dashboard is the default landing page
 export default function Index() {
-  return <Dashboard />;
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    navigate(createPageUrl('Dashboard'));
+  }, [navigate]);
+  
+  return null;
 }
