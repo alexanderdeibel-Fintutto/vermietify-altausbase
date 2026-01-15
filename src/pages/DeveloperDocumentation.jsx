@@ -261,18 +261,23 @@ export default function DeveloperDocumentation() {
                 return [...prev, newDoc];
             });
 
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            const updatedDoc = {
-                ...newDoc,
-                status: 'completed',
-                last_generated_at: new Date().toISOString(),
-                content_markdown: `# ${newDoc.title}\n\n${newDoc.description}\n\n## Placeholder Content\n\nDocumentation for ${docType} would be generated here.`,
-                file_size_bytes: 5120
-            };
+            try {
+                const functionName = `generate${docType.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('')}Documentation`;
+                const response = await base44.functions.invoke(functionName, {});
+                
+                const updatedDoc = {
+                    ...newDoc,
+                    status: 'completed',
+                    last_generated_at: new Date().toISOString(),
+                    content_markdown: response.data?.markdownContent || '',
+                    file_size_bytes: response.data?.markdownContent?.length || 0
+                };
 
-            setDocumentations(prev => prev.map(d => d.documentation_type === docType ? updatedDoc : d));
-            return updatedDoc;
+                setDocumentations(prev => prev.map(d => d.documentation_type === docType ? updatedDoc : d));
+                return updatedDoc;
+            } catch (error) {
+                throw error;
+            }
         },
         onSuccess: () => {
             toast.success('Dokumentation erfolgreich generiert');
