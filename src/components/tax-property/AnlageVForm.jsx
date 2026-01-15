@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { base44 } from '@/api/base44Client';
-import { Plus, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Loader2, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AnlageVForm({ buildingId, taxYear, onGenerated }) {
@@ -142,6 +142,37 @@ export default function AnlageVForm({ buildingId, taxYear, onGenerated }) {
       });
       toast.success('Anlage V berechnet');
       onGenerated?.(response.data);
+    } catch (error) {
+      toast.error('Fehler: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGeneratePDF = async () => {
+    if (!anlageVId) {
+      toast.error('Bitte erst Anlage V berechnen');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await base44.functions.invoke('generateAnlageVPDF', {
+        anlageVId
+      });
+      
+      // Download PDF
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `AnlageV_${taxYear}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+      
+      toast.success('PDF heruntergeladen');
     } catch (error) {
       toast.error('Fehler: ' + error.message);
     } finally {
@@ -307,10 +338,17 @@ export default function AnlageVForm({ buildingId, taxYear, onGenerated }) {
               </span>
             </div>
           </div>
-          <Button onClick={handleGenerate} disabled={loading} className="w-full bg-green-600 hover:bg-green-700">
-            {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Anlage V berechnen
-          </Button>
+          <div className="flex gap-3">
+            <Button onClick={handleGenerate} disabled={loading} className="flex-1 bg-green-600 hover:bg-green-700">
+              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Berechnen
+            </Button>
+            <Button onClick={handleGeneratePDF} disabled={loading || !anlageVId} variant="outline" className="flex-1">
+              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              <FileDown className="w-4 h-4 mr-2" />
+              PDF
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
