@@ -337,6 +337,7 @@ export default function DeveloperDocumentation() {
         setProgress(0);
         let successCount = 0;
         let errorCount = 0;
+        const timeout = 30000; // 30 Sekunden Timeout pro Dokumentation
         
         for (let i = 0; i < DOCUMENTATION_TYPES.length; i++) {
             const docType = DOCUMENTATION_TYPES[i];
@@ -344,7 +345,10 @@ export default function DeveloperDocumentation() {
             setProgress(((i + 1) / DOCUMENTATION_TYPES.length) * 100);
             
             try {
-                await generateMutation.mutateAsync(docType.type);
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Generierung dauert zu lange')), timeout)
+                );
+                await Promise.race([generateMutation.mutateAsync(docType.type), timeoutPromise]);
                 successCount++;
             } catch (error) {
                 errorCount++;
