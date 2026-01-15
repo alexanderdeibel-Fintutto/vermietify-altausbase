@@ -303,6 +303,7 @@ import SteuerApp from './pages/SteuerApp';
 import SteuerVermoegenApp from './pages/SteuerVermoegenApp';
 import StocksAndETFs from './pages/StocksAndETFs';
 import SubmissionDashboard from './pages/SubmissionDashboard';
+import SubscriptionManagement from './pages/SubscriptionManagement';
 import SubscriptionSettings from './pages/SubscriptionSettings';
 import SuiteManagement from './pages/SuiteManagement';
 import SuppliersManagement from './pages/SuppliersManagement';
@@ -447,7 +448,9 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import SubscriptionManagement from './pages/SubscriptionManagement';
+import AfaOverview from './pages/AfaOverview';
+import AfaAssetForm from './pages/AfaAssetForm';
+import AfaAssetDetail from './pages/AfaAssetDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -757,6 +760,7 @@ export const PAGES = {
     "SteuerVermoegenApp": SteuerVermoegenApp,
     "StocksAndETFs": StocksAndETFs,
     "SubmissionDashboard": SubmissionDashboard,
+    "SubscriptionManagement": SubscriptionManagement,
     "SubscriptionSettings": SubscriptionSettings,
     "SuiteManagement": SuiteManagement,
     "SuppliersManagement": SuppliersManagement,
@@ -901,7 +905,9 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "SubscriptionManagement": SubscriptionManagement,
+    "AfaOverview": AfaOverview,
+    "AfaAssetForm": AfaAssetForm,
+    "AfaAssetDetail": AfaAssetDetail,
 }
 
 export const pagesConfig = {
