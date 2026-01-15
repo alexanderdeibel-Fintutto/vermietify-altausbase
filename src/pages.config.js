@@ -459,6 +459,7 @@ import PropertyManagementDashboard from './pages/PropertyManagementDashboard';
 import RentCollectionDashboard from './pages/RentCollectionDashboard';
 import MaintenanceTracking from './pages/MaintenanceTracking';
 import LeaseManagement from './pages/LeaseManagement';
+import TenantChatbotPage from './pages/TenantChatbotPage';
 import __Layout from './Layout.jsx';
 
 
@@ -924,6 +925,7 @@ export const PAGES = {
     "RentCollectionDashboard": RentCollectionDashboard,
     "MaintenanceTracking": MaintenanceTracking,
     "LeaseManagement": LeaseManagement,
+    "TenantChatbotPage": TenantChatbotPage,
 }
 
 export const pagesConfig = {
