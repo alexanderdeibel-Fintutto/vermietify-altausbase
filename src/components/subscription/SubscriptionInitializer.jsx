@@ -21,19 +21,7 @@ export default function SubscriptionInitializer({ children }) {
     enabled: !!user?.email
   });
 
-  const initializeMutation = useMutation({
-    mutationFn: () => base44.functions.invoke('initializeNewUser'),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userSubscription'] });
-      queryClient.invalidateQueries({ queryKey: ['userLimits'] });
-    }
-  });
-
-  useEffect(() => {
-    if (user && !isLoading && !subscription && !initializeMutation.isPending) {
-      initializeMutation.mutate();
-    }
-  }, [user, subscription, isLoading]);
+  // Removed initialization mutation - function doesn't exist
 
   return <>{children}</>;
 }
