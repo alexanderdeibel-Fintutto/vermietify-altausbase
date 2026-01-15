@@ -15,6 +15,7 @@ import SimpleObjectForm from '@/components/onboarding/SimpleObjectForm';
 import QuickTenantSetup from '@/components/onboarding/QuickTenantSetup';
 import TaxCategoryQuickSetup from '@/components/onboarding/TaxCategoryQuickSetup';
 import CompletionScreen from '@/components/onboarding/CompletionScreen';
+import ProgressIndicator from '@/components/onboarding/ProgressIndicator';
 
 export default function Onboarding() {
   const [messages, setMessages] = useState([]);
