@@ -135,7 +135,7 @@ export default function Layout({ children, currentPageName }) {
                                    {/* Main Content Area */}
                                    <div className="flex-1 flex flex-col">
                  {/* Top Header Bar */}
-                <header className="sticky top-0 z-50 bg-white border-b border-slate-100">
+                <header className="sticky top-0 z-50 bg-white border-b border-slate-100" style={{ backgroundColor: '#f8f8f8' }}>
                     <div className="flex items-center justify-between h-16 px-8">
                         {/* Logo */}
                                         <div className="flex items-center gap-3">
