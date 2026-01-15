@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+// Simple progress bar - no external component needed
 import { 
     FileText, 
     Download, 
@@ -992,7 +992,12 @@ export default function DeveloperDocumentation() {
                                 <span>Generierung läuft...</span>
                                 <span>{Math.round(progress)}%</span>
                             </div>
-                            <Progress value={progress} className="h-2" />
+                            <div className="w-full bg-blue-200 rounded-full h-2">
+                                <div 
+                                    className="bg-blue-600 h-2 rounded-full transition-all" 
+                                    style={{ width: `${progress}%` }}
+                                />
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
