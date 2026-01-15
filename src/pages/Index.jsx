@@ -6,7 +6,9 @@ export default function Index() {
   const navigate = useNavigate();
   
   useEffect(() => {
-    navigate(createPageUrl('Dashboard'));
+    const urlParams = new URLSearchParams(window.location.search);
+    const page = urlParams.get('page') || 'Dashboard';
+    navigate(createPageUrl(page));
   }, [navigate]);
   
   return null;
