@@ -142,6 +142,7 @@ import DACHTaxComparison from './pages/DACHTaxComparison';
 import Dashboard from './pages/Dashboard';
 import DataImportExport from './pages/DataImportExport';
 import DataImportExportHub from './pages/DataImportExportHub';
+import DataManagementHub from './pages/DataManagementHub';
 import DeductionMaximizationTool from './pages/DeductionMaximizationTool';
 import DeveloperDocumentation from './pages/DeveloperDocumentation';
 import DividendOptimization from './pages/DividendOptimization';
@@ -446,7 +447,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import DataManagementHub from './pages/DataManagementHub';
 import __Layout from './Layout.jsx';
 
 
@@ -595,6 +595,7 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "DataImportExport": DataImportExport,
     "DataImportExportHub": DataImportExportHub,
+    "DataManagementHub": DataManagementHub,
     "DeductionMaximizationTool": DeductionMaximizationTool,
     "DeveloperDocumentation": DeveloperDocumentation,
     "DividendOptimization": DividendOptimization,
@@ -899,7 +900,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "DataManagementHub": DataManagementHub,
 }
 
 export const pagesConfig = {

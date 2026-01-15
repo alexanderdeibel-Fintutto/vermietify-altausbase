@@ -56,12 +56,18 @@ const TesterManagement = lazy(() => import('@/pages/TesterManagement'));
 
 const LoadingFallback = () => null;
 
+// Default navigation features als Fallback
+const DEFAULT_NAVIGATION_FEATURES = [
+    'dashboard', 'buildings', 'units', 'tenants', 'contracts', 'invoices', 
+    'bank_accounts', 'documents', 'tasks', 'reports', 'settings'
+];
+
 export default function Layout({ children, currentPageName }) {
 
-          const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-          const [activeCategory, setActiveCategory] = useState('real_estate');
-          const { hasModuleAccess, packageConfig } = usePackageAccess();
-          useActivityTracker(); // Track user activity for testers
+            const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+            const [activeCategory, setActiveCategory] = useState('real_estate');
+            const { hasModuleAccess, packageConfig } = usePackageAccess();
+            useActivityTracker(); // Track user activity for testers
 
           // Get dynamic app name from package
           const getAppName = () => {
@@ -81,7 +87,7 @@ export default function Layout({ children, currentPageName }) {
               cacheTime: 10 * 60 * 1000
           });
 
-    let visibleFeatures = navigationState?.visible_features || [];
+          let visibleFeatures = navigationState?.visible_features || DEFAULT_NAVIGATION_FEATURES;
     if (packageConfig && hasModuleAccess) {
         visibleFeatures = visibleFeatures.filter(feature => {
             if (['dashboard', 'account', 'finanzen'].includes(feature)) return true;
