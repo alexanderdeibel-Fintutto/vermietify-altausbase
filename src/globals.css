@@ -105,6 +105,7 @@
   button {
     transition: all var(--transition-fast);
     font-weight: var(--font-weight-extralight);
+    filter: saturate(0.7);
   }
 
   input, textarea, select {
