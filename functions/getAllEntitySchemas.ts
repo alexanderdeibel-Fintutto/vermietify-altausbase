@@ -18,38 +18,39 @@ Deno.serve(async (req) => {
         logDebug("=== getAllEntitySchemas START ===");
         logDebug(`User: ${user?.email}`);
 
-        // Liste der bekannten Entities
+        // Verwende eine einfache Liste von Entities mit ihren Eigenschaften
+        // Da .schema() nicht funktioniert, geben wir eine Basis-Info zurück
         const knownEntities = [
             'Building', 'Unit', 'Tenant', 'LeaseContract', 'Invoice', 'BankAccount', 
             'BankTransaction', 'OperatingCostStatement', 'Document', 'Task', 'Owner',
             'UploadedDocument', 'GeneratedDocument', 'UserProblem', 'TestAssignment',
             'Report', 'Financing', 'PurchaseContract', 'Asset', 'Portfolio',
-            'TaxReturnV', 'ElsterSubmission', 'Feature', 'Product', 'FeatureGroup'
+            'TaxReturnV', 'ElsterSubmission', 'Feature', 'Product', 'FeatureGroup',
+            'Meter', 'MeterReading', 'Payment', 'ActualPayment', 'PlannedBooking',
+            'CoTenant', 'Applicant', 'Deposit', 'OperatingCostItem', 'BankTransfer',
+            'CostCategory', 'EnergyPassport', 'Equipment', 'Shareholder', 'BuildingOwnership'
         ];
 
+        // Erstelle ein einfaches Schema-Objekt für jede Entity
         const schemas = {};
-        let successCount = 0;
-        
-        // Lade Schemas für bekannte Entities
         for (const entityName of knownEntities) {
-            try {
-                const schema = await base44.asServiceRole.entities[entityName].schema();
-                schemas[entityName] = schema;
-                successCount++;
-            } catch (err) {
-                logDebug(`Überspringe ${entityName}: ${err.message}`);
-            }
+            schemas[entityName] = {
+                name: entityName,
+                type: 'object',
+                properties: {},
+                description: `Entity: ${entityName}`,
+                note: 'Schema-Details über SDK derzeit nicht verfügbar'
+            };
         }
 
-        logDebug(`✓ ${successCount} von ${knownEntities.length} Schemas erfolgreich geladen`);
-        logDebug(`Schemas: ${Object.keys(schemas).join(', ')}`);
+        logDebug(`✓ ${knownEntities.length} Entity-Platzhalter erstellt`);
 
         return Response.json({
             success: true,
             count: Object.keys(schemas).length,
             schemas,
             debugLogs,
-            note: `Geladen: ${Object.keys(schemas).length} Entity-Schemas`
+            note: `Geladen: ${Object.keys(schemas).length} Entity-Schemas (vereinfacht)`
         });
 
     } catch (error) {
