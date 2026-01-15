@@ -49,8 +49,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import ReactMarkdown from 'react-markdown';
 import { cn } from "@/lib/utils";
-import DocumentationAdvancedFilters from '@/components/documentation/DocumentationAdvancedFilters';
-import DocumentationFulltextSearch from '@/components/documentation/DocumentationFulltextSearch';
+
 
 const PRIORITY_TYPES = [
     {
@@ -229,14 +228,6 @@ export default function DeveloperDocumentation() {
     const [progress, setProgress] = useState(0);
     const [showScheduleDialog, setShowScheduleDialog] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [showVersionHistory, setShowVersionHistory] = useState(null);
-    const [showExportPresets, setShowExportPresets] = useState(false);
-    const [showFulltextSearch, setShowFulltextSearch] = useState(false);
-    const [advancedFilters, setAdvancedFilters] = useState({
-        status: null,
-        daysOld: null,
-        sizeRange: null
-    });
     const queryClient = useQueryClient();
 
     const { data: documentations = [], isLoading } = useQuery({
@@ -479,27 +470,7 @@ export default function DeveloperDocumentation() {
         return documentations.find(d => d.documentation_type === type);
     };
 
-    const applyAdvancedFilters = (docs) => {
-        return docs.filter(doc => {
-            if (advancedFilters.status && doc.status !== advancedFilters.status) return false;
-            
-            if (advancedFilters.daysOld && doc.last_generated_at) {
-                const now = new Date();
-                const docDate = new Date(doc.last_generated_at);
-                const ageInDays = (now - docDate) / (1000 * 60 * 60 * 24);
-                if (ageInDays > advancedFilters.daysOld) return false;
-            }
-            
-            if (advancedFilters.sizeRange && doc.file_size_bytes) {
-                const kb = doc.file_size_bytes / 1024;
-                if (advancedFilters.sizeRange === 'small' && kb > 100) return false;
-                if (advancedFilters.sizeRange === 'medium' && (kb <= 100 || kb > 500)) return false;
-                if (advancedFilters.sizeRange === 'large' && kb <= 500) return false;
-            }
-            
-            return true;
-        });
-    };
+
 
     const formatBytes = (bytes) => {
         if (!bytes) return '0 KB';
@@ -1003,22 +974,15 @@ export default function DeveloperDocumentation() {
                 </Card>
             )}
 
-            {/* Erweiterte Such- und Filteroptionen */}
-            <div className="space-y-3">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <Input
-                        type="text"
-                        placeholder="Dokumentationen global durchsuchen..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10"
-                    />
-                </div>
-                <DocumentationAdvancedFilters
-                    filters={advancedFilters}
-                    onFiltersChange={setAdvancedFilters}
-                    documentations={documentations}
+            {/* Search */}
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <Input
+                    type="text"
+                    placeholder="Dokumentationen global durchsuchen..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
                 />
             </div>
 
@@ -1212,177 +1176,7 @@ export default function DeveloperDocumentation() {
                             const query = searchQuery.toLowerCase();
                             return docType.title.toLowerCase().includes(query) || 
                                    docType.description.toLowerCase().includes(query);
-                        }).map(docType => applyAdvancedFilters([getDocumentation(docType.type)]).length > 0 ? docType : null)
-                        .filter(Boolean).map((docType) => {
-                            const doc = getDocumentation(docType.type);
-                            const Icon = docType.icon;
-                            const isGenerating = doc?.status === 'generating';
-
-                            return (
-                                <Card key={docType.type} className={selectedTypes.includes(docType.type) ? 'border-2 border-emerald-500' : ''}>
-                                    <CardHeader>
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex items-start gap-3 flex-1">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedTypes.includes(docType.type)}
-                                                    onChange={(e) => {
-                                                        if (e.target.checked) {
-                                                            setSelectedTypes([...selectedTypes, docType.type]);
-                                                        } else {
-                                                            setSelectedTypes(selectedTypes.filter(t => t !== docType.type));
-                                                        }
-                                                    }}
-                                                    className="w-5 h-5 mt-2 cursor-pointer"
-                                                />
-                                                <Icon className="w-6 h-6 text-emerald-600 mt-1" />
-                                                <div className="flex-1">
-                                                    <CardTitle className="text-lg">
-                                                        {docType.title}
-                                                    </CardTitle>
-                                                    <CardDescription className="mt-1">
-                                                        {docType.description}
-                                                    </CardDescription>
-                                                    <div className="flex gap-4 mt-2 text-sm text-slate-600">
-                                                        <span>Geschätzte Größe: {docType.estimatedSize}</span>
-                                                        <span>•</span>
-                                                        <span>Geschätzte Dauer: ~{docType.estimatedDuration}s</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            {/* Status Badge */}
-                                            <div>
-                                                {!doc || doc.status === 'not_created' ? (
-                                                    <Badge variant="outline" className="text-slate-600">
-                                                        ❌ Nicht erstellt
-                                                    </Badge>
-                                                ) : doc.status === 'generating' ? (
-                                                    <Badge className="bg-blue-100 text-blue-700">
-                                                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                                        In Erstellung...
-                                                    </Badge>
-                                                ) : doc.status === 'completed' ? (
-                                                    <div className="text-right">
-                                                        {doc.last_generated_at && new Date(doc.last_generated_at) < new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) ? (
-                                                            <Badge className="bg-yellow-100 text-yellow-700 mb-1">
-                                                                ⚠️ Veraltet (>7 Tage)
-                                                            </Badge>
-                                                        ) : (
-                                                            <Badge className="bg-emerald-100 text-emerald-700">
-                                                                <CheckCircle className="w-3 h-3 mr-1" />
-                                                                ✅ Aktuell
-                                                            </Badge>
-                                                        )}
-                                                        <p className="text-xs text-slate-500 mt-1">
-                                                            {format(new Date(doc.last_generated_at), 'dd.MM.yyyy HH:mm', { locale: de })}
-                                                        </p>
-                                                        <p className="text-xs text-slate-500">
-                                                            {formatBytes(doc.file_size_bytes)}
-                                                        </p>
-                                                        {doc.generation_duration_seconds && (
-                                                            <p className="text-xs text-slate-500">
-                                                                {doc.generation_duration_seconds.toFixed(1)}s
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <Badge className="bg-red-100 text-red-700">
-                                                        <AlertCircle className="w-3 h-3 mr-1" />
-                                                        Fehler
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="flex gap-2 flex-wrap">
-                                            <Button
-                                                variant="default"
-                                                size="sm"
-                                                onClick={() => generateMutation.mutate(docType.type)}
-                                                disabled={isGenerating || generatingAll}
-                                                className="bg-emerald-600 hover:bg-emerald-700"
-                                            >
-                                                {isGenerating ? (
-                                                    <>
-                                                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                                                        Generiere...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <RefreshCw className="w-4 h-4 mr-1" />
-                                                        Generieren
-                                                    </>
-                                                )}
-                                            </Button>
-
-                                            {doc?.status === 'completed' && (
-                                                <>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => setPreviewDoc(doc)}
-                                                    >
-                                                        <Eye className="w-4 h-4 mr-1" />
-                                                        Vorschau
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => handleCopyToClipboard(doc)}
-                                                    >
-                                                        <Copy className="w-4 h-4 mr-1" />
-                                                        Kopieren
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => handleDownloadMarkdown(doc)}
-                                                    >
-                                                        <Download className="w-4 h-4 mr-1" />
-                                                        MD
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => handleDownloadPDF(doc)}
-                                                    >
-                                                        <FileText className="w-4 h-4 mr-1" />
-                                                        PDF
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => handleDownloadJSON(doc)}
-                                                    >
-                                                        <FileJson className="w-4 h-4 mr-1" />
-                                                        JSON
-                                                    </Button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* Kontext & Planung */}
-                <div>
-                    <div className="flex items-center gap-3 mb-4">
-                        <CalendarDays className="w-6 h-6 text-blue-600" />
-                        <h2 className="text-2xl font-bold text-slate-900">📅 Kontext & Planung</h2>
-                    </div>
-                    <div className="grid gap-4">
-                        {CONTEXT_TYPES.filter(docType => {
-                            if (!searchQuery) return true;
-                            const query = searchQuery.toLowerCase();
-                            return docType.title.toLowerCase().includes(query) || 
-                                   docType.description.toLowerCase().includes(query);
-                        }).map(docType => applyAdvancedFilters([getDocumentation(docType.type)]).length > 0 ? docType : null)
-                        .filter(Boolean).map((docType) => {
+                        }).map((docType) => {
                             const doc = getDocumentation(docType.type);
                             const Icon = docType.icon;
                             const isGenerating = doc?.status === 'generating';
