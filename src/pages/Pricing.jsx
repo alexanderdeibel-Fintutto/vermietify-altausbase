@@ -1,322 +1,172 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Check, X, Zap, Crown, Rocket } from 'lucide-react';
-import { cn } from "@/lib/utils";
-import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
+import { Check, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Pricing() {
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [billingCycle, setBillingCycle] = useState('MONTHLY');
+    const [billingCycle, setBillingCycle] = useState('MONTHLY');
+    const [isLoading, setIsLoading] = useState(false);
+    const navigate = useNavigate();
 
-  const { data: user } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: () => base44.auth.me()
-  });
+    const { data: plans } = useQuery({
+        queryKey: ['subscriptionPlans'],
+        queryFn: () => base44.entities.SubscriptionPlan.filter({ is_active: true }),
+        initialData: []
+    });
 
-  const { data: currentSubscription } = useQuery({
-    queryKey: ['userSubscription', user?.email],
-    queryFn: async () => {
-      const subs = await base44.entities.UserSubscription.filter({ 
-        user_email: user.email 
-      });
-      return subs[0] || null;
-    },
-    enabled: !!user?.email
-  });
+    const features = [
+        { code: 'basic_management', label: 'Grundverwaltung' },
+        { code: 'document_upload', label: 'Dokumente hochladen' },
+        { code: 'invoice_generation', label: 'Rechnungen erstellen' },
+        { code: 'bank_sync', label: 'Bank-Synchronisation' },
+        { code: 'ocr_basic', label: 'OCR (Standard)' },
+        { code: 'ocr_pro', label: 'OCR (Pro)' },
+        { code: 'datev_export', label: 'DATEV-Export' },
+        { code: 'api_access', label: 'API-Zugriff' }
+    ];
 
-  const { data: products = [] } = useQuery({
-    queryKey: ['activeProducts'],
-    queryFn: async () => {
-      const prods = await base44.entities.Product.filter({ is_active: true });
-      return prods.sort((a, b) => a.sort_order - b.sort_order);
-    }
-  });
+    const handleSelectPlan = async (planId) => {
+        setIsLoading(true);
+        try {
+            const response = await base44.functions.invoke('createStripeCheckoutSession', {
+                planId,
+                billingCycle
+            });
+            if (response.data?.url) {
+                window.location.href = response.data.url;
+            }
+        } catch (error) {
+            console.error('Checkout-Fehler:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-  const { data: tiers = [] } = useQuery({
-    queryKey: ['pricingTiers', selectedProduct?.id],
-    queryFn: async () => {
-      const allTiers = await base44.entities.PricingTier.filter({ 
-        product_id: selectedProduct.id,
-        is_active: true 
-      });
-      return allTiers.sort((a, b) => a.tier_level - b.tier_level);
-    },
-    enabled: !!selectedProduct
-  });
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
+            <div className="max-w-7xl mx-auto">
+                {/* Header */}
+                <div className="text-center mb-12">
+                    <h1 className="text-4xl font-bold text-gray-900 mb-4">Einfache, transparente Preise</h1>
+                    <p className="text-xl text-gray-600 mb-8">Wähle den perfekten Plan für deine Immobilien</p>
 
-  const { data: allFeatures = [] } = useQuery({
-    queryKey: ['features'],
-    queryFn: () => base44.entities.Feature.list('-sort_order')
-  });
-
-  const { data: groups = [] } = useQuery({
-    queryKey: ['featureGroups'],
-    queryFn: () => base44.entities.FeatureGroup.list('-sort_order')
-  });
-
-  const { data: tierFeatures = [] } = useQuery({
-    queryKey: ['allTierFeatures'],
-    queryFn: () => base44.entities.TierFeature.list(),
-    enabled: tiers.length > 0
-  });
-
-  const { data: productFeatures = [] } = useQuery({
-    queryKey: ['productFeatures', selectedProduct?.id],
-    queryFn: () => base44.entities.ProductFeature.filter({ product_id: selectedProduct.id }),
-    enabled: !!selectedProduct
-  });
-
-  React.useEffect(() => {
-    if (products.length > 0 && !selectedProduct) {
-      setSelectedProduct(products[0]);
-    }
-  }, [products, selectedProduct]);
-
-  const productFeatureIds = new Set(productFeatures.map(pf => pf.feature_id));
-  const relevantFeatures = allFeatures.filter(f => productFeatureIds.has(f.id));
-
-  const getFeatureInTier = (tierId, featureId) => {
-    return tierFeatures.find(tf => tf.tier_id === tierId && tf.feature_id === featureId);
-  };
-
-  const handleSelectPlan = async (tier) => {
-    if (!user) {
-      base44.auth.redirectToLogin(window.location.href);
-      return;
-    }
-
-    if (currentSubscription?.tier_id === tier.id) {
-      toast.info('Sie haben bereits diesen Plan');
-      return;
-    }
-
-    toast.success(`${tier.name} ausgewählt - Upgrade wird vorbereitet...`);
-  };
-
-  const isCurrentPlan = (tierId) => {
-    return currentSubscription?.tier_id === tierId;
-  };
-
-  if (!selectedProduct) {
-    return <div className="p-6">Lade...</div>;
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4">
-      <div className="max-w-7xl mx-auto space-y-12">
-        {/* Header */}
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-light text-slate-900">
-            Wähle deinen Plan
-          </h1>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            {selectedProduct.description}
-          </p>
-
-          {/* Product Tabs */}
-          {products.length > 1 && (
-            <div className="flex justify-center gap-2 pt-4">
-              {products.map(p => (
-                <Button
-                  key={p.id}
-                  variant={selectedProduct.id === p.id ? 'default' : 'outline'}
-                  onClick={() => setSelectedProduct(p)}
-                  style={selectedProduct.id === p.id ? { backgroundColor: p.color } : {}}
-                >
-                  {p.name}
-                </Button>
-              ))}
-            </div>
-          )}
-
-          {/* Billing Toggle */}
-          <div className="flex items-center justify-center gap-4 pt-4">
-            <button
-              onClick={() => setBillingCycle('MONTHLY')}
-              className={cn(
-                "px-4 py-2 rounded-lg font-medium transition",
-                billingCycle === 'MONTHLY' 
-                  ? 'bg-slate-900 text-white' 
-                  : 'text-slate-600 hover:text-slate-900'
-              )}
-            >
-              Monatlich
-            </button>
-            <button
-              onClick={() => setBillingCycle('YEARLY')}
-              className={cn(
-                "px-4 py-2 rounded-lg font-medium transition",
-                billingCycle === 'YEARLY' 
-                  ? 'bg-slate-900 text-white' 
-                  : 'text-slate-600 hover:text-slate-900'
-              )}
-            >
-              Jährlich
-              <Badge className="ml-2 bg-green-500 text-white text-xs">2 Monate gratis</Badge>
-            </button>
-          </div>
-        </div>
-
-        {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {tiers.map(tier => {
-            const price = billingCycle === 'YEARLY' && tier.price_yearly 
-              ? tier.price_yearly / 12 / 100 
-              : tier.price_monthly / 100;
-            
-            const isPopular = tier.is_popular;
-
-            return (
-              <Card 
-                key={tier.id}
-                className={cn(
-                  "relative overflow-hidden transition-all hover:shadow-xl",
-                  isPopular && "border-2 border-emerald-500 shadow-lg scale-105"
-                )}
-              >
-                {isPopular && (
-                  <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-medium px-3 py-1 rounded-bl-lg">
-                    {tier.badge_text || 'BELIEBT'}
-                  </div>
-                )}
-                
-                <CardHeader className="text-center pb-8">
-                  <CardTitle className="text-2xl font-light mb-2">{tier.name}</CardTitle>
-                  <div className="space-y-1">
-                    <div className="text-4xl font-light text-slate-900">
-                      {price === 0 ? 'Kostenlos' : `${price.toFixed(2)}€`}
+                    {/* Billing Toggle */}
+                    <div className="flex items-center justify-center gap-4 mb-8">
+                        <button
+                            onClick={() => setBillingCycle('MONTHLY')}
+                            className={`px-4 py-2 rounded-lg transition ${
+                                billingCycle === 'MONTHLY'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-white text-gray-700'
+                            }`}
+                        >
+                            Monatlich
+                        </button>
+                        <button
+                            onClick={() => setBillingCycle('YEARLY')}
+                            className={`px-4 py-2 rounded-lg transition ${
+                                billingCycle === 'YEARLY'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-white text-gray-700'
+                            }`}
+                        >
+                            Jährlich <span className="text-xs ml-2 text-green-600">Spare 2 Monate</span>
+                        </button>
                     </div>
-                    {price > 0 && (
-                      <div className="text-sm text-slate-500">
-                        pro Monat
-                        {billingCycle === 'YEARLY' && (
-                          <div className="text-xs text-green-600 mt-1">
-                            Jährlich: {(tier.price_yearly / 100).toFixed(2)}€
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  {tier.description && (
-                    <p className="text-sm text-slate-600 mt-4">{tier.description}</p>
-                  )}
-                </CardHeader>
+                </div>
 
-                <CardContent className="space-y-4 pb-8">
-                  {groups.map(group => {
-                    const groupFeatures = relevantFeatures.filter(f => f.group_id === group.id);
-                    const hasAnyFeature = groupFeatures.some(f => {
-                      const tf = getFeatureInTier(tier.id, f.id);
-                      return tf && tf.inclusion_type !== 'EXCLUDED';
-                    });
+                {/* Pricing Cards */}
+                <div className="grid md:grid-cols-4 gap-6 mb-12">
+                    {plans.map((plan) => {
+                        const features_array = JSON.parse(plan.features || '[]');
+                        const price = billingCycle === 'YEARLY' ? (plan.price_yearly || plan.price_monthly * 12) : plan.price_monthly;
 
-                    if (!hasAnyFeature) return null;
+                        return (
+                            <div
+                                key={plan.id}
+                                className={`rounded-xl transition transform hover:scale-105 ${
+                                    plan.internal_code === 'PRO'
+                                        ? 'bg-blue-600 text-white shadow-2xl ring-2 ring-blue-400'
+                                        : 'bg-white text-gray-900 shadow-lg'
+                                }`}
+                            >
+                                <div className="p-6">
+                                    {plan.internal_code === 'PRO' && (
+                                        <div className="bg-yellow-400 text-blue-600 px-3 py-1 rounded-full text-xs font-bold mb-4 inline-block">
+                                            ⭐ Empfohlen
+                                        </div>
+                                    )}
 
-                    return (
-                      <div key={group.id} className="space-y-2">
-                        <div className="text-xs font-medium text-slate-500 uppercase">
-                          {group.name}
-                        </div>
-                        {groupFeatures.map(feature => {
-                          const tf = getFeatureInTier(tier.id, feature.id);
-                          
-                          if (!tf || tf.inclusion_type === 'EXCLUDED') {
-                            return (
-                              <div key={feature.id} className="flex items-start gap-2 text-sm text-slate-400">
-                                <X className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                                <span>{feature.name}</span>
-                              </div>
-                            );
-                          }
+                                    <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                                    <p className={`text-4xl font-bold mb-2`}>
+                                        €{price.toFixed(2)}
+                                    </p>
+                                    <p className={`text-sm mb-6 ${plan.internal_code === 'PRO' ? 'text-blue-100' : 'text-gray-600'}`}>
+                                        pro {billingCycle === 'YEARLY' ? 'Jahr' : 'Monat'}
+                                    </p>
 
-                          return (
-                            <div key={feature.id} className="flex items-start gap-2 text-sm">
-                              <Check className="h-4 w-4 mt-0.5 flex-shrink-0 text-green-600" />
-                              <div className="flex-1">
-                                <span className="text-slate-700">{feature.name}</span>
-                                {tf.inclusion_type === 'AVAILABLE' && (
-                                  <Badge variant="outline" className="ml-2 text-xs">
-                                    +{((tf.price_override || feature.standalone_price) / 100).toFixed(2)}€
-                                  </Badge>
-                                )}
-                                {feature.is_quantifiable && tf.quantity_limit && (
-                                  <span className="ml-2 text-xs text-slate-500">
-                                    ({tf.quantity_limit === -1 ? 'unbegrenzt' : `${tf.quantity_limit} ${feature.quantity_unit}`})
-                                  </span>
-                                )}
-                              </div>
+                                    {/* Features List */}
+                                    <ul className="space-y-3 mb-8 text-sm">
+                                        <li className="flex gap-2">
+                                            <span className="font-bold">{plan.max_buildings === -1 ? '∞' : plan.max_buildings}</span>
+                                            <span>Gebäude</span>
+                                        </li>
+                                        <li className="flex gap-2">
+                                            <span className="font-bold">{plan.max_units === -1 ? '∞' : plan.max_units}</span>
+                                            <span>Einheiten</span>
+                                        </li>
+                                        {features.map((f) => (
+                                            <li key={f.code} className="flex items-center gap-2">
+                                                {features_array.includes(f.code) ? (
+                                                    <Check className="w-4 h-4 text-green-500" />
+                                                ) : (
+                                                    <X className={`w-4 h-4 ${plan.internal_code === 'PRO' ? 'text-blue-300' : 'text-gray-300'}`} />
+                                                )}
+                                                <span className={features_array.includes(f.code) ? '' : plan.internal_code === 'PRO' ? 'text-blue-200' : 'text-gray-400'}>
+                                                    {f.label}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+
+                                    <Button
+                                        onClick={() => handleSelectPlan(plan.id)}
+                                        disabled={isLoading}
+                                        className={`w-full ${
+                                            plan.internal_code === 'PRO'
+                                                ? 'bg-white text-blue-600 hover:bg-gray-100'
+                                                : 'bg-blue-600 text-white hover:bg-blue-700'
+                                        }`}
+                                    >
+                                        Jetzt starten
+                                    </Button>
+                                </div>
                             </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })}
-                </CardContent>
+                        );
+                    })}
+                </div>
 
-                <CardFooter>
-                  {isCurrentPlan(tier.id) ? (
-                    <Button 
-                      className="w-full"
-                      variant="outline"
-                      disabled
-                    >
-                      <Crown className="h-4 w-4 mr-2" />
-                      Aktueller Plan
-                    </Button>
-                  ) : (
-                    <Button 
-                      className="w-full"
-                      variant={isPopular ? 'default' : 'outline'}
-                      onClick={() => handleSelectPlan(tier)}
-                    >
-                      {currentSubscription 
-                        ? 'Upgraden' 
-                        : tier.trial_days > 0 
-                          ? `${tier.trial_days} Tage kostenlos testen` 
-                          : 'Plan wählen'}
-                    </Button>
-                  )}
-                </CardFooter>
-              </Card>
-            );
-          })}
+                {/* FAQ Section */}
+                <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8">
+                    <h2 className="text-2xl font-bold mb-6">Häufig gestellte Fragen</h2>
+                    <div className="space-y-6">
+                        <div>
+                            <h3 className="font-semibold text-gray-900 mb-2">Kann ich später wechseln?</h3>
+                            <p className="text-gray-600">Ja, du kannst jederzeit zwischen Tarifen wechseln. Die Abrechnung wird proportional angepasst.</p>
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-gray-900 mb-2">Gibt es eine kostenloses Trial?</h3>
+                            <p className="text-gray-600">Der Starter-Tarif ist kostenlos und unbegrenzt nutzbar. Perfekt zum Ausprobieren.</p>
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-gray-900 mb-2">Wie funktioniert die Abrechnung?</h3>
+                            <p className="text-gray-600">Monatlich oder jährlich. Jederzeit kündbar. Keine Verträge, keine versteckten Kosten.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        {/* FAQ */}
-        <div className="max-w-3xl mx-auto pt-12">
-          <h2 className="text-2xl font-light text-slate-900 text-center mb-8">
-            Häufige Fragen
-          </h2>
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Kann ich jederzeit upgraden?</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-slate-600">
-                  Ja, du kannst jederzeit zu einem höheren Plan wechseln. Die Abrechnung erfolgt anteilig.
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Was passiert nach der Trial-Phase?</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-slate-600">
-                  Nach dem kostenlosen Testzeitraum wird deine Zahlungsmethode belastet, sofern du nicht kündigst.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }
