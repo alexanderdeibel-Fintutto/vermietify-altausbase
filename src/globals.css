@@ -164,50 +164,72 @@
           @apply px-2 py-1 text-xs font-extralight rounded-md;
         }
 
-        /* Override all dark colors - 30% saturation desaturated grays */
-        .bg-black, [class*="bg-black"] {
+        /* COMPREHENSIVE dark color desaturation - 30% saturation */
+        * {
+          --desaturated-dark: #4a4a4a;
+          --desaturated-light: #f5f5f5;
+        }
+
+        /* All black/dark elements */
+        .bg-black, [class*="bg-black"], [style*="background-color: #000"], [style*="background-color: black"] {
           background-color: #4a4a4a !important;
           color: #f5f5f5 !important;
         }
 
         .bg-slate-900, .bg-slate-800, .bg-slate-700, .bg-slate-600,
         .bg-gray-900, .bg-gray-800, .bg-gray-700, .bg-gray-600,
-        .bg-neutral-900, .bg-neutral-800, .bg-neutral-700 {
+        .bg-neutral-900, .bg-neutral-800, .bg-neutral-700,
+        .bg-zinc-900, .bg-zinc-800, .bg-zinc-700 {
           background-color: #4a4a4a !important;
+          color: #f5f5f5 !important;
         }
 
-        .text-black, .text-slate-900, .text-gray-900 {
+        /* Text colors */
+        .text-black, .text-slate-900, .text-gray-900, .text-neutral-900, .text-zinc-900 {
           color: #4a4a4a !important;
         }
 
-        .text-white {
-          color: #f5f5f5 !important;
-        }
-
-        .border-black, .border-slate-900, .border-gray-900 {
+        /* Borders */
+        .border-black, .border-slate-900, .border-gray-900, [class*="border-black"] {
           border-color: #6a6a6a !important;
         }
 
-        /* Button overrides */
-        button {
+        /* All buttons and clickables */
+        button, [role="button"], .btn, [class*="button"] {
           background-color: #4a4a4a !important;
           color: #f5f5f5 !important;
         }
 
-        button:hover {
+        button:hover, [role="button"]:hover, .btn:hover {
           background-color: #5a5a5a !important;
         }
 
-        /* Tab and navigation overrides */
-        [role="tab"], [role="tablist"], nav, .tabs {
+        /* Tabs, navigation, dropdowns */
+        [role="tab"], [role="tablist"], [role="menuitem"], nav, .tabs, .nav, .navigation {
           background-color: #4a4a4a !important;
           color: #f5f5f5 !important;
         }
 
-        /* Card and container dark backgrounds */
-        .dark, [data-theme="dark"], .bg-dark {
+        [role="tab"][aria-selected="true"] {
           background-color: #4a4a4a !important;
           color: #f5f5f5 !important;
+        }
+
+        /* Dark mode and theme overrides */
+        .dark, [data-theme="dark"], .bg-dark, [class*="dark"] {
+          background-color: #4a4a4a !important;
+          color: #f5f5f5 !important;
+        }
+
+        /* Dialogs and modals */
+        dialog, [role="dialog"], .modal, .dialog {
+          background-color: #4a4a4a !important;
+          color: #f5f5f5 !important;
+        }
+
+        /* Inline styles override */
+        [style*="background: black"], [style*="background: #000"], [style*="background: rgb(0,0,0)"] {
+          background-color: #4a4a4a !important;
         }
 
         /* SOLL vs. IST Unterscheidung */
