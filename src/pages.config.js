@@ -60,6 +60,9 @@ import AdvancedReporting from './pages/AdvancedReporting';
 import AdvancedSearch from './pages/AdvancedSearch';
 import AdvancedTaxReporting from './pages/AdvancedTaxReporting';
 import AdvancedWorkflowAnalytics from './pages/AdvancedWorkflowAnalytics';
+import AfaAssetDetail from './pages/AfaAssetDetail';
+import AfaAssetForm from './pages/AfaAssetForm';
+import AfaOverview from './pages/AfaOverview';
 import AlertManagement from './pages/AlertManagement';
 import Analytics from './pages/Analytics';
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
@@ -74,6 +77,8 @@ import AnlageSO from './pages/AnlageSO';
 import AnlageSOAT from './pages/AnlageSOAT';
 import AnlageSODE from './pages/AnlageSODE';
 import AnlageSOEditor from './pages/AnlageSOEditor';
+import AnlageVDashboard from './pages/AnlageVDashboard';
+import AnlageVForm from './pages/AnlageVForm';
 import AnlageVG from './pages/AnlageVG';
 import AnlageVGAT from './pages/AnlageVGAT';
 import AnlageVGDE from './pages/AnlageVGDE';
@@ -320,6 +325,7 @@ import TaxAdminPanel from './pages/TaxAdminPanel';
 import TaxAdvisorCollaborationHub from './pages/TaxAdvisorCollaborationHub';
 import TaxAdvisorPortal from './pages/TaxAdvisorPortal';
 import TaxAdvisorPortalPage from './pages/TaxAdvisorPortalPage';
+import TaxForms from './pages/TaxForms';
 import TaxAnalyticsReporting from './pages/TaxAnalyticsReporting';
 import TaxAuditPreparation from './pages/TaxAuditPreparation';
 import TaxAuthoritySubmissions from './pages/TaxAuthoritySubmissions';
@@ -348,7 +354,6 @@ import TaxFilingWizard from './pages/TaxFilingWizard';
 import TaxForecastPlanner from './pages/TaxForecastPlanner';
 import TaxFormGuide from './pages/TaxFormGuide';
 import TaxFormLibrary from './pages/TaxFormLibrary';
-import TaxForms from './pages/TaxForms';
 import TaxHarvesting from './pages/TaxHarvesting';
 import TaxLawUpdates from './pages/TaxLawUpdates';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
@@ -448,11 +453,8 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import AfaOverview from './pages/AfaOverview';
-import AfaAssetForm from './pages/AfaAssetForm';
-import AfaAssetDetail from './pages/AfaAssetDetail';
-import AnlageVDashboard from './pages/AnlageVDashboard';
-import AnlageVForm from './pages/AnlageVForm';
+import TaxPropertyDashboard from './pages/TaxPropertyDashboard';
+import TaxPropertyModule from './pages/TaxPropertyModule';
 import __Layout from './Layout.jsx';
 
 
@@ -519,6 +521,9 @@ export const PAGES = {
     "AdvancedSearch": AdvancedSearch,
     "AdvancedTaxReporting": AdvancedTaxReporting,
     "AdvancedWorkflowAnalytics": AdvancedWorkflowAnalytics,
+    "AfaAssetDetail": AfaAssetDetail,
+    "AfaAssetForm": AfaAssetForm,
+    "AfaOverview": AfaOverview,
     "AlertManagement": AlertManagement,
     "Analytics": Analytics,
     "AnalyticsDashboard": AnalyticsDashboard,
@@ -533,6 +538,8 @@ export const PAGES = {
     "AnlageSOAT": AnlageSOAT,
     "AnlageSODE": AnlageSODE,
     "AnlageSOEditor": AnlageSOEditor,
+    "AnlageVDashboard": AnlageVDashboard,
+    "AnlageVForm": AnlageVForm,
     "AnlageVG": AnlageVG,
     "AnlageVGAT": AnlageVGAT,
     "AnlageVGDE": AnlageVGDE,
@@ -779,6 +786,7 @@ export const PAGES = {
     "TaxAdvisorCollaborationHub": TaxAdvisorCollaborationHub,
     "TaxAdvisorPortal": TaxAdvisorPortal,
     "TaxAdvisorPortalPage": TaxAdvisorPortalPage,
+    "TaxForms": TaxForms,
     "TaxAnalyticsReporting": TaxAnalyticsReporting,
     "TaxAuditPreparation": TaxAuditPreparation,
     "TaxAuthoritySubmissions": TaxAuthoritySubmissions,
@@ -807,7 +815,6 @@ export const PAGES = {
     "TaxForecastPlanner": TaxForecastPlanner,
     "TaxFormGuide": TaxFormGuide,
     "TaxFormLibrary": TaxFormLibrary,
-    "TaxForms": TaxForms,
     "TaxHarvesting": TaxHarvesting,
     "TaxLawUpdates": TaxLawUpdates,
     "TaxLibraryManagement": TaxLibraryManagement,
@@ -907,11 +914,8 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "AfaOverview": AfaOverview,
-    "AfaAssetForm": AfaAssetForm,
-    "AfaAssetDetail": AfaAssetDetail,
-    "AnlageVDashboard": AnlageVDashboard,
-    "AnlageVForm": AnlageVForm,
+    "TaxPropertyDashboard": TaxPropertyDashboard,
+    "TaxPropertyModule": TaxPropertyModule,
 }
 
 export const pagesConfig = {
