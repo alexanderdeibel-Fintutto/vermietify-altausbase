@@ -3,21 +3,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Zap, Check, AlertTriangle, Upload, Download } from 'lucide-react';
+import { Zap, Check, AlertTriangle, Upload, Download, Send } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import QuickStats from '@/components/shared/QuickStats';
+import ElsterSubmitPanel from '@/components/elster/ElsterSubmitPanel';
 
 export default function ElsterIntegrationPage() {
-  const submissions = [
-    { year: 2025, form: 'Anlage V', status: 'submitted', transferId: 'TID-2025-001', date: '2026-01-05' },
-    { year: 2024, form: 'Anlage V', status: 'accepted', transferId: 'TID-2024-001', date: '2025-06-15' },
-    { year: 2025, form: 'Euer', status: 'draft', transferId: null, date: null },
-  ];
+  const [selectedSubmission, setSelectedSubmission] = useState(null);
+
+  const { data: elsterSubmissions = [] } = useQuery({
+    queryKey: ['elsterSubmissions'],
+    queryFn: () => base44.entities.ElsterSubmission.list()
+  });
 
   const stats = [
-    { label: 'Eingereichte Formulare', value: 2 },
-    { label: 'Akzeptiert', value: 1 },
-    { label: 'Im Entwurf', value: 1 },
-    { label: 'Fehler', value: 0 },
+    { label: 'Eingereichte Formulare', value: elsterSubmissions.filter(s => s.status === 'SUBMITTED').length },
+    { label: 'Akzeptiert', value: elsterSubmissions.filter(s => s.status === 'ACCEPTED').length },
+    { label: 'Im Entwurf', value: elsterSubmissions.filter(s => s.status === 'DRAFT').length },
+    { label: 'Fehler', value: elsterSubmissions.filter(s => s.status === 'REJECTED').length },
   ];
 
   return (
@@ -69,36 +73,78 @@ export default function ElsterIntegrationPage() {
 
       <div className="space-y-3">
         <h2 className="font-bold text-slate-900">Einreichungshistorie</h2>
-        {submissions.map((sub, idx) => (
-          <Card key={idx} className="border border-slate-200">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Zap className="w-5 h-5 text-red-600" />
-                    <h3 className="font-semibold text-slate-900">{sub.form} {sub.year}</h3>
-                    <Badge className={
-                      sub.status === 'submitted' ? 'bg-blue-600' : 
-                      sub.status === 'accepted' ? 'bg-green-600' : 
-                      'bg-slate-600'
-                    }>
-                      {sub.status === 'submitted' ? '📤 Eingereicht' : 
-                       sub.status === 'accepted' ? '✓ Akzeptiert' : 
-                       'Entwurf'}
-                    </Badge>
+        {elsterSubmissions.length > 0 ? (
+          elsterSubmissions.map((sub, idx) => {
+            const statusColors = {
+              DRAFT: 'bg-slate-600',
+              VALIDATED: 'bg-blue-600',
+              SUBMITTED: 'bg-orange-600',
+              ACCEPTED: 'bg-green-600',
+              REJECTED: 'bg-red-600'
+            };
+            const statusLabels = {
+              DRAFT: '📝 Entwurf',
+              VALIDATED: '✓ Validiert',
+              SUBMITTED: '📤 Eingereicht',
+              ACCEPTED: '✅ Akzeptiert',
+              REJECTED: '❌ Abgelehnt'
+            };
+
+            return (
+              <Card key={idx} className="border border-slate-200 cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedSubmission(sub)}>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Zap className="w-5 h-5 text-red-600" />
+                        <h3 className="font-semibold text-slate-900">Anlage V {sub.tax_year}</h3>
+                        <Badge className={statusColors[sub.status] || 'bg-slate-600'}>
+                          {statusLabels[sub.status] || sub.status}
+                        </Badge>
+                      </div>
+                      {sub.reference_number && (
+                        <p className="text-xs text-slate-600 ml-8">Referenz: {sub.reference_number} • {new Date(sub.submission_date).toLocaleDateString('de-DE')}</p>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      {sub.status === 'VALIDATED' && (
+                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedSubmission(sub);
+                        }}>
+                          <Send className="w-4 h-4 mr-1" />
+                          Einreichen
+                        </Button>
+                      )}
+                      <Button size="sm" variant="outline"><Download className="w-4 h-4" /></Button>
+                    </div>
                   </div>
-                  {sub.transferId && (
-                    <p className="text-xs text-slate-600 ml-8">Transfer ID: {sub.transferId} • {sub.date}</p>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline"><Download className="w-4 h-4" /></Button>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
+            );
+          })
+        ) : (
+          <Card className="border border-slate-200">
+            <CardContent className="pt-6 text-center text-slate-600">
+              Noch keine Einreichungen. Erstellen Sie zuerst eine <strong>Anlage V</strong>.
             </CardContent>
           </Card>
-        ))}
+        )}
       </div>
+
+      {selectedSubmission && selectedSubmission.status === 'VALIDATED' && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-md">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>ELSTER Einreichung</CardTitle>
+              <button onClick={() => setSelectedSubmission(null)} className="text-slate-400 hover:text-slate-600">✕</button>
+            </CardHeader>
+            <CardContent>
+              <ElsterSubmitPanel submission={selectedSubmission} />
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
