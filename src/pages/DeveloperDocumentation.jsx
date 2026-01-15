@@ -1000,8 +1000,7 @@ export default function DeveloperDocumentation() {
                             const query = searchQuery.toLowerCase();
                             return docType.title.toLowerCase().includes(query) || 
                                    docType.description.toLowerCase().includes(query);
-                        }).map(docType => applyAdvancedFilters([getDocumentation(docType.type)]).length > 0 ? docType : null)
-                        .filter(Boolean).map((docType) => {
+                        }).map((docType) => {
                             const doc = getDocumentation(docType.type);
                             const Icon = docType.icon;
                             const isGenerating = doc?.status === 'generating';
