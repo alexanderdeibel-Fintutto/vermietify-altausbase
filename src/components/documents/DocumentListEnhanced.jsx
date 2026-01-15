@@ -151,7 +151,7 @@ export default function DocumentListEnhanced({ documents = [], onDelete, isLoadi
                   )}
 
                   <p className="text-xs text-slate-500 font-light mt-2">
-                    {format(new Date(doc.created_date), 'd. MMM yyyy HH:mm', { locale: de })}
+                    {doc.created_date ? format(new Date(doc.created_date), 'd. MMM yyyy HH:mm', { locale: de }) : 'Kein Datum'}
                   </p>
                 </div>
               </div>
