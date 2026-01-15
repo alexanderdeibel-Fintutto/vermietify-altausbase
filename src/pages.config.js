@@ -451,6 +451,8 @@ import WorkflowTemplates from './pages/WorkflowTemplates';
 import AfaOverview from './pages/AfaOverview';
 import AfaAssetForm from './pages/AfaAssetForm';
 import AfaAssetDetail from './pages/AfaAssetDetail';
+import AnlageVDashboard from './pages/AnlageVDashboard';
+import AnlageVForm from './pages/AnlageVForm';
 import __Layout from './Layout.jsx';
 
 
@@ -908,6 +910,8 @@ export const PAGES = {
     "AfaOverview": AfaOverview,
     "AfaAssetForm": AfaAssetForm,
     "AfaAssetDetail": AfaAssetDetail,
+    "AnlageVDashboard": AnlageVDashboard,
+    "AnlageVForm": AnlageVForm,
 }
 
 export const pagesConfig = {
