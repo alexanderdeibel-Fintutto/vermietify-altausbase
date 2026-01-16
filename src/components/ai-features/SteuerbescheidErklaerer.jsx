@@ -30,13 +30,16 @@ export default function SteuerbescheidErklaerer() {
 
         setLoading(true);
         try {
-            const response = await base44.functions.invoke('erklaereSteuerbescheid', {
+            const response = await base44.functions.invoke('callClaudeAPI', {
+                featureKey: 'steuerbescheid',
+                systemPrompt: 'Du bist ein Steuerberater. Erkläre den Steuerbescheid verständlich und strukturiert.',
+                userPrompt: 'Analysiere diesen Steuerbescheid. Erkläre die wichtigsten Punkte: Einkommen, Steuerlast, Nachzahlung/Erstattung, besondere Posten. Nutze Markdown für die Formatierung.',
                 imageBase64: image.base64,
                 imageMediaType: image.type
             });
 
             if (response.data.success) {
-                setErklaerung(response.data);
+                setErklaerung({ erklaerung: response.data.data });
                 toast.success('Steuerbescheid analysiert');
             } else {
                 toast.error(response.data.error || 'Fehler bei der Analyse');
@@ -113,7 +116,7 @@ export default function SteuerbescheidErklaerer() {
                             </div>
 
                             <div className="text-xs text-slate-500 text-center">
-                                Kosten: {erklaerung.meta?.costEur?.toFixed(4)} € | Provider: {erklaerung.meta?.provider}
+                                AI-Nutzung protokolliert
                             </div>
                         </div>
                     )}

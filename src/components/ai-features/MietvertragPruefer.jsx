@@ -33,9 +33,13 @@ export default function MietvertragPruefer() {
 
         setLoading(true);
         try {
-            const response = await base44.functions.invoke('pruefeMietvertrag', {
-                imagesBase64: images.map(img => img.base64),
-                imagesMediaTypes: images.map(img => img.type)
+            const response = await base44.functions.invoke('callClaudeAPI', {
+                featureKey: 'mietvertrag',
+                systemPrompt: 'Du bist ein Fachanwalt für Mietrecht. Prüfe alle Klauseln auf Rechtmäßigkeit.',
+                userPrompt: 'Prüfe diesen Mietvertrag. Gib zurück: zusammenfassung{kaltmiete, nebenkosten, kaution, mietbeginn}, klauseln[{thema, bewertung: "ok"|"achtung"|"unwirksam", erklaerung, handlungsempfehlung}], bewertung{gesamtnote: "gut"|"mittel"|"schlecht", kurzfassung}',
+                imageBase64: images[0].base64,
+                imageMediaType: images[0].type,
+                responseSchema: true
             });
 
             if (response.data.success) {
@@ -172,7 +176,7 @@ export default function MietvertragPruefer() {
                             </Button>
 
                             <div className="text-xs text-slate-500 text-center">
-                                Kosten: {result._meta?.costEur?.toFixed(4)} € | Provider: {result._meta?.provider}
+                                AI-Nutzung protokolliert
                             </div>
                         </div>
                     )}

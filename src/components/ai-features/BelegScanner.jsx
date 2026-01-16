@@ -32,9 +32,13 @@ export default function BelegScanner() {
 
         setLoading(true);
         try {
-            const response = await base44.functions.invoke('scanBeleg', {
+            const response = await base44.functions.invoke('callClaudeAPI', {
+                featureKey: 'beleg_scanner',
+                systemPrompt: 'Du bist ein Experte für Buchhaltung und Belegverarbeitung. Extrahiere alle relevanten Daten strukturiert aus dem Beleg.',
+                userPrompt: 'Analysiere diesen Beleg und extrahiere: typ, haendler{name}, datum, betraege{brutto, netto, mwst_19}, kategorie_vorschlag, skr03_konto, steuerlich_absetzbar, notizen',
                 imageBase64: image.base64,
-                imageMediaType: image.type
+                imageMediaType: image.type,
+                responseSchema: true
             });
 
             if (response.data.success) {
@@ -198,7 +202,7 @@ export default function BelegScanner() {
                             </div>
 
                             <div className="text-xs text-slate-500 text-center">
-                                Kosten: {result._meta?.costEur?.toFixed(4)} € | Provider: {result._meta?.provider}
+                                AI-Nutzung protokolliert
                             </div>
                         </div>
                     )}
