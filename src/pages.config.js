@@ -293,6 +293,7 @@ import RentIncreaseOptimizer from './pages/RentIncreaseOptimizer';
 import RentIndexManagement from './pages/RentIndexManagement';
 import ReportBuilder from './pages/ReportBuilder';
 import ReportGenerator from './pages/ReportGenerator';
+import ReportManagementCenter from './pages/ReportManagementCenter';
 import ReportScheduling from './pages/ReportScheduling';
 import ReportingDashboard from './pages/ReportingDashboard';
 import ReportingHub from './pages/ReportingHub';
@@ -462,7 +463,7 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import ReportManagementCenter from './pages/ReportManagementCenter';
+import PartnerOnboarding from './pages/PartnerOnboarding';
 import __Layout from './Layout.jsx';
 
 
@@ -762,6 +763,7 @@ export const PAGES = {
     "RentIndexManagement": RentIndexManagement,
     "ReportBuilder": ReportBuilder,
     "ReportGenerator": ReportGenerator,
+    "ReportManagementCenter": ReportManagementCenter,
     "ReportScheduling": ReportScheduling,
     "ReportingDashboard": ReportingDashboard,
     "ReportingHub": ReportingHub,
@@ -931,7 +933,7 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "ReportManagementCenter": ReportManagementCenter,
+    "PartnerOnboarding": PartnerOnboarding,
 }
 
 export const pagesConfig = {
