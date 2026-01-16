@@ -1255,6 +1255,163 @@
     margin-bottom: var(--vf-spacing-2);
   }
   
+  .vf-empty-state-description {
+    font-size: var(--vf-text-sm);
+    color: var(--theme-text-muted);
+    margin-bottom: var(--vf-spacing-6);
+    max-width: 400px;
+  }
+  
+  .vf-empty-state-icon {
+    width: 64px;
+    height: 64px;
+    color: var(--theme-border);
+    margin-bottom: var(--vf-spacing-4);
+  }
+  
+  /* ═══════════════════════════════════════════════════════════════════════════
+     PROPERTY CARD
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .vf-property-card {
+    background-color: var(--theme-elevated);
+    border: 1px solid var(--theme-border);
+    border-radius: var(--vf-radius-lg);
+    overflow: hidden;
+    cursor: pointer;
+    transition: var(--vf-transition-fast);
+  }
+  
+  .vf-property-card:hover {
+    border-color: var(--theme-primary);
+    box-shadow: var(--vf-shadow-md);
+  }
+  
+  .vf-property-card-image {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+  }
+  
+  .vf-property-card-body {
+    padding: var(--vf-spacing-4);
+  }
+  
+  .vf-property-card-address {
+    font-size: var(--vf-text-base);
+    font-weight: 600;
+    color: var(--theme-text-primary);
+    margin-bottom: var(--vf-spacing-1);
+  }
+  
+  .vf-property-card-city {
+    font-size: var(--vf-text-sm);
+    color: var(--theme-text-muted);
+    margin-bottom: var(--vf-spacing-3);
+    display: flex;
+    align-items: center;
+  }
+  
+  .vf-property-card-meta {
+    display: flex;
+    gap: var(--vf-spacing-4);
+    margin-bottom: var(--vf-spacing-3);
+  }
+  
+  .vf-property-card-meta-item {
+    display: flex;
+    align-items: center;
+    gap: var(--vf-spacing-1);
+    font-size: var(--vf-text-sm);
+    color: var(--theme-text-secondary);
+  }
+  
+  .vf-property-card-cashflow {
+    padding-top: var(--vf-spacing-3);
+    border-top: 1px solid var(--theme-divider);
+  }
+  
+  .vf-property-card-cashflow-label {
+    font-size: var(--vf-text-sm);
+    color: var(--theme-text-secondary);
+  }
+  
+  .vf-property-card-cashflow-value {
+    font-size: var(--vf-text-lg);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  
+  .vf-property-card-cashflow-value.positive {
+    color: var(--vf-success-600);
+  }
+  
+  .vf-property-card-cashflow-value.negative {
+    color: var(--vf-error-600);
+  }
+  
+  /* ═══════════════════════════════════════════════════════════════════════════
+     INPUT GROUPS
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .vf-input-group {
+    display: flex;
+    align-items: stretch;
+  }
+  
+  .vf-input-group .vf-input {
+    border-radius: 0;
+  }
+  
+  .vf-input-group .vf-input:first-child {
+    border-top-left-radius: var(--vf-radius-md);
+    border-bottom-left-radius: var(--vf-radius-md);
+  }
+  
+  .vf-input-group .vf-input:last-child {
+    border-top-right-radius: var(--vf-radius-md);
+    border-bottom-right-radius: var(--vf-radius-md);
+  }
+  
+  .vf-input-prefix,
+  .vf-input-suffix {
+    display: flex;
+    align-items: center;
+    padding: 0 var(--vf-spacing-3);
+    background-color: var(--theme-surface);
+    border: 1px solid var(--theme-border);
+    font-size: var(--vf-text-sm);
+    color: var(--theme-text-secondary);
+    white-space: nowrap;
+  }
+  
+  .vf-input-prefix {
+    border-right: none;
+    border-top-left-radius: var(--vf-radius-md);
+    border-bottom-left-radius: var(--vf-radius-md);
+  }
+  
+  .vf-input-suffix {
+    border-left: none;
+    border-top-right-radius: var(--vf-radius-md);
+    border-bottom-right-radius: var(--vf-radius-md);
+  }
+  
+  .vf-input-group .vf-input {
+    border-left: none;
+    border-right: none;
+  }
+  
+  .vf-input-group .vf-input:focus {
+    border-color: var(--theme-border-focus);
+  }
+  
+  .vf-currency-input {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-family: var(--vf-font-mono);
+  }
+  
   /* ═══════════════════════════════════════════════════════════════════════════
      VERMITIFY SIDEBAR-STYLES
      ═══════════════════════════════════════════════════════════════════════════ */
