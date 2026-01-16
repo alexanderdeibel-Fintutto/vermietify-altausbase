@@ -1,176 +1,132 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Upload } from 'lucide-react';
+import { Upload, Loader2, FileText, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function DokumentZusammenfasser() {
-  const [image, setImage] = useState(null);
-  const [imageBase64, setImageBase64] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const fileInputRef = useRef(null);
+    const [image, setImage] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [result, setResult] = useState(null);
 
-  const handleImageUpload = (file) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const base64 = e.target.result.split(',')[1];
-      setImageBase64(base64);
-      setImage(e.target.result);
+    const handleFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            setImagePreview(reader.result);
+            const base64 = reader.result.split(',')[1];
+            setImage({ base64, type: file.type });
+        };
+        reader.readAsDataURL(file);
     };
-    reader.readAsDataURL(file);
-  };
 
-  const zusammenfasse = async () => {
-    if (!imageBase64) {
-      toast.error('Bitte ein Dokument hochladen');
-      return;
-    }
+    const handleAnalyze = async () => {
+        if (!image) return;
 
-    setLoading(true);
-    try {
-      const response = await base44.functions.invoke('zusammenfasseDokument', {
-        imageBase64,
-        imageMediaType: 'image/jpeg'
-      });
+        setLoading(true);
+        try {
+            const response = await base44.functions.invoke('zusammenfasseDokument', {
+                imageBase64: image.base64,
+                imageMediaType: image.type
+            });
 
-      if (response.data) {
-        setResult(response.data);
-        toast.success('Dokument zusammengefasst!');
-      }
-    } catch (error) {
-      toast.error('Fehler: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+            if (response.data.success) {
+                setResult(response.data.data);
+                toast.success('Dokument zusammengefasst');
+            } else {
+                toast.error(response.data.error || 'Fehler beim Zusammenfassen');
+            }
+        } catch (error) {
+            toast.error(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  return (
-    <div className="space-y-6 max-w-4xl">
-      <Card>
-        <CardHeader>
-          <CardTitle>📄 Dokument-Zusammenfasser</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Button
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full gap-2"
-          >
-            <Upload className="w-4 h-4" />
-            Dokument hochladen
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*,.pdf"
-            onChange={(e) => handleImageUpload(e.target.files?.[0])}
-            className="hidden"
-          />
+    return (
+        <div className="max-w-4xl mx-auto space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <FileText className="w-5 h-5" />
+                        Dokument-Zusammenfasser
+                    </CardTitle>
+                    <p className="text-sm text-slate-600">Lade ein Dokument - ich fasse es strukturiert zusammen</p>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    {!result && (
+                        <>
+                            <label>
+                                <input type="file" accept="image/*,application/pdf" onChange={handleFileSelect} className="hidden" />
+                                <Button type="button" variant="outline" className="w-full" asChild>
+                                    <span><Upload className="w-4 h-4 mr-2" />Dokument hochladen</span>
+                                </Button>
+                            </label>
 
-          {image && (
-            <div className="bg-gray-100 rounded-lg p-3">
-              <img
-                src={image}
-                alt="Dokument-Vorschau"
-                className="w-full max-h-48 object-contain"
-              />
-            </div>
-          )}
+                            {imagePreview && (
+                                <>
+                                    <div className="border rounded-lg p-4 bg-slate-50">
+                                        <img src={imagePreview} alt="Dokument" className="max-h-96 mx-auto" />
+                                    </div>
+                                    <Button onClick={handleAnalyze} disabled={loading} className="w-full">
+                                        {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analysiere...</> : 'Dokument zusammenfassen'}
+                                    </Button>
+                                </>
+                            )}
+                        </>
+                    )}
 
-          <Button
-            onClick={zusammenfasse}
-            disabled={loading || !imageBase64}
-            className="w-full"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                Wird zusammengefasst...
-              </>
-            ) : (
-              '🔍 Zusammenfassen'
-            )}
-          </Button>
-        </CardContent>
-      </Card>
+                    {result && (
+                        <div className="space-y-6">
+                            <div>
+                                <h3 className="text-xl font-bold mb-2">{result.titel}</h3>
+                                <div className="inline-block px-2 py-1 bg-slate-100 text-slate-700 rounded text-sm">
+                                    {result.dokument_typ}
+                                </div>
+                            </div>
 
-      {result && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{result.titel}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="text-sm font-medium text-blue-900 mb-2">Dokumenttyp:</div>
-              <div className="text-sm text-blue-800">{result.dokument_typ}</div>
-            </div>
+                            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                <div className="font-semibold mb-2">📝 Kurz-Zusammenfassung</div>
+                                <div className="text-sm">{result.zusammenfassung?.kurz}</div>
+                            </div>
 
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">📋 Zusammenfassung</h3>
-              <div className="text-sm text-gray-700 mb-3 font-medium">{result.zusammenfassung?.kurz}</div>
-              <div className="text-sm text-gray-600">{result.zusammenfassung?.ausfuehrlich}</div>
-            </div>
+                            <div>
+                                <h3 className="font-semibold mb-3">🔑 Kernpunkte</h3>
+                                <ul className="list-disc list-inside space-y-1 text-sm">
+                                    {result.kernpunkte?.map((punkt, idx) => (
+                                        <li key={idx}>{punkt}</li>
+                                    ))}
+                                </ul>
+                            </div>
 
-            {result.kernpunkte?.length > 0 && (
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">🎯 Kernpunkte</h3>
-                <ul className="text-sm text-gray-700 space-y-1">
-                  {result.kernpunkte.map((punkt, idx) => (
-                    <li key={idx}>• {punkt}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+                            {result.handlungsbedarf?.vorhanden && (
+                                <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                                    <div className="flex items-center gap-2 font-semibold mb-3 text-orange-800">
+                                        <AlertCircle className="w-5 h-5" />
+                                        Handlungsbedarf
+                                    </div>
+                                    <div className="space-y-2">
+                                        {result.handlungsbedarf.aktionen?.map((aktion, idx) => (
+                                            <div key={idx} className="text-sm">
+                                                <div className="font-medium">{aktion.was}</div>
+                                                {aktion.bis_wann && <div className="text-slate-600">Frist: {aktion.bis_wann}</div>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
-            {result.daten && (
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-gray-900 mb-3">📊 Wichtige Daten</h3>
-                {result.daten.datum && (
-                  <div className="text-sm text-gray-700 mb-2"><strong>Datum:</strong> {result.daten.datum}</div>
-                )}
-                {result.daten.beteiligte?.length > 0 && (
-                  <div className="text-sm text-gray-700 mb-2">
-                    <strong>Beteiligte:</strong> {result.daten.beteiligte.join(', ')}
-                  </div>
-                )}
-                {result.daten.betraege?.length > 0 && (
-                  <div className="text-sm text-gray-700">
-                    <strong>Beträge:</strong>
-                    <ul className="ml-4 mt-1">
-                      {result.daten.betraege.map((b, idx) => (
-                        <li key={idx}>{b.beschreibung}: {b.betrag}€</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {result.handlungsbedarf?.vorhanden && result.handlungsbedarf.aktionen?.length > 0 && (
-              <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
-                <h3 className="font-semibold text-yellow-900 mb-2">⏰ Handlungsbedarf</h3>
-                <div className="space-y-2">
-                  {result.handlungsbedarf.aktionen.map((aktion, idx) => (
-                    <div key={idx} className="text-sm text-yellow-800">
-                      <div className="font-medium">{aktion.was}</div>
-                      {aktion.bis_wann && <div className="text-xs text-yellow-700">Bis: {aktion.bis_wann}</div>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {result._meta && (
-              <div className="text-xs text-gray-500 pt-2 border-t">
-                ℹ️ Kosten: {result._meta.costEur}€
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
+                            <Button variant="outline" onClick={() => { setResult(null); setImage(null); setImagePreview(null); }}>
+                                Neues Dokument
+                            </Button>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
+    );
 }
