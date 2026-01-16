@@ -464,6 +464,7 @@ import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
 import PartnerOnboarding from './pages/PartnerOnboarding';
+import MarketplaceAdmin from './pages/MarketplaceAdmin';
 import __Layout from './Layout.jsx';
 
 
@@ -934,6 +935,7 @@ export const PAGES = {
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
     "PartnerOnboarding": PartnerOnboarding,
+    "MarketplaceAdmin": MarketplaceAdmin,
 }
 
 export const pagesConfig = {
