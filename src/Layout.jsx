@@ -1,4 +1,4 @@
-import React, { useState, lazy, Suspense } from 'react';
+import React, { useState, lazy, Suspense, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { useActivityTracker } from '@/components/testing/ActivityTracker';
@@ -67,10 +67,22 @@ const DEFAULT_NAVIGATION_FEATURES = [
 
 export default function Layout({ children, currentPageName }) {
 
-            const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-            const [activeCategory, setActiveCategory] = useState('real_estate');
-            const { hasModuleAccess, packageConfig } = usePackageAccess();
-            useActivityTracker(); // Track user activity for testers
+                  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+                  const [activeCategory, setActiveCategory] = useState('real_estate');
+                  const { hasModuleAccess, packageConfig } = usePackageAccess();
+                  useActivityTracker();
+
+                  // Apply saved theme on mount
+                  useEffect(() => {
+                    const savedTheme = localStorage.getItem('vf-theme') || 'vermieter';
+                    const savedDark = localStorage.getItem('vf-dark') === 'true';
+                    if (savedTheme !== 'vermieter') {
+                      document.body.classList.add(`theme-${savedTheme}`);
+                    }
+                    if (savedDark && savedTheme !== 'invest') {
+                      document.body.classList.add('dark');
+                    }
+                  }, []);
 
           // Get dynamic app name from package
           const getAppName = () => {
