@@ -21,7 +21,29 @@ export default function SubscriptionInitializer({ children }) {
     enabled: !!user?.email
   });
 
-  // Removed initialization mutation - function doesn't exist
+  // AI Features Initialization
+  const { data: aiSettings } = useQuery({
+    queryKey: ['aiSettings'],
+    queryFn: async () => {
+      const settings = await base44.entities.AISettings.list('-updated_date', 1);
+      return settings[0] || null;
+    },
+    enabled: !!user
+  });
+
+  const initAIMutation = useMutation({
+    mutationFn: () => base44.functions.invoke('initializeAIFeatures', {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['aiSettings'] });
+      queryClient.invalidateQueries({ queryKey: ['aiFeatures'] });
+    }
+  });
+
+  useEffect(() => {
+    if (user && aiSettings === null && !initAIMutation.isPending && !initAIMutation.isSuccess) {
+      initAIMutation.mutate();
+    }
+  }, [user, aiSettings]);
 
   return <>{children}</>;
 }
