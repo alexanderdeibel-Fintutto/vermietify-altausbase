@@ -5,7 +5,10 @@ import PropertyAnalyticsReportBuilder from '@/components/reporting/PropertyAnaly
 import PropertyComparisonTool from '@/components/reporting/PropertyComparisonTool';
 import FinancialReportBuilder from '@/components/reporting/FinancialReportBuilder';
 import MaintenanceReportBuilder from '@/components/reporting/MaintenanceReportBuilder';
-import { BarChart3, GitCompare, DollarSign, Wrench, FileText } from 'lucide-react';
+import TenantPerformanceReport from '@/components/reporting/TenantPerformanceReport';
+import PortfolioOverviewReport from '@/components/reporting/PortfolioOverviewReport';
+import KPIDashboard from '@/components/reporting/KPIDashboard';
+import { BarChart3, GitCompare, DollarSign, Wrench, FileText, User, Briefcase, Zap } from 'lucide-react';
 
 export default function AdvancedReportingDashboard() {
   const [selectedBuilding, setSelectedBuilding] = useState('');
@@ -47,6 +50,24 @@ export default function AdvancedReportingDashboard() {
       icon: Wrench,
       label: 'Wartungsbericht',
       color: 'orange'
+    },
+    {
+      id: 'tenant-performance',
+      icon: User,
+      label: 'Mieter-Performance',
+      color: 'cyan'
+    },
+    {
+      id: 'portfolio',
+      icon: Briefcase,
+      label: 'Portfolio-Übersicht',
+      color: 'indigo'
+    },
+    {
+      id: 'kpi',
+      icon: Zap,
+      label: 'KPI-Dashboard',
+      color: 'pink'
     }
   ];
 
@@ -82,14 +103,17 @@ export default function AdvancedReportingDashboard() {
         )}
 
         {/* Report Navigation */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
           {reportTypes.map(report => {
             const Icon = report.icon;
             const colorClasses = {
               blue: 'bg-blue-50 border-blue-200 hover:border-blue-400 text-blue-700',
               purple: 'bg-purple-50 border-purple-200 hover:border-purple-400 text-purple-700',
               green: 'bg-green-50 border-green-200 hover:border-green-400 text-green-700',
-              orange: 'bg-orange-50 border-orange-200 hover:border-orange-400 text-orange-700'
+              orange: 'bg-orange-50 border-orange-200 hover:border-orange-400 text-orange-700',
+              cyan: 'bg-cyan-50 border-cyan-200 hover:border-cyan-400 text-cyan-700',
+              indigo: 'bg-indigo-50 border-indigo-200 hover:border-indigo-400 text-indigo-700',
+              pink: 'bg-pink-50 border-pink-200 hover:border-pink-400 text-pink-700'
             };
 
             return (
@@ -122,8 +146,17 @@ export default function AdvancedReportingDashboard() {
             {activeReport === 'maintenance' && selectedBuilding && (
               <MaintenanceReportBuilder buildingId={selectedBuilding} />
             )}
+            {activeReport === 'tenant-performance' && (
+              <TenantPerformanceReport />
+            )}
+            {activeReport === 'portfolio' && (
+              <PortfolioOverviewReport />
+            )}
+            {activeReport === 'kpi' && selectedBuilding && (
+              <KPIDashboard buildingId={selectedBuilding} />
+            )}
 
-            {!selectedBuilding && (activeReport === 'property-analytics' || activeReport === 'financial' || activeReport === 'maintenance') && (
+            {!selectedBuilding && (activeReport === 'property-analytics' || activeReport === 'financial' || activeReport === 'maintenance' || activeReport === 'kpi') && (
               <div className="text-center py-12">
                 <p className="text-slate-600">Bitte wählen Sie oben ein Gebäude aus</p>
               </div>
