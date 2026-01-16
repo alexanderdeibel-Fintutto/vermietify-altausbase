@@ -674,6 +674,19 @@
     padding: var(--vf-spacing-4);
   }
   
+  .vf-stat-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--vf-spacing-2);
+  }
+  
+  .vf-stat-card-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--theme-text-muted);
+  }
+  
   .vf-stat-card-value {
     font-size: var(--vf-text-2xl);
     font-weight: 700;
@@ -684,6 +697,44 @@
   .vf-stat-card-label {
     font-size: var(--vf-text-sm);
     color: var(--theme-text-secondary);
+  }
+  
+  .vf-stat-card-trend {
+    display: flex;
+    align-items: center;
+    gap: var(--vf-spacing-1);
+    font-size: var(--vf-text-sm);
+    font-weight: 500;
+    margin-top: var(--vf-spacing-1);
+  }
+  
+  .vf-stat-card-trend.positive {
+    color: var(--vf-success-600);
+  }
+  
+  .vf-stat-card-trend.negative {
+    color: var(--vf-error-600);
+  }
+  
+  .vf-stat-card-trend.neutral {
+    color: var(--theme-text-muted);
+  }
+  
+  .vf-stat-card-highlighted {
+    background: var(--vf-gradient-primary);
+    border: none;
+    padding: var(--vf-spacing-4);
+    border-radius: var(--vf-radius-lg);
+  }
+  
+  .vf-stat-card-highlighted .vf-stat-card-label,
+  .vf-stat-card-highlighted .vf-stat-card-value,
+  .vf-stat-card-highlighted .vf-stat-card-icon {
+    color: white;
+  }
+  
+  .vf-stat-card-highlighted .vf-stat-card-trend {
+    color: rgba(255, 255, 255, 0.8);
   }
   
   .theme-mieter .vf-card {
@@ -875,6 +926,11 @@
   
   .vf-switch.active::after {
     transform: translateX(20px);
+  }
+  
+  .vf-switch:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
   
   .theme-komfort .vf-input,
