@@ -40,6 +40,8 @@ import SubscriptionInitializer from '@/components/subscription/SubscriptionIniti
 import KeyboardShortcutsHandler from '@/components/shortcuts/KeyboardShortcutsHandler';
 import KeyboardShortcutsHelp from '@/components/shortcuts/KeyboardShortcutsHelp';
 import ThemeToggle from '@/components/theme/ThemeToggle';
+import ThemeSwitcher from '@/components/theme/ThemeSwitcher';
+import VermitifyLogo from '@/components/branding/VermitifyLogo';
 import OfflineModeInitializer from '@/components/offline/OfflineModeInitializer';
 import { FloatingFeedbackButton } from '@/components/feedback/UserFeedbackCollector';
 import ErrorBoundaryWithLogging from '@/components/errors/ErrorBoundaryWithLogging';
@@ -139,12 +141,9 @@ export default function Layout({ children, currentPageName }) {
                 <header className="sticky top-0 z-50 bg-white border-b border-slate-100" style={{ backgroundColor: '#f8f8f8' }}>
                     <div className="flex items-center justify-between h-16 px-8">
                         {/* Logo */}
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
-                                                <Building2 className="w-4 h-4 text-white" />
-                                            </div>
-                                            <span className="font-light text-slate-800 text-base tracking-wide">{getAppName()}</span>
-                                        </div>
+                        <div className="flex items-center gap-3">
+                            <VermitifyLogo size="sm" colorMode="gradient" />
+                        </div>
 
                                         {/* Global Search */}
                                         <div className="hidden lg:block flex-1 max-w-2xl mx-8">
@@ -153,6 +152,7 @@ export default function Layout({ children, currentPageName }) {
 
                                         {/* Right Actions */}
                                         <div className="flex items-center gap-3">
+                                            <ThemeSwitcher />
                                             <ThemeToggle />
                                             <MandantSwitcher />
                                             <NotificationCenter />

@@ -2,9 +2,11 @@ import AICommunicationHub from './pages/AICommunicationHub';
 import AIDocumentAnalysis from './pages/AIDocumentAnalysis';
 import AIDocumentAnalysisPage from './pages/AIDocumentAnalysisPage';
 import AIDocumentManagement from './pages/AIDocumentManagement';
+import AIFeatures from './pages/AIFeatures';
 import AIInsightsDashboard from './pages/AIInsightsDashboard';
 import AIMaintenanceDashboard from './pages/AIMaintenanceDashboard';
 import AIRuleApprovalDashboard from './pages/AIRuleApprovalDashboard';
+import AISettings from './pages/AISettings';
 import AITaxAdvisor from './pages/AITaxAdvisor';
 import AITaxRecommendations from './pages/AITaxRecommendations';
 import AITemplateGenerator from './pages/AITemplateGenerator';
@@ -107,7 +109,6 @@ import BudgetPlanning from './pages/BudgetPlanning';
 import BuildingBoard from './pages/BuildingBoard';
 import BuildingDetail from './pages/BuildingDetail';
 import BuildingDetailEnhanced from './pages/BuildingDetailEnhanced';
-import Finanzen from './pages/Finanzen';
 import BuildingInspections from './pages/BuildingInspections';
 import BuildingWorkflowManager from './pages/BuildingWorkflowManager';
 import Buildings from './pages/Buildings';
@@ -200,6 +201,7 @@ import FinancialItems from './pages/FinancialItems';
 import FinancialReporting from './pages/FinancialReporting';
 import FinancialReports from './pages/FinancialReports';
 import FinancingManagement from './pages/FinancingManagement';
+import Finanzen from './pages/Finanzen';
 import FullFeatureHub from './pages/FullFeatureHub';
 import GeneratedBookings from './pages/GeneratedBookings';
 import GlobalSettings from './pages/GlobalSettings';
@@ -213,6 +215,7 @@ import Home from './pages/Home';
 import IncomeOptimizationTool from './pages/IncomeOptimizationTool';
 import Index from './pages/Index';
 import InsuranceManagement from './pages/InsuranceManagement';
+import Invoices from './pages/Invoices';
 import IntegrationHub from './pages/IntegrationHub';
 import IntegrationMarketplace from './pages/IntegrationMarketplace';
 import InternationalTaxComparison from './pages/InternationalTaxComparison';
@@ -222,7 +225,6 @@ import InvestmentTaxTracking from './pages/InvestmentTaxTracking';
 import InvestmentsCH from './pages/InvestmentsCH';
 import InvoiceManagement from './pages/InvoiceManagement';
 import InvoiceManagementNew from './pages/InvoiceManagementNew';
-import Invoices from './pages/Invoices';
 import IoTSensorManagement from './pages/IoTSensorManagement';
 import KnowledgeBaseAdmin from './pages/KnowledgeBaseAdmin';
 import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
@@ -322,11 +324,11 @@ import SubscriptionSettings from './pages/SubscriptionSettings';
 import SuiteManagement from './pages/SuiteManagement';
 import SuppliersManagement from './pages/SuppliersManagement';
 import SupportCenter from './pages/SupportCenter';
+import Tasks from './pages/Tasks';
 import SyncManagement from './pages/SyncManagement';
 import SystemConfiguration from './pages/SystemConfiguration';
 import SystemHealth from './pages/SystemHealth';
 import TaskManagement from './pages/TaskManagement';
-import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
 import TaxAIChatbot from './pages/TaxAIChatbot';
 import TaxAdminDashboard from './pages/TaxAdminDashboard';
@@ -465,8 +467,7 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import AISettings from './pages/AISettings';
-import AIFeatures from './pages/AIFeatures';
+import DesignSystem from './pages/DesignSystem';
 import __Layout from './Layout.jsx';
 
 
@@ -475,9 +476,11 @@ export const PAGES = {
     "AIDocumentAnalysis": AIDocumentAnalysis,
     "AIDocumentAnalysisPage": AIDocumentAnalysisPage,
     "AIDocumentManagement": AIDocumentManagement,
+    "AIFeatures": AIFeatures,
     "AIInsightsDashboard": AIInsightsDashboard,
     "AIMaintenanceDashboard": AIMaintenanceDashboard,
     "AIRuleApprovalDashboard": AIRuleApprovalDashboard,
+    "AISettings": AISettings,
     "AITaxAdvisor": AITaxAdvisor,
     "AITaxRecommendations": AITaxRecommendations,
     "AITemplateGenerator": AITemplateGenerator,
@@ -580,7 +583,6 @@ export const PAGES = {
     "BuildingBoard": BuildingBoard,
     "BuildingDetail": BuildingDetail,
     "BuildingDetailEnhanced": BuildingDetailEnhanced,
-    "Finanzen": Finanzen,
     "BuildingInspections": BuildingInspections,
     "BuildingWorkflowManager": BuildingWorkflowManager,
     "Buildings": Buildings,
@@ -673,6 +675,7 @@ export const PAGES = {
     "FinancialReporting": FinancialReporting,
     "FinancialReports": FinancialReports,
     "FinancingManagement": FinancingManagement,
+    "Finanzen": Finanzen,
     "FullFeatureHub": FullFeatureHub,
     "GeneratedBookings": GeneratedBookings,
     "GlobalSettings": GlobalSettings,
@@ -686,6 +689,7 @@ export const PAGES = {
     "IncomeOptimizationTool": IncomeOptimizationTool,
     "Index": Index,
     "InsuranceManagement": InsuranceManagement,
+    "Invoices": Invoices,
     "IntegrationHub": IntegrationHub,
     "IntegrationMarketplace": IntegrationMarketplace,
     "InternationalTaxComparison": InternationalTaxComparison,
@@ -695,7 +699,6 @@ export const PAGES = {
     "InvestmentsCH": InvestmentsCH,
     "InvoiceManagement": InvoiceManagement,
     "InvoiceManagementNew": InvoiceManagementNew,
-    "Invoices": Invoices,
     "IoTSensorManagement": IoTSensorManagement,
     "KnowledgeBaseAdmin": KnowledgeBaseAdmin,
     "KnowledgeManagementDashboard": KnowledgeManagementDashboard,
@@ -795,11 +798,11 @@ export const PAGES = {
     "SuiteManagement": SuiteManagement,
     "SuppliersManagement": SuppliersManagement,
     "SupportCenter": SupportCenter,
+    "Tasks": Tasks,
     "SyncManagement": SyncManagement,
     "SystemConfiguration": SystemConfiguration,
     "SystemHealth": SystemHealth,
     "TaskManagement": TaskManagement,
-    "Tasks": Tasks,
     "Tax": Tax,
     "TaxAIChatbot": TaxAIChatbot,
     "TaxAdminDashboard": TaxAdminDashboard,
@@ -938,8 +941,7 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "AISettings": AISettings,
-    "AIFeatures": AIFeatures,
+    "DesignSystem": DesignSystem,
 }
 
 export const pagesConfig = {
