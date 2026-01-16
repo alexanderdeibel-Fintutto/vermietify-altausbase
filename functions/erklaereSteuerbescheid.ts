@@ -13,7 +13,7 @@ ANTWORTE IN DIESEM FORMAT:
 ## 💰 Die wichtigsten Zahlen
 
 ### Zu versteuerndes Einkommen: [Betrag] €
-[Erklärung in 1-2 Sätzen]
+[Erklärung in 1-2 Sätzen, was das bedeutet]
 
 ### Festgesetzte Einkommensteuer: [Betrag] €
 [Erklärung]
@@ -39,87 +39,53 @@ ANTWORTE IN DIESEM FORMAT:
 [2-3 konkrete Tipps, wie der Nutzer Steuern sparen könnte]
 
 WICHTIG:
-- Erkläre ALLES in einfacher Sprache
+- Erkläre ALLES in einfacher Sprache, keine Fachbegriffe ohne Erklärung
 - Sei ermutigend und positiv
 - Wenn etwas unklar ist, sag das ehrlich
 - Sprich den Nutzer mit "du" an`;
 
 Deno.serve(async (req) => {
-  try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
     
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { imageBase64, imageMediaType = "image/jpeg" } = await req.json();
-
-    if (!imageBase64) {
-      return Response.json({ error: 'imageBase64 erforderlich' }, { status: 400 });
-    }
-
-    const content = [
-      {
-        type: "image",
-        source: {
-          type: "base64",
-          media_type: imageMediaType,
-          data: imageBase64
+    try {
+        const user = await base44.auth.me();
+        if (!user) {
+            return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
-      },
-      {
-        type: "text",
-        text: "Bitte analysiere diesen Steuerbescheid und erkläre mir alle wichtigen Posten in einfacher Sprache."
-      }
-    ];
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": Deno.env.get("ANTHROPIC_API_KEY"),
-        "anthropic-version": "2023-06-01"
-      },
-      body: JSON.stringify({
-        model: "claude-3-5-sonnet-20241022",
-        max_tokens: 3000,
-        system: STEUERBESCHEID_PROMPT,
-        messages: [
-          {
-            role: "user",
-            content
-          }
-        ]
-      })
-    });
+        const { imageBase64, imageMediaType } = await req.json();
 
-    const result = await response.json();
-    
-    if (!response.ok) {
-      return Response.json({ error: result.error?.message || "API error" }, { status: 400 });
+        if (!imageBase64) {
+            return Response.json({ error: 'imageBase64 is required' }, { status: 400 });
+        }
+
+        const result = await base44.functions.invoke('callAI', {
+            featureKey: 'steuerbescheid_erklaerer',
+            messages: [{
+                role: 'user',
+                content: 'Bitte analysiere diesen Steuerbescheid und erkläre mir alle wichtigen Posten in einfacher Sprache.'
+            }],
+            systemPrompt: STEUERBESCHEID_PROMPT,
+            imageBase64,
+            imageMediaType: imageMediaType || 'image/jpeg'
+        });
+
+        if (!result.data.success) {
+            throw new Error(result.data.error || 'AI-Aufruf fehlgeschlagen');
+        }
+
+        return Response.json({
+            success: true,
+            erklaerung: result.data.content,
+            meta: {
+                provider: result.data.provider,
+                model: result.data.model,
+                costEur: result.data.costEur
+            }
+        });
+
+    } catch (error) {
+        console.error('Steuerbescheid-Erklärer error:', error);
+        return Response.json({ error: error.message }, { status: 500 });
     }
-
-    const erklaerung = result.content[0]?.text || "";
-
-    await base44.asServiceRole.entities.AIUsageLog.create({
-      user_id: user.id,
-      feature_key: "steuerbescheid_erklaerer",
-      model: "claude-3-5-sonnet-20241022",
-      tokens_used: result.usage.output_tokens + result.usage.input_tokens,
-      cost_eur: ((result.usage.input_tokens * 0.003 + result.usage.output_tokens * 0.015) / 1000).toFixed(4)
-    });
-
-    return Response.json({
-      erklaerung,
-      _meta: {
-        model: "claude-3-5-sonnet-20241022",
-        tokens: result.usage.output_tokens + result.usage.input_tokens,
-        costEur: ((result.usage.input_tokens * 0.003 + result.usage.output_tokens * 0.015) / 1000).toFixed(4)
-      }
-    });
-  } catch (error) {
-    console.error("Error:", error);
-    return Response.json({ error: error.message }, { status: 500 });
-  }
 });

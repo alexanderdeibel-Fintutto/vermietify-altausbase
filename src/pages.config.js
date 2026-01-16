@@ -238,6 +238,7 @@ import MaintenanceTasks from './pages/MaintenanceTasks';
 import MaintenanceTracking from './pages/MaintenanceTracking';
 import MandantManagement from './pages/MandantManagement';
 import MarketAnalytics from './pages/MarketAnalytics';
+import MarketplaceAdmin from './pages/MarketplaceAdmin';
 import MeterApp from './pages/MeterApp';
 import MeterDashboard from './pages/MeterDashboard';
 import MieterSelfServicePortal from './pages/MieterSelfServicePortal';
@@ -265,6 +266,7 @@ import OperatingCostsSimplified from './pages/OperatingCostsSimplified';
 import OtherIncomeCH from './pages/OtherIncomeCH';
 import PackageManager from './pages/PackageManager';
 import PackageTestPage from './pages/PackageTestPage';
+import PartnerOnboarding from './pages/PartnerOnboarding';
 import Payments from './pages/Payments';
 import PerformanceMonitor from './pages/PerformanceMonitor';
 import PermissionDashboard from './pages/PermissionDashboard';
@@ -463,8 +465,7 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import PartnerOnboarding from './pages/PartnerOnboarding';
-import MarketplaceAdmin from './pages/MarketplaceAdmin';
+import AISettings from './pages/AISettings';
 import __Layout from './Layout.jsx';
 
 
@@ -709,6 +710,7 @@ export const PAGES = {
     "MaintenanceTracking": MaintenanceTracking,
     "MandantManagement": MandantManagement,
     "MarketAnalytics": MarketAnalytics,
+    "MarketplaceAdmin": MarketplaceAdmin,
     "MeterApp": MeterApp,
     "MeterDashboard": MeterDashboard,
     "MieterSelfServicePortal": MieterSelfServicePortal,
@@ -736,6 +738,7 @@ export const PAGES = {
     "OtherIncomeCH": OtherIncomeCH,
     "PackageManager": PackageManager,
     "PackageTestPage": PackageTestPage,
+    "PartnerOnboarding": PartnerOnboarding,
     "Payments": Payments,
     "PerformanceMonitor": PerformanceMonitor,
     "PermissionDashboard": PermissionDashboard,
@@ -934,8 +937,7 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "PartnerOnboarding": PartnerOnboarding,
-    "MarketplaceAdmin": MarketplaceAdmin,
+    "AISettings": AISettings,
 }
 
 export const pagesConfig = {

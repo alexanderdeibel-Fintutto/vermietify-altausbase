@@ -74,7 +74,7 @@ AUSGABEN (Klasse 4):
 - 4970: Nebenkosten des Geldverkehrs
 
 PRIVAT:
-- 1800: Privatentnahmen
+- 1800: Privatentnahmen (Lebensmittel, Kleidung, etc.)
 - 1890: Privateinlagen
 
 IMMOBILIEN-SPEZIFISCH:
@@ -86,86 +86,59 @@ IMMOBILIEN-SPEZIFISCH:
 - 2100: Abschreibung Gebäude`;
 
 Deno.serve(async (req) => {
-  try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
     
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { buchungen_text, imageBase64, imageMediaType } = await req.json();
-
-    let content = [];
-    
-    if (imageBase64) {
-      content.push({
-        type: "image",
-        source: {
-          type: "base64",
-          media_type: imageMediaType || "image/jpeg",
-          data: imageBase64
+    try {
+        const user = await base44.auth.me();
+        if (!user) {
+            return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
-      });
+
+        const { imageBase64, imageMediaType } = await req.json();
+
+        if (!imageBase64) {
+            return Response.json({ error: 'imageBase64 is required' }, { status: 400 });
+        }
+
+        const result = await base44.functions.invoke('callAI', {
+            featureKey: 'buchungs_kategorisierer',
+            messages: [{
+                role: 'user',
+                content: 'Kategorisiere diese Buchungen nach SKR03.'
+            }],
+            systemPrompt: BUCHUNGS_KATEGORISIERER_PROMPT,
+            imageBase64,
+            imageMediaType: imageMediaType || 'image/jpeg'
+        });
+
+        if (!result.data.success) {
+            throw new Error(result.data.error || 'AI-Aufruf fehlgeschlagen');
+        }
+
+        let data;
+        try {
+            data = JSON.parse(result.data.content);
+        } catch {
+            const jsonMatch = result.data.content.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                data = JSON.parse(jsonMatch[0]);
+            } else {
+                throw new Error('Konnte JSON nicht extrahieren');
+            }
+        }
+
+        return Response.json({
+            success: true,
+            data,
+            meta: {
+                provider: result.data.provider,
+                model: result.data.model,
+                costEur: result.data.costEur
+            }
+        });
+
+    } catch (error) {
+        console.error('Buchungs-Kategorisierer error:', error);
+        return Response.json({ error: error.message }, { status: 500 });
     }
-    
-    content.push({
-      type: "text",
-      text: buchungen_text || "Kategorisiere diese Buchungen nach SKR03."
-    });
-
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": Deno.env.get("ANTHROPIC_API_KEY"),
-        "anthropic-version": "2023-06-01"
-      },
-      body: JSON.stringify({
-        model: "claude-3-5-sonnet-20241022",
-        max_tokens: 4096,
-        system: BUCHUNGS_KATEGORISIERER_PROMPT,
-        messages: [
-          {
-            role: "user",
-            content
-          }
-        ]
-      })
-    });
-
-    const result = await response.json();
-    
-    if (!response.ok) {
-      return Response.json({ error: result.error?.message || "API error" }, { status: 400 });
-    }
-
-    const content_text = result.content[0]?.text || "";
-    const jsonMatch = content_text.match(/\{[\s\S]*\}/);
-    const data = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
-
-    if (!data) {
-      return Response.json({ error: "Konnte Buchungen nicht kategorisieren" }, { status: 400 });
-    }
-
-    await base44.asServiceRole.entities.AIUsageLog.create({
-      user_id: user.id,
-      feature_key: "buchungs_kategorisierer",
-      model: "claude-3-5-sonnet-20241022",
-      tokens_used: result.usage.output_tokens + result.usage.input_tokens,
-      cost_eur: ((result.usage.input_tokens * 0.003 + result.usage.output_tokens * 0.015) / 1000).toFixed(4)
-    });
-
-    return Response.json({
-      ...data,
-      _meta: {
-        model: "claude-3-5-sonnet-20241022",
-        tokens: result.usage.output_tokens + result.usage.input_tokens,
-        costEur: ((result.usage.input_tokens * 0.003 + result.usage.output_tokens * 0.015) / 1000).toFixed(4)
-      }
-    });
-  } catch (error) {
-    console.error("Error:", error);
-    return Response.json({ error: error.message }, { status: 500 });
-  }
 });
