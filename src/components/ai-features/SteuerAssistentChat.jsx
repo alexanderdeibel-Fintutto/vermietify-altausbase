@@ -3,144 +3,112 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Send, RefreshCw } from 'lucide-react';
+import { MessageCircle, Send, RotateCcw, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function SteuerAssistentChat() {
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content: '🧮 Hallo! Ich bin dein Steuer-Assistent. Ich führe dich Schritt für Schritt durch deine Steuererklärung. Für welches Jahr möchtest du die Steuererklärung machen?'
-    }
-  ]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState([
-    {
-      role: 'assistant',
-      content: '🧮 Hallo! Ich bin dein Steuer-Assistent. Ich führe dich Schritt für Schritt durch deine Steuererklärung. Für welches Jahr möchtest du die Steuererklärung machen?'
-    }
-  ]);
-  const messagesEndRef = useRef(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const sendMessage = async () => {
-    if (!input.trim()) return;
-
-    const userMessage = { role: 'user', content: input };
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setLoading(true);
-
-    try {
-      const response = await base44.functions.invoke('chatMitSteuerAssistent', {
-        messages: [userMessage],
-        conversationHistory
-      });
-
-      if (response.data) {
-        const assistantMessage = { role: 'assistant', content: response.data.antwort };
-        setMessages(prev => [...prev, assistantMessage]);
-        setConversationHistory(response.data.updatedHistory);
-        toast.success('Antwort erhalten!');
-      }
-    } catch (error) {
-      toast.error('Fehler: ' + error.message);
-      setMessages(prev => prev.slice(0, -1)); // Remove user message on error
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const resetChat = () => {
-    setMessages([
-      {
-        role: 'assistant',
-        content: '🧮 Hallo! Ich bin dein Steuer-Assistent. Ich führe dich Schritt für Schritt durch deine Steuererklärung. Für welches Jahr möchtest du die Steuererklärung machen?'
-      }
+    const [messages, setMessages] = useState([
+        { role: 'assistant', content: 'Hallo! Ich bin dein Steuer-Assistent. Für welches Jahr möchtest du die Steuererklärung machen?' }
     ]);
-    setConversationHistory([
-      {
-        role: 'assistant',
-        content: '🧮 Hallo! Ich bin dein Steuer-Assistent. Ich führe dich Schritt für Schritt durch deine Steuererklärung. Für welches Jahr möchtest du die Steuererklärung machen?'
-      }
-    ]);
-    setInput('');
-  };
+    const [input, setInput] = useState('');
+    const [loading, setLoading] = useState(false);
+    const messagesEndRef = useRef(null);
 
-  return (
-    <div className="space-y-6 max-w-2xl">
-      <Card className="flex flex-col h-96">
-        <CardHeader className="border-b flex-shrink-0">
-          <div className="flex justify-between items-center">
-            <CardTitle>🧮 Steuer-Assistent</CardTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={resetChat}
-              className="gap-1"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Neustart
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.map((msg, idx) => (
-            <div
-              key={idx}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-xs px-4 py-2 rounded-lg ${
-                  msg.role === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-900'
-                }`}
-              >
-                <p className="text-sm leading-relaxed">{msg.content}</p>
-              </div>
-            </div>
-          ))}
-          {loading && (
-            <div className="flex justify-start">
-              <div className="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg">
-                <Loader2 className="w-4 h-4 animate-spin" />
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </CardContent>
-      </Card>
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
 
-      <div className="flex gap-2">
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && !loading && sendMessage()}
-          placeholder="Deine Antwort..."
-          disabled={loading}
-          className="flex-1"
-        />
-        <Button
-          onClick={sendMessage}
-          disabled={loading || !input.trim()}
-          className="gap-1"
-        >
-          {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Send className="w-4 h-4" />
-          )}
-        </Button>
-      </div>
-    </div>
-  );
+    const handleSend = async () => {
+        if (!input.trim() || loading) return;
+
+        const userMessage = { role: 'user', content: input };
+        setMessages(prev => [...prev, userMessage]);
+        setInput('');
+        setLoading(true);
+
+        try {
+            const response = await base44.functions.invoke('chatMitSteuerAssistent', {
+                messages: [userMessage],
+                conversationHistory: messages
+            });
+
+            if (response.data.success) {
+                setMessages(response.data.updatedHistory);
+            } else {
+                toast.error(response.data.error || 'Fehler beim Senden');
+            }
+        } catch (error) {
+            toast.error(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleReset = () => {
+        setMessages([
+            { role: 'assistant', content: 'Hallo! Ich bin dein Steuer-Assistent. Für welches Jahr möchtest du die Steuererklärung machen?' }
+        ]);
+        setInput('');
+    };
+
+    return (
+        <div className="max-w-4xl mx-auto">
+            <Card className="h-[600px] flex flex-col">
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                            <MessageCircle className="w-5 h-5" />
+                            Steuer-Assistent
+                        </CardTitle>
+                        <Button variant="outline" size="sm" onClick={handleReset}>
+                            <RotateCcw className="w-4 h-4 mr-2" />
+                            Neustart
+                        </Button>
+                    </div>
+                    <p className="text-sm text-slate-600">Ich führe dich durch deine Steuererklärung</p>
+                </CardHeader>
+                <CardContent className="flex-1 flex flex-col overflow-hidden">
+                    <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+                        {messages.map((msg, idx) => (
+                            <div
+                                key={idx}
+                                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                            >
+                                <div
+                                    className={`max-w-[80%] p-3 rounded-lg ${
+                                        msg.role === 'user'
+                                            ? 'bg-slate-900 text-white'
+                                            : 'bg-slate-100 text-slate-900'
+                                    }`}
+                                >
+                                    {msg.content}
+                                </div>
+                            </div>
+                        ))}
+                        {loading && (
+                            <div className="flex justify-start">
+                                <div className="bg-slate-100 p-3 rounded-lg">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                </div>
+                            </div>
+                        )}
+                        <div ref={messagesEndRef} />
+                    </div>
+
+                    <div className="flex gap-2 border-t pt-4">
+                        <Input
+                            placeholder="Deine Antwort eingeben..."
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                            disabled={loading}
+                        />
+                        <Button onClick={handleSend} disabled={loading || !input.trim()}>
+                            <Send className="w-4 h-4" />
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+    );
 }

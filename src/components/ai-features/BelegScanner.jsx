@@ -1,324 +1,209 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Camera, Upload, Loader2, Download } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Camera, Upload, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function BelegScanner() {
-  const [image, setImage] = useState(null);
-  const [imageBase64, setImageBase64] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [editedData, setEditedData] = useState(null);
-  const fileInputRef = useRef(null);
-  const cameraInputRef = useRef(null);
+    const [image, setImage] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [result, setResult] = useState(null);
 
-  const handleImageUpload = async (file) => {
-    if (!file) return;
+    const handleFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const base64 = e.target.result.split(',')[1];
-      setImageBase64(base64);
-      setImage(e.target.result);
-      
-      // Auto-scan after upload
-      await scanBeleg(base64);
+        const reader = new FileReader();
+        reader.onload = () => {
+            setImagePreview(reader.result);
+            const base64 = reader.result.split(',')[1];
+            setImage({ base64, type: file.type });
+        };
+        reader.readAsDataURL(file);
     };
-    reader.readAsDataURL(file);
-  };
 
-  const scanBeleg = async (base64String) => {
-    setLoading(true);
-    try {
-      const response = await base44.functions.invoke('scanBeleg', {
-        imageBase64: base64String,
-        imageMediaType: 'image/jpeg'
-      });
+    const handleScan = async () => {
+        if (!image) return;
 
-      if (response.data) {
-        setResult(response.data);
-        setEditedData(JSON.parse(JSON.stringify(response.data)));
-        toast.success('Beleg erfolgreich gescannt!');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Fehler beim Scannen: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+        setLoading(true);
+        try {
+            const response = await base44.functions.invoke('scanBeleg', {
+                imageBase64: image.base64,
+                imageMediaType: image.type
+            });
 
-  const handleSave = async () => {
-    try {
-      // Create Invoice or Expense entity
-      await base44.entities.Invoice.create({
-        betrag: editedData.betraege.brutto,
-        datum: editedData.datum,
-        beschreibung: editedData.haendler?.name || 'Beleg',
-        kategorie: editedData.kategorie_vorschlag,
-        skr03_konto: editedData.skr03_konto,
-        haendler: editedData.haendler?.name,
-        mwst_satz: editedData.betraege.mwst_19 > 0 ? 19 : 7,
-        netto: editedData.betraege.netto
-      });
-      toast.success('Beleg gespeichert!');
-      // Reset form
-      setImage(null);
-      setResult(null);
-      setEditedData(null);
-    } catch (error) {
-      toast.error('Fehler beim Speichern: ' + error.message);
-    }
-  };
+            if (response.data.success) {
+                setResult(response.data.data);
+                toast.success('Beleg erfolgreich analysiert');
+            } else {
+                toast.error(response.data.error || 'Fehler beim Scannen');
+            }
+        } catch (error) {
+            toast.error(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  return (
-    <div className="space-y-6 max-w-2xl">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            📸 Beleg-Scanner
-            <span className="text-sm font-normal text-gray-500">OCR mit Claude AI</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => cameraInputRef.current?.click()}
-              className="gap-2"
-            >
-              <Camera className="w-4 h-4" />
-              Foto aufnehmen
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => fileInputRef.current?.click()}
-              className="gap-2"
-            >
-              <Upload className="w-4 h-4" />
-              Datei auswählen
-            </Button>
-          </div>
+    const handleSave = async () => {
+        if (!result) return;
 
-          <input
-            ref={cameraInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={(e) => handleImageUpload(e.target.files?.[0])}
-            className="hidden"
-          />
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*,.pdf"
-            onChange={(e) => handleImageUpload(e.target.files?.[0])}
-            className="hidden"
-          />
+        try {
+            await base44.entities.Invoice.create({
+                description: result.haendler?.name || 'Beleg',
+                amount: result.betraege?.brutto || 0,
+                date: result.datum,
+                category: result.kategorie_vorschlag,
+                tax_deductible: result.steuerlich_absetzbar,
+                notes: result.notizen
+            });
+            toast.success('Beleg gespeichert');
+            setResult(null);
+            setImage(null);
+            setImagePreview(null);
+        } catch (error) {
+            toast.error('Fehler beim Speichern');
+        }
+    };
 
-          {image && (
-            <div className="relative w-full bg-gray-100 rounded-lg overflow-hidden">
-              <img
-                src={image}
-                alt="Beleg-Vorschau"
-                className="w-full max-h-96 object-contain"
-              />
-            </div>
-          )}
+    return (
+        <div className="max-w-4xl mx-auto space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Camera className="w-5 h-5" />
+                        Beleg-Scanner
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    {!result && (
+                        <>
+                            <div className="flex gap-4">
+                                <label className="flex-1">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        capture="environment"
+                                        onChange={handleFileSelect}
+                                        className="hidden"
+                                    />
+                                    <Button type="button" variant="outline" className="w-full" asChild>
+                                        <span>
+                                            <Camera className="w-4 h-4 mr-2" />
+                                            Foto aufnehmen
+                                        </span>
+                                    </Button>
+                                </label>
+                                <label className="flex-1">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleFileSelect}
+                                        className="hidden"
+                                    />
+                                    <Button type="button" variant="outline" className="w-full" asChild>
+                                        <span>
+                                            <Upload className="w-4 h-4 mr-2" />
+                                            Datei auswählen
+                                        </span>
+                                    </Button>
+                                </label>
+                            </div>
 
-          {image && !result && (
-            <Button
-              onClick={() => scanBeleg(imageBase64)}
-              disabled={loading}
-              className="w-full"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  Beleg analysiert...
-                </>
-              ) : (
-                '🔍 Beleg analysieren'
-              )}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+                            {imagePreview && (
+                                <>
+                                    <div className="border rounded-lg p-4 bg-slate-50">
+                                        <img src={imagePreview} alt="Beleg" className="max-h-96 mx-auto" />
+                                    </div>
+                                    <Button onClick={handleScan} disabled={loading} className="w-full">
+                                        {loading ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                Analysiere Beleg...
+                                            </>
+                                        ) : (
+                                            'Beleg analysieren'
+                                        )}
+                                    </Button>
+                                </>
+                            )}
+                        </>
+                    )}
 
-      {result && editedData && (
-        <Card>
-          <CardHeader>
-            <CardTitle>✅ Erkannte Daten</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Typ</label>
-                <select
-                  value={editedData.typ || ''}
-                  onChange={(e) =>
-                    setEditedData({ ...editedData, typ: e.target.value })
-                  }
-                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm"
-                >
-                  <option value="rechnung">Rechnung</option>
-                  <option value="quittung">Quittung</option>
-                  <option value="kassenbon">Kassenbon</option>
-                  <option value="tankbeleg">Tankbeleg</option>
-                  <option value="restaurantrechnung">Restaurantrechnung</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Händler</label>
-                <input
-                  type="text"
-                  value={editedData.haendler?.name || ''}
-                  onChange={(e) =>
-                    setEditedData({
-                      ...editedData,
-                      haendler: { ...editedData.haendler, name: e.target.value }
-                    })
-                  }
-                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Datum</label>
-                <input
-                  type="date"
-                  value={editedData.datum || ''}
-                  onChange={(e) =>
-                    setEditedData({ ...editedData, datum: e.target.value })
-                  }
-                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Brutto (€)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={editedData.betraege?.brutto || 0}
-                  onChange={(e) =>
-                    setEditedData({
-                      ...editedData,
-                      betraege: {
-                        ...editedData.betraege,
-                        brutto: parseFloat(e.target.value)
-                      }
-                    })
-                  }
-                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">MwSt 19% (€)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={editedData.betraege?.mwst_19 || 0}
-                  onChange={(e) =>
-                    setEditedData({
-                      ...editedData,
-                      betraege: {
-                        ...editedData.betraege,
-                        mwst_19: parseFloat(e.target.value)
-                      }
-                    })
-                  }
-                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Kategorie</label>
-                <select
-                  value={editedData.kategorie_vorschlag || ''}
-                  onChange={(e) =>
-                    setEditedData({
-                      ...editedData,
-                      kategorie_vorschlag: e.target.value
-                    })
-                  }
-                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm"
-                >
-                  <option value="bürobedarf">Bürobedarf</option>
-                  <option value="fahrtkosten">Fahrtkosten</option>
-                  <option value="versicherung">Versicherung</option>
-                  <option value="reparatur">Reparatur</option>
-                  <option value="sonstiges">Sonstiges</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium">SKR03-Konto</label>
-                <input
-                  type="text"
-                  value={editedData.skr03_konto || ''}
-                  onChange={(e) =>
-                    setEditedData({
-                      ...editedData,
-                      skr03_konto: e.target.value
-                    })
-                  }
-                  className="w-full mt-1 px-3 py-2 border rounded-md text-sm"
-                />
-              </div>
-              <div className="flex items-end">
-                <label className="flex items-center gap-2 mt-1">
-                  <input
-                    type="checkbox"
-                    checked={editedData.steuerlich_absetzbar || false}
-                    onChange={(e) =>
-                      setEditedData({
-                        ...editedData,
-                        steuerlich_absetzbar: e.target.checked
-                      })
-                    }
-                  />
-                  <span className="text-sm">Steuerlich absetzbar</span>
-                </label>
-              </div>
-            </div>
+                    {result && (
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 text-green-600 mb-4">
+                                <CheckCircle className="w-5 h-5" />
+                                <span className="font-semibold">Erkannte Daten</span>
+                            </div>
 
-            <div>
-              <label className="text-sm font-medium">Notizen</label>
-              <textarea
-                value={editedData.notizen || ''}
-                onChange={(e) =>
-                  setEditedData({ ...editedData, notizen: e.target.value })
-                }
-                className="w-full mt-1 px-3 py-2 border rounded-md text-sm"
-                rows="3"
-              />
-            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Typ</Label>
+                                    <Input value={result.typ || ''} readOnly />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Händler</Label>
+                                    <Input value={result.haendler?.name || ''} readOnly />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Datum</Label>
+                                    <Input value={result.datum || ''} readOnly />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Brutto</Label>
+                                    <Input value={`${result.betraege?.brutto || 0} €`} readOnly />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>MwSt 19%</Label>
+                                    <Input value={`${result.betraege?.mwst_19 || 0} €`} readOnly />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Netto</Label>
+                                    <Input value={`${result.betraege?.netto || 0} €`} readOnly />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Kategorie</Label>
+                                    <Input value={result.kategorie_vorschlag || ''} readOnly />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>SKR03</Label>
+                                    <Input value={result.skr03_konto || ''} readOnly />
+                                </div>
+                            </div>
 
-            <div className="flex gap-3">
-              <Button onClick={handleSave} className="flex-1 bg-green-600 hover:bg-green-700">
-                💾 Beleg speichern
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setResult(null);
-                  setEditedData(null);
-                }}
-                className="flex-1"
-              >
-                Neue Aufnahme
-              </Button>
-            </div>
+                            {result.notizen && (
+                                <div className="space-y-2">
+                                    <Label>Notizen</Label>
+                                    <div className="p-3 bg-slate-50 rounded-md text-sm">{result.notizen}</div>
+                                </div>
+                            )}
 
-            {result._meta && (
-              <div className="text-xs text-gray-500 pt-2 border-t">
-                ℹ️ Kosten: {result._meta.costEur}€ | Model: {result._meta.model}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
+                            <div className="flex gap-2 pt-4">
+                                <Button onClick={handleSave} className="flex-1">
+                                    Beleg speichern
+                                </Button>
+                                <Button variant="outline" onClick={() => {
+                                    setResult(null);
+                                    setImage(null);
+                                    setImagePreview(null);
+                                }}>
+                                    Neuer Scan
+                                </Button>
+                            </div>
+
+                            <div className="text-xs text-slate-500 text-center">
+                                Kosten: {result._meta?.costEur?.toFixed(4)} € | Provider: {result._meta?.provider}
+                            </div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
+    );
 }

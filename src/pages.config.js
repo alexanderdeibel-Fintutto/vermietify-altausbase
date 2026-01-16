@@ -466,6 +466,7 @@ import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
 import AISettings from './pages/AISettings';
+import AIFeatures from './pages/AIFeatures';
 import __Layout from './Layout.jsx';
 
 
@@ -938,6 +939,7 @@ export const PAGES = {
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
     "AISettings": AISettings,
+    "AIFeatures": AIFeatures,
 }
 
 export const pagesConfig = {

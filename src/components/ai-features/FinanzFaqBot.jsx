@@ -3,174 +3,107 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Send, RefreshCw, HelpCircle } from 'lucide-react';
+import { HelpCircle, Send, RotateCcw, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const BEISPIEL_FRAGEN = [
-  'Was ist die Kleinreparaturklausel?',
-  'Wie berechne ich die Bruttomietrendite?',
-  'Welche Kosten sind in der Anlage V absetzbar?',
-  'Was ist SKR03?',
-  'Wie hoch darf die Kaution sein?'
-];
-
 export default function FinanzFaqBot() {
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content: '💬 Hallo! Ich bin dein Finanz-Assistent. Stell mir Fragen zu Mietrecht, Steuern, Nebenkosten oder Finanzen. Wie kann ich dir heute helfen?'
-    }
-  ]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState([
-    {
-      role: 'assistant',
-      content: '💬 Hallo! Ich bin dein Finanz-Assistent. Stell mir Fragen zu Mietrecht, Steuern, Nebenkosten oder Finanzen. Wie kann ich dir heute helfen?'
-    }
-  ]);
-  const messagesEndRef = useRef(null);
+    const [history, setHistory] = useState([]);
+    const [input, setInput] = useState('');
+    const [loading, setLoading] = useState(false);
+    const messagesEndRef = useRef(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [history]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    const handleAsk = async () => {
+        if (!input.trim() || loading) return;
 
-  const sendMessage = async (text = input) => {
-    if (!text.trim()) return;
+        setLoading(true);
+        const question = input;
+        setInput('');
 
-    const userMessage = { role: 'user', content: text };
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setLoading(true);
+        try {
+            const response = await base44.functions.invoke('fragFinanzBot', {
+                frage: question,
+                conversationHistory: history
+            });
 
-    try {
-      const response = await base44.functions.invoke('fragFinanzBot', {
-        messages: [userMessage],
-        conversationHistory
-      });
+            if (response.data.success) {
+                setHistory(response.data.updatedHistory);
+            } else {
+                toast.error(response.data.error || 'Fehler beim Senden');
+            }
+        } catch (error) {
+            toast.error(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-      if (response.data) {
-        const assistantMessage = { role: 'assistant', content: response.data.antwort };
-        setMessages(prev => [...prev, assistantMessage]);
-        setConversationHistory(response.data.updatedHistory);
-      }
-    } catch (error) {
-      toast.error('Fehler: ' + error.message);
-      setMessages(prev => prev.slice(0, -1));
-    } finally {
-      setLoading(false);
-    }
-  };
+    return (
+        <div className="max-w-4xl mx-auto">
+            <Card className="h-[600px] flex flex-col">
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                            <HelpCircle className="w-5 h-5" />
+                            Finanz-FAQ-Bot
+                        </CardTitle>
+                        <Button variant="outline" size="sm" onClick={() => setHistory([])}>
+                            <RotateCcw className="w-4 h-4 mr-2" />
+                            Zurücksetzen
+                        </Button>
+                    </div>
+                    <p className="text-sm text-slate-600">Stelle Fragen zu Finanzen, Steuern und Mietrecht</p>
+                </CardHeader>
+                <CardContent className="flex-1 flex flex-col overflow-hidden">
+                    <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+                        {history.length === 0 && (
+                            <div className="text-center text-slate-500 py-8">
+                                Stelle eine Frage und ich helfe dir weiter!
+                            </div>
+                        )}
+                        {history.map((msg, idx) => (
+                            <div
+                                key={idx}
+                                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                            >
+                                <div
+                                    className={`max-w-[80%] p-3 rounded-lg whitespace-pre-wrap ${
+                                        msg.role === 'user'
+                                            ? 'bg-slate-900 text-white'
+                                            : 'bg-slate-100 text-slate-900'
+                                    }`}
+                                >
+                                    {msg.content}
+                                </div>
+                            </div>
+                        ))}
+                        {loading && (
+                            <div className="flex justify-start">
+                                <div className="bg-slate-100 p-3 rounded-lg">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                </div>
+                            </div>
+                        )}
+                        <div ref={messagesEndRef} />
+                    </div>
 
-  const resetChat = () => {
-    setMessages([
-      {
-        role: 'assistant',
-        content: '💬 Hallo! Ich bin dein Finanz-Assistent. Stell mir Fragen zu Mietrecht, Steuern, Nebenkosten oder Finanzen. Wie kann ich dir heute helfen?'
-      }
-    ]);
-    setConversationHistory([
-      {
-        role: 'assistant',
-        content: '💬 Hallo! Ich bin dein Finanz-Assistent. Stell mir Fragen zu Mietrecht, Steuern, Nebenkosten oder Finanzen. Wie kann ich dir heute helfen?'
-      }
-    ]);
-    setInput('');
-  };
-
-  return (
-    <div className="space-y-6 max-w-2xl">
-      <Card className="flex flex-col h-96">
-        <CardHeader className="border-b flex-shrink-0">
-          <div className="flex justify-between items-center">
-            <CardTitle className="flex items-center gap-2">
-              <HelpCircle className="w-5 h-5" />
-              Finanz-FAQ
-            </CardTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={resetChat}
-              className="gap-1"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Reset
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.map((msg, idx) => (
-            <div
-              key={idx}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-xs px-4 py-2 rounded-lg ${
-                  msg.role === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-900'
-                }`}
-              >
-                <p className="text-sm leading-relaxed">{msg.content}</p>
-              </div>
-            </div>
-          ))}
-          {loading && (
-            <div className="flex justify-start">
-              <div className="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg">
-                <Loader2 className="w-4 h-4 animate-spin" />
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </CardContent>
-      </Card>
-
-      {messages.length === 1 && (
-        <div>
-          <div className="text-xs font-medium text-gray-500 mb-2">Beispielfragen:</div>
-          <div className="flex flex-wrap gap-2">
-            {BEISPIEL_FRAGEN.map((frage, idx) => (
-              <Button
-                key={idx}
-                variant="outline"
-                size="sm"
-                onClick={() => sendMessage(frage)}
-                disabled={loading}
-                className="text-xs justify-start"
-              >
-                {frage}
-              </Button>
-            ))}
-          </div>
+                    <div className="flex gap-2 border-t pt-4">
+                        <Input
+                            placeholder="Deine Frage eingeben..."
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && handleAsk()}
+                            disabled={loading}
+                        />
+                        <Button onClick={handleAsk} disabled={loading || !input.trim()}>
+                            <Send className="w-4 h-4" />
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
-      )}
-
-      <div className="flex gap-2">
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && !loading && sendMessage()}
-          placeholder="Deine Frage..."
-          disabled={loading}
-          className="flex-1"
-        />
-        <Button
-          onClick={() => sendMessage()}
-          disabled={loading || !input.trim()}
-          className="gap-1"
-        >
-          {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Send className="w-4 h-4" />
-          )}
-        </Button>
-      </div>
-    </div>
-  );
+    );
 }
