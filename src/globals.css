@@ -1413,6 +1413,67 @@
   }
   
   /* ═══════════════════════════════════════════════════════════════════════════
+     SPINNER SIZES
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .vf-spinner-sm {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+  }
+  
+  .vf-spinner-lg {
+    width: 32px;
+    height: 32px;
+    border-width: 3px;
+  }
+  
+  /* ═══════════════════════════════════════════════════════════════════════════
+     DROPDOWN / POPOVER STYLES
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .vf-dropdown,
+  .vf-popover {
+    background-color: var(--theme-elevated);
+    border: 1px solid var(--theme-border);
+    border-radius: var(--vf-radius-lg);
+    box-shadow: var(--vf-shadow-lg);
+    padding: var(--vf-spacing-2);
+    min-width: 200px;
+  }
+  
+  .vf-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: var(--vf-spacing-2);
+    padding: var(--vf-spacing-2) var(--vf-spacing-3);
+    font-size: var(--vf-text-sm);
+    color: var(--theme-text-primary);
+    border-radius: var(--vf-radius-md);
+    cursor: pointer;
+    transition: var(--vf-transition-fast);
+  }
+  
+  .vf-dropdown-item:hover {
+    background-color: var(--theme-surface-hover);
+  }
+  
+  .vf-dropdown-separator {
+    height: 1px;
+    background-color: var(--theme-divider);
+    margin: var(--vf-spacing-2) 0;
+  }
+  
+  .vf-dropdown-label {
+    padding: var(--vf-spacing-2) var(--vf-spacing-3);
+    font-size: var(--vf-text-xs);
+    font-weight: 600;
+    color: var(--theme-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  /* ═══════════════════════════════════════════════════════════════════════════
      VERMITIFY SIDEBAR-STYLES
      ═══════════════════════════════════════════════════════════════════════════ */
   
