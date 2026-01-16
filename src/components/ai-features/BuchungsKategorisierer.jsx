@@ -29,9 +29,13 @@ export default function BuchungsKategorisierer() {
 
         setLoading(true);
         try {
-            const response = await base44.functions.invoke('kategorisiereBuchungen', {
+            const response = await base44.functions.invoke('callClaudeAPI', {
+                featureKey: 'buchungen',
+                systemPrompt: 'Du bist ein Buchhaltungsexperte. Kategorisiere alle Buchungen nach SKR03.',
+                userPrompt: 'Kategorisiere alle Buchungen in diesem Bild. Gib zurück: zusammenfassung{anzahl_buchungen, summe_einnahmen, summe_ausgaben}, buchungen[{beschreibung, betrag, typ: "einnahme"|"ausgabe", skr03_konto, konto_bezeichnung}]',
                 imageBase64: image.base64,
-                imageMediaType: image.type
+                imageMediaType: image.type,
+                responseSchema: true
             });
 
             if (response.data.success) {

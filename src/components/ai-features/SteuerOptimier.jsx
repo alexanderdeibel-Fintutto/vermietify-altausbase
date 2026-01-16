@@ -25,7 +25,12 @@ export default function SteuerOptimier() {
 
         setLoading(true);
         try {
-            const response = await base44.functions.invoke('optimiereSteuern', { situation });
+            const response = await base44.functions.invoke('callClaudeAPI', {
+                featureKey: 'steuer_optimierung',
+                systemPrompt: 'Du bist ein Steuerberater. Finde legale Optimierungsmöglichkeiten.',
+                userPrompt: `Optimiere die Steuersituation: ${JSON.stringify(situation)}. Gib zurück: optimierungspotenzial[{bereich, beschreibung, ersparnis_geschaetzt, aufwand, umsetzung, tipp}], checkliste_jahresende[{aktion, frist, potenzial}], disclaimer`,
+                responseSchema: true
+            });
 
             if (response.data.success) {
                 setResult(response.data.data);

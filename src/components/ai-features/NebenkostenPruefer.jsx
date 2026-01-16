@@ -29,9 +29,13 @@ export default function NebenkostenPruefer() {
 
         setLoading(true);
         try {
-            const response = await base44.functions.invoke('pruefeNebenkostenabrechnung', {
+            const response = await base44.functions.invoke('callClaudeAPI', {
+                featureKey: 'nebenkosten',
+                systemPrompt: 'Du bist ein Mietrechtsexperte. Prüfe Nebenkostenabrechnungen auf Fehler und nicht umlagefähige Kosten.',
+                userPrompt: 'Prüfe diese Nebenkostenabrechnung. Gib zurück: grunddaten{abrechnungszeitraum_von, abrechnungszeitraum_bis, vorauszahlungen_gesamt, abrechnungsergebnis, ist_nachzahlung}, nicht_umlagefaehige_kosten[{bezeichnung, betrag, grund}], ergebnis{empfehlung: "akzeptieren"|"pruefen_lassen"|"widerspruch_einlegen", begruendung, ersparnis}, widerspruch_vorlage',
                 imageBase64: image.base64,
-                imageMediaType: image.type
+                imageMediaType: image.type,
+                responseSchema: true
             });
 
             if (response.data.success) {

@@ -24,13 +24,15 @@ export default function FinanzFaqBot() {
         setInput('');
 
         try {
-            const response = await base44.functions.invoke('fragFinanzBot', {
-                frage: question,
-                conversationHistory: history
+            const newHistory = [...history, { role: 'user', content: question }];
+            const response = await base44.functions.invoke('callClaudeAPI', {
+                featureKey: 'faq_bot',
+                systemPrompt: 'Du bist ein Experte für Immobilien, Finanzen, Steuern und Mietrecht. Beantworte Fragen präzise und verständlich.',
+                userPrompt: `Konversation: ${JSON.stringify(newHistory)}. Beantworte die letzte Frage.`
             });
 
             if (response.data.success) {
-                setHistory(response.data.updatedHistory);
+                setHistory([...newHistory, { role: 'assistant', content: response.data.data }]);
             } else {
                 toast.error(response.data.error || 'Fehler beim Senden');
             }

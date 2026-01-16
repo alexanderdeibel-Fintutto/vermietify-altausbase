@@ -29,7 +29,12 @@ export default function RenditeAnalyse() {
 
         setLoading(true);
         try {
-            const response = await base44.functions.invoke('analysiereRenditeAusDaten', { daten });
+            const response = await base44.functions.invoke('callClaudeAPI', {
+                featureKey: 'rendite',
+                systemPrompt: 'Du bist ein Immobilieninvestment-Experte. Berechne alle wichtigen Renditekennzahlen.',
+                userPrompt: `Analysiere diese Immobilie: ${JSON.stringify(daten)}. Berechne: renditen{bruttomietrendite, nettomietrendite, eigenkapitalrendite, cashflow_monatlich, cashflow_jaehrlich}, bewertung{gesamtnote: "sehr_gut"|"gut"|"mittel"|"schlecht", empfehlung: "kaufen"|"pruefen"|"ablehnen", begruendung, staerken[], risiken[]}`,
+                responseSchema: true
+            });
 
             if (response.data.success) {
                 setResult(response.data.data);

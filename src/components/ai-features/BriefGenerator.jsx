@@ -30,9 +30,11 @@ export default function BriefGenerator() {
 
         setLoading(true);
         try {
-            const response = await base44.functions.invoke('generiereBrief', {
-                brieftyp: formData.get('brieftyp'),
-                daten
+            const response = await base44.functions.invoke('callClaudeAPI', {
+                featureKey: 'brief',
+                systemPrompt: 'Du bist ein Rechtsanwalt für Mietrecht. Erstelle rechtssichere Geschäftsbriefe.',
+                userPrompt: `Erstelle einen Brief vom Typ "${formData.get('brieftyp')}" mit diesen Daten: ${JSON.stringify(daten)}. Gib zurück: brief_vollstaendig (formatierter Brief), versandhinweise{empfohlen: "normal"|"einschreiben"|"einschreiben_rueckschein", begruendung}`,
+                responseSchema: true
             });
 
             if (response.data.success) {

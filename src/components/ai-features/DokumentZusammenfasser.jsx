@@ -29,9 +29,13 @@ export default function DokumentZusammenfasser() {
 
         setLoading(true);
         try {
-            const response = await base44.functions.invoke('zusammenfasseDokument', {
+            const response = await base44.functions.invoke('callClaudeAPI', {
+                featureKey: 'dokument_zusammenfasser',
+                systemPrompt: 'Du bist ein Dokumentenanalyst. Fasse Dokumente strukturiert zusammen.',
+                userPrompt: 'Fasse dieses Dokument zusammen. Gib zurück: titel, dokument_typ, zusammenfassung{kurz}, kernpunkte[], handlungsbedarf{vorhanden: boolean, aktionen[{was, bis_wann}]}',
                 imageBase64: image.base64,
-                imageMediaType: image.type
+                imageMediaType: image.type,
+                responseSchema: true
             });
 
             if (response.data.success) {

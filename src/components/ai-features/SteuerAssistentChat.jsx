@@ -27,13 +27,15 @@ export default function SteuerAssistentChat() {
         setLoading(true);
 
         try {
-            const response = await base44.functions.invoke('chatMitSteuerAssistent', {
-                messages: [userMessage],
-                conversationHistory: messages
+            const newMessages = [...messages, userMessage];
+            const response = await base44.functions.invoke('callClaudeAPI', {
+                featureKey: 'steuer_chat',
+                systemPrompt: 'Du bist ein geduldiger Steuerberater. Führe Nutzer Schritt für Schritt durch ihre Steuererklärung.',
+                userPrompt: `Konversation: ${JSON.stringify(newMessages)}. Beantworte die letzte Nachricht und stelle die nächste relevante Frage.`
             });
 
             if (response.data.success) {
-                setMessages(response.data.updatedHistory);
+                setMessages([...newMessages, { role: 'assistant', content: response.data.data }]);
             } else {
                 toast.error(response.data.error || 'Fehler beim Senden');
             }

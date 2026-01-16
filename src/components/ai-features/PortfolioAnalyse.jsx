@@ -12,7 +12,13 @@ export default function PortfolioAnalyse() {
     const handleAnalyze = async () => {
         setLoading(true);
         try {
-            const response = await base44.functions.invoke('analysierePortfolio', {});
+            const buildings = await base44.entities.Building.list();
+            const response = await base44.functions.invoke('callClaudeAPI', {
+                featureKey: 'portfolio',
+                systemPrompt: 'Du bist ein Portfolio-Manager für Immobilien. Analysiere das Portfolio strategisch.',
+                userPrompt: `Analysiere dieses Immobilien-Portfolio: ${JSON.stringify(buildings)}. Gib zurück: portfolio_uebersicht{anzahl_objekte, gesamtwert_geschaetzt, durchschnittliche_rendite}, diversifikation{bewertung: "gut"|"mittel"|"schlecht", kommentar}, risiko_analyse{gesamtrisiko: "niedrig"|"mittel"|"hoch", klumpenrisiken[]}, empfehlungen[{bereich, empfehlung, begruendung, prioritaet}], disclaimer`,
+                responseSchema: true
+            });
 
             if (response.data.success) {
                 setResult(response.data.data);
