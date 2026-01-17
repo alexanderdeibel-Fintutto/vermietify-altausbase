@@ -537,6 +537,7 @@ import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
 import WelcomeDashboard from './pages/WelcomeDashboard';
+import SubscriptionSuccess from './pages/SubscriptionSuccess';
 import __Layout from './Layout.jsx';
 
 
@@ -1080,6 +1081,7 @@ export const PAGES = {
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
     "WelcomeDashboard": WelcomeDashboard,
+    "SubscriptionSuccess": SubscriptionSuccess,
 }
 
 export const pagesConfig = {
