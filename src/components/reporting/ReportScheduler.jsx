@@ -1,65 +1,43 @@
 import React, { useState } from 'react';
-import { VfModal } from '@/components/shared/VfModal';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { VfSelect } from '@/components/shared/VfSelect';
-import { VfInput } from '@/components/shared/VfInput';
+import { VfCheckbox } from '@/components/shared/VfCheckbox';
 import { Button } from '@/components/ui/button';
-import { base44 } from '@/api/base44Client';
-import { useMutation } from '@tanstack/react-query';
-import { Clock } from 'lucide-react';
+import { Clock, Plus } from 'lucide-react';
 
-export default function ReportScheduler({ open, onClose, reportType }) {
-  const [frequency, setFrequency] = useState('weekly');
-  const [recipients, setRecipients] = useState('');
-
-  const scheduleMutation = useMutation({
-    mutationFn: async (data) => {
-      await base44.entities.ReportSchedule.create({
-        report_type: reportType,
-        frequency: data.frequency,
-        recipients: data.recipients.split(',').map(e => e.trim()),
-        is_active: true
-      });
-    },
-    onSuccess: () => onClose()
-  });
+export default function ReportScheduler() {
+  const [schedules, setSchedules] = useState([
+    { id: 1, report: 'Monatsbericht Finanzen', frequency: 'monthly', active: true }
+  ]);
 
   return (
-    <VfModal
-      open={open}
-      onOpenChange={onClose}
-      title="Bericht planen"
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>Abbrechen</Button>
-          <Button 
-            variant="gradient"
-            onClick={() => scheduleMutation.mutate({ frequency, recipients })}
-          >
-            <Clock className="h-4 w-4 mr-2" />
-            Planen
-          </Button>
-        </>
-      }
-    >
-      <div className="space-y-4">
-        <VfSelect
-          label="Häufigkeit"
-          value={frequency}
-          onChange={setFrequency}
-          options={[
-            { value: 'daily', label: 'Täglich' },
-            { value: 'weekly', label: 'Wöchentlich' },
-            { value: 'monthly', label: 'Monatlich' }
-          ]}
-        />
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Clock className="h-5 w-5" />
+          Geplante Berichte
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3 mb-4">
+          {schedules.map((schedule) => (
+            <div key={schedule.id} className="flex items-center justify-between p-3 bg-[var(--theme-surface)] rounded-lg">
+              <div className="flex-1">
+                <div className="font-medium text-sm">{schedule.report}</div>
+                <div className="text-xs text-[var(--theme-text-muted)] mt-1">
+                  {schedule.frequency === 'monthly' ? 'Monatlich' : schedule.frequency === 'weekly' ? 'Wöchentlich' : 'Täglich'}
+                </div>
+              </div>
+              <VfCheckbox checked={schedule.active} />
+            </div>
+          ))}
+        </div>
 
-        <VfInput
-          label="E-Mail-Empfänger"
-          placeholder="email@example.com, email2@example.com"
-          value={recipients}
-          onChange={(e) => setRecipients(e.target.value)}
-        />
-      </div>
-    </VfModal>
+        <Button variant="outline" className="w-full">
+          <Plus className="h-4 w-4 mr-2" />
+          Neuer Zeitplan
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

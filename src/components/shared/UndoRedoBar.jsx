@@ -1,32 +1,27 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Undo2, Redo2 } from 'lucide-react';
+import { Undo, Redo } from 'lucide-react';
 
-export default function UndoRedoBar({ 
-  canUndo = false, 
-  canRedo = false,
-  onUndo,
-  onRedo 
-}) {
+export default function UndoRedoBar({ canUndo, canRedo, onUndo, onRedo }) {
   return (
-    <div className="flex items-center gap-2 p-2 bg-[var(--theme-surface)] rounded-lg border border-[var(--theme-border)]">
+    <div className="flex gap-2 items-center">
       <Button 
         variant="ghost" 
         size="sm"
         onClick={onUndo}
         disabled={!canUndo}
-        title="Rückgängig"
       >
-        <Undo2 className="h-4 w-4" />
+        <Undo className="h-4 w-4 mr-2" />
+        Rückgängig
       </Button>
       <Button 
         variant="ghost" 
         size="sm"
         onClick={onRedo}
         disabled={!canRedo}
-        title="Wiederholen"
       >
-        <Redo2 className="h-4 w-4" />
+        <Redo className="h-4 w-4 mr-2" />
+        Wiederholen
       </Button>
     </div>
   );
