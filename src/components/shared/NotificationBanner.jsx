@@ -3,25 +3,37 @@ import { X, Info, AlertTriangle, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function NotificationBanner({ 
-  type = 'info', 
   message, 
-  onDismiss 
+  type = 'info', 
+  onDismiss,
+  action 
 }) {
-  const config = {
-    info: { icon: Info, bg: 'bg-[var(--vf-info-50)]', border: 'border-[var(--vf-info-200)]', text: 'text-[var(--vf-info-700)]' },
-    success: { icon: CheckCircle, bg: 'bg-[var(--vf-success-50)]', border: 'border-[var(--vf-success-200)]', text: 'text-[var(--vf-success-700)]' },
-    warning: { icon: AlertWarning, bg: 'bg-[var(--vf-warning-50)]', border: 'border-[var(--vf-warning-200)]', text: 'text-[var(--vf-warning-700)]' }
+  const icons = {
+    info: Info,
+    warning: AlertTriangle,
+    success: CheckCircle,
+    error: AlertTriangle
   };
 
-  const { icon: Icon, bg, border, text } = config[type] || config.info;
+  const Icon = icons[type];
 
   return (
-    <div className={cn('flex items-center gap-3 p-4 rounded-lg border', bg, border)}>
-      <Icon className={cn('h-5 w-5 flex-shrink-0', text)} />
-      <p className={cn('flex-1 text-sm', text)}>{message}</p>
+    <div className={cn(
+      "vf-alert mb-4",
+      `vf-alert-${type}`
+    )}>
+      <Icon className="vf-alert-icon" />
+      <div className="vf-alert-content flex-1">
+        <p className="vf-alert-description">{message}</p>
+        {action && (
+          <button onClick={action.onClick} className="underline font-medium mt-1">
+            {action.label}
+          </button>
+        )}
+      </div>
       {onDismiss && (
-        <button onClick={onDismiss} className={text}>
-          <X className="h-5 w-5" />
+        <button onClick={onDismiss}>
+          <X className="h-4 w-4" />
         </button>
       )}
     </div>
