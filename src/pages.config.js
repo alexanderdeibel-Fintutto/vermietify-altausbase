@@ -153,6 +153,7 @@ import DataImportExport from './pages/DataImportExport';
 import DataImportExportHub from './pages/DataImportExportHub';
 import DataManagementHub from './pages/DataManagementHub';
 import DeductionMaximizationTool from './pages/DeductionMaximizationTool';
+import DesignSystem from './pages/DesignSystem';
 import DeveloperDocumentation from './pages/DeveloperDocumentation';
 import DividendOptimization from './pages/DividendOptimization';
 import DocumentAdvancedHub from './pages/DocumentAdvancedHub';
@@ -214,9 +215,8 @@ import HilfeCenter from './pages/HilfeCenter';
 import Home from './pages/Home';
 import IncomeOptimizationTool from './pages/IncomeOptimizationTool';
 import Index from './pages/Index';
-import InsuranceManagement from './pages/InsuranceManagement';
-import Invoices from './pages/Invoices';
 import IntegrationHub from './pages/IntegrationHub';
+import InsuranceManagement from './pages/InsuranceManagement';
 import IntegrationMarketplace from './pages/IntegrationMarketplace';
 import InternationalTaxComparison from './pages/InternationalTaxComparison';
 import InternationalTaxPlanning from './pages/InternationalTaxPlanning';
@@ -225,6 +225,7 @@ import InvestmentTaxTracking from './pages/InvestmentTaxTracking';
 import InvestmentsCH from './pages/InvestmentsCH';
 import InvoiceManagement from './pages/InvoiceManagement';
 import InvoiceManagementNew from './pages/InvoiceManagementNew';
+import Invoices from './pages/Invoices';
 import IoTSensorManagement from './pages/IoTSensorManagement';
 import KnowledgeBaseAdmin from './pages/KnowledgeBaseAdmin';
 import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
@@ -323,8 +324,8 @@ import SubscriptionManagement from './pages/SubscriptionManagement';
 import SubscriptionSettings from './pages/SubscriptionSettings';
 import SuiteManagement from './pages/SuiteManagement';
 import SuppliersManagement from './pages/SuppliersManagement';
-import SupportCenter from './pages/SupportCenter';
 import Tasks from './pages/Tasks';
+import SupportCenter from './pages/SupportCenter';
 import SyncManagement from './pages/SyncManagement';
 import SystemConfiguration from './pages/SystemConfiguration';
 import SystemHealth from './pages/SystemHealth';
@@ -467,7 +468,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import DesignSystem from './pages/DesignSystem';
 import __Layout from './Layout.jsx';
 
 
@@ -627,6 +627,7 @@ export const PAGES = {
     "DataImportExportHub": DataImportExportHub,
     "DataManagementHub": DataManagementHub,
     "DeductionMaximizationTool": DeductionMaximizationTool,
+    "DesignSystem": DesignSystem,
     "DeveloperDocumentation": DeveloperDocumentation,
     "DividendOptimization": DividendOptimization,
     "DocumentAdvancedHub": DocumentAdvancedHub,
@@ -688,9 +689,8 @@ export const PAGES = {
     "Home": Home,
     "IncomeOptimizationTool": IncomeOptimizationTool,
     "Index": Index,
-    "InsuranceManagement": InsuranceManagement,
-    "Invoices": Invoices,
     "IntegrationHub": IntegrationHub,
+    "InsuranceManagement": InsuranceManagement,
     "IntegrationMarketplace": IntegrationMarketplace,
     "InternationalTaxComparison": InternationalTaxComparison,
     "InternationalTaxPlanning": InternationalTaxPlanning,
@@ -699,6 +699,7 @@ export const PAGES = {
     "InvestmentsCH": InvestmentsCH,
     "InvoiceManagement": InvoiceManagement,
     "InvoiceManagementNew": InvoiceManagementNew,
+    "Invoices": Invoices,
     "IoTSensorManagement": IoTSensorManagement,
     "KnowledgeBaseAdmin": KnowledgeBaseAdmin,
     "KnowledgeManagementDashboard": KnowledgeManagementDashboard,
@@ -797,8 +798,8 @@ export const PAGES = {
     "SubscriptionSettings": SubscriptionSettings,
     "SuiteManagement": SuiteManagement,
     "SuppliersManagement": SuppliersManagement,
-    "SupportCenter": SupportCenter,
     "Tasks": Tasks,
+    "SupportCenter": SupportCenter,
     "SyncManagement": SyncManagement,
     "SystemConfiguration": SystemConfiguration,
     "SystemHealth": SystemHealth,
@@ -941,11 +942,10 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "DesignSystem": DesignSystem,
 }
 
 export const pagesConfig = {
-    mainPage: "Documents",
+    mainPage: "DeveloperDocumentation",
     Pages: PAGES,
     Layout: __Layout,
 };
