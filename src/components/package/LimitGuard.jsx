@@ -1,100 +1,42 @@
 import React, { useState } from 'react';
-import { usePackageAccess } from '@/components/hooks/usePackageAccess';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { AlertTriangle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
+import UpgradePrompt from '@/components/subscription/UpgradePrompt';
 
 export default function LimitGuard({ 
-  limitType, // 'buildings' | 'units'
-  currentCount,
-  onLimitReached,
-  children 
+  entityType, 
+  children,
+  onLimitReached 
 }) {
-  const { packageConfig, canCreateBuilding, canCreateUnit } = usePackageAccess();
-  const [showDialog, setShowDialog] = useState(false);
-  const navigate = useNavigate();
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
-  const checkLimit = async () => {
-    let canCreate = false;
-    
-    // Backend-Validierung
-    try {
-      if (limitType === 'buildings') {
-        const response = await base44.functions.invoke('validateBuildingCreation');
-        canCreate = response.data.allowed;
-      } else if (limitType === 'units') {
-        const response = await base44.functions.invoke('validateUnitCreation');
-        canCreate = response.data.allowed;
-      }
-    } catch (error) {
-      console.error('Limit validation error:', error);
-      canCreate = false;
+  const { data: limitCheck } = useQuery({
+    queryKey: ['limit-check', entityType],
+    queryFn: async () => {
+      const response = await base44.functions.invoke('checkLimitAccess', {
+        entity_type: entityType
+      });
+      return response.data;
     }
+  });
 
-    if (!canCreate) {
-      setShowDialog(true);
+  const handleClick = () => {
+    if (limitCheck && !limitCheck.allowed) {
+      setShowUpgrade(true);
       if (onLimitReached) onLimitReached();
-      return false;
     }
-
-    return true;
   };
-
-  const limit = limitType === 'buildings' 
-    ? packageConfig?.max_buildings 
-    : packageConfig?.max_units;
 
   return (
     <>
-      {React.cloneElement(children, {
-        onClick: async (e) => {
-          const canProceed = await checkLimit();
-          if (canProceed && children.props.onClick) {
-            children.props.onClick(e);
-          }
-        }
-      })}
-
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-orange-600" />
-              Limit erreicht
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <p className="text-sm text-slate-600">
-              Sie haben das Maximum von <strong>{limit} {limitType === 'buildings' ? 'Gebäuden' : 'Einheiten'}</strong> für Ihr Paket <strong>{packageConfig?.package_type}</strong> erreicht.
-            </p>
-
-            <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
-              <p className="text-xs text-orange-800">
-                💡 <strong>Tipp:</strong> Upgraden Sie auf ein höheres Paket für mehr Objekte und Einheiten.
-              </p>
-            </div>
-
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setShowDialog(false)} className="flex-1">
-                Schließen
-              </Button>
-              <Button 
-                onClick={() => {
-                  setShowDialog(false);
-                  navigate(createPageUrl('MyAccount'));
-                }}
-                className="flex-1 bg-orange-600 hover:bg-orange-700"
-              >
-                Paket upgraden
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <div onClick={handleClick}>
+        {children}
+      </div>
+      <UpgradePrompt
+        open={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        feature={`Mehr ${entityType === 'Building' ? 'Objekte' : 'Einheiten'}`}
+      />
     </>
   );
 }

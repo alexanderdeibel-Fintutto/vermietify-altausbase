@@ -1,54 +1,37 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Sparkles } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
+import { VfBadge } from '@/components/shared/VfBadge';
 
 export default function NewFeaturesWidget() {
-  const { data: recentUnlocks = [] } = useQuery({
-    queryKey: ['recentUnlocks'],
-    queryFn: async () => {
-      const unlocks = await base44.entities.FeatureUnlock.list('-created_date', 5);
-      return unlocks.filter(u => {
-        const unlockDate = new Date(u.created_date);
-        const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-        return unlockDate > weekAgo;
-      });
-    }
-  });
-
-  if (recentUnlocks.length === 0) return null;
+  const features = [
+    { title: 'KI-Mietersuche', description: 'Automatische Vorschläge', badge: 'Neu' },
+    { title: 'Bulk-BK-Abrechnung', description: 'Alle Objekte auf einmal', badge: 'Beta' },
+    { title: 'WhatsApp-Integration', description: 'Kommunikation mit Mietern', badge: 'Neu' }
+  ];
 
   return (
-    <Card className="border border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50">
+    <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Sparkles className="w-5 h-5 text-orange-600" />
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5" />
           Neue Features
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <p className="text-sm text-slate-600">
-          🎉 Du hast {recentUnlocks.length} neue Feature{recentUnlocks.length !== 1 ? 's' : ''} freigeschaltet!
-        </p>
-        <div className="space-y-2">
-          {recentUnlocks.map(unlock => (
-            <div key={unlock.id} className="p-2 bg-white rounded-lg border border-orange-200">
-              <p className="text-sm font-medium text-slate-900">{unlock.feature_key}</p>
-              <p className="text-xs text-slate-500">
-                {new Date(unlock.created_date).toLocaleDateString('de-DE')}
-              </p>
+      <CardContent>
+        <div className="space-y-3">
+          {features.map((feature, index) => (
+            <div key={index} className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="font-medium text-sm">{feature.title}</div>
+                <div className="text-xs text-[var(--theme-text-muted)]">{feature.description}</div>
+              </div>
+              <VfBadge variant={feature.badge === 'Beta' ? 'warning' : 'accent'}>
+                {feature.badge}
+              </VfBadge>
             </div>
           ))}
         </div>
-        <Link to={createPageUrl('FeatureCatalog')}>
-          <Button size="sm" className="w-full bg-orange-600 hover:bg-orange-700">
-            Alle Features ansehen
-          </Button>
-        </Link>
       </CardContent>
     </Card>
   );

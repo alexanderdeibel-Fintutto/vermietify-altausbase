@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react';
 
-/**
- * LocalStorage Hook mit automatischer Synchronisation
- */
 export function useLocalStorage(key, initialValue) {
   const [storedValue, setStoredValue] = useState(() => {
     try {
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
     } catch (error) {
-      console.error('Error reading localStorage:', error);
+      console.error('Error reading from localStorage:', error);
       return initialValue;
     }
   });
@@ -20,7 +17,7 @@ export function useLocalStorage(key, initialValue) {
       setStoredValue(valueToStore);
       window.localStorage.setItem(key, JSON.stringify(valueToStore));
     } catch (error) {
-      console.error('Error setting localStorage:', error);
+      console.error('Error saving to localStorage:', error);
     }
   };
 

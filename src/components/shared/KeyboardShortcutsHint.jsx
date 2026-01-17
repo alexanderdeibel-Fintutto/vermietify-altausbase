@@ -1,18 +1,14 @@
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
-import { motion } from 'framer-motion';
+import { Command } from 'lucide-react';
 
 export default function KeyboardShortcutsHint({ shortcut, description }) {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="flex items-center gap-2 text-xs text-slate-500"
-    >
-      <span>{description}</span>
-      <Badge variant="outline" className="bg-slate-100 text-slate-700 font-mono text-xs">
+    <div className="flex items-center gap-2 text-xs text-[var(--theme-text-muted)]">
+      <Command className="h-3 w-3" />
+      <kbd className="px-2 py-1 bg-[var(--theme-surface)] border border-[var(--theme-border)] rounded font-mono">
         {shortcut}
-      </Badge>
-    </motion.div>
+      </kbd>
+      <span>{description}</span>
+    </div>
   );
 }

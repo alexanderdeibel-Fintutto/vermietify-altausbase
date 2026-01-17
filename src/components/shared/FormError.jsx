@@ -1,21 +1,13 @@
 import React from 'react';
 import { AlertCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
-export default function FormError({ message, visible = true }) {
+export default function FormError({ message }) {
+  if (!message) return null;
+
   return (
-    <AnimatePresence>
-      {visible && message && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200"
-        >
-          <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-red-600">{message}</p>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <div className="flex items-center gap-2 text-sm text-[var(--vf-error-600)] mt-2">
+      <AlertCircle className="h-4 w-4 flex-shrink-0" />
+      <span>{message}</span>
+    </div>
   );
 }

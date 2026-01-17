@@ -1,90 +1,29 @@
-import React, { useState } from 'react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { X, Info, AlertTriangle, CheckCircle, AlertCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
+import { X, Info, AlertTriangle, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const variantConfig = {
-  info: {
-    icon: Info,
-    className: 'border-blue-200 bg-blue-50 text-blue-900',
-    iconColor: 'text-blue-600'
-  },
-  warning: {
-    icon: AlertTriangle,
-    className: 'border-amber-200 bg-amber-50 text-amber-900',
-    iconColor: 'text-amber-600'
-  },
-  success: {
-    icon: CheckCircle,
-    className: 'border-green-200 bg-green-50 text-green-900',
-    iconColor: 'text-green-600'
-  },
-  error: {
-    icon: AlertCircle,
-    className: 'border-red-200 bg-red-50 text-red-900',
-    iconColor: 'text-red-600'
-  }
-};
-
-export default function NotificationBanner({
-  title,
-  message,
-  variant = 'info',
-  dismissible = true,
-  action,
-  onDismiss
+export default function NotificationBanner({ 
+  type = 'info', 
+  message, 
+  onDismiss 
 }) {
-  const [visible, setVisible] = useState(true);
-
-  const config = variantConfig[variant];
-  const Icon = config.icon;
-
-  const handleDismiss = () => {
-    setVisible(false);
-    onDismiss?.();
+  const config = {
+    info: { icon: Info, bg: 'bg-[var(--vf-info-50)]', border: 'border-[var(--vf-info-200)]', text: 'text-[var(--vf-info-700)]' },
+    success: { icon: CheckCircle, bg: 'bg-[var(--vf-success-50)]', border: 'border-[var(--vf-success-200)]', text: 'text-[var(--vf-success-700)]' },
+    warning: { icon: AlertWarning, bg: 'bg-[var(--vf-warning-50)]', border: 'border-[var(--vf-warning-200)]', text: 'text-[var(--vf-warning-700)]' }
   };
 
+  const { icon: Icon, bg, border, text } = config[type] || config.info;
+
   return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-        >
-          <Alert className={cn(config.className, 'relative')}>
-            <Icon className={cn('h-5 w-5', config.iconColor)} />
-            <div className="flex-1">
-              {title && <AlertTitle className="mb-1">{title}</AlertTitle>}
-              <AlertDescription>{message}</AlertDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              {action && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={action.onClick}
-                  className="ml-auto"
-                >
-                  {action.label}
-                </Button>
-              )}
-              {dismissible && (
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={handleDismiss}
-                  className="h-8 w-8"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </Alert>
-        </motion.div>
+    <div className={cn('flex items-center gap-3 p-4 rounded-lg border', bg, border)}>
+      <Icon className={cn('h-5 w-5 flex-shrink-0', text)} />
+      <p className={cn('flex-1 text-sm', text)}>{message}</p>
+      {onDismiss && (
+        <button onClick={onDismiss} className={text}>
+          <X className="h-5 w-5" />
+        </button>
       )}
-    </AnimatePresence>
+    </div>
   );
 }
