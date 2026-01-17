@@ -1,13 +1,13 @@
 import * as React from "react"
-
 import { cn } from "@/lib/utils"
 
-const Textarea = React.forwardRef(({ className, ...props }, ref) => {
+const Textarea = React.forwardRef(({ className, error, ...props }, ref) => {
   return (
-    (<textarea
-      className={cn("vf-textarea", className)}
+    <textarea
+      className={cn("vf-textarea", error && "vf-input-error", className)}
       ref={ref}
-      {...props} />)
+      {...props}
+    />
   );
 })
 Textarea.displayName = "Textarea"

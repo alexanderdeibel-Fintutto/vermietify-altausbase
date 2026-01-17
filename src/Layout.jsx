@@ -143,12 +143,12 @@ export default function Layout({ children, currentPageName }) {
                                                 <Suspense fallback={null}>
                                                    <FeatureUnlockNotification />
                                                  </Suspense>
-                                 <div className="min-h-screen flex" style={{ backgroundColor: '#ffffff' }}>
+                                 <div className="min-h-screen flex">
                                    {/* Sidebar */}
                                    <MainSidebar />
 
                                    {/* Main Content Area */}
-                                   <div className="flex-1 flex flex-col">
+                                   <div className="flex-1 flex flex-col vf-main-with-sidebar">
                  {/* Top Header Bar */}
                  <header className="vf-navbar">
                     <div className="vf-navbar-left">
