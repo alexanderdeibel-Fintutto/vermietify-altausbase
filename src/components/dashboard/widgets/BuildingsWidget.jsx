@@ -1,46 +1,48 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2 } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Building2, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
 export default function BuildingsWidget() {
   const { data: buildings = [] } = useQuery({
-    queryKey: ['buildings-widget'],
-    queryFn: () => base44.entities.Building.list('-updated_date', 10)
+    queryKey: ['buildings'],
+    queryFn: () => base44.entities.Building.list('-created_date', 5)
   });
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Building2 className="w-5 h-5" />
-          Gebäude
+        <CardTitle className="flex items-center gap-2">
+          <Building2 className="h-5 w-5" />
+          Objekte
+          <span className="vf-badge vf-badge-primary">{buildings.length}</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          {buildings.slice(0, 5).map(building => (
+        <div className="space-y-2">
+          {buildings.map((building) => (
             <Link key={building.id} to={createPageUrl('BuildingDetail') + `?id=${building.id}`}>
-              <div className="p-3 border rounded-lg hover:bg-slate-50 transition-all flex justify-between items-center">
-                <div>
-                  <p className="text-sm font-semibold text-slate-800">{building.name}</p>
-                  <p className="text-xs text-slate-500">{building.city}</p>
-                </div>
-                <Link to={createPageUrl(`Units?building_id=${building.id}`)} className="text-sm text-blue-600 font-medium flex items-center gap-1 hover:gap-2 transition-all">
-                  Einheiten <ArrowRight className="w-4 h-4" />
-                </Link>
+              <div className="p-3 bg-[var(--theme-surface)] hover:bg-[var(--theme-surface-hover)] rounded-lg transition-colors">
+                <div className="font-medium text-sm">{building.name}</div>
+                {building.address && (
+                  <div className="text-xs text-[var(--theme-text-muted)] mt-1">{building.address}</div>
+                )}
               </div>
             </Link>
           ))}
-
-          {buildings.length === 0 && (
-            <p className="text-sm text-slate-500 text-center py-4">Keine Gebäude</p>
-          )}
         </div>
       </CardContent>
+      <CardFooter>
+        <Link to={createPageUrl('Buildings')} className="w-full">
+          <Button variant="outline" className="w-full">
+            Alle ansehen
+          </Button>
+        </Link>
+      </CardFooter>
     </Card>
   );
 }
