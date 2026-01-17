@@ -1,59 +1,72 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { VfSelect } from '@/components/shared/VfSelect';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Zap, Plus } from 'lucide-react';
-import { toast } from 'sonner';
 
 export default function RuleBasedActions() {
-  const [ruleName, setRuleName] = useState('');
-  const queryClient = useQueryClient();
-
-  const { data: rules = [] } = useQuery({
-    queryKey: ['automationRules'],
-    queryFn: async () => {
-      const response = await base44.functions.invoke('getAutomationRules', {});
-      return response.data.rules;
-    }
+  const [rules, setRules] = useState([]);
+  const [newRule, setNewRule] = useState({
+    trigger: '',
+    action: ''
   });
 
-  const createMutation = useMutation({
-    mutationFn: async () => {
-      await base44.functions.invoke('createRule', { name: ruleName });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['automationRules'] });
-      toast.success('Regel erstellt');
-      setRuleName('');
+  const addRule = () => {
+    if (newRule.trigger && newRule.action) {
+      setRules([...rules, newRule]);
+      setNewRule({ trigger: '', action: '' });
     }
-  });
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Zap className="w-5 h-5" />
+          <Zap className="h-5 w-5" />
           Automatisierungs-Regeln
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex gap-2">
-          <Input placeholder="Regel-Name" value={ruleName} onChange={(e) => setRuleName(e.target.value)} />
-          <Button size="icon" onClick={() => createMutation.mutate()}>
-            <Plus className="w-4 h-4" />
-          </Button>
-        </div>
-        {rules.map(rule => (
-          <div key={rule.id} className="p-3 bg-slate-50 rounded-lg">
-            <p className="font-semibold text-sm">{rule.name}</p>
-            <Badge className="mt-1 bg-green-600 text-xs">
-              {rule.executions} Ausführungen
-            </Badge>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            <VfSelect
+              label="Wenn..."
+              value={newRule.trigger}
+              onChange={(v) => setNewRule({ ...newRule, trigger: v })}
+              options={[
+                { value: 'payment_overdue', label: 'Zahlung überfällig' },
+                { value: 'contract_expiring', label: 'Vertrag läuft aus' },
+                { value: 'maintenance_request', label: 'Wartungsanfrage erstellt' }
+              ]}
+            />
+
+            <VfSelect
+              label="Dann..."
+              value={newRule.action}
+              onChange={(v) => setNewRule({ ...newRule, action: v })}
+              options={[
+                { value: 'send_email', label: 'E-Mail senden' },
+                { value: 'create_task', label: 'Aufgabe erstellen' },
+                { value: 'send_notification', label: 'Benachrichtigung senden' }
+              ]}
+            />
           </div>
-        ))}
+
+          <Button variant="outline" onClick={addRule} className="w-full">
+            <Plus className="h-4 w-4 mr-2" />
+            Regel hinzufügen
+          </Button>
+
+          {rules.length > 0 && (
+            <div className="space-y-2 mt-4">
+              {rules.map((rule, index) => (
+                <div key={index} className="p-3 bg-[var(--theme-surface)] rounded-lg text-sm">
+                  <span className="font-medium">Wenn</span> {rule.trigger} → <span className="font-medium">Dann</span> {rule.action}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

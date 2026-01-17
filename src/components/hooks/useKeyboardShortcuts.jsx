@@ -1,31 +1,14 @@
 import { useEffect } from 'react';
 
-export function useKeyboardShortcuts(shortcuts = {}) {
+export function useKeyboardShortcuts(shortcuts) {
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Ctrl/Cmd + N: New
-      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+      const key = `${e.ctrlKey || e.metaKey ? 'ctrl+' : ''}${e.shiftKey ? 'shift+' : ''}${e.key.toLowerCase()}`;
+      
+      const shortcut = shortcuts[key];
+      if (shortcut) {
         e.preventDefault();
-        shortcuts.onNew?.();
-      }
-      // Ctrl/Cmd + S: Save
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        shortcuts.onSave?.();
-      }
-      // Ctrl/Cmd + F: Search/Filter
-      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-        e.preventDefault();
-        shortcuts.onSearch?.();
-      }
-      // Escape: Close
-      if (e.key === 'Escape') {
-        shortcuts.onEscape?.();
-      }
-      // Ctrl/Cmd + K: Command/Action Menu
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        shortcuts.onCommand?.();
+        shortcut();
       }
     };
 

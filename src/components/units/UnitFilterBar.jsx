@@ -1,30 +1,54 @@
 import React from 'react';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, Plus, Filter } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { VfInput } from '@/components/shared/VfInput';
+import { VfSelect } from '@/components/shared/VfSelect';
+import { Search } from 'lucide-react';
 
-export default function UnitFilterBar({ onSearchChange, onStatusChange, onNewUnit }) {
+export default function UnitFilterBar({ filters, onChange }) {
   return (
-    <div className="flex gap-4 flex-wrap items-center mb-6">
-      <div className="flex-1 min-w-64">
-        <div className="relative">
-          <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-          <Input placeholder="Wohneinheiten suchen..." onChange={(e) => onSearchChange?.(e.target.value)} className="pl-10" />
-        </div>
+    <div className="vf-card p-4">
+      <div className="grid md:grid-cols-4 gap-4">
+        <VfInput
+          leftIcon={Search}
+          placeholder="Einheitsnummer..."
+          value={filters.search || ''}
+          onChange={(e) => onChange({ ...filters, search: e.target.value })}
+        />
+
+        <VfSelect
+          label="Status"
+          value={filters.status || 'all'}
+          onChange={(v) => onChange({ ...filters, status: v })}
+          options={[
+            { value: 'all', label: 'Alle' },
+            { value: 'occupied', label: 'Vermietet' },
+            { value: 'vacant', label: 'Leer' },
+            { value: 'maintenance', label: 'In Wartung' }
+          ]}
+        />
+
+        <VfSelect
+          label="Typ"
+          value={filters.type || 'all'}
+          onChange={(v) => onChange({ ...filters, type: v })}
+          options={[
+            { value: 'all', label: 'Alle' },
+            { value: 'apartment', label: 'Wohnung' },
+            { value: 'commercial', label: 'Gewerbe' },
+            { value: 'parking', label: 'Stellplatz' }
+          ]}
+        />
+
+        <VfSelect
+          label="Sortierung"
+          value={filters.sort || 'unit_number'}
+          onChange={(v) => onChange({ ...filters, sort: v })}
+          options={[
+            { value: 'unit_number', label: 'Nummer' },
+            { value: '-living_area', label: 'Größte zuerst' },
+            { value: '-rent_cold', label: 'Höchste Miete' }
+          ]}
+        />
       </div>
-      <div className="flex items-center gap-2">
-        <Filter className="w-4 h-4 text-slate-400" />
-        <Select onValueChange={(value) => onStatusChange?.(value)}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle</SelectItem>
-            <SelectItem value="occupied">Vermietet</SelectItem>
-            <SelectItem value="vacant">Leer</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <Button onClick={onNewUnit} className="bg-slate-700 hover:bg-slate-800 font-extralight"><Plus className="w-4 h-4 mr-2" />Neue Einheit</Button>
     </div>
   );
 }

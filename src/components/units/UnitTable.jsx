@@ -1,32 +1,41 @@
 import React from 'react';
-import { Home, Edit, Trash2 } from 'lucide-react';
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
+import StatusBadge from '@/components/shared/StatusBadge';
+import CurrencyDisplay from '@/components/shared/CurrencyDisplay';
+import { Eye } from 'lucide-react';
 
-export default function UnitTable({ units, onEdit, onDelete }) {
+export default function UnitTable({ units = [], onView }) {
   return (
-    <div className="rounded-xl border border-slate-200 overflow-hidden">
-      <table className="w-full">
+    <div className="vf-table-container">
+      <table className="vf-table">
         <thead>
-          <tr className="bg-slate-50 border-b border-slate-200">
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Einheit</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Gebäude</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Fläche</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Miete</th>
-            <th className="px-6 py-3"></th>
+          <tr>
+            <th>Einheit</th>
+            <th>Typ</th>
+            <th>Fläche</th>
+            <th>Zimmer</th>
+            <th>Miete</th>
+            <th>Status</th>
+            <th className="text-right">Aktionen</th>
           </tr>
         </thead>
         <tbody>
-          {units?.map((unit, idx) => (
-            <tr key={idx} className="border-b border-slate-100 hover:bg-sky-50 transition-colors cursor-pointer" onClick={() => onEdit?.(unit)}>
-              <td className="px-6 py-4 text-sm font-medium text-slate-900 flex items-center gap-2"><Home className="w-4 h-4 text-sky-600" />{unit.unit_number || unit.name || `Wohnung ${idx + 1}`}</td>
-              <td className="px-6 py-4 text-sm text-slate-700">{unit.building_name || '—'}</td>
-              <td className="px-6 py-4 text-sm text-slate-700">{unit.sqm || unit.area || '—'} m² / {unit.rooms || '—'} Zi.</td>
-              <td className="px-6 py-4 text-sm"><span className={`px-2 py-1 rounded-full text-xs font-medium ${unit.status === 'occupied' ? 'bg-green-100 text-green-700' : unit.status === 'renovation' ? 'bg-orange-100 text-orange-700' : 'bg-yellow-100 text-yellow-700'}`}>{unit.status === 'occupied' ? 'Vermietet' : unit.status === 'renovation' ? 'Renovierung' : 'Verfügbar'}</span></td>
-              <td className="px-6 py-4 text-sm font-medium text-slate-900">€{(unit.base_rent || unit.rent || 0).toFixed(2)}</td>
-              <td className="px-6 py-4 text-right flex gap-2 justify-end">
-                <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onEdit?.(unit); }}><Edit className="w-4 h-4 text-slate-600" /></Button>
-                <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onDelete?.(unit); }}><Trash2 className="w-4 h-4 text-red-600" /></Button>
+          {units.map((unit) => (
+            <tr key={unit.id}>
+              <td className="font-medium">{unit.unit_number || unit.name}</td>
+              <td>{unit.unit_type || 'Wohnung'}</td>
+              <td>{unit.living_area ? `${unit.living_area} m²` : '-'}</td>
+              <td>{unit.rooms || '-'}</td>
+              <td>
+                <CurrencyDisplay amount={unit.rent_cold || 0} />
+              </td>
+              <td>
+                <StatusBadge status={unit.status || 'vacant'} />
+              </td>
+              <td className="text-right">
+                <Button variant="ghost" size="sm" onClick={() => onView(unit)}>
+                  <Eye className="h-4 w-4" />
+                </Button>
               </td>
             </tr>
           ))}

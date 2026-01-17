@@ -1,14 +1,12 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { useQuery } from '@tanstack/react-query';
-import { WifiOff, Upload } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { WifiOff, CloudOff } from 'lucide-react';
+import { useLocalStorage } from '@/components/hooks/useLocalStorage';
 
-export default function OfflineMode() {
-  const [isOnline, setIsOnline] = React.useState(navigator.onLine);
+export default function OfflineMode({ children }) {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [offlineQueue, setOfflineQueue] = useLocalStorage('offline-queue', []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
@@ -21,38 +19,27 @@ export default function OfflineMode() {
     };
   }, []);
 
-  const pendingSync = JSON.parse(localStorage.getItem('pendingSync') || '[]');
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <WifiOff className="w-5 h-5" />
-          Offline-Modus
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-sm">Status</span>
-          <Badge className={isOnline ? 'bg-green-600' : 'bg-red-600'}>
-            {isOnline ? 'Online' : 'Offline'}
-          </Badge>
+  if (!isOnline) {
+    return (
+      <div className="p-6">
+        <div className="max-w-md mx-auto text-center py-12">
+          <CloudOff className="h-16 w-16 mx-auto mb-4 text-[var(--theme-text-muted)]" />
+          <h2 className="text-xl font-semibold mb-2">Offline-Modus</h2>
+          <p className="text-[var(--theme-text-secondary)]">
+            Sie sind offline. Einige Funktionen sind eingeschränkt.
+          </p>
+          {offlineQueue.length > 0 && (
+            <div className="mt-4 p-4 bg-[var(--vf-warning-50)] rounded-lg">
+              <WifiOff className="h-5 w-5 mx-auto mb-2 text-[var(--vf-warning-600)]" />
+              <p className="text-sm text-[var(--vf-warning-700)]">
+                {offlineQueue.length} Aktionen warten auf Synchronisation
+              </p>
+            </div>
+          )}
         </div>
+      </div>
+    );
+  }
 
-        {pendingSync.length > 0 && (
-          <div className="p-3 bg-orange-50 rounded-lg">
-            <p className="text-sm font-semibold text-orange-900">
-              {pendingSync.length} Einträge warten auf Synchronisation
-            </p>
-            {isOnline && (
-              <Button size="sm" className="mt-2 w-full">
-                <Upload className="w-4 h-4 mr-2" />
-                Jetzt synchronisieren
-              </Button>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
+  return children;
 }
