@@ -148,6 +148,7 @@ import ComplianceCenter from './pages/ComplianceCenter';
 import ComplianceHub from './pages/ComplianceHub';
 import ComplianceMonitoringDashboard from './pages/ComplianceMonitoringDashboard';
 import ComplianceReportingHub from './pages/ComplianceReportingHub';
+import ComprehensiveDashboard from './pages/ComprehensiveDashboard';
 import ComprehensiveTaxDashboard from './pages/ComprehensiveTaxDashboard';
 import ConsolidatedTaxSummary from './pages/ConsolidatedTaxSummary';
 import ContractAutomationHub from './pages/ContractAutomationHub';
@@ -541,7 +542,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import ComprehensiveDashboard from './pages/ComprehensiveDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -696,6 +696,7 @@ export const PAGES = {
     "ComplianceHub": ComplianceHub,
     "ComplianceMonitoringDashboard": ComplianceMonitoringDashboard,
     "ComplianceReportingHub": ComplianceReportingHub,
+    "ComprehensiveDashboard": ComprehensiveDashboard,
     "ComprehensiveTaxDashboard": ComprehensiveTaxDashboard,
     "ConsolidatedTaxSummary": ConsolidatedTaxSummary,
     "ContractAutomationHub": ContractAutomationHub,
@@ -1089,7 +1090,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "ComprehensiveDashboard": ComprehensiveDashboard,
 }
 
 export const pagesConfig = {

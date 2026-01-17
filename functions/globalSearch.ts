@@ -17,50 +17,54 @@ Deno.serve(async (req) => {
     }
 
     const searchTerm = query.toLowerCase();
+    
+    const [buildings, tenants, contracts] = await Promise.all([
+      base44.entities.Building.list(),
+      base44.entities.Tenant.list(),
+      base44.entities.LeaseContract.list()
+    ]);
+
     const results = [];
 
-    // Search Buildings
-    const buildings = await base44.entities.Building.list();
-    buildings.forEach(building => {
-      if (building.name?.toLowerCase().includes(searchTerm) || 
-          building.address?.toLowerCase().includes(searchTerm)) {
+    buildings.forEach(b => {
+      if (b.name?.toLowerCase().includes(searchTerm) || 
+          b.address?.toLowerCase().includes(searchTerm)) {
         results.push({
-          id: building.id,
-          entity_type: 'Building',
-          title: building.name,
-          subtitle: building.address
+          id: b.id,
+          type: 'building',
+          title: b.name,
+          subtitle: b.address,
+          url: `/BuildingDetail?id=${b.id}`
         });
       }
     });
 
-    // Search Tenants
-    const tenants = await base44.entities.Tenant.list();
-    tenants.forEach(tenant => {
-      if (tenant.name?.toLowerCase().includes(searchTerm) ||
-          tenant.email?.toLowerCase().includes(searchTerm)) {
+    tenants.forEach(t => {
+      if (t.name?.toLowerCase().includes(searchTerm) || 
+          t.email?.toLowerCase().includes(searchTerm)) {
         results.push({
-          id: tenant.id,
-          entity_type: 'Tenant',
-          title: tenant.name,
-          subtitle: tenant.email
+          id: t.id,
+          type: 'tenant',
+          title: t.name,
+          subtitle: t.email,
+          url: `/TenantDetail?id=${t.id}`
         });
       }
     });
 
-    // Search Contracts
-    const contracts = await base44.entities.LeaseContract.list();
-    contracts.forEach(contract => {
-      if (contract.tenant_name?.toLowerCase().includes(searchTerm)) {
+    contracts.forEach(c => {
+      if (c.tenant_name?.toLowerCase().includes(searchTerm)) {
         results.push({
-          id: contract.id,
-          entity_type: 'LeaseContract',
-          title: `Vertrag: ${contract.tenant_name}`,
-          subtitle: contract.unit_name
+          id: c.id,
+          type: 'contract',
+          title: `Vertrag ${c.tenant_name}`,
+          subtitle: c.unit_name,
+          url: `/ContractDetail?id=${c.id}`
         });
       }
     });
 
-    return Response.json({ results: results.slice(0, 20) });
+    return Response.json({ results: results.slice(0, 10) });
     
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
