@@ -1,49 +1,37 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Filter } from 'lucide-react';
 import { VfProgress } from '@/components/shared/VfProgress';
-import { Users } from 'lucide-react';
 
-export default function OnboardingFunnelTracker({ data = [] }) {
+export default function OnboardingFunnelTracker() {
   const steps = [
-    { label: 'Registrierung', count: 100 },
-    { label: 'Profil erstellt', count: 85 },
-    { label: 'Erstes Objekt', count: 62 },
-    { label: 'Erster Vertrag', count: 45 },
-    { label: 'Upgrade zu Pro', count: 28 }
+    { name: 'Account erstellt', count: 100, percentage: 100 },
+    { name: 'Objekt hinzugefügt', count: 75, percentage: 75 },
+    { name: 'Mieter angelegt', count: 60, percentage: 60 },
+    { name: 'Vertrag erstellt', count: 45, percentage: 45 },
+    { name: 'Erste Rechnung', count: 30, percentage: 30 }
   ];
-
-  const maxCount = steps[0].count;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          Onboarding Funnel
+          <Filter className="h-5 w-5" />
+          Onboarding-Funnel
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {steps.map((step, index) => {
-          const percentage = (step.count / maxCount) * 100;
-          const dropoff = index > 0 ? steps[index - 1].count - step.count : 0;
-          
-          return (
+      <CardContent>
+        <div className="space-y-4">
+          {steps.map((step, index) => (
             <div key={index}>
-              <div className="flex items-center justify-between mb-2 text-sm">
-                <span className="font-medium">{step.label}</span>
-                <div className="text-right">
-                  <span className="font-semibold">{step.count}</span>
-                  {dropoff > 0 && (
-                    <span className="text-xs text-[var(--vf-error-600)] ml-2">
-                      -{dropoff}
-                    </span>
-                  )}
-                </div>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm font-medium">{step.name}</span>
+                <span className="text-sm text-[var(--theme-text-muted)]">{step.count} Nutzer</span>
               </div>
-              <VfProgress value={percentage} max={100} variant="gradient" />
+              <VfProgress value={step.percentage} max={100} variant="gradient" />
             </div>
-          );
-        })}
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

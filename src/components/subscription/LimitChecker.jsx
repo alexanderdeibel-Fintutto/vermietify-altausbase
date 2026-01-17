@@ -1,45 +1,28 @@
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 
-export function useLimitChecker() {
-  const { data: user } = useQuery({
-    queryKey: ['user'],
-    queryFn: () => base44.auth.me()
-  });
-
-  const { data: subscription } = useQuery({
-    queryKey: ['subscription'],
+export default function LimitChecker({ entityType, children, onLimitReached }) {
+  const { data: count } = useQuery({
+    queryKey: ['entity-count', entityType],
     queryFn: async () => {
-      const subs = await base44.entities.UserSubscription.filter({ user_email: user.email });
-      return subs[0];
-    },
-    enabled: !!user
+      const items = await base44.entities[entityType].list();
+      return items.length;
+    }
   });
 
-  const { data: plan } = useQuery({
-    queryKey: ['plan', subscription?.plan_id],
-    queryFn: () => base44.entities.SubscriptionPlan.get(subscription.plan_id),
-    enabled: !!subscription?.plan_id
-  });
-
-  const checkLimit = async (entityType) => {
-    if (!plan) return { allowed: false, reason: 'Plan not found' };
-
-    const entities = await base44.entities[entityType].list();
-    const current = entities.length;
-
-    const limitMap = {
-      Building: plan.max_buildings,
-      Unit: plan.max_units
-    };
-
-    const max = limitMap[entityType];
-    
-    if (max === -1) return { allowed: true };
-    if (current >= max) return { allowed: false, current, max };
-    
-    return { allowed: true, current, max };
+  const limits = {
+    Building: 5,
+    Unit: 20,
+    Tenant: 25
   };
 
-  return { checkLimit, plan };
+  const limit = limits[entityType] || 999;
+  const isAtLimit = count >= limit;
+
+  if (isAtLimit && onLimitReached) {
+    return onLimitReached();
+  }
+
+  return children;
 }

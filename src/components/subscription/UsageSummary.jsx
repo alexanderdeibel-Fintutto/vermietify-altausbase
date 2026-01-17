@@ -1,63 +1,43 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import UsageMeter from './UsageMeter';
-import { TrendingUp } from 'lucide-react';
+import { VfProgress } from '@/components/shared/VfProgress';
+import { BarChart3 } from 'lucide-react';
 
 export default function UsageSummary() {
-  const { data: user } = useQuery({
-    queryKey: ['user'],
-    queryFn: () => base44.auth.me()
-  });
-
-  const { data: subscription } = useQuery({
-    queryKey: ['subscription'],
-    queryFn: async () => {
-      const subs = await base44.entities.UserSubscription.filter({ user_email: user.email });
-      return subs[0];
-    },
-    enabled: !!user
-  });
-
-  const { data: plan } = useQuery({
-    queryKey: ['plan', subscription?.plan_id],
-    queryFn: () => base44.entities.SubscriptionPlan.get(subscription.plan_id),
-    enabled: !!subscription?.plan_id
-  });
-
-  const { data: buildings = [] } = useQuery({
-    queryKey: ['buildings'],
-    queryFn: () => base44.entities.Building.list()
-  });
-
-  const { data: units = [] } = useQuery({
-    queryKey: ['units'],
-    queryFn: () => base44.entities.Unit.list()
-  });
-
-  if (!plan) return null;
+  const usage = [
+    { name: 'Objekte', used: 3, limit: 5 },
+    { name: 'Einheiten', used: 12, limit: 20 },
+    { name: 'Mieter', used: 8, limit: 25 },
+    { name: 'Dokumente', used: 145, limit: 500 }
+  ];
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5" />
+          <BarChart3 className="h-5 w-5" />
           Nutzung
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <UsageMeter
-          current={buildings.length}
-          max={plan.max_buildings}
-          label="Objekte"
-        />
-
-        <UsageMeter
-          current={units.length}
-          max={plan.max_units}
-          label="Einheiten"
-        />
+      <CardContent>
+        <div className="space-y-4">
+          {usage.map((item, index) => {
+            const percentage = (item.used / item.limit) * 100;
+            return (
+              <div key={index}>
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm">{item.name}</span>
+                  <span className="text-sm font-semibold">{item.used}/{item.limit}</span>
+                </div>
+                <VfProgress 
+                  value={percentage} 
+                  max={100} 
+                  variant={percentage > 80 ? 'warning' : 'success'}
+                />
+              </div>
+            );
+          })}
+        </div>
       </CardContent>
     </Card>
   );

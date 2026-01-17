@@ -13,38 +13,39 @@ Deno.serve(async (req) => {
       base44.entities.Building.list(),
       base44.entities.Unit.list(),
       base44.entities.Tenant.list(),
-      base44.entities.LeaseContract.list(),
+      base44.entities.LeaseContract.filter({ status: 'active' }),
       base44.entities.Invoice.list()
     ]);
 
-    const activeContracts = contracts.filter(c => c.status === 'active');
-    const totalRent = activeContracts.reduce((sum, c) => sum + (c.rent_cold || 0), 0);
-    const totalExpenses = invoices.reduce((sum, i) => sum + (i.amount || 0), 0);
-    const occupancyRate = units.length > 0 
-      ? (activeContracts.length / units.length) * 100 
-      : 0;
+    const occupiedUnits = contracts.length;
+    const occupancyRate = units.length > 0 ? Math.round((occupiedUnits / units.length) * 100) : 0;
 
-    return Response.json({
+    const totalRent = contracts.reduce((sum, c) => sum + (c.rent_cold || 0), 0);
+    const totalExpenses = invoices
+      .filter(i => i.payment_status === 'paid')
+      .reduce((sum, i) => sum + (i.amount || 0), 0);
+
+    const stats = {
       buildings: {
-        total: buildings.length,
-        with_units: buildings.filter(b => units.some(u => u.building_id === b.id)).length
+        total: buildings.length
       },
       units: {
         total: units.length,
-        occupied: activeContracts.length,
-        vacant: units.length - activeContracts.length,
-        occupancy_rate: Math.round(occupancyRate)
+        occupied: occupiedUnits,
+        vacant: units.length - occupiedUnits,
+        occupancy_rate: occupancyRate
       },
       tenants: {
-        total: tenants.length,
-        active: activeContracts.length
+        active: tenants.length
       },
       financial: {
         monthly_rent: totalRent,
         monthly_expenses: totalExpenses,
         net_income: totalRent - totalExpenses
       }
-    });
+    };
+
+    return Response.json(stats);
     
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

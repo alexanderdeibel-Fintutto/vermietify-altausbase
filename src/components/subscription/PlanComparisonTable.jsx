@@ -1,38 +1,32 @@
 import React from 'react';
-import { Check, X } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Check, X } from 'lucide-react';
 
-export default function PlanComparisonTable({ plans = [], onSelectPlan }) {
-  const features = [
-    { key: 'max_buildings', label: 'Objekte' },
-    { key: 'max_units', label: 'Einheiten' },
-    { key: 'basic_management', label: 'Basis-Verwaltung' },
-    { key: 'free_tools', label: 'Kostenlose Tools' },
-    { key: 'anlage_v', label: 'Anlage V Export' },
-    { key: 'bk_automation', label: 'BK-Abrechnung' },
-    { key: 'letterxpress', label: 'LetterXpress' },
-    { key: 'api_access', label: 'API-Zugang' },
-    { key: 'priority_support', label: 'Priority Support' }
+export default function PlanComparisonTable() {
+  const plans = [
+    { name: 'Starter', price: 19, buildings: 2, units: 10, features: ['basic'] },
+    { name: 'Basic', price: 49, buildings: 5, units: 25, features: ['basic', 'advanced'] },
+    { name: 'Pro', price: 99, buildings: 15, units: 75, features: ['basic', 'advanced', 'premium'] }
   ];
 
-  const hasFeature = (plan, featureKey) => {
-    const planFeatures = typeof plan.features === 'string' ? JSON.parse(plan.features) : plan.features;
-    return planFeatures.includes(featureKey);
-  };
+  const features = [
+    { key: 'basic', label: 'Basis-Funktionen' },
+    { key: 'advanced', label: 'Erweiterte Berichte' },
+    { key: 'premium', label: 'KI-Assistent' }
+  ];
 
   return (
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
           <tr className="border-b">
-            <th className="text-left p-4">Feature</th>
+            <th className="p-4 text-left">Feature</th>
             {plans.map((plan) => (
-              <th key={plan.id} className="text-center p-4 min-w-[150px]">
+              <th key={plan.name} className="p-4 text-center">
                 <div className="font-bold">{plan.name}</div>
-                <div className="text-lg font-bold text-[var(--vf-primary-600)] mt-1">
-                  €{plan.price_monthly}
-                </div>
-                <div className="text-xs text-[var(--theme-text-muted)]">/Monat</div>
+                <div className="text-2xl font-bold text-[var(--theme-primary)] my-2">€{plan.price}</div>
+                <div className="text-xs text-[var(--theme-text-muted)]">pro Monat</div>
               </th>
             ))}
           </tr>
@@ -42,34 +36,16 @@ export default function PlanComparisonTable({ plans = [], onSelectPlan }) {
             <tr key={feature.key} className="border-b">
               <td className="p-4 font-medium">{feature.label}</td>
               {plans.map((plan) => (
-                <td key={plan.id} className="text-center p-4">
-                  {feature.key === 'max_buildings' ? (
-                    <span>{plan.max_buildings === -1 ? '∞' : plan.max_buildings}</span>
-                  ) : feature.key === 'max_units' ? (
-                    <span>{plan.max_units === -1 ? '∞' : plan.max_units}</span>
-                  ) : hasFeature(plan, feature.key) ? (
+                <td key={plan.name} className="p-4 text-center">
+                  {plan.features.includes(feature.key) ? (
                     <Check className="h-5 w-5 text-[var(--vf-success-500)] mx-auto" />
                   ) : (
-                    <X className="h-5 w-5 text-[var(--vf-neutral-300)] mx-auto" />
+                    <X className="h-5 w-5 text-[var(--theme-text-muted)] mx-auto" />
                   )}
                 </td>
               ))}
             </tr>
           ))}
-          <tr>
-            <td className="p-4"></td>
-            {plans.map((plan) => (
-              <td key={plan.id} className="text-center p-4">
-                <Button 
-                  variant={plan.internal_code === 'PRO' ? 'gradient' : 'primary'}
-                  onClick={() => onSelectPlan(plan)}
-                  className="w-full"
-                >
-                  Wählen
-                </Button>
-              </td>
-            ))}
-          </tr>
         </tbody>
       </table>
     </div>

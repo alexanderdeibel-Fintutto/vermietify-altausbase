@@ -1,9 +1,10 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
 
-export default function CompactTable({ headers = [], rows = [], onRowClick }) {
+export default function CompactTable({ headers, rows, className }) {
   return (
     <div className="vf-table-container">
-      <table className="vf-table vf-table-compact">
+      <table className={cn("vf-table vf-table-compact", className)}>
         <thead>
           <tr>
             {headers.map((header, index) => (
@@ -12,12 +13,8 @@ export default function CompactTable({ headers = [], rows = [], onRowClick }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, index) => (
-            <tr 
-              key={index}
-              onClick={() => onRowClick && onRowClick(row)}
-              className={onRowClick ? 'cursor-pointer hover:bg-[var(--theme-surface)]' : ''}
-            >
+          {rows.map((row, rowIndex) => (
+            <tr key={rowIndex}>
               {row.map((cell, cellIndex) => (
                 <td key={cellIndex}>{cell}</td>
               ))}

@@ -1,49 +1,35 @@
 import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Camera, Upload } from 'lucide-react';
+import { Camera } from 'lucide-react';
 
-export default function MobilePhotoUpload({ onUpload, multiple = false }) {
+export default function MobilePhotoUpload({ onCapture }) {
   const fileInputRef = useRef(null);
-  const cameraInputRef = useRef(null);
+
+  const handleChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file && onCapture) {
+      onCapture(file);
+    }
+  };
 
   return (
-    <div className="flex gap-2">
-      <input
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={(e) => onUpload(e.target.files)}
-        className="hidden"
-        multiple={multiple}
-      />
-      
+    <>
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        onChange={(e) => onUpload(e.target.files)}
+        capture="environment"
+        onChange={handleChange}
         className="hidden"
-        multiple={multiple}
       />
-
       <Button 
-        variant="outline"
-        onClick={() => cameraInputRef.current?.click()}
-        className="flex-1"
+        variant="gradient"
+        onClick={() => fileInputRef.current?.click()}
+        className="w-full"
       >
         <Camera className="h-4 w-4 mr-2" />
         Foto aufnehmen
       </Button>
-
-      <Button 
-        variant="outline"
-        onClick={() => fileInputRef.current?.click()}
-        className="flex-1"
-      >
-        <Upload className="h-4 w-4 mr-2" />
-        Hochladen
-      </Button>
-    </div>
+    </>
   );
 }

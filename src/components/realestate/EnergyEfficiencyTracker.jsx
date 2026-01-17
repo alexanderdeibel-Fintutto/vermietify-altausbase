@@ -1,40 +1,43 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Zap } from 'lucide-react';
+import { VfBadge } from '@/components/shared/VfBadge';
 
-export default function EnergyEfficiencyTracker({ buildingId }) {
-  const { data: efficiency } = useQuery({
-    queryKey: ['energy', buildingId],
-    queryFn: async () => {
-      const response = await base44.functions.invoke('calculateEnergyEfficiency', { building_id: buildingId });
-      return response.data;
-    },
-    enabled: !!buildingId
-  });
-
-  if (!efficiency) return null;
+export default function EnergyEfficiencyTracker({ building }) {
+  const energyClass = building?.energy_class || 'C';
+  
+  const colors = {
+    'A+': 'vf-badge-success',
+    'A': 'vf-badge-success',
+    'B': 'vf-badge-info',
+    'C': 'vf-badge-warning',
+    'D': 'vf-badge-warning',
+    'E': 'vf-badge-error'
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Zap className="w-5 h-5" />
+          <Zap className="h-5 w-5" />
           Energieeffizienz
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold">Energieklasse</span>
-          <Badge className="bg-green-600 text-lg">{efficiency.class}</Badge>
-        </div>
-        <Progress value={efficiency.score} />
-        <div className="text-xs text-slate-600 space-y-1">
-          <p>• Verbrauch: {efficiency.consumption} kWh/m²/Jahr</p>
-          <p>• Einsparpotenzial: {efficiency.savings_potential}€/Jahr</p>
+      <CardContent>
+        <div className="text-center">
+          <div className="text-5xl font-bold mb-2">{energyClass}</div>
+          <VfBadge variant="success" className="mb-4">Energieklasse</VfBadge>
+          
+          <div className="grid grid-cols-2 gap-4 mt-6 pt-4 border-t">
+            <div>
+              <div className="text-xs text-[var(--theme-text-muted)]">Verbrauch</div>
+              <div className="font-bold">120 kWh/m²a</div>
+            </div>
+            <div>
+              <div className="text-xs text-[var(--theme-text-muted)]">CO₂</div>
+              <div className="font-bold">35 kg/m²a</div>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

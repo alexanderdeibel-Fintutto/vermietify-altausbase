@@ -1,27 +1,24 @@
 import React, { useState } from 'react';
 import { VfModal } from '@/components/shared/VfModal';
 import { VfInput } from '@/components/shared/VfInput';
-import { VfRadio } from '@/components/shared/VfRadio';
+import { VfSelect } from '@/components/shared/VfSelect';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { UserPlus } from 'lucide-react';
 import { showSuccess } from '@/components/notifications/ToastNotification';
 
 export default function InviteUserDialog({ open, onClose }) {
-  const [email, setEmail] = useState('');
-  const [role, setRole] = useState('user');
-  const queryClient = useQueryClient();
+  const [formData, setFormData] = useState({
+    email: '',
+    role: 'user'
+  });
 
   const inviteMutation = useMutation({
-    mutationFn: async (data) => {
-      await base44.users.inviteUser(data.email, data.role);
-    },
+    mutationFn: () => base44.users.inviteUser(formData.email, formData.role),
     onSuccess: () => {
-      queryClient.invalidateQueries(['users']);
-      showSuccess('Einladung gesendet', 'Der Benutzer erhält eine E-Mail');
-      setEmail('');
-      setRole('user');
+      showSuccess('Einladung versendet');
+      setFormData({ email: '', role: 'user' });
       onClose();
     }
   });
@@ -36,32 +33,31 @@ export default function InviteUserDialog({ open, onClose }) {
           <Button variant="secondary" onClick={onClose}>Abbrechen</Button>
           <Button 
             variant="gradient"
-            onClick={() => inviteMutation.mutate({ email, role })}
-            disabled={!email || inviteMutation.isPending}
+            onClick={() => inviteMutation.mutate()}
+            disabled={!formData.email || inviteMutation.isPending}
           >
             <UserPlus className="h-4 w-4 mr-2" />
-            {inviteMutation.isPending ? 'Lädt...' : 'Einladen'}
+            Einladen
           </Button>
         </>
       }
     >
       <div className="space-y-4">
         <VfInput
-          type="email"
           label="E-Mail-Adresse"
+          type="email"
           required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="user@example.com"
+          value={formData.email}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
         />
 
-        <VfRadio
+        <VfSelect
           label="Rolle"
-          value={role}
-          onValueChange={setRole}
+          value={formData.role}
+          onChange={(v) => setFormData({ ...formData, role: v })}
           options={[
-            { value: 'user', label: 'Benutzer - Normaler Zugriff' },
-            { value: 'admin', label: 'Admin - Voller Zugriff' }
+            { value: 'user', label: 'Benutzer' },
+            { value: 'admin', label: 'Administrator' }
           ]}
         />
       </div>
