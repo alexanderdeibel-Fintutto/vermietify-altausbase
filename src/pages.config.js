@@ -508,6 +508,15 @@ import VermitifyToolsOverview from './pages/VermitifyToolsOverview';
 import VermitifyHomepage from './pages/VermitifyHomepage';
 import AdminLeadDashboard from './pages/AdminLeadDashboard';
 import DocumentationComplete from './pages/DocumentationComplete';
+import MarketReportGenerator from './pages/MarketReportGenerator';
+import VermitifyPricing from './pages/VermitifyPricing';
+import VermitifyAboutUs from './pages/VermitifyAboutUs';
+import VermitifyContact from './pages/VermitifyContact';
+import FeatureVergleich from './pages/FeatureVergleich';
+import CalculationHistory from './pages/CalculationHistory';
+import VermitifyFeatures from './pages/VermitifyFeatures';
+import VermitifyImpressum from './pages/VermitifyImpressum';
+import VermitifyDatenschutz from './pages/VermitifyDatenschutz';
 import __Layout from './Layout.jsx';
 
 
@@ -1022,6 +1031,15 @@ export const PAGES = {
     "VermitifyHomepage": VermitifyHomepage,
     "AdminLeadDashboard": AdminLeadDashboard,
     "DocumentationComplete": DocumentationComplete,
+    "MarketReportGenerator": MarketReportGenerator,
+    "VermitifyPricing": VermitifyPricing,
+    "VermitifyAboutUs": VermitifyAboutUs,
+    "VermitifyContact": VermitifyContact,
+    "FeatureVergleich": FeatureVergleich,
+    "CalculationHistory": CalculationHistory,
+    "VermitifyFeatures": VermitifyFeatures,
+    "VermitifyImpressum": VermitifyImpressum,
+    "VermitifyDatenschutz": VermitifyDatenschutz,
 }
 
 export const pagesConfig = {
