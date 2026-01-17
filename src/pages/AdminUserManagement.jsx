@@ -1,84 +1,105 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import UserRoleManager from '@/components/admin/UserRoleManager';
-import DepartmentManager from '@/components/admin/DepartmentManager';
-import UserAuditLogViewer from '@/components/admin/UserAuditLogViewer';
-import UserPermissionsMatrix from '@/components/admin/UserPermissionsMatrix';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { VfListPageHeader } from '@/components/list-pages/VfListPage';
+import { VfFilterBar } from '@/components/list-pages/VfFilterBar';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { UserPlus, Mail } from 'lucide-react';
+import { VfAvatar } from '@/components/shared/VfAvatar';
+import { cn } from '@/lib/utils';
 
 export default function AdminUserManagement() {
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState('');
+
+  const { data: users = [] } = useQuery({
+    queryKey: ['all-users'],
+    queryFn: () => base44.entities.User.list()
+  });
+
+  const updateRoleMutation = useMutation({
+    mutationFn: ({ userId, role }) => base44.entities.User.update(userId, { role }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['all-users'] });
+    }
+  });
+
+  const filteredUsers = users.filter(user => {
+    if (!search) return true;
+    return user.email.toLowerCase().includes(search.toLowerCase()) ||
+           user.full_name?.toLowerCase().includes(search.toLowerCase());
+  });
+
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-light">Benutzerverwaltung</h1>
-        <p className="text-slate-600 text-sm mt-1">
-          Rollen, Berechtigungen, Teams und Audit-Logs verwalten
-        </p>
+    <div className="p-6">
+      <VfListPageHeader
+        title="Benutzerverwaltung"
+        description={`${users.length} Benutzer • ${users.filter(u => u.role === 'admin').length} Admins`}
+        actions={
+          <Button variant="gradient">
+            <UserPlus className="h-4 w-4 mr-2" />
+            Benutzer einladen
+          </Button>
+        }
+      />
+
+      <VfFilterBar
+        searchPlaceholder="Benutzer suchen..."
+        searchValue={search}
+        onSearchChange={setSearch}
+      />
+
+      <div className="vf-data-table-container">
+        <table className="vf-data-table">
+          <thead>
+            <tr>
+              <th>Benutzer</th>
+              <th>E-Mail</th>
+              <th>Rolle</th>
+              <th>Registriert</th>
+              <th>Letzte Aktivität</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredUsers.map((user) => (
+              <tr key={user.id}>
+                <td>
+                  <div className="flex items-center gap-3">
+                    <VfAvatar 
+                      fallback={user.full_name || user.email} 
+                      size="sm"
+                    />
+                    <span className="font-medium">{user.full_name || 'Kein Name'}</span>
+                  </div>
+                </td>
+                <td>{user.email}</td>
+                <td>
+                  <Select 
+                    value={user.role} 
+                    onValueChange={(v) => updateRoleMutation.mutate({ userId: user.id, role: v })}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="user">User</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </td>
+                <td className="vf-table-cell-date">
+                  {new Date(user.created_date).toLocaleDateString('de-DE')}
+                </td>
+                <td className="vf-table-cell-date">
+                  {new Date(user.updated_date).toLocaleDateString('de-DE')}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-
-      <Tabs defaultValue="roles" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="roles">Rollen & Berechtigungen</TabsTrigger>
-          <TabsTrigger value="departments">Teams & Abteilungen</TabsTrigger>
-          <TabsTrigger value="matrix">Berechtigungsmatrix</TabsTrigger>
-          <TabsTrigger value="audit">Audit-Log</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="roles" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Benutzerrollen verwalten</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <UserRoleManager />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="departments" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Teams und Abteilungen</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <DepartmentManager />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="matrix" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Benutzer-Rollen-Berechtigungen Matrix</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <UserPermissionsMatrix />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="audit" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Aktivitäts-Audit-Log</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <UserAuditLogViewer />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      <Card className="bg-slate-50">
-        <CardHeader>
-          <CardTitle className="text-base">Wichtige Hinweise</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-slate-700 space-y-2">
-          <p>• <span className="font-semibold">Rollen:</span> Definieren Sie benutzerdefinierte Rollen mit spezifischen Berechtigungen für verschiedene Benutzergruppen.</p>
-          <p>• <span className="font-semibold">Teams/Abteilungen:</span> Organisieren Sie Benutzer in Abteilungen und gewähren Sie rollenbasierte Zugriffe auf Daten.</p>
-          <p>• <span className="font-semibold">Audit-Trail:</span> Alle Benutzeraktivitäten werden protokolliert für Compliance- und Sicherheitszwecke.</p>
-        </CardContent>
-      </Card>
     </div>
   );
 }

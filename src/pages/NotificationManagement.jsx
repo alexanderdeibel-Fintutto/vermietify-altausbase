@@ -1,125 +1,148 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bell, Mail, MessageSquare, Smartphone } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { VfNotificationCenter } from '@/components/notifications/VfNotificationCenter';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Bell, Mail, Smartphone } from 'lucide-react';
 
 export default function NotificationManagement() {
-  const [selectedChannel, setSelectedChannel] = useState('email');
-
-  const { data: currentUser } = useQuery({
+  const queryClient = useQueryClient();
+  
+  const { data: user } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me(),
+    queryFn: () => base44.auth.me()
   });
 
-  const isAdmin = currentUser?.role === 'admin';
+  const [emailPrefs, setEmailPrefs] = useState({
+    paymentReceived: user?.email_payment_received ?? true,
+    paymentOverdue: user?.email_payment_overdue ?? true,
+    contractExpiring: user?.email_contract_expiring ?? true,
+    documentGenerated: user?.email_document_generated ?? false,
+    weeklyReport: user?.email_weekly_report ?? true
+  });
 
-  const channels = [
-    { id: 'email', label: 'E-Mail', icon: Mail },
-    { id: 'sms', label: 'SMS', icon: MessageSquare },
-    { id: 'push', label: 'Push', icon: Smartphone },
-    { id: 'inapp', label: 'In-App', icon: Bell },
-  ];
+  const [pushPrefs, setPushPrefs] = useState({
+    urgentAlerts: user?.push_urgent_alerts ?? true,
+    dailySummary: user?.push_daily_summary ?? false
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (data) => base44.auth.updateMe(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+    }
+  });
+
+  const handleSave = () => {
+    updateMutation.mutate({
+      email_payment_received: emailPrefs.paymentReceived,
+      email_payment_overdue: emailPrefs.paymentOverdue,
+      email_contract_expiring: emailPrefs.contractExpiring,
+      email_document_generated: emailPrefs.documentGenerated,
+      email_weekly_report: emailPrefs.weeklyReport,
+      push_urgent_alerts: pushPrefs.urgentAlerts,
+      push_daily_summary: pushPrefs.dailySummary
+    });
+  };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-light text-slate-900">Benachrichtigungsverwaltung</h1>
-        <p className="text-slate-600 font-light mt-2">
-          {isAdmin ? 'Verwalten Sie Benachrichtigungskanäle und Einstellungen' : 'Ihre Benachrichtigungseinstellungen'}
+    <div className="max-w-5xl mx-auto p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold mb-2">Benachrichtigungen</h1>
+        <p className="text-[var(--theme-text-secondary)]">
+          Verwalten Sie Ihre E-Mail- und Push-Benachrichtigungen
         </p>
       </div>
 
-      {isAdmin && (
-        <Tabs defaultValue="channels" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="channels">Kanäle</TabsTrigger>
-            <TabsTrigger value="templates">Vorlagen</TabsTrigger>
-          </TabsList>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="h-5 w-5" />
+                E-Mail-Benachrichtigungen
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Zahlungseingang</Label>
+                <Switch 
+                  checked={emailPrefs.paymentReceived}
+                  onCheckedChange={(v) => setEmailPrefs({ ...emailPrefs, paymentReceived: v })}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label>Zahlungsverzug</Label>
+                <Switch 
+                  checked={emailPrefs.paymentOverdue}
+                  onCheckedChange={(v) => setEmailPrefs({ ...emailPrefs, paymentOverdue: v })}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label>Vertragsende</Label>
+                <Switch 
+                  checked={emailPrefs.contractExpiring}
+                  onCheckedChange={(v) => setEmailPrefs({ ...emailPrefs, contractExpiring: v })}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label>Dokument erstellt</Label>
+                <Switch 
+                  checked={emailPrefs.documentGenerated}
+                  onCheckedChange={(v) => setEmailPrefs({ ...emailPrefs, documentGenerated: v })}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label>Wöchentlicher Bericht</Label>
+                <Switch 
+                  checked={emailPrefs.weeklyReport}
+                  onCheckedChange={(v) => setEmailPrefs({ ...emailPrefs, weeklyReport: v })}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Kanäle */}
-          <TabsContent value="channels" className="mt-6 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {channels.map(channel => {
-                const Icon = channel.icon;
-                return (
-                  <Card key={channel.id}>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <Icon className="w-5 h-5" />
-                        {channel.label}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="space-y-2">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="checkbox" defaultChecked className="rounded" />
-                          <span className="text-sm">Aktiviert</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="checkbox" defaultChecked className="rounded" />
-                          <span className="text-sm">Für Mieter sichtbar</span>
-                        </label>
-                      </div>
-                      <Button size="sm" variant="outline" className="w-full">
-                        Konfigurieren
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </TabsContent>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Smartphone className="h-5 w-5" />
+                Push-Benachrichtigungen
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Dringende Meldungen</Label>
+                <Switch 
+                  checked={pushPrefs.urgentAlerts}
+                  onCheckedChange={(v) => setPushPrefs({ ...pushPrefs, urgentAlerts: v })}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label>Tägliche Zusammenfassung</Label>
+                <Switch 
+                  checked={pushPrefs.dailySummary}
+                  onCheckedChange={(v) => setPushPrefs({ ...pushPrefs, dailySummary: v })}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Vorlagen */}
-          <TabsContent value="templates" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Benachrichtigungsvorlagen</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {['Zahlungserinnerung', 'Wartung', 'Ankündigung', 'Notfall'].map(template => (
-                    <Card key={template} className="bg-slate-50">
-                      <CardContent className="pt-6">
-                        <h3 className="font-medium text-sm mb-3">{template}</h3>
-                        <Button size="sm" variant="outline" className="w-full">
-                          Bearbeiten
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      )}
+          <Button 
+            variant="gradient" 
+            onClick={handleSave}
+            disabled={updateMutation.isPending}
+          >
+            {updateMutation.isPending ? 'Wird gespeichert...' : 'Einstellungen speichern'}
+          </Button>
+        </div>
 
-      {!isAdmin && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Ihre Benachrichtigungseinstellungen</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {channels.map(channel => {
-              const Icon = channel.icon;
-              return (
-                <div key={channel.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Icon className="w-4 h-4" />
-                    <span className="text-sm">{channel.label}</span>
-                  </div>
-                  <input type="checkbox" defaultChecked className="rounded" />
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      )}
+        <div>
+          <VfNotificationCenter />
+        </div>
+      </div>
     </div>
   );
 }

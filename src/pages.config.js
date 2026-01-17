@@ -19,6 +19,7 @@ import AdminAIAnalyticsLazy from './pages/AdminAIAnalyticsLazy';
 import AdminAnalyticsDashboard from './pages/AdminAnalyticsDashboard';
 import AdminAnnouncementCenter from './pages/AdminAnnouncementCenter';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminDashboardTemplate from './pages/AdminDashboardTemplate';
 import AdminIssueReports from './pages/AdminIssueReports';
 import AdminLimitsConfig from './pages/AdminLimitsConfig';
 import AdminMasterDashboard from './pages/AdminMasterDashboard';
@@ -64,6 +65,7 @@ import AdvancedReportingDashboard from './pages/AdvancedReportingDashboard';
 import AdvancedSearch from './pages/AdvancedSearch';
 import AdvancedTaxReporting from './pages/AdvancedTaxReporting';
 import AdvancedWorkflowAnalytics from './pages/AdvancedWorkflowAnalytics';
+import AfACalculator from './pages/AfACalculator';
 import AfaAssetDetail from './pages/AfaAssetDetail';
 import AfaAssetForm from './pages/AfaAssetForm';
 import AfaOverview from './pages/AfaOverview';
@@ -86,6 +88,7 @@ import AnlageVForm from './pages/AnlageVForm';
 import AnlageVG from './pages/AnlageVG';
 import AnlageVGAT from './pages/AnlageVGAT';
 import AnlageVGDE from './pages/AnlageVGDE';
+import AnlageVWizard from './pages/AnlageVWizard';
 import AnnualTaxReview from './pages/AnnualTaxReview';
 import AssetDetail from './pages/AssetDetail';
 import AssetManagement from './pages/AssetManagement';
@@ -96,6 +99,7 @@ import AutomatedCommunication from './pages/AutomatedCommunication';
 import AutomatedReports from './pages/AutomatedReports';
 import AutomatedTaxFormGenerator from './pages/AutomatedTaxFormGenerator';
 import AutomationRules from './pages/AutomationRules';
+import BKAbrechnungWizard from './pages/BKAbrechnungWizard';
 import BackupRecovery from './pages/BackupRecovery';
 import BankAccounts from './pages/BankAccounts';
 import BankReconciliation from './pages/BankReconciliation';
@@ -103,12 +107,14 @@ import BankStatements from './pages/BankStatements';
 import BankTransactions from './pages/BankTransactions';
 import BankTransfers from './pages/BankTransfers';
 import BankingAutomationHub from './pages/BankingAutomationHub';
+import Error404 from './pages/Error404';
 import BankingManagement from './pages/BankingManagement';
 import BudgetAnalysis from './pages/BudgetAnalysis';
 import BudgetPlanning from './pages/BudgetPlanning';
 import BuildingBoard from './pages/BuildingBoard';
 import BuildingDetail from './pages/BuildingDetail';
 import BuildingDetailEnhanced from './pages/BuildingDetailEnhanced';
+import BuildingDetailTemplate from './pages/BuildingDetailTemplate';
 import BuildingInspections from './pages/BuildingInspections';
 import BuildingWorkflowManager from './pages/BuildingWorkflowManager';
 import Buildings from './pages/Buildings';
@@ -120,6 +126,7 @@ import CalculatorExample from './pages/CalculatorExample';
 import CapitalGainCH from './pages/CapitalGainCH';
 import CapitalGainsManagement from './pages/CapitalGainsManagement';
 import CapitalGainsOptimizer from './pages/CapitalGainsOptimizer';
+import CashflowRechner from './pages/CashflowRechner';
 import CharitableDonationPlanner from './pages/CharitableDonationPlanner';
 import CommunicationAnalytics from './pages/CommunicationAnalytics';
 import CommunicationAuditLog from './pages/CommunicationAuditLog';
@@ -141,6 +148,7 @@ import ComprehensiveTaxDashboard from './pages/ComprehensiveTaxDashboard';
 import ConsolidatedTaxSummary from './pages/ConsolidatedTaxSummary';
 import ContractAutomationHub from './pages/ContractAutomationHub';
 import ContractDetail from './pages/ContractDetail';
+import ContractDetailTemplate from './pages/ContractDetailTemplate';
 import ContractorMarketplace from './pages/ContractorMarketplace';
 import Contracts from './pages/Contracts';
 import CostTypes from './pages/CostTypes';
@@ -191,6 +199,7 @@ import EnergyPassportManager from './pages/EnergyPassportManager';
 import EnhancedTenantPortal from './pages/EnhancedTenantPortal';
 import EntityTaxPlanning from './pages/EntityTaxPlanning';
 import Equipment from './pages/Equipment';
+import Error500 from './pages/Error500';
 import EstateTaxPlanning from './pages/EstateTaxPlanning';
 import EstimatedTaxScheduler from './pages/EstimatedTaxScheduler';
 import FeatureCatalog from './pages/FeatureCatalog';
@@ -218,6 +227,7 @@ import HilfeCenter from './pages/HilfeCenter';
 import Home from './pages/Home';
 import IncomeOptimizationTool from './pages/IncomeOptimizationTool';
 import Index from './pages/Index';
+import IndexmietenRechner from './pages/IndexmietenRechner';
 import InsuranceManagement from './pages/InsuranceManagement';
 import IntegrationHub from './pages/IntegrationHub';
 import IntegrationMarketplace from './pages/IntegrationMarketplace';
@@ -226,6 +236,7 @@ import InternationalTaxPlanning from './pages/InternationalTaxPlanning';
 import InternationalTaxStrategy from './pages/InternationalTaxStrategy';
 import InvestmentTaxTracking from './pages/InvestmentTaxTracking';
 import InvestmentsCH from './pages/InvestmentsCH';
+import investorprofilQuiz from './pages/InvestorProfil Quiz';
 import InvoiceManagement from './pages/InvoiceManagement';
 import InvoiceManagementNew from './pages/InvoiceManagementNew';
 import Invoices from './pages/Invoices';
@@ -240,6 +251,7 @@ import LetterShipmentManagement from './pages/LetterShipmentManagement';
 import LetterXpressManagement from './pages/LetterXpressManagement';
 import ListPageExample from './pages/ListPageExample';
 import MaintenanceManager from './pages/MaintenanceManager';
+import MaintenanceMode from './pages/MaintenanceMode';
 import MaintenanceScheduling from './pages/MaintenanceScheduling';
 import MaintenanceTasks from './pages/MaintenanceTasks';
 import MaintenanceTracking from './pages/MaintenanceTracking';
@@ -249,7 +261,9 @@ import MarketingPageExample from './pages/MarketingPageExample';
 import MarketplaceAdmin from './pages/MarketplaceAdmin';
 import MeterApp from './pages/MeterApp';
 import MeterDashboard from './pages/MeterDashboard';
+import MieterDashboard from './pages/MieterDashboard';
 import MieterSelfServicePortal from './pages/MieterSelfServicePortal';
+import MietvertragGenerator from './pages/MietvertragGenerator';
 import MobileApp from './pages/MobileApp';
 import MobileMeterScanning from './pages/MobileMeterScanning';
 import ModuleManagement from './pages/ModuleManagement';
@@ -264,8 +278,10 @@ import NotificationHistory from './pages/NotificationHistory';
 import NotificationHub from './pages/NotificationHub';
 import NotificationManagement from './pages/NotificationManagement';
 import NotificationPreferences from './pages/NotificationPreferences';
+import OfflineError from './pages/OfflineError';
 import Onboarding from './pages/Onboarding';
 import OnboardingWizard from './pages/OnboardingWizard';
+import OnboardingWizardNew from './pages/OnboardingWizardNew';
 import OperatingCostAutomationHub from './pages/OperatingCostAutomationHub';
 import OperatingCostWizard from './pages/OperatingCostWizard';
 import OperatingCosts from './pages/OperatingCosts';
@@ -309,22 +325,23 @@ import ReportScheduling from './pages/ReportScheduling';
 import ReportingDashboard from './pages/ReportingDashboard';
 import ReportingHub from './pages/ReportingHub';
 import ReportsPage from './pages/ReportsPage';
+import RoleManagement from './pages/RoleManagement';
 import RetirementIncomeTaxOptimizer from './pages/RetirementIncomeTaxOptimizer';
 import RetirementTaxPlanning from './pages/RetirementTaxPlanning';
-import RoleManagement from './pages/RoleManagement';
 import RoleManagementPage from './pages/RoleManagementPage';
 import ScheduledTasks from './pages/ScheduledTasks';
 import SelfEmploymentTaxPlanner from './pages/SelfEmploymentTaxPlanner';
 import SelfEmploymentTaxPlanning from './pages/SelfEmploymentTaxPlanning';
 import SettingsPage from './pages/SettingsPage';
+import SettingsProfile from './pages/SettingsProfile';
 import SmartExpenseTracker from './pages/SmartExpenseTracker';
 import SmartHomeHub from './pages/SmartHomeHub';
 import SmartPropertyHub from './pages/SmartPropertyHub';
 import SmartTaskDashboard from './pages/SmartTaskDashboard';
+import StBDashboard from './pages/StBDashboard';
 import StaffMobileApp from './pages/StaffMobileApp';
 import SteuerApp from './pages/SteuerApp';
 import SteuerVermoegenApp from './pages/SteuerVermoegenApp';
-import Tasks from './pages/Tasks';
 import StocksAndETFs from './pages/StocksAndETFs';
 import SubmissionDashboard from './pages/SubmissionDashboard';
 import SubscriptionManagement from './pages/SubscriptionManagement';
@@ -336,6 +353,7 @@ import SyncManagement from './pages/SyncManagement';
 import SystemConfiguration from './pages/SystemConfiguration';
 import SystemHealth from './pages/SystemHealth';
 import TaskManagement from './pages/TaskManagement';
+import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
 import TaxAIChatbot from './pages/TaxAIChatbot';
 import TaxAdminDashboard from './pages/TaxAdminDashboard';
@@ -415,6 +433,7 @@ import TenantCommunicationCenter from './pages/TenantCommunicationCenter';
 import TenantCommunicationHub from './pages/TenantCommunicationHub';
 import TenantCommunity from './pages/TenantCommunity';
 import TenantDetail from './pages/TenantDetail';
+import TenantDetailTemplate from './pages/TenantDetailTemplate';
 import TenantDigitalKey from './pages/TenantDigitalKey';
 import TenantDocuments from './pages/TenantDocuments';
 import TenantMaintenance from './pages/TenantMaintenance';
@@ -435,11 +454,11 @@ import TesterDashboard from './pages/TesterDashboard';
 import TesterManagement from './pages/TesterManagement';
 import TesterManagementLazy from './pages/TesterManagementLazy';
 import TesterOnboarding from './pages/TesterOnboarding';
-import Error404 from './pages/Error404';
 import TestingDashboard from './pages/TestingDashboard';
 import ThemeManagement from './pages/ThemeManagement';
 import UltimateEnterpriseHub from './pages/UltimateEnterpriseHub';
 import UnitDetail from './pages/UnitDetail';
+import UnitDetailTemplate from './pages/UnitDetailTemplate';
 import UnitsManagement from './pages/UnitsManagement';
 import UserAudit from './pages/UserAudit';
 import UserDetail from './pages/UserDetail';
@@ -447,6 +466,7 @@ import UserManagement from './pages/UserManagement';
 import UserSettings from './pages/UserSettings';
 import VendorManagement from './pages/VendorManagement';
 import VermieterApp from './pages/VermieterApp';
+import VermieterDashboard from './pages/VermieterDashboard';
 import VermieterGo from './pages/VermieterGo';
 import VermieterGoApp from './pages/VermieterGoApp';
 import VermitifyDesignShowcase from './pages/VermitifyDesignShowcase';
@@ -477,26 +497,17 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import Error500 from './pages/Error500';
-import VermieterDashboard from './pages/VermieterDashboard';
-import BuildingDetailTemplate from './pages/BuildingDetailTemplate';
-import SettingsProfile from './pages/SettingsProfile';
-import MieterDashboard from './pages/MieterDashboard';
-import OnboardingWizardNew from './pages/OnboardingWizardNew';
-import IndexmietenRechner from './pages/IndexmietenRechner';
-import UnitDetailTemplate from './pages/UnitDetailTemplate';
-import TenantDetailTemplate from './pages/TenantDetailTemplate';
-import ContractDetailTemplate from './pages/ContractDetailTemplate';
-import AdminDashboardTemplate from './pages/AdminDashboardTemplate';
-import investorprofilQuiz from './pages/InvestorProfil Quiz';
-import MietvertragGenerator from './pages/MietvertragGenerator';
-import StBDashboard from './pages/StBDashboard';
-import BKAbrechnungWizard from './pages/BKAbrechnungWizard';
-import AnlageVWizard from './pages/AnlageVWizard';
-import OfflineError from './pages/OfflineError';
-import MaintenanceMode from './pages/MaintenanceMode';
-import AfACalculator from './pages/AfACalculator';
-import CashflowRechner from './pages/CashflowRechner';
+import VermieterProfilSettings from './pages/VermieterProfilSettings';
+import TilgungsRechner from './pages/TilgungsRechner';
+import BKChecker from './pages/BKChecker';
+import LeadManagement from './pages/LeadManagement';
+import KaufpreisRechner from './pages/KaufpreisRechner';
+import SteuerGuideQuiz from './pages/SteuerGuideQuiz';
+import WertentwicklungsRechner from './pages/WertentwicklungsRechner';
+import VermitifyToolsOverview from './pages/VermitifyToolsOverview';
+import VermitifyHomepage from './pages/VermitifyHomepage';
+import AdminLeadDashboard from './pages/AdminLeadDashboard';
+import DocumentationComplete from './pages/DocumentationComplete';
 import __Layout from './Layout.jsx';
 
 
@@ -522,6 +533,7 @@ export const PAGES = {
     "AdminAnalyticsDashboard": AdminAnalyticsDashboard,
     "AdminAnnouncementCenter": AdminAnnouncementCenter,
     "AdminDashboard": AdminDashboard,
+    "AdminDashboardTemplate": AdminDashboardTemplate,
     "AdminIssueReports": AdminIssueReports,
     "AdminLimitsConfig": AdminLimitsConfig,
     "AdminMasterDashboard": AdminMasterDashboard,
@@ -567,6 +579,7 @@ export const PAGES = {
     "AdvancedSearch": AdvancedSearch,
     "AdvancedTaxReporting": AdvancedTaxReporting,
     "AdvancedWorkflowAnalytics": AdvancedWorkflowAnalytics,
+    "AfACalculator": AfACalculator,
     "AfaAssetDetail": AfaAssetDetail,
     "AfaAssetForm": AfaAssetForm,
     "AfaOverview": AfaOverview,
@@ -589,6 +602,7 @@ export const PAGES = {
     "AnlageVG": AnlageVG,
     "AnlageVGAT": AnlageVGAT,
     "AnlageVGDE": AnlageVGDE,
+    "AnlageVWizard": AnlageVWizard,
     "AnnualTaxReview": AnnualTaxReview,
     "AssetDetail": AssetDetail,
     "AssetManagement": AssetManagement,
@@ -599,6 +613,7 @@ export const PAGES = {
     "AutomatedReports": AutomatedReports,
     "AutomatedTaxFormGenerator": AutomatedTaxFormGenerator,
     "AutomationRules": AutomationRules,
+    "BKAbrechnungWizard": BKAbrechnungWizard,
     "BackupRecovery": BackupRecovery,
     "BankAccounts": BankAccounts,
     "BankReconciliation": BankReconciliation,
@@ -606,12 +621,14 @@ export const PAGES = {
     "BankTransactions": BankTransactions,
     "BankTransfers": BankTransfers,
     "BankingAutomationHub": BankingAutomationHub,
+    "Error404": Error404,
     "BankingManagement": BankingManagement,
     "BudgetAnalysis": BudgetAnalysis,
     "BudgetPlanning": BudgetPlanning,
     "BuildingBoard": BuildingBoard,
     "BuildingDetail": BuildingDetail,
     "BuildingDetailEnhanced": BuildingDetailEnhanced,
+    "BuildingDetailTemplate": BuildingDetailTemplate,
     "BuildingInspections": BuildingInspections,
     "BuildingWorkflowManager": BuildingWorkflowManager,
     "Buildings": Buildings,
@@ -623,6 +640,7 @@ export const PAGES = {
     "CapitalGainCH": CapitalGainCH,
     "CapitalGainsManagement": CapitalGainsManagement,
     "CapitalGainsOptimizer": CapitalGainsOptimizer,
+    "CashflowRechner": CashflowRechner,
     "CharitableDonationPlanner": CharitableDonationPlanner,
     "CommunicationAnalytics": CommunicationAnalytics,
     "CommunicationAuditLog": CommunicationAuditLog,
@@ -644,6 +662,7 @@ export const PAGES = {
     "ConsolidatedTaxSummary": ConsolidatedTaxSummary,
     "ContractAutomationHub": ContractAutomationHub,
     "ContractDetail": ContractDetail,
+    "ContractDetailTemplate": ContractDetailTemplate,
     "ContractorMarketplace": ContractorMarketplace,
     "Contracts": Contracts,
     "CostTypes": CostTypes,
@@ -694,6 +713,7 @@ export const PAGES = {
     "EnhancedTenantPortal": EnhancedTenantPortal,
     "EntityTaxPlanning": EntityTaxPlanning,
     "Equipment": Equipment,
+    "Error500": Error500,
     "EstateTaxPlanning": EstateTaxPlanning,
     "EstimatedTaxScheduler": EstimatedTaxScheduler,
     "FeatureCatalog": FeatureCatalog,
@@ -721,6 +741,7 @@ export const PAGES = {
     "Home": Home,
     "IncomeOptimizationTool": IncomeOptimizationTool,
     "Index": Index,
+    "IndexmietenRechner": IndexmietenRechner,
     "InsuranceManagement": InsuranceManagement,
     "IntegrationHub": IntegrationHub,
     "IntegrationMarketplace": IntegrationMarketplace,
@@ -729,6 +750,7 @@ export const PAGES = {
     "InternationalTaxStrategy": InternationalTaxStrategy,
     "InvestmentTaxTracking": InvestmentTaxTracking,
     "InvestmentsCH": InvestmentsCH,
+    "InvestorProfil Quiz": investorprofilQuiz,
     "InvoiceManagement": InvoiceManagement,
     "InvoiceManagementNew": InvoiceManagementNew,
     "Invoices": Invoices,
@@ -743,6 +765,7 @@ export const PAGES = {
     "LetterXpressManagement": LetterXpressManagement,
     "ListPageExample": ListPageExample,
     "MaintenanceManager": MaintenanceManager,
+    "MaintenanceMode": MaintenanceMode,
     "MaintenanceScheduling": MaintenanceScheduling,
     "MaintenanceTasks": MaintenanceTasks,
     "MaintenanceTracking": MaintenanceTracking,
@@ -752,7 +775,9 @@ export const PAGES = {
     "MarketplaceAdmin": MarketplaceAdmin,
     "MeterApp": MeterApp,
     "MeterDashboard": MeterDashboard,
+    "MieterDashboard": MieterDashboard,
     "MieterSelfServicePortal": MieterSelfServicePortal,
+    "MietvertragGenerator": MietvertragGenerator,
     "MobileApp": MobileApp,
     "MobileMeterScanning": MobileMeterScanning,
     "ModuleManagement": ModuleManagement,
@@ -767,8 +792,10 @@ export const PAGES = {
     "NotificationHub": NotificationHub,
     "NotificationManagement": NotificationManagement,
     "NotificationPreferences": NotificationPreferences,
+    "OfflineError": OfflineError,
     "Onboarding": Onboarding,
     "OnboardingWizard": OnboardingWizard,
+    "OnboardingWizardNew": OnboardingWizardNew,
     "OperatingCostAutomationHub": OperatingCostAutomationHub,
     "OperatingCostWizard": OperatingCostWizard,
     "OperatingCosts": OperatingCosts,
@@ -812,22 +839,23 @@ export const PAGES = {
     "ReportingDashboard": ReportingDashboard,
     "ReportingHub": ReportingHub,
     "ReportsPage": ReportsPage,
+    "RoleManagement": RoleManagement,
     "RetirementIncomeTaxOptimizer": RetirementIncomeTaxOptimizer,
     "RetirementTaxPlanning": RetirementTaxPlanning,
-    "RoleManagement": RoleManagement,
     "RoleManagementPage": RoleManagementPage,
     "ScheduledTasks": ScheduledTasks,
     "SelfEmploymentTaxPlanner": SelfEmploymentTaxPlanner,
     "SelfEmploymentTaxPlanning": SelfEmploymentTaxPlanning,
     "SettingsPage": SettingsPage,
+    "SettingsProfile": SettingsProfile,
     "SmartExpenseTracker": SmartExpenseTracker,
     "SmartHomeHub": SmartHomeHub,
     "SmartPropertyHub": SmartPropertyHub,
     "SmartTaskDashboard": SmartTaskDashboard,
+    "StBDashboard": StBDashboard,
     "StaffMobileApp": StaffMobileApp,
     "SteuerApp": SteuerApp,
     "SteuerVermoegenApp": SteuerVermoegenApp,
-    "Tasks": Tasks,
     "StocksAndETFs": StocksAndETFs,
     "SubmissionDashboard": SubmissionDashboard,
     "SubscriptionManagement": SubscriptionManagement,
@@ -839,6 +867,7 @@ export const PAGES = {
     "SystemConfiguration": SystemConfiguration,
     "SystemHealth": SystemHealth,
     "TaskManagement": TaskManagement,
+    "Tasks": Tasks,
     "Tax": Tax,
     "TaxAIChatbot": TaxAIChatbot,
     "TaxAdminDashboard": TaxAdminDashboard,
@@ -918,6 +947,7 @@ export const PAGES = {
     "TenantCommunicationHub": TenantCommunicationHub,
     "TenantCommunity": TenantCommunity,
     "TenantDetail": TenantDetail,
+    "TenantDetailTemplate": TenantDetailTemplate,
     "TenantDigitalKey": TenantDigitalKey,
     "TenantDocuments": TenantDocuments,
     "TenantMaintenance": TenantMaintenance,
@@ -938,11 +968,11 @@ export const PAGES = {
     "TesterManagement": TesterManagement,
     "TesterManagementLazy": TesterManagementLazy,
     "TesterOnboarding": TesterOnboarding,
-    "Error404": Error404,
     "TestingDashboard": TestingDashboard,
     "ThemeManagement": ThemeManagement,
     "UltimateEnterpriseHub": UltimateEnterpriseHub,
     "UnitDetail": UnitDetail,
+    "UnitDetailTemplate": UnitDetailTemplate,
     "UnitsManagement": UnitsManagement,
     "UserAudit": UserAudit,
     "UserDetail": UserDetail,
@@ -950,6 +980,7 @@ export const PAGES = {
     "UserSettings": UserSettings,
     "VendorManagement": VendorManagement,
     "VermieterApp": VermieterApp,
+    "VermieterDashboard": VermieterDashboard,
     "VermieterGo": VermieterGo,
     "VermieterGoApp": VermieterGoApp,
     "VermitifyDesignShowcase": VermitifyDesignShowcase,
@@ -980,26 +1011,17 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "Error500": Error500,
-    "VermieterDashboard": VermieterDashboard,
-    "BuildingDetailTemplate": BuildingDetailTemplate,
-    "SettingsProfile": SettingsProfile,
-    "MieterDashboard": MieterDashboard,
-    "OnboardingWizardNew": OnboardingWizardNew,
-    "IndexmietenRechner": IndexmietenRechner,
-    "UnitDetailTemplate": UnitDetailTemplate,
-    "TenantDetailTemplate": TenantDetailTemplate,
-    "ContractDetailTemplate": ContractDetailTemplate,
-    "AdminDashboardTemplate": AdminDashboardTemplate,
-    "InvestorProfil Quiz": investorprofilQuiz,
-    "MietvertragGenerator": MietvertragGenerator,
-    "StBDashboard": StBDashboard,
-    "BKAbrechnungWizard": BKAbrechnungWizard,
-    "AnlageVWizard": AnlageVWizard,
-    "OfflineError": OfflineError,
-    "MaintenanceMode": MaintenanceMode,
-    "AfACalculator": AfACalculator,
-    "CashflowRechner": CashflowRechner,
+    "VermieterProfilSettings": VermieterProfilSettings,
+    "TilgungsRechner": TilgungsRechner,
+    "BKChecker": BKChecker,
+    "LeadManagement": LeadManagement,
+    "KaufpreisRechner": KaufpreisRechner,
+    "SteuerGuideQuiz": SteuerGuideQuiz,
+    "WertentwicklungsRechner": WertentwicklungsRechner,
+    "VermitifyToolsOverview": VermitifyToolsOverview,
+    "VermitifyHomepage": VermitifyHomepage,
+    "AdminLeadDashboard": AdminLeadDashboard,
+    "DocumentationComplete": DocumentationComplete,
 }
 
 export const pagesConfig = {
