@@ -21,6 +21,7 @@ import AdminAnnouncementCenter from './pages/AdminAnnouncementCenter';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminDashboardTemplate from './pages/AdminDashboardTemplate';
 import AdminIssueReports from './pages/AdminIssueReports';
+import AdminLeadDashboard from './pages/AdminLeadDashboard';
 import AdminLimitsConfig from './pages/AdminLimitsConfig';
 import AdminMasterDashboard from './pages/AdminMasterDashboard';
 import AdminMessagingCenter from './pages/AdminMessagingCenter';
@@ -47,6 +48,7 @@ import AdminSettings from './pages/AdminSettings';
 import AdminSetupGuide from './pages/AdminSetupGuide';
 import AdminStripeSetup from './pages/AdminStripeSetup';
 import AdminSubscriptionAddons from './pages/AdminSubscriptionAddons';
+import AdminSubscriptionOverview from './pages/AdminSubscriptionOverview';
 import AdminSubscriptionPlans from './pages/AdminSubscriptionPlans';
 import AdminSubscriptions from './pages/AdminSubscriptions';
 import AdminTenantDashboard from './pages/AdminTenantDashboard';
@@ -100,6 +102,7 @@ import AutomatedReports from './pages/AutomatedReports';
 import AutomatedTaxFormGenerator from './pages/AutomatedTaxFormGenerator';
 import AutomationRules from './pages/AutomationRules';
 import BKAbrechnungWizard from './pages/BKAbrechnungWizard';
+import BKChecker from './pages/BKChecker';
 import BackupRecovery from './pages/BackupRecovery';
 import BankAccounts from './pages/BankAccounts';
 import BankReconciliation from './pages/BankReconciliation';
@@ -107,7 +110,6 @@ import BankStatements from './pages/BankStatements';
 import BankTransactions from './pages/BankTransactions';
 import BankTransfers from './pages/BankTransfers';
 import BankingAutomationHub from './pages/BankingAutomationHub';
-import Error404 from './pages/Error404';
 import BankingManagement from './pages/BankingManagement';
 import BudgetAnalysis from './pages/BudgetAnalysis';
 import BudgetPlanning from './pages/BudgetPlanning';
@@ -122,6 +124,7 @@ import BuildingsMap from './pages/BuildingsMap';
 import BulkMessaging from './pages/BulkMessaging';
 import BulkOperations from './pages/BulkOperations';
 import BusinessStructureOptimizer from './pages/BusinessStructureOptimizer';
+import CalculationHistory from './pages/CalculationHistory';
 import CalculatorExample from './pages/CalculatorExample';
 import CapitalGainCH from './pages/CapitalGainCH';
 import CapitalGainsManagement from './pages/CapitalGainsManagement';
@@ -184,6 +187,7 @@ import DocumentSearch from './pages/DocumentSearch';
 import DocumentSecurityHub from './pages/DocumentSecurityHub';
 import DocumentTemplateManager from './pages/DocumentTemplateManager';
 import DocumentUltimateHub from './pages/DocumentUltimateHub';
+import DocumentationComplete from './pages/DocumentationComplete';
 import Documents from './pages/Documents';
 import ElsterAutomationHub from './pages/ElsterAutomationHub';
 import ElsterCertificates from './pages/ElsterCertificates';
@@ -199,10 +203,12 @@ import EnergyPassportManager from './pages/EnergyPassportManager';
 import EnhancedTenantPortal from './pages/EnhancedTenantPortal';
 import EntityTaxPlanning from './pages/EntityTaxPlanning';
 import Equipment from './pages/Equipment';
+import Error404 from './pages/Error404';
 import Error500 from './pages/Error500';
 import EstateTaxPlanning from './pages/EstateTaxPlanning';
 import EstimatedTaxScheduler from './pages/EstimatedTaxScheduler';
 import FeatureCatalog from './pages/FeatureCatalog';
+import FeatureVergleich from './pages/FeatureVergleich';
 import FieldTasksManager from './pages/FieldTasksManager';
 import FinAPICallback from './pages/FinAPICallback';
 import FinanceDashboard from './pages/FinanceDashboard';
@@ -241,10 +247,12 @@ import InvoiceManagement from './pages/InvoiceManagement';
 import InvoiceManagementNew from './pages/InvoiceManagementNew';
 import Invoices from './pages/Invoices';
 import IoTSensorManagement from './pages/IoTSensorManagement';
+import KaufpreisRechner from './pages/KaufpreisRechner';
 import KnowledgeBaseAdmin from './pages/KnowledgeBaseAdmin';
 import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
 import Kommunikation from './pages/Kommunikation';
 import KommunikationDashboard from './pages/KommunikationDashboard';
+import LeadManagement from './pages/LeadManagement';
 import LeaseContracts from './pages/LeaseContracts';
 import LeaseManagement from './pages/LeaseManagement';
 import LetterShipmentManagement from './pages/LetterShipmentManagement';
@@ -257,6 +265,7 @@ import MaintenanceTasks from './pages/MaintenanceTasks';
 import MaintenanceTracking from './pages/MaintenanceTracking';
 import MandantManagement from './pages/MandantManagement';
 import MarketAnalytics from './pages/MarketAnalytics';
+import MarketReportGenerator from './pages/MarketReportGenerator';
 import MarketingPageExample from './pages/MarketingPageExample';
 import MarketplaceAdmin from './pages/MarketplaceAdmin';
 import MeterApp from './pages/MeterApp';
@@ -325,9 +334,9 @@ import ReportScheduling from './pages/ReportScheduling';
 import ReportingDashboard from './pages/ReportingDashboard';
 import ReportingHub from './pages/ReportingHub';
 import ReportsPage from './pages/ReportsPage';
-import RoleManagement from './pages/RoleManagement';
 import RetirementIncomeTaxOptimizer from './pages/RetirementIncomeTaxOptimizer';
 import RetirementTaxPlanning from './pages/RetirementTaxPlanning';
+import RoleManagement from './pages/RoleManagement';
 import RoleManagementPage from './pages/RoleManagementPage';
 import ScheduledTasks from './pages/ScheduledTasks';
 import SelfEmploymentTaxPlanner from './pages/SelfEmploymentTaxPlanner';
@@ -341,6 +350,7 @@ import SmartTaskDashboard from './pages/SmartTaskDashboard';
 import StBDashboard from './pages/StBDashboard';
 import StaffMobileApp from './pages/StaffMobileApp';
 import SteuerApp from './pages/SteuerApp';
+import SteuerGuideQuiz from './pages/SteuerGuideQuiz';
 import SteuerVermoegenApp from './pages/SteuerVermoegenApp';
 import StocksAndETFs from './pages/StocksAndETFs';
 import SubmissionDashboard from './pages/SubmissionDashboard';
@@ -456,6 +466,7 @@ import TesterManagementLazy from './pages/TesterManagementLazy';
 import TesterOnboarding from './pages/TesterOnboarding';
 import TestingDashboard from './pages/TestingDashboard';
 import ThemeManagement from './pages/ThemeManagement';
+import TilgungsRechner from './pages/TilgungsRechner';
 import UltimateEnterpriseHub from './pages/UltimateEnterpriseHub';
 import UnitDetail from './pages/UnitDetail';
 import UnitDetailTemplate from './pages/UnitDetailTemplate';
@@ -469,7 +480,23 @@ import VermieterApp from './pages/VermieterApp';
 import VermieterDashboard from './pages/VermieterDashboard';
 import VermieterGo from './pages/VermieterGo';
 import VermieterGoApp from './pages/VermieterGoApp';
+import VermieterProfilSettings from './pages/VermieterProfilSettings';
+import VermitifyAboutUs from './pages/VermitifyAboutUs';
+import VermitifyBlog from './pages/VermitifyBlog';
+import VermitifyCaseStudies from './pages/VermitifyCaseStudies';
+import VermitifyChangelog from './pages/VermitifyChangelog';
+import VermitifyContact from './pages/VermitifyContact';
+import VermitifyDatenschutz from './pages/VermitifyDatenschutz';
 import VermitifyDesignShowcase from './pages/VermitifyDesignShowcase';
+import VermitifyFAQ from './pages/VermitifyFAQ';
+import VermitifyFeatures from './pages/VermitifyFeatures';
+import VermitifyHelp from './pages/VermitifyHelp';
+import VermitifyHomepage from './pages/VermitifyHomepage';
+import VermitifyImpressum from './pages/VermitifyImpressum';
+import VermitifyPartners from './pages/VermitifyPartners';
+import VermitifyPricing from './pages/VermitifyPricing';
+import VermitifyRoadmap from './pages/VermitifyRoadmap';
+import VermitifyToolsOverview from './pages/VermitifyToolsOverview';
 import VollversionApp from './pages/VollversionApp';
 import WealthAdvanced from './pages/WealthAdvanced';
 import WealthAnalytics from './pages/WealthAnalytics';
@@ -480,6 +507,7 @@ import WealthMobile from './pages/WealthMobile';
 import WealthTaxCalculator from './pages/WealthTaxCalculator';
 import WealthTaxIntegration from './pages/WealthTaxIntegration';
 import WealthTeam from './pages/WealthTeam';
+import WertentwicklungsRechner from './pages/WertentwicklungsRechner';
 import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
@@ -497,34 +525,12 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import VermieterProfilSettings from './pages/VermieterProfilSettings';
-import TilgungsRechner from './pages/TilgungsRechner';
-import BKChecker from './pages/BKChecker';
-import LeadManagement from './pages/LeadManagement';
-import KaufpreisRechner from './pages/KaufpreisRechner';
-import SteuerGuideQuiz from './pages/SteuerGuideQuiz';
-import WertentwicklungsRechner from './pages/WertentwicklungsRechner';
-import VermitifyToolsOverview from './pages/VermitifyToolsOverview';
-import VermitifyHomepage from './pages/VermitifyHomepage';
-import AdminLeadDashboard from './pages/AdminLeadDashboard';
-import DocumentationComplete from './pages/DocumentationComplete';
-import MarketReportGenerator from './pages/MarketReportGenerator';
-import VermitifyPricing from './pages/VermitifyPricing';
-import VermitifyAboutUs from './pages/VermitifyAboutUs';
-import VermitifyContact from './pages/VermitifyContact';
-import FeatureVergleich from './pages/FeatureVergleich';
-import CalculationHistory from './pages/CalculationHistory';
-import VermitifyFeatures from './pages/VermitifyFeatures';
-import VermitifyImpressum from './pages/VermitifyImpressum';
-import VermitifyDatenschutz from './pages/VermitifyDatenschutz';
-import AdminSubscriptionOverview from './pages/AdminSubscriptionOverview';
-import VermitifyBlog from './pages/VermitifyBlog';
-import VermitifyHelp from './pages/VermitifyHelp';
-import VermitifyCaseStudies from './pages/VermitifyCaseStudies';
-import VermitifyRoadmap from './pages/VermitifyRoadmap';
-import VermitifyChangelog from './pages/VermitifyChangelog';
-import VermitifyPartners from './pages/VermitifyPartners';
-import VermitifyFAQ from './pages/VermitifyFAQ';
+import VermitifyTestimonials from './pages/VermitifyTestimonials';
+import VermitifySignup from './pages/VermitifySignup';
+import VermitifyLogin from './pages/VermitifyLogin';
+import ToolsLandingPage from './pages/ToolsLandingPage';
+import VermitifyAGB from './pages/VermitifyAGB';
+import VermitifySitemap from './pages/VermitifySitemap';
 import __Layout from './Layout.jsx';
 
 
@@ -552,6 +558,7 @@ export const PAGES = {
     "AdminDashboard": AdminDashboard,
     "AdminDashboardTemplate": AdminDashboardTemplate,
     "AdminIssueReports": AdminIssueReports,
+    "AdminLeadDashboard": AdminLeadDashboard,
     "AdminLimitsConfig": AdminLimitsConfig,
     "AdminMasterDashboard": AdminMasterDashboard,
     "AdminMessagingCenter": AdminMessagingCenter,
@@ -578,6 +585,7 @@ export const PAGES = {
     "AdminSetupGuide": AdminSetupGuide,
     "AdminStripeSetup": AdminStripeSetup,
     "AdminSubscriptionAddons": AdminSubscriptionAddons,
+    "AdminSubscriptionOverview": AdminSubscriptionOverview,
     "AdminSubscriptionPlans": AdminSubscriptionPlans,
     "AdminSubscriptions": AdminSubscriptions,
     "AdminTenantDashboard": AdminTenantDashboard,
@@ -631,6 +639,7 @@ export const PAGES = {
     "AutomatedTaxFormGenerator": AutomatedTaxFormGenerator,
     "AutomationRules": AutomationRules,
     "BKAbrechnungWizard": BKAbrechnungWizard,
+    "BKChecker": BKChecker,
     "BackupRecovery": BackupRecovery,
     "BankAccounts": BankAccounts,
     "BankReconciliation": BankReconciliation,
@@ -638,7 +647,6 @@ export const PAGES = {
     "BankTransactions": BankTransactions,
     "BankTransfers": BankTransfers,
     "BankingAutomationHub": BankingAutomationHub,
-    "Error404": Error404,
     "BankingManagement": BankingManagement,
     "BudgetAnalysis": BudgetAnalysis,
     "BudgetPlanning": BudgetPlanning,
@@ -653,6 +661,7 @@ export const PAGES = {
     "BulkMessaging": BulkMessaging,
     "BulkOperations": BulkOperations,
     "BusinessStructureOptimizer": BusinessStructureOptimizer,
+    "CalculationHistory": CalculationHistory,
     "CalculatorExample": CalculatorExample,
     "CapitalGainCH": CapitalGainCH,
     "CapitalGainsManagement": CapitalGainsManagement,
@@ -715,6 +724,7 @@ export const PAGES = {
     "DocumentSecurityHub": DocumentSecurityHub,
     "DocumentTemplateManager": DocumentTemplateManager,
     "DocumentUltimateHub": DocumentUltimateHub,
+    "DocumentationComplete": DocumentationComplete,
     "Documents": Documents,
     "ElsterAutomationHub": ElsterAutomationHub,
     "ElsterCertificates": ElsterCertificates,
@@ -730,10 +740,12 @@ export const PAGES = {
     "EnhancedTenantPortal": EnhancedTenantPortal,
     "EntityTaxPlanning": EntityTaxPlanning,
     "Equipment": Equipment,
+    "Error404": Error404,
     "Error500": Error500,
     "EstateTaxPlanning": EstateTaxPlanning,
     "EstimatedTaxScheduler": EstimatedTaxScheduler,
     "FeatureCatalog": FeatureCatalog,
+    "FeatureVergleich": FeatureVergleich,
     "FieldTasksManager": FieldTasksManager,
     "FinAPICallback": FinAPICallback,
     "FinanceDashboard": FinanceDashboard,
@@ -772,10 +784,12 @@ export const PAGES = {
     "InvoiceManagementNew": InvoiceManagementNew,
     "Invoices": Invoices,
     "IoTSensorManagement": IoTSensorManagement,
+    "KaufpreisRechner": KaufpreisRechner,
     "KnowledgeBaseAdmin": KnowledgeBaseAdmin,
     "KnowledgeManagementDashboard": KnowledgeManagementDashboard,
     "Kommunikation": Kommunikation,
     "KommunikationDashboard": KommunikationDashboard,
+    "LeadManagement": LeadManagement,
     "LeaseContracts": LeaseContracts,
     "LeaseManagement": LeaseManagement,
     "LetterShipmentManagement": LetterShipmentManagement,
@@ -788,6 +802,7 @@ export const PAGES = {
     "MaintenanceTracking": MaintenanceTracking,
     "MandantManagement": MandantManagement,
     "MarketAnalytics": MarketAnalytics,
+    "MarketReportGenerator": MarketReportGenerator,
     "MarketingPageExample": MarketingPageExample,
     "MarketplaceAdmin": MarketplaceAdmin,
     "MeterApp": MeterApp,
@@ -856,9 +871,9 @@ export const PAGES = {
     "ReportingDashboard": ReportingDashboard,
     "ReportingHub": ReportingHub,
     "ReportsPage": ReportsPage,
-    "RoleManagement": RoleManagement,
     "RetirementIncomeTaxOptimizer": RetirementIncomeTaxOptimizer,
     "RetirementTaxPlanning": RetirementTaxPlanning,
+    "RoleManagement": RoleManagement,
     "RoleManagementPage": RoleManagementPage,
     "ScheduledTasks": ScheduledTasks,
     "SelfEmploymentTaxPlanner": SelfEmploymentTaxPlanner,
@@ -872,6 +887,7 @@ export const PAGES = {
     "StBDashboard": StBDashboard,
     "StaffMobileApp": StaffMobileApp,
     "SteuerApp": SteuerApp,
+    "SteuerGuideQuiz": SteuerGuideQuiz,
     "SteuerVermoegenApp": SteuerVermoegenApp,
     "StocksAndETFs": StocksAndETFs,
     "SubmissionDashboard": SubmissionDashboard,
@@ -987,6 +1003,7 @@ export const PAGES = {
     "TesterOnboarding": TesterOnboarding,
     "TestingDashboard": TestingDashboard,
     "ThemeManagement": ThemeManagement,
+    "TilgungsRechner": TilgungsRechner,
     "UltimateEnterpriseHub": UltimateEnterpriseHub,
     "UnitDetail": UnitDetail,
     "UnitDetailTemplate": UnitDetailTemplate,
@@ -1000,7 +1017,23 @@ export const PAGES = {
     "VermieterDashboard": VermieterDashboard,
     "VermieterGo": VermieterGo,
     "VermieterGoApp": VermieterGoApp,
+    "VermieterProfilSettings": VermieterProfilSettings,
+    "VermitifyAboutUs": VermitifyAboutUs,
+    "VermitifyBlog": VermitifyBlog,
+    "VermitifyCaseStudies": VermitifyCaseStudies,
+    "VermitifyChangelog": VermitifyChangelog,
+    "VermitifyContact": VermitifyContact,
+    "VermitifyDatenschutz": VermitifyDatenschutz,
     "VermitifyDesignShowcase": VermitifyDesignShowcase,
+    "VermitifyFAQ": VermitifyFAQ,
+    "VermitifyFeatures": VermitifyFeatures,
+    "VermitifyHelp": VermitifyHelp,
+    "VermitifyHomepage": VermitifyHomepage,
+    "VermitifyImpressum": VermitifyImpressum,
+    "VermitifyPartners": VermitifyPartners,
+    "VermitifyPricing": VermitifyPricing,
+    "VermitifyRoadmap": VermitifyRoadmap,
+    "VermitifyToolsOverview": VermitifyToolsOverview,
     "VollversionApp": VollversionApp,
     "WealthAdvanced": WealthAdvanced,
     "WealthAnalytics": WealthAnalytics,
@@ -1011,6 +1044,7 @@ export const PAGES = {
     "WealthTaxCalculator": WealthTaxCalculator,
     "WealthTaxIntegration": WealthTaxIntegration,
     "WealthTeam": WealthTeam,
+    "WertentwicklungsRechner": WertentwicklungsRechner,
     "WhatsAppCommunication": WhatsAppCommunication,
     "WhatsAppSettings": WhatsAppSettings,
     "WhatsAppSetup": WhatsAppSetup,
@@ -1028,34 +1062,12 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "VermieterProfilSettings": VermieterProfilSettings,
-    "TilgungsRechner": TilgungsRechner,
-    "BKChecker": BKChecker,
-    "LeadManagement": LeadManagement,
-    "KaufpreisRechner": KaufpreisRechner,
-    "SteuerGuideQuiz": SteuerGuideQuiz,
-    "WertentwicklungsRechner": WertentwicklungsRechner,
-    "VermitifyToolsOverview": VermitifyToolsOverview,
-    "VermitifyHomepage": VermitifyHomepage,
-    "AdminLeadDashboard": AdminLeadDashboard,
-    "DocumentationComplete": DocumentationComplete,
-    "MarketReportGenerator": MarketReportGenerator,
-    "VermitifyPricing": VermitifyPricing,
-    "VermitifyAboutUs": VermitifyAboutUs,
-    "VermitifyContact": VermitifyContact,
-    "FeatureVergleich": FeatureVergleich,
-    "CalculationHistory": CalculationHistory,
-    "VermitifyFeatures": VermitifyFeatures,
-    "VermitifyImpressum": VermitifyImpressum,
-    "VermitifyDatenschutz": VermitifyDatenschutz,
-    "AdminSubscriptionOverview": AdminSubscriptionOverview,
-    "VermitifyBlog": VermitifyBlog,
-    "VermitifyHelp": VermitifyHelp,
-    "VermitifyCaseStudies": VermitifyCaseStudies,
-    "VermitifyRoadmap": VermitifyRoadmap,
-    "VermitifyChangelog": VermitifyChangelog,
-    "VermitifyPartners": VermitifyPartners,
-    "VermitifyFAQ": VermitifyFAQ,
+    "VermitifyTestimonials": VermitifyTestimonials,
+    "VermitifySignup": VermitifySignup,
+    "VermitifyLogin": VermitifyLogin,
+    "ToolsLandingPage": ToolsLandingPage,
+    "VermitifyAGB": VermitifyAGB,
+    "VermitifySitemap": VermitifySitemap,
 }
 
 export const pagesConfig = {
