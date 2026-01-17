@@ -1,3 +1,4 @@
+
 "use client";
 import * as React from "react"
 import * as SheetPrimitive from "@radix-ui/react-dialog"
@@ -17,7 +18,7 @@ const SheetPortal = SheetPrimitive.Portal
 const SheetOverlay = React.forwardRef(({ className, ...props }, ref) => (
   <SheetPrimitive.Overlay
     className={cn(
-      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "vf-modal-backdrop",
       className
     )}
     {...props}
@@ -64,7 +65,7 @@ const SheetHeader = ({
   ...props
 }) => (
   <div
-    className={cn("flex flex-col space-y-2 text-center sm:text-left", className)}
+    className={cn("vf-modal-header", className)}
     {...props} />
 )
 SheetHeader.displayName = "SheetHeader"
@@ -74,7 +75,7 @@ const SheetFooter = ({
   ...props
 }) => (
   <div
-    className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)}
+    className={cn("vf-modal-footer", className)}
     {...props} />
 )
 SheetFooter.displayName = "SheetFooter"
@@ -82,7 +83,7 @@ SheetFooter.displayName = "SheetFooter"
 const SheetTitle = React.forwardRef(({ className, ...props }, ref) => (
   <SheetPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold text-foreground", className)}
+    className={cn("vf-modal-title", className)}
     {...props} />
 ))
 SheetTitle.displayName = SheetPrimitive.Title.displayName
@@ -90,7 +91,7 @@ SheetTitle.displayName = SheetPrimitive.Title.displayName
 const SheetDescription = React.forwardRef(({ className, ...props }, ref) => (
   <SheetPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={cn("vf-modal-description", className)}
     {...props} />
 ))
 SheetDescription.displayName = SheetPrimitive.Description.displayName
