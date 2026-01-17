@@ -1,30 +1,46 @@
 import React from 'react';
-import { Phone, Mail, Edit, Trash2 } from 'lucide-react';
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
+import { Eye, Mail, Phone } from 'lucide-react';
 
-export default function SupplierTable({ suppliers, onEdit, onDelete }) {
+export default function SupplierTable({ suppliers = [], onView }) {
   return (
-    <div className="rounded-xl border border-slate-200 overflow-hidden">
-      <table className="w-full">
+    <div className="vf-table-container">
+      <table className="vf-table">
         <thead>
-          <tr className="bg-slate-50 border-b border-slate-200">
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Name</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Kategorie</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Telefon</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Email</th>
-            <th className="px-6 py-3"></th>
+          <tr>
+            <th>Name</th>
+            <th>Kategorie</th>
+            <th>Kontakt</th>
+            <th>Offene Rechnungen</th>
+            <th className="text-right">Aktionen</th>
           </tr>
         </thead>
         <tbody>
-          {suppliers?.map((supplier, idx) => (
-            <tr key={idx} className="border-b border-slate-100 hover:bg-lime-50 transition-colors cursor-pointer" onClick={() => onEdit?.(supplier)}>
-              <td className="px-6 py-4 text-sm font-medium text-slate-900">{supplier.name || '—'}</td>
-              <td className="px-6 py-4 text-sm text-slate-700">{supplier.category || '—'}</td>
-              <td className="px-6 py-4 text-sm text-slate-700 flex items-center gap-2"><Phone className="w-4 h-4" />{supplier.phone || '—'}</td>
-              <td className="px-6 py-4 text-sm text-slate-700 flex items-center gap-2"><Mail className="w-4 h-4" />{supplier.email || '—'}</td>
-              <td className="px-6 py-4 text-right flex gap-2 justify-end">
-                <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onEdit?.(supplier); }}><Edit className="w-4 h-4 text-slate-600" /></Button>
-                <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); onDelete?.(supplier); }}><Trash2 className="w-4 h-4 text-red-600" /></Button>
+          {suppliers.map((supplier) => (
+            <tr key={supplier.id}>
+              <td className="font-medium">{supplier.name}</td>
+              <td>{supplier.category || 'Allgemein'}</td>
+              <td>
+                <div className="space-y-1">
+                  {supplier.email && (
+                    <div className="flex items-center gap-1 text-xs">
+                      <Mail className="h-3 w-3" />
+                      {supplier.email}
+                    </div>
+                  )}
+                  {supplier.phone && (
+                    <div className="flex items-center gap-1 text-xs">
+                      <Phone className="h-3 w-3" />
+                      {supplier.phone}
+                    </div>
+                  )}
+                </div>
+              </td>
+              <td>{supplier.open_invoices || 0}</td>
+              <td className="text-right">
+                <Button variant="ghost" size="sm" onClick={() => onView(supplier)}>
+                  <Eye className="h-4 w-4" />
+                </Button>
               </td>
             </tr>
           ))}

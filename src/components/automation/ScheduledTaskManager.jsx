@@ -1,39 +1,36 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useQuery } from '@tanstack/react-query';
-import { Clock, Play, Pause } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { VfSwitch } from '@/components/shared/VfSwitch';
+import { Clock } from 'lucide-react';
 
 export default function ScheduledTaskManager() {
-  const { data: tasks = [] } = useQuery({
-    queryKey: ['scheduledTasks'],
-    queryFn: async () => {
-      const response = await fetch('/api/scheduled-tasks');
-      return response.json();
-    }
-  });
+  const tasks = [
+    { id: 1, name: 'Zahlungserinnerungen versenden', enabled: true, schedule: 'Täglich um 09:00' },
+    { id: 2, name: 'Vertragsende-Hinweise', enabled: true, schedule: 'Monatlich am 1.' },
+    { id: 3, name: 'Backup erstellen', enabled: true, schedule: 'Täglich um 03:00' },
+    { id: 4, name: 'Berichte generieren', enabled: false, schedule: 'Wöchentlich Montags' }
+  ];
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Clock className="w-5 h-5" />
+          <Clock className="h-5 w-5" />
           Geplante Aufgaben
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
-        {tasks.map(task => (
-          <div key={task.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-            <div>
-              <p className="font-semibold text-sm">{task.name}</p>
-              <p className="text-xs text-slate-600">{task.schedule}</p>
+      <CardContent>
+        <div className="space-y-3">
+          {tasks.map((task) => (
+            <div key={task.id} className="flex items-center justify-between p-3 bg-[var(--theme-surface)] rounded-lg">
+              <div className="flex-1">
+                <div className="font-medium text-sm">{task.name}</div>
+                <div className="text-xs text-[var(--theme-text-muted)] mt-1">{task.schedule}</div>
+              </div>
+              <VfSwitch checked={task.enabled} />
             </div>
-            <Badge className={task.is_active ? 'bg-green-600' : 'bg-gray-600'}>
-              {task.is_active ? 'Aktiv' : 'Pausiert'}
-            </Badge>
-          </div>
-        ))}
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

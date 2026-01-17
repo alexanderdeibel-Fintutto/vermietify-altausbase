@@ -1,47 +1,55 @@
-import React, { useEffect } from 'react';
-import { toast } from 'sonner';
-import { CheckCircle2, AlertCircle, Info, AlertTriangle } from 'lucide-react';
+import React, { createContext, useContext, useState } from 'react';
+import { X, CheckCircle, AlertCircle, Info } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-export function useToast() {
-  const notify = {
-    success: (message, description) => {
-      toast.success(message, {
-        description,
-        icon: <CheckCircle2 className="w-5 h-5" />,
-        duration: 3000,
-      });
-    },
-    error: (message, description) => {
-      toast.error(message, {
-        description,
-        icon: <AlertCircle className="w-5 h-5" />,
-        duration: 5000,
-      });
-    },
-    info: (message, description) => {
-      toast.info(message, {
-        description,
-        icon: <Info className="w-5 h-5" />,
-        duration: 4000,
-      });
-    },
-    warning: (message, description) => {
-      toast.warning(message, {
-        description,
-        icon: <AlertTriangle className="w-5 h-5" />,
-        duration: 4000,
-      });
-    },
-    promise: async (promise, messages) => {
-      return toast.promise(promise, {
-        loading: messages.loading || 'Wird verarbeitet...',
-        success: messages.success || 'Erfolgreich!',
-        error: messages.error || 'Fehler aufgetreten',
-      });
-    }
+const ToastContext = createContext(null);
+
+export const useToast = () => useContext(ToastContext);
+
+export function ToastProvider({ children }) {
+  const [toasts, setToasts] = useState([]);
+
+  const addToast = (message, type = 'info') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => removeToast(id), 5000);
   };
 
-  return notify;
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
+
+  return (
+    <ToastContext.Provider value={{ addToast }}>
+      {children}
+      <div className="fixed bottom-6 right-6 z-50 space-y-2">
+        {toasts.map((toast) => (
+          <Toast key={toast.id} {...toast} onClose={() => removeToast(toast.id)} />
+        ))}
+      </div>
+    </ToastContext.Provider>
+  );
 }
 
-export default useToast;
+function Toast({ message, type, onClose }) {
+  const icons = {
+    success: CheckCircle,
+    error: AlertCircle,
+    info: Info
+  };
+
+  const Icon = icons[type] || Info;
+
+  return (
+    <div className={cn(
+      "vf-toast",
+      `vf-toast-${type}`
+    )}>
+      <Icon className="h-5 w-5 flex-shrink-0" />
+      <div className="flex-1 text-sm">{message}</div>
+      <button onClick={onClose}>
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
