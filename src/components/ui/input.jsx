@@ -1,14 +1,14 @@
 import * as React from "react"
-
 import { cn } from "@/lib/utils"
 
-const Input = React.forwardRef(({ className, type, ...props }, ref) => {
+const Input = React.forwardRef(({ className, type, error, ...props }, ref) => {
   return (
-    (<input
+    <input
       type={type}
-      className={cn("vf-input", className)}
+      className={cn("vf-input", error && "vf-input-error", className)}
       ref={ref}
-      {...props} />)
+      {...props}
+    />
   );
 })
 Input.displayName = "Input"
