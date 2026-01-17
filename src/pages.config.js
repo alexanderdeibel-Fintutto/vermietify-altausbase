@@ -116,6 +116,7 @@ import BuildingsMap from './pages/BuildingsMap';
 import BulkMessaging from './pages/BulkMessaging';
 import BulkOperations from './pages/BulkOperations';
 import BusinessStructureOptimizer from './pages/BusinessStructureOptimizer';
+import CalculatorExample from './pages/CalculatorExample';
 import CapitalGainCH from './pages/CapitalGainCH';
 import CapitalGainsManagement from './pages/CapitalGainsManagement';
 import CapitalGainsOptimizer from './pages/CapitalGainsOptimizer';
@@ -206,6 +207,7 @@ import FinancingManagement from './pages/FinancingManagement';
 import Finanzen from './pages/Finanzen';
 import FullFeatureHub from './pages/FullFeatureHub';
 import GeneratedBookings from './pages/GeneratedBookings';
+import GeneratorExample from './pages/GeneratorExample';
 import GlobalSettings from './pages/GlobalSettings';
 import GlobalTaxDeadlineCalendar from './pages/GlobalTaxDeadlineCalendar';
 import GlobalTaxOverview from './pages/GlobalTaxOverview';
@@ -236,12 +238,14 @@ import LeaseContracts from './pages/LeaseContracts';
 import LeaseManagement from './pages/LeaseManagement';
 import LetterShipmentManagement from './pages/LetterShipmentManagement';
 import LetterXpressManagement from './pages/LetterXpressManagement';
+import ListPageExample from './pages/ListPageExample';
 import MaintenanceManager from './pages/MaintenanceManager';
 import MaintenanceScheduling from './pages/MaintenanceScheduling';
 import MaintenanceTasks from './pages/MaintenanceTasks';
 import MaintenanceTracking from './pages/MaintenanceTracking';
 import MandantManagement from './pages/MandantManagement';
 import MarketAnalytics from './pages/MarketAnalytics';
+import MarketingPageExample from './pages/MarketingPageExample';
 import MarketplaceAdmin from './pages/MarketplaceAdmin';
 import MeterApp from './pages/MeterApp';
 import MeterDashboard from './pages/MeterDashboard';
@@ -290,6 +294,7 @@ import PropertyPortfolio from './pages/PropertyPortfolio';
 import PropertyValuation from './pages/PropertyValuation';
 import PropertyValuationEngine from './pages/PropertyValuationEngine';
 import QuarterlyTaxEstimator from './pages/QuarterlyTaxEstimator';
+import QuizExample from './pages/QuizExample';
 import ROIDashboard from './pages/ROIDashboard';
 import RealEstateCH from './pages/RealEstateCH';
 import RealEstateTaxPlanning from './pages/RealEstateTaxPlanning';
@@ -319,6 +324,7 @@ import SmartTaskDashboard from './pages/SmartTaskDashboard';
 import StaffMobileApp from './pages/StaffMobileApp';
 import SteuerApp from './pages/SteuerApp';
 import SteuerVermoegenApp from './pages/SteuerVermoegenApp';
+import Tasks from './pages/Tasks';
 import StocksAndETFs from './pages/StocksAndETFs';
 import SubmissionDashboard from './pages/SubmissionDashboard';
 import SubscriptionManagement from './pages/SubscriptionManagement';
@@ -330,7 +336,6 @@ import SyncManagement from './pages/SyncManagement';
 import SystemConfiguration from './pages/SystemConfiguration';
 import SystemHealth from './pages/SystemHealth';
 import TaskManagement from './pages/TaskManagement';
-import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
 import TaxAIChatbot from './pages/TaxAIChatbot';
 import TaxAdminDashboard from './pages/TaxAdminDashboard';
@@ -443,6 +448,7 @@ import VendorManagement from './pages/VendorManagement';
 import VermieterApp from './pages/VermieterApp';
 import VermieterGo from './pages/VermieterGo';
 import VermieterGoApp from './pages/VermieterGoApp';
+import VermitifyDesignShowcase from './pages/VermitifyDesignShowcase';
 import VollversionApp from './pages/VollversionApp';
 import WealthAdvanced from './pages/WealthAdvanced';
 import WealthAnalytics from './pages/WealthAnalytics';
@@ -458,6 +464,7 @@ import WhatsAppSettings from './pages/WhatsAppSettings';
 import WhatsAppSetup from './pages/WhatsAppSetup';
 import WhiteLabelSaaS from './pages/WhiteLabelSaaS';
 import WithholdingTaxCalculator from './pages/WithholdingTaxCalculator';
+import WizardExample from './pages/WizardExample';
 import WorkflowAI from './pages/WorkflowAI';
 import WorkflowAutomation from './pages/WorkflowAutomation';
 import WorkflowAutomationBuilder from './pages/WorkflowAutomationBuilder';
@@ -469,13 +476,9 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import CalculatorExample from './pages/CalculatorExample';
-import WizardExample from './pages/WizardExample';
-import QuizExample from './pages/QuizExample';
-import GeneratorExample from './pages/GeneratorExample';
-import ListPageExample from './pages/ListPageExample';
-import MarketingPageExample from './pages/MarketingPageExample';
-import VermitifyDesignShowcase from './pages/VermitifyDesignShowcase';
+import Error404 from './pages/Error404';
+import Error500 from './pages/Error500';
+import VermieterDashboard from './pages/VermieterDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -598,6 +601,7 @@ export const PAGES = {
     "BulkMessaging": BulkMessaging,
     "BulkOperations": BulkOperations,
     "BusinessStructureOptimizer": BusinessStructureOptimizer,
+    "CalculatorExample": CalculatorExample,
     "CapitalGainCH": CapitalGainCH,
     "CapitalGainsManagement": CapitalGainsManagement,
     "CapitalGainsOptimizer": CapitalGainsOptimizer,
@@ -688,6 +692,7 @@ export const PAGES = {
     "Finanzen": Finanzen,
     "FullFeatureHub": FullFeatureHub,
     "GeneratedBookings": GeneratedBookings,
+    "GeneratorExample": GeneratorExample,
     "GlobalSettings": GlobalSettings,
     "GlobalTaxDeadlineCalendar": GlobalTaxDeadlineCalendar,
     "GlobalTaxOverview": GlobalTaxOverview,
@@ -718,12 +723,14 @@ export const PAGES = {
     "LeaseManagement": LeaseManagement,
     "LetterShipmentManagement": LetterShipmentManagement,
     "LetterXpressManagement": LetterXpressManagement,
+    "ListPageExample": ListPageExample,
     "MaintenanceManager": MaintenanceManager,
     "MaintenanceScheduling": MaintenanceScheduling,
     "MaintenanceTasks": MaintenanceTasks,
     "MaintenanceTracking": MaintenanceTracking,
     "MandantManagement": MandantManagement,
     "MarketAnalytics": MarketAnalytics,
+    "MarketingPageExample": MarketingPageExample,
     "MarketplaceAdmin": MarketplaceAdmin,
     "MeterApp": MeterApp,
     "MeterDashboard": MeterDashboard,
@@ -772,6 +779,7 @@ export const PAGES = {
     "PropertyValuation": PropertyValuation,
     "PropertyValuationEngine": PropertyValuationEngine,
     "QuarterlyTaxEstimator": QuarterlyTaxEstimator,
+    "QuizExample": QuizExample,
     "ROIDashboard": ROIDashboard,
     "RealEstateCH": RealEstateCH,
     "RealEstateTaxPlanning": RealEstateTaxPlanning,
@@ -801,6 +809,7 @@ export const PAGES = {
     "StaffMobileApp": StaffMobileApp,
     "SteuerApp": SteuerApp,
     "SteuerVermoegenApp": SteuerVermoegenApp,
+    "Tasks": Tasks,
     "StocksAndETFs": StocksAndETFs,
     "SubmissionDashboard": SubmissionDashboard,
     "SubscriptionManagement": SubscriptionManagement,
@@ -812,7 +821,6 @@ export const PAGES = {
     "SystemConfiguration": SystemConfiguration,
     "SystemHealth": SystemHealth,
     "TaskManagement": TaskManagement,
-    "Tasks": Tasks,
     "Tax": Tax,
     "TaxAIChatbot": TaxAIChatbot,
     "TaxAdminDashboard": TaxAdminDashboard,
@@ -925,6 +933,7 @@ export const PAGES = {
     "VermieterApp": VermieterApp,
     "VermieterGo": VermieterGo,
     "VermieterGoApp": VermieterGoApp,
+    "VermitifyDesignShowcase": VermitifyDesignShowcase,
     "VollversionApp": VollversionApp,
     "WealthAdvanced": WealthAdvanced,
     "WealthAnalytics": WealthAnalytics,
@@ -940,6 +949,7 @@ export const PAGES = {
     "WhatsAppSetup": WhatsAppSetup,
     "WhiteLabelSaaS": WhiteLabelSaaS,
     "WithholdingTaxCalculator": WithholdingTaxCalculator,
+    "WizardExample": WizardExample,
     "WorkflowAI": WorkflowAI,
     "WorkflowAutomation": WorkflowAutomation,
     "WorkflowAutomationBuilder": WorkflowAutomationBuilder,
@@ -951,13 +961,9 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "CalculatorExample": CalculatorExample,
-    "WizardExample": WizardExample,
-    "QuizExample": QuizExample,
-    "GeneratorExample": GeneratorExample,
-    "ListPageExample": ListPageExample,
-    "MarketingPageExample": MarketingPageExample,
-    "VermitifyDesignShowcase": VermitifyDesignShowcase,
+    "Error404": Error404,
+    "Error500": Error500,
+    "VermieterDashboard": VermieterDashboard,
 }
 
 export const pagesConfig = {
