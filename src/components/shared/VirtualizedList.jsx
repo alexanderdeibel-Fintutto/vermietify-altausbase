@@ -1,23 +1,20 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export default function VirtualizedList({ 
-  items, 
+  items = [], 
   renderItem, 
-  itemHeight = 80, 
-  containerHeight = 600,
-  overscan = 3 
+  itemHeight = 60,
+  containerHeight = 600 
 }) {
   const [scrollTop, setScrollTop] = useState(0);
   const containerRef = useRef(null);
 
-  const totalHeight = items.length * itemHeight;
-  const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
-  const endIndex = Math.min(
-    items.length - 1,
-    Math.ceil((scrollTop + containerHeight) / itemHeight) + overscan
-  );
+  const visibleCount = Math.ceil(containerHeight / itemHeight);
+  const startIndex = Math.floor(scrollTop / itemHeight);
+  const endIndex = Math.min(startIndex + visibleCount + 1, items.length);
+  const visibleItems = items.slice(startIndex, endIndex);
 
-  const visibleItems = items.slice(startIndex, endIndex + 1);
+  const totalHeight = items.length * itemHeight;
   const offsetY = startIndex * itemHeight;
 
   const handleScroll = (e) => {
@@ -25,11 +22,10 @@ export default function VirtualizedList({
   };
 
   return (
-    <div 
+    <div
       ref={containerRef}
       onScroll={handleScroll}
       style={{ height: containerHeight, overflow: 'auto' }}
-      className="relative"
     >
       <div style={{ height: totalHeight, position: 'relative' }}>
         <div style={{ transform: `translateY(${offsetY}px)` }}>

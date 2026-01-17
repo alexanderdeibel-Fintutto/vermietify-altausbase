@@ -1,89 +1,77 @@
 import React, { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Save } from 'lucide-react';
-import { toast } from 'sonner';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { VfInput } from '@/components/shared/VfInput';
+import { Button } from '@/components/ui/button';
+import { User, Save } from 'lucide-react';
+import { showSuccess } from '@/components/notifications/ToastNotification';
 
-export default function ProfileSettings({ user }) {
-  const [formData, setFormData] = useState({
-    full_name: user.full_name || '',
-    phone: user.phone || '',
-    company: user.company || '',
-    address: user.address || ''
+export default function ProfileSettings() {
+  const { data: user } = useQuery({
+    queryKey: ['user'],
+    queryFn: () => base44.auth.me()
   });
-  const queryClient = useQueryClient();
+
+  const [formData, setFormData] = useState({
+    full_name: user?.full_name || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    company: user?.company || ''
+  });
 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.auth.updateMe(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['current-user'] });
-      toast.success('Profil aktualisiert');
+      showSuccess('Profil aktualisiert');
     }
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    updateMutation.mutate(formData);
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="full_name">Name</Label>
-          <Input
-            id="full_name"
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <User className="h-5 w-5" />
+          Profil-Einstellungen
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4 max-w-xl">
+          <VfInput
+            label="Name"
             value={formData.full_name}
-            onChange={(e) => setFormData({...formData, full_name: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
           />
-        </div>
-        <div>
-          <Label htmlFor="email">E-Mail (nicht änderbar)</Label>
-          <Input
-            id="email"
-            value={user.email}
+
+          <VfInput
+            label="E-Mail"
+            type="email"
+            value={formData.email}
             disabled
-            className="bg-slate-50"
           />
-        </div>
-      </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="phone">Telefon</Label>
-          <Input
-            id="phone"
+          <VfInput
+            label="Telefon"
             value={formData.phone}
-            onChange={(e) => setFormData({...formData, phone: e.target.value})}
-            placeholder="+49 123 456789"
+            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
           />
-        </div>
-        <div>
-          <Label htmlFor="company">Firma</Label>
-          <Input
-            id="company"
+
+          <VfInput
+            label="Firma"
             value={formData.company}
-            onChange={(e) => setFormData({...formData, company: e.target.value})}
+            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
           />
+
+          <Button 
+            variant="gradient"
+            onClick={() => updateMutation.mutate(formData)}
+            disabled={updateMutation.isPending}
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {updateMutation.isPending ? 'Speichert...' : 'Speichern'}
+          </Button>
         </div>
-      </div>
-
-      <div>
-        <Label htmlFor="address">Adresse</Label>
-        <Input
-          id="address"
-          value={formData.address}
-          onChange={(e) => setFormData({...formData, address: e.target.value})}
-        />
-      </div>
-
-      <Button type="submit" disabled={updateMutation.isPending} className="bg-emerald-600 hover:bg-emerald-700">
-        <Save className="w-4 h-4 mr-2" />
-        Speichern
-      </Button>
-    </form>
+      </CardContent>
+    </Card>
   );
 }
