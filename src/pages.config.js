@@ -435,6 +435,7 @@ import TesterDashboard from './pages/TesterDashboard';
 import TesterManagement from './pages/TesterManagement';
 import TesterManagementLazy from './pages/TesterManagementLazy';
 import TesterOnboarding from './pages/TesterOnboarding';
+import Error404 from './pages/Error404';
 import TestingDashboard from './pages/TestingDashboard';
 import ThemeManagement from './pages/ThemeManagement';
 import UltimateEnterpriseHub from './pages/UltimateEnterpriseHub';
@@ -476,9 +477,13 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import Error404 from './pages/Error404';
 import Error500 from './pages/Error500';
 import VermieterDashboard from './pages/VermieterDashboard';
+import BuildingDetailTemplate from './pages/BuildingDetailTemplate';
+import SettingsProfile from './pages/SettingsProfile';
+import MieterDashboard from './pages/MieterDashboard';
+import OnboardingWizardNew from './pages/OnboardingWizardNew';
+import IndexmietenRechner from './pages/IndexmietenRechner';
 import __Layout from './Layout.jsx';
 
 
@@ -920,6 +925,7 @@ export const PAGES = {
     "TesterManagement": TesterManagement,
     "TesterManagementLazy": TesterManagementLazy,
     "TesterOnboarding": TesterOnboarding,
+    "Error404": Error404,
     "TestingDashboard": TestingDashboard,
     "ThemeManagement": ThemeManagement,
     "UltimateEnterpriseHub": UltimateEnterpriseHub,
@@ -961,9 +967,13 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "Error404": Error404,
     "Error500": Error500,
     "VermieterDashboard": VermieterDashboard,
+    "BuildingDetailTemplate": BuildingDetailTemplate,
+    "SettingsProfile": SettingsProfile,
+    "MieterDashboard": MieterDashboard,
+    "OnboardingWizardNew": OnboardingWizardNew,
+    "IndexmietenRechner": IndexmietenRechner,
 }
 
 export const pagesConfig = {
