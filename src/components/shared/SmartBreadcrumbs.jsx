@@ -1,36 +1,27 @@
 import React from 'react';
+import { ChevronRight, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { ChevronRight, Home } from 'lucide-react';
 
 export default function SmartBreadcrumbs({ items = [] }) {
-  if (items.length === 0) return null;
-
   return (
-    <nav className="flex items-center gap-2 text-sm text-slate-600">
-      <Link 
-        to={createPageUrl('Dashboard')} 
-        className="hover:text-slate-900 transition-colors"
-      >
-        <Home className="w-4 h-4" />
+    <nav className="flex items-center gap-2 text-sm mb-4">
+      <Link to={createPageUrl('Dashboard')} className="text-[var(--theme-text-muted)] hover:text-[var(--theme-primary)]">
+        <Home className="h-4 w-4" />
       </Link>
-
-      {items.map((item, idx) => (
-        <React.Fragment key={idx}>
-          <ChevronRight className="w-4 h-4 text-slate-400" />
+      
+      {items.map((item, index) => (
+        <React.Fragment key={index}>
+          <ChevronRight className="h-4 w-4 text-[var(--theme-text-muted)]" />
           {item.href ? (
-            <Link
-              to={item.href}
-              className={`hover:text-slate-900 transition-colors ${
-                idx === items.length - 1 ? 'font-medium text-slate-900' : ''
-              }`}
+            <Link 
+              to={createPageUrl(item.href)}
+              className="text-[var(--theme-text-muted)] hover:text-[var(--theme-primary)]"
             >
               {item.label}
             </Link>
           ) : (
-            <span className={idx === items.length - 1 ? 'font-medium text-slate-900' : ''}>
-              {item.label}
-            </span>
+            <span className="text-[var(--theme-text-primary)] font-medium">{item.label}</span>
           )}
         </React.Fragment>
       ))}
