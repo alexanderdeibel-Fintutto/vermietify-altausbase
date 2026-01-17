@@ -1575,6 +1575,74 @@
   }
   
   /* ═══════════════════════════════════════════════════════════════════════════
+     TOOLTIP STYLES
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .vf-tooltip {
+    z-index: var(--vf-z-tooltip);
+    max-width: 300px;
+    padding: var(--vf-spacing-2) var(--vf-spacing-3);
+    background-color: var(--theme-text-primary);
+    color: white;
+    font-size: var(--vf-text-xs);
+    border-radius: var(--vf-radius-md);
+    box-shadow: var(--vf-shadow-lg);
+    animation: vf-fade-in 150ms ease-in-out;
+  }
+  
+  .theme-invest .vf-tooltip,
+  .dark .vf-tooltip {
+    background-color: var(--theme-elevated);
+    color: var(--theme-text-primary);
+    border: 1px solid var(--theme-border);
+  }
+  
+  /* ═══════════════════════════════════════════════════════════════════════════
+     TABS STYLES
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .vf-tabs-list {
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--theme-surface);
+    border: 1px solid var(--theme-border);
+    border-radius: var(--vf-radius-lg);
+    padding: var(--vf-spacing-1);
+    gap: var(--vf-spacing-1);
+  }
+  
+  .vf-tabs-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--vf-spacing-2) var(--vf-spacing-4);
+    font-size: var(--vf-text-sm);
+    font-weight: 500;
+    color: var(--theme-text-secondary);
+    border-radius: var(--vf-radius-md);
+    cursor: pointer;
+    transition: var(--vf-transition-fast);
+    background: transparent;
+    border: none;
+  }
+  
+  .vf-tabs-trigger:hover {
+    color: var(--theme-text-primary);
+    background-color: var(--theme-surface-hover);
+  }
+  
+  .vf-tabs-trigger[data-state="active"] {
+    background-color: var(--theme-elevated);
+    color: var(--theme-primary);
+    box-shadow: var(--vf-shadow-sm);
+  }
+  
+  .vf-tabs-trigger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  /* ═══════════════════════════════════════════════════════════════════════════
      VERMITIFY SIDEBAR-STYLES
      ═══════════════════════════════════════════════════════════════════════════ */
   

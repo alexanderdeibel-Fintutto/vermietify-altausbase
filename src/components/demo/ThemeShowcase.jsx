@@ -8,8 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { 
   CheckCircle, AlertTriangle, Info, TrendingUp, TrendingDown,
-  Building2, Users, Euro, Calculator, FileText
+  Building2, Users, Euro, Calculator, FileText, Palette, Home
 } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 export default function ThemeShowcase() {
   const [count, setCount] = useState(0);
@@ -234,6 +235,67 @@ export default function ThemeShowcase() {
           <h3 className="vf-empty-state-title">Noch keine Objekte</h3>
           <p className="text-sm text-slate-500 mb-6">Erstellen Sie Ihr erstes Objekt, um zu starten.</p>
           <Button variant="primary">+ Objekt anlegen</Button>
+        </CardContent>
+      </Card>
+
+      {/* Tabs Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Tabs Navigation</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="overview">
+            <TabsList>
+              <TabsTrigger value="overview">Übersicht</TabsTrigger>
+              <TabsTrigger value="finance">Finanzen</TabsTrigger>
+              <TabsTrigger value="documents">Dokumente</TabsTrigger>
+              <TabsTrigger value="settings">Einstellungen</TabsTrigger>
+            </TabsList>
+            <TabsContent value="overview" className="mt-4">
+              <p className="text-sm text-slate-600">Übersicht der wichtigsten Kennzahlen und Informationen.</p>
+            </TabsContent>
+            <TabsContent value="finance" className="mt-4">
+              <p className="text-sm text-slate-600">Finanzielle Auswertungen und Transaktionen.</p>
+            </TabsContent>
+            <TabsContent value="documents" className="mt-4">
+              <p className="text-sm text-slate-600">Alle Dokumente und Verträge an einem Ort.</p>
+            </TabsContent>
+            <TabsContent value="settings" className="mt-4">
+              <p className="text-sm text-slate-600">Systemeinstellungen und Konfiguration.</p>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Color Palette Reference */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Palette className="w-5 h-5" />
+            Classic Ocean Sunset Palette
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <p className="text-sm font-medium mb-2">Primary (Ocean Blue)</p>
+            <div className="flex gap-2">
+              <div className="w-12 h-12 rounded-lg" style={{ backgroundColor: '#1E3A8A' }} title="#1E3A8A" />
+              <div className="w-12 h-12 rounded-lg" style={{ backgroundColor: '#3B5998' }} title="#3B5998" />
+              <div className="w-12 h-12 rounded-lg" style={{ backgroundColor: '#EEF2FF' }} title="#EEF2FF" />
+            </div>
+          </div>
+          <div>
+            <p className="text-sm font-medium mb-2">Accent (Sunset Orange)</p>
+            <div className="flex gap-2">
+              <div className="w-12 h-12 rounded-lg" style={{ backgroundColor: '#F97316' }} title="#F97316" />
+              <div className="w-12 h-12 rounded-lg" style={{ backgroundColor: '#EA580C' }} title="#EA580C" />
+              <div className="w-12 h-12 rounded-lg" style={{ backgroundColor: '#FFEDD5' }} title="#FFEDD5" />
+            </div>
+          </div>
+          <div>
+            <p className="text-sm font-medium mb-2">Gradient</p>
+            <div className="w-full h-12 rounded-lg" style={{ background: 'linear-gradient(135deg, #1E3A8A 0%, #F97316 100%)' }} />
+          </div>
         </CardContent>
       </Card>
     </div>
