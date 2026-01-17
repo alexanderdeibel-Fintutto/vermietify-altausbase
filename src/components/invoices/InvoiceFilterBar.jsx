@@ -1,48 +1,54 @@
 import React from 'react';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, Plus, Filter } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { VfInput } from '@/components/shared/VfInput';
+import { VfSelect } from '@/components/shared/VfSelect';
+import { Search } from 'lucide-react';
 
-export default function InvoiceFilterBar({ onSearchChange, onStatusChange, onNewInvoice }) {
+export default function InvoiceFilterBar({ filters, onChange }) {
   return (
-    <div className="flex gap-4 flex-wrap items-center mb-6">
-      <div className="flex-1 min-w-64">
-        <div className="relative">
-          <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-          <Input
-            placeholder="Rechnungen suchen..."
-            onChange={(e) => onSearchChange?.(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
+    <div className="vf-card p-4">
+      <div className="grid md:grid-cols-4 gap-4">
+        <VfInput
+          leftIcon={Search}
+          placeholder="Lieferant, Nummer..."
+          value={filters.search || ''}
+          onChange={(e) => onChange({ ...filters, search: e.target.value })}
+        />
 
-      <div className="flex items-center gap-2">
-        <Filter className="w-4 h-4 text-slate-400" />
-        <Select onValueChange={(value) => onStatusChange?.(value)}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Status</SelectItem>
-            <SelectItem value="draft">Entwurf</SelectItem>
-            <SelectItem value="issued">Ausgestellt</SelectItem>
-            <SelectItem value="paid">Bezahlt</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+        <VfSelect
+          label="Status"
+          value={filters.status || 'all'}
+          onChange={(v) => onChange({ ...filters, status: v })}
+          options={[
+            { value: 'all', label: 'Alle' },
+            { value: 'paid', label: 'Bezahlt' },
+            { value: 'pending', label: 'Ausstehend' },
+            { value: 'overdue', label: 'Überfällig' }
+          ]}
+        />
 
-      <Button onClick={onNewInvoice} className="bg-slate-700 hover:bg-slate-800 font-extralight">
-        <Plus className="w-4 h-4 mr-2" />
-        Neue Rechnung
-      </Button>
+        <VfSelect
+          label="Kategorie"
+          value={filters.category || 'all'}
+          onChange={(v) => onChange({ ...filters, category: v })}
+          options={[
+            { value: 'all', label: 'Alle' },
+            { value: 'maintenance', label: 'Instandhaltung' },
+            { value: 'utilities', label: 'Nebenkosten' },
+            { value: 'insurance', label: 'Versicherung' }
+          ]}
+        />
+
+        <VfSelect
+          label="Sortierung"
+          value={filters.sort || '-invoice_date'}
+          onChange={(v) => onChange({ ...filters, sort: v })}
+          options={[
+            { value: '-invoice_date', label: 'Neueste' },
+            { value: 'invoice_date', label: 'Älteste' },
+            { value: '-amount', label: 'Höchster Betrag' }
+          ]}
+        />
+      </div>
     </div>
   );
 }

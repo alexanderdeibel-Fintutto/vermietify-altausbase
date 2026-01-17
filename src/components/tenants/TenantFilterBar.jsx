@@ -1,102 +1,41 @@
-import React, { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import { Search, Filter, SortAsc } from 'lucide-react';
+import React from 'react';
+import { VfInput } from '@/components/shared/VfInput';
+import { VfSelect } from '@/components/shared/VfSelect';
+import { Search } from 'lucide-react';
 
-export default function TenantFilterBar({
-  onSearchChange,
-  onStatusChange,
-  onPortalAccessChange,
-  onSortChange,
-  onNewTenant,
-}) {
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const handleSearch = (value) => {
-    setSearchTerm(value);
-    onSearchChange?.(value);
-  };
-
+export default function TenantFilterBar({ filters, onChange }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex-1 relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <Input
-          placeholder="Nach Name oder Email suchen..."
-          value={searchTerm}
-          onChange={(e) => handleSearch(e.target.value)}
-          className="pl-10"
+    <div className="vf-card p-4">
+      <div className="grid md:grid-cols-3 gap-4">
+        <VfInput
+          leftIcon={Search}
+          placeholder="Name, E-Mail suchen..."
+          value={filters.search || ''}
+          onChange={(e) => onChange({ ...filters, search: e.target.value })}
         />
-      </div>
 
-      <div className="flex gap-2">
-        {/* Status Filter */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Filter className="w-4 h-4" />
-              Status
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onStatusChange?.('all')}>
-              Alle
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onStatusChange?.('active')}>
-              Aktiv
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onStatusChange?.('inactive')}>
-              Inaktiv
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onPortalAccessChange?.('with_access')}>
-              Mit Portal-Zugang
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onPortalAccessChange?.('without_access')}>
-              Ohne Portal-Zugang
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <VfSelect
+          label="Status"
+          value={filters.status || 'all'}
+          onChange={(v) => onChange({ ...filters, status: v })}
+          options={[
+            { value: 'all', label: 'Alle' },
+            { value: 'active', label: 'Aktiv' },
+            { value: 'inactive', label: 'Inaktiv' },
+            { value: 'former', label: 'Ehemalig' }
+          ]}
+        />
 
-        {/* Sort */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <SortAsc className="w-4 h-4" />
-              Sortieren
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onSortChange?.('name_asc')}>
-              Name (A-Z)
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onSortChange?.('name_desc')}>
-              Name (Z-A)
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onSortChange?.('created_recent')}>
-              Neueste zuerst
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onSortChange?.('created_oldest')}>
-              Älteste zuerst
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <Button
-          onClick={onNewTenant}
-          className="bg-slate-700 hover:bg-slate-800 gap-2"
-          size="sm"
-        >
-          + Neuer Mieter
-        </Button>
+        <VfSelect
+          label="Sortierung"
+          value={filters.sort || 'name'}
+          onChange={(v) => onChange({ ...filters, sort: v })}
+          options={[
+            { value: 'name', label: 'Name' },
+            { value: '-created_date', label: 'Neueste zuerst' },
+            { value: 'created_date', label: 'Älteste zuerst' }
+          ]}
+        />
       </div>
     </div>
   );

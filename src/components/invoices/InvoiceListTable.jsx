@@ -1,84 +1,44 @@
 import React from 'react';
-import { Pencil, Trash2, Download } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { Button } from '@/components/ui/button';
+import StatusBadge from '@/components/shared/StatusBadge';
+import CurrencyDisplay from '@/components/shared/CurrencyDisplay';
+import { Eye, Download } from 'lucide-react';
 
-export default function InvoiceListTable({ invoices, onEdit, onDelete, onDownload }) {
-  const getStatusColor = (status) => {
-    const colors = {
-      draft: 'bg-slate-100 text-slate-700',
-      issued: 'bg-orange-100 text-orange-700',
-      paid: 'bg-green-100 text-green-700',
-    };
-    return colors[status] || colors.draft;
-  };
-
+export default function InvoiceListTable({ invoices = [], onView, onDownload }) {
   return (
-    <div className="rounded-xl border border-slate-200 overflow-hidden">
-      <table className="w-full">
+    <div className="vf-table-container">
+      <table className="vf-table">
         <thead>
-          <tr className="bg-slate-50 border-b border-slate-200">
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Nummer</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Empfänger</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Betrag</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Datum</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
-            <th className="px-6 py-3"></th>
+          <tr>
+            <th>Rechnungsnummer</th>
+            <th>Lieferant</th>
+            <th>Betrag</th>
+            <th>Datum</th>
+            <th>Status</th>
+            <th className="text-right">Aktionen</th>
           </tr>
         </thead>
         <tbody>
-          {invoices?.map((invoice, idx) => (
-            <tr 
-              key={idx}
-              className="border-b border-slate-100 hover:bg-orange-50 transition-colors cursor-pointer"
-              onClick={() => onEdit?.(invoice)}
-            >
-              <td className="px-6 py-4 text-sm font-medium text-slate-900">{invoice.number || `INV-${idx + 1}`}</td>
-              <td className="px-6 py-4 text-sm text-slate-700">{invoice.recipient_name || '—'}</td>
-              <td className="px-6 py-4 text-sm font-medium text-slate-900">€{(invoice.amount || 0).toFixed(2)}</td>
-              <td className="px-6 py-4 text-sm text-slate-700">
-                {invoice.date ? format(new Date(invoice.date), 'dd.MM.yyyy', { locale: de }) : '—'}
+          {invoices.map((invoice) => (
+            <tr key={invoice.id}>
+              <td className="font-medium">{invoice.invoice_number || invoice.id.slice(0, 8)}</td>
+              <td>{invoice.supplier_name || 'Unbekannt'}</td>
+              <td>
+                <CurrencyDisplay amount={invoice.amount || 0} />
               </td>
-              <td className="px-6 py-4 text-sm">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(invoice.status)}`}>
-                  {invoice.status === 'draft' && 'Entwurf'}
-                  {invoice.status === 'issued' && 'Ausgestellt'}
-                  {invoice.status === 'paid' && 'Bezahlt'}
-                </span>
+              <td>{invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('de-DE') : '-'}</td>
+              <td>
+                <StatusBadge status={invoice.payment_status || 'pending'} />
               </td>
-              <td className="px-6 py-4 text-right flex gap-2 justify-end">
-                <Button 
-                  size="icon" 
-                  variant="ghost"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDownload?.(invoice);
-                  }}
-                  title="PDF herunterladen"
-                >
-                  <Download className="w-4 h-4 text-slate-600" />
-                </Button>
-                <Button 
-                  size="icon" 
-                  variant="ghost"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit?.(invoice);
-                  }}
-                >
-                  <Pencil className="w-4 h-4 text-slate-600" />
-                </Button>
-                <Button 
-                  size="icon" 
-                  variant="ghost"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete?.(invoice);
-                  }}
-                >
-                  <Trash2 className="w-4 h-4 text-red-600" />
-                </Button>
+              <td className="text-right">
+                <div className="flex gap-2 justify-end">
+                  <Button variant="ghost" size="sm" onClick={() => onView(invoice)}>
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => onDownload(invoice)}>
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </div>
               </td>
             </tr>
           ))}

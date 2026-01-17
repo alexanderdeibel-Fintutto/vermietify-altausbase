@@ -1,85 +1,63 @@
 import React from 'react';
-import { Zap, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Eye, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
-export default function BuildingTable({ stats, onEdit, onDelete, onQuickAction }) {
-  const getOccupancyColor = (occupancy) => {
-    if (occupancy === 100) return 'text-slate-600';
-    if (occupancy > 50) return 'text-slate-500';
-    return 'text-slate-400';
-  };
-
-  const getOccupancyDot = (occupancy) => {
-    if (occupancy === 100) return '●';
-    if (occupancy > 50) return '◐';
-    return '○';
-  };
+export default function BuildingTable({ buildings = [], unitsMap = {}, contractsMap = {} }) {
+  const navigate = useNavigate();
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse">
+    <div className="vf-table-container">
+      <table className="vf-table">
         <thead>
-          <tr className="border-b border-slate-100">
-            <th className="px-6 py-3 text-left text-xs font-extralight text-slate-400 w-1/4">Name</th>
-            <th className="px-6 py-3 text-left text-xs font-extralight text-slate-400 w-1/6 hidden md:table-cell">Ort</th>
-            <th className="px-6 py-3 text-left text-xs font-extralight text-slate-400 w-1/6">Einheiten</th>
-            <th className="px-6 py-3 text-left text-xs font-extralight text-slate-400 w-1/6">Auslast.</th>
-            <th className="px-6 py-3 text-left text-xs font-extralight text-slate-400 w-1/6">Ertrag</th>
-            <th className="px-6 py-3 text-right text-xs font-extralight text-slate-400 w-1/6">Aktionen</th>
+          <tr>
+            <th>Name</th>
+            <th>Adresse</th>
+            <th>Einheiten</th>
+            <th>Belegt</th>
+            <th>Auslastung</th>
+            <th className="text-right">Aktionen</th>
           </tr>
         </thead>
         <tbody>
-          {stats.map((stat) => (
-            <tr
-              key={stat.building.id}
-              className="border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer"
-              onClick={() => onEdit(stat.building)}
-            >
-              <td className="px-6 py-3 text-sm font-extralight text-slate-700">{stat.building.name}</td>
-              <td className="px-6 py-3 text-sm font-extralight text-slate-500 hidden md:table-cell">{stat.building.city}</td>
-              <td className="px-6 py-3 text-sm font-extralight text-slate-700">
-                {stat.rentedUnits}/{stat.totalUnits}
-              </td>
-              <td className={`px-6 py-3 text-sm font-extralight ${getOccupancyColor(stat.occupancy)}`}>
-                <span className="mr-1">{getOccupancyDot(stat.occupancy)}</span>
-                {stat.occupancy}%
-              </td>
-              <td className="px-6 py-3 text-sm font-extralight text-slate-700">
-                €{stat.totalRent.toLocaleString('de-DE')}
-              </td>
-              <td className="px-4 py-2 text-right">
-                <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                  <Button
+          {buildings.map((building) => {
+            const units = unitsMap[building.id] || [];
+            const activeContracts = contractsMap[building.id] || [];
+            const occupancy = units.length > 0 
+              ? Math.round((activeContracts.length / units.length) * 100) 
+              : 0;
+
+            return (
+              <tr key={building.id}>
+                <td className="font-medium">{building.name}</td>
+                <td>
+                  {building.address && (
+                    <div className="flex items-center gap-1 text-sm">
+                      <MapPin className="h-3 w-3 text-[var(--theme-text-muted)]" />
+                      {building.address}
+                    </div>
+                  )}
+                </td>
+                <td>{units.length}</td>
+                <td>{activeContracts.length}</td>
+                <td>
+                  <span className={occupancy >= 90 ? 'text-[var(--vf-success-600)]' : ''}>
+                    {occupancy}%
+                  </span>
+                </td>
+                <td className="text-right">
+                  <Button 
+                    variant="ghost" 
                     size="sm"
-                    variant="ghost"
-                    className="h-6 w-6 p-0"
-                    onClick={() => onQuickAction(stat.building)}
-                    title="Schnell-Status"
+                    onClick={() => navigate(createPageUrl('BuildingDetail') + `?id=${building.id}`)}
                   >
-                    <Zap className="w-3.5 h-3.5 text-slate-600" />
+                    <Eye className="h-4 w-4" />
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-6 w-6 p-0"
-                    onClick={() => onEdit(stat.building)}
-                    title="Bearbeiten"
-                  >
-                    <Edit className="w-3.5 h-3.5 text-slate-600" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-6 w-6 p-0 hover:text-red-600"
-                    onClick={() => onDelete(stat.building)}
-                    title="Löschen"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              </td>
-            </tr>
-          ))}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

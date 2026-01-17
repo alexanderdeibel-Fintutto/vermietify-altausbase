@@ -1,80 +1,46 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
+import { Building2, MapPin, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Building2, MapPin, Home, ChevronRight } from 'lucide-react';
 
-export default function BuildingCard({ building, units = [] }) {
-    const buildingUnits = units.filter(u => u.building_id === building.id);
-    const occupiedCount = buildingUnits.filter(u => u.status === 'occupied').length;
-    const vacantCount = buildingUnits.filter(u => u.status === 'vacant').length;
-    const totalSqm = buildingUnits.reduce((sum, u) => sum + (u.sqm || 0), 0);
+export default function BuildingCard({ building, unitCount = 0, occupancyRate = 0 }) {
+  const navigate = useNavigate();
 
-    return (
-        <Link to={createPageUrl(`BuildingDetail?buildingId=${building.id}`)}>
-            <Card className="border-slate-200/50 hover:shadow-lg transition-all duration-300 cursor-pointer group overflow-hidden">
-                <div className="h-40 bg-gradient-to-br from-slate-100 to-slate-200 relative">
-                    {building.image_url ? (
-                        <img 
-                            src={building.image_url} 
-                            alt={building.name}
-                            className="w-full h-full object-cover"
-                        />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                            <Building2 className="w-16 h-16 text-slate-300" />
-                        </div>
-                    )}
-                    <div className="absolute top-3 right-3">
-                        <Badge className="bg-white/90 text-slate-700 hover:bg-white">
-                            {buildingUnits.length} Einheiten
-                        </Badge>
-                    </div>
-                </div>
-                <CardContent className="p-5">
-                    <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                            <h3 className="font-semibold text-lg text-slate-800 group-hover:text-emerald-600 transition-colors">
-                                {building.name}
-                            </h3>
-                            <div className="flex items-center gap-1.5 text-sm text-slate-500 mt-1">
-                                <MapPin className="w-3.5 h-3.5" />
-                                {building.address} {building.house_number}, {building.postal_code} {building.city}
-                            </div>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
-                    </div>
-                    
-                    <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-100">
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-2 h-2 bg-emerald-500 rounded-full" />
-                            <span className="text-sm text-slate-600">{occupiedCount} vermietet</span>
-                        </div>
-                        {vacantCount > 0 && (
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-2 h-2 bg-amber-500 rounded-full" />
-                                <span className="text-sm text-slate-600">{vacantCount} leer</span>
-                            </div>
-                        )}
-                        {totalSqm > 0 && (
-                            <span className="text-sm text-slate-400 ml-auto">{totalSqm} m²</span>
-                        )}
-                    </div>
-                    
-                    {buildingUnits.length > 0 && (
-                        <Link 
-                            to={createPageUrl(`BuildingDetail?id=${building.id}&tab=units`)}
-                            className="mt-3 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 rounded-lg transition-all font-medium border border-blue-200"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <Home className="w-4 h-4" />
-                            {buildingUnits.length} {buildingUnits.length === 1 ? 'Einheit' : 'Einheiten'} verwalten
-                            <ChevronRight className="w-4 h-4" />
-                        </Link>
-                    )}
-                </CardContent>
-            </Card>
-        </Link>
-    );
+  return (
+    <Card 
+      className="vf-card-clickable"
+      onClick={() => navigate(createPageUrl('BuildingDetail') + `?id=${building.id}`)}
+    >
+      <CardContent className="p-6">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-lg bg-[var(--vf-gradient-primary)] flex items-center justify-center text-white flex-shrink-0">
+            <Building2 className="h-6 w-6" />
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold mb-1 truncate">{building.name}</h3>
+            {building.address && (
+              <div className="flex items-center gap-1 text-sm text-[var(--theme-text-muted)] mb-2">
+                <MapPin className="h-3 w-3" />
+                <span className="truncate">{building.address}</span>
+              </div>
+            )}
+            
+            <div className="flex items-center gap-4 mt-3">
+              <div className="flex items-center gap-1 text-sm">
+                <Home className="h-4 w-4 text-[var(--theme-text-muted)]" />
+                <span>{unitCount} Einheiten</span>
+              </div>
+              
+              <div className="text-sm">
+                <span className="font-semibold">{occupancyRate}%</span>
+                <span className="text-[var(--theme-text-muted)]"> belegt</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }

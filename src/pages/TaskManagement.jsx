@@ -1,73 +1,82 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import TaskFilterBar from '@/components/tasks/TaskFilterBar';
-import TaskListTable from '@/components/tasks/TaskListTable';
-import QuickStats from '@/components/shared/QuickStats';
+import { base44 } from '@/api/base44Client';
+import PageHeader from '@/components/shared/PageHeader';
+import TaskList from '@/components/tasks/TaskList';
+import { Button } from '@/components/ui/button';
+import { Plus, CheckSquare } from 'lucide-react';
+import { VfEmptyState } from '@/components/shared/VfEmptyState';
 
-export default function TaskManagementPage() {
-  const [search, setSearch] = useState('');
-  const [showDialog, setShowDialog] = useState(false);
-  const [editingTask, setEditingTask] = useState(null);
-  const [formData, setFormData] = useState({});
+export default function TaskManagement() {
+  const [filter, setFilter] = useState('pending');
   const queryClient = useQueryClient();
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task?.list?.() || []
+    queryKey: ['tasks', filter],
+    queryFn: async () => {
+      const allTasks = await base44.entities.Task.list('-created_date');
+      if (filter === 'all') return allTasks;
+      return allTasks.filter(t => 
+        filter === 'pending' ? t.status !== 'completed' : t.status === 'completed'
+      );
+    }
   });
 
-  const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Task.create(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['tasks'] }); setShowDialog(false); setFormData({}); }
+  const toggleMutation = useMutation({
+    mutationFn: (task) => base44.entities.Task.update(task.id, {
+      status: task.status === 'completed' ? 'pending' : 'completed'
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['tasks']);
+    }
   });
-
-  const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.Task.update(editingTask.id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['tasks'] }); setShowDialog(false); setEditingTask(null); }
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Task.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] })
-  });
-
-  const filteredTasks = tasks.filter(t => (t.title || '').toLowerCase().includes(search.toLowerCase()));
-  const completedCount = tasks.filter(t => t.status === 'done').length;
-
-  const stats = [
-    { label: 'Gesamt-Aufgaben', value: tasks.length },
-    { label: 'Offen', value: tasks.length - completedCount },
-    { label: 'Erledigt', value: completedCount },
-    { label: 'Diese Woche', value: 0 },
-  ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">✅ Aufgaben</h1>
-        <p className="text-slate-600 mt-1">Verwalten Sie Ihre Aufgaben und Workflows</p>
+    <div className="p-6 max-w-4xl mx-auto">
+      <PageHeader
+        title="Aufgaben"
+        subtitle="Verwalten Sie Ihre To-Dos"
+        actions={
+          <Button variant="gradient">
+            <Plus className="h-4 w-4 mr-2" />
+            Neue Aufgabe
+          </Button>
+        }
+      />
+
+      <div className="flex gap-2 mb-6">
+        <Button
+          variant={filter === 'pending' ? 'primary' : 'outline'}
+          size="sm"
+          onClick={() => setFilter('pending')}
+        >
+          Offen ({tasks.filter(t => t.status !== 'completed').length})
+        </Button>
+        <Button
+          variant={filter === 'completed' ? 'primary' : 'outline'}
+          size="sm"
+          onClick={() => setFilter('completed')}
+        >
+          Erledigt
+        </Button>
+        <Button
+          variant={filter === 'all' ? 'primary' : 'outline'}
+          size="sm"
+          onClick={() => setFilter('all')}
+        >
+          Alle
+        </Button>
       </div>
-      <QuickStats stats={stats} accentColor="red" />
-      <TaskFilterBar onSearchChange={setSearch} onNewTask={() => { setEditingTask(null); setFormData({}); setShowDialog(true); }} />
-      <TaskListTable tasks={filteredTasks} onEdit={(t) => { setEditingTask(t); setFormData(t); setShowDialog(true); }} onDelete={(t) => deleteMutation.mutate(t.id)} onToggle={(t) => updateMutation.mutate({...t, status: t.status === 'done' ? 'open' : 'done'})} />
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>{editingTask ? 'Aufgabe bearbeiten' : 'Neue Aufgabe'}</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <Input placeholder="Titel" value={formData.title || ''} onChange={(e) => setFormData({...formData, title: e.target.value})} />
-            <Input placeholder="Beschreibung" value={formData.description || ''} onChange={(e) => setFormData({...formData, description: e.target.value})} />
-            <Input placeholder="Fällig am" type="date" value={formData.due_date || ''} onChange={(e) => setFormData({...formData, due_date: e.target.value})} />
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setShowDialog(false)}>Abbrechen</Button>
-              <Button onClick={() => editingTask ? updateMutation.mutate(formData) : createMutation.mutate(formData)} className="bg-red-600 hover:bg-red-700">Speichern</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+
+      {tasks.length === 0 ? (
+        <VfEmptyState
+          icon={CheckSquare}
+          title="Keine Aufgaben"
+          description={filter === 'pending' ? 'Sie haben alle Aufgaben erledigt' : 'Keine Aufgaben gefunden'}
+        />
+      ) : (
+        <TaskList tasks={tasks} onToggle={(task) => toggleMutation.mutate(task)} />
+      )}
     </div>
   );
 }

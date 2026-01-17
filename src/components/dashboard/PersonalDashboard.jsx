@@ -1,84 +1,63 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Button } from '@/components/ui/button';
-import { Settings } from 'lucide-react';
-import DashboardCustomizer from './DashboardCustomizer';
-import AssignedTasksWidget from './widgets/AssignedTasksWidget';
-import PendingApprovalsWidget from './widgets/PendingApprovalsWidget';
-import WorkflowStatusWidget from './widgets/WorkflowStatusWidget';
-import NotificationsWidget from './widgets/NotificationsWidget';
-import QuickStatsWidget from './widgets/QuickStatsWidget';
-
-const WIDGET_COMPONENTS = {
-  assigned_tasks: AssignedTasksWidget,
-  pending_approvals: PendingApprovalsWidget,
-  workflow_status: WorkflowStatusWidget,
-  notifications: NotificationsWidget,
-  quick_stats: QuickStatsWidget
-};
+import { VfDashboard } from '@/components/dashboards/VfDashboard';
+import QuickStatsGrid from '@/components/shared/QuickStatsGrid';
+import TaskDashboard from '@/components/tasks/TaskDashboard';
+import FavoritesWidget from './FavoritesWidget';
+import RecentActivityWidget from '@/components/dashboards/RecentActivityWidget';
+import UpcomingDeadlinesWidget from '@/components/dashboards/UpcomingDeadlinesWidget';
+import { Building2, Users, FileText, Euro } from 'lucide-react';
 
 export default function PersonalDashboard() {
-  const [showCustomizer, setShowCustomizer] = useState(false);
-
   const { data: user } = useQuery({
-    queryKey: ['current-user'],
+    queryKey: ['user'],
     queryFn: () => base44.auth.me()
   });
 
-  const { data: preferences = {} } = useQuery({
-    queryKey: ['user-preferences', user?.email],
-    queryFn: async () => {
-      if (!user?.email) return {};
-      const result = await base44.asServiceRole.entities.UserPreferences.filter({
-        user_email: user.email
-      });
-      return result[0] || {};
-    },
-    enabled: !!user?.email
+  const { data: buildings = [] } = useQuery({
+    queryKey: ['buildings'],
+    queryFn: () => base44.entities.Building.list()
   });
 
-  const enabledWidgets = preferences.dashboard_widgets || [
-    'assigned_tasks',
-    'pending_approvals',
-    'workflow_status',
-    'notifications'
+  const { data: tenants = [] } = useQuery({
+    queryKey: ['tenants'],
+    queryFn: () => base44.entities.Tenant.list()
+  });
+
+  const { data: contracts = [] } = useQuery({
+    queryKey: ['contracts'],
+    queryFn: () => base44.entities.LeaseContract.list()
+  });
+
+  const stats = [
+    { label: 'Objekte', value: buildings.length, icon: Building2 },
+    { label: 'Mieter', value: tenants.length, icon: Users },
+    { label: 'Verträge', value: contracts.length, icon: FileText },
+    { 
+      label: 'Mieteinnahmen', 
+      value: `€${contracts.filter(c => c.status === 'active').reduce((s, c) => s + (c.rent_cold || 0), 0).toLocaleString()}`,
+      icon: Euro,
+      variant: 'highlighted'
+    }
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowCustomizer(true)}
-          className="gap-2"
-        >
-          <Settings className="w-4 h-4" />
-          Anpassen
-        </Button>
+    <VfDashboard
+      greeting={`Willkommen zurück, ${user?.full_name?.split(' ')[0] || 'Vermieter'}!`}
+      date={new Date().toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+    >
+      <QuickStatsGrid stats={stats} />
+
+      <div className="grid lg:grid-cols-2 gap-6 mt-6">
+        <TaskDashboard />
+        <UpcomingDeadlinesWidget />
       </div>
 
-      {showCustomizer && (
-        <DashboardCustomizer
-          enabledWidgets={enabledWidgets}
-          onClose={() => setShowCustomizer(false)}
-          onSave={() => setShowCustomizer(false)}
-        />
-      )}
-
-      {/* Widgets Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {enabledWidgets.map(widgetId => {
-          const Component = WIDGET_COMPONENTS[widgetId];
-          return Component ? (
-            <div key={widgetId}>
-              <Component />
-            </div>
-          ) : null;
-        })}
+      <div className="grid lg:grid-cols-2 gap-6 mt-6">
+        <FavoritesWidget />
+        <RecentActivityWidget limit={5} />
       </div>
-    </div>
+    </VfDashboard>
   );
 }

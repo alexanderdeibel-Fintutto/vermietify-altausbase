@@ -1,61 +1,46 @@
 import React from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { Button } from '@/components/ui/button';
+import StatusBadge from '@/components/shared/StatusBadge';
+import CurrencyDisplay from '@/components/shared/CurrencyDisplay';
+import { Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
-export default function ContractTable({ contracts, onEdit, onDelete }) {
+export default function ContractTable({ contracts = [] }) {
+  const navigate = useNavigate();
+
   return (
-    <div className="rounded-xl border border-slate-200 overflow-hidden">
-      <table className="w-full">
+    <div className="vf-table-container">
+      <table className="vf-table">
         <thead>
-          <tr className="bg-slate-50 border-b border-slate-200">
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Mieter</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Wohneinheit</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Miete</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Start</th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
-            <th className="px-6 py-3"></th>
+          <tr>
+            <th>Mieter</th>
+            <th>Einheit</th>
+            <th>Kaltmiete</th>
+            <th>Beginn</th>
+            <th>Status</th>
+            <th className="text-right">Aktionen</th>
           </tr>
         </thead>
         <tbody>
-          {contracts?.map((contract, idx) => (
-            <tr 
-              key={idx}
-              className="border-b border-slate-100 hover:bg-blue-50 transition-colors cursor-pointer"
-              onClick={() => onEdit?.(contract)}
-            >
-              <td className="px-6 py-4 text-sm font-medium text-slate-900">{contract.tenant_name || '—'}</td>
-              <td className="px-6 py-4 text-sm text-slate-700">{contract.unit_name || '—'}</td>
-              <td className="px-6 py-4 text-sm font-medium text-slate-900">€{(contract.rent_amount || 0).toFixed(2)}</td>
-              <td className="px-6 py-4 text-sm text-slate-700">
-                {contract.start_date ? format(new Date(contract.start_date), 'dd.MM.yyyy', { locale: de }) : '—'}
+          {contracts.map((contract) => (
+            <tr key={contract.id}>
+              <td className="font-medium">{contract.tenant_name || 'Unbekannt'}</td>
+              <td>{contract.unit_name || contract.unit_id}</td>
+              <td>
+                <CurrencyDisplay amount={contract.rent_cold || 0} />
               </td>
-              <td className="px-6 py-4 text-sm">
-                <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                  Aktiv
-                </span>
+              <td>{contract.start_date ? new Date(contract.start_date).toLocaleDateString('de-DE') : '-'}</td>
+              <td>
+                <StatusBadge status={contract.status || 'active'} />
               </td>
-              <td className="px-6 py-4 text-right flex gap-2 justify-end">
+              <td className="text-right">
                 <Button 
-                  size="icon" 
-                  variant="ghost"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit?.(contract);
-                  }}
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => navigate(createPageUrl('ContractDetail') + `?id=${contract.id}`)}
                 >
-                  <Pencil className="w-4 h-4 text-slate-600" />
-                </Button>
-                <Button 
-                  size="icon" 
-                  variant="ghost"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete?.(contract);
-                  }}
-                >
-                  <Trash2 className="w-4 h-4 text-red-600" />
+                  <Eye className="h-4 w-4" />
                 </Button>
               </td>
             </tr>
