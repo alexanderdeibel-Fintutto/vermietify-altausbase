@@ -1,17 +1,10 @@
 import React, { Suspense } from 'react';
-import SkeletonLoader from './SkeletonLoader';
+import LoadingSpinner from './LoadingSpinner';
 
-export default function LazyLoadWrapper({ 
-  component: Component, 
-  fallback,
-  skeletonType = 'card',
-  ...props 
-}) {
-  const LoadingFallback = fallback || <SkeletonLoader type={skeletonType} />;
-
+export default function LazyLoadWrapper({ children, fallback }) {
   return (
-    <Suspense fallback={LoadingFallback}>
-      <Component {...props} />
+    <Suspense fallback={fallback || <LoadingSpinner />}>
+      {children}
     </Suspense>
   );
 }

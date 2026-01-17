@@ -1,31 +1,52 @@
 import React from 'react';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, Plus, Filter } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { VfInput } from '@/components/shared/VfInput';
+import { VfSelect } from '@/components/shared/VfSelect';
+import { Search } from 'lucide-react';
 
-export default function DocumentFilterBar({ onSearchChange, onTypeChange, onNewDocument }) {
+export default function DocumentFilterBar({ filters, onChange }) {
   return (
-    <div className="flex gap-4 flex-wrap items-center mb-6">
-      <div className="flex-1 min-w-64">
-        <div className="relative">
-          <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-          <Input placeholder="Dokumente suchen..." onChange={(e) => onSearchChange?.(e.target.value)} className="pl-10" />
-        </div>
+    <div className="vf-card p-4">
+      <div className="grid md:grid-cols-4 gap-4">
+        <VfInput
+          leftIcon={Search}
+          placeholder="Dokument suchen..."
+          value={filters.search || ''}
+          onChange={(e) => onChange({ ...filters, search: e.target.value })}
+        />
+
+        <VfSelect
+          label="Typ"
+          value={filters.type || 'all'}
+          onChange={(v) => onChange({ ...filters, type: v })}
+          options={[
+            { value: 'all', label: 'Alle Typen' },
+            { value: 'Mietvertrag', label: 'Mietvertrag' },
+            { value: 'Rechnung', label: 'Rechnung' },
+            { value: 'BK-Abrechnung', label: 'BK-Abrechnung' },
+            { value: 'Sonstige', label: 'Sonstige' }
+          ]}
+        />
+
+        <VfSelect
+          label="Objekt"
+          value={filters.building || 'all'}
+          onChange={(v) => onChange({ ...filters, building: v })}
+          options={[
+            { value: 'all', label: 'Alle Objekte' }
+          ]}
+        />
+
+        <VfSelect
+          label="Sortierung"
+          value={filters.sort || '-created_date'}
+          onChange={(v) => onChange({ ...filters, sort: v })}
+          options={[
+            { value: '-created_date', label: 'Neueste' },
+            { value: 'created_date', label: 'Älteste' },
+            { value: 'name', label: 'Name A-Z' }
+          ]}
+        />
       </div>
-      <div className="flex items-center gap-2">
-        <Filter className="w-4 h-4 text-slate-400" />
-        <Select onValueChange={(value) => onTypeChange?.(value)}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Typ" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Typen</SelectItem>
-            <SelectItem value="contract">Vertrag</SelectItem>
-            <SelectItem value="invoice">Rechnung</SelectItem>
-            <SelectItem value="other">Sonstige</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <Button onClick={onNewDocument} className="bg-slate-700 hover:bg-slate-800 font-extralight"><Plus className="w-4 h-4 mr-2" />Dokument hochladen</Button>
     </div>
   );
 }

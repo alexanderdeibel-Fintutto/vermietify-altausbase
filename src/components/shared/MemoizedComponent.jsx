@@ -1,3 +1,4 @@
+
 import React, { memo } from 'react';
 
 // Generic memoized wrapper for expensive components
@@ -28,4 +29,13 @@ export const MemoizedListItem = memo(({ item, onSelect, renderItem }) => {
   );
 }, (prev, next) => prev.item.id === next.item.id);
 
-export default { withMemoization, MemoizedListItem, shallowEqual, deepEqual };
+export const MemoizedCard = React.memo(({ title, children }) => (
+  <div className="vf-card p-6">
+    <h3 className="vf-card-title mb-4">{title}</h3>
+    {children}
+  </div>
+));
+
+MemoizedCard.displayName = 'MemoizedCard';
+
+export default { withMemoization, MemoizedListItem, shallowEqual, deepEqual, MemoizedCard };

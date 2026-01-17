@@ -1,31 +1,43 @@
 import React from 'react';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, Plus, Filter } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { VfInput } from '@/components/shared/VfInput';
+import { VfSelect } from '@/components/shared/VfSelect';
+import { Search } from 'lucide-react';
 
-export default function PaymentFilterBar({ onSearchChange, onStatusChange, onNewPayment }) {
+export default function PaymentFilterBar({ filters, onChange }) {
   return (
-    <div className="flex gap-4 flex-wrap items-center mb-6">
-      <div className="flex-1 min-w-64">
-        <div className="relative">
-          <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-          <Input placeholder="Zahlungen suchen..." onChange={(e) => onSearchChange?.(e.target.value)} className="pl-10" />
-        </div>
+    <div className="vf-card p-4">
+      <div className="grid md:grid-cols-3 gap-4">
+        <VfInput
+          leftIcon={Search}
+          placeholder="Mieter suchen..."
+          value={filters.search || ''}
+          onChange={(e) => onChange({ ...filters, search: e.target.value })}
+        />
+
+        <VfSelect
+          label="Status"
+          value={filters.status || 'all'}
+          onChange={(v) => onChange({ ...filters, status: v })}
+          options={[
+            { value: 'all', label: 'Alle' },
+            { value: 'paid', label: 'Bezahlt' },
+            { value: 'pending', label: 'Ausstehend' },
+            { value: 'overdue', label: 'Überfällig' }
+          ]}
+        />
+
+        <VfSelect
+          label="Zeitraum"
+          value={filters.period || 'all'}
+          onChange={(v) => onChange({ ...filters, period: v })}
+          options={[
+            { value: 'all', label: 'Alle' },
+            { value: 'current_month', label: 'Dieser Monat' },
+            { value: 'last_month', label: 'Letzter Monat' },
+            { value: 'current_year', label: 'Dieses Jahr' }
+          ]}
+        />
       </div>
-      <div className="flex items-center gap-2">
-        <Filter className="w-4 h-4 text-slate-400" />
-        <Select onValueChange={(value) => onStatusChange?.(value)}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle</SelectItem>
-            <SelectItem value="pending">Ausstehend</SelectItem>
-            <SelectItem value="completed">Abgeschlossen</SelectItem>
-            <SelectItem value="overdue">Überfällig</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <Button onClick={onNewPayment} className="bg-slate-700 hover:bg-slate-800 font-extralight"><Plus className="w-4 h-4 mr-2" />Neue Zahlung</Button>
     </div>
   );
 }

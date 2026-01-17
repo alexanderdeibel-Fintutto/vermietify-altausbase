@@ -1,101 +1,75 @@
-import React from 'react';
-import GuidedTourSpotlight from './GuidedTourSpotlight';
+import React, { useState } from 'react';
+import { VfModal } from '@/components/shared/VfModal';
+import { Button } from '@/components/ui/button';
+import { Compass, ArrowRight, ArrowLeft } from 'lucide-react';
 
-const TOURS = {
-  'bk-wizard': {
-    id: 'bk-wizard',
-    steps: [
-      {
-        target: '[data-tour="bk-start"]',
-        title: 'Willkommen zum BK-Wizard',
-        description: 'Erstellen Sie eine Betriebskostenabrechnung in 4 einfachen Schritten.'
-      },
-      {
-        target: '[data-tour="bk-building"]',
-        title: 'Gebäude auswählen',
-        description: 'Wählen Sie das Gebäude für die Abrechnung aus.'
-      },
-      {
-        target: '[data-tour="bk-period"]',
-        title: 'Abrechnungszeitraum',
-        description: 'Legen Sie den Zeitraum fest (üblicherweise 12 Monate).'
-      },
-      {
-        target: '[data-tour="bk-costs"]',
-        title: 'Kosten auswählen',
-        description: 'Nur umlagefähige Kosten werden automatisch vorausgewählt.'
-      }
-    ]
-  },
-  'contract-creation': {
-    id: 'contract-creation',
-    steps: [
-      {
-        target: '[data-tour="contract-unit"]',
-        title: 'Einheit auswählen',
-        description: 'Wählen Sie die zu vermietende Wohneinheit aus.'
-      },
-      {
-        target: '[data-tour="contract-tenant"]',
-        title: 'Mieter zuordnen',
-        description: 'Wählen Sie einen vorhandenen Mieter oder legen Sie einen neuen an.'
-      },
-      {
-        target: '[data-tour="contract-rent"]',
-        title: 'Mietkonditionen',
-        description: 'Kaltmiete, Nebenkosten und Heizkosten werden zur Warmmiete addiert.'
-      },
-      {
-        target: '[data-tour="contract-deposit"]',
-        title: 'Kaution & Kündigungsfrist',
-        description: 'Max. 3 Monatsmieten Kaution, gesetzliche Kündigungsfrist: 3 Monate.'
-      }
-    ]
-  },
-  'dashboard-first-visit': {
-    id: 'dashboard-first-visit',
-    steps: [
-      {
-        target: '[data-tour="quick-actions"]',
-        title: 'Schnellaktionen',
-        description: 'Häufige Aktionen wie Rechnung erfassen oder Vertrag anlegen.'
-      },
-      {
-        target: '[data-tour="sidebar"]',
-        title: 'Navigation',
-        description: 'Zugriff auf alle Module: Immobilien, Mieter, Finanzen, Steuern.'
-      },
-      {
-        target: '[data-tour="onboarding-checklist"]',
-        title: 'Onboarding-Checkliste',
-        description: 'Schrittweise Einrichtung Ihrer Verwaltung.'
-      }
-    ]
-  }
-};
+export default function FeatureTourManager({ open, onClose, steps = [] }) {
+  const [currentStep, setCurrentStep] = useState(0);
 
-export default function FeatureTourManager({ tourId, onComplete }) {
-  const tour = TOURS[tourId];
-  
-  if (!tour) return null;
+  const defaultSteps = [
+    {
+      title: 'Willkommen bei vermitify',
+      description: 'Lernen Sie die wichtigsten Funktionen kennen',
+      image: '🏠'
+    },
+    {
+      title: 'Objekte verwalten',
+      description: 'Fügen Sie Ihre Immobilien hinzu und verwalten Sie alle Details',
+      image: '🏢'
+    },
+    {
+      title: 'Mieter & Verträge',
+      description: 'Erfassen Sie Mieterdaten und erstellen Sie Verträge',
+      image: '📄'
+    }
+  ];
+
+  const tourSteps = steps.length > 0 ? steps : defaultSteps;
+  const step = tourSteps[currentStep];
 
   return (
-    <GuidedTourSpotlight
-      tourId={tour.id}
-      steps={tour.steps}
-      onComplete={onComplete}
-    />
+    <VfModal
+      open={open}
+      onOpenChange={onClose}
+      title="Feature-Tour"
+    >
+      <div className="text-center py-6">
+        <div className="text-6xl mb-4">{step.image}</div>
+        <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
+        <p className="text-[var(--theme-text-secondary)] mb-6">{step.description}</p>
+
+        <div className="flex items-center justify-center gap-2 mb-6">
+          {tourSteps.map((_, index) => (
+            <div
+              key={index}
+              className={`h-2 rounded-full transition-all ${
+                index === currentStep 
+                  ? 'w-8 bg-[var(--theme-primary)]' 
+                  : 'w-2 bg-[var(--theme-border)]'
+              }`}
+            />
+          ))}
+        </div>
+
+        <div className="flex gap-3 justify-center">
+          {currentStep > 0 && (
+            <Button variant="outline" onClick={() => setCurrentStep(currentStep - 1)}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Zurück
+            </Button>
+          )}
+          {currentStep < tourSteps.length - 1 ? (
+            <Button variant="gradient" onClick={() => setCurrentStep(currentStep + 1)}>
+              Weiter
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          ) : (
+            <Button variant="gradient" onClick={onClose}>
+              Tour beenden
+            </Button>
+          )}
+        </div>
+      </div>
+    </VfModal>
   );
-}
-
-export function useTourTrigger(tourId, condition) {
-  const [shouldShow, setShouldShow] = React.useState(false);
-
-  React.useEffect(() => {
-    if (condition) {
-      setShouldShow(true);
-    }
-  }, [condition]);
-
-  return shouldShow ? tourId : null;
 }
