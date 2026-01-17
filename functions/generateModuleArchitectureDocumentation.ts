@@ -199,13 +199,13 @@ FinAPI Integration
 
 ## Fehlerbehandlung
 
-```
+\`\`\`
 User Action
   ↓
 Try-Catch Block
   ├─ Success → State Update → UI Update
   └─ Error → Log → User Notification
-```
+\`\`\`
 
 Fehlertypen:
 - Validation Errors: 400
