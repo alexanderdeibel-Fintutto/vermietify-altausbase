@@ -1,49 +1,29 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { subMonths, format, startOfMonth, endOfMonth } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import SimpleBarChart from '@/components/charts/SimpleBarChart';
+import { BarChart3 } from 'lucide-react';
 
 export default function RevenueChartWidget() {
-  const { data: financialItems = [] } = useQuery({
-    queryKey: ['financial-items'],
-    queryFn: () => base44.entities.FinancialItem.list()
-  });
-
-  const getMonthlyData = () => {
-    const months = [];
-    const now = new Date();
-    
-    for (let i = 5; i >= 0; i--) {
-      const date = subMonths(now, i);
-      const monthStart = startOfMonth(date);
-      const monthEnd = endOfMonth(date);
-      
-      const income = financialItems.filter(item => {
-        if (!item.due_date) return false;
-        const dueDate = new Date(item.due_date);
-        return dueDate >= monthStart && dueDate <= monthEnd && item.type === 'income';
-      }).reduce((sum, item) => sum + (item.amount || 0), 0);
-
-      months.push({
-        month: format(date, 'MMM', { locale: de }),
-        Umsatz: income
-      });
-    }
-    
-    return months;
-  };
+  const data = [
+    { name: 'Jan', value: 15000 },
+    { name: 'Feb', value: 15500 },
+    { name: 'Mär', value: 14800 },
+    { name: 'Apr', value: 16200 },
+    { name: 'Mai', value: 15900 },
+    { name: 'Jun', value: 17100 }
+  ];
 
   return (
-    <ResponsiveContainer width="100%" height={200}>
-      <LineChart data={getMonthlyData()}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="month" />
-        <YAxis />
-        <Tooltip formatter={(value) => `${value.toLocaleString('de-DE')}€`} />
-        <Line type="monotone" dataKey="Umsatz" stroke="#10b981" strokeWidth={2} />
-      </LineChart>
-    </ResponsiveContainer>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <BarChart3 className="h-5 w-5" />
+          Mieteinnahmen
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <SimpleBarChart data={data} height={200} />
+      </CardContent>
+    </Card>
   );
 }

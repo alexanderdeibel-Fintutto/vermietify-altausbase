@@ -1,52 +1,54 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, Building2, Users, FileText, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
-export default function FloatingActionMenu({ actions = [] }) {
-  const [open, setOpen] = useState(false);
+export default function FloatingActionMenu() {
+  const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
 
-  if (actions.length === 0) return null;
+  const actions = [
+    { icon: Building2, label: 'Objekt', page: 'Buildings' },
+    { icon: Users, label: 'Mieter', page: 'Tenants' },
+    { icon: FileText, label: 'Vertrag', page: 'Contracts' }
+  ];
 
   return (
-    <div className="fixed bottom-6 right-6 flex flex-col items-end gap-2 z-40">
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="flex flex-col gap-2"
-          >
-            {actions.map((action, idx) => (
-              <motion.div
-                key={action.id}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.05 }}
+    <div className="fixed bottom-6 right-6 z-50">
+      <div className={cn(
+        "flex flex-col-reverse gap-3 mb-3 transition-all",
+        isOpen ? "opacity-100 scale-100" : "opacity-0 scale-0 pointer-events-none"
+      )}>
+        {actions.map((action) => {
+          const Icon = action.icon;
+          return (
+            <div key={action.page} className="flex items-center gap-3">
+              <span className="text-sm font-medium bg-white px-3 py-1 rounded-full shadow-lg">
+                {action.label}
+              </span>
+              <Button
+                onClick={() => {
+                  navigate(createPageUrl(action.page));
+                  setIsOpen(false);
+                }}
+                className="w-12 h-12 rounded-full shadow-lg"
+                variant="gradient"
               >
-                <Button
-                  onClick={() => {
-                    action.onClick?.();
-                    setOpen(false);
-                  }}
-                  className={`${action.className || 'bg-blue-600 hover:bg-blue-700'} gap-2 shadow-lg`}
-                  size="sm"
-                >
-                  {action.icon && <action.icon className="w-4 h-4" />}
-                  <span className="hidden sm:inline">{action.label}</span>
-                </Button>
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+                <Icon className="h-5 w-5" />
+              </Button>
+            </div>
+          );
+        })}
+      </div>
 
       <Button
-        onClick={() => setOpen(!open)}
-        className="bg-slate-900 hover:bg-slate-800 rounded-full w-12 h-12 p-0 shadow-lg"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-14 h-14 rounded-full shadow-xl"
+        variant="gradient"
       >
-        {open ? <X className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
+        {isOpen ? <X className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
       </Button>
     </div>
   );

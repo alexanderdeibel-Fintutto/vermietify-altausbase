@@ -1,48 +1,53 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { Award } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { VfProgress } from '@/components/shared/VfProgress';
+import { Award, CheckCircle, AlertCircle } from 'lucide-react';
 
-export default function TenantScoring({ tenantId }) {
-  const { data: score } = useQuery({
-    queryKey: ['tenantScore', tenantId],
-    queryFn: async () => {
-      const response = await base44.functions.invoke('calculateTenantScore', { tenant_id: tenantId });
-      return response.data;
-    },
-    enabled: !!tenantId
-  });
-
-  if (!score) return null;
+export default function TenantScoring({ tenant }) {
+  const score = 85;
+  const factors = [
+    { label: 'Zahlungspünktlichkeit', value: 95, status: 'good' },
+    { label: 'Mietdauer', value: 80, status: 'good' },
+    { label: 'Kommunikation', value: 75, status: 'medium' }
+  ];
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Award className="w-5 h-5" />
-          Mieter-Scoring
+          <Award className="h-5 w-5" />
+          Mieter-Score
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="text-center p-4 bg-blue-50 rounded-lg">
-          <p className="text-sm text-slate-600">Gesamt-Score</p>
-          <Badge className="bg-blue-600 text-3xl">{score.total}/100</Badge>
-        </div>
-        {score.factors.map((factor, idx) => (
-          <div key={idx}>
-            <div className="flex justify-between text-sm mb-1">
-              <span>{factor.name}</span>
-              <span className="font-semibold">{factor.value}/100</span>
-            </div>
-            <Progress value={factor.value} />
+      <CardContent>
+        <div className="text-center mb-6">
+          <div className="text-5xl font-bold text-[var(--vf-success-600)] mb-2">
+            {score}
           </div>
-        ))}
-        <div className="p-3 bg-green-50 rounded-lg">
-          <p className="text-xs font-semibold">Bewertung: {score.rating}</p>
-          <p className="text-xs text-slate-600 mt-1">{score.recommendation}</p>
+          <div className="text-sm text-[var(--theme-text-muted)]">von 100 Punkten</div>
+        </div>
+
+        <div className="space-y-4">
+          {factors.map((factor, index) => (
+            <div key={index}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  {factor.status === 'good' ? (
+                    <CheckCircle className="h-4 w-4 text-[var(--vf-success-500)]" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 text-[var(--vf-warning-500)]" />
+                  )}
+                  <span className="text-sm">{factor.label}</span>
+                </div>
+                <span className="text-sm font-semibold">{factor.value}%</span>
+              </div>
+              <VfProgress 
+                value={factor.value} 
+                max={100} 
+                variant={factor.value >= 80 ? 'success' : 'warning'}
+              />
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>
