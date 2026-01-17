@@ -531,6 +531,11 @@ import VermitifyLogin from './pages/VermitifyLogin';
 import ToolsLandingPage from './pages/ToolsLandingPage';
 import VermitifyAGB from './pages/VermitifyAGB';
 import VermitifySitemap from './pages/VermitifySitemap';
+import QuickStartGuide from './pages/QuickStartGuide';
+import DashboardHome from './pages/DashboardHome';
+import VermitifyComparison from './pages/VermitifyComparison';
+import VermitifyStatusPage from './pages/VermitifyStatusPage';
+import ImplementationChecklistPrompt22to27 from './pages/ImplementationChecklistPrompt22to27';
 import __Layout from './Layout.jsx';
 
 
@@ -1068,6 +1073,11 @@ export const PAGES = {
     "ToolsLandingPage": ToolsLandingPage,
     "VermitifyAGB": VermitifyAGB,
     "VermitifySitemap": VermitifySitemap,
+    "QuickStartGuide": QuickStartGuide,
+    "DashboardHome": DashboardHome,
+    "VermitifyComparison": VermitifyComparison,
+    "VermitifyStatusPage": VermitifyStatusPage,
+    "ImplementationChecklistPrompt22to27": ImplementationChecklistPrompt22to27,
 }
 
 export const pagesConfig = {
