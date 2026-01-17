@@ -1,168 +1,162 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { VfListPage } from '@/components/list-pages/VfListPage';
-import { VfListPageHeader } from '@/components/list-pages/VfListPage';
-import { VfFilterBar } from '@/components/list-pages/VfFilterBar';
+import { VfListPage, VfListPageHeader } from '@/components/list-pages/VfListPage';
 import { VfDataTable } from '@/components/list-pages/VfDataTable';
-import { VfPagination } from '@/components/list-pages/VfPagination';
-import { Card, CardContent } from '@/components/ui/card';
+import { VfFilterBar } from '@/components/list-pages/VfFilterBar';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserPlus, Mail, Phone, Star } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { VfBadge } from '@/components/shared/VfBadge';
+import { Mail, Phone, UserPlus, TrendingUp } from 'lucide-react';
 
 export default function LeadManagement() {
   const queryClient = useQueryClient();
-  const [filters, setFilters] = useState({
-    status: 'all',
-    source: 'all',
-    search: ''
-  });
+  const [filters, setFilters] = useState({ status: 'all', interest: 'all' });
 
   const { data: leads = [] } = useQuery({
     queryKey: ['leads'],
     queryFn: () => base44.entities.Lead.list('-score')
   });
 
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }) => base44.entities.Lead.update(id, { status }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['leads'] });
-    }
+  const convertMutation = useMutation({
+    mutationFn: (leadId) => base44.functions.invoke('convertLeadToUser', { lead_id: leadId }),
+    onSuccess: () => queryClient.invalidateQueries(['leads'])
   });
 
   const filteredLeads = leads.filter(lead => {
     if (filters.status !== 'all' && lead.status !== filters.status) return false;
-    if (filters.source !== 'all' && lead.source !== filters.source) return false;
-    if (filters.search && !lead.email.toLowerCase().includes(filters.search.toLowerCase()) && 
-        (!lead.name || !lead.name.toLowerCase().includes(filters.search.toLowerCase()))) return false;
+    if (filters.interest !== 'all' && lead.interest_level !== filters.interest) return false;
     return true;
   });
 
+  const columns = [
+    { key: 'name', label: 'Name', sortable: true },
+    { key: 'email', label: 'E-Mail', sortable: true },
+    { 
+      key: 'score', 
+      label: 'Score', 
+      sortable: true,
+      render: (row) => (
+        <div className="flex items-center gap-2">
+          <div className="w-20 vf-progress vf-progress-sm">
+            <div className="vf-progress-bar vf-progress-bar-gradient" style={{ width: `${row.score}%` }} />
+          </div>
+          <span className="font-semibold">{row.score}</span>
+        </div>
+      )
+    },
+    { 
+      key: 'interest_level', 
+      label: 'Interest',
+      render: (row) => (
+        <VfBadge variant={
+          row.interest_level === 'hot' ? 'error' :
+          row.interest_level === 'warm' ? 'warning' : 'default'
+        }>
+          {row.interest_level}
+        </VfBadge>
+      )
+    },
+    { 
+      key: 'status', 
+      label: 'Status',
+      render: (row) => (
+        <VfBadge variant={
+          row.status === 'converted' ? 'success' :
+          row.status === 'qualified' ? 'info' : 'default'
+        }>
+          {row.status}
+        </VfBadge>
+      )
+    },
+    { 
+      key: 'source', 
+      label: 'Quelle',
+      render: (row) => <span className="text-sm">{row.source}</span>
+    },
+    {
+      key: 'actions',
+      label: 'Aktionen',
+      render: (row) => (
+        <div className="flex gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => window.open(`mailto:${row.email}`)}
+          >
+            <Mail className="h-4 w-4" />
+          </Button>
+          {row.phone && (
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => window.open(`tel:${row.phone}`)}
+            >
+              <Phone className="h-4 w-4" />
+            </Button>
+          )}
+          {row.status !== 'converted' && (
+            <Button 
+              variant="primary" 
+              size="sm"
+              onClick={() => convertMutation.mutate(row.id)}
+            >
+              <UserPlus className="h-4 w-4 mr-1" />
+              Convert
+            </Button>
+          )}
+        </div>
+      )
+    }
+  ];
+
   return (
-    <div className="p-6">
+    <VfListPage>
       <VfListPageHeader
         title="Lead Management"
-        description={`${leads.length} Leads gesamt • ${leads.filter(l => l.status === 'new').length} neu`}
+        description={`${leads.length} Leads • ${leads.filter(l => l.interest_level === 'hot').length} Hot Leads`}
         actions={
           <Button variant="gradient">
-            <UserPlus className="h-4 w-4 mr-2" />
-            Lead manuell hinzufügen
+            <TrendingUp className="h-4 w-4 mr-2" />
+            Analytics
           </Button>
         }
       />
 
       <VfFilterBar
-        searchPlaceholder="Nach E-Mail oder Name suchen..."
-        searchValue={filters.search}
-        onSearchChange={(v) => setFilters({ ...filters, search: v })}
-        filters={
-          <>
-            <Select value={filters.status} onValueChange={(v) => setFilters({ ...filters, status: v })}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle Status</SelectItem>
-                <SelectItem value="new">Neu</SelectItem>
-                <SelectItem value="contacted">Kontaktiert</SelectItem>
-                <SelectItem value="qualified">Qualifiziert</SelectItem>
-                <SelectItem value="converted">Konvertiert</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={filters.source} onValueChange={(v) => setFilters({ ...filters, source: v })}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle Quellen</SelectItem>
-                <SelectItem value="rendite_rechner">Rendite-Rechner</SelectItem>
-                <SelectItem value="immobilien_quiz">Quiz</SelectItem>
-                <SelectItem value="website">Website</SelectItem>
-              </SelectContent>
-            </Select>
-          </>
-        }
+        filters={[
+          {
+            type: 'select',
+            label: 'Status',
+            value: filters.status,
+            onChange: (v) => setFilters({ ...filters, status: v }),
+            options: [
+              { value: 'all', label: 'Alle' },
+              { value: 'new', label: 'Neu' },
+              { value: 'contacted', label: 'Kontaktiert' },
+              { value: 'qualified', label: 'Qualifiziert' },
+              { value: 'trial_started', label: 'Trial' },
+              { value: 'converted', label: 'Konvertiert' }
+            ]
+          },
+          {
+            type: 'select',
+            label: 'Interest',
+            value: filters.interest,
+            onChange: (v) => setFilters({ ...filters, interest: v }),
+            options: [
+              { value: 'all', label: 'Alle' },
+              { value: 'hot', label: 'Hot' },
+              { value: 'warm', label: 'Warm' },
+              { value: 'cold', label: 'Cold' }
+            ]
+          }
+        ]}
       />
 
-      <div className="vf-data-table-container">
-        <table className="vf-data-table">
-          <thead>
-            <tr>
-              <th>Lead</th>
-              <th>Score</th>
-              <th>Quelle</th>
-              <th>Status</th>
-              <th>Erstellt</th>
-              <th className="vf-table-cell-actions">Aktionen</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredLeads.map((lead) => (
-              <tr key={lead.id}>
-                <td>
-                  <div>
-                    <div className="font-medium">{lead.name || lead.email}</div>
-                    {lead.name && (
-                      <div className="text-sm text-[var(--theme-text-muted)]">{lead.email}</div>
-                    )}
-                  </div>
-                </td>
-                <td>
-                  <div className="flex items-center gap-2">
-                    <Star className={cn(
-                      "h-4 w-4",
-                      lead.score >= 70 ? "text-[var(--vf-success-500)]" :
-                      lead.score >= 40 ? "text-[var(--vf-warning-500)]" :
-                      "text-[var(--vf-neutral-400)]"
-                    )} />
-                    <span className="font-semibold">{lead.score}</span>
-                  </div>
-                </td>
-                <td>
-                  <span className="vf-badge vf-badge-default">
-                    {lead.source}
-                  </span>
-                </td>
-                <td>
-                  <Select 
-                    value={lead.status} 
-                    onValueChange={(v) => updateStatusMutation.mutate({ id: lead.id, status: v })}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="new">Neu</SelectItem>
-                      <SelectItem value="contacted">Kontaktiert</SelectItem>
-                      <SelectItem value="qualified">Qualifiziert</SelectItem>
-                      <SelectItem value="converted">Konvertiert</SelectItem>
-                      <SelectItem value="lost">Verloren</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </td>
-                <td className="vf-table-cell-date">
-                  {new Date(lead.created_date).toLocaleDateString('de-DE')}
-                </td>
-                <td className="vf-table-cell-actions">
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" title="E-Mail senden">
-                      <Mail className="h-4 w-4" />
-                    </Button>
-                    {lead.phone && (
-                      <Button variant="ghost" size="sm" title="Anrufen">
-                        <Phone className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+      <VfDataTable
+        columns={columns}
+        data={filteredLeads}
+      />
+    </VfListPage>
   );
 }

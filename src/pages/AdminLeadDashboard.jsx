@@ -1,113 +1,119 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { VfDashboard, VfKpiCard, VfDashboardWidget } from '@/components/dashboards/VfDashboard';
-import { Users, TrendingUp, Target, Award } from 'lucide-react';
+import { VfDashboard, VfKpiCard } from '@/components/dashboards/VfDashboard';
+import { Card, CardContent } from '@/components/ui/card';
+import { Users, Target, TrendingUp, Calculator } from 'lucide-react';
+import { VfProgress } from '@/components/shared/VfProgress';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function AdminLeadDashboard() {
-  const { data: leads = [] } = useQuery({
-    queryKey: ['leads'],
-    queryFn: () => base44.entities.Lead.list()
+  const { data: report } = useQuery({
+    queryKey: ['lead-report'],
+    queryFn: () => base44.functions.invoke('generateLeadReport').then(r => r.data)
   });
 
-  const { data: quizResults = [] } = useQuery({
-    queryKey: ['quiz-results'],
-    queryFn: () => base44.entities.QuizResult.list()
-  });
+  if (!report) return <div>Laden...</div>;
 
-  const { data: calculations = [] } = useQuery({
-    queryKey: ['calculations'],
-    queryFn: () => base44.entities.CalculationHistory.list()
-  });
-
-  const newLeadsThisMonth = leads.filter(l => {
-    const created = new Date(l.created_date);
-    const now = new Date();
-    return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
-  }).length;
-
-  const convertedLeads = leads.filter(l => l.status === 'converted').length;
-  const conversionRate = leads.length > 0 ? (convertedLeads / leads.length) * 100 : 0;
-
-  const sourceData = leads.reduce((acc, lead) => {
-    acc[lead.source] = (acc[lead.source] || 0) + 1;
-    return acc;
-  }, {});
-
-  const chartData = Object.entries(sourceData).map(([source, count]) => ({
-    name: source,
-    count
+  const sourceChartData = Object.entries(report.source_distribution).map(([name, value]) => ({
+    name,
+    leads: value
   }));
 
   return (
     <VfDashboard
       greeting="Lead Dashboard 🎯"
-      date="Performance-Übersicht"
+      date="Lead Generation & Conversion Analytics"
       kpis={[
         {
-          label: 'Gesamt Leads',
-          value: leads.length,
-          trend: 'up',
-          trendValue: `+${newLeadsThisMonth} diesen Monat`,
+          label: 'Total Leads',
+          value: report.summary.total_leads,
           icon: Users,
           highlighted: true
         },
         {
-          label: 'Conversion Rate',
-          value: `${conversionRate.toFixed(1)}%`,
-          trend: conversionRate >= 10 ? 'up' : 'warning',
-          trendValue: `${convertedLeads} konvertiert`,
+          label: 'Hot Leads',
+          value: report.summary.hot_leads_count,
+          trendValue: `${((report.summary.hot_leads_count / report.summary.total_leads) * 100).toFixed(1)}%`,
           icon: Target
         },
         {
-          label: 'Quiz-Teilnahmen',
-          value: quizResults.length,
-          icon: Award
+          label: 'Conversion Rate',
+          value: `${report.summary.conversion_rate}%`,
+          trend: 'up',
+          icon: TrendingUp
         },
         {
           label: 'Berechnungen',
-          value: calculations.length,
-          icon: TrendingUp
+          value: report.total_calculations,
+          icon: Calculator
         }
       ]}
     >
-      <div className="vf-dashboard__grid">
-        <VfDashboardWidget title="Leads nach Quelle">
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="count" fill="var(--vf-primary-600)" />
-            </BarChart>
-          </ResponsiveContainer>
-        </VfDashboardWidget>
+      <div className="grid lg:grid-cols-2 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="font-semibold mb-4">Leads nach Quelle</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={sourceChartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="leads" fill="#1E3A8A" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-        <VfDashboardWidget
-          title="Top Leads"
-          footer={
-            <button className="text-sm text-[var(--theme-primary)] hover:underline">
-              Alle Leads →
-            </button>
-          }
-        >
-          {leads
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 5)
-            .map((lead) => (
-              <div key={lead.id} className="flex justify-between items-center py-2 border-b border-[var(--theme-divider)] last:border-0">
-                <div>
-                  <div className="font-medium">{lead.name || lead.email}</div>
-                  <div className="text-sm text-[var(--theme-text-muted)]">{lead.source}</div>
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="font-semibold mb-4">Top 10 Hot Leads</h3>
+            <div className="space-y-3">
+              {report.top_leads.map((lead) => (
+                <div key={lead.email} className="flex items-center justify-between p-3 bg-[var(--theme-surface)] rounded-lg">
+                  <div>
+                    <div className="font-medium">{lead.name || lead.email}</div>
+                    <div className="text-sm text-[var(--theme-text-muted)]">{lead.source}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-[var(--vf-primary-600)]">{lead.score}</div>
+                    <div className="text-xs text-[var(--theme-text-muted)]">{lead.status}</div>
+                  </div>
                 </div>
-                <div className="font-semibold text-[var(--vf-primary-600)]">
-                  {lead.score}
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardContent className="p-6">
+            <h3 className="font-semibold mb-4">Conversion Funnel</h3>
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span>Neue Leads</span>
+                  <span className="font-semibold">{report.summary.new_leads}</span>
                 </div>
+                <VfProgress value={report.summary.new_leads} max={report.summary.total_leads} variant="gradient" />
               </div>
-            ))}
-        </VfDashboardWidget>
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span>Qualifiziert</span>
+                  <span className="font-semibold">{report.summary.qualified_leads}</span>
+                </div>
+                <VfProgress value={report.summary.qualified_leads} max={report.summary.total_leads} variant="gradient" />
+              </div>
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span>Konvertiert</span>
+                  <span className="font-semibold">{report.summary.converted_leads}</span>
+                </div>
+                <VfProgress value={report.summary.converted_leads} max={report.summary.total_leads} variant="success" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </VfDashboard>
   );

@@ -1,37 +1,47 @@
-import * as React from "react"
-import { cn } from "@/lib/utils"
+import React from 'react';
+import { cn } from '@/lib/utils';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
-const VfStatCard = React.forwardRef(({ 
-  label,
-  value,
-  icon,
+export function VfStatCard({ 
+  label, 
+  value, 
   trend,
-  trendValue,
-  highlighted,
-  className,
-  ...props 
-}, ref) => {
-  const trendType = trend === "up" ? "positive" : trend === "down" ? "negative" : "neutral";
+  trendLabel,
+  icon: Icon,
+  variant = 'default',
+  className 
+}) {
+  const getTrendIcon = () => {
+    if (!trend) return null;
+    if (trend === 'up') return <TrendingUp className="h-4 w-4" />;
+    if (trend === 'down') return <TrendingDown className="h-4 w-4" />;
+    return <Minus className="h-4 w-4" />;
+  };
 
   return (
-    <div 
-      ref={ref} 
-      className={cn("vf-stat-card", highlighted && "vf-stat-card-highlighted", className)} 
-      {...props}
-    >
+    <div className={cn(
+      "vf-stat-card",
+      variant === 'highlighted' && "vf-stat-card-highlighted",
+      className
+    )}>
       <div className="vf-stat-card-header">
-        <span className="vf-stat-card-label">{label}</span>
-        {icon && <div className="vf-stat-card-icon">{icon}</div>}
+        <div className="vf-stat-card-label">{label}</div>
+        {Icon && <Icon className="vf-stat-card-icon" />}
       </div>
+      
       <div className="vf-stat-card-value">{value}</div>
-      {trendValue && (
-        <div className={cn("vf-stat-card-trend", trendType)}>
-          {trendValue}
+      
+      {(trend || trendLabel) && (
+        <div className={cn(
+          "vf-stat-card-trend",
+          trend === 'up' && "positive",
+          trend === 'down' && "negative",
+          trend === 'neutral' && "neutral"
+        )}>
+          {getTrendIcon()}
+          <span>{trendLabel || trend}</span>
         </div>
       )}
     </div>
   );
-})
-VfStatCard.displayName = "VfStatCard"
-
-export { VfStatCard }
+}
