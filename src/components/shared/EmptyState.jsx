@@ -1,18 +1,29 @@
 import React from 'react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export default function EmptyState({ 
   icon: Icon,
-  title = 'Keine Daten vorhanden',
-  description = ''
+  title,
+  description,
+  actionLabel,
+  onAction,
+  className 
 }) {
   return (
-    <div className="flex flex-col items-center justify-center p-8 text-center">
-      {Icon && (
-        <Icon className="w-12 h-12 text-slate-300 mb-3" />
-      )}
-      <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+    <div className={cn("vf-empty-state", className)}>
+      {Icon && <Icon className="vf-empty-state-icon" />}
+      
+      <h3 className="vf-empty-state-title">{title}</h3>
+      
       {description && (
-        <p className="text-sm text-slate-600 mt-1 max-w-sm">{description}</p>
+        <p className="vf-empty-state-description">{description}</p>
+      )}
+      
+      {actionLabel && onAction && (
+        <Button variant="gradient" onClick={onAction}>
+          {actionLabel}
+        </Button>
       )}
     </div>
   );

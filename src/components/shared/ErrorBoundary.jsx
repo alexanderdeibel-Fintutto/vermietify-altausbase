@@ -1,7 +1,8 @@
 import React from 'react';
-import { AlertCircle } from 'lucide-react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-export default class ErrorBoundary extends React.Component {
+class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -18,16 +19,19 @@ export default class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-            <div>
-              <h3 className="font-semibold text-red-900">Etwas ist schiefgelaufen</h3>
-              <p className="text-sm text-red-800 mt-1">
-                {this.props.fallback || this.state.error?.message || 'Ein unbekannter Fehler ist aufgetreten'}
-              </p>
-            </div>
-          </div>
+        <div className="flex flex-col items-center justify-center min-h-[400px] p-6">
+          <AlertTriangle className="h-16 w-16 text-[var(--vf-error-500)] mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Etwas ist schiefgelaufen</h2>
+          <p className="text-[var(--theme-text-secondary)] mb-6 text-center max-w-md">
+            {this.state.error?.message || 'Ein unerwarteter Fehler ist aufgetreten'}
+          </p>
+          <Button 
+            variant="gradient"
+            onClick={() => window.location.reload()}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Seite neu laden
+          </Button>
         </div>
       );
     }
@@ -35,3 +39,5 @@ export default class ErrorBoundary extends React.Component {
     return this.props.children;
   }
 }
+
+export default ErrorBoundary;

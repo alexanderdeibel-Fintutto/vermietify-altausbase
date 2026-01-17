@@ -1,102 +1,62 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import PlanFeaturesList from './PlanFeaturesList';
 import { Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
-export function PlanCard({ 
+export default function PlanCard({ 
   plan, 
-  isCurrentPlan = false, 
-  billingCycle = 'monthly',
+  isCurrent = false, 
   onSelect,
-  className 
+  highlighted = false 
 }) {
-  const monthlyPrice = billingCycle === 'yearly' 
-    ? Math.round(plan.price_yearly / 12) 
-    : plan.price_monthly;
-
-  const yearlyDiscount = plan.price_yearly 
-    ? plan.price_monthly * 12 - plan.price_yearly 
-    : 0;
-
-  const features = plan.features_json ? JSON.parse(plan.features_json) : [];
-  const limits = plan.limits_json ? JSON.parse(plan.limits_json) : {};
-
-  const featureNames = {
-    building_management: 'Objektverwaltung',
-    tenant_management: 'Mieterverwaltung',
-    contract_management: 'Vertragsverwaltung',
-    basic_reports: 'Basis-Reports',
-    advanced_reports: 'Erweiterte Reports',
-    multi_user: 'Multi-User',
-    api_access: 'API-Zugang'
-  };
-
   return (
-    <Card className={cn(
-      "relative transition-all",
-      plan.highlight && "border-slate-900 shadow-lg scale-105",
-      isCurrentPlan && "border-emerald-500 bg-emerald-50/50",
-      className
-    )}>
-      {plan.badge_text && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <Badge className="bg-slate-900 text-white">{plan.badge_text}</Badge>
-        </div>
-      )}
-
-      <CardHeader className="text-center pb-4">
-        <CardTitle className="text-2xl">{plan.name}</CardTitle>
-        <CardDescription className="text-sm">{plan.description}</CardDescription>
-        
+    <Card className={highlighted ? 'vf-card-premium' : ''}>
+      <CardHeader>
+        {highlighted && (
+          <div className="vf-badge vf-badge-gradient mb-2">Beliebteste Wahl</div>
+        )}
+        <CardTitle>{plan.name}</CardTitle>
         <div className="mt-4">
-          <div className="text-4xl font-light text-slate-900">
-            {(monthlyPrice / 100).toFixed(2)}€
+          <div className="text-4xl font-bold">
+            €{plan.price_monthly}
+            <span className="text-lg font-normal text-[var(--theme-text-muted)]">/Monat</span>
           </div>
-          <div className="text-sm text-slate-600 mt-1">/Monat</div>
-          
-          {billingCycle === 'yearly' && yearlyDiscount > 0 && (
-            <Badge variant="secondary" className="mt-2 bg-emerald-100 text-emerald-700">
-              {(yearlyDiscount / 100).toFixed(2)}€ gespart/Jahr
-            </Badge>
+          {plan.price_yearly && (
+            <div className="text-sm text-[var(--vf-success-600)] mt-1">
+              oder €{plan.price_yearly}/Jahr (20% sparen)
+            </div>
           )}
         </div>
       </CardHeader>
-
-      <CardContent className="space-y-3 pt-4 border-t">
-        {features.map(featureKey => (
-          <div key={featureKey} className="flex items-center gap-2 text-sm">
-            <Check className="h-4 w-4 text-emerald-600 shrink-0" />
-            <span>{featureNames[featureKey] || featureKey}</span>
-          </div>
-        ))}
-
-        {limits.objects && limits.objects !== -1 && (
-          <div className="flex items-center gap-2 text-sm">
-            <Check className="h-4 w-4 text-emerald-600 shrink-0" />
-            <span>{limits.objects} Objekte</span>
-          </div>
+      <CardContent>
+        {plan.description && (
+          <p className="text-sm text-[var(--theme-text-secondary)] mb-4">
+            {plan.description}
+          </p>
         )}
 
-        {limits.objects === -1 && (
-          <div className="flex items-center gap-2 text-sm">
-            <Check className="h-4 w-4 text-emerald-600 shrink-0" />
-            <span>Unbegrenzte Objekte</span>
+        <div className="space-y-2 mb-6">
+          <div className="text-sm font-medium">Limits:</div>
+          <div className="text-sm text-[var(--theme-text-secondary)]">
+            {plan.max_buildings === -1 ? '∞' : plan.max_buildings} Objekte
           </div>
-        )}
-      </CardContent>
+          <div className="text-sm text-[var(--theme-text-secondary)]">
+            {plan.max_units === -1 ? '∞' : plan.max_units} Einheiten
+          </div>
+        </div>
 
-      <CardFooter className="pt-4">
+        <PlanFeaturesList features={plan.features} />
+
         <Button
-          className="w-full"
-          variant={isCurrentPlan ? 'outline' : 'default'}
-          disabled={isCurrentPlan}
+          variant={highlighted ? 'gradient' : 'primary'}
+          className="w-full mt-6"
           onClick={() => onSelect(plan)}
+          disabled={isCurrent}
         >
-          {isCurrentPlan ? 'Aktueller Plan' : 'Auswählen'}
+          {isCurrent ? 'Aktueller Plan' : plan.price_monthly === 0 ? 'Kostenlos starten' : 'Plan wählen'}
         </Button>
-      </CardFooter>
+      </CardContent>
     </Card>
   );
 }

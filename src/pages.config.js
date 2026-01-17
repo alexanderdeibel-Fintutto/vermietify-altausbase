@@ -509,6 +509,7 @@ import VermitifySitemap from './pages/VermitifySitemap';
 import VermitifyStatusPage from './pages/VermitifyStatusPage';
 import VermitifyTestimonials from './pages/VermitifyTestimonials';
 import VermitifyToolsOverview from './pages/VermitifyToolsOverview';
+import VideoTutorials from './pages/VideoTutorials';
 import VollversionApp from './pages/VollversionApp';
 import WealthAdvanced from './pages/WealthAdvanced';
 import WealthAnalytics from './pages/WealthAnalytics';
@@ -538,7 +539,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import VideoTutorials from './pages/VideoTutorials';
 import __Layout from './Layout.jsx';
 
 
@@ -1054,6 +1054,7 @@ export const PAGES = {
     "VermitifyStatusPage": VermitifyStatusPage,
     "VermitifyTestimonials": VermitifyTestimonials,
     "VermitifyToolsOverview": VermitifyToolsOverview,
+    "VideoTutorials": VideoTutorials,
     "VollversionApp": VollversionApp,
     "WealthAdvanced": WealthAdvanced,
     "WealthAnalytics": WealthAnalytics,
@@ -1083,7 +1084,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "VideoTutorials": VideoTutorials,
 }
 
 export const pagesConfig = {

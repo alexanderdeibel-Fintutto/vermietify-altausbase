@@ -1,42 +1,62 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { VfListPageHeader } from '@/components/list-pages/VfListPage';
 import ReportFilterBar from '@/components/reports/ReportFilterBar';
 import ReportTable from '@/components/reports/ReportTable';
-import QuickStats from '@/components/shared/QuickStats';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 export default function ReportsPage() {
-  const [search, setSearch] = useState('');
-  const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [reportType, setReportType] = useState('all');
+  const [dateRange, setDateRange] = useState({
+    start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+    end: new Date()
+  });
 
   const { data: reports = [] } = useQuery({
     queryKey: ['reports'],
-    queryFn: () => base44.entities.ReportSchedule?.list?.() || []
+    queryFn: () => base44.entities.Report.list('-created_date')
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.ReportSchedule.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reports'] })
-  });
+  const handleView = (report) => {
+    console.log('View report:', report);
+  };
 
-  const filteredReports = reports.filter(r => (r.name || '').toLowerCase().includes(search.toLowerCase()));
-
-  const stats = [
-    { label: 'Gesamt-Reports', value: reports.length },
-    { label: 'Diese Woche', value: 0 },
-    { label: 'Geplante Reports', value: reports.filter(r => r.is_active).length },
-    { label: 'Downloads', value: 0 },
-  ];
+  const handleDownload = (report) => {
+    console.log('Download report:', report);
+  };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Reports</h1>
-        <p className="text-sm font-extralight text-slate-400 mt-1">Erstellen und verwalten Sie automatisierte Reports</p>
+    <div className="p-6">
+      <VfListPageHeader
+        title="Berichte"
+        description="Alle Berichte im Überblick"
+        actions={
+          <Button variant="gradient">
+            <Plus className="h-4 w-4 mr-2" />
+            Neuer Bericht
+          </Button>
+        }
+      />
+
+      <ReportFilterBar
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        dateRange={dateRange}
+        onDateChange={setDateRange}
+        reportType={reportType}
+        onTypeChange={setReportType}
+      />
+
+      <div className="mt-6">
+        <ReportTable
+          reports={reports}
+          onView={handleView}
+          onDownload={handleDownload}
+        />
       </div>
-      <QuickStats stats={stats} accentColor="rose" />
-      <ReportFilterBar onSearchChange={setSearch} onGenerateReport={() => {}} />
-      <ReportTable reports={filteredReports} onView={() => {}} onDownload={() => {}} onDelete={(r) => deleteMutation.mutate(r.id)} />
     </div>
   );
 }

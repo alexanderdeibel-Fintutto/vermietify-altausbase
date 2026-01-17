@@ -1,41 +1,26 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
 
-export default function ResponsiveContainer({ children, mobileView, desktopView }) {
-  const [isMobile, setIsMobile] = React.useState(false);
+export default function ResponsiveContainer({ 
+  children, 
+  className,
+  maxWidth = 'xl' 
+}) {
+  const maxWidthClasses = {
+    sm: 'max-w-2xl',
+    md: 'max-w-4xl',
+    lg: 'max-w-5xl',
+    xl: 'max-w-6xl',
+    '2xl': 'max-w-7xl'
+  };
 
-  React.useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  if (isMobile && mobileView) {
-    return mobileView;
-  }
-
-  if (!isMobile && desktopView) {
-    return desktopView;
-  }
-
-  return children;
-}
-
-export function useMobileDetection() {
-  const [isMobile, setIsMobile] = React.useState(false);
-
-  React.useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  return isMobile;
+  return (
+    <div className={cn(
+      "mx-auto px-4 sm:px-6 lg:px-8",
+      maxWidthClasses[maxWidth],
+      className
+    )}>
+      {children}
+    </div>
+  );
 }

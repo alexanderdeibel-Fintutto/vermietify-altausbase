@@ -1,63 +1,88 @@
 import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Plus, FileText } from 'lucide-react';
-import AIInsightsDashboard from '@/components/analytics/AIInsightsDashboard';
-import SmartRecommendations from '@/components/analytics/SmartRecommendations';
-import PerformanceMetrics from '@/components/analytics/PerformanceMetrics';
-import TrendAnalysis from '@/components/analytics/TrendAnalysis';
-import CustomReportBuilder from '@/components/reporting/CustomReportBuilder';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import PageHeader from '@/components/shared/PageHeader';
+import StatGrid from '@/components/stats/StatGrid';
+import TrendAnalysisChart from '@/components/analytics/TrendAnalysisChart';
+import DateRangeSelector from '@/components/shared/DateRangeSelector';
+import { Users, Building2, FileText, Euro } from 'lucide-react';
 
 export default function AnalyticsDashboard() {
-  const [reportBuilderOpen, setReportBuilderOpen] = useState(false);
-  const [entityType, setEntityType] = useState('Invoice');
+  const [dateRange, setDateRange] = useState({
+    start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+    end: new Date()
+  });
+
+  const { data: buildings = [] } = useQuery({
+    queryKey: ['buildings'],
+    queryFn: () => base44.entities.Building.list()
+  });
+
+  const { data: tenants = [] } = useQuery({
+    queryKey: ['tenants'],
+    queryFn: () => base44.entities.Tenant.list()
+  });
+
+  const { data: contracts = [] } = useQuery({
+    queryKey: ['contracts'],
+    queryFn: () => base44.entities.LeaseContract.list()
+  });
+
+  const stats = [
+    {
+      label: 'Objekte',
+      value: buildings.length,
+      icon: Building2,
+      trend: { value: 12, positive: true }
+    },
+    {
+      label: 'Mieter',
+      value: tenants.length,
+      icon: Users,
+      trend: { value: 8, positive: true }
+    },
+    {
+      label: 'Aktive Verträge',
+      value: contracts.filter(c => c.status === 'active').length,
+      icon: FileText,
+      trend: { value: 5, positive: true }
+    },
+    {
+      label: 'Mieteinnahmen',
+      value: `€${contracts.reduce((sum, c) => sum + (c.rent_cold || 0), 0).toLocaleString()}`,
+      icon: Euro,
+      variant: 'highlighted'
+    }
+  ];
+
+  const trendData = [
+    { name: 'Jan', value: 45 },
+    { name: 'Feb', value: 52 },
+    { name: 'Mär', value: 48 },
+    { name: 'Apr', value: 61 },
+    { name: 'Mai', value: 58 },
+    { name: 'Jun', value: 67 }
+  ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Analytics & KI</h1>
-          <p className="text-slate-600 text-sm mt-1">Insights, Empfehlungen & Custom Reports</p>
-        </div>
-        <Button
-          onClick={() => setReportBuilderOpen(true)}
-          className="gap-2"
-        >
-          <FileText className="w-4 h-4" />
-          Report erstellen
-        </Button>
+    <div className="p-6">
+      <PageHeader
+        title="Analytics Dashboard"
+        subtitle="Übersicht Ihrer Kennzahlen"
+      />
+
+      <div className="mb-6">
+        <DateRangeSelector
+          startDate={dateRange.start}
+          endDate={dateRange.end}
+          onStartChange={(d) => setDateRange({ ...dateRange, start: d })}
+          onEndChange={(d) => setDateRange({ ...dateRange, end: d })}
+        />
       </div>
 
-      {/* Main Content */}
-      <Tabs defaultValue="insights" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="insights">🧠 Insights</TabsTrigger>
-          <TabsTrigger value="recommendations">✨ Empfehlungen</TabsTrigger>
-          <TabsTrigger value="metrics">📊 Metriken</TabsTrigger>
-          <TabsTrigger value="trends">📈 Trends</TabsTrigger>
-        </TabsList>
+      <StatGrid stats={stats} columns={4} className="mb-6" />
 
-        <TabsContent value="insights" className="space-y-4">
-          <AIInsightsDashboard entityType={entityType} />
-          <SmartRecommendations entityType={entityType} />
-        </TabsContent>
-
-        <TabsContent value="recommendations" className="space-y-4">
-          <SmartRecommendations entityType={entityType} />
-        </TabsContent>
-
-        <TabsContent value="metrics" className="space-y-4">
-          <PerformanceMetrics entityType={entityType} />
-        </TabsContent>
-
-        <TabsContent value="trends" className="space-y-4">
-          <TrendAnalysis entityType={entityType} />
-        </TabsContent>
-      </Tabs>
-
-      {/* Report Builder Dialog */}
-      <CustomReportBuilder open={reportBuilderOpen} onOpenChange={setReportBuilderOpen} />
+      <TrendAnalysisChart data={trendData} title="Entwicklung" />
     </div>
   );
 }

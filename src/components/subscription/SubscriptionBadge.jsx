@@ -1,30 +1,26 @@
 import React from 'react';
-import { useSubscription } from '@/components/hooks/useSubscription';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import { VfBadge } from '@/components/shared/VfBadge';
+import { Crown, Zap } from 'lucide-react';
 
-export function SubscriptionBadge({ className, showPlan = true, showStatus = true }) {
-  const { data: subscription, isLoading } = useSubscription();
-
-  if (isLoading) return null;
-  if (!subscription) return null;
-
-  const statusConfig = {
-    trialing: { text: 'Testphase', variant: 'secondary' },
-    active: { text: 'Aktiv', variant: 'default' },
-    past_due: { text: 'Zahlung ausstehend', variant: 'destructive' },
-    canceled: { text: 'Gekündigt', variant: 'outline' },
-    unpaid: { text: 'Unbezahlt', variant: 'destructive' },
-    paused: { text: 'Pausiert', variant: 'outline' },
+export default function SubscriptionBadge({ planName, status }) {
+  const config = {
+    STARTER: { label: 'Starter', variant: 'default' },
+    BASIC: { label: 'Basic', variant: 'primary' },
+    PRO: { label: 'Professional', variant: 'gradient', icon: Zap },
+    BUSINESS: { label: 'Business', variant: 'gradient', icon: Crown }
   };
 
-  const status = statusConfig[subscription.subscription.status] || statusConfig.active;
+  const planConfig = config[planName] || { label: planName, variant: 'default' };
+  const BadgeIcon = planConfig.icon;
+
+  if (status === 'TRIAL') {
+    return <VfBadge variant="warning">Testphase</VfBadge>;
+  }
 
   return (
-    <Badge variant={status.variant} className={cn("gap-1", className)}>
-      {showPlan && subscription.plan.name}
-      {showPlan && showStatus && ' • '}
-      {showStatus && status.text}
-    </Badge>
+    <VfBadge variant={planConfig.variant}>
+      {BadgeIcon && <BadgeIcon className="h-3 w-3 mr-1" />}
+      {planConfig.label}
+    </VfBadge>
   );
 }

@@ -1,34 +1,36 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function PageHeader({ 
-  title,
-  description,
-  actionLabel,
-  onAction,
-  children,
-  loading = false
+  title, 
+  subtitle,
+  actions,
+  backButton = false 
 }) {
+  const navigate = useNavigate();
+
   return (
-    <div className="mb-8">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="text-3xl font-bold text-slate-900">{title}</h1>
-          {description && (
-            <p className="text-sm text-slate-600 mt-2">{description}</p>
-          )}
-        </div>
-        {actionLabel && (
-          <Button
-            onClick={onAction}
-            disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 whitespace-nowrap"
-          >
-            {loading ? 'Wird verarbeitet...' : actionLabel}
-          </Button>
-        )}
+    <div className="vf-page-header">
+      {backButton && (
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="mb-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Zurück
+        </Button>
+      )}
+      
+      <div>
+        <h1 className="vf-page-title">{title}</h1>
+        {subtitle && <p className="vf-page-subtitle">{subtitle}</p>}
       </div>
-      {children}
+      
+      {actions && <div className="vf-page-actions">{actions}</div>}
     </div>
   );
 }
