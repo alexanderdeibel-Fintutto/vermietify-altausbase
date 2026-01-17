@@ -1474,6 +1474,107 @@
   }
   
   /* ═══════════════════════════════════════════════════════════════════════════
+     MODAL / DIALOG STYLES
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  .vf-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: var(--vf-z-modal-backdrop);
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: vf-fade-in 200ms ease-in-out;
+  }
+  
+  .vf-modal {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    z-index: var(--vf-z-modal);
+    width: 90%;
+    max-width: 500px;
+    transform: translate(-50%, -50%);
+    background-color: var(--theme-elevated);
+    border: 1px solid var(--theme-border);
+    border-radius: var(--vf-radius-xl);
+    box-shadow: var(--vf-shadow-xl);
+    padding: var(--vf-spacing-6);
+    animation: vf-modal-in 200ms ease-in-out;
+  }
+  
+  .vf-modal-close {
+    position: absolute;
+    right: var(--vf-spacing-4);
+    top: var(--vf-spacing-4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--vf-radius-full);
+    color: var(--theme-text-muted);
+    cursor: pointer;
+    transition: var(--vf-transition-fast);
+    background: transparent;
+    border: none;
+  }
+  
+  .vf-modal-close:hover {
+    background-color: var(--theme-surface-hover);
+    color: var(--theme-text-primary);
+  }
+  
+  @keyframes vf-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes vf-modal-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -48%) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+  
+  .vf-modal-header {
+    margin-bottom: var(--vf-spacing-4);
+  }
+  
+  .vf-modal-title {
+    font-size: var(--vf-text-xl);
+    font-weight: 600;
+    color: var(--theme-text-primary);
+    margin-bottom: var(--vf-spacing-1);
+  }
+  
+  .vf-modal-description {
+    font-size: var(--vf-text-sm);
+    color: var(--theme-text-secondary);
+  }
+  
+  .vf-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--vf-spacing-3);
+    margin-top: var(--vf-spacing-6);
+    padding-top: var(--vf-spacing-4);
+    border-top: 1px solid var(--theme-divider);
+  }
+  
+  @media (max-width: 640px) {
+    .vf-modal-footer {
+      flex-direction: column-reverse;
+    }
+    
+    .vf-modal-footer .vf-btn {
+      width: 100%;
+    }
+  }
+  
+  /* ═══════════════════════════════════════════════════════════════════════════
      VERMITIFY SIDEBAR-STYLES
      ═══════════════════════════════════════════════════════════════════════════ */
   
