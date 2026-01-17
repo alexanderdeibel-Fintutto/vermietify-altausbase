@@ -1,246 +1,133 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { VfListPage, VfListPageHeader } from '@/components/list-pages/VfListPage';
+import { VfDataTable } from '@/components/list-pages/VfDataTable';
+import { VfFilterBar } from '@/components/list-pages/VfFilterBar';
+import { VfBadge } from '@/components/shared/VfBadge';
+import { Button } from '@/components/ui/button';
+import { CreditCard, Download, RefreshCw } from 'lucide-react';
 
 export default function AdminSubscriptions() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const queryClient = useQueryClient();
+  const [filters, setFilters] = useState({ status: 'all', plan: 'all' });
 
   const { data: subscriptions = [] } = useQuery({
-    queryKey: ['adminSubscriptions'],
+    queryKey: ['subscriptions'],
     queryFn: () => base44.entities.UserSubscription.list('-created_date')
   });
 
   const { data: plans = [] } = useQuery({
-    queryKey: ['adminPlans'],
+    queryKey: ['plans'],
     queryFn: () => base44.entities.SubscriptionPlan.list()
   });
 
   const filteredSubs = subscriptions.filter(sub => {
-    const matchesSearch = sub.user_email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || sub.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    if (filters.status !== 'all' && sub.status !== filters.status) return false;
+    if (filters.plan !== 'all' && sub.plan_id !== filters.plan) return false;
+    return true;
   });
 
-  const stats = {
-    total: subscriptions.length,
-    active: subscriptions.filter(s => s.status === 'active').length,
-    trialing: subscriptions.filter(s => s.status === 'trialing').length,
-    canceled: subscriptions.filter(s => s.status === 'canceled').length,
-  };
-
-  let totalMRR = 0;
-  subscriptions.filter(s => ['active', 'trialing'].includes(s.status)).forEach(sub => {
-    const plan = plans.find(p => p.id === sub.plan_id);
-    if (plan) {
-      totalMRR += sub.billing_cycle === 'yearly' ? plan.price_yearly / 12 : plan.price_monthly;
+  const columns = [
+    { key: 'user_email', label: 'Benutzer', sortable: true },
+    { 
+      key: 'plan_id', 
+      label: 'Plan',
+      render: (row) => {
+        const plan = plans.find(p => p.id === row.plan_id);
+        return plan?.name || row.plan_id;
+      }
+    },
+    { 
+      key: 'status', 
+      label: 'Status',
+      render: (row) => (
+        <VfBadge variant={
+          row.status === 'ACTIVE' ? 'success' :
+          row.status === 'TRIAL' ? 'warning' :
+          row.status === 'CANCELLED' ? 'error' : 'default'
+        }>
+          {row.status}
+        </VfBadge>
+      )
+    },
+    { 
+      key: 'billing_cycle', 
+      label: 'Zyklus',
+      render: (row) => row.billing_cycle === 'MONTHLY' ? 'Monatlich' : 'Jährlich'
+    },
+    { 
+      key: 'start_date', 
+      label: 'Start',
+      render: (row) => new Date(row.start_date).toLocaleDateString('de-DE')
+    },
+    { 
+      key: 'next_billing_date', 
+      label: 'Nächste Zahlung',
+      render: (row) => new Date(row.next_billing_date).toLocaleDateString('de-DE')
+    },
+    {
+      key: 'actions',
+      label: '',
+      render: (row) => (
+        <div className="flex gap-2">
+          <Button variant="ghost" size="sm" title="Details">
+            <CreditCard className="h-4 w-4" />
+          </Button>
+        </div>
+      )
     }
-  });
-
-  const statusConfig = {
-    trialing: { label: 'Testphase', variant: 'secondary', icon: AlertCircle },
-    active: { label: 'Aktiv', variant: 'default', icon: CheckCircle2 },
-    past_due: { label: 'Überfällig', variant: 'destructive', icon: AlertCircle },
-    canceled: { label: 'Gekündigt', variant: 'outline', icon: AlertCircle },
-  };
+  ];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-light text-slate-900">Subscription-Übersicht</h1>
-        <p className="text-sm text-slate-600">Alle Abonnements verwalten</p>
-      </div>
-
-      <div className="grid md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-2xl font-light">{stats.total}</div>
-                <div className="text-xs text-slate-600">Gesamt</div>
-              </div>
-              <Users className="h-8 w-8 text-slate-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-2xl font-light text-emerald-600">{stats.active}</div>
-                <div className="text-xs text-slate-600">Aktiv</div>
-              </div>
-              <CheckCircle2 className="h-8 w-8 text-emerald-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-2xl font-light text-blue-600">{stats.trialing}</div>
-                <div className="text-xs text-slate-600">Testphase</div>
-              </div>
-              <AlertCircle className="h-8 w-8 text-blue-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-2xl font-light">{(totalMRR / 100).toFixed(0)}€</div>
-                <div className="text-xs text-slate-600">MRR</div>
-              </div>
-              <TrendingUp className="h-8 w-8 text-slate-400" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-4">
-            <Input 
-              placeholder="Nach Email suchen..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle Status</SelectItem>
-                <SelectItem value="active">Aktiv</SelectItem>
-                <SelectItem value="trialing">Testphase</SelectItem>
-                <SelectItem value="canceled">Gekündigt</SelectItem>
-                <SelectItem value="past_due">Überfällig</SelectItem>
-              </SelectContent>
-            </Select>
+    <VfListPage>
+      <VfListPageHeader
+        title="Abonnements"
+        description={`${subscriptions.length} Abonnements • ${subscriptions.filter(s => s.status === 'ACTIVE').length} aktiv`}
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button variant="primary" onClick={() => queryClient.invalidateQueries(['subscriptions'])}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Aktualisieren
+            </Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {filteredSubs.map(sub => {
-              const plan = plans.find(p => p.id === sub.plan_id);
-              const status = statusConfig[sub.status] || statusConfig.active;
-              const Icon = status.icon;
+        }
+      />
 
-              return (
-                <div key={sub.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50">
-                  <div className="flex items-center gap-4">
-                    <Icon className="h-5 w-5 text-slate-400" />
-                    <div>
-                      <div className="font-medium text-sm">{sub.user_email}</div>
-                      <div className="text-xs text-slate-600">
-                        {plan?.name} · {sub.billing_cycle === 'monthly' ? 'Monatlich' : 'Jährlich'}
-                      </div>
-                    </div>
-                  </div>
+      <VfFilterBar
+        filters={[
+          {
+            type: 'select',
+            label: 'Status',
+            value: filters.status,
+            onChange: (v) => setFilters({ ...filters, status: v }),
+            options: [
+              { value: 'all', label: 'Alle' },
+              { value: 'TRIAL', label: 'Trial' },
+              { value: 'ACTIVE', label: 'Aktiv' },
+              { value: 'PAUSED', label: 'Pausiert' },
+              { value: 'CANCELLED', label: 'Gekündigt' },
+              { value: 'EXPIRED', label: 'Abgelaufen' }
+            ]
+          },
+          {
+            type: 'select',
+            label: 'Plan',
+            value: filters.plan,
+            onChange: (v) => setFilters({ ...filters, plan: v }),
+            options: [
+              { value: 'all', label: 'Alle Pläne' },
+              ...plans.map(p => ({ value: p.id, label: p.name }))
+            ]
+          }
+        ]}
+      />
 
-                  <div className="flex items-center gap-6">
-                    <div className="text-right">
-                      <div className="text-sm font-medium">
-                        {format(new Date(sub.current_period_end), 'dd.MM.yyyy', { locale: de })}
-                      </div>
-                      <div className="text-xs text-slate-600">Nächste Zahlung</div>
-                    </div>
-
-                    <Badge variant={status.variant}>{status.label}</Badge>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              Preis bearbeiten
-            </DialogTitle>
-          </DialogHeader>
-          {editingPricing && (
-            <PricingEditForm 
-              pricing={editingPricing}
-              onSave={(data) => {
-                if (editingPricing.id) {
-                  updateMutation.mutate({ id: editingPricing.id, data });
-                } else {
-                  createMutation.mutate(data);
-                }
-              }}
-              onCancel={() => {
-                setDialogOpen(false);
-                setEditingPricing(null);
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-
-function PricingEditForm({ pricing, onSave, onCancel }) {
-  const [formData, setFormData] = useState({
-    plan_id: pricing.plan_id,
-    addon_id: pricing.addon_id,
-    price_monthly: pricing.price_monthly,
-    stripe_price_id: pricing.stripe_price_id || '',
-    is_included: pricing.is_included,
-    is_available: pricing.is_available,
-    discount_percent: pricing.discount_percent || 0
-  });
-
-  return (
-    <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-4">
-      <div className="space-y-2">
-        <Label>Preis (Cent/Monat)</Label>
-        <Input 
-          type="number"
-          value={formData.price_monthly} 
-          onChange={e => setFormData({...formData, price_monthly: Number(e.target.value)})}
-          disabled={formData.is_included}
-        />
-      </div>
-
-      <div className="flex items-center gap-2">
-        <Switch 
-          checked={formData.is_included} 
-          onCheckedChange={v => setFormData({...formData, is_included: v, price_monthly: v ? 0 : pricing.price_monthly})}
-        />
-        <Label>Inklusive</Label>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <Switch 
-          checked={formData.is_available} 
-          onCheckedChange={v => setFormData({...formData, is_available: v})}
-        />
-        <Label>Verfügbar</Label>
-      </div>
-
-      <div className="flex gap-2">
-        <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
-          Abbrechen
-        </Button>
-        <Button type="submit" className="flex-1">Speichern</Button>
-      </div>
-    </form>
+      <VfDataTable columns={columns} data={filteredSubs} />
+    </VfListPage>
   );
 }

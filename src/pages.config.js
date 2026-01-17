@@ -161,6 +161,7 @@ import CustomDashboard from './pages/CustomDashboard';
 import DACHComplianceChecklist from './pages/DACHComplianceChecklist';
 import DACHTaxComparison from './pages/DACHTaxComparison';
 import Dashboard from './pages/Dashboard';
+import DashboardHome from './pages/DashboardHome';
 import DataImportExport from './pages/DataImportExport';
 import DataImportExportHub from './pages/DataImportExportHub';
 import DataManagementHub from './pages/DataManagementHub';
@@ -231,6 +232,7 @@ import HaushaltsbuchbudgetApp from './pages/HaushaltsbuchbudgetApp';
 import HelpCenter from './pages/HelpCenter';
 import HilfeCenter from './pages/HilfeCenter';
 import Home from './pages/Home';
+import ImplementationChecklistPrompt22to27 from './pages/ImplementationChecklistPrompt22to27';
 import IncomeOptimizationTool from './pages/IncomeOptimizationTool';
 import Index from './pages/Index';
 import IndexmietenRechner from './pages/IndexmietenRechner';
@@ -319,6 +321,7 @@ import PropertyPortfolio from './pages/PropertyPortfolio';
 import PropertyValuation from './pages/PropertyValuation';
 import PropertyValuationEngine from './pages/PropertyValuationEngine';
 import QuarterlyTaxEstimator from './pages/QuarterlyTaxEstimator';
+import QuickStartGuide from './pages/QuickStartGuide';
 import QuizExample from './pages/QuizExample';
 import ROIDashboard from './pages/ROIDashboard';
 import RealEstateCH from './pages/RealEstateCH';
@@ -467,6 +470,7 @@ import TesterOnboarding from './pages/TesterOnboarding';
 import TestingDashboard from './pages/TestingDashboard';
 import ThemeManagement from './pages/ThemeManagement';
 import TilgungsRechner from './pages/TilgungsRechner';
+import ToolsLandingPage from './pages/ToolsLandingPage';
 import UltimateEnterpriseHub from './pages/UltimateEnterpriseHub';
 import UnitDetail from './pages/UnitDetail';
 import UnitDetailTemplate from './pages/UnitDetailTemplate';
@@ -481,10 +485,12 @@ import VermieterDashboard from './pages/VermieterDashboard';
 import VermieterGo from './pages/VermieterGo';
 import VermieterGoApp from './pages/VermieterGoApp';
 import VermieterProfilSettings from './pages/VermieterProfilSettings';
+import VermitifyAGB from './pages/VermitifyAGB';
 import VermitifyAboutUs from './pages/VermitifyAboutUs';
 import VermitifyBlog from './pages/VermitifyBlog';
 import VermitifyCaseStudies from './pages/VermitifyCaseStudies';
 import VermitifyChangelog from './pages/VermitifyChangelog';
+import VermitifyComparison from './pages/VermitifyComparison';
 import VermitifyContact from './pages/VermitifyContact';
 import VermitifyDatenschutz from './pages/VermitifyDatenschutz';
 import VermitifyDesignShowcase from './pages/VermitifyDesignShowcase';
@@ -493,9 +499,14 @@ import VermitifyFeatures from './pages/VermitifyFeatures';
 import VermitifyHelp from './pages/VermitifyHelp';
 import VermitifyHomepage from './pages/VermitifyHomepage';
 import VermitifyImpressum from './pages/VermitifyImpressum';
+import VermitifyLogin from './pages/VermitifyLogin';
 import VermitifyPartners from './pages/VermitifyPartners';
 import VermitifyPricing from './pages/VermitifyPricing';
 import VermitifyRoadmap from './pages/VermitifyRoadmap';
+import VermitifySignup from './pages/VermitifySignup';
+import VermitifySitemap from './pages/VermitifySitemap';
+import VermitifyStatusPage from './pages/VermitifyStatusPage';
+import VermitifyTestimonials from './pages/VermitifyTestimonials';
 import VermitifyToolsOverview from './pages/VermitifyToolsOverview';
 import VollversionApp from './pages/VollversionApp';
 import WealthAdvanced from './pages/WealthAdvanced';
@@ -525,17 +536,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import VermitifyTestimonials from './pages/VermitifyTestimonials';
-import VermitifySignup from './pages/VermitifySignup';
-import VermitifyLogin from './pages/VermitifyLogin';
-import ToolsLandingPage from './pages/ToolsLandingPage';
-import VermitifyAGB from './pages/VermitifyAGB';
-import VermitifySitemap from './pages/VermitifySitemap';
-import QuickStartGuide from './pages/QuickStartGuide';
-import DashboardHome from './pages/DashboardHome';
-import VermitifyComparison from './pages/VermitifyComparison';
-import VermitifyStatusPage from './pages/VermitifyStatusPage';
-import ImplementationChecklistPrompt22to27 from './pages/ImplementationChecklistPrompt22to27';
 import __Layout from './Layout.jsx';
 
 
@@ -703,6 +703,7 @@ export const PAGES = {
     "DACHComplianceChecklist": DACHComplianceChecklist,
     "DACHTaxComparison": DACHTaxComparison,
     "Dashboard": Dashboard,
+    "DashboardHome": DashboardHome,
     "DataImportExport": DataImportExport,
     "DataImportExportHub": DataImportExportHub,
     "DataManagementHub": DataManagementHub,
@@ -773,6 +774,7 @@ export const PAGES = {
     "HelpCenter": HelpCenter,
     "HilfeCenter": HilfeCenter,
     "Home": Home,
+    "ImplementationChecklistPrompt22to27": ImplementationChecklistPrompt22to27,
     "IncomeOptimizationTool": IncomeOptimizationTool,
     "Index": Index,
     "IndexmietenRechner": IndexmietenRechner,
@@ -861,6 +863,7 @@ export const PAGES = {
     "PropertyValuation": PropertyValuation,
     "PropertyValuationEngine": PropertyValuationEngine,
     "QuarterlyTaxEstimator": QuarterlyTaxEstimator,
+    "QuickStartGuide": QuickStartGuide,
     "QuizExample": QuizExample,
     "ROIDashboard": ROIDashboard,
     "RealEstateCH": RealEstateCH,
@@ -1009,6 +1012,7 @@ export const PAGES = {
     "TestingDashboard": TestingDashboard,
     "ThemeManagement": ThemeManagement,
     "TilgungsRechner": TilgungsRechner,
+    "ToolsLandingPage": ToolsLandingPage,
     "UltimateEnterpriseHub": UltimateEnterpriseHub,
     "UnitDetail": UnitDetail,
     "UnitDetailTemplate": UnitDetailTemplate,
@@ -1023,10 +1027,12 @@ export const PAGES = {
     "VermieterGo": VermieterGo,
     "VermieterGoApp": VermieterGoApp,
     "VermieterProfilSettings": VermieterProfilSettings,
+    "VermitifyAGB": VermitifyAGB,
     "VermitifyAboutUs": VermitifyAboutUs,
     "VermitifyBlog": VermitifyBlog,
     "VermitifyCaseStudies": VermitifyCaseStudies,
     "VermitifyChangelog": VermitifyChangelog,
+    "VermitifyComparison": VermitifyComparison,
     "VermitifyContact": VermitifyContact,
     "VermitifyDatenschutz": VermitifyDatenschutz,
     "VermitifyDesignShowcase": VermitifyDesignShowcase,
@@ -1035,9 +1041,14 @@ export const PAGES = {
     "VermitifyHelp": VermitifyHelp,
     "VermitifyHomepage": VermitifyHomepage,
     "VermitifyImpressum": VermitifyImpressum,
+    "VermitifyLogin": VermitifyLogin,
     "VermitifyPartners": VermitifyPartners,
     "VermitifyPricing": VermitifyPricing,
     "VermitifyRoadmap": VermitifyRoadmap,
+    "VermitifySignup": VermitifySignup,
+    "VermitifySitemap": VermitifySitemap,
+    "VermitifyStatusPage": VermitifyStatusPage,
+    "VermitifyTestimonials": VermitifyTestimonials,
     "VermitifyToolsOverview": VermitifyToolsOverview,
     "VollversionApp": VollversionApp,
     "WealthAdvanced": WealthAdvanced,
@@ -1067,17 +1078,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "VermitifyTestimonials": VermitifyTestimonials,
-    "VermitifySignup": VermitifySignup,
-    "VermitifyLogin": VermitifyLogin,
-    "ToolsLandingPage": ToolsLandingPage,
-    "VermitifyAGB": VermitifyAGB,
-    "VermitifySitemap": VermitifySitemap,
-    "QuickStartGuide": QuickStartGuide,
-    "DashboardHome": DashboardHome,
-    "VermitifyComparison": VermitifyComparison,
-    "VermitifyStatusPage": VermitifyStatusPage,
-    "ImplementationChecklistPrompt22to27": ImplementationChecklistPrompt22to27,
 }
 
 export const pagesConfig = {

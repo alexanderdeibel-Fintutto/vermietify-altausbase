@@ -103,6 +103,7 @@ export default function VermitifyHomepage() {
 
   return (
     <VfMarketingLayout>
+      <ConversionTracker eventType="homepage_view" />
       <VfHero
         headline="Immobilien verwalten. Steuern sparen. Zeit gewinnen."
         subheadline="Die All-in-One Software für private und professionelle Vermieter in Deutschland"
