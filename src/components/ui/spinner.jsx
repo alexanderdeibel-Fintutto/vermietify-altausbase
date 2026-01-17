@@ -1,16 +1,20 @@
-import React from 'react';
-import { cn } from '@/lib/utils';
+import * as React from "react"
+import { cn } from "@/lib/utils"
 
-export const Spinner = ({ size = 'md', className }) => {
-  const sizeClasses = {
-    sm: 'vf-spinner-sm',
-    md: '',
-    lg: 'vf-spinner-lg'
-  };
-
+const Spinner = React.forwardRef(({ className, size = "md", ...props }, ref) => {
+  const sizeClass = size === "xs" ? "vf-spinner-xs" :
+                    size === "sm" ? "vf-spinner-sm" :
+                    size === "lg" ? "vf-spinner-lg" :
+                    size === "xl" ? "vf-spinner-xl" : "vf-spinner-md";
+  
   return (
-    <div className={cn("vf-spinner", sizeClasses[size], className)} />
+    <div
+      ref={ref}
+      className={cn("vf-spinner", sizeClass, className)}
+      {...props}
+    />
   );
-};
+})
+Spinner.displayName = "Spinner"
 
-export default Spinner;
+export { Spinner }
