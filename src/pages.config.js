@@ -484,6 +484,19 @@ import SettingsProfile from './pages/SettingsProfile';
 import MieterDashboard from './pages/MieterDashboard';
 import OnboardingWizardNew from './pages/OnboardingWizardNew';
 import IndexmietenRechner from './pages/IndexmietenRechner';
+import UnitDetailTemplate from './pages/UnitDetailTemplate';
+import TenantDetailTemplate from './pages/TenantDetailTemplate';
+import ContractDetailTemplate from './pages/ContractDetailTemplate';
+import AdminDashboardTemplate from './pages/AdminDashboardTemplate';
+import investorprofilQuiz from './pages/InvestorProfil Quiz';
+import MietvertragGenerator from './pages/MietvertragGenerator';
+import StBDashboard from './pages/StBDashboard';
+import BKAbrechnungWizard from './pages/BKAbrechnungWizard';
+import AnlageVWizard from './pages/AnlageVWizard';
+import OfflineError from './pages/OfflineError';
+import MaintenanceMode from './pages/MaintenanceMode';
+import AfACalculator from './pages/AfACalculator';
+import CashflowRechner from './pages/CashflowRechner';
 import __Layout from './Layout.jsx';
 
 
@@ -974,6 +987,19 @@ export const PAGES = {
     "MieterDashboard": MieterDashboard,
     "OnboardingWizardNew": OnboardingWizardNew,
     "IndexmietenRechner": IndexmietenRechner,
+    "UnitDetailTemplate": UnitDetailTemplate,
+    "TenantDetailTemplate": TenantDetailTemplate,
+    "ContractDetailTemplate": ContractDetailTemplate,
+    "AdminDashboardTemplate": AdminDashboardTemplate,
+    "InvestorProfil Quiz": investorprofilQuiz,
+    "MietvertragGenerator": MietvertragGenerator,
+    "StBDashboard": StBDashboard,
+    "BKAbrechnungWizard": BKAbrechnungWizard,
+    "AnlageVWizard": AnlageVWizard,
+    "OfflineError": OfflineError,
+    "MaintenanceMode": MaintenanceMode,
+    "AfACalculator": AfACalculator,
+    "CashflowRechner": CashflowRechner,
 }
 
 export const pagesConfig = {
