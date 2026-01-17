@@ -207,7 +207,7 @@ export default function Layout({ children, currentPageName }) {
                 <SmartActionButton />
 
                 {/* PWA Install Prompt */}
-                <PWAInstallPrompt />
+                <InstallPWAPrompt />
 
                 {/* Offline Indicator */}
                                 <OfflineIndicator />
@@ -215,8 +215,8 @@ export default function Layout({ children, currentPageName }) {
                                 {/* Offline Mode Support */}
                                                 <OfflineModeInitializer />
 
-                                {/* Floating Feedback Button */}
-                                <FloatingFeedbackButton />
+                                {/* User Journey Tracker */}
+                                <UserJourneyTracker />
 
                                 {/* AI Chat Widget */}
                                 <Suspense fallback={<LoadingFallback />}>
