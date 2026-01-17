@@ -150,40 +150,33 @@ export default function Layout({ children, currentPageName }) {
                                    {/* Main Content Area */}
                                    <div className="flex-1 flex flex-col">
                  {/* Top Header Bar */}
-                <header className="sticky top-0 z-50 bg-white border-b border-slate-100" style={{ backgroundColor: '#f8f8f8' }}>
-                    <div className="flex items-center justify-between h-16 px-8">
-                        {/* Logo */}
-                        <div className="flex items-center gap-3">
-                            <VermitifyLogo size="sm" colorMode="gradient" />
+                 <header className="vf-navbar">
+                    <div className="vf-navbar-left">
+                        {/* Global Search */}
+                        <div className="vf-navbar-search hidden lg:block">
+                            <GlobalSearchBar compact />
                         </div>
+                    </div>
 
-                                        {/* Global Search */}
-                                        <div className="hidden lg:block flex-1 max-w-2xl mx-8">
-                                            <GlobalSearchBar compact />
-                                        </div>
-
-                                        {/* Right Actions */}
-                                        <div className="flex items-center gap-3">
-                                            <ThemeSwitcher />
-                                            <ThemeToggle />
-                                            <MandantSwitcher />
-                                            <NotificationCenter />
-                                            <SuiteSwitcher />
-                                            <Link to={createPageUrl('MyAccount')}>
-                                                <Button variant="ghost" size="icon" title="Mein Account" className="text-slate-400 hover:text-slate-700">
-                                                    <Users className="w-5 h-5" />
-                                                </Button>
-                                            </Link>
-                                            <Link to={createPageUrl('UserSettings')}>
-                                                <Button variant="ghost" size="icon" title="Einstellungen" className="text-slate-400 hover:text-slate-700">
-                                                    <Settings className="w-5 h-5" />
-                                                </Button>
-                                            </Link>
-                                        </div>
-                            </div>
-
-
-                </header>
+                    {/* Right Actions */}
+                    <div className="vf-navbar-right">
+                        <ThemeSwitcher />
+                        <ThemeToggle />
+                        <MandantSwitcher />
+                        <NotificationCenter />
+                        <SuiteSwitcher />
+                        <Link to={createPageUrl('MyAccount')}>
+                            <button className="vf-navbar-icon-btn" title="Mein Account">
+                                <Users className="w-5 h-5" />
+                            </button>
+                        </Link>
+                        <Link to={createPageUrl('UserSettings')}>
+                            <button className="vf-navbar-icon-btn" title="Einstellungen">
+                                <Settings className="w-5 h-5" />
+                            </button>
+                        </Link>
+                    </div>
+                 </header>
 
                 {/* Category Sub-Navigation */}
                 <CategorySubNavigation activeCategory={activeCategory} />
@@ -198,7 +191,7 @@ export default function Layout({ children, currentPageName }) {
                 <DeepSubNavigation parentSection={mainSection} currentPage={currentPageName} visibleFeatures={visibleFeatures} />
 
                 {/* Main Content - Full Width */}
-                <main className="p-6 lg:p-8 mb-20 lg:mb-0 max-w-[1600px] mx-auto">
+                <main className="p-6 lg:p-8 mb-20 lg:mb-0 max-w-[1600px] mx-auto mt-16">
                     {children}
                 </main>
 
