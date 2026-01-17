@@ -154,6 +154,7 @@ import DataImportExportHub from './pages/DataImportExportHub';
 import DataManagementHub from './pages/DataManagementHub';
 import DeductionMaximizationTool from './pages/DeductionMaximizationTool';
 import DesignSystem from './pages/DesignSystem';
+import DesignSystemShowcase from './pages/DesignSystemShowcase';
 import DeveloperDocumentation from './pages/DeveloperDocumentation';
 import DividendOptimization from './pages/DividendOptimization';
 import DocumentAdvancedHub from './pages/DocumentAdvancedHub';
@@ -215,8 +216,8 @@ import HilfeCenter from './pages/HilfeCenter';
 import Home from './pages/Home';
 import IncomeOptimizationTool from './pages/IncomeOptimizationTool';
 import Index from './pages/Index';
-import IntegrationHub from './pages/IntegrationHub';
 import InsuranceManagement from './pages/InsuranceManagement';
+import IntegrationHub from './pages/IntegrationHub';
 import IntegrationMarketplace from './pages/IntegrationMarketplace';
 import InternationalTaxComparison from './pages/InternationalTaxComparison';
 import InternationalTaxPlanning from './pages/InternationalTaxPlanning';
@@ -324,12 +325,12 @@ import SubscriptionManagement from './pages/SubscriptionManagement';
 import SubscriptionSettings from './pages/SubscriptionSettings';
 import SuiteManagement from './pages/SuiteManagement';
 import SuppliersManagement from './pages/SuppliersManagement';
-import Tasks from './pages/Tasks';
 import SupportCenter from './pages/SupportCenter';
 import SyncManagement from './pages/SyncManagement';
 import SystemConfiguration from './pages/SystemConfiguration';
 import SystemHealth from './pages/SystemHealth';
 import TaskManagement from './pages/TaskManagement';
+import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
 import TaxAIChatbot from './pages/TaxAIChatbot';
 import TaxAdminDashboard from './pages/TaxAdminDashboard';
@@ -468,7 +469,13 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import DesignSystemShowcase from './pages/DesignSystemShowcase';
+import CalculatorExample from './pages/CalculatorExample';
+import WizardExample from './pages/WizardExample';
+import QuizExample from './pages/QuizExample';
+import GeneratorExample from './pages/GeneratorExample';
+import ListPageExample from './pages/ListPageExample';
+import MarketingPageExample from './pages/MarketingPageExample';
+import VermitifyDesignShowcase from './pages/VermitifyDesignShowcase';
 import __Layout from './Layout.jsx';
 
 
@@ -629,6 +636,7 @@ export const PAGES = {
     "DataManagementHub": DataManagementHub,
     "DeductionMaximizationTool": DeductionMaximizationTool,
     "DesignSystem": DesignSystem,
+    "DesignSystemShowcase": DesignSystemShowcase,
     "DeveloperDocumentation": DeveloperDocumentation,
     "DividendOptimization": DividendOptimization,
     "DocumentAdvancedHub": DocumentAdvancedHub,
@@ -690,8 +698,8 @@ export const PAGES = {
     "Home": Home,
     "IncomeOptimizationTool": IncomeOptimizationTool,
     "Index": Index,
-    "IntegrationHub": IntegrationHub,
     "InsuranceManagement": InsuranceManagement,
+    "IntegrationHub": IntegrationHub,
     "IntegrationMarketplace": IntegrationMarketplace,
     "InternationalTaxComparison": InternationalTaxComparison,
     "InternationalTaxPlanning": InternationalTaxPlanning,
@@ -799,12 +807,12 @@ export const PAGES = {
     "SubscriptionSettings": SubscriptionSettings,
     "SuiteManagement": SuiteManagement,
     "SuppliersManagement": SuppliersManagement,
-    "Tasks": Tasks,
     "SupportCenter": SupportCenter,
     "SyncManagement": SyncManagement,
     "SystemConfiguration": SystemConfiguration,
     "SystemHealth": SystemHealth,
     "TaskManagement": TaskManagement,
+    "Tasks": Tasks,
     "Tax": Tax,
     "TaxAIChatbot": TaxAIChatbot,
     "TaxAdminDashboard": TaxAdminDashboard,
@@ -943,7 +951,13 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "DesignSystemShowcase": DesignSystemShowcase,
+    "CalculatorExample": CalculatorExample,
+    "WizardExample": WizardExample,
+    "QuizExample": QuizExample,
+    "GeneratorExample": GeneratorExample,
+    "ListPageExample": ListPageExample,
+    "MarketingPageExample": MarketingPageExample,
+    "VermitifyDesignShowcase": VermitifyDesignShowcase,
 }
 
 export const pagesConfig = {

@@ -1,4 +1,3 @@
-
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
@@ -61,10 +60,20 @@ TableCell.displayName = "TableCell"
 const TableCaption = React.forwardRef(({ className, ...props }, ref) => (
   <caption
     ref={ref}
-    className={cn("mt-4 text-sm text-muted-foreground", className)}
-    {...props} />
+    className={cn("mt-4 text-sm text-[var(--theme-text-muted)]", className)}
+    {...props}
+  />
 ))
 TableCaption.displayName = "TableCaption"
+
+const TableEmpty = React.forwardRef(({ className, children, ...props }, ref) => (
+  <tr ref={ref} {...props}>
+    <td colSpan={100} className={cn("vf-table-empty", className)}>
+      {children || "Keine Daten verfügbar"}
+    </td>
+  </tr>
+))
+TableEmpty.displayName = "TableEmpty"
 
 export {
   Table,
@@ -75,4 +84,5 @@ export {
   TableRow,
   TableCell,
   TableCaption,
+  TableEmpty,
 }
