@@ -359,6 +359,7 @@ import StocksAndETFs from './pages/StocksAndETFs';
 import SubmissionDashboard from './pages/SubmissionDashboard';
 import SubscriptionManagement from './pages/SubscriptionManagement';
 import SubscriptionSettings from './pages/SubscriptionSettings';
+import SubscriptionSuccess from './pages/SubscriptionSuccess';
 import SuiteManagement from './pages/SuiteManagement';
 import SuppliersManagement from './pages/SuppliersManagement';
 import SupportCenter from './pages/SupportCenter';
@@ -518,6 +519,7 @@ import WealthMobile from './pages/WealthMobile';
 import WealthTaxCalculator from './pages/WealthTaxCalculator';
 import WealthTaxIntegration from './pages/WealthTaxIntegration';
 import WealthTeam from './pages/WealthTeam';
+import WelcomeDashboard from './pages/WelcomeDashboard';
 import WertentwicklungsRechner from './pages/WertentwicklungsRechner';
 import WhatsAppCommunication from './pages/WhatsAppCommunication';
 import WhatsAppSettings from './pages/WhatsAppSettings';
@@ -536,8 +538,7 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import WelcomeDashboard from './pages/WelcomeDashboard';
-import SubscriptionSuccess from './pages/SubscriptionSuccess';
+import VideoTutorials from './pages/VideoTutorials';
 import __Layout from './Layout.jsx';
 
 
@@ -903,6 +904,7 @@ export const PAGES = {
     "SubmissionDashboard": SubmissionDashboard,
     "SubscriptionManagement": SubscriptionManagement,
     "SubscriptionSettings": SubscriptionSettings,
+    "SubscriptionSuccess": SubscriptionSuccess,
     "SuiteManagement": SuiteManagement,
     "SuppliersManagement": SuppliersManagement,
     "SupportCenter": SupportCenter,
@@ -1062,6 +1064,7 @@ export const PAGES = {
     "WealthTaxCalculator": WealthTaxCalculator,
     "WealthTaxIntegration": WealthTaxIntegration,
     "WealthTeam": WealthTeam,
+    "WelcomeDashboard": WelcomeDashboard,
     "WertentwicklungsRechner": WertentwicklungsRechner,
     "WhatsAppCommunication": WhatsAppCommunication,
     "WhatsAppSettings": WhatsAppSettings,
@@ -1080,8 +1083,7 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "WelcomeDashboard": WelcomeDashboard,
-    "SubscriptionSuccess": SubscriptionSuccess,
+    "VideoTutorials": VideoTutorials,
 }
 
 export const pagesConfig = {
