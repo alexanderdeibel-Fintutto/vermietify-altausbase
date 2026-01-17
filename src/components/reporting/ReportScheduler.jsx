@@ -1,105 +1,65 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { VfModal } from '@/components/shared/VfModal';
+import { VfSelect } from '@/components/shared/VfSelect';
+import { VfInput } from '@/components/shared/VfInput';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Clock } from 'lucide-react';
-import { toast } from 'sonner';
+import { useMutation } from '@tanstack/react-query';
+import { Clock } from 'lucide-react';
 
-export default function ReportScheduler({ buildingId, reportType }) {
-  const [creating, setCreating] = useState(false);
-  const [config, setConfig] = useState({
-    frequency: 'weekly',
-    recipients: '',
-    format: 'pdf'
+export default function ReportScheduler({ open, onClose, reportType }) {
+  const [frequency, setFrequency] = useState('weekly');
+  const [recipients, setRecipients] = useState('');
+
+  const scheduleMutation = useMutation({
+    mutationFn: async (data) => {
+      await base44.entities.ReportSchedule.create({
+        report_type: reportType,
+        frequency: data.frequency,
+        recipients: data.recipients.split(',').map(e => e.trim()),
+        is_active: true
+      });
+    },
+    onSuccess: () => onClose()
   });
 
-  const handleCreate = async () => {
-    if (!config.recipients.trim()) {
-      toast.error('Bitte Empfänger eingeben');
-      return;
-    }
-
-    setCreating(true);
-    try {
-      const response = await base44.functions.invoke('createReportSchedule', {
-        buildingId,
-        reportType,
-        frequency: config.frequency,
-        recipients: config.recipients.split(',').map(e => e.trim()),
-        format: config.format
-      });
-
-      toast.success(response.data.message);
-      setConfig({ frequency: 'weekly', recipients: '', format: 'pdf' });
-    } catch (error) {
-      toast.error('Fehler: ' + error.message);
-    } finally {
-      setCreating(false);
-    }
-  };
-
   return (
-    <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Clock className="w-5 h-5 text-purple-600" />
-          Automatische Reports
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <label className="text-sm font-medium text-slate-700">Häufigkeit</label>
-          <select
-            value={config.frequency}
-            onChange={(e) => setConfig({...config, frequency: e.target.value})}
-            className="w-full mt-2 border rounded-lg px-4 py-2 text-sm"
+    <VfModal
+      open={open}
+      onOpenChange={onClose}
+      title="Bericht planen"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>Abbrechen</Button>
+          <Button 
+            variant="gradient"
+            onClick={() => scheduleMutation.mutate({ frequency, recipients })}
           >
-            <option value="daily">Täglich</option>
-            <option value="weekly">Wöchentlich</option>
-            <option value="monthly">Monatlich</option>
-          </select>
-        </div>
+            <Clock className="h-4 w-4 mr-2" />
+            Planen
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <VfSelect
+          label="Häufigkeit"
+          value={frequency}
+          onChange={setFrequency}
+          options={[
+            { value: 'daily', label: 'Täglich' },
+            { value: 'weekly', label: 'Wöchentlich' },
+            { value: 'monthly', label: 'Monatlich' }
+          ]}
+        />
 
-        <div>
-          <label className="text-sm font-medium text-slate-700">Format</label>
-          <select
-            value={config.format}
-            onChange={(e) => setConfig({...config, format: e.target.value})}
-            className="w-full mt-2 border rounded-lg px-4 py-2 text-sm"
-          >
-            <option value="pdf">PDF</option>
-            <option value="csv">CSV</option>
-            <option value="excel">Excel</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-slate-700">Empfänger (Email)</label>
-          <input
-            type="text"
-            placeholder="user1@example.com, user2@example.com"
-            value={config.recipients}
-            onChange={(e) => setConfig({...config, recipients: e.target.value})}
-            className="w-full mt-2 border rounded-lg px-4 py-2 text-sm"
-          />
-          <p className="text-xs text-slate-500 mt-1">Mehrere Emails durch Komma getrennt</p>
-        </div>
-
-        <Button
-          onClick={handleCreate}
-          disabled={creating}
-          className="w-full bg-purple-600 hover:bg-purple-700"
-        >
-          {creating ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Erstelle...
-            </>
-          ) : (
-            'Automatischer Report erstellen'
-          )}
-        </Button>
-      </CardContent>
-    </Card>
+        <VfInput
+          label="E-Mail-Empfänger"
+          placeholder="email@example.com, email2@example.com"
+          value={recipients}
+          onChange={(e) => setRecipients(e.target.value)}
+        />
+      </div>
+    </VfModal>
   );
 }

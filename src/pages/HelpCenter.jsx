@@ -1,128 +1,98 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, ChevronRight, BookOpen, MessageCircle, Video } from 'lucide-react';
+import PageHeader from '@/components/shared/PageHeader';
+import FAQAccordion from '@/components/help/FAQAccordion';
+import VideoTutorialCard from '@/components/help/VideoTutorialCard';
+import { VfInput } from '@/components/shared/VfInput';
+import { Search, Book, Video, MessageCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-export default function HelpCenterPage() {
+export default function HelpCenter() {
   const [searchQuery, setSearchQuery] = useState('');
 
-  const faq = [
+  const faqs = [
     {
-      category: 'Mieter-Management',
-      items: [
-        { q: 'Wie füge ich einen neuen Mieter hinzu?', a: 'Gehen Sie zu Mieter > Neuer Mieter und füllen Sie das Formular aus.' },
-        { q: 'Wie erstelle ich einen Mietvertrag?', a: 'Nutzen Sie den integrierten Dokumentgenerator unter Dokumenten > Neue Vorlage.' },
-      ]
+      question: 'Wie erstelle ich mein erstes Objekt?',
+      answer: 'Gehen Sie zu "Objekte" und klicken Sie auf "Neues Objekt". Füllen Sie die Pflichtfelder aus und speichern Sie.'
     },
     {
-      category: 'Finanzen',
-      items: [
-        { q: 'Wie wird die Nebenkostenabrechnung erstellt?', a: 'Unter Nebenkosten > Abrechnung erstellen können Sie automatisiert abrechnen.' },
-        { q: 'Welche Berichte sind verfügbar?', a: 'Sie finden alle Reports unter Reports > Vorhandene Reports.' },
-      ]
+      question: 'Wie funktioniert die BK-Abrechnung?',
+      answer: 'Die BK-Abrechnung wird automatisch erstellt. Wählen Sie das Objekt, den Zeitraum und die Kostenpositionen - vermitify berechnet alles automatisch.'
     },
     {
-      category: 'Wartung',
-      items: [
-        { q: 'Wie erstelle ich ein Wartungsticket?', a: 'Klicken Sie auf Wartung > Neues Ticket und füllen Sie die Details aus.' },
-        { q: 'Wer kann Wartungsanfragen stellen?', a: 'Mieter können über das Selbstservice-Portal Anfragen stellen.' },
-      ]
+      question: 'Kann ich meine Daten exportieren?',
+      answer: 'Ja, Sie können Ihre Daten jederzeit als PDF, CSV oder Excel exportieren. Nutzen Sie die Export-Funktion in den jeweiligen Modulen.'
     },
+    {
+      question: 'Wie kündige ich mein Abonnement?',
+      answer: 'Gehen Sie zu Einstellungen → Abonnement und klicken Sie auf "Kündigen". Ihre Daten bleiben bis zum Ende der Laufzeit erhalten.'
+    }
   ];
 
   const tutorials = [
-    { title: 'Getting Started - 5 Minuten', duration: '5:30' },
-    { title: 'Dashboard Übersicht', duration: '3:15' },
-    { title: 'Mieterverwaltung von A-Z', duration: '12:45' },
-    { title: 'Reports & Analysen', duration: '8:20' },
+    { title: 'Schnellstart Tutorial', duration: '5:23' },
+    { title: 'Objekte verwalten', duration: '8:45' },
+    { title: 'BK-Abrechnung erstellen', duration: '12:30' }
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">❓ Help Center</h1>
-        <p className="text-slate-600 mt-1">Dokumentation, FAQs und Video-Tutorials</p>
-      </div>
+    <div className="p-6 max-w-6xl mx-auto">
+      <PageHeader
+        title="Hilfe & Support"
+        subtitle="Finden Sie Antworten auf Ihre Fragen"
+      />
 
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-        <Input 
-          placeholder="Haben Sie eine Frage? Hier können Sie suchen..." 
-          className="pl-10 h-12"
+      <div className="mb-8">
+        <VfInput
+          leftIcon={Search}
+          placeholder="Wie können wir Ihnen helfen?"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          className="max-w-2xl"
         />
       </div>
 
-      <Tabs defaultValue="faq">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="faq" className="flex items-center gap-2"><BookOpen className="w-4 h-4" /> FAQs</TabsTrigger>
-          <TabsTrigger value="tutorials" className="flex items-center gap-2"><Video className="w-4 h-4" /> Tutorials</TabsTrigger>
-          <TabsTrigger value="support" className="flex items-center gap-2"><MessageCircle className="w-4 h-4" /> Support</TabsTrigger>
-        </TabsList>
+      <div className="grid lg:grid-cols-3 gap-6 mb-8">
+        <div className="vf-card p-6 text-center">
+          <Book className="h-12 w-12 mx-auto mb-4 text-[var(--vf-primary-600)]" />
+          <h3 className="font-semibold mb-2">Dokumentation</h3>
+          <p className="text-sm text-[var(--theme-text-secondary)] mb-4">
+            Ausführliche Anleitungen
+          </p>
+          <Button variant="outline" className="w-full">Zur Dokumentation</Button>
+        </div>
 
-        <TabsContent value="faq" className="space-y-6">
-          {faq.map((category, idx) => (
-            <div key={idx}>
-              <h3 className="text-lg font-semibold text-slate-900 mb-3">{category.category}</h3>
-              <div className="space-y-2">
-                {category.items.map((item, itemIdx) => (
-                  <Card key={itemIdx} className="border border-slate-200 cursor-pointer hover:border-blue-300 transition-colors">
-                    <CardContent className="pt-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <p className="font-semibold text-slate-900">{item.q}</p>
-                          <p className="text-sm text-slate-600 mt-2">{item.a}</p>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-slate-400 mt-1 flex-shrink-0" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
+        <div className="vf-card p-6 text-center">
+          <Video className="h-12 w-12 mx-auto mb-4 text-[var(--vf-accent-600)]" />
+          <h3 className="font-semibold mb-2">Video-Tutorials</h3>
+          <p className="text-sm text-[var(--theme-text-secondary)] mb-4">
+            Schritt-für-Schritt Videos
+          </p>
+          <Button variant="outline" className="w-full">Videos ansehen</Button>
+        </div>
+
+        <div className="vf-card p-6 text-center">
+          <MessageCircle className="h-12 w-12 mx-auto mb-4 text-[var(--vf-success-600)]" />
+          <h3 className="font-semibold mb-2">Live-Chat</h3>
+          <p className="text-sm text-[var(--theme-text-secondary)] mb-4">
+            Direkter Support-Chat
+          </p>
+          <Button variant="gradient" className="w-full">Chat starten</Button>
+        </div>
+      </div>
+
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold mb-4">Häufig gestellte Fragen</h2>
+        <FAQAccordion faqs={faqs} />
+      </div>
+
+      <div>
+        <h2 className="text-2xl font-bold mb-4">Video-Tutorials</h2>
+        <div className="grid md:grid-cols-3 gap-4">
+          {tutorials.map((tutorial) => (
+            <VideoTutorialCard key={tutorial.title} {...tutorial} />
           ))}
-        </TabsContent>
-
-        <TabsContent value="tutorials" className="space-y-3">
-          {tutorials.map((tutorial, idx) => (
-            <Card key={idx} className="border border-slate-200">
-              <CardContent className="pt-6 flex items-center justify-between">
-                <div className="flex items-center gap-3 flex-1">
-                  <Video className="w-8 h-8 text-red-600 flex-shrink-0" />
-                  <div>
-                    <p className="font-semibold text-slate-900">{tutorial.title}</p>
-                    <p className="text-xs text-slate-600">{tutorial.duration}</p>
-                  </div>
-                </div>
-                <Button size="sm" className="bg-red-600 hover:bg-red-700">Schauen</Button>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="support">
-          <Card className="border border-slate-200">
-            <CardHeader>
-              <CardTitle>Kontaktieren Sie uns</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold mb-2">Betreff</label>
-                <Input placeholder="Wie können wir helfen?" />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-2">Nachricht</label>
-                <textarea placeholder="Beschreiben Sie Ihr Problem..." rows="6" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"></textarea>
-              </div>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700">Support-Anfrage senden</Button>
-              <p className="text-xs text-slate-600 text-center">Wir antworten innerhalb von 24 Stunden</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,16 +1,20 @@
 import React from 'react';
-import { HelpCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { HelpCircle } from 'lucide-react';
 
-export default function HelpTooltip({ text, side = 'right' }) {
+export default function HelpTooltip({ children, content }) {
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <HelpCircle className="h-4 w-4 text-slate-400 cursor-help hover:text-slate-600" />
+          {children || (
+            <button type="button" className="inline-flex text-[var(--theme-text-muted)] hover:text-[var(--theme-primary)]">
+              <HelpCircle className="h-4 w-4" />
+            </button>
+          )}
         </TooltipTrigger>
-        <TooltipContent side={side} className="max-w-xs">
-          <p className="text-sm">{text}</p>
+        <TooltipContent className="max-w-xs">
+          <p className="text-sm">{content}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

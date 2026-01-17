@@ -1,86 +1,68 @@
-import React, { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Check, ChevronsUpDown, Search } from 'lucide-react';
+import React, { useState } from 'react';
+import { VfInput } from './VfInput';
+import { Search, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function SearchableSelect({
-  options = [],
-  value,
+export default function SearchableSelect({ 
+  options = [], 
+  value, 
   onChange,
-  placeholder = 'Auswählen...',
-  searchPlaceholder = 'Suchen...',
-  emptyText = 'Keine Ergebnisse',
-  className
+  placeholder = 'Suchen...',
+  label 
 }) {
-  const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
 
-  const filteredOptions = useMemo(() => {
-    if (!search) return options;
-    const searchLower = search.toLowerCase();
-    return options.filter(option =>
-      option.label.toLowerCase().includes(searchLower)
-    );
-  }, [options, search]);
+  const filtered = options.filter(opt => 
+    opt.label.toLowerCase().includes(search.toLowerCase())
+  );
 
-  const selectedOption = options.find(opt => opt.value === value);
+  const selected = options.find(opt => opt.value === value);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn('w-full justify-between', className)}
-        >
-          {selectedOption?.label || placeholder}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
-        <div className="flex items-center border-b px-3">
-          <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-          <Input
-            placeholder={searchPlaceholder}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-          />
-        </div>
-        <div className="max-h-64 overflow-auto">
-          {filteredOptions.length === 0 ? (
-            <div className="py-6 text-center text-sm text-slate-500">
-              {emptyText}
-            </div>
-          ) : (
-            filteredOptions.map((option) => (
-              <button
+    <div className="relative">
+      {label && <div className="vf-label mb-1">{label}</div>}
+      
+      <div onClick={() => setIsOpen(!isOpen)}>
+        <VfInput
+          value={selected?.label || ''}
+          placeholder={placeholder}
+          readOnly
+          className="cursor-pointer"
+        />
+      </div>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[var(--theme-border)] rounded-lg shadow-xl z-50 max-h-64 overflow-hidden">
+          <div className="p-2 border-b">
+            <VfInput
+              leftIcon={Search}
+              placeholder="Suchen..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="max-h-48 overflow-y-auto">
+            {filtered.map((option) => (
+              <div
                 key={option.value}
                 onClick={() => {
-                  onChange?.(option.value);
-                  setOpen(false);
+                  onChange(option.value);
+                  setIsOpen(false);
                   setSearch('');
                 }}
                 className={cn(
-                  'relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-slate-100 transition-colors',
-                  value === option.value && 'bg-slate-100'
+                  "px-4 py-2 cursor-pointer hover:bg-[var(--theme-surface)] flex items-center justify-between",
+                  value === option.value && "bg-[var(--vf-primary-50)]"
                 )}
               >
-                <Check
-                  className={cn(
-                    'mr-2 h-4 w-4',
-                    value === option.value ? 'opacity-100' : 'opacity-0'
-                  )}
-                />
-                {option.label}
-              </button>
-            ))
-          )}
+                <span>{option.label}</span>
+                {value === option.value && <Check className="h-4 w-4 text-[var(--vf-primary-600)]" />}
+              </div>
+            ))}
+          </div>
         </div>
-      </PopoverContent>
-    </Popover>
+      )}
+    </div>
   );
 }

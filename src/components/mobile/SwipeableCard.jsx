@@ -1,51 +1,42 @@
 import React, { useState } from 'react';
-import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { Card } from '@/components/ui/card';
 import { Trash2, Edit } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-export default function SwipeableCard({ 
-  children, 
-  onDelete, 
-  onEdit,
-  deleteThreshold = 120 
-}) {
-  const x = useMotionValue(0);
-  const [isDragging, setIsDragging] = useState(false);
-  
-  const backgroundColor = useTransform(
-    x,
-    [-deleteThreshold, 0],
-    ['#ef4444', '#ffffff']
-  );
-
-  const handleDragEnd = (event, info) => {
-    setIsDragging(false);
-    
-    if (info.offset.x < -deleteThreshold) {
-      onDelete?.();
-    }
-    
-    x.set(0);
-  };
+export default function SwipeableCard({ children, onDelete, onEdit }) {
+  const [swiped, setSwiped] = useState(false);
 
   return (
-    <div className="relative overflow-hidden rounded-lg">
-      {/* Background actions */}
-      <div className="absolute inset-y-0 right-0 flex items-center px-6 bg-red-500">
-        <Trash2 className="w-5 h-5 text-white" />
+    <div className="relative overflow-hidden">
+      <div
+        className={cn(
+          "absolute inset-0 flex items-center justify-end gap-2 px-4 bg-[var(--vf-error-500)]",
+          swiped ? "translate-x-0" : "translate-x-full",
+          "transition-transform"
+        )}
+      >
+        {onEdit && (
+          <button onClick={onEdit} className="p-2 bg-white/20 rounded-lg">
+            <Edit className="h-5 w-5 text-white" />
+          </button>
+        )}
+        {onDelete && (
+          <button onClick={onDelete} className="p-2 bg-white/20 rounded-lg">
+            <Trash2 className="h-5 w-5 text-white" />
+          </button>
+        )}
       </div>
-
-      {/* Card */}
-      <motion.div
-        drag="x"
-        dragConstraints={{ left: -200, right: 0 }}
-        dragElastic={0.2}
-        onDragStart={() => setIsDragging(true)}
-        onDragEnd={handleDragEnd}
-        style={{ x, backgroundColor }}
-        className="relative z-10 touch-pan-y"
+      
+      <Card
+        className={cn(
+          "transition-transform",
+          swiped && "-translate-x-24"
+        )}
+        onTouchStart={() => setSwiped(true)}
+        onTouchEnd={() => setTimeout(() => setSwiped(false), 2000)}
       >
         {children}
-      </motion.div>
+      </Card>
     </div>
   );
 }
