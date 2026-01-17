@@ -1,22 +1,20 @@
 import React from 'react';
-import { CheckCircle2, Clock, AlertCircle, Pause } from 'lucide-react';
+import { VfBadge } from './VfBadge';
 
-export default function StatusBadge({ status = 'pending', label }) {
+export default function StatusBadge({ status }) {
   const statusConfig = {
-    success: { icon: CheckCircle2, color: 'bg-emerald-100 text-emerald-800', text: 'Erfolg' },
-    pending: { icon: Clock, color: 'bg-blue-100 text-blue-800', text: 'Ausstehend' },
-    error: { icon: AlertCircle, color: 'bg-red-100 text-red-800', text: 'Fehler' },
-    warning: { icon: AlertCircle, color: 'bg-amber-100 text-amber-800', text: 'Warnung' },
-    paused: { icon: Pause, color: 'bg-slate-100 text-slate-800', text: 'Pausiert' },
+    active: { variant: 'success', label: 'Aktiv' },
+    inactive: { variant: 'default', label: 'Inaktiv' },
+    pending: { variant: 'warning', label: 'Ausstehend' },
+    draft: { variant: 'default', label: 'Entwurf' },
+    sent: { variant: 'info', label: 'Versendet' },
+    paid: { variant: 'success', label: 'Bezahlt' },
+    overdue: { variant: 'error', label: 'Überfällig' },
+    cancelled: { variant: 'error', label: 'Gekündigt' },
+    expired: { variant: 'default', label: 'Abgelaufen' }
   };
 
-  const config = statusConfig[status] || statusConfig.pending;
-  const Icon = config.icon;
+  const config = statusConfig[status?.toLowerCase()] || { variant: 'default', label: status };
 
-  return (
-    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${config.color}`}>
-      <Icon className="w-4 h-4" />
-      <span className="text-sm font-medium">{label || config.text}</span>
-    </div>
-  );
+  return <VfBadge variant={config.variant}>{config.label}</VfBadge>;
 }

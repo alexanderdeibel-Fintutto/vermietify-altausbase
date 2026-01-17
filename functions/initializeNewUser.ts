@@ -1,76 +1,69 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
+  const base44 = createClientFromRequest(req);
+  
   try {
-    const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if already initialized
-    const existing = await base44.asServiceRole.entities.UserSubscription.filter({ 
+    // Check if user already has subscription
+    const existingSubs = await base44.entities.UserSubscription.filter({ 
       user_email: user.email 
     });
 
-    if (existing.length > 0) {
+    if (existingSubs.length > 0) {
       return Response.json({ 
-        already_initialized: true,
-        subscription: existing[0]
+        success: true, 
+        message: 'User already initialized',
+        skipped: true 
       });
     }
 
-    // Get default tier
-    const defaultTiers = await base44.asServiceRole.entities.PricingTier.filter({ 
-      is_default: true,
-      is_active: true
+    // Get Starter plan
+    const plans = await base44.entities.SubscriptionPlan.filter({ 
+      internal_code: 'STARTER' 
     });
+    const starterPlan = plans[0];
 
-    if (defaultTiers.length === 0) {
-      return Response.json({ error: 'No default tier found' }, { status: 404 });
+    if (!starterPlan) {
+      return Response.json({ error: 'Starter plan not found' }, { status: 404 });
     }
 
-    const defaultTier = defaultTiers[0];
-    const today = new Date();
-    const trialEnd = new Date(today);
-    trialEnd.setDate(trialEnd.getDate() + (defaultTier.trial_days || 14));
+    // Create trial subscription for Professional plan
+    const proPlan = await base44.entities.SubscriptionPlan.filter({ 
+      internal_code: 'PRO' 
+    });
 
-    // Create subscription
-    const subscription = await base44.asServiceRole.entities.UserSubscription.create({
+    const now = new Date();
+    const trialEnd = new Date(now);
+    trialEnd.setDate(trialEnd.getDate() + 14);
+
+    await base44.entities.UserSubscription.create({
       user_email: user.email,
-      tier_id: defaultTier.id,
-      status: defaultTier.trial_days > 0 ? 'TRIAL' : 'ACTIVE',
+      plan_id: proPlan[0]?.id || starterPlan.id,
+      status: 'TRIAL',
       billing_cycle: 'MONTHLY',
-      trial_start_date: today.toISOString().split('T')[0],
-      trial_end_date: trialEnd.toISOString().split('T')[0],
-      auto_renew: true
+      start_date: now.toISOString(),
+      trial_end_date: trialEnd.toISOString(),
+      next_billing_date: trialEnd.toISOString(),
+      payment_method: 'NONE'
     });
 
-    // Initialize UserLimits
-    const tierLimits = await base44.asServiceRole.entities.TierLimit.filter({ 
-      tier_id: defaultTier.id 
+    // Send welcome email
+    await base44.functions.invoke('sendWelcomeEmail', {
+      email: user.email,
+      name: user.full_name,
+      user_type: 'vermieter'
     });
-
-    const userLimitsToCreate = tierLimits.map(tl => ({
-      user_email: user.email,
-      limit_id: tl.limit_id,
-      current_usage: 0,
-      limit_value: tl.limit_value,
-      last_checked: new Date().toISOString(),
-      warning_sent: false
-    }));
-
-    if (userLimitsToCreate.length > 0) {
-      await base44.asServiceRole.entities.UserLimit.bulkCreate(userLimitsToCreate);
-    }
 
     return Response.json({ 
       success: true,
-      subscription,
-      limits_initialized: userLimitsToCreate.length
+      message: 'User initialized with trial subscription' 
     });
-
+    
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
