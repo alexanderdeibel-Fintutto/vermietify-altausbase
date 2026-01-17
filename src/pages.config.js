@@ -517,6 +517,14 @@ import CalculationHistory from './pages/CalculationHistory';
 import VermitifyFeatures from './pages/VermitifyFeatures';
 import VermitifyImpressum from './pages/VermitifyImpressum';
 import VermitifyDatenschutz from './pages/VermitifyDatenschutz';
+import AdminSubscriptionOverview from './pages/AdminSubscriptionOverview';
+import VermitifyBlog from './pages/VermitifyBlog';
+import VermitifyHelp from './pages/VermitifyHelp';
+import VermitifyCaseStudies from './pages/VermitifyCaseStudies';
+import VermitifyRoadmap from './pages/VermitifyRoadmap';
+import VermitifyChangelog from './pages/VermitifyChangelog';
+import VermitifyPartners from './pages/VermitifyPartners';
+import VermitifyFAQ from './pages/VermitifyFAQ';
 import __Layout from './Layout.jsx';
 
 
@@ -1040,6 +1048,14 @@ export const PAGES = {
     "VermitifyFeatures": VermitifyFeatures,
     "VermitifyImpressum": VermitifyImpressum,
     "VermitifyDatenschutz": VermitifyDatenschutz,
+    "AdminSubscriptionOverview": AdminSubscriptionOverview,
+    "VermitifyBlog": VermitifyBlog,
+    "VermitifyHelp": VermitifyHelp,
+    "VermitifyCaseStudies": VermitifyCaseStudies,
+    "VermitifyRoadmap": VermitifyRoadmap,
+    "VermitifyChangelog": VermitifyChangelog,
+    "VermitifyPartners": VermitifyPartners,
+    "VermitifyFAQ": VermitifyFAQ,
 }
 
 export const pagesConfig = {
