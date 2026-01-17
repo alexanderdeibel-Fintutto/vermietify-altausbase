@@ -100,6 +100,7 @@ import AuditReports from './pages/AuditReports';
 import AutomatedCommunication from './pages/AutomatedCommunication';
 import AutomatedReports from './pages/AutomatedReports';
 import AutomatedTaxFormGenerator from './pages/AutomatedTaxFormGenerator';
+import AutomationCenter from './pages/AutomationCenter';
 import AutomationRules from './pages/AutomationRules';
 import BKAbrechnungWizard from './pages/BKAbrechnungWizard';
 import BKChecker from './pages/BKChecker';
@@ -217,6 +218,7 @@ import FinanceManagement from './pages/FinanceManagement';
 import FinanceManagementHub from './pages/FinanceManagementHub';
 import FinancialForecasting from './pages/FinancialForecasting';
 import FinancialItems from './pages/FinancialItems';
+import FinancialPlanning from './pages/FinancialPlanning';
 import FinancialReporting from './pages/FinancialReporting';
 import FinancialReports from './pages/FinancialReports';
 import FinancingManagement from './pages/FinancingManagement';
@@ -539,8 +541,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import AutomationCenter from './pages/AutomationCenter';
-import FinancialPlanning from './pages/FinancialPlanning';
 import __Layout from './Layout.jsx';
 
 
@@ -647,6 +647,7 @@ export const PAGES = {
     "AutomatedCommunication": AutomatedCommunication,
     "AutomatedReports": AutomatedReports,
     "AutomatedTaxFormGenerator": AutomatedTaxFormGenerator,
+    "AutomationCenter": AutomationCenter,
     "AutomationRules": AutomationRules,
     "BKAbrechnungWizard": BKAbrechnungWizard,
     "BKChecker": BKChecker,
@@ -764,6 +765,7 @@ export const PAGES = {
     "FinanceManagementHub": FinanceManagementHub,
     "FinancialForecasting": FinancialForecasting,
     "FinancialItems": FinancialItems,
+    "FinancialPlanning": FinancialPlanning,
     "FinancialReporting": FinancialReporting,
     "FinancialReports": FinancialReports,
     "FinancingManagement": FinancingManagement,
@@ -1086,8 +1088,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "AutomationCenter": AutomationCenter,
-    "FinancialPlanning": FinancialPlanning,
 }
 
 export const pagesConfig = {

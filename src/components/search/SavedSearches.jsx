@@ -1,59 +1,35 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { Bookmark, Plus } from 'lucide-react';
-import { toast } from 'sonner';
+import { Search, Play } from 'lucide-react';
 
 export default function SavedSearches() {
-  const [name, setName] = useState('');
-  const queryClient = useQueryClient();
-
-  const { data: searches = [] } = useQuery({
-    queryKey: ['savedSearches'],
-    queryFn: async () => {
-      const response = await base44.functions.invoke('getSavedSearches', {});
-      return response.data.searches;
-    }
-  });
-
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      await base44.functions.invoke('saveSearch', { name, query: 'current_query' });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['savedSearches'] });
-      toast.success('Suche gespeichert');
-      setName('');
-    }
-  });
+  const searches = [
+    { id: 1, name: 'Auslaufende Verträge', query: 'contract:expiring' },
+    { id: 2, name: 'Unbezahlte Rechnungen', query: 'invoice:unpaid' },
+    { id: 3, name: 'Leere Wohnungen', query: 'unit:vacant' }
+  ];
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Bookmark className="w-5 h-5" />
+          <Search className="h-5 w-5" />
           Gespeicherte Suchen
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex gap-2">
-          <Input 
-            placeholder="Suchname..." 
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <Button size="icon" onClick={() => saveMutation.mutate()}>
-            <Plus className="w-4 h-4" />
-          </Button>
-        </div>
+      <CardContent>
         <div className="space-y-2">
-          {searches.map(search => (
-            <Button key={search.id} variant="outline" className="w-full justify-start">
-              {search.name}
-            </Button>
+          {searches.map((search) => (
+            <div key={search.id} className="flex items-center justify-between p-3 bg-[var(--theme-surface)] rounded-lg">
+              <div>
+                <div className="font-medium text-sm">{search.name}</div>
+                <div className="text-xs text-[var(--theme-text-muted)] mt-1 font-mono">{search.query}</div>
+              </div>
+              <Button variant="ghost" size="sm">
+                <Play className="h-4 w-4" />
+              </Button>
+            </div>
           ))}
         </div>
       </CardContent>

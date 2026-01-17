@@ -1,45 +1,36 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { TrendingUp } from 'lucide-react';
+import SimpleLineChart from '@/components/charts/SimpleLineChart';
+import { TrendingUp, TrendingDown } from 'lucide-react';
+import PercentageDisplay from '@/components/shared/PercentageDisplay';
 
-export default function TrendAnalysis({ data = [], metrics = [] }) {
-  const colors = ['#1E3A8A', '#F97316', '#16A34A', '#EF4444', '#8B5CF6'];
+export default function TrendAnalysis({ metric = 'revenue' }) {
+  const data = [
+    { name: 'Q1', value: 45000 },
+    { name: 'Q2', value: 48500 },
+    { name: 'Q3', value: 46800 },
+    { name: 'Q4', value: 52000 }
+  ];
+
+  const trend = 8.5;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5" />
-          Trend-Analyse
+        <CardTitle className="flex items-center justify-between">
+          <span>Trend-Analyse</span>
+          <div className="flex items-center gap-2">
+            {trend > 0 ? (
+              <TrendingUp className="h-5 w-5 text-[var(--vf-success-600)]" />
+            ) : (
+              <TrendingDown className="h-5 w-5 text-[var(--vf-error-600)]" />
+            )}
+            <PercentageDisplay value={trend} className="font-bold" />
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-border)" />
-            <XAxis dataKey="name" stroke="var(--theme-text-muted)" />
-            <YAxis stroke="var(--theme-text-muted)" />
-            <Tooltip 
-              contentStyle={{
-                backgroundColor: 'var(--theme-elevated)',
-                border: '1px solid var(--theme-border)',
-                borderRadius: '8px'
-              }}
-            />
-            <Legend />
-            {metrics.map((metric, index) => (
-              <Line
-                key={metric}
-                type="monotone"
-                dataKey={metric}
-                stroke={colors[index % colors.length]}
-                strokeWidth={2}
-                dot={{ r: 3 }}
-              />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
+        <SimpleLineChart data={data} height={200} />
       </CardContent>
     </Card>
   );

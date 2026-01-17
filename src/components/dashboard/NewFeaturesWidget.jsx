@@ -5,9 +5,9 @@ import { VfBadge } from '@/components/shared/VfBadge';
 
 export default function NewFeaturesWidget() {
   const features = [
-    { title: 'KI-Mietersuche', description: 'Automatische Vorschläge', badge: 'Neu' },
-    { title: 'Bulk-BK-Abrechnung', description: 'Alle Objekte auf einmal', badge: 'Beta' },
-    { title: 'WhatsApp-Integration', description: 'Kommunikation mit Mietern', badge: 'Neu' }
+    { title: 'KI-gestützte Mietpreisanalyse', badge: 'Neu', description: 'Optimieren Sie Ihre Mietpreise' },
+    { title: 'Automatische BK-Abrechnung', badge: 'Beta', description: 'Sparen Sie Zeit bei der Abrechnung' },
+    { title: 'WhatsApp-Integration', badge: 'Neu', description: 'Kommunizieren Sie direkt mit Mietern' }
   ];
 
   return (
@@ -21,14 +21,12 @@ export default function NewFeaturesWidget() {
       <CardContent>
         <div className="space-y-3">
           {features.map((feature, index) => (
-            <div key={index} className="flex items-start justify-between">
-              <div className="flex-1">
+            <div key={index} className="p-3 bg-[var(--theme-surface)] hover:bg-[var(--theme-surface-hover)] rounded-lg cursor-pointer transition-colors">
+              <div className="flex items-start justify-between mb-1">
                 <div className="font-medium text-sm">{feature.title}</div>
-                <div className="text-xs text-[var(--theme-text-muted)]">{feature.description}</div>
+                <VfBadge variant="accent">{feature.badge}</VfBadge>
               </div>
-              <VfBadge variant={feature.badge === 'Beta' ? 'warning' : 'accent'}>
-                {feature.badge}
-              </VfBadge>
+              <div className="text-xs text-[var(--theme-text-muted)]">{feature.description}</div>
             </div>
           ))}
         </div>

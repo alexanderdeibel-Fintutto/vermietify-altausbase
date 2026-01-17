@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import SimpleLineChart from '@/components/charts/SimpleLineChart';
+import SimpleBarChart from '@/components/charts/SimpleBarChart';
 import { Activity } from 'lucide-react';
 
 export default function UserActivityChart() {
@@ -8,10 +8,10 @@ export default function UserActivityChart() {
     { name: 'Mo', value: 45 },
     { name: 'Di', value: 52 },
     { name: 'Mi', value: 38 },
-    { name: 'Do', value: 61 },
-    { name: 'Fr', value: 58 },
-    { name: 'Sa', value: 24 },
-    { name: 'So', value: 18 }
+    { name: 'Do', value: 60 },
+    { name: 'Fr', value: 48 },
+    { name: 'Sa', value: 15 },
+    { name: 'So', value: 8 }
   ];
 
   return (
@@ -19,11 +19,15 @@ export default function UserActivityChart() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Activity className="h-5 w-5" />
-          Benutzeraktivität
+          Aktivität diese Woche
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <SimpleLineChart data={data} height={200} />
+        <SimpleBarChart data={data} height={200} />
+        <div className="text-center mt-4">
+          <div className="text-2xl font-bold">266</div>
+          <div className="text-sm text-[var(--theme-text-muted)]">Aktionen insgesamt</div>
+        </div>
       </CardContent>
     </Card>
   );

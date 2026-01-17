@@ -1,32 +1,40 @@
-import React from 'react';
-import MultiFormatExporter from '@/components/export/MultiFormatExporter';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Download, FileText, Table, FileSpreadsheet } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-export default function ExportButton({ data, filename }) {
-  const handleExportPDF = () => {
-    console.log('Export PDF', data);
-  };
-
-  const handleExportCSV = () => {
-    const csv = Object.keys(data[0] || {}).join(',') + '\n' +
-      data.map(row => Object.values(row).join(',')).join('\n');
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${filename}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    a.remove();
+export default function ExportButton({ data, filename = 'export' }) {
+  const handleExport = (format) => {
+    console.log(`Exporting as ${format}:`, data);
   };
 
   return (
-    <MultiFormatExporter
-      data={data}
-      filename={filename}
-      onExportPDF={handleExportPDF}
-      onExportCSV={handleExportCSV}
-    />
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">
+          <Download className="h-4 w-4 mr-2" />
+          Exportieren
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuItem onClick={() => handleExport('pdf')}>
+          <FileText className="h-4 w-4 mr-2" />
+          PDF
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleExport('csv')}>
+          <Table className="h-4 w-4 mr-2" />
+          CSV
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleExport('excel')}>
+          <FileSpreadsheet className="h-4 w-4 mr-2" />
+          Excel
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

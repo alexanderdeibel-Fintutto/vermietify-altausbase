@@ -1,47 +1,37 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { Wallet } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Shield, CheckCircle } from 'lucide-react';
+import CurrencyDisplay from '@/components/shared/CurrencyDisplay';
 
-export default function DepositManager() {
-  const { data: deposits } = useQuery({
-    queryKey: ['depositOverview'],
-    queryFn: async () => {
-      const response = await base44.functions.invoke('getDepositOverview', {});
-      return response.data;
-    }
-  });
-
-  if (!deposits) return null;
+export default function DepositManager({ contract }) {
+  const deposit = contract?.deposit_amount || 0;
+  const status = contract?.deposit_status || 'pending';
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Wallet className="w-5 h-5" />
-          Kautions-Verwaltung
+          <Shield className="h-5 w-5" />
+          Kaution
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="p-3 bg-blue-50 rounded text-center">
-            <p className="text-xs">Gesamt-Kautionen</p>
-            <Badge className="bg-blue-600 text-lg">{deposits.total}€</Badge>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="text-center p-4 bg-[var(--theme-surface)] rounded-lg">
+            <CurrencyDisplay amount={deposit} className="text-2xl font-bold" />
+            <div className="text-xs text-[var(--theme-text-muted)] mt-1">Kautionsbetrag</div>
           </div>
-          <div className="p-3 bg-green-50 rounded text-center">
-            <p className="text-xs">Zinsen 2025</p>
-            <Badge className="bg-green-600">{deposits.interest}€</Badge>
+
+          <div className="flex items-center gap-2 p-3 bg-[var(--vf-success-50)] rounded-lg">
+            <CheckCircle className="h-5 w-5 text-[var(--vf-success-600)]" />
+            <span className="text-sm font-medium text-[var(--vf-success-700)]">
+              Kaution hinterlegt
+            </span>
           </div>
-        </div>
-        <div className="space-y-2">
-          {deposits.items.map(item => (
-            <div key={item.id} className="flex justify-between p-2 bg-slate-50 rounded">
-              <span className="text-sm">{item.tenant_name}</span>
-              <Badge variant="outline">{item.amount}€</Badge>
-            </div>
-          ))}
+
+          <div className="text-xs text-[var(--theme-text-muted)]">
+            Hinterlegt am: {contract?.deposit_date ? new Date(contract.deposit_date).toLocaleDateString('de-DE') : '-'}
+          </div>
         </div>
       </CardContent>
     </Card>

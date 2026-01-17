@@ -1,86 +1,60 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Calendar, AlertCircle, Clock } from 'lucide-react';
+import { Calendar, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-export default function ContractRenewalTracker({ contractId }) {
-  const { data: contract } = useQuery({
-    queryKey: ['contract', contractId],
+export default function ContractRenewalTracker() {
+  const { data: contracts = [] } = useQuery({
+    queryKey: ['expiring-contracts'],
     queryFn: async () => {
-      const contracts = await base44.entities.LeaseContract.filter({ id: contractId }, null, 1);
-      return contracts[0];
-    },
-    enabled: !!contractId
+      const all = await base44.entities.LeaseContract.filter({ status: 'active' });
+      const threeMonthsFromNow = new Date();
+      threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3);
+      
+      return all.filter(c => {
+        if (!c.end_date) return false;
+        const endDate = new Date(c.end_date);
+        return endDate <= threeMonthsFromNow;
+      });
+    }
   });
-
-  if (!contract) return null;
-
-  const endDate = new Date(contract.end_date);
-  const today = new Date();
-  const daysUntilExpiry = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
-  
-  const isExpiringSoon = daysUntilExpiry <= 90 && daysUntilExpiry > 0;
-  const isExpired = daysUntilExpiry < 0;
-  const isUnlimited = contract.is_unlimited;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <Calendar className="w-5 h-5" />
-          Vertragslaufzeit
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="h-5 w-5" />
+          Auslaufende Verträge
+          {contracts.length > 0 && (
+            <span className="vf-badge vf-badge-warning">{contracts.length}</span>
+          )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-xs text-slate-600">Beginn</p>
-            <p className="font-semibold">{new Date(contract.start_date).toLocaleDateString('de-DE')}</p>
-          </div>
-          <div>
-            <p className="text-xs text-slate-600">Ende</p>
-            <p className="font-semibold">
-              {isUnlimited ? 'Unbefristet' : new Date(contract.end_date).toLocaleDateString('de-DE')}
-            </p>
-          </div>
-        </div>
-
-        {!isUnlimited && (
-          <div className="pt-3 border-t">
-            {isExpired ? (
-              <div className="flex items-center gap-2 p-3 bg-red-50 rounded-lg">
-                <AlertCircle className="w-5 h-5 text-red-600" />
-                <div>
-                  <p className="font-semibold text-red-900">Vertrag abgelaufen</p>
-                  <p className="text-xs text-red-700">Vor {Math.abs(daysUntilExpiry)} Tagen</p>
+      <CardContent>
+        {contracts.length > 0 ? (
+          <div className="space-y-3">
+            {contracts.map((contract) => (
+              <div key={contract.id} className="p-3 bg-[var(--vf-warning-50)] rounded-lg">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-[var(--vf-warning-600)] flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm">{contract.tenant_name || 'Unbekannt'}</div>
+                    <div className="text-xs text-[var(--theme-text-muted)] mt-1">
+                      Endet am {new Date(contract.end_date).toLocaleDateString('de-DE')}
+                    </div>
+                    <Button variant="outline" size="sm" className="mt-2">
+                      Verlängerung anbieten
+                    </Button>
+                  </div>
                 </div>
               </div>
-            ) : isExpiringSoon ? (
-              <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-lg">
-                <Clock className="w-5 h-5 text-amber-600" />
-                <div>
-                  <p className="font-semibold text-amber-900">Läuft bald aus</p>
-                  <p className="text-xs text-amber-700">Noch {daysUntilExpiry} Tage</p>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
-                <Calendar className="w-5 h-5 text-green-600" />
-                <div>
-                  <p className="font-semibold text-green-900">Aktiv</p>
-                  <p className="text-xs text-green-700">Noch {daysUntilExpiry} Tage</p>
-                </div>
-              </div>
-            )}
+            ))}
           </div>
-        )}
-
-        {contract.notice_period_months && (
-          <div className="pt-3 border-t">
-            <p className="text-xs text-slate-600">Kündigungsfrist</p>
-            <p className="font-semibold">{contract.notice_period_months} Monat(e)</p>
+        ) : (
+          <div className="text-center py-6 text-[var(--theme-text-muted)]">
+            Keine auslaufenden Verträge in den nächsten 3 Monaten
           </div>
         )}
       </CardContent>
