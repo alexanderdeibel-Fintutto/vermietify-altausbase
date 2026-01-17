@@ -13,7 +13,7 @@ const VfToolHeader = React.forwardRef(({
     <div ref={ref} className={cn("vf-tool-header", className)} {...props}>
       {icon && <div className="vf-tool-icon">{icon}</div>}
       {badge && <span className="vf-tool-badge">{badge}</span>}
-      {title && <h1 className="vf-tool-title">{title}</h1>}
+      <h1 className="vf-tool-title">{title}</h1>
       {description && <p className="vf-tool-description">{description}</p>}
     </div>
   );

@@ -15,8 +15,8 @@ const VfKeyValueList = React.forwardRef(({
     >
       {items.map((item, index) => (
         <div key={index} className="vf-kv-item">
-          <div className="vf-data-field-label">{item.label}</div>
-          <div className="vf-data-field-value font-semibold">{item.value}</div>
+          <span className="text-[var(--theme-text-secondary)]">{item.label}</span>
+          <span className="font-medium">{item.value}</span>
         </div>
       ))}
     </div>

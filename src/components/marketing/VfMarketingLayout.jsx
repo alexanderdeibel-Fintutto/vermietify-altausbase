@@ -1,46 +1,71 @@
 import * as React from "react"
-import { Link } from "react-router-dom"
 import { cn } from "@/lib/utils"
+import { Link } from "react-router-dom"
 
-const VfMarketingNavbar = ({ logo, links = [], cta }) => {
+const VfMarketingLayout = React.forwardRef(({ 
+  navbar,
+  children,
+  footer,
+  className,
+  ...props 
+}, ref) => {
   return (
-    <nav className="vf-marketing-navbar">
-      <div className="flex items-center gap-3">
-        {logo}
-      </div>
+    <div ref={ref} className={cn("min-h-screen", className)} {...props}>
+      {navbar}
+      <main className="pt-[72px]">{children}</main>
+      {footer}
+    </div>
+  );
+})
+VfMarketingLayout.displayName = "VfMarketingLayout"
+
+const VfMarketingNavbar = React.forwardRef(({ 
+  logo,
+  links = [],
+  cta,
+  className,
+  ...props 
+}, ref) => {
+  return (
+    <nav ref={ref} className={cn("vf-marketing-navbar", className)} {...props}>
+      <div>{logo}</div>
       <div className="vf-marketing-navbar-links">
         {links.map((link, index) => (
-          <Link 
-            key={index} 
-            to={link.href} 
-            className="vf-marketing-navbar-link"
-          >
+          <a key={index} href={link.href} className="vf-marketing-navbar-link">
             {link.label}
-          </Link>
+          </a>
         ))}
         {cta}
       </div>
     </nav>
   );
-}
+})
+VfMarketingNavbar.displayName = "VfMarketingNavbar"
 
-const VfMarketingFooter = ({ logo, description, sections = [] }) => {
+const VfMarketingFooter = React.forwardRef(({ 
+  logo,
+  description,
+  sections = [],
+  copyright,
+  className,
+  ...props 
+}, ref) => {
   return (
-    <footer className="vf-marketing-footer">
+    <footer ref={ref} className={cn("vf-marketing-footer", className)} {...props}>
       <div className="vf-footer-grid">
         <div>
-          {logo && <div className="vf-footer-logo">{logo}</div>}
-          {description && <p className="vf-footer-description">{description}</p>}
+          <div className="vf-footer-logo">{logo}</div>
+          <p className="vf-footer-description">{description}</p>
         </div>
         {sections.map((section, index) => (
           <div key={index}>
-            <h3 className="vf-footer-heading">{section.title}</h3>
+            <h4 className="vf-footer-heading">{section.title}</h4>
             <ul className="vf-footer-links">
-              {section.links?.map((link, idx) => (
-                <li key={idx}>
-                  <Link to={link.href} className="vf-footer-link">
+              {section.links.map((link, i) => (
+                <li key={i}>
+                  <a href={link.href} className="vf-footer-link">
                     {link.label}
-                  </Link>
+                  </a>
                 </li>
               ))}
             </ul>
@@ -48,26 +73,15 @@ const VfMarketingFooter = ({ logo, description, sections = [] }) => {
         ))}
       </div>
       <div className="vf-footer-bottom">
-        <div>© 2026 Vermitify. Alle Rechte vorbehalten.</div>
+        <div>{copyright || `© ${new Date().getFullYear()} Vermitify. Alle Rechte vorbehalten.`}</div>
         <div className="flex gap-6">
-          <Link to="/datenschutz" className="vf-footer-link">Datenschutz</Link>
-          <Link to="/impressum" className="vf-footer-link">Impressum</Link>
+          <a href="#" className="vf-footer-link">Datenschutz</a>
+          <a href="#" className="vf-footer-link">AGB</a>
         </div>
       </div>
     </footer>
   );
-}
-
-const VfMarketingLayout = ({ children, navbar, footer }) => {
-  return (
-    <div className="min-h-screen flex flex-col">
-      {navbar}
-      <main className="flex-1 pt-[72px]">
-        {children}
-      </main>
-      {footer}
-    </div>
-  );
-}
+})
+VfMarketingFooter.displayName = "VfMarketingFooter"
 
 export { VfMarketingLayout, VfMarketingNavbar, VfMarketingFooter }

@@ -1,98 +1,101 @@
 import * as React from "react"
-import { ChevronDown, ChevronUp } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Checkbox } from "@/components/ui/checkbox"
+import { ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal } from "lucide-react"
 
 const VfDataTable = React.forwardRef(({ 
   columns = [],
   data = [],
   sortBy,
-  sortDirection,
+  sortDirection = 'asc',
   onSort,
   selectable,
   selectedRows = [],
   onSelectRow,
   onSelectAll,
   onRowClick,
-  emptyState,
-  loading,
   className,
   ...props 
 }, ref) => {
-  const allSelected = data.length > 0 && selectedRows.length === data.length
+  const allSelected = selectable && data.length > 0 && selectedRows.length === data.length;
+  const someSelected = selectable && selectedRows.length > 0 && selectedRows.length < data.length;
 
   return (
-    <div ref={ref} className={cn("vf-data-table-container", className)} {...props}>
-      <table className="vf-data-table">
+    <div className="vf-data-table-container">
+      <table ref={ref} className={cn("vf-data-table", className)} {...props}>
         <thead>
           <tr>
             {selectable && (
               <th className="vf-data-table-cell-checkbox">
-                <Checkbox
+                <Checkbox 
                   checked={allSelected}
-                  onCheckedChange={(checked) => onSelectAll?.(checked)}
+                  indeterminate={someSelected}
+                  onCheckedChange={onSelectAll}
                 />
               </th>
             )}
             {columns.map((column, index) => (
               <th
                 key={index}
-                className={cn(
-                  column.sortable && "vf-data-table-th-sortable",
-                  sortBy === column.key && "vf-data-table-th-sorted"
-                )}
-                onClick={() => column.sortable && onSort?.(column.key)}
+                className={cn(column.sortable && "th-sortable", sortBy === column.key && "th-sorted")}
+                onClick={column.sortable ? () => onSort?.(column.key) : undefined}
               >
-                <div className="flex items-center gap-1">
-                  {column.label}
-                  {column.sortable && sortBy === column.key && (
-                    <span className="vf-data-table-sort-icon">
-                      {sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </span>
-                  )}
-                </div>
+                {column.label}
+                {column.sortable && sortBy === column.key && (
+                  sortDirection === 'asc' ? 
+                    <ArrowUp className="vf-data-table-sort-icon h-4 w-4 inline ml-1" /> : 
+                    <ArrowDown className="vf-data-table-sort-icon h-4 w-4 inline ml-1" />
+                )}
               </th>
             ))}
+            <th className="vf-data-table-cell-actions"></th>
           </tr>
         </thead>
         <tbody>
           {data.length === 0 ? (
             <tr>
-              <td colSpan={columns.length + (selectable ? 1 : 0)} className="vf-table-empty">
-                {emptyState || "Keine Daten verfügbar"}
+              <td colSpan={columns.length + (selectable ? 2 : 1)} className="vf-data-table-empty">
+                Keine Daten verfügbar
               </td>
             </tr>
           ) : (
-            data.map((row, rowIndex) => (
-              <tr
-                key={rowIndex}
-                className={cn(onRowClick && "vf-data-table-row-clickable")}
-                onClick={() => onRowClick?.(row)}
-              >
-                {selectable && (
-                  <td className="vf-data-table-cell-checkbox">
-                    <Checkbox
-                      checked={selectedRows.includes(row.id || rowIndex)}
-                      onCheckedChange={(checked) => onSelectRow?.(row.id || rowIndex, checked)}
-                      onClick={(e) => e.stopPropagation()}
-                    />
+            data.map((row, rowIndex) => {
+              const isSelected = selectedRows.includes(row.id);
+              
+              return (
+                <tr 
+                  key={rowIndex}
+                  className={cn(onRowClick && "vf-data-table-row-clickable")}
+                  onClick={() => onRowClick?.(row)}
+                >
+                  {selectable && (
+                    <td className="vf-data-table-cell-checkbox" onClick={(e) => e.stopPropagation()}>
+                      <Checkbox 
+                        checked={isSelected}
+                        onCheckedChange={(checked) => onSelectRow?.(row.id, checked)}
+                      />
+                    </td>
+                  )}
+                  {columns.map((column, colIndex) => {
+                    const value = row[column.key];
+                    const cellClass = column.type === 'number' ? 'vf-data-table-cell-number' :
+                                     column.type === 'currency' ? 'vf-data-table-cell-currency' :
+                                     column.type === 'date' ? 'vf-data-table-cell-date' : '';
+
+                    return (
+                      <td key={colIndex} className={cellClass}>
+                        {column.render ? column.render(value, row) : value}
+                      </td>
+                    );
+                  })}
+                  <td className="vf-data-table-cell-actions" onClick={(e) => e.stopPropagation()}>
+                    <button className="p-2 hover:bg-[var(--theme-surface-hover)] rounded">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </button>
                   </td>
-                )}
-                {columns.map((column, colIndex) => (
-                  <td
-                    key={colIndex}
-                    className={cn(
-                      column.type === "number" && "vf-data-table-cell-number",
-                      column.type === "currency" && "vf-data-table-cell-currency",
-                      column.type === "date" && "vf-data-table-cell-date",
-                      column.type === "actions" && "vf-data-table-cell-actions"
-                    )}
-                  >
-                    {column.render ? column.render(row[column.key], row) : row[column.key]}
-                  </td>
-                ))}
-              </tr>
-            ))
+                </tr>
+              );
+            })
           )}
         </tbody>
       </table>

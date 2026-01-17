@@ -1,25 +1,20 @@
 import * as React from "react"
-import { Download, Copy } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { toast } from "sonner"
+import { Download, Copy, Eye } from "lucide-react"
 
 const VfGenerator = React.forwardRef(({ 
   form,
   preview,
-  onGenerate,
   onDownload,
-  loading,
+  onCopy,
   className,
   ...props 
 }, ref) => {
-  const handleCopy = async () => {
-    const previewText = typeof preview === 'string' ? preview : preview?.props?.children
-    if (previewText) {
-      await navigator.clipboard.writeText(previewText)
-      toast.success("In Zwischenablage kopiert")
-    }
-  }
+  const handleCopy = () => {
+    navigator.clipboard.writeText(preview);
+    onCopy?.();
+  };
 
   return (
     <div ref={ref} className={cn("vf-generator", className)} {...props}>
@@ -29,30 +24,28 @@ const VfGenerator = React.forwardRef(({
 
       <div className="vf-generator-preview">
         <div className="vf-generator-preview-header">
-          <h3 className="font-semibold">Vorschau</h3>
+          <h3 className="font-semibold flex items-center gap-2">
+            <Eye className="h-4 w-4" />
+            Vorschau
+          </h3>
           <div className="flex gap-2">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={handleCopy}
-              disabled={!preview}
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={onDownload}
-              disabled={!preview}
-            >
-              <Download className="h-4 w-4" />
-            </Button>
+            {onCopy && (
+              <Button variant="ghost" size="sm" onClick={handleCopy}>
+                <Copy className="h-4 w-4" />
+              </Button>
+            )}
+            {onDownload && (
+              <Button variant="outline" size="sm" onClick={onDownload}>
+                <Download className="h-4 w-4 mr-2" />
+                Download
+              </Button>
+            )}
           </div>
         </div>
         <div className="vf-generator-preview-content">
           {preview || (
-            <div className="text-center text-[var(--theme-text-muted)] py-12">
-              Fülle das Formular aus, um eine Vorschau zu generieren
+            <div className="text-center text-[var(--theme-text-muted)]">
+              Füllen Sie das Formular aus, um eine Vorschau zu sehen
             </div>
           )}
         </div>

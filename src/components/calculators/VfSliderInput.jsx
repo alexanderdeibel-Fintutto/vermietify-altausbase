@@ -12,22 +12,25 @@ const VfSliderInput = React.forwardRef(({
   className,
   ...props 
 }, ref) => {
-  const percentage = ((value - min) / (max - min)) * 100
+  const percentage = ((value - min) / (max - min)) * 100;
 
   const handleChange = (e) => {
-    onChange?.(parseFloat(e.target.value))
-  }
+    onChange?.(Number(e.target.value));
+  };
 
-  const displayValue = formatValue ? formatValue(value) : value
+  const displayValue = formatValue ? formatValue(value) : value;
 
   return (
     <div ref={ref} className={cn("vf-slider-input", className)} {...props}>
       <div className="vf-slider-header">
-        <label className="vf-slider-label">{label}</label>
+        <span className="vf-slider-label">{label}</span>
         <span className="vf-slider-value">{displayValue}</span>
       </div>
       <div className="vf-slider-track">
-        <div className="vf-slider-fill" style={{ width: `${percentage}%` }} />
+        <div 
+          className="vf-slider-fill" 
+          style={{ width: `${percentage}%` }}
+        />
         <input
           type="range"
           min={min}

@@ -10,13 +10,18 @@ const VfFeatureSection = React.forwardRef(({
   ...props 
 }, ref) => {
   const gridClass = columns === 2 ? "vf-features-grid-2" :
+                    columns === 3 ? "vf-features-grid-3" :
                     columns === 4 ? "vf-features-grid-4" : "vf-features-grid-3";
 
   return (
     <section ref={ref} className={cn("vf-features", className)} {...props}>
       <div className="max-w-6xl mx-auto px-6">
-        {title && <h2 className="text-center text-3xl font-bold mb-4">{title}</h2>}
-        {description && <p className="text-center text-lg text-[var(--vf-neutral-600)] mb-12 max-w-2xl mx-auto">{description}</p>}
+        {(title || description) && (
+          <div className="text-center mb-16">
+            {title && <h2 className="text-3xl font-bold mb-4">{title}</h2>}
+            {description && <p className="text-lg text-[var(--vf-neutral-600)]">{description}</p>}
+          </div>
+        )}
         <div className={cn("vf-features-grid", gridClass)}>
           {features.map((feature, index) => (
             <div key={index} className="vf-feature-card">

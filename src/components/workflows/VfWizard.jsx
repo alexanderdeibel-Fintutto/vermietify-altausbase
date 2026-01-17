@@ -1,7 +1,7 @@
 import * as React from "react"
-import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { ChevronLeft, ChevronRight, Check } from "lucide-react"
 
 const VfWizard = React.forwardRef(({ 
   steps = [],
@@ -11,36 +11,32 @@ const VfWizard = React.forwardRef(({
   className,
   ...props 
 }, ref) => {
-  const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      onStepChange?.(currentStep + 1)
-    }
-  }
-
-  const handlePrev = () => {
-    if (currentStep > 0) {
-      onStepChange?.(currentStep - 1)
-    }
-  }
+  const canGoNext = currentStep < steps.length - 1;
+  const canGoPrev = currentStep > 0;
 
   return (
     <div ref={ref} className={cn("vf-wizard", className)} {...props}>
       <div className="vf-wizard-progress">
-        {steps.map((step, index) => (
-          <div 
-            key={index}
-            className={cn(
-              "vf-wizard-progress-step",
-              index === currentStep && "vf-wizard-progress-step-active",
-              index < currentStep && "vf-wizard-progress-step-completed"
-            )}
-          >
-            <div className="vf-wizard-progress-icon">
-              {index < currentStep ? <Check className="h-5 w-5" /> : index + 1}
+        {steps.map((step, index) => {
+          const isActive = index === currentStep;
+          const isCompleted = index < currentStep;
+
+          return (
+            <div 
+              key={index} 
+              className={cn(
+                "vf-wizard-progress-step",
+                isActive && "vf-wizard-progress-step-active",
+                isCompleted && "vf-wizard-progress-step-completed"
+              )}
+            >
+              <div className="vf-wizard-progress-icon">
+                {isCompleted ? <Check className="h-5 w-5" /> : index + 1}
+              </div>
+              <span className="vf-wizard-progress-label">{step.label}</span>
             </div>
-            <div className="vf-wizard-progress-label">{step.label}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="vf-wizard-content">
@@ -57,19 +53,20 @@ const VfWizard = React.forwardRef(({
 
         <div className="vf-wizard-actions">
           <Button
-            type="button"
             variant="outline"
-            onClick={handlePrev}
-            disabled={currentStep === 0}
+            onClick={() => onStepChange?.(currentStep - 1)}
+            disabled={!canGoPrev}
           >
+            <ChevronLeft className="h-4 w-4 mr-2" />
             Zurück
           </Button>
           <Button
-            type="button"
-            onClick={handleNext}
-            disabled={currentStep === steps.length - 1}
+            variant="primary"
+            onClick={() => onStepChange?.(currentStep + 1)}
+            disabled={!canGoNext}
           >
-            {currentStep === steps.length - 1 ? "Abschließen" : "Weiter"}
+            Weiter
+            <ChevronRight className="h-4 w-4 ml-2" />
           </Button>
         </div>
       </div>

@@ -9,12 +9,8 @@ const VfLeadCapturePage = React.forwardRef(({
 }, ref) => {
   return (
     <div ref={ref} className={cn("vf-lead-page", className)} {...props}>
-      <div className="vf-lead-page-header">
-        {header}
-      </div>
-      <div className="vf-lead-page-content">
-        {children}
-      </div>
+      {header && <div className="vf-lead-page-header">{header}</div>}
+      <div className="vf-lead-page-content">{children}</div>
     </div>
   );
 })

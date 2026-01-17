@@ -6,9 +6,8 @@ const VfCtaSection = React.forwardRef(({
   subheadline,
   primaryCta,
   secondaryCta,
-  gradient = true,
+  gradient = false,
   className,
-  children,
   ...props 
 }, ref) => {
   return (
@@ -18,15 +17,12 @@ const VfCtaSection = React.forwardRef(({
       {...props}
     >
       <div className="max-w-4xl mx-auto px-6">
-        {headline && <h2 className="vf-cta-headline">{headline}</h2>}
+        <h2 className="vf-cta-headline">{headline}</h2>
         {subheadline && <p className="vf-cta-subheadline">{subheadline}</p>}
-        {(primaryCta || secondaryCta) && (
-          <div className="flex gap-4 justify-center">
-            {primaryCta}
-            {secondaryCta}
-          </div>
-        )}
-        {children}
+        <div className="flex gap-4 justify-center">
+          {primaryCta}
+          {secondaryCta}
+        </div>
       </div>
     </section>
   );

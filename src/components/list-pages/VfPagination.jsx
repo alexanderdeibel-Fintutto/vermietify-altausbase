@@ -1,69 +1,68 @@
 import * as React from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 const VfPagination = React.forwardRef(({ 
-  currentPage = 1,
-  totalPages = 1,
-  pageSize = 20,
-  totalItems = 0,
+  currentPage,
+  totalPages,
+  pageSize,
+  totalItems,
   onPageChange,
   onPageSizeChange,
-  pageSizeOptions = [10, 20, 50, 100],
   className,
   ...props 
 }, ref) => {
-  const startItem = (currentPage - 1) * pageSize + 1
-  const endItem = Math.min(currentPage * pageSize, totalItems)
+  const startItem = (currentPage - 1) * pageSize + 1;
+  const endItem = Math.min(currentPage * pageSize, totalItems);
 
   const getPageNumbers = () => {
-    const pages = []
-    const maxVisible = 5
+    const pages = [];
+    const maxVisible = 5;
     
     if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i)
-      }
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
-      if (currentPage <= 3) {
-        pages.push(1, 2, 3, 4, "...", totalPages)
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1, "...", totalPages - 3, totalPages - 2, totalPages - 1, totalPages)
-      } else {
-        pages.push(1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages)
-      }
+      pages.push(1);
+      if (currentPage > 3) pages.push('...');
+      
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      
+      if (currentPage < totalPages - 2) pages.push('...');
+      pages.push(totalPages);
     }
     
-    return pages
-  }
+    return pages;
+  };
 
   return (
     <div ref={ref} className={cn("vf-pagination", className)} {...props}>
       <div className="vf-pagination-info">
-        Zeige {startItem}-{endItem} von {totalItems}
+        Zeige {startItem} bis {endItem} von {totalItems}
       </div>
 
       <div className="vf-pagination-controls">
         <button
-          className="vf-pagination-btn"
           onClick={() => onPageChange?.(currentPage - 1)}
           disabled={currentPage === 1}
+          className="vf-pagination-btn"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
 
         <div className="vf-pagination-pages">
           {getPageNumbers().map((page, index) => (
-            page === "..." ? (
-              <span key={index} className="vf-pagination-page">...</span>
+            page === '...' ? (
+              <span key={index} className="px-2">...</span>
             ) : (
               <button
                 key={index}
+                onClick={() => onPageChange?.(page)}
                 className={cn(
                   "vf-pagination-page",
                   currentPage === page && "vf-pagination-page-active"
                 )}
-                onClick={() => onPageChange?.(page)}
               >
                 {page}
               </button>
@@ -72,9 +71,9 @@ const VfPagination = React.forwardRef(({
         </div>
 
         <button
-          className="vf-pagination-btn"
           onClick={() => onPageChange?.(currentPage + 1)}
           disabled={currentPage === totalPages}
+          className="vf-pagination-btn"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
@@ -85,11 +84,10 @@ const VfPagination = React.forwardRef(({
             onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
             className="vf-pagination-size-select"
           >
-            {pageSizeOptions.map((size) => (
-              <option key={size} value={size}>
-                {size} / Seite
-              </option>
-            ))}
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
           </select>
         )}
       </div>

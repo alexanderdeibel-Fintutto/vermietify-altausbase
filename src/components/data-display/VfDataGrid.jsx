@@ -3,18 +3,19 @@ import { cn } from "@/lib/utils"
 
 const VfDataGrid = React.forwardRef(({ 
   columns = 2,
-  className,
   children,
+  className,
   ...props 
 }, ref) => {
-  const columnClass = columns === 1 ? "vf-data-grid-1" :
-                      columns === 3 ? "vf-data-grid-3" :
-                      columns === 4 ? "vf-data-grid-4" : "vf-data-grid-2";
+  const gridClass = columns === 1 ? "vf-data-grid-1" :
+                    columns === 2 ? "vf-data-grid-2" :
+                    columns === 3 ? "vf-data-grid-3" :
+                    columns === 4 ? "vf-data-grid-4" : "vf-data-grid-2";
 
   return (
     <div 
       ref={ref} 
-      className={cn("vf-data-grid", columnClass, className)} 
+      className={cn("vf-data-grid", gridClass, className)} 
       {...props}
     >
       {children}

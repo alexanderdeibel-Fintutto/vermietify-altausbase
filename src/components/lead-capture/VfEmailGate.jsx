@@ -1,57 +1,67 @@
 import * as React from "react"
-import { Lock, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Lock, CheckCircle } from "lucide-react"
 
 const VfEmailGate = React.forwardRef(({ 
-  title = "Ergebnis freischalten",
-  description = "Gib deine E-Mail-Adresse ein, um dein personalisiertes Ergebnis zu erhalten.",
+  title = "Ergebnisse freischalten",
+  description = "Geben Sie Ihre E-Mail-Adresse ein, um die vollständigen Ergebnisse zu erhalten",
   benefits = [
-    "Kostenlose Analyse",
-    "Keine Verpflichtung",
-    "Datenschutz garantiert"
+    "100% kostenlos",
+    "Keine Kreditkarte erforderlich",
+    "Sofortiger Zugriff"
   ],
   onSubmit,
-  loading,
   className,
   ...props 
 }, ref) => {
-  const [email, setEmail] = React.useState("")
+  const [email, setEmail] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    onSubmit?.(email)
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!email) return;
+    
+    setLoading(true);
+    await onSubmit?.(email);
+    setLoading(false);
+  };
 
   return (
     <div ref={ref} className={cn("vf-email-gate", className)} {...props}>
       <Lock className="vf-email-gate-locked-icon" />
-      <h2 className="vf-email-gate-title">{title}</h2>
+      <h3 className="vf-email-gate-title">{title}</h3>
       <p className="vf-email-gate-description">{description}</p>
       
       <form onSubmit={handleSubmit} className="vf-email-gate-form">
         <Input
           type="email"
-          placeholder="deine@email.de"
+          placeholder="ihre@email.de"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
           className="vf-email-gate-input"
         />
-        <Button type="submit" variant="gradient" disabled={loading}>
-          {loading ? "Wird verarbeitet..." : "Freischalten"}
+        <Button 
+          type="submit" 
+          variant="gradient"
+          disabled={loading}
+        >
+          {loading ? 'Wird verarbeitet...' : 'Freischalten'}
         </Button>
       </form>
 
-      <ul className="vf-email-gate-benefits">
-        {benefits.map((benefit, index) => (
-          <li key={index} className="vf-email-gate-benefit">
-            <Check className="vf-email-gate-benefit-icon h-4 w-4" />
-            {benefit}
-          </li>
-        ))}
-      </ul>
+      {benefits.length > 0 && (
+        <ul className="vf-email-gate-benefits">
+          {benefits.map((benefit, index) => (
+            <li key={index} className="vf-email-gate-benefit">
+              <CheckCircle className="vf-email-gate-benefit-icon h-4 w-4" />
+              {benefit}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 })
