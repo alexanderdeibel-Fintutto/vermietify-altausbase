@@ -3,7 +3,7 @@ import { VfQuiz } from '@/components/workflows/VfQuiz';
 import { VfToolHeader } from '@/components/lead-capture/VfToolHeader';
 import { VfLeadCapturePage } from '@/components/lead-capture/VfLeadCapturePage';
 import { base44 } from '@/api/base44Client';
-import { useMutation } from '@tantml/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { FileText } from 'lucide-react';
 
 export default function SteuerGuideQuiz() {

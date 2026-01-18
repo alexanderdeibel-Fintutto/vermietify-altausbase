@@ -1,5 +1,5 @@
 import React from 'react';
-import { VfAlert } from './VfAlert';
+import { VfAlert } from '@/components/shared/VfAlert';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';

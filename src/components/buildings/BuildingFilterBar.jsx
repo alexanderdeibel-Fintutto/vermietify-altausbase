@@ -27,7 +27,7 @@ export default function BuildingFilterBar({ filters, onChange }) {
         />
 
         <VfSelect
-          label: 'Sortierung'
+          label="Sortierung"
           value={filters.sort || 'name'}
           onChange={(v) => onChange({ ...filters, sort: v })}
           options={[
