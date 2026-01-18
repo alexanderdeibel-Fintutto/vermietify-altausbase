@@ -1,55 +1,30 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Bookmark } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useToast } from 'sonner';
+import { useMutation } from '@tanstack/react-query';
+import { showSuccess } from '@/components/notifications/ToastNotification';
 
-export default function SaveCalculationButton({ 
-  calculatorType,
-  inputData,
-  resultData,
-  primaryResult,
-  primaryResultLabel
-}) {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
+export default function SaveCalculationButton({ calculation, calculatorType }) {
   const saveMutation = useMutation({
-    mutationFn: async () => {
-      const user = await base44.auth.me();
-      
-      const response = await base44.functions.invoke('trackCalculation', {
-        calculator_type: calculatorType,
-        input_data: inputData,
-        result_data: resultData,
-        primary_result: primaryResult,
-        primary_result_label: primaryResultLabel,
-        user_id: user?.id || null
-      });
-
-      const calcId = response.data.calculation_id;
-      
-      await base44.entities.CalculationHistory.update(calcId, {
-        saved: true
-      });
-
-      return calcId;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['calculations']);
-      toast.success('Berechnung gespeichert');
-    }
+    mutationFn: () => base44.entities.Report.create({
+      report_type: calculatorType,
+      title: `${calculatorType} Berechnung`,
+      data: JSON.stringify(calculation),
+      generated_date: new Date().toISOString()
+    }),
+    onSuccess: () => showSuccess('Berechnung gespeichert')
   });
 
   return (
     <Button 
-      variant="outline"
+      variant="outline" 
+      size="sm"
       onClick={() => saveMutation.mutate()}
       disabled={saveMutation.isPending}
     >
-      <Bookmark className="h-4 w-4 mr-2" />
-      {saveMutation.isPending ? 'Wird gespeichert...' : 'Speichern'}
+      <Save className="h-4 w-4 mr-2" />
+      Speichern
     </Button>
   );
 }

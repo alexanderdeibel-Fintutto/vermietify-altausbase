@@ -1,52 +1,56 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { VfDatePicker } from '@/components/shared/VfDatePicker';
-import SearchableSelect from '@/components/shared/SearchableSelect';
+import { VfSelect } from '@/components/shared/VfSelect';
 import { Button } from '@/components/ui/button';
-import { Calendar, Plus } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { Calendar, Save } from 'lucide-react';
 
 export default function InspectionScheduler() {
-  const [formData, setFormData] = useState({
+  const [inspection, setInspection] = useState({
     building_id: '',
     inspection_date: '',
     inspector: ''
   });
-
-  const { data: buildings = [] } = useQuery({
-    queryKey: ['buildings'],
-    queryFn: () => base44.entities.Building.list()
-  });
-
-  const buildingOptions = buildings.map(b => ({ value: b.id, label: b.name }));
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calendar className="h-5 w-5" />
-          Besichtigung planen
+          Inspektion planen
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <SearchableSelect
+          <VfSelect
             label="Objekt"
-            options={buildingOptions}
-            value={formData.building_id}
-            onChange={(v) => setFormData({ ...formData, building_id: v })}
+            value={inspection.building_id}
+            onChange={(v) => setInspection({ ...inspection, building_id: v })}
+            options={[
+              { value: '1', label: 'Hauptstraße 12' },
+              { value: '2', label: 'Parkweg 8' }
+            ]}
           />
 
           <VfDatePicker
             label="Datum"
-            value={formData.inspection_date}
-            onChange={(v) => setFormData({ ...formData, inspection_date: v })}
+            value={inspection.inspection_date}
+            onChange={(v) => setInspection({ ...inspection, inspection_date: v })}
+          />
+
+          <VfSelect
+            label="Prüfer"
+            value={inspection.inspector}
+            onChange={(v) => setInspection({ ...inspection, inspector: v })}
+            options={[
+              { value: 'internal', label: 'Intern' },
+              { value: 'external', label: 'Extern' }
+            ]}
           />
 
           <Button variant="gradient" className="w-full">
-            <Plus className="h-4 w-4 mr-2" />
-            Besichtigung anlegen
+            <Save className="h-4 w-4 mr-2" />
+            Inspektion anlegen
           </Button>
         </div>
       </CardContent>

@@ -4,24 +4,17 @@ Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
   
   try {
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await req.json();
-    const { user_id, title, message, type = 'info', link } = body;
+    const { recipient_email, title, message, type } = body;
 
-    await base44.entities.Notification.create({
-      user_id,
+    const result = await base44.functions.invoke('createNotification', {
+      recipient_email,
       title,
-      message: message || null,
-      type,
-      link: link || null,
-      is_read: false
+      message,
+      type: type || 'info'
     });
 
-    return Response.json({ success: true });
+    return Response.json({ success: true, data: result.data });
     
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
