@@ -1,22 +1,21 @@
-import React, { useState } from 'react';
+import React from 'react';
 import PageHeader from '@/components/shared/PageHeader';
 import BulkCSVImportDialog from '@/components/import/BulkCSVImportDialog';
-import ExportButton from '@/components/reporting/ExportButton';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, Download, Database } from 'lucide-react';
+import { Download, Upload } from 'lucide-react';
 
 export default function DataImportExport() {
-  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importOpen, setImportOpen] = React.useState(false);
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <PageHeader
-        title="Daten Import/Export"
-        subtitle="Verwalten Sie Ihre Daten"
+        title="Import & Export"
+        subtitle="Daten importieren und exportieren"
       />
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-6 mt-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -26,11 +25,11 @@ export default function DataImportExport() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-[var(--theme-text-secondary)] mb-4">
-              Importieren Sie Mieter, Objekte oder Rechnungen aus CSV-Dateien
+              Importieren Sie Objekte, Mieter oder Verträge aus CSV-Dateien
             </p>
-            <Button variant="gradient" onClick={() => setImportDialogOpen(true)} className="w-full">
+            <Button variant="gradient" className="w-full" onClick={() => setImportOpen(true)}>
               <Upload className="h-4 w-4 mr-2" />
-              CSV hochladen
+              CSV importieren
             </Button>
           </CardContent>
         </Card>
@@ -44,21 +43,17 @@ export default function DataImportExport() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-[var(--theme-text-secondary)] mb-4">
-              Exportieren Sie alle Daten in verschiedenen Formaten
+              Exportieren Sie Ihre Daten in verschiedenen Formaten
             </p>
-            <ExportButton filename="vermitify-export" />
+            <Button variant="outline" className="w-full">
+              <Download className="h-4 w-4 mr-2" />
+              Alle Daten exportieren
+            </Button>
           </CardContent>
         </Card>
       </div>
 
-      <BulkCSVImportDialog
-        open={importDialogOpen}
-        onClose={() => setImportDialogOpen(false)}
-        onImport={(data) => {
-          console.log('Import:', data);
-          setImportDialogOpen(false);
-        }}
-      />
+      <BulkCSVImportDialog open={importOpen} onClose={() => setImportOpen(false)} />
     </div>
   );
 }

@@ -1,16 +1,14 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Database, Download, Upload } from 'lucide-react';
+import { Download, Upload, Database } from 'lucide-react';
+import TimeAgo from '@/components/shared/TimeAgo';
 
 export default function BackupRestore() {
-  const handleBackup = () => {
-    console.log('Creating backup...');
-  };
-
-  const handleRestore = () => {
-    console.log('Restoring backup...');
-  };
+  const backups = [
+    { id: 1, created_date: new Date(), size: '2.4 MB', type: 'auto' },
+    { id: 2, created_date: new Date(Date.now() - 86400000), size: '2.3 MB', type: 'manual' }
+  ];
 
   return (
     <Card>
@@ -21,24 +19,29 @@ export default function BackupRestore() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          <div className="p-4 bg-[var(--vf-info-50)] rounded-lg">
-            <p className="text-sm text-[var(--vf-info-700)]">
-              Letzte Sicherung: Heute, 03:00 Uhr
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <Button variant="outline" onClick={handleBackup}>
-              <Download className="h-4 w-4 mr-2" />
-              Backup erstellen
-            </Button>
-            <Button variant="outline" onClick={handleRestore}>
-              <Upload className="h-4 w-4 mr-2" />
-              Wiederherstellen
-            </Button>
-          </div>
+        <div className="space-y-3 mb-4">
+          {backups.map((backup) => (
+            <div key={backup.id} className="flex items-center justify-between p-3 bg-[var(--theme-surface)] rounded-lg">
+              <div>
+                <div className="text-sm font-medium">
+                  {backup.type === 'auto' ? 'Automatisch' : 'Manuell'}
+                </div>
+                <TimeAgo date={backup.created_date} className="text-xs text-[var(--theme-text-muted)]" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[var(--theme-text-muted)]">{backup.size}</span>
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
+
+        <Button variant="gradient" className="w-full">
+          <Upload className="h-4 w-4 mr-2" />
+          Backup erstellen
+        </Button>
       </CardContent>
     </Card>
   );
