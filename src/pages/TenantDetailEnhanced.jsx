@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Users, FileText, Euro, MessageCircle, ArrowLeft } from 'lucide-react';
+import { Users, FileText, Euro, MessageCircle, ArrowLeft, History } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import TenantProfileCard from '@/components/tenant-detail/TenantProfileCard';
 import TenantContractsOverview from '@/components/tenant-detail/TenantContractsOverview';
 import PaymentsList from '@/components/tenant-detail/PaymentsList';
@@ -54,6 +56,7 @@ export default function TenantDetailEnhanced() {
           <TabsTrigger value="payments">Zahlungen</TabsTrigger>
           <TabsTrigger value="documents">Dokumente</TabsTrigger>
           <TabsTrigger value="communication">Kommunikation</TabsTrigger>
+          <TabsTrigger value="history">Historie</TabsTrigger>
         </TabsList>
 
         <div className="vf-detail-layout">
@@ -80,6 +83,30 @@ export default function TenantDetailEnhanced() {
             <TabsContent value="communication">
               <CommunicationsList tenantId={tenantId} />
             </TabsContent>
+
+            <TabsContent value="history">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Miethistorie</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm text-[var(--theme-text-muted)]">
+                    Hier erscheint die vollständige Historie des Mieters...
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </div>
+
+          <div className="vf-detail-sidebar">
+            <div className="vf-detail-sidebar__section">
+              <h3 className="vf-detail-sidebar__title">Schnellaktionen</h3>
+              <div className="space-y-2">
+                <Button variant="outline" size="sm" className="w-full">Nachricht senden</Button>
+                <Button variant="outline" size="sm" className="w-full">Dokument erstellen</Button>
+                <Button variant="outline" size="sm" className="w-full">Zahlungserinnerung</Button>
+              </div>
+            </div>
           </div>
         </div>
       </Tabs>

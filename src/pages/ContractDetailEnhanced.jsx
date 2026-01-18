@@ -5,6 +5,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { FileText, Euro, Wallet, TrendingUp, ArrowLeft } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import CurrencyDisplay from '@/components/shared/CurrencyDisplay';
 import DepositManager from '@/components/tenants/DepositManager';
 import RentChangeHistory from '@/components/contracts/RentChangeHistory';
@@ -128,6 +129,37 @@ export default function ContractDetailEnhanced() {
           <TabsContent value="adjustments">
             <RentChangeHistory contractId={contractId} />
           </TabsContent>
+
+          <TabsContent value="documents">
+            <Card>
+              <CardHeader>
+                <CardTitle>Vertragsdokumente</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <Button variant="outline" className="w-full justify-start">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Mietvertrag.pdf
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Übergabeprotokoll.pdf
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </div>
+
+        <div className="vf-detail-sidebar">
+          <div className="vf-detail-sidebar__section">
+            <h3 className="vf-detail-sidebar__title">Schnellaktionen</h3>
+            <div className="space-y-2">
+              <Button variant="outline" size="sm" className="w-full">Mieterhöhung</Button>
+              <Button variant="outline" size="sm" className="w-full">Kündigung</Button>
+              <Button variant="outline" size="sm" className="w-full">Nachtrag erstellen</Button>
+            </div>
+          </div>
         </div>
       </Tabs>
     </div>

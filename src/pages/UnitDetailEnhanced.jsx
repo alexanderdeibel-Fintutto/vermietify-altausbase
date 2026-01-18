@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Home, FileText, Users, Euro, History, ArrowLeft } from 'lucide-react';
+import { Home, FileText, Users, Euro, History, ArrowLeft, Wrench, Image } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import CurrencyDisplay from '@/components/shared/CurrencyDisplay';
+import { Button } from '@/components/ui/button';
 
 export default function UnitDetailEnhanced() {
   const [searchParams] = useSearchParams();
@@ -55,6 +57,8 @@ export default function UnitDetailEnhanced() {
           <TabsTrigger value="tenant">Mieter</TabsTrigger>
           <TabsTrigger value="finances">Finanzen</TabsTrigger>
           <TabsTrigger value="documents">Dokumente</TabsTrigger>
+          <TabsTrigger value="maintenance">Wartung</TabsTrigger>
+          <TabsTrigger value="photos">Fotos</TabsTrigger>
         </TabsList>
 
         <div className="vf-detail-main">
@@ -81,6 +85,79 @@ export default function UnitDetailEnhanced() {
                     <div className="vf-data-field__label">Zimmer</div>
                     <div className="vf-data-field__value">{unit.zimmer}</div>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="contract">
+            <Card>
+              <CardHeader>
+                <CardTitle>Aktueller Mietvertrag</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-[var(--theme-text-muted)]">
+                  Derzeit nicht vermietet
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="finances">
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Miete</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-[var(--theme-text-secondary)]">Kaltmiete</span>
+                      <span className="font-medium">-</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[var(--theme-text-secondary)]">Nebenkosten</span>
+                      <span className="font-medium">-</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Ausstattung</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 text-sm">
+                    <div>🛁 Badezimmer: {unit.anzahl_badezimmer || 1}</div>
+                    <div>🚽 WC: {unit.anzahl_wc || 1}</div>
+                    <div>🏡 Balkon: {unit.hat_balkon ? 'Ja' : 'Nein'}</div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="maintenance">
+            <Card>
+              <CardHeader>
+                <CardTitle>Wartungsarbeiten</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-[var(--theme-text-muted)]">
+                  Keine aktuellen Wartungsarbeiten
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="photos">
+            <Card>
+              <CardHeader>
+                <CardTitle>Fotogalerie</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-[var(--theme-text-muted)]">
+                  Noch keine Fotos hochgeladen
                 </div>
               </CardContent>
             </Card>

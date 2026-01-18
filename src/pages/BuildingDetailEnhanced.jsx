@@ -4,6 +4,8 @@ import { base44 } from '@/api/base44Client';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Building, Home, Users, FileText, Euro, CheckSquare, Settings, ArrowLeft } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import CurrencyDisplay from '@/components/shared/CurrencyDisplay';
 import BuildingSummary from '@/components/buildings/BuildingSummary';
 import BuildingUnitsManager from '@/components/building-detail/BuildingUnitsManager';
 import BuildingTenantsOverview from '@/components/building-detail/BuildingTenantsOverview';
@@ -101,6 +103,14 @@ export default function BuildingDetailEnhanced() {
             <FileText className="h-4 w-4" />
             Dokumente
           </TabsTrigger>
+          <TabsTrigger value="finances" className="vf-detail-tabs__tab">
+            <Euro className="h-4 w-4" />
+            Finanzen
+          </TabsTrigger>
+          <TabsTrigger value="tasks" className="vf-detail-tabs__tab">
+            <CheckSquare className="h-4 w-4" />
+            Aufgaben
+          </TabsTrigger>
         </TabsList>
 
         <div className="vf-detail-main">
@@ -126,6 +136,42 @@ export default function BuildingDetailEnhanced() {
 
           <TabsContent value="documents">
             <BuildingDocumentsManager buildingId={buildingId} />
+          </TabsContent>
+
+          <TabsContent value="finances">
+            <div className="grid gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Finanzübersicht</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="vf-stat-card">
+                      <div className="vf-stat-card__label">Monatliche Mieteinnahmen</div>
+                      <div className="vf-stat-card__value">
+                        <CurrencyDisplay amount={contracts.filter(c => c.status === 'Aktiv').reduce((sum, c) => sum + (c.kaltmiete || 0), 0)} />
+                      </div>
+                    </div>
+                    <div className="vf-stat-card">
+                      <div className="vf-stat-card__label">Jahreseinnahmen (erwartet)</div>
+                      <div className="vf-stat-card__value">
+                        <CurrencyDisplay amount={contracts.filter(c => c.status === 'Aktiv').reduce((sum, c) => sum + (c.kaltmiete || 0), 0) * 12} />
+                      </div>
+                    </div>
+                    <div className="vf-stat-card">
+                      <div className="vf-stat-card__label">Auslastung</div>
+                      <div className="vf-stat-card__value">
+                        {Math.round((units.length > 0 ? (contracts.filter(c => c.status === 'Aktiv').length / units.length) * 100 : 0))}%
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="tasks">
+            <BuildingTasksManager buildingId={buildingId} />
           </TabsContent>
         </div>
       </Tabs>
