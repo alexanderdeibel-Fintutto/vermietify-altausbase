@@ -1,62 +1,46 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import PlanFeaturesList from './PlanFeaturesList';
 import { Check } from 'lucide-react';
+import CurrencyDisplay from '@/components/shared/CurrencyDisplay';
 
-export default function PlanCard({ 
-  plan, 
-  isCurrent = false, 
-  onSelect,
-  highlighted = false 
-}) {
+export default function PlanCard({ plan, isPopular, onSelect }) {
   return (
-    <Card className={highlighted ? 'vf-card-premium' : ''}>
+    <Card className={isPopular ? 'border-2 border-[var(--theme-primary)] relative' : ''}>
+      {isPopular && (
+        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+          <span className="vf-badge vf-badge-gradient px-4">Beliebt</span>
+        </div>
+      )}
+      
       <CardHeader>
-        {highlighted && (
-          <div className="vf-badge vf-badge-gradient mb-2">Beliebteste Wahl</div>
-        )}
         <CardTitle>{plan.name}</CardTitle>
-        <div className="mt-4">
-          <div className="text-4xl font-bold">
-            €{plan.price_monthly}
-            <span className="text-lg font-normal text-[var(--theme-text-muted)]">/Monat</span>
-          </div>
-          {plan.price_yearly && (
-            <div className="text-sm text-[var(--vf-success-600)] mt-1">
-              oder €{plan.price_yearly}/Jahr (20% sparen)
-            </div>
-          )}
+        <div className="flex items-baseline gap-2">
+          <CurrencyDisplay amount={plan.price} className="text-3xl font-bold" />
+          <span className="text-sm text-[var(--theme-text-muted)]">/ Monat</span>
         </div>
       </CardHeader>
+
       <CardContent>
-        {plan.description && (
-          <p className="text-sm text-[var(--theme-text-secondary)] mb-4">
-            {plan.description}
-          </p>
-        )}
-
-        <div className="space-y-2 mb-6">
-          <div className="text-sm font-medium">Limits:</div>
-          <div className="text-sm text-[var(--theme-text-secondary)]">
-            {plan.max_buildings === -1 ? '∞' : plan.max_buildings} Objekte
-          </div>
-          <div className="text-sm text-[var(--theme-text-secondary)]">
-            {plan.max_units === -1 ? '∞' : plan.max_units} Einheiten
-          </div>
-        </div>
-
-        <PlanFeaturesList features={plan.features} />
-
-        <Button
-          variant={highlighted ? 'gradient' : 'primary'}
-          className="w-full mt-6"
-          onClick={() => onSelect(plan)}
-          disabled={isCurrent}
-        >
-          {isCurrent ? 'Aktueller Plan' : plan.price_monthly === 0 ? 'Kostenlos starten' : 'Plan wählen'}
-        </Button>
+        <ul className="space-y-3">
+          {plan.features?.map((feature, index) => (
+            <li key={index} className="flex items-start gap-2">
+              <Check className="h-4 w-4 text-[var(--vf-success-500)] mt-0.5 flex-shrink-0" />
+              <span className="text-sm">{feature}</span>
+            </li>
+          ))}
+        </ul>
       </CardContent>
+
+      <CardFooter>
+        <Button 
+          variant={isPopular ? 'gradient' : 'outline'} 
+          className="w-full"
+          onClick={() => onSelect(plan)}
+        >
+          Plan wählen
+        </Button>
+      </CardFooter>
     </Card>
   );
 }

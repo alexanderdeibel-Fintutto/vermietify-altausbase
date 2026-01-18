@@ -1,41 +1,25 @@
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Play, Clock } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Play } from 'lucide-react';
 
-export default function VideoTutorialCard({ 
-  title, 
-  duration,
-  thumbnail,
-  videoUrl,
-  description 
-}) {
+export default function VideoTutorialCard({ title, duration, thumbnail, videoUrl }) {
   return (
-    <Card className="vf-card-clickable">
-      <div className="relative aspect-video bg-[var(--vf-neutral-200)] rounded-t-lg overflow-hidden">
-        {thumbnail ? (
-          <img src={thumbnail} alt={title} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Play className="h-16 w-16 text-[var(--vf-neutral-400)]" />
-          </div>
-        )}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/40 transition-colors cursor-pointer">
-          <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center">
-            <Play className="h-8 w-8 text-[var(--vf-primary-600)] ml-1" />
+    <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+      <div className="relative">
+        <img 
+          src={thumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400'} 
+          alt={title}
+          className="w-full h-40 object-cover rounded-t-lg"
+        />
+        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+          <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center">
+            <Play className="h-6 w-6 text-[var(--theme-primary)]" />
           </div>
         </div>
-        {duration && (
-          <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/70 text-white text-xs rounded flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            {duration}
-          </div>
-        )}
       </div>
-      <CardContent className="p-4">
+      <CardContent className="pt-4">
         <h3 className="font-semibold mb-1">{title}</h3>
-        {description && (
-          <p className="text-sm text-[var(--theme-text-secondary)]">{description}</p>
-        )}
+        <p className="text-xs text-[var(--theme-text-muted)]">{duration || '5 Min.'}</p>
       </CardContent>
     </Card>
   );

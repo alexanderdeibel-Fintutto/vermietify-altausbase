@@ -1,18 +1,38 @@
 import React from 'react';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
-export default function FAQAccordion({ faqs = [] }) {
+export default function FAQAccordion({ faqs }) {
+  const defaultFaqs = [
+    {
+      question: 'Wie erstelle ich ein neues Objekt?',
+      answer: 'Navigieren Sie zu Objekte und klicken Sie auf "Neues Objekt". Füllen Sie alle erforderlichen Felder aus.'
+    },
+    {
+      question: 'Wie funktioniert die Betriebskostenabrechnung?',
+      answer: 'Gehen Sie zu Betriebskosten und starten Sie den Assistenten für eine Schritt-für-Schritt Anleitung.'
+    },
+    {
+      question: 'Kann ich mehrere Mieter verwalten?',
+      answer: 'Ja, Sie können beliebig viele Mieter anlegen und verwalten. Die Anzahl hängt von Ihrem Tarif ab.'
+    }
+  ];
+
+  const displayFaqs = faqs || defaultFaqs;
+
   return (
-    <Accordion type="single" collapsible className="space-y-2">
-      {faqs.map((faq, index) => (
-        <AccordionItem key={index} value={`faq-${index}`} className="vf-card">
-          <AccordionTrigger className="px-6 py-4 hover:no-underline">
-            <span className="font-semibold text-left">{faq.question}</span>
+    <Accordion type="single" collapsible className="w-full">
+      {displayFaqs.map((faq, index) => (
+        <AccordionItem key={index} value={`item-${index}`}>
+          <AccordionTrigger className="text-left font-medium">
+            {faq.question}
           </AccordionTrigger>
-          <AccordionContent className="px-6 pb-4">
-            <p className="text-[var(--theme-text-secondary)] leading-relaxed">
-              {faq.answer}
-            </p>
+          <AccordionContent className="text-sm text-[var(--theme-text-secondary)]">
+            {faq.answer}
           </AccordionContent>
         </AccordionItem>
       ))}
