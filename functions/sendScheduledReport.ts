@@ -4,52 +4,27 @@ Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
   
   try {
-    const user = await base44.auth.me();
-    if (user?.role !== 'admin') {
-      return Response.json({ error: 'Admin access required' }, { status: 403 });
-    }
+    const body = await req.json();
+    const { reportType, recipientEmail } = body;
 
-    const schedules = await base44.asServiceRole.entities.ReportSchedule.filter({
-      is_active: true
+    const stats = await base44.functions.invoke('generateDashboardStats', {});
+    
+    const reportHTML = `
+      <h1>Vermitify Bericht - ${new Date().toLocaleDateString('de-DE')}</h1>
+      <h2>${reportType}</h2>
+      <p>Objekte: ${stats.data.buildings.total}</p>
+      <p>Einheiten: ${stats.data.units.total}</p>
+      <p>Auslastung: ${stats.data.units.occupancy_rate}%</p>
+      <p>Monatliche Mieteinnahmen: €${stats.data.financial.monthly_rent}</p>
+    `;
+
+    await base44.integrations.Core.SendEmail({
+      to: recipientEmail,
+      subject: `Vermitify ${reportType} - ${new Date().toLocaleDateString('de-DE')}`,
+      body: reportHTML
     });
 
-    const today = new Date().getDay();
-    const dayOfMonth = new Date().getDate();
-
-    let reportsSent = 0;
-
-    for (const schedule of schedules) {
-      let shouldSend = false;
-
-      if (schedule.frequency === 'daily') {
-        shouldSend = true;
-      } else if (schedule.frequency === 'weekly' && today === 1) {
-        shouldSend = true;
-      } else if (schedule.frequency === 'monthly' && dayOfMonth === 1) {
-        shouldSend = true;
-      }
-
-      if (shouldSend) {
-        const reportData = await base44.asServiceRole.functions.invoke('generateUsageReport', {});
-        
-        const recipients = typeof schedule.recipients === 'string' 
-          ? JSON.parse(schedule.recipients) 
-          : schedule.recipients;
-
-        for (const email of recipients) {
-          await base44.integrations.Core.SendEmail({
-            to: email,
-            subject: `${schedule.report_type} Bericht - ${new Date().toLocaleDateString('de-DE')}`,
-            body: `Ihr automatischer Bericht ist bereit.\n\n${JSON.stringify(reportData.data, null, 2)}`,
-            from_name: 'vermitify Reports'
-          });
-        }
-
-        reportsSent++;
-      }
-    }
-
-    return Response.json({ success: true, reports_sent: reportsSent });
+    return Response.json({ success: true });
     
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

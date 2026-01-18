@@ -1,36 +1,33 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import VermitifyLogo from '@/components/branding/VermitifyLogo';
-import { Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 
-export default function WelcomeScreen({ onStart, userName }) {
+export default function WelcomeScreen({ onStart }) {
   return (
-    <div className="vf-onboarding">
-      <div className="vf-onboarding__card">
-        <VermitifyLogo size="xl" className="vf-onboarding__logo" />
-        
-        <h1 className="vf-onboarding__title">
-          Willkommen bei vermitify{userName && `, ${userName}`}! 👋
-        </h1>
-        
-        <p className="vf-onboarding__description">
-          Lassen Sie uns gemeinsam Ihre Immobilienverwaltung einrichten. 
-          Das dauert nur 3 Minuten.
-        </p>
-        
-        <div className="vf-onboarding__cta">
-          <Button variant="gradient" size="lg" onClick={onStart}>
-            <Sparkles className="h-5 w-5 mr-2" />
-            Los geht's!
-          </Button>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[var(--vf-primary-50)] to-white p-6">
+      <div className="text-center max-w-2xl">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm mb-6">
+          <Sparkles className="h-4 w-4 text-[var(--theme-primary)]" />
+          <span className="text-sm font-medium">Willkommen bei Vermitify</span>
         </div>
 
-        <div className="vf-onboarding__progress">
-          <div className="vf-onboarding__progress-dot vf-onboarding__progress-dot--active" />
-          <div className="vf-onboarding__progress-line" />
-          <div className="vf-onboarding__progress-dot" />
-          <div className="vf-onboarding__progress-line" />
-          <div className="vf-onboarding__progress-dot" />
+        <h1 className="text-5xl font-bold mb-4 vf-gradient-text">
+          Ihre Immobilienverwaltung beginnt hier
+        </h1>
+
+        <p className="text-xl text-[var(--theme-text-secondary)] mb-8">
+          In nur 5 Minuten eingerichtet. Keine Kreditkarte erforderlich.
+        </p>
+
+        <Button variant="gradient" size="lg" onClick={onStart}>
+          Los geht's
+          <ArrowRight className="h-5 w-5 ml-2" />
+        </Button>
+
+        <div className="flex justify-center gap-8 mt-12 text-sm text-[var(--theme-text-muted)]">
+          <div>✓ Kostenlose Testphase</div>
+          <div>✓ Keine Vertragsbindung</div>
+          <div>✓ Schneller Support</div>
         </div>
       </div>
     </div>
