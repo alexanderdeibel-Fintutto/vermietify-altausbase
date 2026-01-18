@@ -2,85 +2,81 @@ import React, { useState } from 'react';
 import { VfInput } from '@/components/shared/VfInput';
 import { VfSelect } from '@/components/shared/VfSelect';
 import { VfDatePicker } from '@/components/shared/VfDatePicker';
+import { VfTextarea } from '@/components/shared/VfTextarea';
 import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
 
-export default function InvoiceForm({ invoice, onSubmit, onCancel }) {
-  const [formData, setFormData] = useState({
-    supplier_name: invoice?.supplier_name || '',
-    invoice_number: invoice?.invoice_number || '',
-    invoice_date: invoice?.invoice_date || '',
-    amount: invoice?.amount || '',
-    category: invoice?.category || 'maintenance',
-    payment_status: invoice?.payment_status || 'pending'
+export default function InvoiceForm({ invoice, onSubmit }) {
+  const [formData, setFormData] = useState(invoice || {
+    rechnungsnummer: '',
+    lieferant: '',
+    betrag: '',
+    datum: '',
+    faelligkeitsdatum: '',
+    kategorie: '',
+    beschreibung: ''
   });
 
   return (
     <div className="space-y-4">
       <VfInput
-        label="Lieferant"
+        label="Rechnungsnummer"
         required
-        value={formData.supplier_name}
-        onChange={(e) => setFormData({ ...formData, supplier_name: e.target.value })}
+        value={formData.rechnungsnummer}
+        onChange={(e) => setFormData({ ...formData, rechnungsnummer: e.target.value })}
       />
 
       <VfInput
-        label="Rechnungsnummer"
-        value={formData.invoice_number}
-        onChange={(e) => setFormData({ ...formData, invoice_number: e.target.value })}
+        label="Lieferant"
+        required
+        value={formData.lieferant}
+        onChange={(e) => setFormData({ ...formData, lieferant: e.target.value })}
+      />
+
+      <VfInput
+        label="Betrag"
+        type="number"
+        rightAddon="€"
+        required
+        value={formData.betrag}
+        onChange={(e) => setFormData({ ...formData, betrag: e.target.value })}
       />
 
       <VfDatePicker
         label="Rechnungsdatum"
-        value={formData.invoice_date}
-        onChange={(v) => setFormData({ ...formData, invoice_date: v })}
+        value={formData.datum}
+        onChange={(v) => setFormData({ ...formData, datum: v })}
       />
 
-      <VfInput
-        label="Betrag (€)"
-        type="number"
-        required
-        value={formData.amount}
-        onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+      <VfDatePicker
+        label="Fälligkeitsdatum"
+        value={formData.faelligkeitsdatum}
+        onChange={(v) => setFormData({ ...formData, faelligkeitsdatum: v })}
       />
 
       <VfSelect
         label="Kategorie"
-        value={formData.category}
-        onChange={(v) => setFormData({ ...formData, category: v })}
+        value={formData.kategorie}
+        onChange={(v) => setFormData({ ...formData, kategorie: v })}
         options={[
           { value: 'maintenance', label: 'Instandhaltung' },
-          { value: 'utilities', label: 'Nebenkosten' },
           { value: 'insurance', label: 'Versicherung' },
-          { value: 'management', label: 'Verwaltung' },
-          { value: 'other', label: 'Sonstige' }
+          { value: 'utilities', label: 'Nebenkosten' },
+          { value: 'tax', label: 'Steuern' }
         ]}
       />
 
-      <VfSelect
-        label="Zahlungsstatus"
-        value={formData.payment_status}
-        onChange={(v) => setFormData({ ...formData, payment_status: v })}
-        options={[
-          { value: 'pending', label: 'Ausstehend' },
-          { value: 'paid', label: 'Bezahlt' },
-          { value: 'overdue', label: 'Überfällig' }
-        ]}
+      <VfTextarea
+        label="Beschreibung"
+        value={formData.beschreibung}
+        onChange={(e) => setFormData({ ...formData, beschreibung: e.target.value })}
+        rows={3}
       />
 
-      <div className="flex gap-3 pt-4">
-        <Button variant="secondary" onClick={onCancel} className="flex-1">
-          Abbrechen
-        </Button>
-        <Button 
-          variant="gradient"
-          onClick={() => onSubmit(formData)}
-          className="flex-1"
-        >
-          <Save className="h-4 w-4 mr-2" />
-          Speichern
-        </Button>
-      </div>
+      <Button variant="gradient" className="w-full" onClick={() => onSubmit(formData)}>
+        <Save className="h-4 w-4 mr-2" />
+        Speichern
+      </Button>
     </div>
   );
 }

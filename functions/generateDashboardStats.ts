@@ -5,43 +5,58 @@ Deno.serve(async (req) => {
   
   try {
     const user = await base44.auth.me();
+    
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const [buildings, units, tenants, contracts, invoices] = await Promise.all([
+    const [buildings, units, contracts, invoices, tasks] = await Promise.all([
       base44.entities.Building.list(),
       base44.entities.Unit.list(),
-      base44.entities.Tenant.list(),
-      base44.entities.LeaseContract.filter({ status: 'active' }),
-      base44.entities.Invoice.list()
+      base44.entities.LeaseContract.list(),
+      base44.entities.Invoice.list(),
+      base44.entities.Task.list()
     ]);
 
-    const occupiedUnits = contracts.length;
-    const occupancyRate = units.length > 0 ? Math.round((occupiedUnits / units.length) * 100) : 0;
-
-    const totalRent = contracts.reduce((sum, c) => sum + (c.rent_cold || 0), 0);
-    const totalExpenses = invoices
-      .filter(i => i.payment_status === 'paid')
-      .reduce((sum, i) => sum + (i.amount || 0), 0);
+    const occupiedUnits = units.filter(u => contracts.some(c => c.unit_id === u.id && c.status === 'Aktiv'));
+    const monthlyRent = contracts
+      .filter(c => c.status === 'Aktiv')
+      .reduce((sum, c) => sum + (c.kaltmiete || 0), 0);
 
     const stats = {
       buildings: {
-        total: buildings.length
+        total: buildings.length,
+        with_units: buildings.filter(b => units.some(u => u.building_id === b.id)).length
       },
       units: {
         total: units.length,
-        occupied: occupiedUnits,
-        vacant: units.length - occupiedUnits,
-        occupancy_rate: occupancyRate
+        occupied: occupiedUnits.length,
+        vacant: units.length - occupiedUnits.length,
+        occupancy_rate: units.length > 0 ? Math.round((occupiedUnits.length / units.length) * 100) : 0
       },
-      tenants: {
-        active: tenants.length
+      contracts: {
+        total: contracts.length,
+        active: contracts.filter(c => c.status === 'Aktiv').length,
+        expiring_soon: contracts.filter(c => {
+          if (!c.ende_datum) return false;
+          const end = new Date(c.ende_datum);
+          const now = new Date();
+          const diff = (end - now) / (1000 * 60 * 60 * 24);
+          return diff > 0 && diff <= 90;
+        }).length
       },
       financial: {
-        monthly_rent: totalRent,
-        monthly_expenses: totalExpenses,
-        net_income: totalRent - totalExpenses
+        monthly_rent: monthlyRent,
+        unpaid_invoices: invoices.filter(i => i.status !== 'Bezahlt').length,
+        total_unpaid: invoices.filter(i => i.status !== 'Bezahlt').reduce((sum, i) => sum + (i.betrag || 0), 0)
+      },
+      tasks: {
+        total: tasks.length,
+        open: tasks.filter(t => t.status === 'Offen').length,
+        overdue: tasks.filter(t => {
+          if (!t.faelligkeitsdatum || t.status === 'Erledigt') return false;
+          return new Date(t.faelligkeitsdatum) < new Date();
+        }).length
       }
     };
 

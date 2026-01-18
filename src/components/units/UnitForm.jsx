@@ -1,89 +1,78 @@
 import React, { useState } from 'react';
 import { VfInput } from '@/components/shared/VfInput';
 import { VfSelect } from '@/components/shared/VfSelect';
+import { VfTextarea } from '@/components/shared/VfTextarea';
 import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
 
-export default function UnitForm({ unit, buildingId, onSubmit, onCancel }) {
-  const [formData, setFormData] = useState({
-    building_id: unit?.building_id || buildingId,
-    unit_number: unit?.unit_number || '',
-    unit_type: unit?.unit_type || 'apartment',
-    living_area: unit?.living_area || '',
-    rooms: unit?.rooms || '',
-    rent_cold: unit?.rent_cold || '',
-    status: unit?.status || 'vacant'
+export default function UnitForm({ unit, onSubmit }) {
+  const [formData, setFormData] = useState(unit || {
+    building_id: '',
+    einheit_nummer: '',
+    typ: 'Wohnung',
+    flaeche: '',
+    zimmer: '',
+    stockwerk: '',
+    beschreibung: ''
   });
 
   return (
     <div className="space-y-4">
       <VfInput
-        label="Einheitsnummer"
+        label="Einheit-Nummer"
         required
-        placeholder="z.B. 1A, EG links"
-        value={formData.unit_number}
-        onChange={(e) => setFormData({ ...formData, unit_number: e.target.value })}
+        placeholder="z.B. 3B, EG rechts"
+        value={formData.einheit_nummer}
+        onChange={(e) => setFormData({ ...formData, einheit_nummer: e.target.value })}
       />
 
       <VfSelect
         label="Typ"
-        value={formData.unit_type}
-        onChange={(v) => setFormData({ ...formData, unit_type: v })}
+        value={formData.typ}
+        onChange={(v) => setFormData({ ...formData, typ: v })}
         options={[
-          { value: 'apartment', label: 'Wohnung' },
-          { value: 'commercial', label: 'Gewerbe' },
-          { value: 'parking', label: 'Stellplatz' },
-          { value: 'storage', label: 'Lagerraum' }
+          { value: 'Wohnung', label: 'Wohnung' },
+          { value: 'Gewerbe', label: 'Gewerbe' },
+          { value: 'Lager', label: 'Lager' },
+          { value: 'Garage', label: 'Garage' }
         ]}
       />
 
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <VfInput
-          label="Wohnfläche (m²)"
+          label="Fläche"
           type="number"
-          value={formData.living_area}
-          onChange={(e) => setFormData({ ...formData, living_area: e.target.value })}
+          rightAddon="m²"
+          value={formData.flaeche}
+          onChange={(e) => setFormData({ ...formData, flaeche: e.target.value })}
         />
+
         <VfInput
           label="Zimmer"
           type="number"
-          step="0.5"
-          value={formData.rooms}
-          onChange={(e) => setFormData({ ...formData, rooms: e.target.value })}
+          value={formData.zimmer}
+          onChange={(e) => setFormData({ ...formData, zimmer: e.target.value })}
         />
       </div>
 
       <VfInput
-        label="Kaltmiete (€)"
-        type="number"
-        value={formData.rent_cold}
-        onChange={(e) => setFormData({ ...formData, rent_cold: e.target.value })}
+        label="Stockwerk"
+        placeholder="z.B. EG, 1. OG"
+        value={formData.stockwerk}
+        onChange={(e) => setFormData({ ...formData, stockwerk: e.target.value })}
       />
 
-      <VfSelect
-        label="Status"
-        value={formData.status}
-        onChange={(v) => setFormData({ ...formData, status: v })}
-        options={[
-          { value: 'vacant', label: 'Leer' },
-          { value: 'occupied', label: 'Vermietet' },
-          { value: 'maintenance', label: 'In Wartung' }
-        ]}
+      <VfTextarea
+        label="Beschreibung"
+        value={formData.beschreibung}
+        onChange={(e) => setFormData({ ...formData, beschreibung: e.target.value })}
+        rows={3}
       />
 
-      <div className="flex gap-3 pt-4">
-        <Button variant="secondary" onClick={onCancel} className="flex-1">
-          Abbrechen
-        </Button>
-        <Button 
-          variant="gradient"
-          onClick={() => onSubmit(formData)}
-          className="flex-1"
-        >
-          <Save className="h-4 w-4 mr-2" />
-          Speichern
-        </Button>
-      </div>
+      <Button variant="gradient" className="w-full" onClick={() => onSubmit(formData)}>
+        <Save className="h-4 w-4 mr-2" />
+        Speichern
+      </Button>
     </div>
   );
 }

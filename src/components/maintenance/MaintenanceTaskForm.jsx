@@ -6,13 +6,13 @@ import { VfDatePicker } from '@/components/shared/VfDatePicker';
 import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
 
-export default function MaintenanceTaskForm({ task, onSubmit, onCancel }) {
-  const [formData, setFormData] = useState({
-    title: task?.title || '',
-    description: task?.description || '',
-    priority: task?.priority || 'medium',
-    status: task?.status || 'open',
-    due_date: task?.due_date || ''
+export default function MaintenanceTaskForm({ task, onSubmit }) {
+  const [formData, setFormData] = useState(task || {
+    title: '',
+    description: '',
+    priority: 'Mittel',
+    due_date: '',
+    assigned_to: ''
   });
 
   return (
@@ -28,32 +28,20 @@ export default function MaintenanceTaskForm({ task, onSubmit, onCancel }) {
         label="Beschreibung"
         value={formData.description}
         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+        rows={4}
       />
 
-      <div className="grid md:grid-cols-2 gap-4">
-        <VfSelect
-          label="Priorität"
-          value={formData.priority}
-          onChange={(v) => setFormData({ ...formData, priority: v })}
-          options={[
-            { value: 'low', label: 'Niedrig' },
-            { value: 'medium', label: 'Mittel' },
-            { value: 'high', label: 'Hoch' },
-            { value: 'urgent', label: 'Dringend' }
-          ]}
-        />
-
-        <VfSelect
-          label="Status"
-          value={formData.status}
-          onChange={(v) => setFormData({ ...formData, status: v })}
-          options={[
-            { value: 'open', label: 'Offen' },
-            { value: 'in_progress', label: 'In Bearbeitung' },
-            { value: 'completed', label: 'Erledigt' }
-          ]}
-        />
-      </div>
+      <VfSelect
+        label="Priorität"
+        value={formData.priority}
+        onChange={(v) => setFormData({ ...formData, priority: v })}
+        options={[
+          { value: 'Niedrig', label: 'Niedrig' },
+          { value: 'Mittel', label: 'Mittel' },
+          { value: 'Hoch', label: 'Hoch' },
+          { value: 'Dringend', label: 'Dringend' }
+        ]}
+      />
 
       <VfDatePicker
         label="Fälligkeitsdatum"
@@ -61,19 +49,10 @@ export default function MaintenanceTaskForm({ task, onSubmit, onCancel }) {
         onChange={(v) => setFormData({ ...formData, due_date: v })}
       />
 
-      <div className="flex gap-3 pt-4">
-        <Button variant="secondary" onClick={onCancel} className="flex-1">
-          Abbrechen
-        </Button>
-        <Button 
-          variant="gradient"
-          onClick={() => onSubmit(formData)}
-          className="flex-1"
-        >
-          <Save className="h-4 w-4 mr-2" />
-          Speichern
-        </Button>
-      </div>
+      <Button variant="gradient" className="w-full" onClick={() => onSubmit(formData)}>
+        <Save className="h-4 w-4 mr-2" />
+        Speichern
+      </Button>
     </div>
   );
 }
