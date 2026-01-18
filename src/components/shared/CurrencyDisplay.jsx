@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-export default function CurrencyDisplay({ 
+export function CurrencyDisplay({ 
   amount, 
   currency = 'EUR',
   showSign = true,
@@ -25,3 +25,5 @@ export default function CurrencyDisplay({
     </span>
   );
 }
+
+export default CurrencyDisplay;
