@@ -3,24 +3,27 @@ import { Button } from '@/components/ui/button';
 import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function FavoriteButton({ entityId, entityType, initialState = false }) {
-  const [isFavorite, setIsFavorite] = useState(initialState);
+export default function FavoriteButton({ isFavorite: initialFavorite, onToggle }) {
+  const [isFavorite, setIsFavorite] = useState(initialFavorite);
 
-  const toggleFavorite = () => {
+  const handleClick = () => {
     setIsFavorite(!isFavorite);
-    console.log('Toggle favorite:', { entityId, entityType, isFavorite: !isFavorite });
+    if (onToggle) onToggle(!isFavorite);
   };
 
   return (
-    <Button 
-      variant="ghost" 
-      size="sm"
-      onClick={toggleFavorite}
-      className={cn(
-        isFavorite && "text-[var(--vf-accent-500)]"
-      )}
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={handleClick}
+      className="hover:text-[var(--vf-warning-500)]"
     >
-      <Star className={cn("h-4 w-4", isFavorite && "fill-current")} />
+      <Star 
+        className={cn(
+          "h-5 w-5",
+          isFavorite && "fill-[var(--vf-warning-500)] text-[var(--vf-warning-500)]"
+        )} 
+      />
     </Button>
   );
 }
