@@ -5,31 +5,28 @@ Deno.serve(async (req) => {
   
   try {
     const body = await req.json();
-    const { user_id, title, message, type, link, send_email } = body;
+    const { title, message, type, recipient_email, action_url } = body;
 
-    // Create notification
-    const notification = await base44.asServiceRole.entities.Notification.create({
-      user_id,
+    await base44.asServiceRole.entities.Notification.create({
       title,
-      message: message || null,
+      message,
       type: type || 'info',
-      link: link || null,
-      is_read: false
+      recipient_email,
+      action_url,
+      is_read: false,
+      channels: JSON.stringify(['in-app'])
     });
 
-    // Send email if requested
-    if (send_email) {
-      const user = await base44.asServiceRole.entities.User.get(user_id);
-      
+    // Send email if specified
+    if (recipient_email) {
       await base44.integrations.Core.SendEmail({
-        to: user.email,
+        to: recipient_email,
         subject: title,
-        body: message || title,
-        from_name: 'vermitify'
+        body: message
       });
     }
 
-    return Response.json({ success: true, notification });
+    return Response.json({ success: true });
     
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

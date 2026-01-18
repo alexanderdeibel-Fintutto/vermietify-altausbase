@@ -1,75 +1,68 @@
 import React, { useState } from 'react';
-import { VfModal } from '@/components/shared/VfModal';
 import { Button } from '@/components/ui/button';
-import { Compass, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Play, X } from 'lucide-react';
 
-export default function FeatureTourManager({ open, onClose, steps = [] }) {
+export default function FeatureTourManager({ tourSteps = [] }) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [isActive, setIsActive] = useState(false);
 
   const defaultSteps = [
-    {
-      title: 'Willkommen bei vermitify',
-      description: 'Lernen Sie die wichtigsten Funktionen kennen',
-      image: '🏠'
-    },
-    {
-      title: 'Objekte verwalten',
-      description: 'Fügen Sie Ihre Immobilien hinzu und verwalten Sie alle Details',
-      image: '🏢'
-    },
-    {
-      title: 'Mieter & Verträge',
-      description: 'Erfassen Sie Mieterdaten und erstellen Sie Verträge',
-      image: '📄'
-    }
+    { title: 'Willkommen', description: 'Lernen Sie die Hauptfunktionen kennen' },
+    { title: 'Objekte', description: 'Verwalten Sie Ihre Immobilien' },
+    { title: 'Dashboard', description: 'Behalten Sie den Überblick' }
   ];
 
-  const tourSteps = steps.length > 0 ? steps : defaultSteps;
-  const step = tourSteps[currentStep];
+  const steps = tourSteps.length > 0 ? tourSteps : defaultSteps;
+
+  if (!isActive) {
+    return (
+      <Button variant="outline" size="sm" onClick={() => setIsActive(true)}>
+        <Play className="h-4 w-4 mr-2" />
+        Tour starten
+      </Button>
+    );
+  }
 
   return (
-    <VfModal
-      open={open}
-      onOpenChange={onClose}
-      title="Feature-Tour"
-    >
-      <div className="text-center py-6">
-        <div className="text-6xl mb-4">{step.image}</div>
-        <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
-        <p className="text-[var(--theme-text-secondary)] mb-6">{step.description}</p>
-
-        <div className="flex items-center justify-center gap-2 mb-6">
-          {tourSteps.map((_, index) => (
-            <div
-              key={index}
-              className={`h-2 rounded-full transition-all ${
-                index === currentStep 
-                  ? 'w-8 bg-[var(--theme-primary)]' 
-                  : 'w-2 bg-[var(--theme-border)]'
-              }`}
-            />
-          ))}
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6">
+      <div className="bg-white rounded-xl p-6 max-w-md shadow-2xl">
+        <div className="flex items-start justify-between mb-4">
+          <div className="font-bold">{steps[currentStep].title}</div>
+          <button onClick={() => setIsActive(false)}>
+            <X className="h-5 w-5" />
+          </button>
         </div>
+        
+        <p className="text-sm text-[var(--theme-text-secondary)] mb-6">
+          {steps[currentStep].description}
+        </p>
 
-        <div className="flex gap-3 justify-center">
-          {currentStep > 0 && (
-            <Button variant="outline" onClick={() => setCurrentStep(currentStep - 1)}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Zurück
+        <div className="flex justify-between items-center">
+          <div className="text-xs text-[var(--theme-text-muted)]">
+            {currentStep + 1} von {steps.length}
+          </div>
+          <div className="flex gap-2">
+            {currentStep > 0 && (
+              <Button variant="outline" size="sm" onClick={() => setCurrentStep(currentStep - 1)}>
+                Zurück
+              </Button>
+            )}
+            <Button 
+              variant="gradient" 
+              size="sm"
+              onClick={() => {
+                if (currentStep < steps.length - 1) {
+                  setCurrentStep(currentStep + 1);
+                } else {
+                  setIsActive(false);
+                }
+              }}
+            >
+              {currentStep < steps.length - 1 ? 'Weiter' : 'Fertig'}
             </Button>
-          )}
-          {currentStep < tourSteps.length - 1 ? (
-            <Button variant="gradient" onClick={() => setCurrentStep(currentStep + 1)}>
-              Weiter
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          ) : (
-            <Button variant="gradient" onClick={onClose}>
-              Tour beenden
-            </Button>
-          )}
+          </div>
         </div>
       </div>
-    </VfModal>
+    </div>
   );
 }

@@ -10,15 +10,15 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { action, entity_type, entity_id, details } = body;
+    const { action, entity_type, entity_id, metadata } = body;
 
-    await base44.entities.AuditLog.create({
-      user_id: user.id,
+    await base44.asServiceRole.entities.ActivityLog.create({
+      user_email: user.email,
       action,
-      entity_type: entity_type || null,
-      entity_id: entity_id || null,
-      details: details || null,
-      ip_address: req.headers.get('x-forwarded-for') || 'unknown'
+      entity_type,
+      entity_id,
+      metadata: JSON.stringify(metadata || {}),
+      timestamp: new Date().toISOString()
     });
 
     return Response.json({ success: true });

@@ -1,30 +1,43 @@
 import React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Lightbulb } from 'lucide-react';
+import { Lightbulb, FileText, Calculator } from 'lucide-react';
 
-export default function ContextualQuickActions({ actions = [] }) {
-  if (actions.length === 0) return null;
+export default function ContextualQuickActions({ context = 'building' }) {
+  const actions = {
+    building: [
+      { icon: FileText, label: 'Vertrag erstellen', action: () => {} },
+      { icon: Calculator, label: 'BK berechnen', action: () => {} }
+    ],
+    tenant: [
+      { icon: FileText, label: 'Dokument senden', action: () => {} }
+    ]
+  };
+
+  const currentActions = actions[context] || [];
 
   return (
-    <div className="bg-[var(--vf-info-50)] border border-[var(--vf-info-200)] rounded-lg p-4">
-      <div className="flex items-start gap-3">
-        <Lightbulb className="h-5 w-5 text-[var(--vf-info-600)] flex-shrink-0 mt-0.5" />
-        <div className="flex-1">
-          <div className="font-semibold text-sm text-[var(--vf-info-900)] mb-2">Schnellaktionen</div>
-          <div className="flex flex-wrap gap-2">
-            {actions.map((action, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                size="sm"
-                onClick={action.onClick}
-              >
-                {action.label}
-              </Button>
-            ))}
-          </div>
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Lightbulb className="h-4 w-4 text-[var(--vf-warning-500)]" />
+          <span className="text-sm font-medium">Schnellaktionen</span>
         </div>
-      </div>
-    </div>
+        <div className="space-y-2">
+          {currentActions.map((action, index) => (
+            <Button 
+              key={index}
+              variant="outline" 
+              size="sm" 
+              className="w-full justify-start"
+              onClick={action.action}
+            >
+              <action.icon className="h-4 w-4 mr-2" />
+              {action.label}
+            </Button>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -1,40 +1,45 @@
 import React, { useState } from 'react';
 import { VfInput } from '@/components/shared/VfInput';
-import { Search } from 'lucide-react';
-import { useDebounce } from '@/components/hooks/useDebounce';
-import SearchResults from './SearchResults';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { VfSelect } from '@/components/shared/VfSelect';
+import { Button } from '@/components/ui/button';
+import { Search, SlidersHorizontal } from 'lucide-react';
 
-export default function AdvancedSearchBar() {
+export default function AdvancedSearchBar({ onSearch }) {
   const [query, setQuery] = useState('');
-  const [isFocused, setIsFocused] = useState(false);
-  const debouncedQuery = useDebounce(query, 300);
-
-  const { data: results = [] } = useQuery({
-    queryKey: ['search', debouncedQuery],
-    queryFn: async () => {
-      const response = await base44.functions.invoke('globalSearch', { query: debouncedQuery });
-      return response.data.results || [];
-    },
-    enabled: debouncedQuery.length >= 2
-  });
+  const [entityType, setEntityType] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
 
   return (
-    <div className="relative">
-      <VfInput
-        leftIcon={Search}
-        placeholder="Suchen Sie nach Objekten, Mietern, Verträgen..."
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-      />
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <VfInput
+          leftIcon={Search}
+          placeholder="Suchen Sie nach Objekten, Mietern, Verträgen..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="flex-1"
+        />
+        <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
+          <SlidersHorizontal className="h-4 w-4" />
+        </Button>
+        <Button variant="gradient" onClick={() => onSearch({ query, entityType })}>
+          Suchen
+        </Button>
+      </div>
 
-      {isFocused && query.length >= 2 && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[var(--theme-border)] rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto">
-          <SearchResults results={results} />
-        </div>
+      {showFilters && (
+        <VfSelect
+          label="Typ"
+          value={entityType}
+          onChange={setEntityType}
+          options={[
+            { value: 'all', label: 'Alle' },
+            { value: 'buildings', label: 'Objekte' },
+            { value: 'tenants', label: 'Mieter' },
+            { value: 'contracts', label: 'Verträge' },
+            { value: 'invoices', label: 'Rechnungen' }
+          ]}
+        />
       )}
     </div>
   );

@@ -1,27 +1,27 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Sparkles } from 'lucide-react';
 
-export default function FeatureShowcase({ title, description, children, beta = false }) {
+export default function FeatureShowcase({ features = [] }) {
+  const defaultFeatures = [
+    { icon: '🏢', title: 'Objekt-Verwaltung', description: 'Alle Immobilien an einem Ort' },
+    { icon: '👥', title: 'Mieter-Management', description: 'Verwalten Sie Ihre Mieter effizient' },
+    { icon: '📊', title: 'Berichte', description: 'Umfassende Finanzberichte' }
+  ];
+
+  const displayFeatures = features.length > 0 ? features : defaultFeatures;
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          {title}
-          {beta && (
-            <span className="vf-badge vf-badge-warning text-xs">
-              <Sparkles className="h-3 w-3 mr-1" />
-              Beta
-            </span>
-          )}
-        </CardTitle>
-        {description && (
-          <p className="text-sm text-[var(--theme-text-secondary)] mt-2">{description}</p>
-        )}
-      </CardHeader>
-      <CardContent>
-        {children}
-      </CardContent>
-    </Card>
+    <div className="grid md:grid-cols-3 gap-6">
+      {displayFeatures.map((feature, index) => (
+        <Card key={index} className="hover:shadow-lg transition-shadow">
+          <CardContent className="p-6 text-center">
+            <div className="text-4xl mb-3">{feature.icon}</div>
+            <h3 className="font-semibold mb-2">{feature.title}</h3>
+            <p className="text-sm text-[var(--theme-text-secondary)]">{feature.description}</p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }
