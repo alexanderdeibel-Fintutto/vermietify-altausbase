@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Sparkles, MessageSquare, Send } from 'lucide-react';
+import { Sparkles, MessageSquare, Send, TrendingUp } from 'lucide-react';
 import AICommunicationInsights from '@/components/communication/AICommunicationInsights';
 import AIResponseDrafter from '@/components/communication/AIResponseDrafter';
 import PersonalizedUpdateGenerator from '@/components/communication/PersonalizedUpdateGenerator';
