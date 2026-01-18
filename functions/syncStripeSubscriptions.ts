@@ -10,56 +10,33 @@ Deno.serve(async (req) => {
   
   try {
     const user = await base44.auth.me();
-    if (user?.role !== 'admin') {
-      return Response.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
-    // Get all Stripe subscriptions
-    const stripeSubscriptions = await stripe.subscriptions.list({ limit: 100 });
     
-    let synced = 0;
-    let errors = 0;
-
-    for (const stripeSub of stripeSubscriptions.data) {
-      try {
-        const customer = await stripe.customers.retrieve(stripeSub.customer);
-        const email = customer.email;
-
-        if (!email) continue;
-
-        // Check if subscription exists in our DB
-        const existing = await base44.asServiceRole.entities.UserSubscription.filter({
-          stripe_subscription_id: stripeSub.id
-        });
-
-        const status = stripeSub.status === 'active' ? 'ACTIVE' :
-                      stripeSub.status === 'trialing' ? 'TRIAL' :
-                      stripeSub.status === 'canceled' ? 'CANCELLED' : 'PAUSED';
-
-        const subData = {
-          user_email: email,
-          status,
-          stripe_subscription_id: stripeSub.id,
-          stripe_customer_id: stripeSub.customer,
-          next_billing_date: new Date(stripeSub.current_period_end * 1000).toISOString()
-        };
-
-        if (existing.length > 0) {
-          await base44.asServiceRole.entities.UserSubscription.update(existing[0].id, subData);
-        }
-        
-        synced++;
-      } catch (err) {
-        errors++;
-        console.error('Error syncing subscription:', err);
-      }
+    if (user?.role !== 'admin') {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
-    return Response.json({ 
-      success: true, 
-      synced,
-      errors
-    });
+    const subscriptions = stripe.subscriptions.list({ limit: 100 });
+    let synced = 0;
+
+    for await (const subscription of subscriptions) {
+      const userEmail = subscription.metadata?.user_email;
+      if (!userEmail) continue;
+
+      await base44.asServiceRole.entities.UserSubscription.create({
+        user_email: userEmail,
+        stripe_subscription_id: subscription.id,
+        stripe_customer_id: subscription.customer,
+        status: subscription.status === 'active' ? 'ACTIVE' : 'CANCELLED',
+        plan_id: subscription.metadata?.plan_id || 'unknown',
+        billing_cycle: subscription.items.data[0]?.price?.recurring?.interval === 'year' ? 'YEARLY' : 'MONTHLY',
+        start_date: new Date(subscription.created * 1000).toISOString(),
+        next_billing_date: new Date(subscription.current_period_end * 1000).toISOString()
+      });
+      
+      synced++;
+    }
+
+    return Response.json({ success: true, synced });
     
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

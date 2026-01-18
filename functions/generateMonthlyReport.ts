@@ -5,57 +5,39 @@ Deno.serve(async (req) => {
   
   try {
     const user = await base44.auth.me();
+    
     if (user?.role !== 'admin') {
-      return Response.json({ error: 'Admin access required' }, { status: 403 });
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
     const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Get all data for the month
-    const leads = await base44.asServiceRole.entities.Lead.list();
-    const calculations = await base44.asServiceRole.entities.CalculationHistory.list();
-    const subscriptions = await base44.asServiceRole.entities.UserSubscription.list();
+    const [invoices, payments, contracts] = await Promise.all([
+      base44.asServiceRole.entities.Invoice.filter({
+        created_date: { $gte: lastMonth.toISOString(), $lt: thisMonth.toISOString() }
+      }),
+      base44.asServiceRole.entities.ActualPayment.filter({
+        created_date: { $gte: lastMonth.toISOString(), $lt: thisMonth.toISOString() }
+      }),
+      base44.asServiceRole.entities.LeaseContract.filter({
+        created_date: { $gte: lastMonth.toISOString(), $lt: thisMonth.toISOString() }
+      })
+    ]);
 
-    const monthLeads = leads.filter(l => {
-      const created = new Date(l.created_date);
-      return created >= firstDay && created <= lastDay;
-    });
-
-    const monthCalculations = calculations.filter(c => {
-      const created = new Date(c.created_date);
-      return created >= firstDay && created <= lastDay;
-    });
-
-    const activeSubscriptions = subscriptions.filter(s => s.status === 'ACTIVE').length;
-    const trialSubscriptions = subscriptions.filter(s => s.status === 'TRIAL').length;
+    const totalIncome = payments.reduce((sum, p) => sum + (p.betrag || 0), 0);
+    const totalExpenses = invoices.filter(i => i.kategorie === 'expense').reduce((sum, i) => sum + (i.betrag || 0), 0);
 
     const report = {
-      period: {
-        month: now.getMonth() + 1,
-        year: now.getFullYear(),
-        start: firstDay.toISOString(),
-        end: lastDay.toISOString()
-      },
-      leads: {
-        total: leads.length,
-        new_this_month: monthLeads.length,
-        converted_this_month: monthLeads.filter(l => l.status === 'converted').length
-      },
-      calculations: {
-        total: calculations.length,
-        this_month: monthCalculations.length,
-        by_type: monthCalculations.reduce((acc, c) => {
-          acc[c.calculator_type] = (acc[c.calculator_type] || 0) + 1;
-          return acc;
-        }, {})
-      },
-      subscriptions: {
-        active: activeSubscriptions,
-        trial: trialSubscriptions,
-        total: subscriptions.length
-      }
+      period: lastMonth.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' }),
+      new_contracts: contracts.length,
+      total_invoices: invoices.length,
+      total_payments: payments.length,
+      total_income: totalIncome,
+      total_expenses: totalExpenses,
+      net_result: totalIncome - totalExpenses,
+      generated_at: new Date().toISOString()
     };
 
     return Response.json(report);

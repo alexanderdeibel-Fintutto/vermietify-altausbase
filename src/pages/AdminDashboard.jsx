@@ -1,47 +1,28 @@
 import React from 'react';
-import { VfDashboard } from '@/components/dashboards/VfDashboard';
+import PageHeader from '@/components/shared/PageHeader';
 import MetricsOverview from '@/components/admin/MetricsOverview';
-import RecentActivityWidget from '@/components/dashboards/RecentActivityWidget';
-import { Button } from '@/components/ui/button';
-import { Download, TrendingUp } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
+import ActivityAuditLog from '@/components/admin/ActivityAuditLog';
+import SystemHealthMonitor from '@/components/admin/SystemHealthMonitor';
+import QuickActions from '@/components/admin/QuickActions';
 
 export default function AdminDashboard() {
   return (
-    <VfDashboard
-      greeting="Admin Dashboard 👨‍💼"
-      date={new Date().toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-    >
+    <div className="p-6 max-w-7xl mx-auto">
+      <PageHeader
+        title="Admin Dashboard"
+        subtitle="System-Übersicht und Verwaltung"
+      />
+
       <MetricsOverview />
 
       <div className="grid lg:grid-cols-2 gap-6 mt-6">
-        <RecentActivityWidget />
-        
-        <div className="space-y-4">
-          <Link to={createPageUrl('AdminLeadDashboard')}>
-            <Button variant="outline" className="w-full justify-start">
-              <TrendingUp className="h-4 w-4 mr-2" />
-              Lead Analytics
-            </Button>
-          </Link>
-          <Link to={createPageUrl('AdminSubscriptionOverview')}>
-            <Button variant="outline" className="w-full justify-start">
-              💳 Abonnement-Übersicht
-            </Button>
-          </Link>
-          <Link to={createPageUrl('AdminUserManagement')}>
-            <Button variant="outline" className="w-full justify-start">
-              👥 Benutzer-Verwaltung
-            </Button>
-          </Link>
-          <Link to={createPageUrl('LeadManagement')}>
-            <Button variant="outline" className="w-full justify-start">
-              🎯 Lead Management
-            </Button>
-          </Link>
-        </div>
+        <SystemHealthMonitor />
+        <ActivityAuditLog />
       </div>
-    </VfDashboard>
+
+      <div className="mt-6">
+        <QuickActions />
+      </div>
+    </div>
   );
 }
