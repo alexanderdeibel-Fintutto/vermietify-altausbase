@@ -1,23 +1,27 @@
 import React from 'react';
 import PageHeader from '@/components/shared/PageHeader';
-import InvestmentPlanner from '@/components/planning/InvestmentPlanner';
-import LoanTracker from '@/components/finance/LoanTracker';
+import FinancialForecastWidget from '@/components/financial-analysis/FinancialForecastWidget';
+import ROIDashboard from '@/components/financial-analysis/ROIDashboard';
 import CashflowForecast from '@/components/finance/CashflowForecast';
+import BudgetTracker from '@/components/finance/BudgetTracker';
 
 export default function FinancialPlanning() {
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto">
       <PageHeader
         title="Finanzplanung"
-        subtitle="Planen Sie Ihre Investitionen und verwalten Sie Ihre Finanzen"
+        subtitle="Prognosen und Budgetierung"
       />
 
-      <div className="grid lg:grid-cols-2 gap-6 mb-6">
-        <InvestmentPlanner />
-        <LoanTracker />
+      <div className="grid lg:grid-cols-2 gap-6 mt-6">
+        <FinancialForecastWidget />
+        <CashflowForecast months={6} />
       </div>
 
-      <CashflowForecast months={12} />
+      <div className="grid lg:grid-cols-2 gap-6 mt-6">
+        <ROIDashboard />
+        <BudgetTracker />
+      </div>
     </div>
   );
 }

@@ -1,25 +1,25 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { VfSelect } from '@/components/shared/VfSelect';
+import { VfDatePicker } from '@/components/shared/VfDatePicker';
 import { VfCheckbox } from '@/components/shared/VfCheckbox';
 import { Button } from '@/components/ui/button';
-import { FileBarChart, Download } from 'lucide-react';
-import DateRangeSelector from '@/components/shared/DateRangeSelector';
+import { FileText, Play } from 'lucide-react';
 
-export default function CustomReportBuilder({ onGenerate }) {
+export default function CustomReportBuilder() {
   const [config, setConfig] = useState({
-    reportType: 'financial',
-    dateRange: { from: null, to: null },
+    type: 'financial',
+    dateFrom: '',
+    dateTo: '',
     includeCharts: true,
-    includeDetails: true,
-    format: 'pdf'
+    includeDetails: false
   });
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <FileBarChart className="h-5 w-5" />
+          <FileText className="h-5 w-5" />
           Bericht erstellen
         </CardTitle>
       </CardHeader>
@@ -27,51 +27,41 @@ export default function CustomReportBuilder({ onGenerate }) {
         <div className="space-y-4">
           <VfSelect
             label="Berichtstyp"
-            value={config.reportType}
-            onChange={(v) => setConfig({ ...config, reportType: v })}
+            value={config.type}
+            onChange={(v) => setConfig({ ...config, type: v })}
             options={[
               { value: 'financial', label: 'Finanzbericht' },
-              { value: 'occupancy', label: 'Belegungsbericht' },
-              { value: 'maintenance', label: 'Wartungsbericht' },
-              { value: 'tax', label: 'Steuerbericht' }
+              { value: 'occupancy', label: 'Auslastungsbericht' },
+              { value: 'maintenance', label: 'Wartungsbericht' }
             ]}
           />
 
-          <DateRangeSelector
-            value={config.dateRange}
-            onChange={(range) => setConfig({ ...config, dateRange: range })}
+          <VfDatePicker
+            label="Von"
+            value={config.dateFrom}
+            onChange={(v) => setConfig({ ...config, dateFrom: v })}
           />
 
-          <div className="space-y-2">
-            <VfCheckbox
-              checked={config.includeCharts}
-              onCheckedChange={(v) => setConfig({ ...config, includeCharts: v })}
-              label="Diagramme einschließen"
-            />
-            <VfCheckbox
-              checked={config.includeDetails}
-              onCheckedChange={(v) => setConfig({ ...config, includeDetails: v })}
-              label="Detailansicht"
-            />
-          </div>
-
-          <VfSelect
-            label="Format"
-            value={config.format}
-            onChange={(v) => setConfig({ ...config, format: v })}
-            options={[
-              { value: 'pdf', label: 'PDF' },
-              { value: 'excel', label: 'Excel' },
-              { value: 'csv', label: 'CSV' }
-            ]}
+          <VfDatePicker
+            label="Bis"
+            value={config.dateTo}
+            onChange={(v) => setConfig({ ...config, dateTo: v })}
           />
 
-          <Button 
-            variant="gradient"
-            className="w-full"
-            onClick={() => onGenerate(config)}
-          >
-            <Download className="h-4 w-4 mr-2" />
+          <VfCheckbox
+            label="Diagramme einschließen"
+            checked={config.includeCharts}
+            onCheckedChange={(v) => setConfig({ ...config, includeCharts: v })}
+          />
+
+          <VfCheckbox
+            label="Detaillierte Aufschlüsselung"
+            checked={config.includeDetails}
+            onCheckedChange={(v) => setConfig({ ...config, includeDetails: v })}
+          />
+
+          <Button variant="gradient" className="w-full">
+            <Play className="h-4 w-4 mr-2" />
             Bericht generieren
           </Button>
         </div>

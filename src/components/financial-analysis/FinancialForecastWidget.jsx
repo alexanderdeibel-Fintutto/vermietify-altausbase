@@ -1,14 +1,16 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import SimpleLineChart from '@/components/charts/SimpleLineChart';
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { TrendingUp } from 'lucide-react';
 
 export default function FinancialForecastWidget() {
   const data = [
-    { name: 'Q1', Einnahmen: 45000, Ausgaben: 28000 },
-    { name: 'Q2', Einnahmen: 48000, Ausgaben: 29500 },
-    { name: 'Q3', Einnahmen: 46500, Ausgaben: 27800 },
-    { name: 'Q4', Einnahmen: 51000, Ausgaben: 31200 }
+    { month: 'Jan', actual: 12000, forecast: 12500 },
+    { month: 'Feb', actual: 11800, forecast: 12800 },
+    { month: 'Mar', actual: 12400, forecast: 13100 },
+    { month: 'Apr', forecast: 13200 },
+    { month: 'Mai', forecast: 13500 },
+    { month: 'Jun', forecast: 13800 }
   ];
 
   return (
@@ -20,7 +22,15 @@ export default function FinancialForecastWidget() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <SimpleLineChart data={data} height={250} />
+        <ResponsiveContainer width="100%" height={250}>
+          <LineChart data={data}>
+            <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+            <YAxis tick={{ fontSize: 12 }} />
+            <Tooltip />
+            <Line type="monotone" dataKey="actual" stroke="var(--theme-primary)" strokeWidth={2} name="Ist" />
+            <Line type="monotone" dataKey="forecast" stroke="var(--vf-accent-500)" strokeWidth={2} strokeDasharray="5 5" name="Prognose" />
+          </LineChart>
+        </ResponsiveContainer>
       </CardContent>
     </Card>
   );
