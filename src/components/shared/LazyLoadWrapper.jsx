@@ -1,9 +1,9 @@
 import React, { Suspense } from 'react';
-import LoadingSpinner from './LoadingSpinner';
+import LoadingFallback from './LoadingFallback';
 
 export default function LazyLoadWrapper({ children, fallback }) {
   return (
-    <Suspense fallback={fallback || <LoadingSpinner />}>
+    <Suspense fallback={fallback || <LoadingFallback />}>
       {children}
     </Suspense>
   );

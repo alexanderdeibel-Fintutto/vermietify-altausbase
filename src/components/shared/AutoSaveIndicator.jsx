@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, Loader2 } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 
 export default function AutoSaveIndicator({ isSaving, lastSaved }) {
   return (
@@ -7,12 +7,12 @@ export default function AutoSaveIndicator({ isSaving, lastSaved }) {
       {isSaving ? (
         <>
           <Loader2 className="h-3 w-3 animate-spin" />
-          <span>Speichern...</span>
+          <span>Speichert...</span>
         </>
       ) : lastSaved ? (
         <>
-          <CheckCircle className="h-3 w-3 text-[var(--vf-success-500)]" />
-          <span>Gespeichert um {new Date(lastSaved).toLocaleTimeString('de-DE')}</span>
+          <Check className="h-3 w-3 text-[var(--vf-success-500)]" />
+          <span>Gespeichert um {new Date(lastSaved).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</span>
         </>
       ) : null}
     </div>

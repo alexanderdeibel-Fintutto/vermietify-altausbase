@@ -1,52 +1,52 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Building2, Users, FileText, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
+import { Plus, FileText, Users, Building, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function FloatingActionMenu() {
   const [isOpen, setIsOpen] = useState(false);
-  const navigate = useNavigate();
 
   const actions = [
-    { icon: Building2, label: 'Objekt', page: 'Buildings' },
-    { icon: Users, label: 'Mieter', page: 'Tenants' },
-    { icon: FileText, label: 'Vertrag', page: 'Contracts' }
+    { icon: Building, label: 'Objekt', color: 'bg-blue-500' },
+    { icon: Users, label: 'Mieter', color: 'bg-green-500' },
+    { icon: FileText, label: 'Vertrag', color: 'bg-purple-500' }
   ];
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
-      <div className={cn(
-        "flex flex-col-reverse gap-3 mb-3 transition-all",
-        isOpen ? "opacity-100 scale-100" : "opacity-0 scale-0 pointer-events-none"
-      )}>
-        {actions.map((action) => {
-          const Icon = action.icon;
-          return (
-            <div key={action.page} className="flex items-center gap-3">
-              <span className="text-sm font-medium bg-white px-3 py-1 rounded-full shadow-lg">
-                {action.label}
-              </span>
-              <Button
-                onClick={() => {
-                  navigate(createPageUrl(action.page));
-                  setIsOpen(false);
-                }}
-                className="w-12 h-12 rounded-full shadow-lg"
-                variant="gradient"
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="mb-4 space-y-2"
+          >
+            {actions.map((action, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="flex items-center gap-3"
               >
-                <Icon className="h-5 w-5" />
-              </Button>
-            </div>
-          );
-        })}
-      </div>
+                <span className="text-sm font-medium bg-white px-3 py-1 rounded-lg shadow-md">
+                  {action.label}
+                </span>
+                <button className={`${action.color} text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform`}>
+                  <action.icon className="h-5 w-5" />
+                </button>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <Button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 rounded-full shadow-xl"
         variant="gradient"
+        size="icon"
+        onClick={() => setIsOpen(!isOpen)}
+        className="h-14 w-14 rounded-full shadow-xl"
       >
         {isOpen ? <X className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
       </Button>

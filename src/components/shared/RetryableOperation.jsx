@@ -1,28 +1,28 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, AlertCircle } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 
-export default function RetryableOperation({ 
-  error, 
-  onRetry, 
-  maxRetries = 3,
-  currentRetry = 0 
-}) {
-  if (!error) return null;
+export default function RetryableOperation({ onRetry, error }) {
+  const [retrying, setRetrying] = useState(false);
+
+  const handleRetry = async () => {
+    setRetrying(true);
+    try {
+      await onRetry();
+    } finally {
+      setRetrying(false);
+    }
+  };
 
   return (
-    <div className="p-6 text-center">
-      <AlertCircle className="h-12 w-12 mx-auto mb-4 text-[var(--vf-error-500)]" />
+    <div className="text-center py-8">
+      <div className="text-4xl mb-4">⚠️</div>
       <h3 className="font-semibold mb-2">Ein Fehler ist aufgetreten</h3>
-      <p className="text-sm text-[var(--theme-text-secondary)] mb-4">
-        {error.message || 'Unbekannter Fehler'}
-      </p>
-      {currentRetry < maxRetries && (
-        <Button variant="outline" onClick={onRetry}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Erneut versuchen ({currentRetry + 1}/{maxRetries})
-        </Button>
-      )}
+      <p className="text-sm text-[var(--theme-text-secondary)] mb-4">{error}</p>
+      <Button variant="gradient" onClick={handleRetry} disabled={retrying}>
+        <RefreshCw className={`h-4 w-4 mr-2 ${retrying ? 'animate-spin' : ''}`} />
+        Erneut versuchen
+      </Button>
     </div>
   );
 }

@@ -1,25 +1,13 @@
-import { useEffect } from 'react';
+import React from 'react';
 
-export default function AccessibilityHelper() {
-  useEffect(() => {
-    const handleTabKey = (e) => {
-      if (e.key === 'Tab') {
-        document.body.classList.add('keyboard-nav');
-      }
-    };
-
-    const handleMouseDown = () => {
-      document.body.classList.remove('keyboard-nav');
-    };
-
-    window.addEventListener('keydown', handleTabKey);
-    window.addEventListener('mousedown', handleMouseDown);
-
-    return () => {
-      window.removeEventListener('keydown', handleTabKey);
-      window.removeEventListener('mousedown', handleMouseDown);
-    };
-  }, []);
-
-  return null;
+export default function AccessibilityHelper({ ariaLabel, ariaDescribedBy, children }) {
+  return (
+    <div 
+      role="region"
+      aria-label={ariaLabel}
+      aria-describedby={ariaDescribedBy}
+    >
+      {children}
+    </div>
+  );
 }
