@@ -5,22 +5,23 @@ Deno.serve(async (req) => {
   
   try {
     const user = await base44.auth.me();
+    
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await req.json();
-    const { entity_type, entity_id, task_title, task_description, due_date } = body;
+    const { title, description, entity_type, entity_id, due_date, priority } = body;
 
     const task = await base44.entities.Task.create({
-      title: task_title,
-      description: task_description || null,
-      due_date: due_date || null,
-      status: 'pending',
-      priority: 'normal',
-      related_entity: entity_type,
-      related_entity_id: entity_id,
-      assigned_to: user.email
+      titel: title,
+      beschreibung: description,
+      quelle_typ: entity_type,
+      quelle_id: entity_id,
+      faelligkeitsdatum: due_date,
+      prioritaet: priority || 'Mittel',
+      status: 'Offen',
+      kategorie: 'Verwaltung'
     });
 
     return Response.json({ success: true, task });
