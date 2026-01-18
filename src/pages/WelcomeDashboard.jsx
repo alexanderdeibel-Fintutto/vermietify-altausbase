@@ -1,10 +1,10 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import CustomizableDashboard from '@/components/dashboard/CustomizableDashboard';
-import DashboardBookmarks from '@/components/dashboard/DashboardBookmarks';
-import QuickActionsMenu from '@/components/dashboard/QuickActionsMenu';
-import ActivityFeed from '@/components/shared/ActivityFeed';
+import WelcomeScreen from '@/components/onboarding/WelcomeScreen';
+import OnboardingResumeCard from '@/components/dashboard/OnboardingResumeCard';
+import QuickStatsWidget from '@/components/dashboard/widgets/QuickStatsWidget';
+import FeatureShowcase from '@/components/demo/FeatureShowcase';
 
 export default function WelcomeDashboard() {
   const { data: user } = useQuery({
@@ -12,32 +12,36 @@ export default function WelcomeDashboard() {
     queryFn: () => base44.auth.me()
   });
 
+  const { data: buildings = [] } = useQuery({
+    queryKey: ['buildings'],
+    queryFn: () => base44.entities.Building.list()
+  });
+
+  const isNewUser = buildings.length === 0;
+
+  if (isNewUser) {
+    return <WelcomeScreen onStart={() => {}} />;
+  }
+
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">
           Willkommen zurück, {user?.full_name?.split(' ')[0]}! 👋
         </h1>
-        <p className="text-[var(--theme-text-secondary)] mt-1">
-          {new Date().toLocaleDateString('de-DE', { 
-            weekday: 'long', 
-            day: 'numeric', 
-            month: 'long', 
-            year: 'numeric' 
-          })}
+        <p className="text-[var(--theme-text-secondary)]">
+          Hier ist Ihr Überblick für heute
         </p>
       </div>
 
-      <QuickActionsMenu />
-
-      <div className="mt-6">
-        <CustomizableDashboard />
+      <div className="grid lg:grid-cols-3 gap-6 mb-6">
+        <div className="lg:col-span-2">
+          <QuickStatsWidget />
+        </div>
+        <OnboardingResumeCard />
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6 mt-6">
-        <DashboardBookmarks />
-        <ActivityFeed />
-      </div>
+      <FeatureShowcase />
     </div>
   );
 }

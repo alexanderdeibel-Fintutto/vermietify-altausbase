@@ -1,21 +1,23 @@
 import React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Play } from 'lucide-react';
 
-export default function VideoTutorialInline({ videoId, title }) {
+export default function VideoTutorialInline({ title, videoUrl, duration = '2:30' }) {
   return (
-    <div className="bg-[var(--vf-info-50)] border border-[var(--vf-info-200)] rounded-lg p-4">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-[var(--vf-info-500)] flex items-center justify-center text-white flex-shrink-0">
-          <Play className="h-5 w-5 ml-0.5" />
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+      <CardContent className="p-0">
+        <div className="relative aspect-video bg-gradient-to-br from-[var(--vf-primary-100)] to-[var(--vf-accent-100)] flex items-center justify-center">
+          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg">
+            <Play className="h-8 w-8 text-[var(--theme-primary)] ml-1" />
+          </div>
+          <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+            {duration}
+          </div>
         </div>
-        <div className="flex-1">
-          <div className="font-semibold text-sm text-[var(--vf-info-900)]">Video-Tutorial</div>
-          <div className="text-sm text-[var(--vf-info-700)]">{title}</div>
+        <div className="p-4">
+          <h4 className="font-medium">{title}</h4>
         </div>
-        <button className="text-[var(--vf-info-600)] hover:text-[var(--vf-info-700)] font-medium text-sm">
-          Ansehen →
-        </button>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

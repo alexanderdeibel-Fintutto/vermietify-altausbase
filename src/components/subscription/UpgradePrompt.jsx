@@ -1,47 +1,21 @@
 import React from 'react';
-import { VfModal } from '@/components/shared/VfModal';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Lock, Zap } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
+import { Sparkles } from 'lucide-react';
 
-export default function UpgradePrompt({ 
-  open, 
-  onClose, 
-  feature,
-  requiredPlan = 'Professional' 
-}) {
+export default function UpgradePrompt({ feature }) {
   return (
-    <VfModal
-      open={open}
-      onOpenChange={onClose}
-      title="Upgrade erforderlich"
-    >
-      <div className="text-center py-6">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--vf-gradient-primary)] flex items-center justify-center">
-          <Lock className="h-8 w-8 text-white" />
-        </div>
-
-        <h3 className="text-xl font-semibold mb-2">
-          {feature || 'Diese Funktion'} ist im {requiredPlan}-Plan verfügbar
-        </h3>
-
-        <p className="text-[var(--theme-text-secondary)] mb-6">
-          Upgraden Sie jetzt und nutzen Sie alle Features ohne Einschränkungen
+    <Card className="border-2 border-[var(--vf-accent-200)]">
+      <CardContent className="p-6 text-center">
+        <Sparkles className="h-12 w-12 mx-auto mb-4 text-[var(--vf-accent-500)]" />
+        <h3 className="font-semibold text-lg mb-2">Premium-Feature</h3>
+        <p className="text-sm text-[var(--theme-text-secondary)] mb-4">
+          {feature || 'Diese Funktion'} ist in Ihrem aktuellen Plan nicht verfügbar.
         </p>
-
-        <div className="space-y-3">
-          <Link to={createPageUrl('Pricing')}>
-            <Button variant="gradient" size="lg" className="w-full">
-              <Zap className="h-5 w-5 mr-2" />
-              Jetzt upgraden
-            </Button>
-          </Link>
-          <Button variant="outline" className="w-full" onClick={onClose}>
-            Später
-          </Button>
-        </div>
-      </div>
-    </VfModal>
+        <Button variant="gradient" className="w-full">
+          Jetzt upgraden
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
