@@ -507,6 +507,7 @@ import VermieterProfilSettings from './pages/VermieterProfilSettings';
 import VermitifyAGB from './pages/VermitifyAGB';
 import VermitifyAboutUs from './pages/VermitifyAboutUs';
 import VermitifyBlog from './pages/VermitifyBlog';
+import VermitifyCareer from './pages/VermitifyCareer';
 import VermitifyCaseStudies from './pages/VermitifyCaseStudies';
 import VermitifyChangelog from './pages/VermitifyChangelog';
 import VermitifyComparison from './pages/VermitifyComparison';
@@ -529,6 +530,7 @@ import VermitifyRoadmap from './pages/VermitifyRoadmap';
 import VermitifySignup from './pages/VermitifySignup';
 import VermitifySitemap from './pages/VermitifySitemap';
 import VermitifyStatusPage from './pages/VermitifyStatusPage';
+import VermitifySupport from './pages/VermitifySupport';
 import VermitifyTestimonials from './pages/VermitifyTestimonials';
 import VermitifyToolsOverview from './pages/VermitifyToolsOverview';
 import VideoTutorials from './pages/VideoTutorials';
@@ -561,8 +563,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import VermitifySupport from './pages/VermitifySupport';
-import VermitifyCareer from './pages/VermitifyCareer';
 import __Layout from './Layout.jsx';
 
 
@@ -1076,6 +1076,7 @@ export const PAGES = {
     "VermitifyAGB": VermitifyAGB,
     "VermitifyAboutUs": VermitifyAboutUs,
     "VermitifyBlog": VermitifyBlog,
+    "VermitifyCareer": VermitifyCareer,
     "VermitifyCaseStudies": VermitifyCaseStudies,
     "VermitifyChangelog": VermitifyChangelog,
     "VermitifyComparison": VermitifyComparison,
@@ -1098,6 +1099,7 @@ export const PAGES = {
     "VermitifySignup": VermitifySignup,
     "VermitifySitemap": VermitifySitemap,
     "VermitifyStatusPage": VermitifyStatusPage,
+    "VermitifySupport": VermitifySupport,
     "VermitifyTestimonials": VermitifyTestimonials,
     "VermitifyToolsOverview": VermitifyToolsOverview,
     "VideoTutorials": VideoTutorials,
@@ -1130,8 +1132,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "VermitifySupport": VermitifySupport,
-    "VermitifyCareer": VermitifyCareer,
 }
 
 export const pagesConfig = {
