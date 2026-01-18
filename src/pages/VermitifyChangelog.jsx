@@ -1,102 +1,96 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Sparkles, Bug, Zap, FileText } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Sparkles, Wrench, Bug, Shield } from 'lucide-react';
 
 export default function VermitifyChangelog() {
-  const updates = [
+  const releases = [
     {
-      version: 'v2.0.0',
-      date: '17. Januar 2026',
-      type: 'major',
-      items: [
-        { type: 'feature', text: 'Komplett neues Design System "Vermitify"' },
-        { type: 'feature', text: '9 kostenlose Tools für Vermieter' },
-        { type: 'feature', text: 'Lead Capture & Marketing-Funktionen' },
-        { type: 'feature', text: '5 verschiedene Themes (Vermieter, Mieter, B2B, Komfort, Invest)' },
-        { type: 'improvement', text: 'Komplett responsive Design' },
-        { type: 'improvement', text: 'Performance-Optimierung (50% schneller)' }
+      version: '2.1.0',
+      date: '2026-01-15',
+      changes: [
+        { type: 'feature', text: 'Vollständiger BK-Abrechnungs-Wizard mit BetrKV-Compliance' },
+        { type: 'feature', text: 'Anlage V Generator mit ELSTER-Export' },
+        { type: 'feature', text: 'KI-gestützte Dokumenten-Kategorisierung' },
+        { type: 'improvement', text: 'Verbesserte mobile Navigation' }
       ]
     },
     {
-      version: 'v1.8.2',
-      date: '10. Dezember 2025',
-      type: 'minor',
-      items: [
-        { type: 'feature', text: 'LetterXpress Integration für Briefversand' },
-        { type: 'feature', text: 'VPI-Index automatisches Update' },
-        { type: 'bug', text: 'BK-Abrechnung Rundungsfehler behoben' },
-        { type: 'improvement', text: 'ELSTER-Export verbessert' }
+      version: '2.0.0',
+      date: '2025-12-20',
+      changes: [
+        { type: 'feature', text: 'Mieter-Portal mit Self-Service' },
+        { type: 'feature', text: 'finAPI Banking-Integration' },
+        { type: 'feature', text: 'Automatische Zahlungszuordnung' },
+        { type: 'improvement', text: 'Redesign der Benutzeroberfläche' },
+        { type: 'bugfix', text: 'Fehler bei Mieterhöhungen behoben' }
       ]
     },
     {
-      version: 'v1.8.0',
-      date: '1. November 2025',
-      type: 'minor',
-      items: [
-        { type: 'feature', text: 'Anlage V Generator mit KI-Unterstützung' },
-        { type: 'feature', text: 'Automatische Kategorisierung von Belegen' },
-        { type: 'bug', text: 'Mieterportal Login-Problem behoben' }
+      version: '1.5.0',
+      date: '2025-11-10',
+      changes: [
+        { type: 'feature', text: 'Multi-Objekt-Verwaltung' },
+        { type: 'feature', text: 'Aufgaben-Management mit Workflows' },
+        { type: 'security', text: 'Zwei-Faktor-Authentifizierung' }
       ]
     }
   ];
 
-  const typeIcons = {
-    feature: { icon: Sparkles, color: 'text-[var(--vf-success-500)]', label: 'Neu' },
-    improvement: { icon: Zap, color: 'text-[var(--vf-info-500)]', label: 'Verbessert' },
-    bug: { icon: Bug, color: 'text-[var(--vf-error-500)]', label: 'Fix' },
-    docs: { icon: FileText, color: 'text-[var(--vf-neutral-500)]', label: 'Doku' }
+  const typeConfig = {
+    feature: { icon: Sparkles, label: 'Neu', color: 'vf-badge-success' },
+    improvement: { icon: Wrench, label: 'Verbesserung', color: 'vf-badge-info' },
+    bugfix: { icon: Bug, label: 'Bugfix', color: 'vf-badge-warning' },
+    security: { icon: Shield, label: 'Sicherheit', color: 'vf-badge-error' }
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Changelog</h1>
-        <p className="text-[var(--theme-text-secondary)]">
-          Alle Updates und Verbesserungen
-        </p>
-      </div>
+    <div className="min-h-screen bg-[var(--theme-background)] py-12">
+      <div className="max-w-4xl mx-auto px-6">
+        <div className="mb-12 text-center">
+          <h1 className="text-4xl font-bold mb-4 vf-gradient-text">Changelog</h1>
+          <p className="text-lg text-[var(--theme-text-secondary)]">
+            Alle Neuerungen und Verbesserungen auf einen Blick
+          </p>
+        </div>
 
-      <div className="space-y-8">
-        {updates.map((update, index) => (
-          <Card key={index}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3">
-                <span>{update.version}</span>
-                <span className={cn(
-                  "vf-badge",
-                  update.type === 'major' ? "vf-badge-gradient" : "vf-badge-default"
-                )}>
-                  {update.type === 'major' ? 'Major Release' : 'Update'}
-                </span>
-                <span className="text-sm font-normal text-[var(--theme-text-muted)] ml-auto">
-                  {update.date}
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {update.items.map((item, itemIndex) => {
-                  const iconData = typeIcons[item.type];
-                  const ItemIcon = iconData.icon;
-                  
-                  return (
-                    <li key={itemIndex} className="flex items-start gap-3">
-                      <div className={cn("mt-0.5", iconData.color)}>
-                        <ItemIcon className="h-4 w-4" />
+        <div className="space-y-6">
+          {releases.map((release) => (
+            <Card key={release.version}>
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-2xl font-bold">Version {release.version}</h2>
+                    <p className="text-sm text-[var(--theme-text-muted)]">
+                      {new Date(release.date).toLocaleDateString('de-DE', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {release.changes.map((change, idx) => {
+                    const config = typeConfig[change.type];
+                    const Icon = config.icon;
+                    
+                    return (
+                      <div key={idx} className="flex items-start gap-3">
+                        <div className={`vf-badge ${config.color} flex items-center gap-1`}>
+                          <Icon className="h-3 w-3" />
+                          {config.label}
+                        </div>
+                        <span className="flex-1 text-sm">{change.text}</span>
                       </div>
-                      <div className="flex-1">
-                        <span className={cn("vf-badge vf-badge-sm mr-2", iconData.color)}>
-                          {iconData.label}
-                        </span>
-                        {item.text}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </CardContent>
-          </Card>
-        ))}
+                    );
+                  })}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );
