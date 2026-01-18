@@ -542,6 +542,14 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
+import SettingsIntegrations from './pages/SettingsIntegrations';
+import SettingsAppearance from './pages/SettingsAppearance';
+import UnitDetailEnhanced from './pages/UnitDetailEnhanced';
+import TenantDetailEnhanced from './pages/TenantDetailEnhanced';
+import ContractDetailEnhanced from './pages/ContractDetailEnhanced';
+import BKAbrechnungWizardEnhanced from './pages/BKAbrechnungWizardEnhanced';
+import AnlageVWizardEnhanced from './pages/AnlageVWizardEnhanced';
+import OnboardingEnhanced from './pages/OnboardingEnhanced';
 import __Layout from './Layout.jsx';
 
 
@@ -1090,6 +1098,14 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
+    "SettingsIntegrations": SettingsIntegrations,
+    "SettingsAppearance": SettingsAppearance,
+    "UnitDetailEnhanced": UnitDetailEnhanced,
+    "TenantDetailEnhanced": TenantDetailEnhanced,
+    "ContractDetailEnhanced": ContractDetailEnhanced,
+    "BKAbrechnungWizardEnhanced": BKAbrechnungWizardEnhanced,
+    "AnlageVWizardEnhanced": AnlageVWizardEnhanced,
+    "OnboardingEnhanced": OnboardingEnhanced,
 }
 
 export const pagesConfig = {

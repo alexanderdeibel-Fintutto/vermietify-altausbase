@@ -10,116 +10,76 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
-  
+
   const base44 = createClientFromRequest(req);
-  
+
   try {
-    const body = await req.json();
-    
-    const {
-      quiz_type,
-      answers,
-      lead_id,
-      duration_seconds
-    } = body;
-    
+    const { quiz_type, answers, lead_id, duration_seconds } = await req.json();
+
     if (!quiz_type || !answers) {
-      return Response.json(
-        { success: false, error: 'Quiz-Typ und Antworten erforderlich' },
-        { status: 400, headers: corsHeaders }
-      );
+      return Response.json({ success: false, error: 'Quiz-Typ und Antworten erforderlich' }, { status: 400, headers: corsHeaders });
     }
-    
-    // Evaluate quiz
-    const evaluation = evaluateQuiz(quiz_type, answers);
-    
-    // Save quiz result
+
+    const { score, maxScore, category, recommendations } = evaluateQuiz(quiz_type, answers);
+
     const result = await base44.asServiceRole.entities.QuizResult.create({
       lead_id: lead_id || null,
       quiz_type,
-      answers,
-      score: evaluation.score,
-      max_score: evaluation.maxScore,
-      result_category: evaluation.category,
-      recommendations: evaluation.recommendations,
+      answers: JSON.stringify(answers),
+      score,
+      max_score: maxScore,
+      result_category: category,
+      recommendations: JSON.stringify(recommendations),
       completed: true,
       duration_seconds: duration_seconds || null
     });
-    
-    // Update lead score if lead exists
+
     if (lead_id) {
-      const lead = await base44.asServiceRole.entities.Lead.get(lead_id);
-      const newScore = Math.min(lead.score + 15, 100);
-      
+      const existingLead = await base44.asServiceRole.entities.Lead.get(lead_id);
       await base44.asServiceRole.entities.Lead.update(lead_id, {
-        score: newScore,
+        score: Math.min(existingLead.score + 15, 100),
         last_activity_at: new Date().toISOString()
       });
     }
-    
-    return Response.json({
-      success: true,
-      result_id: result.id,
-      score: evaluation.score,
-      max_score: evaluation.maxScore,
-      category: evaluation.category,
-      recommendations: evaluation.recommendations
+
+    return Response.json({ 
+      success: true, 
+      result_id: result.id, 
+      score, 
+      max_score: maxScore, 
+      category, 
+      recommendations 
     }, { headers: corsHeaders });
-    
+
   } catch (error) {
-    return Response.json(
-      { success: false, error: error.message }, 
-      { status: 500, headers: corsHeaders }
-    );
+    return Response.json({ success: false, error: error.message }, { status: 500, headers: corsHeaders });
   }
 });
 
 function evaluateQuiz(type, answers) {
+  const answerArray = Array.isArray(answers) ? answers : Object.values(answers);
   let score = 0;
-  const answerArray = Object.values(answers);
   const maxScore = answerArray.length * 10;
-  
+
   answerArray.forEach(answer => {
     if (typeof answer === 'object' && answer.score) {
       score += answer.score;
     } else if (typeof answer === 'number') {
       score += answer;
-    } else {
-      score += 5; // Default score for any answer
     }
   });
-  
+
   const percentage = (score / maxScore) * 100;
+  const category = percentage >= 80 ? 'Profi' : percentage >= 50 ? 'Fortgeschritten' : 'Einsteiger';
   
-  let category = 'Einsteiger';
-  if (percentage >= 80) category = 'Profi';
-  else if (percentage >= 50) category = 'Fortgeschritten';
-  
-  let recommendations = [];
+  const recommendations = [];
   if (percentage < 50) {
-    recommendations = [
-      'Steuerberatung empfohlen',
-      'Grundlagen-Kurs zur Immobilienverwaltung',
-      'Nutzung von Vorlagen für Dokumente'
-    ];
+    recommendations.push('Steuerberatung empfohlen', 'Grundlagen-Kurs ansehen');
   } else if (percentage < 80) {
-    recommendations = [
-      'Betriebskostenabrechnung optimieren',
-      'Steueroptimierung durch Anlage V',
-      'Digitalisierung der Prozesse'
-    ];
+    recommendations.push('Premium-Features nutzen', 'Weiterbildung empfohlen');
   } else {
-    recommendations = [
-      'Premium-Features nutzen',
-      'Portfolio-Analysen durchführen',
-      'Automatisierungen einrichten'
-    ];
+    recommendations.push('Expertenmodus aktivieren', 'Alle Features verfügbar');
   }
-  
-  return {
-    score,
-    maxScore,
-    category,
-    recommendations
-  };
+
+  return { score, maxScore, category, recommendations };
 }

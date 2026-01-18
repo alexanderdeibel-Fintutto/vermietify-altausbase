@@ -10,38 +10,27 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
-  
+
   const base44 = createClientFromRequest(req);
-  
+
   try {
-    const body = await req.json();
-    
-    const {
-      miete_aktuell,
-      letzte_anpassung_datum,
-      schwellenwert = 0
-    } = body;
-    
+    const { miete_aktuell, letzte_anpassung_datum, schwellenwert = 0 } = await req.json();
+
     if (!miete_aktuell || !letzte_anpassung_datum) {
-      return Response.json(
-        { success: false, error: 'Aktuelle Miete und letztes Anpassungsdatum erforderlich' },
-        { status: 400, headers: corsHeaders }
-      );
+      return Response.json({ success: false, error: 'Miete und Datum erforderlich' }, { status: 400, headers: corsHeaders });
     }
-    
+
     const letzteAnpassung = new Date(letzte_anpassung_datum);
     const heute = new Date();
-    
-    // Get VPI indices
+
     const vpiAlt = await getVPI(base44, letzteAnpassung.getFullYear(), letzteAnpassung.getMonth() + 1);
     const vpiNeu = await getVPI(base44, heute.getFullYear(), heute.getMonth() + 1);
-    
-    // Berechnungen
+
     const steigerung_prozent = ((vpiNeu - vpiAlt) / vpiAlt) * 100;
     const neue_miete = miete_aktuell * (vpiNeu / vpiAlt);
     const differenz = neue_miete - miete_aktuell;
     const anpassung_moeglich = schwellenwert === 0 || steigerung_prozent >= schwellenwert;
-    
+
     return Response.json({
       success: true,
       result: {
@@ -52,29 +41,19 @@ Deno.serve(async (req) => {
         vpi_alt: vpiAlt,
         vpi_neu: vpiNeu,
         anpassung_moeglich,
-        schwellenwert_erreicht: steigerung_prozent >= schwellenwert,
-        letzte_anpassung: letzte_anpassung_datum,
-        berechnungsdatum: heute.toISOString()
+        schwellenwert_erreicht: steigerung_prozent >= schwellenwert
       }
     }, { headers: corsHeaders });
-    
+
   } catch (error) {
-    return Response.json(
-      { success: false, error: error.message }, 
-      { status: 500, headers: corsHeaders }
-    );
+    return Response.json({ success: false, error: error.message }, { status: 500, headers: corsHeaders });
   }
 });
 
 async function getVPI(base44, year, month) {
-  const results = await base44.asServiceRole.entities.VPIIndex.filter({ 
-    year: year, 
-    month: month 
-  });
-  
-  if (results.length === 0) {
-    throw new Error(`VPI-Index für ${month}/${year} nicht gefunden`);
+  const result = await base44.asServiceRole.entities.VPIIndex.filter({ year, month });
+  if (result.length === 0) {
+    throw new Error(`VPI für ${month}/${year} nicht gefunden`);
   }
-  
-  return results[0].index_value;
+  return result[0].index_value;
 }

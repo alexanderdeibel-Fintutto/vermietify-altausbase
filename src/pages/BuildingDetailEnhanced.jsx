@@ -1,121 +1,133 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { useParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
+import { Building, Home, Users, FileText, Euro, CheckSquare, Settings, ArrowLeft } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { MapPin, FileText, Home } from 'lucide-react';
+import BuildingSummary from '@/components/buildings/BuildingSummary';
+import BuildingUnitsManager from '@/components/building-detail/BuildingUnitsManager';
+import BuildingTenantsOverview from '@/components/building-detail/BuildingTenantsOverview';
+import BuildingContractsOverview from '@/components/building-detail/BuildingContractsOverview';
+import BuildingDocumentsManager from '@/components/building-detail/BuildingDocumentsManager';
+import BuildingTasksManager from '@/components/building-detail/BuildingTasksManager';
 import BuildingPhotoGallery from '@/components/buildings/BuildingPhotoGallery';
-import BuildingFloorPlan from '@/components/buildings/BuildingFloorPlan';
-import BuildingInventory from '@/components/buildings/BuildingInventory';
 import MaintenanceHistory from '@/components/buildings/MaintenanceHistory';
-import RecurringMaintenancePlanner from '@/components/buildings/RecurringMaintenancePlanner';
 
 export default function BuildingDetailEnhanced() {
-  const { buildingId } = useParams();
-  const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const buildingId = searchParams.get('id');
+  const [activeTab, setActiveTab] = useState('overview');
 
-  const { data: building, isLoading } = useQuery({
+  const { data: building } = useQuery({
     queryKey: ['building', buildingId],
-    queryFn: () => base44.entities.Building.filter({ id: buildingId }).then(results => results[0])
+    queryFn: () => base44.entities.Building.get(buildingId),
+    enabled: !!buildingId
   });
 
-  if (isLoading) return <div className="p-6">Wird geladen...</div>;
-  if (!building) return <div className="p-6">Gebäude nicht gefunden</div>;
+  const { data: units = [] } = useQuery({
+    queryKey: ['units', buildingId],
+    queryFn: () => base44.entities.Unit.filter({ building_id: buildingId })
+  });
 
-  const handleFloorPlanUpdate = async (updatedPlans) => {
-    await base44.entities.Building.update(buildingId, { floor_plans: updatedPlans });
-    queryClient.invalidateQueries({ queryKey: ['building', buildingId] });
-  };
+  const { data: contracts = [] } = useQuery({
+    queryKey: ['contracts', buildingId],
+    queryFn: async () => {
+      const allContracts = await base44.entities.LeaseContract.list();
+      return allContracts.filter(c => units.some(u => u.id === c.unit_id));
+    },
+    enabled: units.length > 0
+  });
 
-  const handleInventoryUpdate = async (updatedInventory) => {
-    await base44.entities.Building.update(buildingId, { inventory: updatedInventory });
-    queryClient.invalidateQueries({ queryKey: ['building', buildingId] });
-  };
+  if (!building) return <div>Laden...</div>;
+
+  const stats = [
+    { label: 'Einheiten', value: units.length },
+    { label: 'Vermietet', value: `${Math.round((units.length > 0 ? (contracts.filter(c => c.status === 'Aktiv').length / units.length) * 100 : 0))}%` },
+    { label: 'Monatsmiete', value: `€${contracts.filter(c => c.status === 'Aktiv').reduce((sum, c) => sum + (c.kaltmiete || 0), 0).toLocaleString('de-DE')}` }
+  ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <Home className="w-8 h-8 text-slate-700" />
-          <h1 className="text-3xl font-bold text-slate-900">{building.name}</h1>
+    <div className="min-h-screen bg-[var(--theme-background)]">
+      <div className="vf-detail-header">
+        <Link to="/buildings" className="vf-detail-header__back">
+          <ArrowLeft className="h-4 w-4" />
+          Zurück zu Objekten
+        </Link>
+
+        <div className="vf-detail-header__top">
+          <div className="flex items-start gap-4 flex-1">
+            <div className="vf-detail-header__icon">
+              <Building className="h-7 w-7" />
+            </div>
+            <div className="vf-detail-header__info">
+              <h1 className="vf-detail-header__title">{building.adresse}</h1>
+              <p className="vf-detail-header__subtitle">
+                {building.plz} {building.ort} • {building.gebaeude_typ || 'Mehrfamilienhaus'}
+              </p>
+            </div>
+          </div>
         </div>
-        <p className="text-slate-600 flex items-center gap-2">
-          <MapPin className="w-4 h-4" />
-          {building.address}
-        </p>
+
+        <div className="vf-detail-header__stats">
+          {stats.map((stat, index) => (
+            <div key={index} className="vf-detail-stat">
+              <div className="vf-detail-stat__value">{stat.value}</div>
+              <div className="vf-detail-stat__label">{stat.label}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-slate-600">Einheiten</p>
-            <p className="text-2xl font-bold text-slate-900 mt-2">{building.units_count || 0}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-slate-600">Baujahr</p>
-            <p className="text-2xl font-bold text-slate-900 mt-2">{building.year_built || '-'}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-slate-600">Gesamtfläche</p>
-            <p className="text-2xl font-bold text-slate-900 mt-2">{building.total_area || 0} m²</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-slate-600">Energieeffizienz</p>
-            <Badge className="mt-2 bg-green-100 text-green-700">{building.energy_rating || 'N/A'}</Badge>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tabs */}
-      <Tabs defaultValue="photos" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="photos">Fotos</TabsTrigger>
-          <TabsTrigger value="floorplans">Grundrisse</TabsTrigger>
-          <TabsTrigger value="inventory">Inventar</TabsTrigger>
-          <TabsTrigger value="maintenance">Wartung</TabsTrigger>
-          <TabsTrigger value="recurring">Regelmäßig</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="vf-detail-tabs">
+        <TabsList className="vf-detail-tabs">
+          <TabsTrigger value="overview" className="vf-detail-tabs__tab">
+            <Home className="h-4 w-4" />
+            Übersicht
+          </TabsTrigger>
+          <TabsTrigger value="units" className="vf-detail-tabs__tab">
+            <Building className="h-4 w-4" />
+            Einheiten
+            <span className="vf-detail-tabs__badge">{units.length}</span>
+          </TabsTrigger>
+          <TabsTrigger value="tenants" className="vf-detail-tabs__tab">
+            <Users className="h-4 w-4" />
+            Mieter
+          </TabsTrigger>
+          <TabsTrigger value="contracts" className="vf-detail-tabs__tab">
+            <FileText className="h-4 w-4" />
+            Verträge
+          </TabsTrigger>
+          <TabsTrigger value="documents" className="vf-detail-tabs__tab">
+            <FileText className="h-4 w-4" />
+            Dokumente
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="photos" className="space-y-6">
-          <BuildingPhotoGallery
-            buildingId={buildingId}
-            photos={building.photos || []}
-          />
-        </TabsContent>
+        <div className="vf-detail-main">
+          <TabsContent value="overview">
+            <div className="vf-building-overview">
+              <BuildingSummary building={building} units={units} />
+              <BuildingPhotoGallery buildingId={buildingId} />
+              <MaintenanceHistory buildingId={buildingId} />
+            </div>
+          </TabsContent>
 
-        <TabsContent value="floorplans" className="space-y-6">
-          <BuildingFloorPlan
-            buildingId={buildingId}
-            floorPlans={building.floor_plans || []}
-            onUpdate={handleFloorPlanUpdate}
-          />
-        </TabsContent>
+          <TabsContent value="units">
+            <BuildingUnitsManager buildingId={buildingId} units={units} />
+          </TabsContent>
 
-        <TabsContent value="inventory" className="space-y-6">
-          <BuildingInventory
-            buildingId={buildingId}
-            inventory={building.inventory || []}
-            onUpdate={handleInventoryUpdate}
-          />
-        </TabsContent>
+          <TabsContent value="tenants">
+            <BuildingTenantsOverview buildingId={buildingId} />
+          </TabsContent>
 
-        <TabsContent value="maintenance" className="space-y-6">
-          <MaintenanceHistory buildingId={buildingId} />
-        </TabsContent>
+          <TabsContent value="contracts">
+            <BuildingContractsOverview buildingId={buildingId} />
+          </TabsContent>
 
-        <TabsContent value="recurring" className="space-y-6">
-          <RecurringMaintenancePlanner buildingId={buildingId} />
-        </TabsContent>
+          <TabsContent value="documents">
+            <BuildingDocumentsManager buildingId={buildingId} />
+          </TabsContent>
+        </div>
       </Tabs>
     </div>
   );

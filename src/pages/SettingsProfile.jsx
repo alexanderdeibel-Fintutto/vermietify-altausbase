@@ -1,184 +1,96 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { VfInput } from '@/components/shared/VfInput';
+import { VfSelect } from '@/components/shared/VfSelect';
 import { Button } from '@/components/ui/button';
-import { User, Building, Globe, Calendar } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Save } from 'lucide-react';
+import { showSuccess } from '@/components/notifications/ToastNotification';
 
 export default function SettingsProfile() {
   const queryClient = useQueryClient();
   
   const { data: user } = useQuery({
-    queryKey: ['currentUser'],
+    queryKey: ['user'],
     queryFn: () => base44.auth.me()
   });
 
   const [formData, setFormData] = useState({
     full_name: user?.full_name || '',
     email: user?.email || '',
-    phone: user?.phone || '',
-    company_name: user?.company_name || '',
-    language: user?.language || 'de',
-    timezone: user?.timezone || 'Europe/Berlin',
-    date_format: user?.date_format || 'DD.MM.YYYY',
-    currency: user?.currency || 'EUR'
+    phone: '',
+    language: 'de',
+    timezone: 'Europe/Berlin',
+    currency: 'EUR'
   });
 
   const updateMutation = useMutation({
     mutationFn: (data) => base44.auth.updateMe(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+      showSuccess('Profil aktualisiert');
     }
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    updateMutation.mutate(formData);
-  };
-
   return (
-    <div className="vf-settings">
-      <div className="vf-settings__nav">
-        <div className="vf-settings__nav-item vf-settings__nav-item--active">
-          <User className="h-4 w-4" />
-          Profil
+    <div className="vf-settings__section">
+      <h2 className="vf-settings__section-title">Profil</h2>
+
+      <div className="vf-form-section">
+        <h3 className="vf-form-section__title">Persönliche Daten</h3>
+        <div className="vf-form-row">
+          <VfInput
+            label="Vollständiger Name"
+            value={formData.full_name}
+            onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+          />
+          <VfInput
+            label="E-Mail"
+            type="email"
+            value={formData.email}
+            disabled
+            hint="E-Mail kann nicht geändert werden"
+          />
         </div>
-        <div className="vf-settings__nav-item">
-          <Building className="h-4 w-4" />
-          Firma
-        </div>
-        <div className="vf-settings__nav-item">
-          <Globe className="h-4 w-4" />
-          Einstellungen
+        <VfInput
+          label="Telefon"
+          value={formData.phone}
+          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+        />
+      </div>
+
+      <div className="vf-form-section">
+        <h3 className="vf-form-section__title">Einstellungen</h3>
+        <div className="vf-form-row">
+          <VfSelect
+            label="Sprache"
+            value={formData.language}
+            onChange={(v) => setFormData({ ...formData, language: v })}
+            options={[
+              { value: 'de', label: 'Deutsch' },
+              { value: 'en', label: 'English' }
+            ]}
+          />
+          <VfSelect
+            label="Währung"
+            value={formData.currency}
+            onChange={(v) => setFormData({ ...formData, currency: v })}
+            options={[
+              { value: 'EUR', label: 'Euro (€)' },
+              { value: 'CHF', label: 'Schweizer Franken (CHF)' }
+            ]}
+          />
         </div>
       </div>
 
-      <div className="vf-settings__content">
-        <div className="vf-settings__section">
-          <h1 className="vf-settings__section-title">Profil</h1>
-
-          <form onSubmit={handleSubmit}>
-            <div className="vf-form-section">
-              <div className="vf-form-section__title">Persönliche Daten</div>
-              
-              <div className="vf-form-row">
-                <div>
-                  <Label required>Name</Label>
-                  <Input
-                    value={formData.full_name}
-                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                    placeholder="Max Mustermann"
-                  />
-                </div>
-                <div>
-                  <Label>Telefon</Label>
-                  <Input
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="+49 170 1234567"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label required>E-Mail</Label>
-                <Input
-                  type="email"
-                  value={formData.email}
-                  disabled
-                  className="bg-[var(--theme-surface)]"
-                />
-                <p className="text-xs text-[var(--theme-text-muted)] mt-1">
-                  E-Mail kann nicht geändert werden
-                </p>
-              </div>
-            </div>
-
-            <div className="vf-form-section">
-              <div className="vf-form-section__title">Firmendaten</div>
-              
-              <div>
-                <Label>Firmenname</Label>
-                <Input
-                  value={formData.company_name}
-                  onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
-                  placeholder="Mustermann Immobilien GmbH"
-                />
-              </div>
-            </div>
-
-            <div className="vf-form-section">
-              <div className="vf-form-section__title">Präferenzen</div>
-              
-              <div className="vf-form-row">
-                <div>
-                  <Label>Sprache</Label>
-                  <Select value={formData.language} onValueChange={(v) => setFormData({ ...formData, language: v })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="de">Deutsch</SelectItem>
-                      <SelectItem value="en">English</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Zeitzone</Label>
-                  <Select value={formData.timezone} onValueChange={(v) => setFormData({ ...formData, timezone: v })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Europe/Berlin">Europe/Berlin</SelectItem>
-                      <SelectItem value="Europe/Vienna">Europe/Vienna</SelectItem>
-                      <SelectItem value="Europe/Zurich">Europe/Zurich</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="vf-form-row">
-                <div>
-                  <Label>Datumsformat</Label>
-                  <Select value={formData.date_format} onValueChange={(v) => setFormData({ ...formData, date_format: v })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="DD.MM.YYYY">DD.MM.YYYY</SelectItem>
-                      <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Währung</Label>
-                  <Select value={formData.currency} onValueChange={(v) => setFormData({ ...formData, currency: v })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="EUR">EUR (€)</SelectItem>
-                      <SelectItem value="CHF">CHF (Fr.)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            <Button 
-              type="submit" 
-              variant="gradient"
-              disabled={updateMutation.isPending}
-            >
-              {updateMutation.isPending ? 'Wird gespeichert...' : 'Änderungen speichern'}
-            </Button>
-          </form>
-        </div>
-      </div>
+      <Button 
+        variant="gradient" 
+        onClick={() => updateMutation.mutate(formData)}
+        disabled={updateMutation.isPending}
+      >
+        <Save className="h-4 w-4 mr-2" />
+        Änderungen speichern
+      </Button>
     </div>
   );
 }

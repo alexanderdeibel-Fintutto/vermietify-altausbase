@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { jsPDF } from 'npm:jspdf@2.5.1';
+import { jsPDF } from 'npm:jspdf@2.5.2';
 
 const corsHeaders = { 
   'Access-Control-Allow-Origin': '*',
@@ -11,71 +11,44 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
-  
+
   const base44 = createClientFromRequest(req);
-  
+
   try {
-    const body = await req.json();
-    
-    const {
-      document_type,
-      data,
-      lead_id,
-      user_id
-    } = body;
-    
+    const { document_type, data, lead_id, user_id } = await req.json();
+
     if (!document_type || !data) {
-      return Response.json(
-        { success: false, error: 'Document type und data erforderlich' },
-        { status: 400, headers: corsHeaders }
-      );
+      return Response.json({ success: false, error: 'Dokumenttyp und Daten erforderlich' }, { status: 400, headers: corsHeaders });
     }
-    
-    // Generate PDF
+
     const doc = new jsPDF();
     
-    // Title
     doc.setFontSize(20);
-    doc.text(getDocumentTitle(document_type), 20, 20);
+    doc.text('Vermitify', 20, 20);
     
-    // Add content based on document type
-    let yPos = 40;
+    doc.setFontSize(16);
+    doc.text(getDocumentTitle(document_type), 20, 40);
     
-    if (document_type === 'mietvertrag') {
-      doc.setFontSize(12);
-      doc.text(`Vermieter: ${data.landlord || '-'}`, 20, yPos);
-      yPos += 10;
-      doc.text(`Mieter: ${data.tenant || '-'}`, 20, yPos);
-      yPos += 10;
-      doc.text(`Wohnung: ${data.address || '-'}`, 20, yPos);
-      yPos += 10;
-      doc.text(`Kaltmiete: ${data.rent || '0'} €`, 20, yPos);
-    } else if (document_type === 'kuendigung') {
-      doc.setFontSize(12);
-      doc.text(`An: ${data.tenant || '-'}`, 20, yPos);
-      yPos += 10;
-      doc.text(`Wohnung: ${data.address || '-'}`, 20, yPos);
-      yPos += 10;
-      doc.text(`Kündigungsdatum: ${data.date || '-'}`, 20, yPos);
-    }
+    doc.setFontSize(12);
+    let yPos = 60;
     
+    Object.entries(data).forEach(([key, value]) => {
+      doc.text(`${key}: ${value}`, 20, yPos);
+      yPos += 10;
+    });
+
     const pdfBytes = doc.output('arraybuffer');
     const fileName = `${document_type}_${Date.now()}.pdf`;
-    
-    // Save document record
-    const docRecord = await base44.asServiceRole.entities.GeneratedDocument.create({
+
+    const generatedDoc = await base44.asServiceRole.entities.GeneratedDocument.create({
       lead_id: lead_id || null,
-      user_id: user_id || null,
-      document_type,
-      template_version: '1.0',
-      input_data: data,
-      file_name: fileName,
-      file_size: pdfBytes.byteLength,
-      download_count: 0,
-      email_sent: false
+      dokumenttyp: document_type,
+      titel: getDocumentTitle(document_type),
+      inhalt_html: JSON.stringify(data),
+      dateiformat: 'PDF',
+      versand_status: 'Entwurf'
     });
-    
-    // Return PDF as response
+
     return new Response(pdfBytes, {
       status: 200,
       headers: {
@@ -84,12 +57,9 @@ Deno.serve(async (req) => {
         'Content-Disposition': `attachment; filename="${fileName}"`
       }
     });
-    
+
   } catch (error) {
-    return Response.json(
-      { success: false, error: error.message }, 
-      { status: 500, headers: corsHeaders }
-    );
+    return Response.json({ success: false, error: error.message }, { status: 500, headers: corsHeaders });
   }
 });
 
@@ -100,10 +70,7 @@ function getDocumentTitle(type) {
     'mietanpassung': 'Mietanpassung',
     'nebenkostenabrechnung': 'Nebenkostenabrechnung',
     'uebergabeprotokoll': 'Übergabeprotokoll',
-    'mahnung': 'Mahnung',
-    'indexanpassung': 'Indexanpassung',
-    'steuer_report': 'Steuer-Report'
+    'mahnung': 'Mahnung'
   };
-  
   return titles[type] || 'Dokument';
 }
