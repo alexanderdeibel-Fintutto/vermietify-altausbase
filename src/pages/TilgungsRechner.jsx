@@ -1,136 +1,148 @@
 import React, { useState } from 'react';
-import { VfCalculatorPage, VfCalculatorForm, VfCalculatorResult } from '@/components/calculators/VfCalculatorPage';
-import { VfCalculatorInputGroup } from '@/components/calculators/VfCalculatorInputGroup';
-import { VfSliderInput } from '@/components/calculators/VfSliderInput';
-import { VfToolHeader } from '@/components/lead-capture/VfToolHeader';
-import { VfLeadCapturePage } from '@/components/lead-capture/VfLeadCapturePage';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { PiggyBank } from 'lucide-react';
+import { VfInput } from '@/components/shared/VfInput';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { TrendingDown } from 'lucide-react';
+import CurrencyDisplay from '@/components/shared/CurrencyDisplay';
 
 export default function TilgungsRechner() {
-  const [formData, setFormData] = useState({
-    darlehensbetrag: 250000,
-    zinssatz: 3.5,
-    tilgungssatz: 2.0,
+  const [input, setInput] = useState({
+    darlehenssumme: '',
+    zinssatz: '',
+    tilgungssatz: 2,
     sondertilgung_jahr: 0
   });
-  
-  const [result, setResult] = useState(null);
 
-  const handleCalculate = () => {
-    const zinsen_jahr = formData.darlehensbetrag * (formData.zinssatz / 100);
-    const tilgung_jahr = formData.darlehensbetrag * (formData.tilgungssatz / 100);
-    const rate_monat = (zinsen_jahr + tilgung_jahr) / 12;
-    
-    // Simplified calculation
-    const tilgung_jahr_gesamt = tilgung_jahr + formData.sondertilgung_jahr;
-    const laufzeit_jahre = Math.ceil(formData.darlehensbetrag / tilgung_jahr_gesamt);
-    
-    setResult({
-      rate_monat,
-      zinsen_jahr,
-      tilgung_jahr,
-      laufzeit_jahre,
-      restschuld_5_jahre: Math.max(0, formData.darlehensbetrag - (tilgung_jahr_gesamt * 5)),
-      restschuld_10_jahre: Math.max(0, formData.darlehensbetrag - (tilgung_jahr_gesamt * 10))
-    });
+  const calculate = () => {
+    const darlehen = parseFloat(input.darlehenssumme) || 0;
+    const zins = parseFloat(input.zinssatz) / 100;
+    const tilgung = parseFloat(input.tilgungssatz) / 100;
+    const sondertilgung = parseFloat(input.sondertilgung_jahr) || 0;
+
+    const annuitaet = darlehen * (zins + tilgung);
+    const monatsrate = annuitaet / 12;
+    const zinsanteilJahr1 = darlehen * zins;
+    const tilgungsanteilJahr1 = annuitaet - zinsanteilJahr1 + sondertilgung;
+
+    // Einfache Schätzung der Laufzeit
+    let restschuld = darlehen;
+    let jahre = 0;
+    while (restschuld > 0 && jahre < 50) {
+      const zinsJahr = restschuld * zins;
+      const tilgungJahr = annuitaet - zinsJahr + sondertilgung;
+      restschuld -= tilgungJahr;
+      jahre++;
+    }
+
+    return {
+      monatsrate,
+      annuitaet,
+      zinsanteilJahr1,
+      tilgungsanteilJahr1,
+      laufzeitJahre: jahre,
+      gesamtkosten: annuitaet * jahre + (sondertilgung * jahre),
+      gesamtzins: (annuitaet * jahre + (sondertilgung * jahre)) - darlehen
+    };
   };
 
+  const result = calculate();
+
   return (
-    <VfLeadCapturePage
-      header={
-        <VfToolHeader
-          icon={<PiggyBank className="h-10 w-10" />}
-          badge="KOSTENLOS"
-          title="Tilgungsrechner"
-          description="Berechnen Sie Ihre monatliche Rate und Laufzeit"
-        />
-      }
-    >
-      <VfCalculatorPage
-        inputPanel={
-          <VfCalculatorForm
-            title="Darlehensdaten"
-            onCalculate={handleCalculate}
-            onReset={() => {
-              setFormData({
-                darlehensbetrag: 250000,
-                zinssatz: 3.5,
-                tilgungssatz: 2.0,
-                sondertilgung_jahr: 0
-              });
-              setResult(null);
-            }}
-          >
-            <VfCalculatorInputGroup title="Darlehen">
-              <div>
-                <Label>Darlehensbetrag</Label>
-                <Input
+    <div className="min-h-screen bg-gradient-to-br from-[var(--vf-primary-50)] to-white p-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-12">
+          <div className="vf-tool-icon mx-auto mb-4">
+            <TrendingDown className="h-9 w-9" />
+          </div>
+          <h1 className="vf-tool-title">Tilgungs-Rechner</h1>
+          <p className="vf-tool-description">
+            Berechnen Sie Ihre Darlehensrate und Laufzeit
+          </p>
+        </div>
+
+        <div className="vf-calculator">
+          <Card className="vf-calculator-input-panel">
+            <CardHeader>
+              <CardTitle>Darlehensdaten</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <VfInput
+                  label="Darlehenssumme"
                   type="number"
-                  value={formData.darlehensbetrag}
-                  onChange={(e) => setFormData({ ...formData, darlehensbetrag: Number(e.target.value) })}
+                  rightAddon="€"
+                  value={input.darlehenssumme}
+                  onChange={(e) => setInput({ ...input, darlehenssumme: e.target.value })}
+                />
+                <VfInput
+                  label="Zinssatz"
+                  type="number"
+                  rightAddon="%"
+                  value={input.zinssatz}
+                  onChange={(e) => setInput({ ...input, zinssatz: e.target.value })}
+                />
+                <VfInput
+                  label="Tilgungssatz"
+                  type="number"
+                  rightAddon="%"
+                  value={input.tilgungssatz}
+                  onChange={(e) => setInput({ ...input, tilgungssatz: e.target.value })}
+                />
+                <VfInput
+                  label="Sondertilgung (jährlich)"
+                  type="number"
+                  rightAddon="€"
+                  value={input.sondertilgung_jahr}
+                  onChange={(e) => setInput({ ...input, sondertilgung_jahr: e.target.value })}
                 />
               </div>
-            </VfCalculatorInputGroup>
+            </CardContent>
+          </Card>
 
-            <VfCalculatorInputGroup title="Konditionen">
-              <VfSliderInput
-                label="Zinssatz"
-                value={formData.zinssatz}
-                onChange={(v) => setFormData({ ...formData, zinssatz: v })}
-                min={0.5}
-                max={10}
-                step={0.1}
-                formatValue={(v) => `${v.toFixed(1)}%`}
-              />
-              <VfSliderInput
-                label="Tilgungssatz"
-                value={formData.tilgungssatz}
-                onChange={(v) => setFormData({ ...formData, tilgungssatz: v })}
-                min={1}
-                max={10}
-                step={0.5}
-                formatValue={(v) => `${v}%`}
-              />
-              <VfSliderInput
-                label="Sondertilgung pro Jahr"
-                value={formData.sondertilgung_jahr}
-                onChange={(v) => setFormData({ ...formData, sondertilgung_jahr: v })}
-                min={0}
-                max={50000}
-                step={1000}
-                formatValue={(v) => `${v.toLocaleString('de-DE')} €`}
-              />
-            </VfCalculatorInputGroup>
-          </VfCalculatorForm>
-        }
-        resultPanel={
-          <VfCalculatorResult
-            primaryResult={result ? {
-              label: "Monatliche Rate",
-              value: `${result.rate_monat.toLocaleString('de-DE')} €`
-            } : null}
-            secondaryResults={result ? [
-              { label: "Laufzeit", value: `${result.laufzeit_jahre} Jahre` },
-              { label: "Zinsen/Jahr", value: `${result.zinsen_jahr.toLocaleString('de-DE')} €` }
-            ] : []}
-            breakdown={result ? [
-              { label: "Tilgung/Jahr", value: `${result.tilgung_jahr.toLocaleString('de-DE')} €` },
-              { label: "Restschuld nach 5 Jahren", value: `${result.restschuld_5_jahre.toLocaleString('de-DE')} €` },
-              { label: "Restschuld nach 10 Jahren", value: `${result.restschuld_10_jahre.toLocaleString('de-DE')} €` }
-            ] : []}
-            empty={!result && (
-              <div className="text-center py-8">
-                <PiggyBank className="h-12 w-12 mx-auto mb-4 text-[var(--theme-text-muted)]" />
-                <p className="text-[var(--theme-text-muted)]">
-                  Berechnen Sie Ihre Tilgung
-                </p>
+          <Card className="vf-calculator-result-panel">
+            {!input.darlehenssumme || !input.zinssatz ? (
+              <div className="vf-calculator-result-empty">
+                <TrendingDown className="h-16 w-16 mx-auto mb-4" />
+                <p>Geben Sie Darlehensdaten ein</p>
               </div>
+            ) : (
+              <CardContent className="p-6">
+                <div className="vf-calculator-primary-result">
+                  <div className="vf-calculator-primary-label">Monatliche Rate</div>
+                  <div className="vf-calculator-primary-value">
+                    <CurrencyDisplay amount={result.monatsrate} />
+                  </div>
+                </div>
+
+                <div className="vf-calculator-secondary-results">
+                  <div className="vf-calculator-secondary-item">
+                    <div className="vf-calculator-secondary-label">Laufzeit</div>
+                    <div className="vf-calculator-secondary-value">{result.laufzeitJahre} Jahre</div>
+                  </div>
+                  <div className="vf-calculator-secondary-item">
+                    <div className="vf-calculator-secondary-label">Gesamtzins</div>
+                    <div className="vf-calculator-secondary-value">
+                      <CurrencyDisplay amount={result.gesamtzins} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="vf-calculator-breakdown">
+                  <div className="vf-calculator-breakdown-title">1. Jahr</div>
+                  <div className="vf-calculator-breakdown-item">
+                    <span>Zinsanteil</span>
+                    <CurrencyDisplay amount={result.zinsanteilJahr1} />
+                  </div>
+                  <div className="vf-calculator-breakdown-item">
+                    <span>Tilgungsanteil</span>
+                    <CurrencyDisplay amount={result.tilgungsanteilJahr1} />
+                  </div>
+                </div>
+              </CardContent>
             )}
-          />
-        }
-      />
-    </VfLeadCapturePage>
+          </Card>
+        </div>
+      </div>
+    </div>
   );
 }

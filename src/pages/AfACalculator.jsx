@@ -1,150 +1,138 @@
 import React, { useState } from 'react';
-import { VfCalculatorPage, VfCalculatorForm, VfCalculatorResult } from '@/components/calculators/VfCalculatorPage';
-import { VfCalculatorInputGroup } from '@/components/calculators/VfCalculatorInputGroup';
-import { VfSliderInput } from '@/components/calculators/VfSliderInput';
-import { VfToolHeader } from '@/components/lead-capture/VfToolHeader';
-import { VfLeadCapturePage } from '@/components/lead-capture/VfLeadCapturePage';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TrendingDown } from 'lucide-react';
+import { VfInput } from '@/components/shared/VfInput';
+import { VfSelect } from '@/components/shared/VfSelect';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Percent } from 'lucide-react';
+import CurrencyDisplay from '@/components/shared/CurrencyDisplay';
 
 export default function AfACalculator() {
-  const [formData, setFormData] = useState({
-    purchase_price: 300000,
-    land_value: 75000,
-    year_built: 2015,
-    afa_type: 'linear',
-    afa_rate: 2.0
+  const [input, setInput] = useState({
+    anschaffungskosten: '',
+    baujahr: '',
+    gebaeudeart: 'wohngebaeude',
+    denkmalschutz: false
   });
-  
   const [result, setResult] = useState(null);
 
-  const handleCalculate = () => {
-    const depreciableBase = formData.purchase_price - formData.land_value;
-    const annualAfa = depreciableBase * (formData.afa_rate / 100);
-    const yearsTotal = 100 / formData.afa_rate;
+  const calculate = () => {
+    const kosten = parseFloat(input.anschaffungskosten);
+    const alter = new Date().getFullYear() - parseInt(input.baujahr);
     
+    let afaSatz = 2.0; // Standard für Wohngebäude nach 1924
+    if (alter > 100) afaSatz = 2.5;
+    if (input.denkmalschutz) afaSatz = 9.0; // Erhöhte AfA bei Denkmalschutz
+    if (input.gebaeudeart === 'gewerbe') afaSatz = 3.0;
+
+    const jahresAfA = kosten * (afaSatz / 100);
+
     setResult({
-      depreciableBase,
-      annualAfa,
-      monthlyAfa: annualAfa / 12,
-      yearsTotal,
-      remainingValue: depreciableBase - annualAfa
+      afaSatz,
+      jahresAfA,
+      monatsAfA: jahresAfA / 12,
+      laufzeit: Math.ceil(100 / afaSatz)
     });
   };
 
   return (
-    <VfLeadCapturePage
-      header={
-        <VfToolHeader
-          icon={<TrendingDown className="h-10 w-10" />}
-          badge="KOSTENLOS"
-          title="AfA-Rechner für Immobilien"
-          description="Berechnen Sie die jährliche Abschreibung Ihrer Immobilie"
-        />
-      }
-    >
-      <VfCalculatorPage
-        inputPanel={
-          <VfCalculatorForm
-            title="Immobiliendaten"
-            onCalculate={handleCalculate}
-            onReset={() => {
-              setFormData({
-                purchase_price: 300000,
-                land_value: 75000,
-                year_built: 2015,
-                afa_type: 'linear',
-                afa_rate: 2.0
-              });
-              setResult(null);
-            }}
-          >
-            <VfCalculatorInputGroup title="Kaufdaten">
-              <div>
-                <Label>Kaufpreis gesamt</Label>
-                <Input
-                  type="number"
-                  value={formData.purchase_price}
-                  onChange={(e) => setFormData({ ...formData, purchase_price: Number(e.target.value) })}
-                />
-              </div>
-              <div>
-                <Label>Grundstückswert</Label>
-                <Input
-                  type="number"
-                  value={formData.land_value}
-                  onChange={(e) => setFormData({ ...formData, land_value: Number(e.target.value) })}
-                />
-                <p className="text-xs text-[var(--theme-text-muted)] mt-1">
-                  Ca. 20-30% des Kaufpreises
-                </p>
-              </div>
-            </VfCalculatorInputGroup>
+    <div className="min-h-screen bg-gradient-to-br from-[var(--vf-primary-50)] to-white p-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-12">
+          <div className="vf-tool-icon mx-auto mb-4">
+            <Percent className="h-9 w-9" />
+          </div>
+          <h1 className="vf-tool-title">AfA-Rechner</h1>
+          <p className="vf-tool-description">
+            Berechnen Sie die Abschreibung für Ihre Immobilie nach § 7 EStG
+          </p>
+        </div>
 
-            <VfCalculatorInputGroup title="Gebäudedaten">
-              <div>
-                <Label>Baujahr</Label>
-                <Input
+        <div className="vf-calculator">
+          <Card className="vf-calculator-input-panel">
+            <CardHeader>
+              <CardTitle>Eingaben</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <VfInput
+                  label="Anschaffungskosten (Gebäudeanteil)"
                   type="number"
-                  value={formData.year_built}
-                  onChange={(e) => setFormData({ ...formData, year_built: Number(e.target.value) })}
-                  placeholder="2015"
+                  rightAddon="€"
+                  hint="Nur Gebäude, ohne Grundstück"
+                  value={input.anschaffungskosten}
+                  onChange={(e) => setInput({ ...input, anschaffungskosten: e.target.value })}
                 />
+                <VfInput
+                  label="Baujahr"
+                  type="number"
+                  value={input.baujahr}
+                  onChange={(e) => setInput({ ...input, baujahr: e.target.value })}
+                />
+                <VfSelect
+                  label="Gebäudeart"
+                  value={input.gebaeudeart}
+                  onChange={(v) => setInput({ ...input, gebaeudeart: v })}
+                  options={[
+                    { value: 'wohngebaeude', label: 'Wohngebäude' },
+                    { value: 'gewerbe', label: 'Gewerbeimmobilie' }
+                  ]}
+                />
+                <Button 
+                  variant="gradient" 
+                  className="w-full" 
+                  onClick={calculate}
+                  disabled={!input.anschaffungskosten || !input.baujahr}
+                >
+                  Berechnen
+                </Button>
               </div>
-              <div>
-                <Label>AfA-Methode</Label>
-                <Select value={formData.afa_type} onValueChange={(v) => setFormData({ ...formData, afa_type: v })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="linear">Linear</SelectItem>
-                    <SelectItem value="degressive">Degressiv</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </VfCalculatorInputGroup>
+            </CardContent>
+          </Card>
 
-            <VfSliderInput
-              label="AfA-Satz"
-              value={formData.afa_rate}
-              onChange={(v) => setFormData({ ...formData, afa_rate: v })}
-              min={1.0}
-              max={3.0}
-              step={0.5}
-              formatValue={(v) => `${v}%`}
-            />
-          </VfCalculatorForm>
-        }
-        resultPanel={
-          <VfCalculatorResult
-            primaryResult={result ? {
-              label: "Jährliche AfA",
-              value: `${result.annualAfa.toLocaleString('de-DE')} €`
-            } : null}
-            secondaryResults={result ? [
-              { label: "Monatlich", value: `${result.monthlyAfa.toLocaleString('de-DE')} €` },
-              { label: "Abschreibungsdauer", value: `${Math.round(result.yearsTotal)} Jahre` }
-            ] : []}
-            breakdown={result ? [
-              { label: "Kaufpreis gesamt", value: `${formData.purchase_price.toLocaleString('de-DE')} €` },
-              { label: "Grundstückswert", value: `${formData.land_value.toLocaleString('de-DE')} €` },
-              { label: "Gebäudewert (AfA-Basis)", value: `${result.depreciableBase.toLocaleString('de-DE')} €` },
-              { label: "AfA-Satz", value: `${formData.afa_rate}%` }
-            ] : []}
-            empty={!result && (
-              <div className="text-center py-8">
-                <TrendingDown className="h-12 w-12 mx-auto mb-4 text-[var(--theme-text-muted)]" />
-                <p className="text-[var(--theme-text-muted)]">
-                  Berechnen Sie Ihre jährliche Abschreibung
-                </p>
+          <Card className="vf-calculator-result-panel">
+            {!result ? (
+              <div className="vf-calculator-result-empty">
+                <Percent className="h-16 w-16 mx-auto mb-4" />
+                <p>Geben Sie Ihre Daten ein</p>
               </div>
+            ) : (
+              <CardContent className="p-6">
+                <div className="vf-calculator-primary-result">
+                  <div className="vf-calculator-primary-label">AfA-Satz</div>
+                  <div className="vf-calculator-primary-value">{result.afaSatz}%</div>
+                </div>
+
+                <div className="vf-calculator-secondary-results">
+                  <div className="vf-calculator-secondary-item">
+                    <div className="vf-calculator-secondary-label">Jährlich</div>
+                    <div className="vf-calculator-secondary-value">
+                      <CurrencyDisplay amount={result.jahresAfA} />
+                    </div>
+                  </div>
+                  <div className="vf-calculator-secondary-item">
+                    <div className="vf-calculator-secondary-label">Monatlich</div>
+                    <div className="vf-calculator-secondary-value">
+                      <CurrencyDisplay amount={result.monatsAfA} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="vf-calculator-breakdown">
+                  <div className="vf-calculator-breakdown-title">Details</div>
+                  <div className="vf-calculator-breakdown-item">
+                    <span>Abschreibungsdauer</span>
+                    <span>{result.laufzeit} Jahre</span>
+                  </div>
+                  <div className="vf-calculator-breakdown-item">
+                    <span>Rechtsgrundlage</span>
+                    <span>§ 7 EStG</span>
+                  </div>
+                </div>
+              </CardContent>
             )}
-          />
-        }
-      />
-    </VfLeadCapturePage>
+          </Card>
+        </div>
+      </div>
+    </div>
   );
 }

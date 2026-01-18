@@ -1,118 +1,114 @@
 import React, { useState } from 'react';
-import { VfGenerator } from '@/components/workflows/VfGenerator';
-import { VfToolHeader } from '@/components/lead-capture/VfToolHeader';
-import { VfLeadCapturePage } from '@/components/lead-capture/VfLeadCapturePage';
-import { VfCalculatorInputGroup } from '@/components/calculators/VfCalculatorInputGroup';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { VfInput } from '@/components/shared/VfInput';
+import { VfSelect } from '@/components/shared/VfSelect';
 import { Button } from '@/components/ui/button';
-import { CheckSquare, Upload } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
 export default function BKChecker() {
-  const [formData, setFormData] = useState({
-    building_name: '',
-    total_costs: 0,
-    units_count: 0
+  const [checks, setChecks] = useState({
+    frist_12_monate: null,
+    formale_anforderungen: null,
+    verteilerschluessel: null,
+    belegpflicht: null
   });
 
-  const [preview, setPreview] = useState('');
-
-  const handleCheck = () => {
-    const costPerUnit = formData.total_costs / formData.units_count;
-    const plausible = costPerUnit >= 50 && costPerUnit <= 500;
-    
-    const previewText = `
-BETRIEBSKOSTEN-CHECK
-
-Objekt: ${formData.building_name}
-Gesamtkosten: ${formData.total_costs.toLocaleString('de-DE')} €
-Anzahl Einheiten: ${formData.units_count}
-
-Kosten pro Einheit: ${costPerUnit.toFixed(2)} €
-
-Status: ${plausible ? '✅ Plausibel' : '⚠️ Prüfung empfohlen'}
-
-${plausible 
-  ? 'Die Betriebskosten liegen im üblichen Rahmen.' 
-  : 'Die Kosten weichen vom Durchschnitt ab. Bitte prüfen Sie die Positionen.'}
-    `;
-    setPreview(previewText);
-  };
+  const checkResults = [
+    {
+      id: 'frist_12_monate',
+      title: '12-Monats-Frist eingehalten?',
+      description: 'Abrechnung muss innerhalb 12 Monaten nach Ende des Abrechnungszeitraums zugestellt werden (§ 556 Abs. 3 BGB)',
+      status: checks.frist_12_monate
+    },
+    {
+      id: 'formale_anforderungen',
+      title: 'Formale Anforderungen erfüllt?',
+      description: 'Abrechnungszeitraum, Gesamtkosten, Verteilerschlüssel, Ihre Kostenanteile müssen angegeben sein',
+      status: checks.formale_anforderungen
+    },
+    {
+      id: 'verteilerschluessel',
+      title: 'Verteilerschlüssel korrekt?',
+      description: 'Nach § 556a BGB bzw. § 2 BetrKV: nach Wohnfläche, Personen oder vereinbart',
+      status: checks.verteilerschluessel
+    },
+    {
+      id: 'belegpflicht',
+      title: 'Belege beigefügt?',
+      description: 'Mieter haben Anspruch auf Belegeinsicht (§ 259 BGB)',
+      status: checks.belegpflicht
+    }
+  ];
 
   return (
-    <VfLeadCapturePage
-      header={
-        <VfToolHeader
-          icon={<CheckSquare className="h-10 w-10" />}
-          badge="KOSTENLOS"
-          title="Betriebskosten-Checker"
-          description="Prüfen Sie Ihre Betriebskosten auf Plausibilität"
-        />
-      }
-    >
-      <VfGenerator
-        form={
-          <>
-            <VfCalculatorInputGroup title="Objektdaten">
-              <div>
-                <Label>Objektname</Label>
-                <Input
-                  value={formData.building_name}
-                  onChange={(e) => setFormData({ ...formData, building_name: e.target.value })}
-                  placeholder="Hauptstraße 1"
-                />
-              </div>
-              <div>
-                <Label>Anzahl Einheiten</Label>
-                <Input
-                  type="number"
-                  value={formData.units_count}
-                  onChange={(e) => setFormData({ ...formData, units_count: Number(e.target.value) })}
-                  placeholder="6"
-                />
-              </div>
-            </VfCalculatorInputGroup>
+    <div className="min-h-screen bg-gradient-to-br from-[var(--vf-primary-50)] to-white p-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-12">
+          <div className="vf-tool-icon mx-auto mb-4">
+            <CheckCircle className="h-9 w-9" />
+          </div>
+          <h1 className="vf-tool-title">BK-Abrechnung Checker</h1>
+          <p className="vf-tool-description">
+            Prüfen Sie, ob Ihre Betriebskostenabrechnung rechtssicher ist
+          </p>
+        </div>
 
-            <VfCalculatorInputGroup title="Betriebskosten">
-              <div>
-                <Label>Gesamtkosten (Jahr)</Label>
-                <Input
-                  type="number"
-                  value={formData.total_costs}
-                  onChange={(e) => setFormData({ ...formData, total_costs: Number(e.target.value) })}
-                  placeholder="7200"
-                />
-              </div>
-            </VfCalculatorInputGroup>
+        <Card>
+          <CardHeader>
+            <CardTitle>Checkliste</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {checkResults.map((check) => (
+                <div key={check.id} className="border border-[var(--vf-neutral-200)] rounded-lg p-4">
+                  <div className="flex items-start gap-3 mb-3">
+                    {check.status === true && <CheckCircle className="h-6 w-6 text-[var(--vf-success-500)] flex-shrink-0 mt-1" />}
+                    {check.status === false && <XCircle className="h-6 w-6 text-[var(--vf-error-500)] flex-shrink-0 mt-1" />}
+                    {check.status === null && <AlertTriangle className="h-6 w-6 text-[var(--vf-neutral-400)] flex-shrink-0 mt-1" />}
+                    <div className="flex-1">
+                      <div className="font-semibold mb-1">{check.title}</div>
+                      <p className="text-sm text-[var(--vf-neutral-600)]">{check.description}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      variant={check.status === true ? 'primary' : 'outline'}
+                      onClick={() => setChecks({ ...checks, [check.id]: true })}
+                    >
+                      ✓ Ja
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant={check.status === false ? 'destructive' : 'outline'}
+                      onClick={() => setChecks({ ...checks, [check.id]: false })}
+                    >
+                      ✗ Nein
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-            <div className="flex gap-2">
-              <Button 
-                variant="gradient" 
-                className="flex-1"
-                onClick={handleCheck}
-              >
-                Prüfen
-              </Button>
-              <Button variant="outline">
-                <Upload className="h-4 w-4 mr-2" />
-                BK-Abrechnung hochladen
-              </Button>
+            <div className="mt-6 p-4 bg-[var(--theme-surface)] rounded-lg">
+              <div className="font-semibold mb-2">Ergebnis:</div>
+              {Object.values(checks).every(v => v === true) ? (
+                <div className="text-[var(--vf-success-700)]">
+                  ✓ Ihre Abrechnung erfüllt alle formalen Anforderungen
+                </div>
+              ) : Object.values(checks).some(v => v === false) ? (
+                <div className="text-[var(--vf-error-700)]">
+                  ✗ Es gibt Punkte, die Sie überprüfen sollten
+                </div>
+              ) : (
+                <div className="text-[var(--vf-neutral-600)]">
+                  Beantworten Sie alle Fragen für eine Auswertung
+                </div>
+              )}
             </div>
-          </>
-        }
-        preview={
-          preview ? (
-            <div className="vf-generator-preview-content whitespace-pre-wrap">
-              {preview}
-            </div>
-          ) : (
-            <div className="text-center py-12 text-[var(--theme-text-muted)]">
-              <CheckSquare className="h-12 w-12 mx-auto mb-4 opacity-30" />
-              <p>Geben Sie Ihre Daten ein, um die Prüfung zu starten</p>
-            </div>
-          )
-        }
-      />
-    </VfLeadCapturePage>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }

@@ -1,17 +1,16 @@
 import React from 'react';
-import { VfMarketingLayout } from '@/components/marketing/VfMarketingLayout';
 
 export default function VermitifyDatenschutz() {
   return (
-    <VfMarketingLayout>
+    <div className="min-h-screen bg-white">
       <div className="max-w-4xl mx-auto px-6 py-20">
         <h1 className="text-4xl font-bold mb-8">Datenschutzerklärung</h1>
-        
-        <div className="prose prose-slate max-w-none space-y-8">
+
+        <div className="space-y-8 text-[var(--vf-neutral-700)]">
           <section>
             <h2 className="text-2xl font-semibold mb-4">1. Datenschutz auf einen Blick</h2>
-            <h3 className="text-xl font-semibold mb-3">Allgemeine Hinweise</h3>
-            <p className="text-[var(--theme-text-secondary)] leading-relaxed">
+            <h3 className="text-lg font-semibold mb-2">Allgemeine Hinweise</h3>
+            <p>
               Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen 
               Daten passiert, wenn Sie diese Website besuchen. Personenbezogene Daten sind alle Daten, 
               mit denen Sie persönlich identifiziert werden können.
@@ -20,53 +19,61 @@ export default function VermitifyDatenschutz() {
 
           <section>
             <h2 className="text-2xl font-semibold mb-4">2. Datenerfassung</h2>
-            <h3 className="text-xl font-semibold mb-3">Welche Daten erfassen wir?</h3>
-            <ul className="list-disc pl-6 space-y-2 text-[var(--theme-text-secondary)]">
-              <li>Kontaktdaten (Name, E-Mail, Telefon)</li>
-              <li>Immobiliendaten (Objekte, Einheiten, Mietverträge)</li>
-              <li>Finanzdaten (Mieten, Ausgaben)</li>
-              <li>Nutzungsdaten (Berechnungen, Dokumente)</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">3. Ihre Rechte</h2>
-            <ul className="list-disc pl-6 space-y-2 text-[var(--theme-text-secondary)]">
-              <li>Auskunft über Ihre gespeicherten Daten</li>
-              <li>Berichtigung unrichtiger Daten</li>
-              <li>Löschung Ihrer Daten</li>
-              <li>Einschränkung der Datenverarbeitung</li>
-              <li>Datenübertragbarkeit</li>
-              <li>Widerspruch gegen die Datenverarbeitung</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">4. Datensicherheit</h2>
-            <p className="text-[var(--theme-text-secondary)] leading-relaxed">
-              Wir verwenden SSL-Verschlüsselung für die Datenübertragung. Ihre Daten werden auf 
-              Servern in Deutschland gespeichert. Regelmäßige Backups und Sicherheitsaudits 
-              gewährleisten die Sicherheit Ihrer Daten.
+            <h3 className="text-lg font-semibold mb-2">Wer ist verantwortlich für die Datenerfassung?</h3>
+            <p className="mb-4">
+              Die Datenverarbeitung auf dieser Website erfolgt durch den Websitebetreiber. 
+              Dessen Kontaktdaten können Sie dem Impressum dieser Website entnehmen.
+            </p>
+            <h3 className="text-lg font-semibold mb-2">Wie erfassen wir Ihre Daten?</h3>
+            <p>
+              Ihre Daten werden zum einen dadurch erhoben, dass Sie uns diese mitteilen. 
+              Hierbei kann es sich z.B. um Daten handeln, die Sie in ein Kontaktformular eingeben.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4">5. Kontakt Datenschutz</h2>
-            <p className="text-[var(--theme-text-secondary)]">
-              Bei Fragen zum Datenschutz:<br />
-              E-Mail: datenschutz@vermitify.de<br />
-              Telefon: +49 30 1234 5678
+            <h2 className="text-2xl font-semibold mb-4">3. Hosting</h2>
+            <p>
+              Wir hosten die Inhalte unserer Website bei Base44. Die Server befinden sich ausschließlich 
+              in Deutschland und sind ISO 27001 zertifiziert.
             </p>
           </section>
 
-          <div className="mt-12 p-6 bg-[var(--vf-primary-50)] rounded-lg">
-            <p className="text-sm text-[var(--theme-text-secondary)]">
-              Stand: Januar 2026<br />
-              Letzte Aktualisierung: 17.01.2026
+          <section>
+            <h2 className="text-2xl font-semibold mb-4">4. Ihre Rechte</h2>
+            <p>
+              Sie haben jederzeit das Recht auf unentgeltliche Auskunft über Ihre gespeicherten 
+              personenbezogenen Daten, deren Herkunft und Empfänger und den Zweck der Datenverarbeitung 
+              sowie ein Recht auf Berichtigung oder Löschung dieser Daten.
             </p>
-          </div>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold mb-4">5. Cookies</h2>
+            <p>
+              Unsere Website verwendet Cookies. Das sind kleine Textdateien, die Ihr Webbrowser auf 
+              Ihrem Endgerät speichert. Cookies helfen uns dabei, unser Angebot nutzerfreundlicher zu machen.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold mb-4">6. SSL/TLS-Verschlüsselung</h2>
+            <p>
+              Diese Seite nutzt aus Sicherheitsgründen und zum Schutz der Übertragung vertraulicher Inhalte 
+              eine SSL/TLS-Verschlüsselung. Eine verschlüsselte Verbindung erkennen Sie daran, dass die 
+              Adresszeile des Browsers von "http://" auf "https://" wechselt.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold mb-4">7. Kontakt</h2>
+            <p>
+              Bei Fragen zum Datenschutz können Sie sich jederzeit an uns wenden:<br />
+              E-Mail: datenschutz@vermitify.de
+            </p>
+          </section>
         </div>
       </div>
-    </VfMarketingLayout>
+    </div>
   );
 }

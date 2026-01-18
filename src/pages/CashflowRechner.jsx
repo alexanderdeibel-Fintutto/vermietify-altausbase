@@ -1,170 +1,153 @@
 import React, { useState } from 'react';
-import { VfCalculatorPage, VfCalculatorForm, VfCalculatorResult } from '@/components/calculators/VfCalculatorPage';
-import { VfCalculatorInputGroup } from '@/components/calculators/VfCalculatorInputGroup';
-import { VfToolHeader } from '@/components/lead-capture/VfToolHeader';
-import { VfLeadCapturePage } from '@/components/lead-capture/VfLeadCapturePage';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { DollarSign } from 'lucide-react';
+import { VfInput } from '@/components/shared/VfInput';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { PieChart } from 'lucide-react';
+import CurrencyDisplay from '@/components/shared/CurrencyDisplay';
 
 export default function CashflowRechner() {
-  const [formData, setFormData] = useState({
-    miete_kalt: 1000,
-    nebenkosten_umlage: 150,
-    nicht_umlagefaehig: 100,
-    instandhaltung: 50,
-    verwaltung: 30,
-    versicherung: 40,
-    grundsteuer: 60,
-    zinskosten: 500
+  const [input, setInput] = useState({
+    miete_kalt: '',
+    nebenkosten_vorauszahlung: '',
+    verwaltungskosten: '',
+    instandhaltung: '',
+    nicht_umlagefaehig: '',
+    finanzierungskosten: ''
   });
-  
-  const [result, setResult] = useState(null);
 
-  const handleCalculate = () => {
-    const einnahmen = formData.miete_kalt + formData.nebenkosten_umlage;
-    const ausgaben = formData.nicht_umlagefaehig + formData.instandhaltung + 
-                     formData.verwaltung + formData.versicherung + 
-                     formData.grundsteuer + formData.zinskosten;
-    
-    const cashflow = einnahmen - ausgaben;
-    const cashflow_jahr = cashflow * 12;
-    
-    setResult({
-      einnahmen_monat: einnahmen,
-      ausgaben_monat: ausgaben,
-      cashflow_monat: cashflow,
-      cashflow_jahr,
-      rendite_status: cashflow > 0 ? 'Positiv' : 'Negativ'
-    });
+  const calculate = () => {
+    const mieteinnahmen = (parseFloat(input.miete_kalt) || 0) * 12;
+    const nebenkostenVZ = (parseFloat(input.nebenkosten_vorauszahlung) || 0) * 12;
+    const verwaltung = (parseFloat(input.verwaltungskosten) || 0) * 12;
+    const instandhaltung = (parseFloat(input.instandhaltung) || 0) * 12;
+    const nichtUmlagefaehig = (parseFloat(input.nicht_umlagefaehig) || 0) * 12;
+    const finanzierung = (parseFloat(input.finanzierungskosten) || 0) * 12;
+
+    const gesamtEinnahmen = mieteinnahmen + nebenkostenVZ;
+    const gesamtAusgaben = verwaltung + instandhaltung + nichtUmlagefaehig + finanzierung;
+    const cashflow = gesamtEinnahmen - gesamtAusgaben;
+
+    return {
+      gesamtEinnahmen,
+      gesamtAusgaben,
+      cashflowJahr: cashflow,
+      cashflowMonat: cashflow / 12,
+      positiv: cashflow > 0
+    };
   };
 
-  return (
-    <VfLeadCapturePage
-      header={
-        <VfToolHeader
-          icon={<DollarSign className="h-10 w-10" />}
-          badge="KOSTENLOS"
-          title="Cashflow-Rechner"
-          description="Berechnen Sie Ihren monatlichen und jährlichen Cashflow"
-        />
-      }
-    >
-      <VfCalculatorPage
-        inputPanel={
-          <VfCalculatorForm
-            title="Einnahmen & Ausgaben"
-            onCalculate={handleCalculate}
-            onReset={() => {
-              setFormData({
-                miete_kalt: 1000,
-                nebenkosten_umlage: 150,
-                nicht_umlagefaehig: 100,
-                instandhaltung: 50,
-                verwaltung: 30,
-                versicherung: 40,
-                grundsteuer: 60,
-                zinskosten: 500
-              });
-              setResult(null);
-            }}
-          >
-            <VfCalculatorInputGroup title="Einnahmen">
-              <div>
-                <Label>Kaltmiete</Label>
-                <Input
-                  type="number"
-                  value={formData.miete_kalt}
-                  onChange={(e) => setFormData({ ...formData, miete_kalt: Number(e.target.value) })}
-                />
-              </div>
-              <div>
-                <Label>Nebenkosten-Umlage</Label>
-                <Input
-                  type="number"
-                  value={formData.nebenkosten_umlage}
-                  onChange={(e) => setFormData({ ...formData, nebenkosten_umlage: Number(e.target.value) })}
-                />
-              </div>
-            </VfCalculatorInputGroup>
+  const result = calculate();
 
-            <VfCalculatorInputGroup title="Laufende Ausgaben">
-              <div>
-                <Label>Nicht umlagefähige NK</Label>
-                <Input
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[var(--vf-primary-50)] to-white p-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-12">
+          <div className="vf-tool-icon mx-auto mb-4">
+            <PieChart className="h-9 w-9" />
+          </div>
+          <h1 className="vf-tool-title">Cashflow-Rechner</h1>
+          <p className="vf-tool-description">
+            Berechnen Sie den monatlichen und jährlichen Cashflow Ihrer Immobilie
+          </p>
+        </div>
+
+        <div className="vf-calculator">
+          <Card className="vf-calculator-input-panel">
+            <CardHeader>
+              <CardTitle>Einnahmen & Ausgaben</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="font-semibold text-[var(--vf-success-700)] mb-2">Einnahmen (monatlich)</div>
+                <VfInput
+                  label="Kaltmiete"
                   type="number"
-                  value={formData.nicht_umlagefaehig}
-                  onChange={(e) => setFormData({ ...formData, nicht_umlagefaehig: Number(e.target.value) })}
+                  rightAddon="€"
+                  value={input.miete_kalt}
+                  onChange={(e) => setInput({ ...input, miete_kalt: e.target.value })}
+                />
+                <VfInput
+                  label="Nebenkosten-Vorauszahlung"
+                  type="number"
+                  rightAddon="€"
+                  value={input.nebenkosten_vorauszahlung}
+                  onChange={(e) => setInput({ ...input, nebenkosten_vorauszahlung: e.target.value })}
+                />
+
+                <div className="font-semibold text-[var(--vf-error-700)] mb-2 mt-6">Ausgaben (monatlich)</div>
+                <VfInput
+                  label="Verwaltungskosten"
+                  type="number"
+                  rightAddon="€"
+                  value={input.verwaltungskosten}
+                  onChange={(e) => setInput({ ...input, verwaltungskosten: e.target.value })}
+                />
+                <VfInput
+                  label="Instandhaltungsrücklage"
+                  type="number"
+                  rightAddon="€"
+                  value={input.instandhaltung}
+                  onChange={(e) => setInput({ ...input, instandhaltung: e.target.value })}
+                />
+                <VfInput
+                  label="Nicht-umlagefähige NK"
+                  type="number"
+                  rightAddon="€"
+                  value={input.nicht_umlagefaehig}
+                  onChange={(e) => setInput({ ...input, nicht_umlagefaehig: e.target.value })}
+                />
+                <VfInput
+                  label="Finanzierungskosten"
+                  type="number"
+                  rightAddon="€"
+                  value={input.finanzierungskosten}
+                  onChange={(e) => setInput({ ...input, finanzierungskosten: e.target.value })}
                 />
               </div>
-              <div>
-                <Label>Instandhaltung</Label>
-                <Input
-                  type="number"
-                  value={formData.instandhaltung}
-                  onChange={(e) => setFormData({ ...formData, instandhaltung: Number(e.target.value) })}
-                />
+            </CardContent>
+          </Card>
+
+          <Card className="vf-calculator-result-panel">
+            <CardContent className="p-6">
+              <div className="vf-calculator-primary-result">
+                <div className="vf-calculator-primary-label">Cashflow (Monat)</div>
+                <div className={`vf-calculator-primary-value ${
+                  result.positiv ? 'text-[var(--vf-success-600)]' : 'text-[var(--vf-error-600)]'
+                }`}>
+                  <CurrencyDisplay amount={result.cashflowMonat} showSign color={result.positiv} />
+                </div>
               </div>
-              <div>
-                <Label>Verwaltung</Label>
-                <Input
-                  type="number"
-                  value={formData.verwaltung}
-                  onChange={(e) => setFormData({ ...formData, verwaltung: Number(e.target.value) })}
-                />
+
+              <div className="vf-calculator-secondary-results">
+                <div className="vf-calculator-secondary-item">
+                  <div className="vf-calculator-secondary-label">Cashflow (Jahr)</div>
+                  <div className={`vf-calculator-secondary-value ${
+                    result.positiv ? 'text-[var(--vf-success-600)]' : 'text-[var(--vf-error-600)]'
+                  }`}>
+                    <CurrencyDisplay amount={result.cashflowJahr} showSign color={result.positiv} />
+                  </div>
+                </div>
               </div>
-              <div>
-                <Label>Versicherung</Label>
-                <Input
-                  type="number"
-                  value={formData.versicherung}
-                  onChange={(e) => setFormData({ ...formData, versicherung: Number(e.target.value) })}
-                />
+
+              <div className="vf-calculator-breakdown">
+                <div className="vf-calculator-breakdown-title">Zusammenfassung (Jahr)</div>
+                <div className="vf-calculator-breakdown-item">
+                  <span className="text-[var(--vf-success-700)]">Einnahmen</span>
+                  <CurrencyDisplay amount={result.gesamtEinnahmen} />
+                </div>
+                <div className="vf-calculator-breakdown-item">
+                  <span className="text-[var(--vf-error-700)]">Ausgaben</span>
+                  <CurrencyDisplay amount={result.gesamtAusgaben} />
+                </div>
+                <div className="vf-calculator-breakdown-item border-t-2 border-[var(--vf-neutral-300)] pt-2 mt-2 font-bold">
+                  <span>Cashflow</span>
+                  <CurrencyDisplay amount={result.cashflowJahr} showSign color={result.positiv} />
+                </div>
               </div>
-              <div>
-                <Label>Grundsteuer</Label>
-                <Input
-                  type="number"
-                  value={formData.grundsteuer}
-                  onChange={(e) => setFormData({ ...formData, grundsteuer: Number(e.target.value) })}
-                />
-              </div>
-              <div>
-                <Label>Zinskosten</Label>
-                <Input
-                  type="number"
-                  value={formData.zinskosten}
-                  onChange={(e) => setFormData({ ...formData, zinskosten: Number(e.target.value) })}
-                />
-              </div>
-            </VfCalculatorInputGroup>
-          </VfCalculatorForm>
-        }
-        resultPanel={
-          <VfCalculatorResult
-            primaryResult={result ? {
-              label: "Cashflow pro Monat",
-              value: `${result.cashflow_monat.toLocaleString('de-DE')} €`
-            } : null}
-            secondaryResults={result ? [
-              { label: "Cashflow pro Jahr", value: `${result.cashflow_jahr.toLocaleString('de-DE')} €` },
-              { label: "Status", value: result.rendite_status }
-            ] : []}
-            breakdown={result ? [
-              { label: "Einnahmen/Monat", value: `${result.einnahmen_monat.toLocaleString('de-DE')} €`, type: "income" },
-              { label: "Ausgaben/Monat", value: `${result.ausgaben_monat.toLocaleString('de-DE')} €`, type: "expense" }
-            ] : []}
-            empty={!result && (
-              <div className="text-center py-8">
-                <DollarSign className="h-12 w-12 mx-auto mb-4 text-[var(--theme-text-muted)]" />
-                <p className="text-[var(--theme-text-muted)]">
-                  Berechnen Sie Ihren Cashflow
-                </p>
-              </div>
-            )}
-          />
-        }
-      />
-    </VfLeadCapturePage>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
   );
 }

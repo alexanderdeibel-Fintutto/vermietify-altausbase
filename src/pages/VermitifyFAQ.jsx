@@ -1,121 +1,91 @@
-import React from 'react';
-import { VfMarketingLayout } from '@/components/marketing/VfMarketingLayout';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import React, { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function VermitifyFAQ() {
+  const [openIndex, setOpenIndex] = useState(null);
+
   const faqs = [
     {
-      category: 'Allgemein',
-      questions: [
-        {
-          q: 'Für wen ist vermitify geeignet?',
-          a: 'vermitify richtet sich an private Vermieter, professionelle Vermieter, Hausverwaltungen und Immobilien-Investoren in Deutschland, Österreich und der Schweiz.'
-        },
-        {
-          q: 'Brauche ich technisches Wissen?',
-          a: 'Nein. vermitify ist so einfach wie Online-Banking. Sie brauchen keine Vorkenntnisse.'
-        },
-        {
-          q: 'Kann ich vermitify testen?',
-          a: 'Ja! Sie können alle Professional-Features 14 Tage kostenlos testen. Keine Kreditkarte erforderlich.'
-        }
-      ]
+      question: 'Wie funktioniert die kostenlose Testphase?',
+      answer: 'Sie können Vermitify 14 Tage lang kostenlos und ohne Angabe von Zahlungsdaten testen. Nach Ablauf der Testphase können Sie einen Plan wählen oder Ihr Konto wird automatisch deaktiviert.'
     },
     {
-      category: 'Funktionen',
-      questions: [
-        {
-          q: 'Welche Rechner sind kostenlos verfügbar?',
-          a: 'Alle 9 Rechner (Rendite, AfA, Indexmiete, Cashflow, Tilgung, Kaufpreis, Wertentwicklung, BK-Checker, Mietvertrag-Generator) sind komplett kostenlos - auch ohne Registrierung.'
-        },
-        {
-          q: 'Wie funktioniert die Anlage V Erstellung?',
-          a: 'vermitify sammelt automatisch alle relevanten Daten (Mieteinnahmen, Ausgaben, AfA) und generiert daraus die Anlage V. Export für ELSTER mit einem Klick.'
-        },
-        {
-          q: 'Kann ich Dokumente automatisch versenden?',
-          a: 'Ja, über die LetterXpress-Integration können Sie BK-Abrechnungen, Mieterhöhungen, etc. automatisch per Post versenden.'
-        }
-      ]
+      question: 'Kann ich jederzeit kündigen?',
+      answer: 'Ja, Sie können Ihr Abonnement jederzeit mit einem Klick kündigen. Es gibt keine Mindestlaufzeit und keine Kündigungsfrist.'
     },
     {
-      category: 'Sicherheit & Datenschutz',
-      questions: [
-        {
-          q: 'Wo werden meine Daten gespeichert?',
-          a: 'Alle Daten werden auf Servern in Deutschland gespeichert. Wir sind DSGVO-konform und erfüllen höchste Sicherheitsstandards.'
-        },
-        {
-          q: 'Wer hat Zugriff auf meine Daten?',
-          a: 'Nur Sie. Ihre Daten werden verschlüsselt übertragen und gespeichert. Nicht einmal unser Support-Team hat Zugriff ohne Ihre Zustimmung.'
-        },
-        {
-          q: 'Was passiert bei Kündigung?',
-          a: 'Sie können alle Ihre Daten jederzeit exportieren. Nach Kündigung werden Ihre Daten nach 90 Tagen vollständig gelöscht.'
-        }
-      ]
+      question: 'Sind meine Daten sicher?',
+      answer: 'Absolut. Wir nutzen Bank-Level-Verschlüsselung (SSL/TLS), tägliche Backups und Server ausschließlich in Deutschland. Vermitify ist vollständig DSGVO-konform.'
     },
     {
-      category: 'Preise & Abrechnung',
-      questions: [
-        {
-          q: 'Gibt es versteckte Kosten?',
-          a: 'Nein. Der monatliche Preis ist alles, was Sie zahlen. Keine Setup-Gebühren, keine versteckten Kosten.'
-        },
-        {
-          q: 'Kann ich monatlich kündigen?',
-          a: 'Ja. Es gibt keine Mindestlaufzeit. Sie können jederzeit zum Monatsende kündigen.'
-        },
-        {
-          q: 'Gibt es einen Jahresrabatt?',
-          a: 'Ja! Bei jährlicher Zahlung sparen Sie 20% (2 Monate kostenlos).'
-        }
-      ]
+      question: 'Funktioniert die ELSTER-Integration wirklich?',
+      answer: 'Ja! Wir generieren die Anlage V automatisch aus Ihren Daten und exportieren sie als XML-Datei, die Sie direkt in ELSTER importieren können. Eine direkte API-Übertragung zu ELSTER ist in Arbeit.'
+    },
+    {
+      question: 'Kann ich mehrere Objekte verwalten?',
+      answer: 'Ja. Je nach Plan können Sie 3 Objekte (Starter), unbegrenzte Objekte (Professional) oder Objekte mit Multi-Mandanten-Verwaltung (Business) anlegen.'
+    },
+    {
+      question: 'Brauche ich technische Kenntnisse?',
+      answer: 'Nein. Vermitify ist bewusst einfach und intuitiv gestaltet. Alle Funktionen werden Schritt-für-Schritt durch Assistenten begleitet.'
+    },
+    {
+      question: 'Was passiert mit meinen Daten bei Kündigung?',
+      answer: 'Sie können jederzeit alle Ihre Daten als PDF oder Excel exportieren. Nach Kündigung haben Sie 30 Tage Zeit, Ihre Daten zu sichern, bevor sie gelöscht werden.'
+    },
+    {
+      question: 'Gibt es eine API?',
+      answer: 'Ja, ab dem Professional Plan erhalten Sie vollen API-Zugang für Integrationen mit anderen Systemen.'
     }
   ];
 
   return (
-    <VfMarketingLayout>
+    <div className="min-h-screen bg-white">
       <div className="max-w-4xl mx-auto px-6 py-20">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold mb-4">Häufige Fragen</h1>
-          <p className="text-xl text-[var(--theme-text-secondary)]">
-            Alles, was Sie über vermitify wissen müssen
+        <div className="text-center mb-16">
+          <h1 className="text-5xl font-bold mb-4">Häufig gestellte Fragen</h1>
+          <p className="text-xl text-[var(--vf-neutral-600)]">
+            Alles, was Sie über Vermitify wissen müssen
           </p>
         </div>
 
-        <div className="space-y-8">
-          {faqs.map((category) => (
-            <div key={category.category}>
-              <h2 className="text-2xl font-bold mb-4">{category.category}</h2>
-              <Accordion type="single" collapsible className="space-y-2">
-                {category.questions.map((faq, index) => (
-                  <AccordionItem key={index} value={`item-${index}`} className="vf-card">
-                    <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                      <span className="font-semibold text-left">{faq.q}</span>
-                    </AccordionTrigger>
-                    <AccordionContent className="px-6 pb-4">
-                      <p className="text-[var(--theme-text-secondary)] leading-relaxed">
-                        {faq.a}
-                      </p>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
+        <div className="space-y-4">
+          {faqs.map((faq, index) => (
+            <div 
+              key={index}
+              className="border border-[var(--vf-neutral-200)] rounded-xl overflow-hidden"
+            >
+              <button
+                className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-[var(--vf-neutral-50)] transition-colors"
+                onClick={() => setOpenIndex(openIndex === index ? null : index)}
+              >
+                <span className="font-semibold text-lg">{faq.question}</span>
+                <ChevronDown 
+                  className={`h-5 w-5 text-[var(--vf-neutral-500)] transition-transform ${
+                    openIndex === index ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+              {openIndex === index && (
+                <div className="px-6 py-4 bg-[var(--vf-neutral-50)] border-t border-[var(--vf-neutral-200)]">
+                  <p className="text-[var(--vf-neutral-700)]">{faq.answer}</p>
+                </div>
+              )}
             </div>
           ))}
         </div>
 
-        <div className="mt-12 text-center p-8 bg-[var(--vf-primary-50)] rounded-xl">
-          <h3 className="text-xl font-bold mb-2">Noch Fragen?</h3>
-          <p className="text-[var(--theme-text-secondary)] mb-4">
-            Unser Team beantwortet Ihre Fragen gerne persönlich
+        <div className="text-center mt-16 p-8 bg-gradient-to-br from-[var(--vf-primary-50)] to-[var(--vf-accent-50)] rounded-2xl">
+          <h2 className="text-2xl font-bold mb-3">Noch Fragen?</h2>
+          <p className="text-[var(--vf-neutral-600)] mb-6">
+            Unser Support-Team hilft Ihnen gerne weiter
           </p>
-          <a href="mailto:support@vermitify.de" className="vf-btn vf-btn-gradient vf-btn-md">
+          <Button variant="gradient" size="lg">
             Kontakt aufnehmen
-          </a>
+          </Button>
         </div>
       </div>
-    </VfMarketingLayout>
+    </div>
   );
 }

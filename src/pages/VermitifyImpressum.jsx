@@ -1,28 +1,34 @@
 import React from 'react';
-import { VfMarketingLayout } from '@/components/marketing/VfMarketingLayout';
 
 export default function VermitifyImpressum() {
   return (
-    <VfMarketingLayout>
+    <div className="min-h-screen bg-white">
       <div className="max-w-4xl mx-auto px-6 py-20">
         <h1 className="text-4xl font-bold mb-8">Impressum</h1>
-        
-        <div className="prose prose-slate max-w-none space-y-8">
+
+        <div className="space-y-8 text-[var(--vf-neutral-700)]">
           <section>
             <h2 className="text-2xl font-semibold mb-4">Angaben gemäß § 5 TMG</h2>
             <p>
-              vermitify GmbH<br />
-              Musterstraße 1<br />
+              Vermitify GmbH<br />
+              Musterstraße 123<br />
               10115 Berlin<br />
               Deutschland
             </p>
           </section>
 
           <section>
+            <h2 className="text-2xl font-semibold mb-4">Vertreten durch</h2>
+            <p>
+              Geschäftsführer: Max Mustermann
+            </p>
+          </section>
+
+          <section>
             <h2 className="text-2xl font-semibold mb-4">Kontakt</h2>
             <p>
-              Telefon: +49 30 1234 5678<br />
-              E-Mail: info@vermitify.de
+              Telefon: +49 30 1234567<br />
+              E-Mail: kontakt@vermitify.de
             </p>
           </section>
 
@@ -30,44 +36,44 @@ export default function VermitifyImpressum() {
             <h2 className="text-2xl font-semibold mb-4">Registereintrag</h2>
             <p>
               Eintragung im Handelsregister<br />
-              Registergericht: Amtsgericht Berlin<br />
-              Registernummer: HRB 12345
+              Registergericht: Amtsgericht Berlin-Charlottenburg<br />
+              Registernummer: HRB 123456 B
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-semibold mb-4">Umsatzsteuer-ID</h2>
             <p>
-              Umsatzsteuer-Identifikationsnummer gemäß §27a UStG:<br />
+              Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:<br />
               DE123456789
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4">Geschäftsführer</h2>
-            <p>Max Mustermann</p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">Verantwortlich für den Inhalt</h2>
+            <h2 className="text-2xl font-semibold mb-4">Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
             <p>
               Max Mustermann<br />
-              Musterstraße 1<br />
+              Musterstraße 123<br />
               10115 Berlin
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4">EU-Streitschlichtung</h2>
+            <h2 className="text-2xl font-semibold mb-4">Haftungsausschluss</h2>
+            <h3 className="text-lg font-semibold mb-2">Haftung für Inhalte</h3>
+            <p className="mb-4">
+              Die Inhalte unserer Seiten wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, 
+              Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen.
+            </p>
+            <h3 className="text-lg font-semibold mb-2">Haftung für Links</h3>
             <p>
-              Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:<br />
-              <a href="https://ec.europa.eu/consumers/odr" className="text-[var(--vf-primary-600)] hover:underline">
-                https://ec.europa.eu/consumers/odr
-              </a>
+              Unser Angebot enthält Links zu externen Webseiten Dritter, auf deren Inhalte wir keinen 
+              Einfluss haben. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter 
+              oder Betreiber der Seiten verantwortlich.
             </p>
           </section>
         </div>
       </div>
-    </VfMarketingLayout>
+    </div>
   );
 }

@@ -1,73 +1,97 @@
 import React from 'react';
+import { Calculator, TrendingUp, FileText, PieChart, Home, Percent } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
-import { VfMarketingLayout } from '@/components/marketing/VfMarketingLayout';
-import { VfHero } from '@/components/marketing/VfHero';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calculator, TrendingUp, TrendingDown, FileText, CheckSquare, Home, DollarSign, PiggyBank, BarChart3 } from 'lucide-react';
 
 export default function ToolsLandingPage() {
   const tools = [
-    { title: 'Rendite-Rechner', icon: Calculator, href: 'RenditeRechner', description: 'Brutto- & Netto-Rendite', popular: true },
-    { title: 'Indexmieten', icon: TrendingUp, href: 'IndexmietenRechner', description: 'VPI-basierte Mieterhöhung' },
-    { title: 'AfA-Rechner', icon: TrendingDown, href: 'AfACalculator', description: 'Abschreibung berechnen' },
-    { title: 'Cashflow', icon: DollarSign, href: 'CashflowRechner', description: 'Monatlicher Cashflow' },
-    { title: 'Tilgung', icon: PiggyBank, href: 'TilgungsRechner', description: 'Kreditrate & Laufzeit' },
-    { title: 'Kaufpreis', icon: Home, href: 'KaufpreisRechner', description: 'Maximaler Kaufpreis' },
-    { title: 'Wertentwicklung', icon: TrendingUp, href: 'WertentwicklungsRechner', description: 'Wertsteigerung prognostizieren' },
-    { title: 'BK-Checker', icon: CheckSquare, href: 'BKChecker', description: 'Betriebskosten prüfen' },
-    { title: 'Mietvertrag', icon: FileText, href: 'MietvertragGenerator', description: 'Mietvertrag erstellen' }
+    {
+      icon: Calculator,
+      title: 'Rendite-Rechner',
+      description: 'Berechnen Sie die Brutto- und Nettorendite Ihrer Immobilie',
+      link: '/rendite-rechner',
+      color: 'from-blue-500 to-cyan-500'
+    },
+    {
+      icon: TrendingUp,
+      title: 'Indexmieten-Rechner',
+      description: 'VPI-basierte Mietanpassungen automatisch berechnen',
+      link: '/indexmieten-rechner-enhanced',
+      color: 'from-green-500 to-emerald-500'
+    },
+    {
+      icon: Percent,
+      title: 'AfA-Rechner',
+      description: 'Abschreibungen für Immobilien nach § 7 EStG berechnen',
+      link: '/afa-calculator',
+      color: 'from-purple-500 to-pink-500'
+    },
+    {
+      icon: PieChart,
+      title: 'Cashflow-Rechner',
+      description: 'Monatliche Einnahmen und Ausgaben kalkulieren',
+      link: '/cashflow-rechner',
+      color: 'from-orange-500 to-red-500'
+    },
+    {
+      icon: Home,
+      title: 'Kaufpreis-Rechner',
+      description: 'Maximalen Kaufpreis basierend auf Zielrendite ermitteln',
+      link: '/kaufpreis-rechner',
+      color: 'from-indigo-500 to-blue-500'
+    },
+    {
+      icon: FileText,
+      title: 'Mietvertrag-Generator',
+      description: 'Rechtssichere Mietverträge in wenigen Minuten erstellen',
+      link: '/mietvertrag-generator-enhanced',
+      color: 'from-teal-500 to-green-500'
+    }
   ];
 
   return (
-    <VfMarketingLayout>
-      <VfHero
-        headline="9 kostenlose Tools für Vermieter"
-        subheadline="Professionelle Rechner und Generatoren - komplett kostenlos, ohne Registrierung"
-        gradient
-      />
-
-      <section className="max-w-6xl mx-auto px-6 py-16">
-        <div className="grid md:grid-cols-3 gap-6">
-          {tools.map((tool) => {
-            const ToolIcon = tool.icon;
-            return (
-              <Link key={tool.title} to={createPageUrl(tool.href)}>
-                <Card className="vf-card-clickable h-full relative">
-                  {tool.popular && (
-                    <div className="absolute top-3 right-3">
-                      <span className="vf-badge vf-badge-accent">Beliebt</span>
-                    </div>
-                  )}
-                  <CardContent className="p-6 text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-[var(--vf-gradient-primary)] rounded-xl flex items-center justify-center text-white">
-                      <ToolIcon className="h-8 w-8" />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">{tool.title}</h3>
-                    <p className="text-sm text-[var(--theme-text-secondary)]">
-                      {tool.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
+    <div className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto px-6 py-20">
+        <div className="text-center mb-16">
+          <h1 className="text-5xl font-bold mb-4">Kostenlose Tools für Vermieter</h1>
+          <p className="text-xl text-[var(--vf-neutral-600)] max-w-3xl mx-auto">
+            Professionelle Rechner und Generatoren – komplett kostenlos und ohne Registrierung
+          </p>
         </div>
-      </section>
 
-      <section className="bg-[var(--vf-primary-50)] py-16">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold mb-4">Alle Tools. Eine Software.</h2>
-          <p className="text-lg text-[var(--theme-text-secondary)] mb-8">
-            Mit vermitify Professional erhalten Sie nicht nur alle Rechner, 
-            sondern auch automatische Verwaltung, ELSTER-Export und vieles mehr.
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {tools.map((tool, index) => (
+            <Link 
+              key={index}
+              to={tool.link}
+              className="group block"
+            >
+              <div className="bg-white border border-[var(--vf-neutral-200)] rounded-2xl p-6 hover:shadow-xl transition-all">
+                <div className={`w-14 h-14 bg-gradient-to-br ${tool.color} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                  <tool.icon className="h-7 w-7 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2 group-hover:text-[var(--theme-primary)] transition-colors">
+                  {tool.title}
+                </h3>
+                <p className="text-[var(--vf-neutral-600)]">
+                  {tool.description}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        <div className="text-center mt-16 p-12 bg-gradient-to-br from-[var(--vf-primary-50)] to-[var(--vf-accent-50)] rounded-2xl">
+          <h2 className="text-3xl font-bold mb-4">Bereit für mehr?</h2>
+          <p className="text-lg text-[var(--vf-neutral-600)] mb-8 max-w-2xl mx-auto">
+            Mit Vermitify erhalten Sie Zugriff auf alle Tools plus automatische Dokumentengenerierung, 
+            ELSTER-Integration, Mieter-Portal und vieles mehr.
           </p>
           <Button variant="gradient" size="lg">
-            Jetzt 14 Tage kostenlos testen →
+            Jetzt kostenlos testen
           </Button>
         </div>
-      </section>
-    </VfMarketingLayout>
+      </div>
+    </div>
   );
 }
