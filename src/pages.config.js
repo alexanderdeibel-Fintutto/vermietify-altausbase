@@ -550,6 +550,17 @@ import ContractDetailEnhanced from './pages/ContractDetailEnhanced';
 import BKAbrechnungWizardEnhanced from './pages/BKAbrechnungWizardEnhanced';
 import AnlageVWizardEnhanced from './pages/AnlageVWizardEnhanced';
 import OnboardingEnhanced from './pages/OnboardingEnhanced';
+import VermitifyHomepageEnhanced from './pages/VermitifyHomepageEnhanced';
+import RenditeRechner from './pages/RenditeRechner';
+import IndexmietenRechnerEnhanced from './pages/IndexmietenRechnerEnhanced';
+import AdminLeadDashboardEnhanced from './pages/AdminLeadDashboardEnhanced';
+import VermitifyPricingEnhanced from './pages/VermitifyPricingEnhanced';
+import VermitifyFeaturesEnhanced from './pages/VermitifyFeaturesEnhanced';
+import VermitifyContactEnhanced from './pages/VermitifyContactEnhanced';
+import InvestorProfilQuiz from './pages/InvestorProfilQuiz';
+import NotificationCenterEnhanced from './pages/NotificationCenterEnhanced';
+import MietvertragGeneratorEnhanced from './pages/MietvertragGeneratorEnhanced';
+import CalculationHistoryEnhanced from './pages/CalculationHistoryEnhanced';
 import __Layout from './Layout.jsx';
 
 
@@ -1106,6 +1117,17 @@ export const PAGES = {
     "BKAbrechnungWizardEnhanced": BKAbrechnungWizardEnhanced,
     "AnlageVWizardEnhanced": AnlageVWizardEnhanced,
     "OnboardingEnhanced": OnboardingEnhanced,
+    "VermitifyHomepageEnhanced": VermitifyHomepageEnhanced,
+    "RenditeRechner": RenditeRechner,
+    "IndexmietenRechnerEnhanced": IndexmietenRechnerEnhanced,
+    "AdminLeadDashboardEnhanced": AdminLeadDashboardEnhanced,
+    "VermitifyPricingEnhanced": VermitifyPricingEnhanced,
+    "VermitifyFeaturesEnhanced": VermitifyFeaturesEnhanced,
+    "VermitifyContactEnhanced": VermitifyContactEnhanced,
+    "InvestorProfilQuiz": InvestorProfilQuiz,
+    "NotificationCenterEnhanced": NotificationCenterEnhanced,
+    "MietvertragGeneratorEnhanced": MietvertragGeneratorEnhanced,
+    "CalculationHistoryEnhanced": CalculationHistoryEnhanced,
 }
 
 export const pagesConfig = {

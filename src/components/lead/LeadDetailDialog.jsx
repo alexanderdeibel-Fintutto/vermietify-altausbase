@@ -1,33 +1,12 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { VfModal } from '@/components/shared/VfModal';
-import { VfDataField } from '@/components/data-display/VfDataField';
-import { VfDataGrid } from '@/components/data-display/VfDataGrid';
-import { VfBadge } from '@/components/shared/VfBadge';
-import { VfProgress } from '@/components/shared/VfProgress';
 import { Button } from '@/components/ui/button';
-import { Mail, Phone, UserPlus, TrendingUp } from 'lucide-react';
+import StatusBadge from '@/components/shared/StatusBadge';
+import { VfBadge } from '@/components/shared/VfBadge';
+import { Mail, Phone, Building, UserPlus } from 'lucide-react';
+import TimeAgo from '@/components/shared/TimeAgo';
 
-export default function LeadDetailDialog({ leadId, open, onClose }) {
-  const { data: lead } = useQuery({
-    queryKey: ['lead', leadId],
-    queryFn: () => base44.entities.Lead.get(leadId),
-    enabled: !!leadId
-  });
-
-  const { data: calculations = [] } = useQuery({
-    queryKey: ['lead-calculations', leadId],
-    queryFn: () => base44.entities.CalculationHistory.filter({ lead_id: leadId }),
-    enabled: !!leadId
-  });
-
-  const { data: quizResults = [] } = useQuery({
-    queryKey: ['lead-quiz', leadId],
-    queryFn: () => base44.entities.QuizResult.filter({ lead_id: leadId }),
-    enabled: !!leadId
-  });
-
+export default function LeadDetailDialog({ lead, open, onClose, onConvert }) {
   if (!lead) return null;
 
   return (
@@ -36,68 +15,65 @@ export default function LeadDetailDialog({ leadId, open, onClose }) {
       onOpenChange={onClose}
       title={lead.name || lead.email}
       size="lg"
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>Schließen</Button>
+          {lead.status !== 'converted' && (
+            <Button variant="gradient" onClick={() => onConvert(lead.id)}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Zu Nutzer konvertieren
+            </Button>
+          )}
+        </>
+      }
     >
       <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <VfBadge variant={
-            lead.interest_level === 'hot' ? 'error' :
-            lead.interest_level === 'warm' ? 'warning' : 'default'
-          }>
-            {lead.interest_level}
-          </VfBadge>
-          <VfBadge variant={lead.status === 'converted' ? 'success' : 'default'}>
-            {lead.status}
-          </VfBadge>
-        </div>
-
-        <div>
-          <div className="text-sm text-[var(--theme-text-muted)] mb-2">Lead Score</div>
-          <VfProgress value={lead.score} max={100} variant="gradient" showValue />
-        </div>
-
-        <VfDataGrid columns={2}>
-          <VfDataField label="E-Mail" value={lead.email} copyable />
-          <VfDataField label="Telefon" value={lead.phone || '-'} copyable />
-          <VfDataField label="Quelle" value={lead.source} />
-          <VfDataField label="Anzahl Objekte" value={lead.property_count || '-'} />
-          <VfDataField label="Nutzertyp" value={lead.user_type || '-'} />
-          <VfDataField 
-            label="Letzte Aktivität" 
-            value={new Date(lead.last_activity_at).toLocaleString('de-DE')} 
-          />
-        </VfDataGrid>
-
-        <div>
-          <h4 className="font-semibold mb-3">Aktivitäten</h4>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Berechnungen</span>
-              <span className="font-semibold">{calculations.length}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Quiz absolviert</span>
-              <span className="font-semibold">{quizResults.length}</span>
-            </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <div className="text-sm text-[var(--theme-text-muted)] mb-1">Status</div>
+            <StatusBadge status={lead.status} />
+          </div>
+          <div>
+            <div className="text-sm text-[var(--theme-text-muted)] mb-1">Lead-Score</div>
+            <VfBadge variant={lead.score >= 70 ? 'success' : lead.score >= 40 ? 'warning' : 'error'}>
+              {lead.score}/100
+            </VfBadge>
           </div>
         </div>
 
-        <div className="flex gap-2 pt-4 border-t">
-          <Button variant="outline" className="flex-1" onClick={() => window.open(`mailto:${lead.email}`)}>
-            <Mail className="h-4 w-4 mr-2" />
-            E-Mail senden
-          </Button>
+        <div className="space-y-3">
+          {lead.email && (
+            <div className="flex items-center gap-3">
+              <Mail className="h-5 w-5 text-[var(--theme-text-muted)]" />
+              <span>{lead.email}</span>
+            </div>
+          )}
           {lead.phone && (
-            <Button variant="outline" className="flex-1" onClick={() => window.open(`tel:${lead.phone}`)}>
-              <Phone className="h-4 w-4 mr-2" />
-              Anrufen
-            </Button>
+            <div className="flex items-center gap-3">
+              <Phone className="h-5 w-5 text-[var(--theme-text-muted)]" />
+              <span>{lead.phone}</span>
+            </div>
           )}
-          {lead.status !== 'converted' && (
-            <Button variant="gradient" className="flex-1">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Konvertieren
-            </Button>
+          {lead.property_count > 0 && (
+            <div className="flex items-center gap-3">
+              <Building className="h-5 w-5 text-[var(--theme-text-muted)]" />
+              <span>{lead.property_count} Objekte</span>
+            </div>
           )}
+        </div>
+
+        <div className="p-4 bg-[var(--theme-surface)] rounded-lg">
+          <div className="text-sm text-[var(--theme-text-muted)] mb-1">Quelle</div>
+          <VfBadge>{lead.source}</VfBadge>
+          {lead.utm_campaign && (
+            <div className="text-xs text-[var(--theme-text-muted)] mt-2">
+              Campaign: {lead.utm_campaign}
+            </div>
+          )}
+        </div>
+
+        <div className="text-sm text-[var(--theme-text-muted)]">
+          Erstellt <TimeAgo date={lead.created_date} />
         </div>
       </div>
     </VfModal>

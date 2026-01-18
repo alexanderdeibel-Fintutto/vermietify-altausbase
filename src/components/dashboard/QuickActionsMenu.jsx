@@ -1,32 +1,37 @@
-import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Plus, FileText, Users, Building2, Calculator, FileSpreadsheet } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
+import React, { useState } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Plus, Building, Users, FileText, Receipt } from 'lucide-react';
 
 export default function QuickActionsMenu() {
   const actions = [
-    { icon: Building2, label: 'Objekt', page: 'Buildings', color: 'text-blue-600' },
-    { icon: Users, label: 'Mieter', page: 'Tenants', color: 'text-green-600' },
-    { icon: FileText, label: 'Vertrag', page: 'Contracts', color: 'text-purple-600' },
-    { icon: FileSpreadsheet, label: 'Rechnung', page: 'Invoices', color: 'text-orange-600' },
-    { icon: Calculator, label: 'BK-Abrechnung', page: 'OperatingCosts', color: 'text-indigo-600' }
+    { icon: Building, label: 'Neues Objekt', onClick: () => {} },
+    { icon: Users, label: 'Neuer Mieter', onClick: () => {} },
+    { icon: FileText, label: 'Neuer Vertrag', onClick: () => {} },
+    { icon: Receipt, label: 'Neue Rechnung', onClick: () => {} }
   ];
 
   return (
-    <div className="grid grid-cols-5 gap-3">
-      {actions.map((action, index) => (
-        <Link key={index} to={createPageUrl(action.page)}>
-          <Card className="cursor-pointer hover:shadow-md transition-shadow">
-            <CardContent className="p-4 flex flex-col items-center text-center">
-              <div className={`w-12 h-12 rounded-full bg-[var(--theme-surface)] flex items-center justify-center mb-2 ${action.color}`}>
-                <action.icon className="h-6 w-6" />
-              </div>
-              <span className="text-xs font-medium">{action.label}</span>
-            </CardContent>
-          </Card>
-        </Link>
-      ))}
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="gradient">
+          <Plus className="h-5 w-5 mr-2" />
+          Neu
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        {actions.map((action, index) => (
+          <DropdownMenuItem key={index} onClick={action.onClick}>
+            <action.icon className="h-4 w-4 mr-2" />
+            {action.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
