@@ -1,18 +1,26 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Zap } from 'lucide-react';
-import { VfBadge } from '@/components/shared/VfBadge';
+import { VfProgress } from '@/components/shared/VfProgress';
 
-export default function EnergyEfficiencyTracker({ building }) {
-  const energyClass = building?.energy_class || 'C';
-  
-  const colors = {
-    'A+': 'vf-badge-success',
-    'A': 'vf-badge-success',
-    'B': 'vf-badge-info',
-    'C': 'vf-badge-warning',
-    'D': 'vf-badge-warning',
-    'E': 'vf-badge-error'
+export default function EnergyEfficiencyTracker({ buildingId }) {
+  const efficiency = {
+    rating: 'B',
+    score: 75,
+    consumption: 85,
+    target: 100
+  };
+
+  const getRatingColor = (rating) => {
+    const colors = {
+      'A+': 'text-green-700',
+      'A': 'text-green-600',
+      'B': 'text-lime-600',
+      'C': 'text-yellow-600',
+      'D': 'text-orange-600',
+      'E': 'text-red-600'
+    };
+    return colors[rating] || 'text-gray-600';
   };
 
   return (
@@ -24,19 +32,25 @@ export default function EnergyEfficiencyTracker({ building }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-center">
-          <div className="text-5xl font-bold mb-2">{energyClass}</div>
-          <VfBadge variant="success" className="mb-4">Energieklasse</VfBadge>
-          
-          <div className="grid grid-cols-2 gap-4 mt-6 pt-4 border-t">
-            <div>
-              <div className="text-xs text-[var(--theme-text-muted)]">Verbrauch</div>
-              <div className="font-bold">120 kWh/m²a</div>
+        <div className="text-center mb-6">
+          <div className={`text-6xl font-bold ${getRatingColor(efficiency.rating)}`}>
+            {efficiency.rating}
+          </div>
+          <div className="text-sm text-[var(--theme-text-muted)] mt-1">Energieklasse</div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <div className="flex justify-between mb-2">
+              <span className="text-sm">Effizienz-Score</span>
+              <span className="text-sm font-bold">{efficiency.score}%</span>
             </div>
-            <div>
-              <div className="text-xs text-[var(--theme-text-muted)]">CO₂</div>
-              <div className="font-bold">35 kg/m²a</div>
-            </div>
+            <VfProgress value={efficiency.score} variant="success" />
+          </div>
+
+          <div className="p-3 bg-[var(--theme-surface)] rounded-lg">
+            <div className="text-xs text-[var(--theme-text-muted)] mb-1">Verbrauch</div>
+            <div className="font-bold">{efficiency.consumption} kWh/m²/Jahr</div>
           </div>
         </div>
       </CardContent>

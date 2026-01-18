@@ -5,19 +5,18 @@ Deno.serve(async (req) => {
   
   try {
     const user = await base44.auth.me();
+    
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { query } = body;
+    const { searchParams } = new URL(req.url);
+    const query = searchParams.get('q')?.toLowerCase();
 
-    if (!query || query.length < 2) {
+    if (!query) {
       return Response.json({ results: [] });
     }
 
-    const searchTerm = query.toLowerCase();
-    
     const [buildings, tenants, contracts] = await Promise.all([
       base44.entities.Building.list(),
       base44.entities.Tenant.list(),
@@ -27,39 +26,37 @@ Deno.serve(async (req) => {
     const results = [];
 
     buildings.forEach(b => {
-      if (b.name?.toLowerCase().includes(searchTerm) || 
-          b.address?.toLowerCase().includes(searchTerm)) {
+      if (b.adresse?.toLowerCase().includes(query) || b.ort?.toLowerCase().includes(query)) {
         results.push({
-          id: b.id,
           type: 'building',
-          title: b.name,
-          subtitle: b.address,
-          url: `/BuildingDetail?id=${b.id}`
+          id: b.id,
+          title: b.adresse,
+          subtitle: `${b.plz} ${b.ort}`,
+          url: `/building-detail?id=${b.id}`
         });
       }
     });
 
     tenants.forEach(t => {
-      if (t.name?.toLowerCase().includes(searchTerm) || 
-          t.email?.toLowerCase().includes(searchTerm)) {
+      if (t.name?.toLowerCase().includes(query) || t.email?.toLowerCase().includes(query)) {
         results.push({
-          id: t.id,
           type: 'tenant',
+          id: t.id,
           title: t.name,
           subtitle: t.email,
-          url: `/TenantDetail?id=${t.id}`
+          url: `/tenant-detail?id=${t.id}`
         });
       }
     });
 
     contracts.forEach(c => {
-      if (c.tenant_name?.toLowerCase().includes(searchTerm)) {
+      if (c.id?.toLowerCase().includes(query)) {
         results.push({
-          id: c.id,
           type: 'contract',
-          title: `Vertrag ${c.tenant_name}`,
-          subtitle: c.unit_name,
-          url: `/ContractDetail?id=${c.id}`
+          id: c.id,
+          title: `Vertrag ${c.id}`,
+          subtitle: `Status: ${c.status}`,
+          url: `/contract-detail?id=${c.id}`
         });
       }
     });

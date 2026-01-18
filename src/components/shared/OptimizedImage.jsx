@@ -1,14 +1,8 @@
 import React, { useState } from 'react';
 import { ImageOff } from 'lucide-react';
 
-export default function OptimizedImage({ 
-  src, 
-  alt, 
-  className,
-  fallback 
-}) {
+export default function OptimizedImage({ src, alt, className, fallback }) {
   const [error, setError] = useState(false);
-  const [loaded, setLoaded] = useState(false);
 
   if (error) {
     return (
@@ -19,18 +13,12 @@ export default function OptimizedImage({
   }
 
   return (
-    <>
-      {!loaded && (
-        <div className={`vf-skeleton ${className}`} />
-      )}
-      <img
-        src={src}
-        alt={alt}
-        className={className}
-        onLoad={() => setLoaded(true)}
-        onError={() => setError(true)}
-        style={{ display: loaded ? 'block' : 'none' }}
-      />
-    </>
+    <img 
+      src={src} 
+      alt={alt}
+      className={className}
+      onError={() => setError(true)}
+      loading="lazy"
+    />
   );
 }

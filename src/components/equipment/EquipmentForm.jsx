@@ -5,14 +5,13 @@ import { VfDatePicker } from '@/components/shared/VfDatePicker';
 import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
 
-export default function EquipmentForm({ equipment, onSubmit, onCancel }) {
-  const [formData, setFormData] = useState({
-    name: equipment?.name || '',
-    equipment_type: equipment?.equipment_type || 'heating',
-    location: equipment?.location || '',
-    purchase_date: equipment?.purchase_date || '',
-    last_maintenance: equipment?.last_maintenance || '',
-    status: equipment?.status || 'active'
+export default function EquipmentForm({ equipment, onSubmit }) {
+  const [formData, setFormData] = useState(equipment || {
+    name: '',
+    category: '',
+    manufacturer: '',
+    installation_date: '',
+    next_maintenance: ''
   });
 
   return (
@@ -25,45 +24,39 @@ export default function EquipmentForm({ equipment, onSubmit, onCancel }) {
       />
 
       <VfSelect
-        label="Typ"
-        value={formData.equipment_type}
-        onChange={(v) => setFormData({ ...formData, equipment_type: v })}
+        label="Kategorie"
+        value={formData.category}
+        onChange={(v) => setFormData({ ...formData, category: v })}
         options={[
           { value: 'heating', label: 'Heizung' },
           { value: 'elevator', label: 'Aufzug' },
-          { value: 'hvac', label: 'Lüftung' },
-          { value: 'plumbing', label: 'Sanitär' },
-          { value: 'electrical', label: 'Elektrik' }
+          { value: 'boiler', label: 'Warmwasser' },
+          { value: 'hvac', label: 'Lüftung' }
         ]}
       />
 
       <VfInput
-        label="Standort"
-        value={formData.location}
-        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+        label="Hersteller"
+        value={formData.manufacturer}
+        onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
       />
 
       <VfDatePicker
-        label="Kaufdatum"
-        value={formData.purchase_date}
-        onChange={(v) => setFormData({ ...formData, purchase_date: v })}
+        label="Installationsdatum"
+        value={formData.installation_date}
+        onChange={(v) => setFormData({ ...formData, installation_date: v })}
       />
 
       <VfDatePicker
-        label="Letzte Wartung"
-        value={formData.last_maintenance}
-        onChange={(v) => setFormData({ ...formData, last_maintenance: v })}
+        label="Nächste Wartung"
+        value={formData.next_maintenance}
+        onChange={(v) => setFormData({ ...formData, next_maintenance: v })}
       />
 
-      <div className="flex gap-3 pt-4">
-        <Button variant="secondary" onClick={onCancel} className="flex-1">
-          Abbrechen
-        </Button>
-        <Button variant="gradient" onClick={() => onSubmit(formData)} className="flex-1">
-          <Save className="h-4 w-4 mr-2" />
-          Speichern
-        </Button>
-      </div>
+      <Button variant="gradient" className="w-full" onClick={() => onSubmit(formData)}>
+        <Save className="h-4 w-4 mr-2" />
+        Speichern
+      </Button>
     </div>
   );
 }

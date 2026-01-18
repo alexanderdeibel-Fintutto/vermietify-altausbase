@@ -1,42 +1,65 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { VfSelect } from '@/components/shared/VfSelect';
-import { VfCheckbox } from '@/components/shared/VfCheckbox';
+import { VfSwitch } from '@/components/shared/VfSwitch';
 import { Button } from '@/components/ui/button';
-import { Clock, Plus } from 'lucide-react';
+import { Clock, Save } from 'lucide-react';
 
 export default function ReportScheduler() {
-  const [schedules, setSchedules] = useState([
-    { id: 1, report: 'Monatsbericht Finanzen', frequency: 'monthly', active: true }
-  ]);
+  const [schedule, setSchedule] = useState({
+    enabled: false,
+    frequency: 'monthly',
+    time: '09:00',
+    recipients: ''
+  });
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Clock className="h-5 w-5" />
-          Geplante Berichte
+          Automatische Berichte
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3 mb-4">
-          {schedules.map((schedule) => (
-            <div key={schedule.id} className="flex items-center justify-between p-3 bg-[var(--theme-surface)] rounded-lg">
-              <div className="flex-1">
-                <div className="font-medium text-sm">{schedule.report}</div>
-                <div className="text-xs text-[var(--theme-text-muted)] mt-1">
-                  {schedule.frequency === 'monthly' ? 'Monatlich' : schedule.frequency === 'weekly' ? 'Wöchentlich' : 'Täglich'}
-                </div>
-              </div>
-              <VfCheckbox checked={schedule.active} />
-            </div>
-          ))}
-        </div>
+        <div className="space-y-4">
+          <VfSwitch
+            label="Automatische Berichte aktivieren"
+            checked={schedule.enabled}
+            onCheckedChange={(v) => setSchedule({ ...schedule, enabled: v })}
+          />
 
-        <Button variant="outline" className="w-full">
-          <Plus className="h-4 w-4 mr-2" />
-          Neuer Zeitplan
-        </Button>
+          {schedule.enabled && (
+            <>
+              <VfSelect
+                label="Häufigkeit"
+                value={schedule.frequency}
+                onChange={(v) => setSchedule({ ...schedule, frequency: v })}
+                options={[
+                  { value: 'weekly', label: 'Wöchentlich' },
+                  { value: 'monthly', label: 'Monatlich' },
+                  { value: 'quarterly', label: 'Vierteljährlich' }
+                ]}
+              />
+
+              <VfSelect
+                label="Uhrzeit"
+                value={schedule.time}
+                onChange={(v) => setSchedule({ ...schedule, time: v })}
+                options={[
+                  { value: '09:00', label: '09:00 Uhr' },
+                  { value: '12:00', label: '12:00 Uhr' },
+                  { value: '18:00', label: '18:00 Uhr' }
+                ]}
+              />
+            </>
+          )}
+
+          <Button variant="gradient" className="w-full">
+            <Save className="h-4 w-4 mr-2" />
+            Speichern
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

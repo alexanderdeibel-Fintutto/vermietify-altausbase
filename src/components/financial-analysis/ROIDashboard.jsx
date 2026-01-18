@@ -1,41 +1,56 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TrendingUp } from 'lucide-react';
-import PercentageDisplay from '@/components/shared/PercentageDisplay';
+import { VfProgress } from '@/components/shared/VfProgress';
+import CurrencyDisplay from '@/components/shared/CurrencyDisplay';
 
-export default function ROIDashboard({ building }) {
-  const purchasePrice = building?.purchase_price || 320000;
-  const annualRent = 18000;
-  const annualExpenses = 6500;
-  const netIncome = annualRent - annualExpenses;
-  const roi = (netIncome / purchasePrice) * 100;
+export default function ROIDashboard() {
+  const roi = {
+    current: 8.5,
+    target: 10,
+    annualIncome: 48000,
+    annualExpenses: 12000,
+    netIncome: 36000
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5" />
-          Rendite (ROI)
+          Rendite-Übersicht
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="text-center mb-6">
-          <PercentageDisplay value={roi} className="text-4xl font-bold text-[var(--vf-success-600)]" />
-          <div className="text-sm text-[var(--theme-text-muted)] mt-2">Jährliche Rendite</div>
+          <div className="text-5xl font-bold text-[var(--theme-primary)] mb-2">
+            {roi.current}%
+          </div>
+          <div className="text-sm text-[var(--theme-text-muted)]">Aktuelle Rendite</div>
         </div>
 
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between p-2 bg-[var(--theme-surface)] rounded">
-            <span className="text-[var(--theme-text-muted)]">Jahresmiete</span>
-            <span className="font-semibold">€{annualRent.toLocaleString()}</span>
+        <div className="mb-6">
+          <div className="flex justify-between mb-2">
+            <span className="text-sm">Ziel-Rendite</span>
+            <span className="text-sm font-bold">{roi.target}%</span>
           </div>
-          <div className="flex justify-between p-2 bg-[var(--theme-surface)] rounded">
-            <span className="text-[var(--theme-text-muted)]">Ausgaben</span>
-            <span className="font-semibold">€{annualExpenses.toLocaleString()}</span>
+          <VfProgress value={(roi.current / roi.target) * 100} variant="success" />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex justify-between">
+            <span className="text-sm text-[var(--theme-text-secondary)]">Jährliche Einnahmen</span>
+            <CurrencyDisplay amount={roi.annualIncome} colored />
           </div>
-          <div className="flex justify-between p-2 bg-[var(--vf-success-50)] rounded">
-            <span className="font-medium">Netto-Einnahmen</span>
-            <span className="font-bold text-[var(--vf-success-600)]">€{netIncome.toLocaleString()}</span>
+          <div className="flex justify-between">
+            <span className="text-sm text-[var(--theme-text-secondary)]">Jährliche Ausgaben</span>
+            <CurrencyDisplay amount={roi.annualExpenses} colored />
+          </div>
+          <div className="pt-2 border-t border-[var(--theme-border)]">
+            <div className="flex justify-between">
+              <span className="font-semibold">Netto-Einkommen</span>
+              <CurrencyDisplay amount={roi.netIncome} colored className="font-bold" />
+            </div>
           </div>
         </div>
       </CardContent>

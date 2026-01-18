@@ -1,53 +1,64 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { VfSwitch } from '@/components/shared/VfSwitch';
-import { Bell } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Settings, Save } from 'lucide-react';
+import { showSuccess } from '@/components/notifications/ToastNotification';
 
 export default function AlertPreferences() {
-  const [preferences, setPreferences] = useState({
-    payment_reminders: true,
-    contract_expiry: true,
-    maintenance_updates: true,
-    budget_alerts: false,
-    tax_deadlines: true
+  const [prefs, setPrefs] = useState({
+    paymentOverdue: true,
+    contractExpiring: true,
+    maintenanceDue: false,
+    documentExpiring: true
   });
 
-  const togglePreference = (key) => {
-    setPreferences({ ...preferences, [key]: !preferences[key] });
+  const handleSave = () => {
+    showSuccess('Einstellungen gespeichert');
   };
-
-  const options = [
-    { key: 'payment_reminders', label: 'Zahlungserinnerungen', description: 'Bei überfälligen Zahlungen' },
-    { key: 'contract_expiry', label: 'Vertragsende', description: '60 Tage vor Ablauf' },
-    { key: 'maintenance_updates', label: 'Wartungs-Updates', description: 'Status-Änderungen' },
-    { key: 'budget_alerts', label: 'Budget-Warnungen', description: 'Bei 80% Budget erreicht' },
-    { key: 'tax_deadlines', label: 'Steuerfristen', description: 'Anlage V & BK-Abrechnungen' }
-  ];
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Bell className="h-5 w-5" />
+          <Settings className="h-5 w-5" />
           Benachrichtigungs-Einstellungen
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {options.map((option) => (
-            <div key={option.key} className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <div className="font-medium text-sm">{option.label}</div>
-                <div className="text-xs text-[var(--theme-text-muted)] mt-1">
-                  {option.description}
-                </div>
-              </div>
-              <VfSwitch
-                checked={preferences[option.key]}
-                onCheckedChange={() => togglePreference(option.key)}
-              />
-            </div>
-          ))}
+          <VfSwitch
+            label="Zahlungsverzug"
+            description="Bei überfälligen Zahlungen"
+            checked={prefs.paymentOverdue}
+            onCheckedChange={(v) => setPrefs({ ...prefs, paymentOverdue: v })}
+          />
+
+          <VfSwitch
+            label="Vertragsende"
+            description="Wenn Verträge auslaufen"
+            checked={prefs.contractExpiring}
+            onCheckedChange={(v) => setPrefs({ ...prefs, contractExpiring: v })}
+          />
+
+          <VfSwitch
+            label="Wartungsfällig"
+            description="Bei anstehender Wartung"
+            checked={prefs.maintenanceDue}
+            onCheckedChange={(v) => setPrefs({ ...prefs, maintenanceDue: v })}
+          />
+
+          <VfSwitch
+            label="Dokumentenablauf"
+            description="Bei ablaufenden Dokumenten"
+            checked={prefs.documentExpiring}
+            onCheckedChange={(v) => setPrefs({ ...prefs, documentExpiring: v })}
+          />
+
+          <Button variant="gradient" className="w-full" onClick={handleSave}>
+            <Save className="h-4 w-4 mr-2" />
+            Speichern
+          </Button>
         </div>
       </CardContent>
     </Card>

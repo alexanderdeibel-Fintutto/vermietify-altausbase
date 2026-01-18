@@ -5,13 +5,13 @@ import AlertPreferences from '@/components/notifications/AlertPreferences';
 
 export default function AlertManagement() {
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-6 max-w-6xl mx-auto">
       <PageHeader
-        title="Warnungen & Benachrichtigungen"
-        subtitle="Konfigurieren Sie automatische Benachrichtigungen"
+        title="Benachrichtigungen & Alerts"
+        subtitle="Verwalten Sie Ihre Benachrichtigungen"
       />
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid lg:grid-cols-2 gap-6 mt-6">
         <AlertManager />
         <AlertPreferences />
       </div>
