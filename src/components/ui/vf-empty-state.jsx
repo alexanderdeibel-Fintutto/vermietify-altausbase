@@ -24,3 +24,4 @@ const VfEmptyState = React.forwardRef(({
 VfEmptyState.displayName = "VfEmptyState"
 
 export { VfEmptyState }
+export default VfEmptyState
