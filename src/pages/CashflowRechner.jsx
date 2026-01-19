@@ -1,153 +1,185 @@
 import React, { useState } from 'react';
-import { VfInput } from '@/components/shared/VfInput';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { PieChart } from 'lucide-react';
-import CurrencyDisplay from '@/components/shared/CurrencyDisplay';
+import { VfInput } from '@/components/shared/VfInput';
+import { Calculator, DollarSign } from 'lucide-react';
 
 export default function CashflowRechner() {
-  const [input, setInput] = useState({
-    miete_kalt: '',
-    nebenkosten_vorauszahlung: '',
-    verwaltungskosten: '',
-    instandhaltung: '',
-    nicht_umlagefaehig: '',
-    finanzierungskosten: ''
-  });
+    const [inputs, setInputs] = useState({
+        jahresmiete: '',
+        bewirtschaftungskosten: '',
+        instandhaltung: '',
+        grundsteuer: '',
+        versicherung: '',
+        hausverwaltung: '',
+        zinsen: '',
+        tilgung: ''
+    });
+    const [result, setResult] = useState(null);
 
-  const calculate = () => {
-    const mieteinnahmen = (parseFloat(input.miete_kalt) || 0) * 12;
-    const nebenkostenVZ = (parseFloat(input.nebenkosten_vorauszahlung) || 0) * 12;
-    const verwaltung = (parseFloat(input.verwaltungskosten) || 0) * 12;
-    const instandhaltung = (parseFloat(input.instandhaltung) || 0) * 12;
-    const nichtUmlagefaehig = (parseFloat(input.nicht_umlagefaehig) || 0) * 12;
-    const finanzierung = (parseFloat(input.finanzierungskosten) || 0) * 12;
+    const handleCalculate = () => {
+        const miete = parseFloat(inputs.jahresmiete) || 0;
+        const kosten = 
+            (parseFloat(inputs.bewirtschaftungskosten) || 0) +
+            (parseFloat(inputs.instandhaltung) || 0) +
+            (parseFloat(inputs.grundsteuer) || 0) +
+            (parseFloat(inputs.versicherung) || 0) +
+            (parseFloat(inputs.hausverwaltung) || 0);
+        const kapitaldienst = 
+            (parseFloat(inputs.zinsen) || 0) +
+            (parseFloat(inputs.tilgung) || 0);
 
-    const gesamtEinnahmen = mieteinnahmen + nebenkostenVZ;
-    const gesamtAusgaben = verwaltung + instandhaltung + nichtUmlagefaehig + finanzierung;
-    const cashflow = gesamtEinnahmen - gesamtAusgaben;
+        const cashflow_vor_steuern = miete - kosten - kapitaldienst;
+        const cashflow_monatlich = cashflow_vor_steuern / 12;
 
-    return {
-      gesamtEinnahmen,
-      gesamtAusgaben,
-      cashflowJahr: cashflow,
-      cashflowMonat: cashflow / 12,
-      positiv: cashflow > 0
+        setResult({
+            einnahmen: miete,
+            ausgaben: kosten + kapitaldienst,
+            cashflow_jaehrlich: Math.round(cashflow_vor_steuern),
+            cashflow_monatlich: Math.round(cashflow_monatlich),
+            betriebskosten: Math.round(kosten),
+            kapitaldienst: Math.round(kapitaldienst)
+        });
     };
-  };
 
-  const result = calculate();
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-[var(--vf-primary-50)] to-white p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-12">
-          <div className="vf-tool-icon mx-auto mb-4">
-            <PieChart className="h-9 w-9" />
-          </div>
-          <h1 className="vf-tool-title">Cashflow-Rechner</h1>
-          <p className="vf-tool-description">
-            Berechnen Sie den monatlichen und jährlichen Cashflow Ihrer Immobilie
-          </p>
-        </div>
-
+    return (
         <div className="vf-calculator">
-          <Card className="vf-calculator-input-panel">
-            <CardHeader>
-              <CardTitle>Einnahmen & Ausgaben</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="font-semibold text-[var(--vf-success-700)] mb-2">Einnahmen (monatlich)</div>
-                <VfInput
-                  label="Kaltmiete"
-                  type="number"
-                  rightAddon="€"
-                  value={input.miete_kalt}
-                  onChange={(e) => setInput({ ...input, miete_kalt: e.target.value })}
-                />
-                <VfInput
-                  label="Nebenkosten-Vorauszahlung"
-                  type="number"
-                  rightAddon="€"
-                  value={input.nebenkosten_vorauszahlung}
-                  onChange={(e) => setInput({ ...input, nebenkosten_vorauszahlung: e.target.value })}
-                />
+            <div className="vf-calculator-input-panel">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="vf-tool-icon w-12 h-12">
+                        <DollarSign className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold">Cashflow-Rechner</h1>
+                        <p className="text-sm text-muted-foreground">Ermitteln Sie den monatlichen Cashflow</p>
+                    </div>
+                </div>
 
-                <div className="font-semibold text-[var(--vf-error-700)] mb-2 mt-6">Ausgaben (monatlich)</div>
-                <VfInput
-                  label="Verwaltungskosten"
-                  type="number"
-                  rightAddon="€"
-                  value={input.verwaltungskosten}
-                  onChange={(e) => setInput({ ...input, verwaltungskosten: e.target.value })}
-                />
-                <VfInput
-                  label="Instandhaltungsrücklage"
-                  type="number"
-                  rightAddon="€"
-                  value={input.instandhaltung}
-                  onChange={(e) => setInput({ ...input, instandhaltung: e.target.value })}
-                />
-                <VfInput
-                  label="Nicht-umlagefähige NK"
-                  type="number"
-                  rightAddon="€"
-                  value={input.nicht_umlagefaehig}
-                  onChange={(e) => setInput({ ...input, nicht_umlagefaehig: e.target.value })}
-                />
-                <VfInput
-                  label="Finanzierungskosten"
-                  type="number"
-                  rightAddon="€"
-                  value={input.finanzierungskosten}
-                  onChange={(e) => setInput({ ...input, finanzierungskosten: e.target.value })}
-                />
-              </div>
-            </CardContent>
-          </Card>
+                <div className="space-y-6">
+                    <div className="vf-calculator-input-group">
+                        <h3 className="vf-calculator-input-group-title">Einnahmen</h3>
+                        <VfInput
+                            label="Jahresmiete (Kalt)"
+                            type="number"
+                            value={inputs.jahresmiete}
+                            onChange={(e) => setInputs(prev => ({ ...prev, jahresmiete: e.target.value }))}
+                            rightAddon="€"
+                        />
+                    </div>
 
-          <Card className="vf-calculator-result-panel">
-            <CardContent className="p-6">
-              <div className="vf-calculator-primary-result">
-                <div className="vf-calculator-primary-label">Cashflow (Monat)</div>
-                <div className={`vf-calculator-primary-value ${
-                  result.positiv ? 'text-[var(--vf-success-600)]' : 'text-[var(--vf-error-600)]'
-                }`}>
-                  <CurrencyDisplay amount={result.cashflowMonat} showSign color={result.positiv} />
-                </div>
-              </div>
+                    <div className="vf-calculator-input-group">
+                        <h3 className="vf-calculator-input-group-title">Betriebskosten</h3>
+                        <div className="space-y-3">
+                            <VfInput
+                                label="Bewirtschaftungskosten"
+                                type="number"
+                                value={inputs.bewirtschaftungskosten}
+                                onChange={(e) => setInputs(prev => ({ ...prev, bewirtschaftungskosten: e.target.value }))}
+                                rightAddon="€"
+                            />
+                            <VfInput
+                                label="Instandhaltung"
+                                type="number"
+                                value={inputs.instandhaltung}
+                                onChange={(e) => setInputs(prev => ({ ...prev, instandhaltung: e.target.value }))}
+                                rightAddon="€"
+                            />
+                            <VfInput
+                                label="Grundsteuer"
+                                type="number"
+                                value={inputs.grundsteuer}
+                                onChange={(e) => setInputs(prev => ({ ...prev, grundsteuer: e.target.value }))}
+                                rightAddon="€"
+                            />
+                            <VfInput
+                                label="Versicherung"
+                                type="number"
+                                value={inputs.versicherung}
+                                onChange={(e) => setInputs(prev => ({ ...prev, versicherung: e.target.value }))}
+                                rightAddon="€"
+                            />
+                            <VfInput
+                                label="Hausverwaltung"
+                                type="number"
+                                value={inputs.hausverwaltung}
+                                onChange={(e) => setInputs(prev => ({ ...prev, hausverwaltung: e.target.value }))}
+                                rightAddon="€"
+                            />
+                        </div>
+                    </div>
 
-              <div className="vf-calculator-secondary-results">
-                <div className="vf-calculator-secondary-item">
-                  <div className="vf-calculator-secondary-label">Cashflow (Jahr)</div>
-                  <div className={`vf-calculator-secondary-value ${
-                    result.positiv ? 'text-[var(--vf-success-600)]' : 'text-[var(--vf-error-600)]'
-                  }`}>
-                    <CurrencyDisplay amount={result.cashflowJahr} showSign color={result.positiv} />
-                  </div>
-                </div>
-              </div>
+                    <div className="vf-calculator-input-group">
+                        <h3 className="vf-calculator-input-group-title">Kapitaldienst</h3>
+                        <div className="space-y-3">
+                            <VfInput
+                                label="Zinsen (jährlich)"
+                                type="number"
+                                value={inputs.zinsen}
+                                onChange={(e) => setInputs(prev => ({ ...prev, zinsen: e.target.value }))}
+                                rightAddon="€"
+                            />
+                            <VfInput
+                                label="Tilgung (jährlich)"
+                                type="number"
+                                value={inputs.tilgung}
+                                onChange={(e) => setInputs(prev => ({ ...prev, tilgung: e.target.value }))}
+                                rightAddon="€"
+                            />
+                        </div>
+                    </div>
 
-              <div className="vf-calculator-breakdown">
-                <div className="vf-calculator-breakdown-title">Zusammenfassung (Jahr)</div>
-                <div className="vf-calculator-breakdown-item">
-                  <span className="text-[var(--vf-success-700)]">Einnahmen</span>
-                  <CurrencyDisplay amount={result.gesamtEinnahmen} />
+                    <Button onClick={handleCalculate} className="vf-btn-gradient w-full">
+                        <Calculator className="w-4 h-4" />
+                        Berechnen
+                    </Button>
                 </div>
-                <div className="vf-calculator-breakdown-item">
-                  <span className="text-[var(--vf-error-700)]">Ausgaben</span>
-                  <CurrencyDisplay amount={result.gesamtAusgaben} />
-                </div>
-                <div className="vf-calculator-breakdown-item border-t-2 border-[var(--vf-neutral-300)] pt-2 mt-2 font-bold">
-                  <span>Cashflow</span>
-                  <CurrencyDisplay amount={result.cashflowJahr} showSign color={result.positiv} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+
+            <div className="vf-calculator-result-panel">
+                {!result ? (
+                    <div className="vf-calculator-result-empty">
+                        <DollarSign className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                        <p className="text-sm">Berechnen Sie Ihren Cashflow</p>
+                    </div>
+                ) : (
+                    <>
+                        <div className="vf-calculator-primary-result">
+                            <div className="vf-calculator-primary-label">Cashflow (monatlich)</div>
+                            <div className={`vf-calculator-primary-value ${result.cashflow_monatlich < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                {result.cashflow_monatlich.toLocaleString('de-DE')} €
+                            </div>
+                        </div>
+
+                        <div className="vf-calculator-secondary-results">
+                            <div className="vf-calculator-secondary-item">
+                                <div className="vf-calculator-secondary-label">Cashflow (jährlich)</div>
+                                <div className={`vf-calculator-secondary-value ${result.cashflow_jaehrlich < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                    {result.cashflow_jaehrlich.toLocaleString('de-DE')} €
+                                </div>
+                            </div>
+                            <div className="vf-calculator-secondary-item">
+                                <div className="vf-calculator-secondary-label">Einnahmen</div>
+                                <div className="vf-calculator-secondary-value text-green-600">{result.einnahmen.toLocaleString('de-DE')} €</div>
+                            </div>
+                        </div>
+
+                        <div className="vf-calculator-breakdown">
+                            <div className="vf-calculator-breakdown-title">Ausgaben</div>
+                            <div className="vf-calculator-breakdown-item">
+                                <span>Betriebskosten</span>
+                                <span className="text-red-600">{result.betriebskosten.toLocaleString('de-DE')} €</span>
+                            </div>
+                            <div className="vf-calculator-breakdown-item">
+                                <span>Kapitaldienst</span>
+                                <span className="text-red-600">{result.kapitaldienst.toLocaleString('de-DE')} €</span>
+                            </div>
+                            <div className="vf-calculator-breakdown-item font-semibold">
+                                <span>Gesamtausgaben</span>
+                                <span className="text-red-600">{result.ausgaben.toLocaleString('de-DE')} €</span>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }

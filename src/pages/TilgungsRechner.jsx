@@ -1,148 +1,143 @@
 import React, { useState } from 'react';
-import { VfInput } from '@/components/shared/VfInput';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { TrendingDown } from 'lucide-react';
-import CurrencyDisplay from '@/components/shared/CurrencyDisplay';
+import { VfInput } from '@/components/shared/VfInput';
+import { Calculator, PiggyBank } from 'lucide-react';
 
 export default function TilgungsRechner() {
-  const [input, setInput] = useState({
-    darlehenssumme: '',
-    zinssatz: '',
-    tilgungssatz: 2,
-    sondertilgung_jahr: 0
-  });
+    const [inputs, setInputs] = useState({
+        darlehensbetrag: '',
+        zinssatz: '3',
+        tilgung: '2',
+        sondertilgung_jaehrlich: '0'
+    });
+    const [result, setResult] = useState(null);
 
-  const calculate = () => {
-    const darlehen = parseFloat(input.darlehenssumme) || 0;
-    const zins = parseFloat(input.zinssatz) / 100;
-    const tilgung = parseFloat(input.tilgungssatz) / 100;
-    const sondertilgung = parseFloat(input.sondertilgung_jahr) || 0;
+    const handleCalculate = () => {
+        const betrag = parseFloat(inputs.darlehensbetrag);
+        const zins = parseFloat(inputs.zinssatz) / 100;
+        const tilgung = parseFloat(inputs.tilgung) / 100;
+        const sondertilgung = parseFloat(inputs.sondertilgung_jaehrlich);
 
-    const annuitaet = darlehen * (zins + tilgung);
-    const monatsrate = annuitaet / 12;
-    const zinsanteilJahr1 = darlehen * zins;
-    const tilgungsanteilJahr1 = annuitaet - zinsanteilJahr1 + sondertilgung;
+        const jaehrliche_rate = betrag * (zins + tilgung);
+        const monatliche_rate = jaehrliche_rate / 12;
+        
+        // Simplified calculation for time until paid off
+        let restschuld = betrag;
+        let jahre = 0;
+        let gesamtzinsen = 0;
 
-    // Einfache Schätzung der Laufzeit
-    let restschuld = darlehen;
-    let jahre = 0;
-    while (restschuld > 0 && jahre < 50) {
-      const zinsJahr = restschuld * zins;
-      const tilgungJahr = annuitaet - zinsJahr + sondertilgung;
-      restschuld -= tilgungJahr;
-      jahre++;
-    }
+        while (restschuld > 0 && jahre < 100) {
+            const zinsen = restschuld * zins;
+            const tilgungsbetrag = jaehrliche_rate - zinsen + sondertilgung;
+            gesamtzinsen += zinsen;
+            restschuld -= tilgungsbetrag;
+            jahre++;
+        }
 
-    return {
-      monatsrate,
-      annuitaet,
-      zinsanteilJahr1,
-      tilgungsanteilJahr1,
-      laufzeitJahre: jahre,
-      gesamtkosten: annuitaet * jahre + (sondertilgung * jahre),
-      gesamtzins: (annuitaet * jahre + (sondertilgung * jahre)) - darlehen
+        setResult({
+            monatliche_rate: Math.round(monatliche_rate),
+            jaehrliche_rate: Math.round(jaehrliche_rate),
+            laufzeit_jahre: jahre,
+            gesamtzinsen: Math.round(gesamtzinsen),
+            gesamtkosten: Math.round(betrag + gesamtzinsen)
+        });
     };
-  };
 
-  const result = calculate();
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-[var(--vf-primary-50)] to-white p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-12">
-          <div className="vf-tool-icon mx-auto mb-4">
-            <TrendingDown className="h-9 w-9" />
-          </div>
-          <h1 className="vf-tool-title">Tilgungs-Rechner</h1>
-          <p className="vf-tool-description">
-            Berechnen Sie Ihre Darlehensrate und Laufzeit
-          </p>
-        </div>
-
+    return (
         <div className="vf-calculator">
-          <Card className="vf-calculator-input-panel">
-            <CardHeader>
-              <CardTitle>Darlehensdaten</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <VfInput
-                  label="Darlehenssumme"
-                  type="number"
-                  rightAddon="€"
-                  value={input.darlehenssumme}
-                  onChange={(e) => setInput({ ...input, darlehenssumme: e.target.value })}
-                />
-                <VfInput
-                  label="Zinssatz"
-                  type="number"
-                  rightAddon="%"
-                  value={input.zinssatz}
-                  onChange={(e) => setInput({ ...input, zinssatz: e.target.value })}
-                />
-                <VfInput
-                  label="Tilgungssatz"
-                  type="number"
-                  rightAddon="%"
-                  value={input.tilgungssatz}
-                  onChange={(e) => setInput({ ...input, tilgungssatz: e.target.value })}
-                />
-                <VfInput
-                  label="Sondertilgung (jährlich)"
-                  type="number"
-                  rightAddon="€"
-                  value={input.sondertilgung_jahr}
-                  onChange={(e) => setInput({ ...input, sondertilgung_jahr: e.target.value })}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="vf-calculator-result-panel">
-            {!input.darlehenssumme || !input.zinssatz ? (
-              <div className="vf-calculator-result-empty">
-                <TrendingDown className="h-16 w-16 mx-auto mb-4" />
-                <p>Geben Sie Darlehensdaten ein</p>
-              </div>
-            ) : (
-              <CardContent className="p-6">
-                <div className="vf-calculator-primary-result">
-                  <div className="vf-calculator-primary-label">Monatliche Rate</div>
-                  <div className="vf-calculator-primary-value">
-                    <CurrencyDisplay amount={result.monatsrate} />
-                  </div>
-                </div>
-
-                <div className="vf-calculator-secondary-results">
-                  <div className="vf-calculator-secondary-item">
-                    <div className="vf-calculator-secondary-label">Laufzeit</div>
-                    <div className="vf-calculator-secondary-value">{result.laufzeitJahre} Jahre</div>
-                  </div>
-                  <div className="vf-calculator-secondary-item">
-                    <div className="vf-calculator-secondary-label">Gesamtzins</div>
-                    <div className="vf-calculator-secondary-value">
-                      <CurrencyDisplay amount={result.gesamtzins} />
+            <div className="vf-calculator-input-panel">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="vf-tool-icon w-12 h-12">
+                        <PiggyBank className="w-6 h-6" />
                     </div>
-                  </div>
+                    <div>
+                        <h1 className="text-2xl font-bold">Tilgungs-Rechner</h1>
+                        <p className="text-sm text-muted-foreground">Berechnen Sie Rate und Laufzeit Ihres Darlehens</p>
+                    </div>
                 </div>
 
-                <div className="vf-calculator-breakdown">
-                  <div className="vf-calculator-breakdown-title">1. Jahr</div>
-                  <div className="vf-calculator-breakdown-item">
-                    <span>Zinsanteil</span>
-                    <CurrencyDisplay amount={result.zinsanteilJahr1} />
-                  </div>
-                  <div className="vf-calculator-breakdown-item">
-                    <span>Tilgungsanteil</span>
-                    <CurrencyDisplay amount={result.tilgungsanteilJahr1} />
-                  </div>
+                <div className="space-y-4">
+                    <VfInput
+                        label="Darlehensbetrag"
+                        type="number"
+                        value={inputs.darlehensbetrag}
+                        onChange={(e) => setInputs(prev => ({ ...prev, darlehensbetrag: e.target.value }))}
+                        rightAddon="€"
+                        required
+                    />
+                    <VfInput
+                        label="Zinssatz"
+                        type="number"
+                        step="0.1"
+                        value={inputs.zinssatz}
+                        onChange={(e) => setInputs(prev => ({ ...prev, zinssatz: e.target.value }))}
+                        rightAddon="%"
+                    />
+                    <VfInput
+                        label="Tilgung"
+                        type="number"
+                        step="0.1"
+                        value={inputs.tilgung}
+                        onChange={(e) => setInputs(prev => ({ ...prev, tilgung: e.target.value }))}
+                        rightAddon="%"
+                    />
+                    <VfInput
+                        label="Sondertilgung (jährlich)"
+                        type="number"
+                        value={inputs.sondertilgung_jaehrlich}
+                        onChange={(e) => setInputs(prev => ({ ...prev, sondertilgung_jaehrlich: e.target.value }))}
+                        rightAddon="€"
+                    />
+
+                    <Button onClick={handleCalculate} disabled={!inputs.darlehensbetrag} className="vf-btn-gradient w-full">
+                        <Calculator className="w-4 h-4" />
+                        Berechnen
+                    </Button>
                 </div>
-              </CardContent>
-            )}
-          </Card>
+            </div>
+
+            <div className="vf-calculator-result-panel">
+                {!result ? (
+                    <div className="vf-calculator-result-empty">
+                        <PiggyBank className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                        <p className="text-sm">Berechnen Sie Ihre Tilgung</p>
+                    </div>
+                ) : (
+                    <>
+                        <div className="vf-calculator-primary-result">
+                            <div className="vf-calculator-primary-label">Monatliche Rate</div>
+                            <div className="vf-calculator-primary-value">{result.monatliche_rate.toLocaleString('de-DE')} €</div>
+                        </div>
+
+                        <div className="vf-calculator-secondary-results">
+                            <div className="vf-calculator-secondary-item">
+                                <div className="vf-calculator-secondary-label">Jährliche Rate</div>
+                                <div className="vf-calculator-secondary-value">{result.jaehrliche_rate.toLocaleString('de-DE')} €</div>
+                            </div>
+                            <div className="vf-calculator-secondary-item">
+                                <div className="vf-calculator-secondary-label">Laufzeit</div>
+                                <div className="vf-calculator-secondary-value">{result.laufzeit_jahre} Jahre</div>
+                            </div>
+                        </div>
+
+                        <div className="vf-calculator-breakdown">
+                            <div className="vf-calculator-breakdown-title">Gesamtkosten</div>
+                            <div className="vf-calculator-breakdown-item">
+                                <span>Darlehensbetrag</span>
+                                <span>{parseFloat(inputs.darlehensbetrag).toLocaleString('de-DE')} €</span>
+                            </div>
+                            <div className="vf-calculator-breakdown-item">
+                                <span>Gesamte Zinsen</span>
+                                <span className="text-red-600">{result.gesamtzinsen.toLocaleString('de-DE')} €</span>
+                            </div>
+                            <div className="vf-calculator-breakdown-item font-semibold">
+                                <span>Gesamtkosten</span>
+                                <span>{result.gesamtkosten.toLocaleString('de-DE')} €</span>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }

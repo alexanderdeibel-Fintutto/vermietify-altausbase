@@ -1,25 +1,23 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, WifiOff } from 'lucide-react';
+import { WifiOff, RefreshCw } from 'lucide-react';
 
 export default function OfflineError() {
-  return (
-    <div className="vf-error-page">
-      <div className="vf-error-page__content">
-        <div className="vf-error-page__illustration mb-8">
-          <WifiOff className="h-32 w-32 text-[var(--theme-text-muted)] mx-auto" />
+    return (
+        <div className="vf-error-page">
+            <div className="vf-error-page__content">
+                <WifiOff className="w-24 h-24 mx-auto mb-6 text-gray-400" />
+                <div className="vf-error-page__title">Keine Internetverbindung</div>
+                <div className="vf-error-page__description">
+                    Sie sind offline. Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.
+                </div>
+                <div className="vf-error-page__actions">
+                    <Button onClick={() => window.location.reload()} className="vf-btn-gradient">
+                        <RefreshCw className="w-4 h-4" />
+                        Erneut versuchen
+                    </Button>
+                </div>
+            </div>
         </div>
-        <h1 className="vf-error-page__title">Keine Internetverbindung</h1>
-        <p className="vf-error-page__description">
-          Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.
-        </p>
-        <div className="vf-error-page__actions">
-          <Button variant="gradient" onClick={() => location.reload()}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Erneut versuchen
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }

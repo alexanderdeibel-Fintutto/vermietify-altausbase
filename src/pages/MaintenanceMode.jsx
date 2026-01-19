@@ -1,25 +1,24 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Wrench, ExternalLink } from 'lucide-react';
+import { Settings, RefreshCw } from 'lucide-react';
 
 export default function MaintenanceMode() {
-  return (
-    <div className="vf-error-page">
-      <div className="vf-error-page__content">
-        <div className="vf-error-page__illustration mb-8">
-          <Wrench className="h-32 w-32 text-[var(--theme-text-muted)] mx-auto" />
+    return (
+        <div className="vf-error-page">
+            <div className="vf-error-page__content">
+                <Settings className="w-24 h-24 mx-auto mb-6 text-gray-400 animate-spin" style={{ animationDuration: '3s' }} />
+                <div className="vf-error-page__title">Wartungsarbeiten</div>
+                <div className="vf-error-page__description">
+                    Wir führen gerade wichtige Wartungsarbeiten durch, um Vermitify noch besser zu machen. 
+                    Wir sind in Kürze wieder für Sie da.
+                </div>
+                <div className="vf-error-page__actions">
+                    <Button onClick={() => window.location.reload()} className="vf-btn-gradient">
+                        <RefreshCw className="w-4 h-4" />
+                        Erneut versuchen
+                    </Button>
+                </div>
+            </div>
         </div>
-        <h1 className="vf-error-page__title">Wartungsarbeiten</h1>
-        <p className="vf-error-page__description">
-          Vermitify wird gerade aktualisiert. Wir sind in Kürze wieder für Sie da.
-        </p>
-        <div className="vf-error-page__actions">
-          <Button variant="gradient" onClick={() => window.open('https://status.vermitify.de', '_blank')}>
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Status-Seite
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }

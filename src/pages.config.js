@@ -245,6 +245,7 @@ import IncomeOptimizationTool from './pages/IncomeOptimizationTool';
 import Index from './pages/Index';
 import IndexmietenRechner from './pages/IndexmietenRechner';
 import IndexmietenRechnerEnhanced from './pages/IndexmietenRechnerEnhanced';
+import IndexmietenRechnerV2 from './pages/IndexmietenRechnerV2';
 import InsuranceManagement from './pages/InsuranceManagement';
 import IntegrationHub from './pages/IntegrationHub';
 import IntegrationMarketplace from './pages/IntegrationMarketplace';
@@ -255,11 +256,13 @@ import InvestmentTaxTracking from './pages/InvestmentTaxTracking';
 import InvestmentsCH from './pages/InvestmentsCH';
 import investorprofilQuiz from './pages/InvestorProfil Quiz';
 import InvestorProfilQuiz from './pages/InvestorProfilQuiz';
+import InvestorProfilQuizV2 from './pages/InvestorProfilQuizV2';
 import InvoiceManagement from './pages/InvoiceManagement';
 import InvoiceManagementNew from './pages/InvoiceManagementNew';
 import Invoices from './pages/Invoices';
 import IoTSensorManagement from './pages/IoTSensorManagement';
 import KaufpreisRechner from './pages/KaufpreisRechner';
+import KaufpreisRechnerV2 from './pages/KaufpreisRechnerV2';
 import KnowledgeBaseAdmin from './pages/KnowledgeBaseAdmin';
 import KnowledgeManagementDashboard from './pages/KnowledgeManagementDashboard';
 import Kommunikation from './pages/Kommunikation';
@@ -319,9 +322,9 @@ import Payments from './pages/Payments';
 import PerformanceMonitor from './pages/PerformanceMonitor';
 import PermissionDashboard from './pages/PermissionDashboard';
 import PermissionManagement from './pages/PermissionManagement';
+import PortfolioDetail from './pages/PortfolioDetail';
 import PersonalizedTaxCockpit from './pages/PersonalizedTaxCockpit';
 import PortfolioDashboard from './pages/PortfolioDashboard';
-import PortfolioDetail from './pages/PortfolioDetail';
 import PortfolioManagement from './pages/PortfolioManagement';
 import PortfolioOptimizer from './pages/PortfolioOptimizer';
 import PreciousMetals from './pages/PreciousMetals';
@@ -564,9 +567,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import IndexmietenRechnerV2 from './pages/IndexmietenRechnerV2';
-import KaufpreisRechnerV2 from './pages/KaufpreisRechnerV2';
-import InvestorProfilQuizV2 from './pages/InvestorProfilQuizV2';
 import __Layout from './Layout.jsx';
 
 
@@ -818,6 +818,7 @@ export const PAGES = {
     "Index": Index,
     "IndexmietenRechner": IndexmietenRechner,
     "IndexmietenRechnerEnhanced": IndexmietenRechnerEnhanced,
+    "IndexmietenRechnerV2": IndexmietenRechnerV2,
     "InsuranceManagement": InsuranceManagement,
     "IntegrationHub": IntegrationHub,
     "IntegrationMarketplace": IntegrationMarketplace,
@@ -828,11 +829,13 @@ export const PAGES = {
     "InvestmentsCH": InvestmentsCH,
     "InvestorProfil Quiz": investorprofilQuiz,
     "InvestorProfilQuiz": InvestorProfilQuiz,
+    "InvestorProfilQuizV2": InvestorProfilQuizV2,
     "InvoiceManagement": InvoiceManagement,
     "InvoiceManagementNew": InvoiceManagementNew,
     "Invoices": Invoices,
     "IoTSensorManagement": IoTSensorManagement,
     "KaufpreisRechner": KaufpreisRechner,
+    "KaufpreisRechnerV2": KaufpreisRechnerV2,
     "KnowledgeBaseAdmin": KnowledgeBaseAdmin,
     "KnowledgeManagementDashboard": KnowledgeManagementDashboard,
     "Kommunikation": Kommunikation,
@@ -892,9 +895,9 @@ export const PAGES = {
     "PerformanceMonitor": PerformanceMonitor,
     "PermissionDashboard": PermissionDashboard,
     "PermissionManagement": PermissionManagement,
+    "PortfolioDetail": PortfolioDetail,
     "PersonalizedTaxCockpit": PersonalizedTaxCockpit,
     "PortfolioDashboard": PortfolioDashboard,
-    "PortfolioDetail": PortfolioDetail,
     "PortfolioManagement": PortfolioManagement,
     "PortfolioOptimizer": PortfolioOptimizer,
     "PreciousMetals": PreciousMetals,
@@ -1137,9 +1140,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "IndexmietenRechnerV2": IndexmietenRechnerV2,
-    "KaufpreisRechnerV2": KaufpreisRechnerV2,
-    "InvestorProfilQuizV2": InvestorProfilQuizV2,
 }
 
 export const pagesConfig = {
