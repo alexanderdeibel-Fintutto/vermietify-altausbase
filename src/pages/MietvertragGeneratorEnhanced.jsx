@@ -1,147 +1,227 @@
 import React, { useState } from 'react';
+import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { VfSelect } from '@/components/shared/VfSelect';
 import { VfInput } from '@/components/shared/VfInput';
-import { VfDatePicker } from '@/components/shared/VfDatePicker';
-import { VfCheckbox } from '@/components/shared/VfCheckbox';
-import { ArrowLeft, ArrowRight, X, FileText } from 'lucide-react';
+import { VfTextarea } from '@/components/shared/VfTextarea';
+import { VfSelect } from '@/components/shared/VfSelect';
+import { FileText, Download, Eye } from 'lucide-react';
+import { showSuccess, showError } from '@/components/notifications/ToastNotification';
+
+const vertragsarten = [
+    { value: 'unbefristet', label: 'Unbefristeter Mietvertrag' },
+    { value: 'befristet', label: 'Befristeter Mietvertrag' },
+    { value: 'gewerblich', label: 'Gewerbemietvertrag' }
+];
 
 export default function MietvertragGeneratorEnhanced() {
-  const [step, setStep] = useState(0);
-  const [data, setData] = useState({
-    unit_id: '',
-    tenant_name: '',
-    begin_date: '',
-    rent_cold: '',
-    utilities: '',
-    deposit: '',
-    index_clause: false,
-    pet_clause: 'zustimmung'
-  });
+    const [inputs, setInputs] = useState({
+        vertragsart: 'unbefristet',
+        vermieter_name: '',
+        vermieter_adresse: '',
+        mieter_name: '',
+        mieter_adresse: '',
+        objekt_adresse: '',
+        wohnflaeche: '',
+        kaltmiete: '',
+        betriebskosten: '',
+        kaution: '',
+        mietbeginn: '',
+        mietende: '',
+        besondere_vereinbarungen: ''
+    });
+    const [preview, setPreview] = useState(null);
+    const [loading, setLoading] = useState(false);
 
-  const steps = [
-    { id: 'unit', title: 'Wohnung' },
-    { id: 'tenant', title: 'Mieter' },
-    { id: 'dates', title: 'Termine' },
-    { id: 'rent', title: 'Miete' },
-    { id: 'deposit', title: 'Kaution' },
-    { id: 'clauses', title: 'Klauseln' },
-    { id: 'preview', title: 'Vorschau' }
-  ];
+    const handleGenerate = async () => {
+        setLoading(true);
+        try {
+            const { data } = await base44.functions.invoke('generatePdf', {
+                template_type: 'mietvertrag',
+                data: inputs
+            });
+            
+            setPreview(data.html_preview);
+            showSuccess('Vertrag wurde generiert');
+        } catch (error) {
+            showError('Fehler beim Generieren');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  return (
-    <div className="min-h-screen bg-[var(--theme-background)] p-6">
-      <div className="vf-wizard max-w-3xl">
-        <div className="vf-wizard__header">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <FileText className="h-6 w-6" />
-              <h1 className="vf-wizard__title">Mietvertrag erstellen</h1>
-            </div>
-            <Button variant="ghost" size="icon">
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-
-        <div className="vf-wizard__progress">
-          {steps.map((s, index) => (
-            <React.Fragment key={s.id}>
-              <div className="vf-wizard__step">
-                <div className={`vf-wizard__step-dot ${
-                  index < step ? 'vf-wizard__step-dot--completed' : 
-                  index === step ? 'vf-wizard__step-dot--active' : ''
-                }`} />
-                <span className={`vf-wizard__step-label ${index === step ? 'vf-wizard__step-label--active' : ''}`}>
-                  {s.title}
-                </span>
-              </div>
-              {index < steps.length - 1 && (
-                <div className={`vf-wizard__step-line ${index < step ? 'vf-wizard__step-line--completed' : ''}`} />
-              )}
-            </React.Fragment>
-          ))}
-        </div>
-
-        <div className="vf-wizard__body">
-          {step === 0 && (
-            <div>
-              <h2 className="text-xl font-semibold mb-6">Wählen Sie die Wohnung</h2>
-              <VfSelect
-                label="Einheit"
-                placeholder="Wohnung auswählen"
-                options={[
-                  { value: '1', label: 'Whg. 1.OG links - 65 m²' },
-                  { value: '2', label: 'Whg. 2.OG rechts - 72 m²' }
-                ]}
-              />
-            </div>
-          )}
-
-          {step === 3 && (
-            <div>
-              <h2 className="text-xl font-semibold mb-6">Miete und Nebenkosten</h2>
-              <div className="space-y-4">
-                <VfInput
-                  label="Kaltmiete"
-                  type="number"
-                  rightAddon="€/Monat"
-                  value={data.rent_cold}
-                  onChange={(e) => setData({ ...data, rent_cold: e.target.value })}
-                />
-                <VfInput
-                  label="Nebenkosten-Vorauszahlung"
-                  type="number"
-                  rightAddon="€/Monat"
-                  value={data.utilities}
-                  onChange={(e) => setData({ ...data, utilities: e.target.value })}
-                />
-                <div className="p-4 bg-[var(--theme-surface)] rounded-lg">
-                  <div className="flex justify-between text-lg font-semibold">
-                    <span>Warmmiete gesamt:</span>
-                    <span>€{(parseFloat(data.rent_cold || 0) + parseFloat(data.utilities || 0)).toFixed(2)}</span>
-                  </div>
+    return (
+        <div className="vf-generator">
+            {/* Input Form */}
+            <div className="vf-generator-form">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="vf-tool-icon w-12 h-12">
+                        <FileText className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold">Mietvertrag-Generator</h1>
+                        <p className="text-sm text-muted-foreground">Erstellen Sie rechtssichere Mietverträge</p>
+                    </div>
                 </div>
-              </div>
-            </div>
-          )}
 
-          {step === 5 && (
-            <div>
-              <h2 className="text-xl font-semibold mb-6">Zusätzliche Vereinbarungen</h2>
-              <div className="space-y-4">
-                <VfCheckbox
-                  label="Indexmietklausel"
-                  checked={data.index_clause}
-                  onChange={(checked) => setData({ ...data, index_clause: checked })}
-                />
-                <VfSelect
-                  label="Haustiere"
-                  value={data.pet_clause}
-                  onChange={(v) => setData({ ...data, pet_clause: v })}
-                  options={[
-                    { value: 'erlaubt', label: 'Erlaubt' },
-                    { value: 'kleintiere', label: 'Nur Kleintiere' },
-                    { value: 'verboten', label: 'Verboten' },
-                    { value: 'zustimmung', label: 'Mit Zustimmung' }
-                  ]}
-                />
-              </div>
-            </div>
-          )}
-        </div>
+                <div className="space-y-6">
+                    <div>
+                        <h3 className="font-semibold mb-3">Vertragsart</h3>
+                        <VfSelect
+                            value={inputs.vertragsart}
+                            onChange={(value) => setInputs(prev => ({ ...prev, vertragsart: value }))}
+                            options={vertragsarten}
+                        />
+                    </div>
 
-        <div className="vf-wizard__footer">
-          <Button variant="secondary" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Zurück
-          </Button>
-          <Button variant="gradient" onClick={() => setStep(Math.min(steps.length - 1, step + 1))} disabled={step === steps.length - 1}>
-            {step === steps.length - 1 ? 'Generieren' : 'Weiter'}
-            <ArrowRight className="h-4 w-4 ml-2" />
-          </Button>
+                    <div>
+                        <h3 className="font-semibold mb-3">Vermieter</h3>
+                        <div className="space-y-3">
+                            <VfInput
+                                label="Name"
+                                value={inputs.vermieter_name}
+                                onChange={(e) => setInputs(prev => ({ ...prev, vermieter_name: e.target.value }))}
+                                required
+                            />
+                            <VfTextarea
+                                label="Adresse"
+                                value={inputs.vermieter_adresse}
+                                onChange={(e) => setInputs(prev => ({ ...prev, vermieter_adresse: e.target.value }))}
+                                rows={3}
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 className="font-semibold mb-3">Mieter</h3>
+                        <div className="space-y-3">
+                            <VfInput
+                                label="Name"
+                                value={inputs.mieter_name}
+                                onChange={(e) => setInputs(prev => ({ ...prev, mieter_name: e.target.value }))}
+                                required
+                            />
+                            <VfTextarea
+                                label="Adresse"
+                                value={inputs.mieter_adresse}
+                                onChange={(e) => setInputs(prev => ({ ...prev, mieter_adresse: e.target.value }))}
+                                rows={3}
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 className="font-semibold mb-3">Mietobjekt</h3>
+                        <div className="space-y-3">
+                            <VfTextarea
+                                label="Adresse"
+                                value={inputs.objekt_adresse}
+                                onChange={(e) => setInputs(prev => ({ ...prev, objekt_adresse: e.target.value }))}
+                                rows={3}
+                                required
+                            />
+                            <VfInput
+                                label="Wohnfläche"
+                                type="number"
+                                value={inputs.wohnflaeche}
+                                onChange={(e) => setInputs(prev => ({ ...prev, wohnflaeche: e.target.value }))}
+                                rightAddon="m²"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 className="font-semibold mb-3">Konditionen</h3>
+                        <div className="space-y-3">
+                            <VfInput
+                                label="Kaltmiete (monatlich)"
+                                type="number"
+                                value={inputs.kaltmiete}
+                                onChange={(e) => setInputs(prev => ({ ...prev, kaltmiete: e.target.value }))}
+                                rightAddon="€"
+                                required
+                            />
+                            <VfInput
+                                label="Betriebskosten (monatlich)"
+                                type="number"
+                                value={inputs.betriebskosten}
+                                onChange={(e) => setInputs(prev => ({ ...prev, betriebskosten: e.target.value }))}
+                                rightAddon="€"
+                                required
+                            />
+                            <VfInput
+                                label="Kaution"
+                                type="number"
+                                value={inputs.kaution}
+                                onChange={(e) => setInputs(prev => ({ ...prev, kaution: e.target.value }))}
+                                rightAddon="€"
+                                required
+                            />
+                            <VfInput
+                                label="Mietbeginn"
+                                type="date"
+                                value={inputs.mietbeginn}
+                                onChange={(e) => setInputs(prev => ({ ...prev, mietbeginn: e.target.value }))}
+                                required
+                            />
+                            {inputs.vertragsart === 'befristet' && (
+                                <VfInput
+                                    label="Mietende"
+                                    type="date"
+                                    value={inputs.mietende}
+                                    onChange={(e) => setInputs(prev => ({ ...prev, mietende: e.target.value }))}
+                                    required
+                                />
+                            )}
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 className="font-semibold mb-3">Besondere Vereinbarungen</h3>
+                        <VfTextarea
+                            value={inputs.besondere_vereinbarungen}
+                            onChange={(e) => setInputs(prev => ({ ...prev, besondere_vereinbarungen: e.target.value }))}
+                            rows={4}
+                            placeholder="z.B. Tierhaltung erlaubt, Gartenmitbenutzung, etc."
+                        />
+                    </div>
+
+                    <Button 
+                        onClick={handleGenerate} 
+                        disabled={loading || !inputs.vermieter_name || !inputs.mieter_name}
+                        className="vf-btn-gradient w-full"
+                    >
+                        <Eye className="w-4 h-4" />
+                        {loading ? 'Wird generiert...' : 'Vorschau erstellen'}
+                    </Button>
+                </div>
+            </div>
+
+            {/* Preview */}
+            <div className="vf-generator-preview">
+                <div className="vf-generator-preview-header">
+                    <h3 className="font-semibold">Vorschau</h3>
+                    {preview && (
+                        <Button size="sm" variant="outline">
+                            <Download className="w-4 h-4" />
+                            PDF herunterladen
+                        </Button>
+                    )}
+                </div>
+
+                <div className="vf-generator-preview-content">
+                    {!preview ? (
+                        <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                            <FileText className="w-16 h-16 mb-4" />
+                            <p>Füllen Sie das Formular aus, um eine Vorschau zu sehen</p>
+                        </div>
+                    ) : (
+                        <div dangerouslySetInnerHTML={{ __html: preview }} />
+                    )}
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }
