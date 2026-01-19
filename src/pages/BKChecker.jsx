@@ -1,114 +1,159 @@
 import React, { useState } from 'react';
-import { VfInput } from '@/components/shared/VfInput';
-import { VfSelect } from '@/components/shared/VfSelect';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { VfInput } from '@/components/shared/VfInput';
+import { Calculator, FileCheck } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 export default function BKChecker() {
-  const [checks, setChecks] = useState({
-    frist_12_monate: null,
-    formale_anforderungen: null,
-    verteilerschluessel: null,
-    belegpflicht: null
-  });
+    const [inputs, setInputs] = useState({
+        wohnflaeche: '',
+        gesamtkosten: '',
+        vorauszahlung: ''
+    });
+    const [result, setResult] = useState(null);
 
-  const checkResults = [
-    {
-      id: 'frist_12_monate',
-      title: '12-Monats-Frist eingehalten?',
-      description: 'Abrechnung muss innerhalb 12 Monaten nach Ende des Abrechnungszeitraums zugestellt werden (§ 556 Abs. 3 BGB)',
-      status: checks.frist_12_monate
-    },
-    {
-      id: 'formale_anforderungen',
-      title: 'Formale Anforderungen erfüllt?',
-      description: 'Abrechnungszeitraum, Gesamtkosten, Verteilerschlüssel, Ihre Kostenanteile müssen angegeben sein',
-      status: checks.formale_anforderungen
-    },
-    {
-      id: 'verteilerschluessel',
-      title: 'Verteilerschlüssel korrekt?',
-      description: 'Nach § 556a BGB bzw. § 2 BetrKV: nach Wohnfläche, Personen oder vereinbart',
-      status: checks.verteilerschluessel
-    },
-    {
-      id: 'belegpflicht',
-      title: 'Belege beigefügt?',
-      description: 'Mieter haben Anspruch auf Belegeinsicht (§ 259 BGB)',
-      status: checks.belegpflicht
-    }
-  ];
+    const handleCheck = () => {
+        const flaeche = parseFloat(inputs.wohnflaeche);
+        const kosten = parseFloat(inputs.gesamtkosten);
+        const vorauszahlung = parseFloat(inputs.vorauszahlung);
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-[var(--vf-primary-50)] to-white p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <div className="vf-tool-icon mx-auto mb-4">
-            <CheckCircle className="h-9 w-9" />
-          </div>
-          <h1 className="vf-tool-title">BK-Abrechnung Checker</h1>
-          <p className="vf-tool-description">
-            Prüfen Sie, ob Ihre Betriebskostenabrechnung rechtssicher ist
-          </p>
-        </div>
+        const kosten_pro_qm = kosten / flaeche;
+        const vorauszahlung_pro_qm = vorauszahlung / flaeche;
+        const nachzahlung = kosten - vorauszahlung;
+        const nachzahlung_pro_qm = nachzahlung / flaeche;
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Checkliste</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {checkResults.map((check) => (
-                <div key={check.id} className="border border-[var(--vf-neutral-200)] rounded-lg p-4">
-                  <div className="flex items-start gap-3 mb-3">
-                    {check.status === true && <CheckCircle className="h-6 w-6 text-[var(--vf-success-500)] flex-shrink-0 mt-1" />}
-                    {check.status === false && <XCircle className="h-6 w-6 text-[var(--vf-error-500)] flex-shrink-0 mt-1" />}
-                    {check.status === null && <AlertTriangle className="h-6 w-6 text-[var(--vf-neutral-400)] flex-shrink-0 mt-1" />}
-                    <div className="flex-1">
-                      <div className="font-semibold mb-1">{check.title}</div>
-                      <p className="text-sm text-[var(--vf-neutral-600)]">{check.description}</p>
+        // Plausibility check (typical range: 2-4 EUR/qm per month)
+        const monatlich_pro_qm = kosten_pro_qm / 12;
+        let plausibel = true;
+        let warnung = '';
+
+        if (monatlich_pro_qm < 1.5) {
+            plausibel = false;
+            warnung = 'Ungewöhnlich niedrig - bitte prüfen Sie die Eingaben';
+        } else if (monatlich_pro_qm > 5) {
+            plausibel = false;
+            warnung = 'Ungewöhnlich hoch - möglicherweise fehlerhafte Eingaben';
+        }
+
+        setResult({
+            kosten_pro_qm: Math.round(kosten_pro_qm * 100) / 100,
+            monatlich_pro_qm: Math.round(monatlich_pro_qm * 100) / 100,
+            nachzahlung: Math.round(nachzahlung * 100) / 100,
+            nachzahlung_pro_qm: Math.round(nachzahlung_pro_qm * 100) / 100,
+            plausibel,
+            warnung
+        });
+    };
+
+    return (
+        <div className="vf-calculator">
+            <div className="vf-calculator-input-panel">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="vf-tool-icon w-12 h-12">
+                        <FileCheck className="w-6 h-6" />
                     </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      size="sm" 
-                      variant={check.status === true ? 'primary' : 'outline'}
-                      onClick={() => setChecks({ ...checks, [check.id]: true })}
-                    >
-                      ✓ Ja
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant={check.status === false ? 'destructive' : 'outline'}
-                      onClick={() => setChecks({ ...checks, [check.id]: false })}
-                    >
-                      ✗ Nein
-                    </Button>
-                  </div>
+                    <div>
+                        <h1 className="text-2xl font-bold">Betriebskosten-Checker</h1>
+                        <p className="text-sm text-muted-foreground">Prüfen Sie Ihre Nebenkostenabrechnung</p>
+                    </div>
                 </div>
-              ))}
+
+                <div className="space-y-4">
+                    <VfInput
+                        label="Wohnfläche"
+                        type="number"
+                        step="0.01"
+                        value={inputs.wohnflaeche}
+                        onChange={(e) => setInputs(prev => ({ ...prev, wohnflaeche: e.target.value }))}
+                        rightAddon="m²"
+                        required
+                    />
+                    <VfInput
+                        label="Gesamtkosten (jährlich)"
+                        type="number"
+                        value={inputs.gesamtkosten}
+                        onChange={(e) => setInputs(prev => ({ ...prev, gesamtkosten: e.target.value }))}
+                        rightAddon="€"
+                        required
+                        hint="Summe aller Betriebskosten laut Abrechnung"
+                    />
+                    <VfInput
+                        label="Vorauszahlung (jährlich)"
+                        type="number"
+                        value={inputs.vorauszahlung}
+                        onChange={(e) => setInputs(prev => ({ ...prev, vorauszahlung: e.target.value }))}
+                        rightAddon="€"
+                        required
+                    />
+
+                    <Button 
+                        onClick={handleCheck} 
+                        disabled={!inputs.wohnflaeche || !inputs.gesamtkosten || !inputs.vorauszahlung} 
+                        className="vf-btn-gradient w-full"
+                    >
+                        <Calculator className="w-4 h-4" />
+                        Prüfen
+                    </Button>
+                </div>
             </div>
 
-            <div className="mt-6 p-4 bg-[var(--theme-surface)] rounded-lg">
-              <div className="font-semibold mb-2">Ergebnis:</div>
-              {Object.values(checks).every(v => v === true) ? (
-                <div className="text-[var(--vf-success-700)]">
-                  ✓ Ihre Abrechnung erfüllt alle formalen Anforderungen
-                </div>
-              ) : Object.values(checks).some(v => v === false) ? (
-                <div className="text-[var(--vf-error-700)]">
-                  ✗ Es gibt Punkte, die Sie überprüfen sollten
-                </div>
-              ) : (
-                <div className="text-[var(--vf-neutral-600)]">
-                  Beantworten Sie alle Fragen für eine Auswertung
-                </div>
-              )}
+            <div className="vf-calculator-result-panel">
+                {!result ? (
+                    <div className="vf-calculator-result-empty">
+                        <FileCheck className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                        <p className="text-sm">Prüfen Sie Ihre Betriebskosten</p>
+                    </div>
+                ) : (
+                    <>
+                        {!result.plausibel && (
+                            <div className="vf-alert vf-alert-warning mb-4">
+                                <div className="vf-alert-content">
+                                    <div className="vf-alert-title">Warnung</div>
+                                    <div className="vf-alert-description">{result.warnung}</div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="vf-calculator-primary-result">
+                            <div className="vf-calculator-primary-label">
+                                {result.nachzahlung >= 0 ? 'Nachzahlung' : 'Guthaben'}
+                            </div>
+                            <div className={`vf-calculator-primary-value ${result.nachzahlung >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                {Math.abs(result.nachzahlung).toLocaleString('de-DE')} €
+                            </div>
+                        </div>
+
+                        <div className="vf-calculator-secondary-results">
+                            <div className="vf-calculator-secondary-item">
+                                <div className="vf-calculator-secondary-label">Pro m²</div>
+                                <div className="vf-calculator-secondary-value">{result.nachzahlung_pro_qm.toLocaleString('de-DE')} €</div>
+                            </div>
+                            <div className="vf-calculator-secondary-item">
+                                <div className="vf-calculator-secondary-label">Status</div>
+                                <div className="vf-calculator-secondary-value">
+                                    {result.plausibel ? (
+                                        <Badge className="vf-badge-success">Plausibel</Badge>
+                                    ) : (
+                                        <Badge className="vf-badge-warning">Prüfen!</Badge>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="vf-calculator-breakdown">
+                            <div className="vf-calculator-breakdown-title">Details pro m²</div>
+                            <div className="vf-calculator-breakdown-item">
+                                <span>Kosten/Jahr</span>
+                                <span>{result.kosten_pro_qm.toLocaleString('de-DE')} €</span>
+                            </div>
+                            <div className="vf-calculator-breakdown-item">
+                                <span>Kosten/Monat</span>
+                                <span>{result.monatlich_pro_qm.toLocaleString('de-DE')} €</span>
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
+        </div>
+    );
 }

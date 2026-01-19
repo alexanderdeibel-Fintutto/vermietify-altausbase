@@ -1,104 +1,181 @@
 import React, { useState } from 'react';
-import { VfQuiz } from '@/components/workflows/VfQuiz';
-import { VfToolHeader } from '@/components/lead-capture/VfToolHeader';
-import { VfLeadCapturePage } from '@/components/lead-capture/VfLeadCapturePage';
 import { base44 } from '@/api/base44Client';
-import { useMutation } from '@tanstack/react-query';
-import { FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight, CheckCircle, BookOpen } from 'lucide-react';
+import { showSuccess, showError } from '@/components/notifications/ToastNotification';
+
+const questions = [
+    {
+        id: 'anlage_v',
+        text: 'Wofür wird die Anlage V verwendet?',
+        options: [
+            { value: 'correct', label: 'Für Einkünfte aus Vermietung und Verpachtung' },
+            { value: false, label: 'Für gewerbliche Einkünfte' },
+            { value: false, label: 'Für Kapitaleinkünfte' },
+            { value: false, label: 'Für selbstständige Arbeit' }
+        ]
+    },
+    {
+        id: 'afa',
+        text: 'Was bedeutet AfA?',
+        options: [
+            { value: false, label: 'Allgemeine Finanzaufsicht' },
+            { value: 'correct', label: 'Absetzung für Abnutzung' },
+            { value: false, label: 'Anschaffungskosten für Ausstattung' },
+            { value: false, label: 'Automatische Finanzanalyse' }
+        ]
+    },
+    {
+        id: 'werbungskosten',
+        text: 'Welche Kosten zählen zu den Werbungskosten?',
+        options: [
+            { value: false, label: 'Nur die Grundsteuer' },
+            { value: 'correct', label: 'Alle Ausgaben zur Erzielung der Mieteinnahmen' },
+            { value: false, label: 'Nur Reparaturkosten' },
+            { value: false, label: 'Private Lebenshaltungskosten' }
+        ]
+    },
+    {
+        id: 'betriebskosten',
+        text: 'Was sind umlagefähige Betriebskosten?',
+        options: [
+            { value: false, label: 'Alle Kosten des Vermieters' },
+            { value: 'correct', label: 'Kosten, die auf den Mieter umgelegt werden können' },
+            { value: false, label: 'Nur Heizkosten' },
+            { value: false, label: 'Verwaltungskosten' }
+        ]
+    }
+];
 
 export default function SteuerGuideQuiz() {
-  const [result, setResult] = useState(null);
+    const [currentQuestion, setCurrentQuestion] = useState(0);
+    const [answers, setAnswers] = useState({});
+    const [result, setResult] = useState(null);
+    const [loading, setLoading] = useState(false);
 
-  const submitMutation = useMutation({
-    mutationFn: (data) => base44.functions.invoke('processQuizResult', data),
-    onSuccess: (response) => {
-      setResult(response.data);
-    }
-  });
+    const handleAnswer = (value) => {
+        setAnswers(prev => ({ ...prev, [questions[currentQuestion].id]: value }));
+    };
 
-  const questions = [
-    {
-      id: 'q1',
-      question: 'Erstellen Sie aktuell eine Anlage V für Ihre Immobilie(n)?',
-      type: 'single',
-      options: [
-        { id: 'a1', label: 'Ja, selbst', score: 8 },
-        { id: 'a2', label: 'Ja, mit Steuerberater', score: 10 },
-        { id: 'a3', label: 'Nein, noch nie', score: 3 },
-        { id: 'a4', label: 'Was ist Anlage V?', score: 0 }
-      ]
-    },
-    {
-      id: 'q2',
-      question: 'Wie erfassen Sie Ihre Mieteinnahmen und Ausgaben?',
-      type: 'single',
-      options: [
-        { id: 'a1', label: 'Professionelle Software', score: 10 },
-        { id: 'a2', label: 'Excel', score: 6 },
-        { id: 'a3', label: 'Papier/Ordner', score: 3 },
-        { id: 'a4', label: 'Gar nicht strukturiert', score: 0 }
-      ]
-    },
-    {
-      id: 'q3',
-      question: 'Kennen Sie Ihren AfA-Satz?',
-      type: 'single',
-      options: [
-        { id: 'a1', label: 'Ja, nutze ich aktiv', score: 10 },
-        { id: 'a2', label: 'Kenne ich, nutze ich nicht', score: 5 },
-        { id: 'a3', label: 'Nein, was ist das?', score: 0 }
-      ]
-    }
-  ];
-
-  const handleComplete = (answers) => {
-    submitMutation.mutate({
-      quiz_type: 'steuer_check',
-      answers,
-      duration_seconds: 60
-    });
-  };
-
-  if (result) {
-    return (
-      <VfLeadCapturePage
-        header={
-          <VfToolHeader
-            icon={<FileText className="h-10 w-10" />}
-            badge="ERGEBNIS"
-            title="Ihr Steuer-Wissen"
-            description="Basierend auf Ihren Antworten"
-          />
+    const handleNext = () => {
+        if (currentQuestion < questions.length - 1) {
+            setCurrentQuestion(prev => prev + 1);
+        } else {
+            handleSubmit();
         }
-      >
-        <div className="vf-quiz-result">
-          <div className="vf-quiz-result-score">
-            {result.score}/{result.max_score}
-          </div>
-          <div className="vf-quiz-result-label">{result.category}</div>
-          <div className="vf-quiz-result-description">
-            {result.recommendations.join(' • ')}
-          </div>
-        </div>
-      </VfLeadCapturePage>
-    );
-  }
+    };
 
-  return (
-    <VfLeadCapturePage
-      header={
-        <VfToolHeader
-          icon={<FileText className="h-10 w-10" />}
-          badge="QUIZ"
-          title="Steuer-Check"
-          description="Wie gut kennen Sie sich mit Immobilien-Steuern aus?"
-        />
-      }
-    >
-      <VfQuiz
-        questions={questions}
-        onComplete={handleComplete}
-      />
-    </VfLeadCapturePage>
-  );
+    const handleBack = () => {
+        setCurrentQuestion(prev => prev - 1);
+    };
+
+    const handleSubmit = async () => {
+        setLoading(true);
+        try {
+            const { data } = await base44.functions.invoke('processQuizResult', {
+                quiz_type: 'steuer_guide',
+                answers
+            });
+
+            setResult(data.result);
+        } catch (error) {
+            showError('Fehler beim Auswerten');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (result) {
+        return (
+            <div className="max-w-3xl mx-auto p-6">
+                <div className="vf-quiz-result">
+                    <BookOpen className="w-20 h-20 mx-auto mb-6 text-blue-600" />
+                    <div className="vf-quiz-result-score">{result.percentage}%</div>
+                    <div className="vf-quiz-result-label">{result.result_title}</div>
+                    <div className="vf-quiz-result-description">{result.result_description}</div>
+                    
+                    {result.recommendations && result.recommendations.length > 0 && (
+                        <div className="mt-8 text-left max-w-md mx-auto">
+                            <h3 className="font-semibold mb-4">Empfehlungen:</h3>
+                            <ul className="space-y-2">
+                                {result.recommendations.map((rec, idx) => (
+                                    <li key={idx} className="flex gap-2">
+                                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                                        <span>{rec}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    <Button onClick={() => window.location.reload()} className="mt-8 vf-btn-gradient">
+                        Quiz wiederholen
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
+    const question = questions[currentQuestion];
+    const hasAnswer = answers[question.id] !== undefined;
+
+    return (
+        <div className="max-w-2xl mx-auto p-6">
+            <div className="vf-wizard-content">
+                <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-6">
+                        <BookOpen className="w-10 h-10 text-blue-600" />
+                        <h1 className="text-2xl font-bold">Steuer-Guide Quiz</h1>
+                    </div>
+                    <div className="vf-wizard-progress">
+                        {questions.map((q, idx) => (
+                            <div 
+                                key={q.id} 
+                                className={`vf-wizard-progress-step ${idx === currentQuestion ? 'vf-wizard-progress-step-active' : ''} ${idx < currentQuestion ? 'vf-wizard-progress-step-completed' : ''}`}
+                            >
+                                <div className="vf-wizard-progress-icon">{idx + 1}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="vf-quiz-question">
+                    <div className="vf-quiz-question-number">Frage {currentQuestion + 1} von {questions.length}</div>
+                    <div className="vf-quiz-question-text">{question.text}</div>
+                </div>
+
+                <div className="vf-quiz-options">
+                    {question.options.map((option, idx) => (
+                        <div
+                            key={idx}
+                            className={`vf-quiz-option ${answers[question.id] === option.value ? 'vf-quiz-option-selected' : ''}`}
+                            onClick={() => handleAnswer(option.value)}
+                        >
+                            <div className="vf-quiz-option-radio"></div>
+                            <span>{option.label}</span>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="vf-wizard-actions mt-8">
+                    <Button 
+                        onClick={handleBack} 
+                        disabled={currentQuestion === 0}
+                        variant="outline"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                        Zurück
+                    </Button>
+                    <Button 
+                        onClick={handleNext} 
+                        disabled={!hasAnswer || loading}
+                        className="vf-btn-gradient"
+                    >
+                        {currentQuestion === questions.length - 1 ? 'Auswerten' : 'Weiter'}
+                        <ChevronRight className="w-4 h-4" />
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
 }

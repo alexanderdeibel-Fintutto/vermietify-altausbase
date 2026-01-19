@@ -1,138 +1,158 @@
 import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { VfInput } from '@/components/shared/VfInput';
 import { VfSelect } from '@/components/shared/VfSelect';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Percent } from 'lucide-react';
-import CurrencyDisplay from '@/components/shared/CurrencyDisplay';
+import { Calculator, Building2 } from 'lucide-react';
+
+const nutzungsarten = [
+    { value: '50', label: 'Wohngebäude (50 Jahre)' },
+    { value: '33', label: 'Gewerbeimmobilie (33 Jahre)' },
+    { value: '25', label: 'Fabrikgebäude (25 Jahre)' },
+    { value: '10', label: 'Betriebsvorrichtung (10 Jahre)' }
+];
 
 export default function AfACalculator() {
-  const [input, setInput] = useState({
-    anschaffungskosten: '',
-    baujahr: '',
-    gebaeudeart: 'wohngebaeude',
-    denkmalschutz: false
-  });
-  const [result, setResult] = useState(null);
-
-  const calculate = () => {
-    const kosten = parseFloat(input.anschaffungskosten);
-    const alter = new Date().getFullYear() - parseInt(input.baujahr);
-    
-    let afaSatz = 2.0; // Standard für Wohngebäude nach 1924
-    if (alter > 100) afaSatz = 2.5;
-    if (input.denkmalschutz) afaSatz = 9.0; // Erhöhte AfA bei Denkmalschutz
-    if (input.gebaeudeart === 'gewerbe') afaSatz = 3.0;
-
-    const jahresAfA = kosten * (afaSatz / 100);
-
-    setResult({
-      afaSatz,
-      jahresAfA,
-      monatsAfA: jahresAfA / 12,
-      laufzeit: Math.ceil(100 / afaSatz)
+    const [inputs, setInputs] = useState({
+        anschaffungskosten: '',
+        nutzungsdauer: '50',
+        inbetriebnahme_jahr: new Date().getFullYear().toString(),
+        inbetriebnahme_monat: '1'
     });
-  };
+    const [result, setResult] = useState(null);
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-[var(--vf-primary-50)] to-white p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-12">
-          <div className="vf-tool-icon mx-auto mb-4">
-            <Percent className="h-9 w-9" />
-          </div>
-          <h1 className="vf-tool-title">AfA-Rechner</h1>
-          <p className="vf-tool-description">
-            Berechnen Sie die Abschreibung für Ihre Immobilie nach § 7 EStG
-          </p>
-        </div>
+    const handleCalculate = () => {
+        const kosten = parseFloat(inputs.anschaffungskosten);
+        const nutzungsdauer = parseInt(inputs.nutzungsdauer);
+        const jahr = parseInt(inputs.inbetriebnahme_jahr);
+        const monat = parseInt(inputs.inbetriebnahme_monat);
 
+        const jaehrliche_afa = kosten / nutzungsdauer;
+        const monatliche_afa = jaehrliche_afa / 12;
+        
+        // First year calculation (pro-rata based on months)
+        const monate_im_ersten_jahr = 13 - monat;
+        const afa_erstes_jahr = monatliche_afa * monate_im_ersten_jahr;
+
+        // Schedule for next 5 years
+        const schedule = [];
+        for (let i = 0; i < 5; i++) {
+            const yearNum = jahr + i;
+            let afa = jaehrliche_afa;
+            
+            if (i === 0) {
+                afa = afa_erstes_jahr;
+            }
+            
+            schedule.push({
+                jahr: yearNum,
+                afa: Math.round(afa),
+                restwert: Math.round(kosten - (jaehrliche_afa * i) - afa_erstes_jahr)
+            });
+        }
+
+        setResult({
+            jaehrliche_afa: Math.round(jaehrliche_afa),
+            monatliche_afa: Math.round(monatliche_afa),
+            afa_erstes_jahr: Math.round(afa_erstes_jahr),
+            gesamte_afa: Math.round(kosten),
+            restwert_nach_5_jahren: schedule[4]?.restwert || 0,
+            schedule
+        });
+    };
+
+    return (
         <div className="vf-calculator">
-          <Card className="vf-calculator-input-panel">
-            <CardHeader>
-              <CardTitle>Eingaben</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <VfInput
-                  label="Anschaffungskosten (Gebäudeanteil)"
-                  type="number"
-                  rightAddon="€"
-                  hint="Nur Gebäude, ohne Grundstück"
-                  value={input.anschaffungskosten}
-                  onChange={(e) => setInput({ ...input, anschaffungskosten: e.target.value })}
-                />
-                <VfInput
-                  label="Baujahr"
-                  type="number"
-                  value={input.baujahr}
-                  onChange={(e) => setInput({ ...input, baujahr: e.target.value })}
-                />
-                <VfSelect
-                  label="Gebäudeart"
-                  value={input.gebaeudeart}
-                  onChange={(v) => setInput({ ...input, gebaeudeart: v })}
-                  options={[
-                    { value: 'wohngebaeude', label: 'Wohngebäude' },
-                    { value: 'gewerbe', label: 'Gewerbeimmobilie' }
-                  ]}
-                />
-                <Button 
-                  variant="gradient" 
-                  className="w-full" 
-                  onClick={calculate}
-                  disabled={!input.anschaffungskosten || !input.baujahr}
-                >
-                  Berechnen
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="vf-calculator-result-panel">
-            {!result ? (
-              <div className="vf-calculator-result-empty">
-                <Percent className="h-16 w-16 mx-auto mb-4" />
-                <p>Geben Sie Ihre Daten ein</p>
-              </div>
-            ) : (
-              <CardContent className="p-6">
-                <div className="vf-calculator-primary-result">
-                  <div className="vf-calculator-primary-label">AfA-Satz</div>
-                  <div className="vf-calculator-primary-value">{result.afaSatz}%</div>
-                </div>
-
-                <div className="vf-calculator-secondary-results">
-                  <div className="vf-calculator-secondary-item">
-                    <div className="vf-calculator-secondary-label">Jährlich</div>
-                    <div className="vf-calculator-secondary-value">
-                      <CurrencyDisplay amount={result.jahresAfA} />
+            <div className="vf-calculator-input-panel">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="vf-tool-icon w-12 h-12">
+                        <Building2 className="w-6 h-6" />
                     </div>
-                  </div>
-                  <div className="vf-calculator-secondary-item">
-                    <div className="vf-calculator-secondary-label">Monatlich</div>
-                    <div className="vf-calculator-secondary-value">
-                      <CurrencyDisplay amount={result.monatsAfA} />
+                    <div>
+                        <h1 className="text-2xl font-bold">AfA-Rechner</h1>
+                        <p className="text-sm text-muted-foreground">Abschreibung für Abnutzung berechnen</p>
                     </div>
-                  </div>
                 </div>
 
-                <div className="vf-calculator-breakdown">
-                  <div className="vf-calculator-breakdown-title">Details</div>
-                  <div className="vf-calculator-breakdown-item">
-                    <span>Abschreibungsdauer</span>
-                    <span>{result.laufzeit} Jahre</span>
-                  </div>
-                  <div className="vf-calculator-breakdown-item">
-                    <span>Rechtsgrundlage</span>
-                    <span>§ 7 EStG</span>
-                  </div>
+                <div className="space-y-4">
+                    <VfInput
+                        label="Anschaffungskosten"
+                        type="number"
+                        value={inputs.anschaffungskosten}
+                        onChange={(e) => setInputs(prev => ({ ...prev, anschaffungskosten: e.target.value }))}
+                        rightAddon="€"
+                        required
+                        hint="Kaufpreis des Gebäudes (ohne Grundstück)"
+                    />
+                    <VfSelect
+                        label="Nutzungsart"
+                        value={inputs.nutzungsdauer}
+                        onChange={(value) => setInputs(prev => ({ ...prev, nutzungsdauer: value }))}
+                        options={nutzungsarten}
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                        <VfSelect
+                            label="Monat"
+                            value={inputs.inbetriebnahme_monat}
+                            onChange={(value) => setInputs(prev => ({ ...prev, inbetriebnahme_monat: value }))}
+                            options={Array.from({ length: 12 }, (_, i) => ({ 
+                                value: (i + 1).toString(), 
+                                label: new Date(2000, i).toLocaleString('de', { month: 'long' }) 
+                            }))}
+                        />
+                        <VfInput
+                            label="Jahr"
+                            type="number"
+                            value={inputs.inbetriebnahme_jahr}
+                            onChange={(e) => setInputs(prev => ({ ...prev, inbetriebnahme_jahr: e.target.value }))}
+                        />
+                    </div>
+
+                    <Button onClick={handleCalculate} disabled={!inputs.anschaffungskosten} className="vf-btn-gradient w-full">
+                        <Calculator className="w-4 h-4" />
+                        Berechnen
+                    </Button>
                 </div>
-              </CardContent>
-            )}
-          </Card>
+            </div>
+
+            <div className="vf-calculator-result-panel">
+                {!result ? (
+                    <div className="vf-calculator-result-empty">
+                        <Building2 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                        <p className="text-sm">Berechnen Sie die AfA</p>
+                    </div>
+                ) : (
+                    <>
+                        <div className="vf-calculator-primary-result">
+                            <div className="vf-calculator-primary-label">Jährliche AfA</div>
+                            <div className="vf-calculator-primary-value">{result.jaehrliche_afa.toLocaleString('de-DE')} €</div>
+                        </div>
+
+                        <div className="vf-calculator-secondary-results">
+                            <div className="vf-calculator-secondary-item">
+                                <div className="vf-calculator-secondary-label">Monatlich</div>
+                                <div className="vf-calculator-secondary-value">{result.monatliche_afa.toLocaleString('de-DE')} €</div>
+                            </div>
+                            <div className="vf-calculator-secondary-item">
+                                <div className="vf-calculator-secondary-label">Erstes Jahr</div>
+                                <div className="vf-calculator-secondary-value">{result.afa_erstes_jahr.toLocaleString('de-DE')} €</div>
+                            </div>
+                        </div>
+
+                        <div className="vf-calculator-breakdown">
+                            <div className="vf-calculator-breakdown-title">5-Jahres-Plan</div>
+                            {result.schedule.map((item) => (
+                                <div key={item.jahr} className="vf-calculator-breakdown-item text-sm">
+                                    <span>{item.jahr}</span>
+                                    <div className="text-right">
+                                        <div className="font-semibold">{item.afa.toLocaleString('de-DE')} €</div>
+                                        <div className="text-xs text-gray-500">RW: {item.restwert.toLocaleString('de-DE')} €</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }
