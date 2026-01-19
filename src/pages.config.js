@@ -341,6 +341,7 @@ import RealEstateCH from './pages/RealEstateCH';
 import RealEstateTaxPlanning from './pages/RealEstateTaxPlanning';
 import RealTimeTaxCalculator from './pages/RealTimeTaxCalculator';
 import RenditeRechner from './pages/RenditeRechner';
+import RenditeRechnerEnhanced from './pages/RenditeRechnerEnhanced';
 import RentCollectionDashboard from './pages/RentCollectionDashboard';
 import RentIncreaseOptimizer from './pages/RentIncreaseOptimizer';
 import RentIndexManagement from './pages/RentIndexManagement';
@@ -563,7 +564,9 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import RenditeRechnerEnhanced from './pages/RenditeRechnerEnhanced';
+import IndexmietenRechnerV2 from './pages/IndexmietenRechnerV2';
+import KaufpreisRechnerV2 from './pages/KaufpreisRechnerV2';
+import InvestorProfilQuizV2 from './pages/InvestorProfilQuizV2';
 import __Layout from './Layout.jsx';
 
 
@@ -911,6 +914,7 @@ export const PAGES = {
     "RealEstateTaxPlanning": RealEstateTaxPlanning,
     "RealTimeTaxCalculator": RealTimeTaxCalculator,
     "RenditeRechner": RenditeRechner,
+    "RenditeRechnerEnhanced": RenditeRechnerEnhanced,
     "RentCollectionDashboard": RentCollectionDashboard,
     "RentIncreaseOptimizer": RentIncreaseOptimizer,
     "RentIndexManagement": RentIndexManagement,
@@ -1133,7 +1137,9 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "RenditeRechnerEnhanced": RenditeRechnerEnhanced,
+    "IndexmietenRechnerV2": IndexmietenRechnerV2,
+    "KaufpreisRechnerV2": KaufpreisRechnerV2,
+    "InvestorProfilQuizV2": InvestorProfilQuizV2,
 }
 
 export const pagesConfig = {

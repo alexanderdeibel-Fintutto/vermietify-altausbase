@@ -1,30 +1,31 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Mail } from 'lucide-react';
+import { Home, RefreshCw } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
 export default function Error500() {
-  return (
-    <div className="vf-error-page">
-      <div className="vf-error-page__content">
-        <div className="vf-error-page__illustration mb-8">
-          <div className="text-9xl">⚠️</div>
+    return (
+        <div className="vf-error-page">
+            <div className="vf-error-page__content">
+                <div className="vf-error-page__code">500</div>
+                <div className="vf-error-page__title">Serverfehler</div>
+                <div className="vf-error-page__description">
+                    Es ist ein unerwarteter Fehler aufgetreten. Unser Team wurde benachrichtigt und arbeitet an einer Lösung.
+                </div>
+                <div className="vf-error-page__actions">
+                    <Button onClick={() => window.location.reload()} className="vf-btn-gradient">
+                        <RefreshCw className="w-4 h-4" />
+                        Seite neu laden
+                    </Button>
+                    <Link to={createPageUrl('Dashboard')}>
+                        <Button variant="outline">
+                            <Home className="w-4 h-4" />
+                            Zum Dashboard
+                        </Button>
+                    </Link>
+                </div>
+            </div>
         </div>
-        <div className="vf-error-page__code">500</div>
-        <h1 className="vf-error-page__title">Ein Fehler ist aufgetreten</h1>
-        <p className="vf-error-page__description">
-          Entschuldigung, da ist etwas schief gelaufen. Wir arbeiten daran.
-        </p>
-        <div className="vf-error-page__actions">
-          <Button variant="gradient" onClick={() => location.reload()}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Erneut versuchen
-          </Button>
-          <Button variant="secondary" onClick={() => window.location.href = '/support-center'}>
-            <Mail className="h-4 w-4 mr-2" />
-            Support kontaktieren
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }
