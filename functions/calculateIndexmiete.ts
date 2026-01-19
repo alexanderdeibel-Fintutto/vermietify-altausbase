@@ -1,59 +1,64 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-const corsHeaders = { 
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type'
-};
-
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+    try {
+        const base44 = createClientFromRequest(req);
+        const { 
+            aktuelle_miete, 
+            start_year, 
+            start_month, 
+            end_year, 
+            end_month,
+            country = 'AT'
+        } = await req.json();
 
-  const base44 = createClientFromRequest(req);
+        if (!aktuelle_miete || !start_year || !start_month || !end_year || !end_month) {
+            return Response.json({ error: 'Alle Pflichtfelder müssen ausgefüllt sein' }, { status: 400 });
+        }
 
-  try {
-    const { miete_aktuell, letzte_anpassung_datum, schwellenwert = 0 } = await req.json();
+        // Fetch VPI data for start and end period
+        const startIndex = await base44.asServiceRole.entities.VPIIndex.filter({ 
+            year: start_year, 
+            month: start_month, 
+            country 
+        });
+        
+        const endIndex = await base44.asServiceRole.entities.VPIIndex.filter({ 
+            year: end_year, 
+            month: end_month, 
+            country 
+        });
 
-    if (!miete_aktuell || !letzte_anpassung_datum) {
-      return Response.json({ success: false, error: 'Miete und Datum erforderlich' }, { status: 400, headers: corsHeaders });
+        if (startIndex.length === 0 || endIndex.length === 0) {
+            return Response.json({ 
+                error: 'VPI-Daten für den angegebenen Zeitraum nicht verfügbar',
+                details: `Start: ${startIndex.length}, End: ${endIndex.length}`
+            }, { status: 404 });
+        }
+
+        const vpi_start = startIndex[0].index_value;
+        const vpi_end = endIndex[0].index_value;
+        
+        // Calculate new rent based on VPI change
+        const indexaenderung = ((vpi_end - vpi_start) / vpi_start) * 100;
+        const neue_miete = aktuelle_miete * (vpi_end / vpi_start);
+        const erhoehung_absolut = neue_miete - aktuelle_miete;
+        const erhoehung_prozent = ((neue_miete - aktuelle_miete) / aktuelle_miete) * 100;
+
+        const result = {
+            aktuelle_miete,
+            neue_miete: Math.round(neue_miete * 100) / 100,
+            erhoehung_absolut: Math.round(erhoehung_absolut * 100) / 100,
+            erhoehung_prozent: Math.round(erhoehung_prozent * 100) / 100,
+            vpi_start,
+            vpi_end,
+            indexaenderung: Math.round(indexaenderung * 100) / 100,
+            start_period: `${start_month}/${start_year}`,
+            end_period: `${end_month}/${end_year}`
+        };
+
+        return Response.json({ success: true, result });
+    } catch (error) {
+        return Response.json({ error: error.message }, { status: 500 });
     }
-
-    const letzteAnpassung = new Date(letzte_anpassung_datum);
-    const heute = new Date();
-
-    const vpiAlt = await getVPI(base44, letzteAnpassung.getFullYear(), letzteAnpassung.getMonth() + 1);
-    const vpiNeu = await getVPI(base44, heute.getFullYear(), heute.getMonth() + 1);
-
-    const steigerung_prozent = ((vpiNeu - vpiAlt) / vpiAlt) * 100;
-    const neue_miete = miete_aktuell * (vpiNeu / vpiAlt);
-    const differenz = neue_miete - miete_aktuell;
-    const anpassung_moeglich = schwellenwert === 0 || steigerung_prozent >= schwellenwert;
-
-    return Response.json({
-      success: true,
-      result: {
-        miete_aktuell,
-        neue_miete: Math.round(neue_miete * 100) / 100,
-        differenz: Math.round(differenz * 100) / 100,
-        steigerung_prozent: Math.round(steigerung_prozent * 100) / 100,
-        vpi_alt: vpiAlt,
-        vpi_neu: vpiNeu,
-        anpassung_moeglich,
-        schwellenwert_erreicht: steigerung_prozent >= schwellenwert
-      }
-    }, { headers: corsHeaders });
-
-  } catch (error) {
-    return Response.json({ success: false, error: error.message }, { status: 500, headers: corsHeaders });
-  }
 });
-
-async function getVPI(base44, year, month) {
-  const result = await base44.asServiceRole.entities.VPIIndex.filter({ year, month });
-  if (result.length === 0) {
-    throw new Error(`VPI für ${month}/${year} nicht gefunden`);
-  }
-  return result[0].index_value;
-}

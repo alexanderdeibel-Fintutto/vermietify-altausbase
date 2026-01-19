@@ -1,85 +1,56 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-const corsHeaders = { 
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type'
-};
-
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+    try {
+        const base44 = createClientFromRequest(req);
+        const { email, full_name, phone, source, source_page, company, interested_in, utm_source, utm_medium, utm_campaign } = await req.json();
 
-  const base44 = createClientFromRequest(req);
-  
-  try {
-    const body = await req.json();
-    const { email, name, phone, source, marketing_consent, utm_source, utm_medium, utm_campaign, property_count, unit_count } = body;
+        if (!email || !source) {
+            return Response.json({ error: 'Email und Source sind erforderlich' }, { status: 400 });
+        }
 
-    if (!email || !isValidEmail(email)) {
-      return Response.json({ success: false, error: 'Ungültige E-Mail' }, { status: 400, headers: corsHeaders });
+        // Check if lead already exists
+        const existingLeads = await base44.asServiceRole.entities.Lead.filter({ email });
+        
+        let lead;
+        if (existingLeads.length > 0) {
+            // Update existing lead
+            lead = await base44.asServiceRole.entities.Lead.update(existingLeads[0].id, {
+                full_name: full_name || existingLeads[0].full_name,
+                phone: phone || existingLeads[0].phone,
+                company: company || existingLeads[0].company,
+                interested_in: interested_in || existingLeads[0].interested_in,
+                last_activity_date: new Date().toISOString(),
+                lead_score: existingLeads[0].lead_score + 5 // Increase score for return visit
+            });
+        } else {
+            // Create new lead
+            lead = await base44.asServiceRole.entities.Lead.create({
+                email,
+                full_name,
+                phone,
+                source,
+                source_page,
+                company,
+                interested_in,
+                utm_source,
+                utm_medium,
+                utm_campaign,
+                lead_score: 10, // Initial score
+                status: 'new',
+                last_activity_date: new Date().toISOString()
+            });
+
+            // Send welcome email
+            await base44.asServiceRole.integrations.Core.SendEmail({
+                to: email,
+                subject: 'Willkommen bei Vermitify',
+                body: `Hallo ${full_name || ''},\n\nvielen Dank für Ihr Interesse an Vermitify. Wir haben Ihre Anfrage erhalten und werden uns in Kürze bei Ihnen melden.\n\nBeste Grüße,\nIhr Vermitify Team`
+            });
+        }
+
+        return Response.json({ success: true, lead });
+    } catch (error) {
+        return Response.json({ error: error.message }, { status: 500 });
     }
-
-    if (!source) {
-      return Response.json({ success: false, error: 'Source erforderlich' }, { status: 400, headers: corsHeaders });
-    }
-
-    const existing = await base44.asServiceRole.entities.Lead.filter({ email: email.toLowerCase().trim() });
-    let lead, isNew = true;
-
-    if (existing.length > 0) {
-      lead = existing[0];
-      isNew = false;
-      const updatedScore = calculateLeadScore({ ...lead, ...body });
-      await base44.asServiceRole.entities.Lead.update(lead.id, {
-        last_activity_at: new Date().toISOString(),
-        score: updatedScore,
-        name: name || lead.name,
-        phone: phone || lead.phone
-      });
-    } else {
-      lead = await base44.asServiceRole.entities.Lead.create({
-        email: email.toLowerCase().trim(),
-        name: name || null,
-        phone: phone || null,
-        source,
-        utm_source: utm_source || null,
-        utm_medium: utm_medium || null,
-        utm_campaign: utm_campaign || null,
-        status: 'new',
-        score: calculateLeadScore(body),
-        marketing_consent: marketing_consent || false,
-        consent_date: marketing_consent ? new Date().toISOString() : null,
-        property_count: property_count || null,
-        unit_count: unit_count || null,
-        tags: '[]',
-        last_activity_at: new Date().toISOString()
-      });
-    }
-
-    return Response.json({ 
-      success: true, 
-      lead_id: lead.id, 
-      is_new: isNew, 
-      score: lead.score 
-    }, { headers: corsHeaders });
-
-  } catch (error) {
-    return Response.json({ success: false, error: error.message }, { status: 500, headers: corsHeaders });
-  }
 });
-
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function calculateLeadScore(data) {
-  let score = 10;
-  if (data.name) score += 10;
-  if (data.phone) score += 15;
-  if (data.property_count > 0) score += Math.min(data.property_count * 5, 25);
-  if (data.unit_count > 5) score += 15;
-  if (data.marketing_consent) score += 10;
-  return Math.min(score, 100);
-}

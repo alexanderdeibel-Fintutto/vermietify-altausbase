@@ -1,37 +1,59 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-const corsHeaders = { 
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type'
-};
-
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+    try {
+        const base44 = createClientFromRequest(req);
+        const { year, month, country = 'AT' } = await req.json();
 
-  const base44 = createClientFromRequest(req);
+        if (year && month) {
+            // Fetch specific month
+            const indices = await base44.asServiceRole.entities.VPIIndex.filter({ 
+                year, 
+                month, 
+                country 
+            });
+            
+            return Response.json({ 
+                success: true, 
+                data: indices.length > 0 ? indices[0] : null 
+            });
+        } else if (year) {
+            // Fetch all months for a year
+            const indices = await base44.asServiceRole.entities.VPIIndex.filter({ 
+                year, 
+                country 
+            });
+            
+            // Sort by month
+            indices.sort((a, b) => a.month - b.month);
+            
+            return Response.json({ 
+                success: true, 
+                data: indices 
+            });
+        } else {
+            // Fetch latest available
+            const allIndices = await base44.asServiceRole.entities.VPIIndex.filter({ country });
+            
+            if (allIndices.length === 0) {
+                return Response.json({ 
+                    success: false, 
+                    error: 'Keine VPI-Daten verfügbar' 
+                }, { status: 404 });
+            }
 
-  try {
-    const { year, month, from_year, from_month } = req.method === 'POST' ? await req.json() : {};
+            // Sort by year and month descending
+            allIndices.sort((a, b) => {
+                if (b.year !== a.year) return b.year - a.year;
+                return b.month - a.month;
+            });
 
-    let results;
-
-    if (year && month) {
-      results = await base44.asServiceRole.entities.VPIIndex.filter({ year, month });
-    } else if (from_year && from_month) {
-      const all = await base44.asServiceRole.entities.VPIIndex.list('-year', 100);
-      results = all.filter(item => 
-        item.year > from_year || (item.year === from_year && item.month >= from_month)
-      );
-    } else {
-      results = await base44.asServiceRole.entities.VPIIndex.list('-year', 50);
+            return Response.json({ 
+                success: true, 
+                data: allIndices[0] 
+            });
+        }
+    } catch (error) {
+        return Response.json({ error: error.message }, { status: 500 });
     }
-
-    return Response.json({ success: true, data: results }, { headers: corsHeaders });
-
-  } catch (error) {
-    return Response.json({ success: false, error: error.message }, { status: 500, headers: corsHeaders });
-  }
 });
