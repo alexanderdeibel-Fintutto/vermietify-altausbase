@@ -1,50 +1,67 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
+    try {
+        const base44 = createClientFromRequest(req);
+        const { email, full_name, type = 'lead' } = await req.json();
 
-  try {
-    const user = await base44.auth.me();
-    
-    if (user?.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
+        if (!email) {
+            return Response.json({ error: 'Email ist erforderlich' }, { status: 400 });
+        }
 
-    const { email, name } = await req.json();
+        let subject = '';
+        let body = '';
 
-    if (!email) {
-      return Response.json({ error: 'E-Mail erforderlich' }, { status: 400 });
-    }
+        if (type === 'lead') {
+            subject = 'Willkommen bei Vermitify - Ihre Immobilienverwaltung';
+            body = `Hallo ${full_name || ''},
 
-    await base44.integrations.Core.SendEmail({
-      to: email,
-      subject: 'Willkommen bei Vermitify! 🏠',
-      from_name: 'Vermitify Team',
-      body: `Hallo ${name || ''},
+vielen Dank für Ihr Interesse an Vermitify!
 
-Herzlich willkommen bei Vermitify!
+Wir haben Ihre Anfrage erhalten und freuen uns, Sie auf Ihrem Weg zur professionellen Immobilienverwaltung zu begleiten.
 
-Wir freuen uns, dass Sie sich für unsere Plattform entschieden haben.
+**Was Sie als Nächstes erwartet:**
+• Zugang zu unseren kostenlosen Rechnern und Tools
+• Persönliche Beratung durch unser Team
+• Exklusive Einblicke in Best Practices
 
-Hier sind Ihre ersten Schritte:
-1. Profil vervollständigen
-2. Erstes Objekt anlegen
-3. Einheiten erstellen
-4. Mieter hinzufügen
+Haben Sie Fragen? Antworten Sie einfach auf diese Email.
 
-Bei Fragen stehen wir Ihnen jederzeit zur Verfügung.
-
-Beste Grüße
+Beste Grüße,
 Ihr Vermitify Team
 
 ---
-support@vermitify.de
-+49 30 1234567`
-    });
+Vermitify - Immobilienverwaltung leicht gemacht`;
+        } else if (type === 'user') {
+            subject = 'Willkommen bei Vermitify - Ihr Account ist bereit!';
+            body = `Hallo ${full_name || ''},
 
-    return Response.json({ success: true });
+herzlich willkommen bei Vermitify!
 
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
-  }
+Ihr Account wurde erfolgreich erstellt. Sie können sich jetzt einloggen und mit der Verwaltung Ihrer Immobilien beginnen.
+
+**Erste Schritte:**
+1. Vervollständigen Sie Ihr Profil
+2. Legen Sie Ihr erstes Gebäude an
+3. Laden Sie Ihre Mieter ein
+
+Unser Onboarding-Wizard hilft Ihnen bei jedem Schritt.
+
+Bei Fragen stehen wir Ihnen gerne zur Verfügung.
+
+Beste Grüße,
+Ihr Vermitify Team`;
+        }
+
+        await base44.asServiceRole.integrations.Core.SendEmail({
+            from_name: 'Vermitify',
+            to: email,
+            subject,
+            body
+        });
+
+        return Response.json({ success: true, message: 'Email versendet' });
+    } catch (error) {
+        return Response.json({ error: error.message }, { status: 500 });
+    }
 });

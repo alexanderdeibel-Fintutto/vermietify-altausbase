@@ -1,32 +1,48 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
+    try {
+        const base44 = createClientFromRequest(req);
+        const { email, activity_type } = await req.json();
 
-  try {
-    const user = await base44.auth.me();
-    
-    if (user?.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+        if (!email || !activity_type) {
+            return Response.json({ error: 'Email und Activity-Type sind erforderlich' }, { status: 400 });
+        }
+
+        const leads = await base44.asServiceRole.entities.Lead.filter({ email });
+        
+        if (leads.length === 0) {
+            return Response.json({ error: 'Lead nicht gefunden' }, { status: 404 });
+        }
+
+        const lead = leads[0];
+        let scoreIncrease = 0;
+
+        // Score increase based on activity type
+        const scoreMap = {
+            'calculator_use': 8,
+            'quiz_completion': 12,
+            'document_download': 10,
+            'page_view': 2,
+            'email_open': 5,
+            'email_click': 7,
+            'form_submit': 15,
+            'demo_request': 20,
+            'pricing_view': 10
+        };
+
+        scoreIncrease = scoreMap[activity_type] || 5;
+
+        const newScore = Math.min((lead.lead_score || 0) + scoreIncrease, 100);
+
+        // Update lead
+        const updatedLead = await base44.asServiceRole.entities.Lead.update(lead.id, {
+            lead_score: newScore,
+            last_activity_date: new Date().toISOString()
+        });
+
+        return Response.json({ success: true, lead: updatedLead });
+    } catch (error) {
+        return Response.json({ error: error.message }, { status: 500 });
     }
-
-    const { lead_id, score_delta, reason } = await req.json();
-
-    if (!lead_id) {
-      return Response.json({ error: 'Lead-ID erforderlich' }, { status: 400 });
-    }
-
-    const lead = await base44.asServiceRole.entities.Lead.get(lead_id);
-    const newScore = Math.min(Math.max((lead.score || 0) + score_delta, 0), 100);
-
-    await base44.asServiceRole.entities.Lead.update(lead_id, {
-      score: newScore,
-      last_activity_at: new Date().toISOString()
-    });
-
-    return Response.json({ success: true, new_score: newScore });
-
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
-  }
 });

@@ -1,49 +1,41 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-const corsHeaders = { 
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type'
-};
-
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+    try {
+        const base44 = createClientFromRequest(req);
+        const { calculator_type, input_data, result_data, result_summary, user_email, session_id } = await req.json();
 
-  const base44 = createClientFromRequest(req);
+        if (!calculator_type || !input_data || !result_data) {
+            return Response.json({ error: 'Calculator-Type, Input-Data und Result-Data sind erforderlich' }, { status: 400 });
+        }
 
-  try {
-    const { calculator_type, input_data, result_data, primary_result, primary_result_label, lead_id, user_id } = await req.json();
+        // Save calculation to history
+        const calculation = await base44.asServiceRole.entities.CalculationHistory.create({
+            calculator_type,
+            user_email,
+            input_data,
+            result_data,
+            result_summary,
+            session_id,
+            is_saved: false,
+            is_shared: false,
+            lead_captured: false
+        });
 
-    if (!calculator_type || !input_data || !result_data) {
-      return Response.json({ success: false, error: 'Fehlende Daten' }, { status: 400, headers: corsHeaders });
+        // Update lead score if email provided
+        if (user_email) {
+            const leads = await base44.asServiceRole.entities.Lead.filter({ email: user_email });
+            if (leads.length > 0) {
+                const currentScore = leads[0].lead_score || 0;
+                await base44.asServiceRole.entities.Lead.update(leads[0].id, {
+                    lead_score: currentScore + 8,
+                    last_activity_date: new Date().toISOString()
+                });
+            }
+        }
+
+        return Response.json({ success: true, calculation });
+    } catch (error) {
+        return Response.json({ error: error.message }, { status: 500 });
     }
-
-    const calculation = await base44.asServiceRole.entities.CalculationHistory.create({
-      lead_id: lead_id || null,
-      user_id: user_id || null,
-      calculator_type,
-      input_data: JSON.stringify(input_data),
-      result_data: JSON.stringify(result_data),
-      primary_result,
-      primary_result_label,
-      saved: false,
-      shared: false,
-      pdf_generated: false
-    });
-
-    if (lead_id) {
-      const lead = await base44.asServiceRole.entities.Lead.get(lead_id);
-      await base44.asServiceRole.entities.Lead.update(lead_id, {
-        score: Math.min(lead.score + 5, 100),
-        last_activity_at: new Date().toISOString()
-      });
-    }
-
-    return Response.json({ success: true, calculation_id: calculation.id }, { headers: corsHeaders });
-
-  } catch (error) {
-    return Response.json({ success: false, error: error.message }, { status: 500, headers: corsHeaders });
-  }
 });

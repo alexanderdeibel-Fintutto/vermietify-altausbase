@@ -1,40 +1,54 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
+    try {
+        const base44 = createClientFromRequest(req);
+        const user = await base44.auth.me();
 
-  try {
-    const user = await base44.auth.me();
-    
-    if (user?.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+        if (!user || user.role !== 'admin') {
+            return Response.json({ error: 'Nur Admins können Leads konvertieren' }, { status: 403 });
+        }
+
+        const { lead_id, send_invite = true } = await req.json();
+
+        if (!lead_id) {
+            return Response.json({ error: 'Lead-ID ist erforderlich' }, { status: 400 });
+        }
+
+        // Get lead
+        const lead = await base44.asServiceRole.entities.Lead.filter({ id: lead_id });
+        
+        if (lead.length === 0) {
+            return Response.json({ error: 'Lead nicht gefunden' }, { status: 404 });
+        }
+
+        const leadData = lead[0];
+
+        // Check if user already exists
+        const existingUsers = await base44.asServiceRole.entities.User.filter({ email: leadData.email });
+        
+        if (existingUsers.length > 0) {
+            return Response.json({ error: 'User existiert bereits' }, { status: 400 });
+        }
+
+        // Invite user
+        if (send_invite) {
+            await base44.users.inviteUser(leadData.email, 'user');
+        }
+
+        // Update lead status
+        await base44.asServiceRole.entities.Lead.update(lead_id, {
+            status: 'converted',
+            converted_to_user_email: leadData.email,
+            conversion_date: new Date().toISOString()
+        });
+
+        return Response.json({ 
+            success: true, 
+            message: 'Lead erfolgreich konvertiert',
+            invited: send_invite
+        });
+    } catch (error) {
+        return Response.json({ error: error.message }, { status: 500 });
     }
-
-    const { lead_id } = await req.json();
-
-    if (!lead_id) {
-      return Response.json({ error: 'Lead-ID erforderlich' }, { status: 400 });
-    }
-
-    const lead = await base44.asServiceRole.entities.Lead.get(lead_id);
-
-    await base44.users.inviteUser(lead.email, 'user');
-
-    await base44.asServiceRole.entities.Lead.update(lead_id, {
-      status: 'converted',
-      last_activity_at: new Date().toISOString()
-    });
-
-    await base44.integrations.Core.SendEmail({
-      to: lead.email,
-      subject: 'Willkommen bei Vermitify! 🏠',
-      from_name: 'Vermitify Team',
-      body: `Hallo ${lead.name || ''},\n\nIhre Registrierung war erfolgreich! Sie erhalten in Kürze eine separate E-Mail mit Ihrem Login-Link.\n\nBeste Grüße\nIhr Vermitify Team`
-    });
-
-    return Response.json({ success: true });
-
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
-  }
 });
