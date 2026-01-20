@@ -1,189 +1,113 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { VfInput } from '@/components/shared/VfInput';
-import { VfSelect } from '@/components/shared/VfSelect';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Gauge, Plus, Droplets, Zap, Flame } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Gauge, Plus, Upload, TrendingUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { showSuccess } from '@/components/notifications/ToastNotification';
-
-const meterTypeOptions = [
-    { value: 'Strom', label: 'Strom' },
-    { value: 'Wasser', label: 'Wasser' },
-    { value: 'Heizung', label: 'Heizung' },
-    { value: 'Gas', label: 'Gas' }
-];
 
 export default function MeterReadings() {
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [formData, setFormData] = useState({
-        unit_id: '',
-        zaehlertyp: 'Strom',
-        zaehlernummer: '',
-        zaehlerstand: '',
-        ablesedatum: new Date().toISOString().split('T')[0]
-    });
-
-    const queryClient = useQueryClient();
-
-    const { data: readings = [], isLoading } = useQuery({
+    const { data: readings = [] } = useQuery({
         queryKey: ['meterReadings'],
-        queryFn: () => base44.entities.MeterReading.list('-ablesedatum', 50)
+        queryFn: () => base44.entities.MeterReading.list('-ablesedatum')
     });
 
-    const { data: units = [] } = useQuery({
-        queryKey: ['units'],
-        queryFn: () => base44.entities.Unit.list()
+    const { data: meters = [] } = useQuery({
+        queryKey: ['meters'],
+        queryFn: () => base44.entities.Meter.list()
     });
 
-    const createReadingMutation = useMutation({
-        mutationFn: (data) => base44.entities.MeterReading.create(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['meterReadings'] });
-            setDialogOpen(false);
-            setFormData({ unit_id: '', zaehlertyp: 'Strom', zaehlernummer: '', zaehlerstand: '', ablesedatum: new Date().toISOString().split('T')[0] });
-            showSuccess('Zählerstand erfasst');
-        }
-    });
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        createReadingMutation.mutate(formData);
-    };
-
-    const getIcon = (type) => {
-        switch (type) {
-            case 'Wasser': return <Droplets className="w-6 h-6" />;
-            case 'Strom': return <Zap className="w-6 h-6" />;
-            case 'Heizung': return <Flame className="w-6 h-6" />;
-            default: return <Gauge className="w-6 h-6" />;
-        }
-    };
-
-    if (isLoading) {
-        return <div className="flex items-center justify-center h-96"><div className="vf-spinner vf-spinner-lg" /></div>;
-    }
+    const recentReadings = readings.slice(0, 20);
+    const overallConsumption = readings.reduce((sum, r) => sum + (parseFloat(r.zaehlerstand) || 0), 0);
 
     return (
         <div className="space-y-6">
             <div className="vf-page-header">
                 <div>
-                    <h1 className="vf-page-title">Zählerstände</h1>
-                    <p className="vf-page-subtitle">{readings.length} Ablesungen</p>
+                    <h1 className="vf-page-title">Zählerablesungen</h1>
+                    <p className="vf-page-subtitle">{readings.length} Ablesungen erfasst</p>
                 </div>
                 <div className="vf-page-actions">
-                    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button className="vf-btn-gradient">
-                                <Plus className="w-4 h-4" />
-                                Ablesung hinzufügen
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Neue Zählerablesung</DialogTitle>
-                            </DialogHeader>
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <VfSelect
-                                    label="Wohneinheit"
-                                    value={formData.unit_id}
-                                    onChange={(value) => setFormData(prev => ({ ...prev, unit_id: value }))}
-                                    options={units.map(u => ({ value: u.id, label: u.nummer }))}
-                                    required
-                                />
-                                <VfSelect
-                                    label="Zählertyp"
-                                    value={formData.zaehlertyp}
-                                    onChange={(value) => setFormData(prev => ({ ...prev, zaehlertyp: value }))}
-                                    options={meterTypeOptions}
-                                />
-                                <VfInput
-                                    label="Zählernummer"
-                                    value={formData.zaehlernummer}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, zaehlernummer: e.target.value }))}
-                                    placeholder="z.B. 12345678"
-                                    required
-                                />
-                                <VfInput
-                                    label="Zählerstand"
-                                    type="number"
-                                    value={formData.zaehlerstand}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, zaehlerstand: e.target.value }))}
-                                    required
-                                />
-                                <VfInput
-                                    label="Ablesedatum"
-                                    type="date"
-                                    value={formData.ablesedatum}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, ablesedatum: e.target.value }))}
-                                    required
-                                />
-                                <div className="flex justify-end gap-3 pt-4">
-                                    <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                                        Abbrechen
-                                    </Button>
-                                    <Button type="submit" className="vf-btn-gradient">
-                                        Erfassen
-                                    </Button>
-                                </div>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
+                    <Button variant="outline">
+                        <Upload className="w-4 h-4 mr-2" />
+                        Importieren
+                    </Button>
+                    <Button className="vf-btn-gradient">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Neue Ablesung
+                    </Button>
                 </div>
             </div>
 
-            {readings.length === 0 ? (
+            <div className="grid md:grid-cols-4 gap-4">
                 <Card>
-                    <CardContent className="py-16">
-                        <div className="text-center">
-                            <Gauge className="w-20 h-20 mx-auto mb-6 text-gray-300" />
-                            <h3 className="text-xl font-semibold mb-2">Noch keine Zählerstände</h3>
-                            <p className="text-gray-600 mb-6">Erfassen Sie Ihren ersten Zählerstand</p>
-                            <Button className="vf-btn-gradient" onClick={() => setDialogOpen(true)}>
-                                <Plus className="w-4 h-4" />
-                                Ersten Stand erfassen
-                            </Button>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <Gauge className="w-8 h-8 text-blue-600" />
                         </div>
+                        <div className="text-3xl font-bold">{readings.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Ablesungen</div>
                     </CardContent>
                 </Card>
-            ) : (
-                <div className="space-y-3">
-                    {readings.map((reading) => {
-                        const unit = units.find(u => u.id === reading.unit_id);
-                        return (
-                            <Card key={reading.id}>
-                                <CardContent className="p-4">
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <Gauge className="w-8 h-8 text-green-600" />
+                        </div>
+                        <div className="text-3xl font-bold">{meters.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Zähler</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <TrendingUp className="w-8 h-8 text-purple-600" />
+                        </div>
+                        <div className="text-3xl font-bold">{overallConsumption.toFixed(0)}</div>
+                        <div className="text-sm text-gray-600 mt-1">Ø Verbrauch</div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-blue-900 to-orange-600 text-white border-none">
+                    <CardContent className="p-6">
+                        <div className="text-3xl font-bold">
+                            {readings.length > 0 
+                                ? new Date(readings[0].ablesedatum).toLocaleDateString('de-DE') 
+                                : '-'}
+                        </div>
+                        <div className="text-sm opacity-90 mt-1">Letzte Ablesung</div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <Card>
+                <CardContent className="p-6">
+                    <h3 className="font-semibold text-lg mb-4">Aktuelle Ablesungen</h3>
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                        {recentReadings.map((reading) => {
+                            const meter = meters.find(m => m.id === reading.meter_id);
+                            return (
+                                <div key={reading.id} className="p-3 bg-gray-50 rounded-lg border">
                                     <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center text-white">
-                                                {getIcon(reading.zaehlertyp)}
-                                            </div>
-                                            <div>
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <Badge className="vf-badge-default">{reading.zaehlertyp}</Badge>
-                                                    {unit && <span className="text-sm font-medium">{unit.nummer}</span>}
-                                                </div>
-                                                <div className="text-xs text-gray-500 font-mono">
-                                                    Zähler: {reading.zaehlernummer}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-2xl font-bold">{reading.zaehlerstand}</div>
-                                            <div className="text-xs text-gray-500">
+                                        <div>
+                                            <div className="font-semibold text-sm">{meter?.zaehlernummer || 'Unbekannt'}</div>
+                                            <div className="text-xs text-gray-600 mt-1">
                                                 {new Date(reading.ablesedatum).toLocaleDateString('de-DE')}
                                             </div>
                                         </div>
+                                        <div className="text-right">
+                                            <div className="text-lg font-bold">{reading.zaehlerstand}</div>
+                                            <div className="text-xs text-gray-600">{meter?.einheit || 'Einheit'}</div>
+                                        </div>
                                     </div>
-                                </CardContent>
-                            </Card>
-                        );
-                    })}
-                </div>
-            )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }

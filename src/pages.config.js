@@ -252,6 +252,7 @@ import GlobalTaxDeadlineCalendar from './pages/GlobalTaxDeadlineCalendar';
 import GlobalTaxOverview from './pages/GlobalTaxOverview';
 import GlobalWealthDashboard from './pages/GlobalWealthDashboard';
 import HaushaltsbuchbudgetApp from './pages/HaushaltsbuchbudgetApp';
+import Help from './pages/Help';
 import HelpCenter from './pages/HelpCenter';
 import HilfeCenter from './pages/HilfeCenter';
 import Home from './pages/Home';
@@ -323,7 +324,6 @@ import NotificationHub from './pages/NotificationHub';
 import NotificationManagement from './pages/NotificationManagement';
 import NotificationPreferences from './pages/NotificationPreferences';
 import OfflineError from './pages/OfflineError';
-import Payments from './pages/Payments';
 import Onboarding from './pages/Onboarding';
 import OnboardingEnhanced from './pages/OnboardingEnhanced';
 import OnboardingWizard from './pages/OnboardingWizard';
@@ -342,6 +342,7 @@ import PartnerOnboarding from './pages/PartnerOnboarding';
 import PaymentHistory from './pages/PaymentHistory';
 import PaymentManagement from './pages/PaymentManagement';
 import PaymentTracking from './pages/PaymentTracking';
+import Payments from './pages/Payments';
 import PerformanceMonitor from './pages/PerformanceMonitor';
 import PermissionDashboard from './pages/PermissionDashboard';
 import PermissionManagement from './pages/PermissionManagement';
@@ -396,6 +397,7 @@ import ScheduledTasks from './pages/ScheduledTasks';
 import SearchResults from './pages/SearchResults';
 import SelfEmploymentTaxPlanner from './pages/SelfEmploymentTaxPlanner';
 import SelfEmploymentTaxPlanning from './pages/SelfEmploymentTaxPlanning';
+import Settings from './pages/Settings';
 import SettingsAppearance from './pages/SettingsAppearance';
 import SettingsIntegrations from './pages/SettingsIntegrations';
 import SettingsPage from './pages/SettingsPage';
@@ -610,8 +612,7 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import Settings from './pages/Settings';
-import Help from './pages/Help';
+import DataManagement from './pages/DataManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -870,6 +871,7 @@ export const PAGES = {
     "GlobalTaxOverview": GlobalTaxOverview,
     "GlobalWealthDashboard": GlobalWealthDashboard,
     "HaushaltsbuchbudgetApp": HaushaltsbuchbudgetApp,
+    "Help": Help,
     "HelpCenter": HelpCenter,
     "HilfeCenter": HilfeCenter,
     "Home": Home,
@@ -941,7 +943,6 @@ export const PAGES = {
     "NotificationManagement": NotificationManagement,
     "NotificationPreferences": NotificationPreferences,
     "OfflineError": OfflineError,
-    "Payments": Payments,
     "Onboarding": Onboarding,
     "OnboardingEnhanced": OnboardingEnhanced,
     "OnboardingWizard": OnboardingWizard,
@@ -960,6 +961,7 @@ export const PAGES = {
     "PaymentHistory": PaymentHistory,
     "PaymentManagement": PaymentManagement,
     "PaymentTracking": PaymentTracking,
+    "Payments": Payments,
     "PerformanceMonitor": PerformanceMonitor,
     "PermissionDashboard": PermissionDashboard,
     "PermissionManagement": PermissionManagement,
@@ -1014,6 +1016,7 @@ export const PAGES = {
     "SearchResults": SearchResults,
     "SelfEmploymentTaxPlanner": SelfEmploymentTaxPlanner,
     "SelfEmploymentTaxPlanning": SelfEmploymentTaxPlanning,
+    "Settings": Settings,
     "SettingsAppearance": SettingsAppearance,
     "SettingsIntegrations": SettingsIntegrations,
     "SettingsPage": SettingsPage,
@@ -1228,8 +1231,7 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "Settings": Settings,
-    "Help": Help,
+    "DataManagement": DataManagement,
 }
 
 export const pagesConfig = {
