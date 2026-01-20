@@ -1,93 +1,124 @@
 import React, { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { VfSelect } from '@/components/shared/VfSelect';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Save, Sun, Moon } from 'lucide-react';
+import { VfSelect } from '@/components/shared/VfSelect';
+import { Palette, Sun, Moon, Monitor } from 'lucide-react';
 import { showSuccess } from '@/components/notifications/ToastNotification';
 
+const themes = [
+    { value: 'vermieter', label: 'Vermieter (Standard)' },
+    { value: 'mieter', label: 'Mieter' },
+    { value: 'b2b', label: 'B2B' },
+    { value: 'komfort', label: 'Komfort' },
+    { value: 'invest', label: 'Investment' }
+];
+
+const colorModes = [
+    { value: 'light', label: 'Hell', icon: Sun },
+    { value: 'dark', label: 'Dunkel', icon: Moon },
+    { value: 'system', label: 'System', icon: Monitor }
+];
+
 export default function SettingsAppearance() {
-  const [settings, setSettings] = useState({
-    theme: 'vermieter',
-    darkMode: 'auto',
-    density: 'comfortable',
-    fontSize: 'normal'
-  });
+    const [theme, setTheme] = useState(localStorage.getItem('vf-theme') || 'vermieter');
+    const [colorMode, setColorMode] = useState(localStorage.getItem('vf-color-mode') || 'light');
 
-  const handleSave = () => {
-    localStorage.setItem('vermitify-theme', settings.theme);
-    document.body.className = `theme-${settings.theme}`;
-    showSuccess('Darstellung gespeichert');
-  };
+    const handleThemeChange = (newTheme) => {
+        setTheme(newTheme);
+        localStorage.setItem('vf-theme', newTheme);
+        
+        // Remove old theme classes
+        document.body.classList.remove('theme-vermieter', 'theme-mieter', 'theme-b2b', 'theme-komfort', 'theme-invest');
+        
+        // Add new theme class
+        if (newTheme !== 'vermieter') {
+            document.body.classList.add(`theme-${newTheme}`);
+        }
+        
+        showSuccess('Theme aktualisiert');
+    };
 
-  return (
-    <div className="vf-settings__section">
-      <h2 className="vf-settings__section-title">Darstellung</h2>
+    const handleColorModeChange = (mode) => {
+        setColorMode(mode);
+        localStorage.setItem('vf-color-mode', mode);
+        
+        if (mode === 'dark') {
+            document.body.classList.add('dark');
+        } else if (mode === 'light') {
+            document.body.classList.remove('dark');
+        } else {
+            // System preference
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (prefersDark) {
+                document.body.classList.add('dark');
+            } else {
+                document.body.classList.remove('dark');
+            }
+        }
+        
+        showSuccess('Farbmodus aktualisiert');
+    };
 
-      <div className="vf-form-section">
-        <h3 className="vf-form-section__title">Theme</h3>
-        <VfSelect
-          label="Farbschema"
-          value={settings.theme}
-          onChange={(v) => setSettings({ ...settings, theme: v })}
-          options={[
-            { value: 'vermieter', label: 'Vermieter (Blau/Orange)' },
-            { value: 'mieter', label: 'Mieter (Grün)' },
-            { value: 'b2b', label: 'B2B (Kompakt)' },
-            { value: 'komfort', label: 'Komfort (Große Elemente)' },
-            { value: 'invest', label: 'Investor (Dunkel/Gold)' }
-          ]}
-        />
-
-        <div className="mt-4 grid grid-cols-5 gap-3">
-          {['vermieter', 'mieter', 'b2b', 'komfort', 'invest'].map((theme) => (
-            <div 
-              key={theme}
-              className={`cursor-pointer p-4 border-2 rounded-lg text-center ${
-                settings.theme === theme ? 'border-[var(--theme-primary)]' : 'border-[var(--theme-border)]'
-              }`}
-              onClick={() => setSettings({ ...settings, theme })}
-            >
-              <div className="w-full h-12 rounded mb-2" style={{
-                background: theme === 'vermieter' ? 'linear-gradient(135deg, #1E3A8A, #F97316)' :
-                           theme === 'mieter' ? 'linear-gradient(135deg, #16A34A, #1E3A8A)' :
-                           theme === 'b2b' ? '#1E3A5F' :
-                           theme === 'komfort' ? '#7C3AED' :
-                           'linear-gradient(135deg, #0F172A, #D4AF37)'
-              }} />
-              <div className="text-xs capitalize">{theme}</div>
+    return (
+        <div className="p-6 max-w-2xl">
+            <div className="vf-page-header mb-6">
+                <div>
+                    <h1 className="vf-page-title">Darstellung</h1>
+                    <p className="vf-page-subtitle">Passen Sie das Aussehen der App an</p>
+                </div>
             </div>
-          ))}
+
+            <div className="space-y-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Palette className="w-5 h-5" />
+                            Theme auswählen
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <VfSelect
+                            label="Theme"
+                            value={theme}
+                            onChange={handleThemeChange}
+                            options={themes}
+                        />
+                        
+                        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                            <p className="text-sm text-gray-600">
+                                <strong>Tipp:</strong> Jedes Theme bietet ein optimiertes Erlebnis für verschiedene Nutzergruppen
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Farbmodus</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-3 gap-4">
+                            {colorModes.map((mode) => {
+                                const Icon = mode.icon;
+                                return (
+                                    <button
+                                        key={mode.value}
+                                        onClick={() => handleColorModeChange(mode.value)}
+                                        className={`p-4 border-2 rounded-lg text-center transition-all ${
+                                            colorMode === mode.value
+                                                ? 'border-blue-600 bg-blue-50'
+                                                : 'border-gray-200 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        <Icon className="w-6 h-6 mx-auto mb-2" />
+                                        <p className="text-sm font-medium">{mode.label}</p>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
-      </div>
-
-      <div className="vf-form-section">
-        <h3 className="vf-form-section__title">Ansicht</h3>
-        <VfSelect
-          label="Dichte"
-          value={settings.density}
-          onChange={(v) => setSettings({ ...settings, density: v })}
-          options={[
-            { value: 'comfortable', label: 'Komfortabel' },
-            { value: 'compact', label: 'Kompakt' }
-          ]}
-        />
-
-        <VfSelect
-          label="Schriftgröße"
-          value={settings.fontSize}
-          onChange={(v) => setSettings({ ...settings, fontSize: v })}
-          options={[
-            { value: 'normal', label: 'Normal' },
-            { value: 'large', label: 'Groß' },
-            { value: 'extra-large', label: 'Sehr groß' }
-          ]}
-        />
-      </div>
-
-      <Button variant="gradient" onClick={handleSave}>
-        <Save className="h-4 w-4 mr-2" />
-        Speichern
-      </Button>
-    </div>
-  );
+    );
 }
