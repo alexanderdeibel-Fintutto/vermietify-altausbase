@@ -146,6 +146,7 @@ import CommunicationCenter from './pages/CommunicationCenter';
 import CommunicationTemplates from './pages/CommunicationTemplates';
 import CommunicationWorkflows from './pages/CommunicationWorkflows';
 import CommunityForum from './pages/CommunityForum';
+import CommunityPortal from './pages/CommunityPortal';
 import Companies from './pages/Companies';
 import CompanyDetailEnhanced from './pages/CompanyDetailEnhanced';
 import CompleteEnterpriseHub from './pages/CompleteEnterpriseHub';
@@ -163,6 +164,7 @@ import ContractAutomationHub from './pages/ContractAutomationHub';
 import ContractDetail from './pages/ContractDetail';
 import ContractDetailEnhanced from './pages/ContractDetailEnhanced';
 import ContractDetailTemplate from './pages/ContractDetailTemplate';
+import ContractRenewalTracking from './pages/ContractRenewalTracking';
 import ContractRenewals from './pages/ContractRenewals';
 import ContractTemplates from './pages/ContractTemplates';
 import ContractorMarketplace from './pages/ContractorMarketplace';
@@ -221,6 +223,7 @@ import Equipment from './pages/Equipment';
 import Error500 from './pages/Error500';
 import EstateTaxPlanning from './pages/EstateTaxPlanning';
 import EstimatedTaxScheduler from './pages/EstimatedTaxScheduler';
+import ExpenseTracking from './pages/ExpenseTracking';
 import FeatureCatalog from './pages/FeatureCatalog';
 import FeatureVergleich from './pages/FeatureVergleich';
 import FieldTasksManager from './pages/FieldTasksManager';
@@ -322,12 +325,13 @@ import OperatingCostAutomationHub from './pages/OperatingCostAutomationHub';
 import OperatingCostWizard from './pages/OperatingCostWizard';
 import OperatingCosts from './pages/OperatingCosts';
 import OperatingCostsManagement from './pages/OperatingCostsManagement';
-import OtherIncomeCH from './pages/OtherIncomeCH';
 import OperatingCostsSimplified from './pages/OperatingCostsSimplified';
+import OtherIncomeCH from './pages/OtherIncomeCH';
 import OwnersManagement from './pages/OwnersManagement';
 import PackageManager from './pages/PackageManager';
 import PackageTestPage from './pages/PackageTestPage';
 import PartnerOnboarding from './pages/PartnerOnboarding';
+import PaymentHistory from './pages/PaymentHistory';
 import PaymentTracking from './pages/PaymentTracking';
 import Payments from './pages/Payments';
 import PerformanceMonitor from './pages/PerformanceMonitor';
@@ -362,7 +366,10 @@ import RenditeRechnerEnhanced from './pages/RenditeRechnerEnhanced';
 import RentCollection from './pages/RentCollection';
 import RentCollectionDashboard from './pages/RentCollectionDashboard';
 import RentIncreaseOptimizer from './pages/RentIncreaseOptimizer';
+import RentIncreaseWizard from './pages/RentIncreaseWizard';
 import RentIndexManagement from './pages/RentIndexManagement';
+import RentIndexTracking from './pages/RentIndexTracking';
+import RentOptimization from './pages/RentOptimization';
 import RentPaymentDashboard from './pages/RentPaymentDashboard';
 import ReportBuilder from './pages/ReportBuilder';
 import ReportGenerator from './pages/ReportGenerator';
@@ -433,9 +440,9 @@ import TaxDashboardMultiCountry from './pages/TaxDashboardMultiCountry';
 import TaxDataImportHub from './pages/TaxDataImportHub';
 import TaxDeadlines from './pages/TaxDeadlines';
 import TaxDeductionOptimizer from './pages/TaxDeductionOptimizer';
-import TaxEvents from './pages/TaxEvents';
 import TaxDocumentManager from './pages/TaxDocumentManager';
 import TaxDocumentProcessor from './pages/TaxDocumentProcessor';
+import TaxEvents from './pages/TaxEvents';
 import TaxExportHub from './pages/TaxExportHub';
 import TaxFilingTimeline from './pages/TaxFilingTimeline';
 import TaxFilingWizard from './pages/TaxFilingWizard';
@@ -490,6 +497,7 @@ import TenantDetailEnhanced from './pages/TenantDetailEnhanced';
 import TenantDetailTemplate from './pages/TenantDetailTemplate';
 import TenantDigitalKey from './pages/TenantDigitalKey';
 import TenantDocuments from './pages/TenantDocuments';
+import TenantHistory from './pages/TenantHistory';
 import TenantMaintenance from './pages/TenantMaintenance';
 import TenantManagementHub from './pages/TenantManagementHub';
 import TenantMessages from './pages/TenantMessages';
@@ -589,14 +597,12 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import RentOptimization from './pages/RentOptimization';
-import TenantHistory from './pages/TenantHistory';
-import RentIncreaseWizard from './pages/RentIncreaseWizard';
-import RentIndexTracking from './pages/RentIndexTracking';
-import CommunityPortal from './pages/CommunityPortal';
-import ExpenseTracking from './pages/ExpenseTracking';
-import PaymentHistory from './pages/PaymentHistory';
-import ContractRenewalTracking from './pages/ContractRenewalTracking';
+import BuildingComparison from './pages/BuildingComparison';
+import FinancialOverview from './pages/FinancialOverview';
+import TenantSatisfaction from './pages/TenantSatisfaction';
+import LegalDocuments from './pages/LegalDocuments';
+import PropertyPerformance from './pages/PropertyPerformance';
+import TaxDocuments from './pages/TaxDocuments';
 import __Layout from './Layout.jsx';
 
 
@@ -749,6 +755,7 @@ export const PAGES = {
     "CommunicationTemplates": CommunicationTemplates,
     "CommunicationWorkflows": CommunicationWorkflows,
     "CommunityForum": CommunityForum,
+    "CommunityPortal": CommunityPortal,
     "Companies": Companies,
     "CompanyDetailEnhanced": CompanyDetailEnhanced,
     "CompleteEnterpriseHub": CompleteEnterpriseHub,
@@ -766,6 +773,7 @@ export const PAGES = {
     "ContractDetail": ContractDetail,
     "ContractDetailEnhanced": ContractDetailEnhanced,
     "ContractDetailTemplate": ContractDetailTemplate,
+    "ContractRenewalTracking": ContractRenewalTracking,
     "ContractRenewals": ContractRenewals,
     "ContractTemplates": ContractTemplates,
     "ContractorMarketplace": ContractorMarketplace,
@@ -824,6 +832,7 @@ export const PAGES = {
     "Error500": Error500,
     "EstateTaxPlanning": EstateTaxPlanning,
     "EstimatedTaxScheduler": EstimatedTaxScheduler,
+    "ExpenseTracking": ExpenseTracking,
     "FeatureCatalog": FeatureCatalog,
     "FeatureVergleich": FeatureVergleich,
     "FieldTasksManager": FieldTasksManager,
@@ -925,12 +934,13 @@ export const PAGES = {
     "OperatingCostWizard": OperatingCostWizard,
     "OperatingCosts": OperatingCosts,
     "OperatingCostsManagement": OperatingCostsManagement,
-    "OtherIncomeCH": OtherIncomeCH,
     "OperatingCostsSimplified": OperatingCostsSimplified,
+    "OtherIncomeCH": OtherIncomeCH,
     "OwnersManagement": OwnersManagement,
     "PackageManager": PackageManager,
     "PackageTestPage": PackageTestPage,
     "PartnerOnboarding": PartnerOnboarding,
+    "PaymentHistory": PaymentHistory,
     "PaymentTracking": PaymentTracking,
     "Payments": Payments,
     "PerformanceMonitor": PerformanceMonitor,
@@ -965,7 +975,10 @@ export const PAGES = {
     "RentCollection": RentCollection,
     "RentCollectionDashboard": RentCollectionDashboard,
     "RentIncreaseOptimizer": RentIncreaseOptimizer,
+    "RentIncreaseWizard": RentIncreaseWizard,
     "RentIndexManagement": RentIndexManagement,
+    "RentIndexTracking": RentIndexTracking,
+    "RentOptimization": RentOptimization,
     "RentPaymentDashboard": RentPaymentDashboard,
     "ReportBuilder": ReportBuilder,
     "ReportGenerator": ReportGenerator,
@@ -1036,9 +1049,9 @@ export const PAGES = {
     "TaxDataImportHub": TaxDataImportHub,
     "TaxDeadlines": TaxDeadlines,
     "TaxDeductionOptimizer": TaxDeductionOptimizer,
-    "TaxEvents": TaxEvents,
     "TaxDocumentManager": TaxDocumentManager,
     "TaxDocumentProcessor": TaxDocumentProcessor,
+    "TaxEvents": TaxEvents,
     "TaxExportHub": TaxExportHub,
     "TaxFilingTimeline": TaxFilingTimeline,
     "TaxFilingWizard": TaxFilingWizard,
@@ -1093,6 +1106,7 @@ export const PAGES = {
     "TenantDetailTemplate": TenantDetailTemplate,
     "TenantDigitalKey": TenantDigitalKey,
     "TenantDocuments": TenantDocuments,
+    "TenantHistory": TenantHistory,
     "TenantMaintenance": TenantMaintenance,
     "TenantManagementHub": TenantManagementHub,
     "TenantMessages": TenantMessages,
@@ -1192,14 +1206,12 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "RentOptimization": RentOptimization,
-    "TenantHistory": TenantHistory,
-    "RentIncreaseWizard": RentIncreaseWizard,
-    "RentIndexTracking": RentIndexTracking,
-    "CommunityPortal": CommunityPortal,
-    "ExpenseTracking": ExpenseTracking,
-    "PaymentHistory": PaymentHistory,
-    "ContractRenewalTracking": ContractRenewalTracking,
+    "BuildingComparison": BuildingComparison,
+    "FinancialOverview": FinancialOverview,
+    "TenantSatisfaction": TenantSatisfaction,
+    "LegalDocuments": LegalDocuments,
+    "PropertyPerformance": PropertyPerformance,
+    "TaxDocuments": TaxDocuments,
 }
 
 export const pagesConfig = {
