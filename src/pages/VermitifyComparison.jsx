@@ -1,125 +1,102 @@
 import React from 'react';
-import { VfMarketingLayout } from '@/components/marketing/VfMarketingLayout';
-import { Check, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { CheckCircle, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+
+const features = [
+    { name: 'Mieterverwaltung', vermitify: true, competitor1: true, competitor2: true },
+    { name: 'Automatische BK-Abrechnung', vermitify: true, competitor1: false, competitor2: true },
+    { name: 'Anlage V Generator', vermitify: true, competitor1: false, competitor2: false },
+    { name: 'ELSTER-Integration', vermitify: true, competitor1: false, competitor2: false },
+    { name: 'KI-Dokumentenerkennung', vermitify: true, competitor1: false, competitor2: false },
+    { name: 'Mieterportal', vermitify: true, competitor1: true, competitor2: false },
+    { name: 'Mobile App', vermitify: true, competitor1: false, competitor2: true },
+    { name: 'WhatsApp-Integration', vermitify: true, competitor1: false, competitor2: false },
+    { name: 'Kostenlose Tools', vermitify: true, competitor1: false, competitor2: false },
+    { name: 'DSGVO-konform', vermitify: true, competitor1: true, competitor2: true },
+    { name: 'Deutscher Support', vermitify: true, competitor1: true, competitor2: false },
+    { name: 'Preis/Monat (ab)', vermitify: '19€', competitor1: '49€', competitor2: '29€' }
+];
 
 export default function VermitifyComparison() {
-  const comparison = [
-    {
-      feature: 'Anzahl Objekte',
-      excel: 'Unbegrenzt',
-      competitors: '10-50',
-      vermitify: 'Unbegrenzt',
-      highlight: false
-    },
-    {
-      feature: 'Preis pro Monat',
-      excel: '0€',
-      competitors: '49-99€',
-      vermitify: '29€',
-      highlight: true
-    },
-    {
-      feature: 'Anlage V Export',
-      excel: false,
-      competitors: true,
-      vermitify: true,
-      highlight: false
-    },
-    {
-      feature: 'BK-Abrechnung',
-      excel: 'Manuell',
-      competitors: 'Automatisch',
-      vermitify: 'Automatisch + KI',
-      highlight: true
-    },
-    {
-      feature: 'Mobile App',
-      excel: false,
-      competitors: true,
-      vermitify: true,
-      highlight: false
-    },
-    {
-      feature: 'Kostenlose Tools',
-      excel: false,
-      competitors: false,
-      vermitify: '9 Tools',
-      highlight: true
-    },
-    {
-      feature: 'Support',
-      excel: '-',
-      competitors: 'E-Mail',
-      vermitify: 'E-Mail + Chat',
-      highlight: false
-    },
-    {
-      feature: 'DSGVO-konform',
-      excel: 'Eigenverantwortung',
-      competitors: true,
-      vermitify: true,
-      highlight: false
-    }
-  ];
+    return (
+        <div className="min-h-screen bg-white">
+            <div className="bg-gradient-to-br from-blue-50 to-orange-50 py-20">
+                <div className="max-w-4xl mx-auto px-6 text-center">
+                    <h1 className="text-5xl font-bold mb-6 vf-gradient-text">
+                        Vermitify im Vergleich
+                    </h1>
+                    <p className="text-xl text-gray-600">
+                        Sehen Sie, warum Vermitify die beste Wahl ist
+                    </p>
+                </div>
+            </div>
 
-  return (
-    <VfMarketingLayout>
-      <div className="max-w-6xl mx-auto px-6 py-20">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold mb-4">Warum vermitify?</h1>
-          <p className="text-xl text-[var(--theme-text-secondary)]">
-            Der Vergleich mit Excel und anderen Lösungen
-          </p>
+            <div className="max-w-6xl mx-auto px-6 py-20">
+                <div className="overflow-x-auto">
+                    <table className="vf-table w-full">
+                        <thead>
+                            <tr>
+                                <th className="text-left">Feature</th>
+                                <th className="text-center">
+                                    <div className="font-bold text-blue-900">Vermitify</div>
+                                </th>
+                                <th className="text-center text-gray-500">Anbieter A</th>
+                                <th className="text-center text-gray-500">Anbieter B</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {features.map((feature, idx) => (
+                                <tr key={idx}>
+                                    <td className="font-medium">{feature.name}</td>
+                                    <td className="text-center">
+                                        {typeof feature.vermitify === 'boolean' ? (
+                                            feature.vermitify ? (
+                                                <CheckCircle className="w-5 h-5 text-green-600 mx-auto" />
+                                            ) : (
+                                                <X className="w-5 h-5 text-gray-300 mx-auto" />
+                                            )
+                                        ) : (
+                                            <span className="font-bold text-green-600">{feature.vermitify}</span>
+                                        )}
+                                    </td>
+                                    <td className="text-center">
+                                        {typeof feature.competitor1 === 'boolean' ? (
+                                            feature.competitor1 ? (
+                                                <CheckCircle className="w-5 h-5 text-green-600 mx-auto" />
+                                            ) : (
+                                                <X className="w-5 h-5 text-gray-300 mx-auto" />
+                                            )
+                                        ) : (
+                                            <span className="text-gray-600">{feature.competitor1}</span>
+                                        )}
+                                    </td>
+                                    <td className="text-center">
+                                        {typeof feature.competitor2 === 'boolean' ? (
+                                            feature.competitor2 ? (
+                                                <CheckCircle className="w-5 h-5 text-green-600 mx-auto" />
+                                            ) : (
+                                                <X className="w-5 h-5 text-gray-300 mx-auto" />
+                                            )
+                                        ) : (
+                                            <span className="text-gray-600">{feature.competitor2}</span>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div className="text-center mt-12">
+                    <Link to={createPageUrl('VermitifySignup')}>
+                        <Button className="vf-btn-gradient vf-btn-lg">
+                            Jetzt kostenlos testen
+                        </Button>
+                    </Link>
+                </div>
+            </div>
         </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full vf-card">
-            <thead>
-              <tr className="bg-[var(--theme-surface)]">
-                <th className="p-4 text-left">Feature</th>
-                <th className="p-4 text-center">Excel</th>
-                <th className="p-4 text-center">Wettbewerb</th>
-                <th className="p-4 text-center bg-[var(--vf-primary-50)] font-bold">vermitify</th>
-              </tr>
-            </thead>
-            <tbody>
-              {comparison.map((row, index) => (
-                <tr 
-                  key={index}
-                  className={cn(
-                    row.highlight && "bg-[var(--vf-primary-50)]",
-                    "border-b border-[var(--theme-divider)]"
-                  )}
-                >
-                  <td className="p-4 font-medium">{row.feature}</td>
-                  <td className="p-4 text-center">{renderValue(row.excel)}</td>
-                  <td className="p-4 text-center">{renderValue(row.competitors)}</td>
-                  <td className="p-4 text-center font-semibold text-[var(--vf-primary-600)]">
-                    {renderValue(row.vermitify)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="mt-12 text-center">
-          <a href="/signup" className="vf-btn vf-btn-gradient vf-btn-lg">
-            Jetzt kostenlos testen →
-          </a>
-        </div>
-      </div>
-    </VfMarketingLayout>
-  );
-}
-
-function renderValue(value) {
-  if (value === true) {
-    return <Check className="h-5 w-5 text-[var(--vf-success-500)] mx-auto" />;
-  }
-  if (value === false) {
-    return <X className="h-5 w-5 text-[var(--vf-neutral-300)] mx-auto" />;
-  }
-  return value;
+    );
 }

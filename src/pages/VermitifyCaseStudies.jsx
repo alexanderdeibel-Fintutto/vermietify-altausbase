@@ -1,109 +1,131 @@
 import React from 'react';
-import { VfMarketingLayout } from '@/components/marketing/VfMarketingLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { TrendingUp, Clock, Euro } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { TrendingUp, Clock, Users } from 'lucide-react';
 
-export default function VermitifyCaseStudies() {
-  const caseStudies = [
+const caseStudies = [
     {
-      name: 'Alexander M.',
-      role: 'Privater Vermieter',
-      properties: 4,
-      units: 12,
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
-      stats: [
-        { label: 'Zeit gespart', value: '8 Std/Monat', icon: Clock },
-        { label: 'Steuerersparnis', value: '€3.200/Jahr', icon: Euro },
-        { label: 'Rendite-Steigerung', value: '+0,8%', icon: TrendingUp }
-      ],
-      quote: 'vermitify hat meine Verwaltung revolutioniert. Die Anlage V erstelle ich jetzt in 10 Minuten statt 3 Stunden.',
-      challenge: 'Zeitaufwändige manuelle Steuererklärung',
-      solution: 'Automatische Anlage V Erstellung mit ELSTER-Export',
-      result: '€3.200 Steuerersparnis durch bessere Dokumentation'
+        company: 'Immobilien Wagner GmbH',
+        industry: 'Gewerbeverwaltung',
+        units: '120 Einheiten',
+        challenge: 'Unübersichtliche Excel-Listen, manuelle BK-Abrechnungen dauerten Wochen',
+        solution: 'Migration zu Vermitify mit vollautomatisierter BK-Abrechnung',
+        results: [
+            { label: 'Zeitersparnis', value: '85%', icon: Clock },
+            { label: 'Fehlerreduktion', value: '95%', icon: TrendingUp },
+            { label: 'Zufriedenheit', value: '98%', icon: Users }
+        ],
+        quote: 'Vermitify hat unsere Verwaltung revolutioniert. Die BK-Abrechnung ist jetzt in 2 Stunden statt 2 Wochen erledigt.',
+        author: 'Michael Wagner, Geschäftsführer'
     },
     {
-      name: 'Sabine K.',
-      role: 'Hausverwaltung',
-      properties: 12,
-      units: 48,
-      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200',
-      stats: [
-        { label: 'Zeit gespart', value: '20 Std/Monat', icon: Clock },
-        { label: 'Automatisierung', value: '85%', icon: TrendingUp },
-        { label: 'Kundenzufriedenheit', value: '+45%', icon: TrendingUp }
-      ],
-      quote: 'Die BK-Abrechnungen erstelle ich jetzt für alle 48 Einheiten in unter 2 Stunden. Früher waren es 2 Tage.',
-      challenge: 'Manuelle BK-Abrechnungen für 48 Einheiten',
-      solution: 'Automatisierte BK-Abrechnung mit LetterXpress-Versand',
-      result: '90% Zeitersparnis bei Betriebskosten'
+        company: 'Huber Immobilien',
+        industry: 'Wohnungsverwaltung',
+        units: '45 Einheiten',
+        challenge: 'Verstreute Dokumente, fehlende Übersicht über Finanzen',
+        solution: 'Zentralisierung aller Prozesse in Vermitify',
+        results: [
+            { label: 'Zeitersparnis', value: '70%', icon: Clock },
+            { label: 'Kosteneinsparung', value: '12.000€/Jahr', icon: TrendingUp },
+            { label: 'Mieterzufriedenheit', value: '+35%', icon: Users }
+        ],
+        quote: 'Endlich habe ich alle Dokumente und Finanzen an einem Ort. Das spart nicht nur Zeit, sondern gibt mir auch Sicherheit.',
+        author: 'Sarah Huber, Inhaberin'
+    },
+    {
+        company: 'Investmentgroup Berger',
+        industry: 'Immobilieninvestor',
+        units: '8 Gebäude',
+        challenge: 'Komplexe Portfolio-Analyse, manuelle Renditeberechnungen',
+        solution: 'Vermitify als zentrale Analyse- und Verwaltungsplattform',
+        results: [
+            { label: 'ROI-Steigerung', value: '+18%', icon: TrendingUp },
+            { label: 'Analysezeit', value: '-90%', icon: Clock },
+            { label: 'Transparenz', value: '100%', icon: Users }
+        ],
+        quote: 'Die Rendite-Analysen und Portfolio-Übersichten helfen mir bei fundierten Investitionsentscheidungen.',
+        author: 'Thomas Berger, CEO'
     }
-  ];
+];
 
-  return (
-    <VfMarketingLayout>
-      <div className="max-w-6xl mx-auto px-6 py-20">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold mb-4">Erfolgsgeschichten</h1>
-          <p className="text-xl text-[var(--theme-text-secondary)]">
-            Wie Vermieter mit vermitify Zeit und Geld sparen
-          </p>
-        </div>
-
-        <div className="space-y-16">
-          {caseStudies.map((study, index) => (
-            <div key={index} className="vf-card p-8">
-              <div className="grid md:grid-cols-3 gap-8">
-                <div className="md:col-span-1">
-                  <img 
-                    src={study.image} 
-                    alt={study.name}
-                    className="w-32 h-32 rounded-full mx-auto mb-4 object-cover"
-                  />
-                  <h3 className="text-xl font-bold text-center mb-1">{study.name}</h3>
-                  <p className="text-center text-[var(--theme-text-secondary)] mb-4">{study.role}</p>
-                  <div className="text-center text-sm text-[var(--theme-text-muted)]">
-                    {study.properties} Objekte • {study.units} Einheiten
-                  </div>
+export default function VermitifyCaseStudies() {
+    return (
+        <div className="min-h-screen bg-white">
+            <div className="bg-gradient-to-br from-blue-50 to-orange-50 py-20">
+                <div className="max-w-4xl mx-auto px-6 text-center">
+                    <h1 className="text-5xl font-bold mb-6 vf-gradient-text">
+                        Erfolgsgeschichten
+                    </h1>
+                    <p className="text-xl text-gray-600">
+                        Wie unsere Kunden mit Vermitify erfolgreich sind
+                    </p>
                 </div>
-
-                <div className="md:col-span-2">
-                  <div className="grid grid-cols-3 gap-4 mb-6">
-                    {study.stats.map((stat) => {
-                      const StatIcon = stat.icon;
-                      return (
-                        <div key={stat.label} className="text-center p-4 bg-[var(--vf-primary-50)] rounded-lg">
-                          <StatIcon className="h-6 w-6 mx-auto mb-2 text-[var(--vf-primary-600)]" />
-                          <div className="text-2xl font-bold mb-1">{stat.value}</div>
-                          <div className="text-xs text-[var(--theme-text-muted)]">{stat.label}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <blockquote className="text-lg italic mb-6 pl-4 border-l-4 border-[var(--vf-primary-500)]">
-                    "{study.quote}"
-                  </blockquote>
-
-                  <div className="space-y-4">
-                    <div>
-                      <div className="font-semibold text-sm text-[var(--theme-text-muted)] mb-1">HERAUSFORDERUNG</div>
-                      <p className="text-[var(--theme-text-secondary)]">{study.challenge}</p>
-                    </div>
-                    <div>
-                      <div className="font-semibold text-sm text-[var(--theme-text-muted)] mb-1">LÖSUNG</div>
-                      <p className="text-[var(--theme-text-secondary)]">{study.solution}</p>
-                    </div>
-                    <div>
-                      <div className="font-semibold text-sm text-[var(--theme-text-muted)] mb-1">ERGEBNIS</div>
-                      <p className="text-[var(--theme-primary)] font-semibold">{study.result}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
-          ))}
+
+            <div className="max-w-6xl mx-auto px-6 py-20 space-y-16">
+                {caseStudies.map((study, idx) => (
+                    <Card key={idx} className="overflow-hidden">
+                        <CardHeader className="bg-gray-50">
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <CardTitle className="text-2xl mb-2">{study.company}</CardTitle>
+                                    <div className="flex gap-2">
+                                        <Badge className="vf-badge-primary">{study.industry}</Badge>
+                                        <Badge className="vf-badge-default">{study.units}</Badge>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <div className="grid md:grid-cols-2 gap-8 mb-8">
+                                <div>
+                                    <h3 className="font-semibold text-sm text-gray-500 uppercase mb-2">Herausforderung</h3>
+                                    <p className="text-gray-700">{study.challenge}</p>
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-sm text-gray-500 uppercase mb-2">Lösung</h3>
+                                    <p className="text-gray-700">{study.solution}</p>
+                                </div>
+                            </div>
+
+                            <div className="mb-8">
+                                <h3 className="font-semibold text-sm text-gray-500 uppercase mb-4">Ergebnisse</h3>
+                                <div className="grid grid-cols-3 gap-4">
+                                    {study.results.map((result, i) => {
+                                        const Icon = result.icon;
+                                        return (
+                                            <div key={i} className="text-center">
+                                                <Icon className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+                                                <p className="text-2xl font-bold text-blue-900">{result.value}</p>
+                                                <p className="text-xs text-gray-500 mt-1">{result.label}</p>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div className="bg-blue-50 border-l-4 border-blue-600 p-4">
+                                <p className="text-gray-700 italic mb-2">"{study.quote}"</p>
+                                <p className="text-sm text-gray-600">— {study.author}</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+
+            <div className="bg-gray-50 py-20">
+                <div className="max-w-4xl mx-auto px-6 text-center">
+                    <h2 className="text-3xl font-bold mb-6">Ihre Erfolgsgeschichte beginnt hier</h2>
+                    <p className="text-xl text-gray-600 mb-8">
+                        Schließen Sie sich unseren zufriedenen Kunden an
+                    </p>
+                    <Link to={createPageUrl('VermitifySignup')}>
+                        <Button className="vf-btn-gradient vf-btn-lg">
+                            Kostenlos starten
+                        </Button>
+                    </Link>
+                </div>
+            </div>
         </div>
-      </div>
-    </VfMarketingLayout>
-  );
+    );
 }
