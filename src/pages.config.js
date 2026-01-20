@@ -614,6 +614,8 @@ import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
 import DataManagement from './pages/DataManagement';
 import BudgetTracking from './pages/BudgetTracking';
+import ContractManagement from './pages/ContractManagement';
+import ResidentsManagement from './pages/ResidentsManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -1234,6 +1236,8 @@ export const PAGES = {
     "WorkflowTemplates": WorkflowTemplates,
     "DataManagement": DataManagement,
     "BudgetTracking": BudgetTracking,
+    "ContractManagement": ContractManagement,
+    "ResidentsManagement": ResidentsManagement,
 }
 
 export const pagesConfig = {
