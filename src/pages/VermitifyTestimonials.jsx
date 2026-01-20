@@ -1,105 +1,102 @@
 import React from 'react';
-import { Star, Quote } from 'lucide-react';
+import { Star } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+import { Button } from '@/components/ui/button';
+
+const testimonials = [
+    {
+        name: 'Michael Wagner',
+        role: 'Privater Vermieter, 8 Einheiten',
+        text: 'Vermitify hat meine Immobilienverwaltung revolutioniert. Die Betriebskostenabrechnung war früher ein Albtraum - jetzt mache ich sie in 30 Minuten.',
+        rating: 5
+    },
+    {
+        name: 'Sarah Huber',
+        role: 'Hausverwaltung, 45 Einheiten',
+        text: 'Endlich eine Software, die alle Funktionen bietet, die ich brauche. Besonders die Automatisierung spart mir enorm viel Zeit.',
+        rating: 5
+    },
+    {
+        name: 'Thomas Berger',
+        role: 'Investor, 3 Gebäude',
+        text: 'Die Renditeberechnungen und Cashflow-Analysen sind perfekt für meine Investitionsentscheidungen. Sehr zu empfehlen!',
+        rating: 5
+    },
+    {
+        name: 'Anna Schmid',
+        role: 'Steuerberaterin',
+        text: 'Meine Mandanten nutzen Vermitify und die Anlage V kommt perfekt strukturiert. Das spart uns beiden viel Zeit bei der Steuererklärung.',
+        rating: 5
+    },
+    {
+        name: 'Peter Gruber',
+        role: 'Gewerbevermieter, 12 Objekte',
+        text: 'Die Mieterverwaltung und Dokumentenverwaltung sind genau das, was ich gesucht habe. Alles an einem Ort, rechtssicher und übersichtlich.',
+        rating: 5
+    },
+    {
+        name: 'Lisa Moser',
+        role: 'Private Vermieterin, 2 Wohnungen',
+        text: 'Als Neueinsteigerin war ich überfordert mit der Verwaltung. Vermitify macht es mir leicht und ich fühle mich sicher.',
+        rating: 5
+    }
+];
 
 export default function VermitifyTestimonials() {
-  const testimonials = [
-    {
-      name: 'Michael Schmidt',
-      role: 'Vermieter, 8 Objekte',
-      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
-      text: 'Vermitify hat mir hunderte Stunden gespart. Die automatische Betriebskostenabrechnung allein ist Gold wert.',
-      rating: 5
-    },
-    {
-      name: 'Sarah Müller',
-      role: 'Hausverwaltung, 45 Einheiten',
-      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop',
-      text: 'Die ELSTER-Integration funktioniert perfekt. Endlich kann ich meine Steuererklärung in unter einer Stunde erledigen.',
-      rating: 5
-    },
-    {
-      name: 'Thomas Becker',
-      role: 'Investor, 15 Objekte',
-      image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
-      text: 'Das beste Tool für Immobilien-Investoren. Portfolio-Übersicht, Rendite-Tracking und Steueroptimierung in einer App.',
-      rating: 5
-    },
-    {
-      name: 'Julia Wagner',
-      role: 'Privatvermieterin, 2 Wohnungen',
-      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
-      text: 'Endlich verstehe ich meine Nebenkostenabrechnung. Die Vorlagen sind perfekt und rechtssicher.',
-      rating: 5
-    },
-    {
-      name: 'Robert Klein',
-      role: 'Steuerberater',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-      text: 'Ich empfehle Vermitify all meinen Mandanten. Die Datenqualität für die Steuererklärung ist hervorragend.',
-      rating: 5
-    },
-    {
-      name: 'Anna Hoffmann',
-      role: 'Vermieterin, 4 Objekte',
-      image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop',
-      text: 'Das Mieter-Portal hat die Kommunikation revolutioniert. Keine nervigen Anrufe mehr wegen Kleinigkeiten.',
-      rating: 5
-    }
-  ];
-
-  return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto px-6 py-20">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold mb-4">Was unsere Kunden sagen</h1>
-          <p className="text-xl text-[var(--vf-neutral-600)]">
-            Über 1.000 zufriedene Vermieter vertrauen auf Vermitify
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {testimonials.map((testimonial, index) => (
-            <div 
-              key={index}
-              className="bg-white border border-[var(--vf-neutral-200)] rounded-2xl p-6 hover:shadow-lg transition-shadow relative"
-            >
-              <Quote className="h-10 w-10 text-[var(--vf-primary-200)] mb-4" />
-              
-              <div className="flex gap-1 mb-4">
-                {[...Array(testimonial.rating)].map((_, i) => (
-                  <Star key={i} className="h-5 w-5 fill-[var(--vf-warning-400)] text-[var(--vf-warning-400)]" />
-                ))}
-              </div>
-
-              <p className="text-[var(--vf-neutral-700)] mb-6 leading-relaxed">
-                "{testimonial.text}"
-              </p>
-
-              <div className="flex items-center gap-3">
-                <img 
-                  src={testimonial.image} 
-                  alt={testimonial.name}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                <div>
-                  <div className="font-semibold">{testimonial.name}</div>
-                  <div className="text-sm text-[var(--vf-neutral-500)]">{testimonial.role}</div>
+    return (
+        <div className="min-h-screen bg-white">
+            {/* Hero */}
+            <div className="bg-gradient-to-br from-blue-50 to-orange-50 py-20">
+                <div className="max-w-4xl mx-auto px-6 text-center">
+                    <h1 className="text-5xl font-bold mb-6 vf-gradient-text">
+                        Das sagen unsere Kunden
+                    </h1>
+                    <p className="text-xl text-gray-600">
+                        Über 500 zufriedene Vermieter vertrauen auf Vermitify
+                    </p>
                 </div>
-              </div>
             </div>
-          ))}
-        </div>
 
-        <div className="text-center mt-16 p-8 bg-gradient-to-br from-[var(--vf-primary-50)] to-[var(--vf-accent-50)] rounded-2xl">
-          <h2 className="text-3xl font-bold mb-3">Werden Sie Teil der Vermitify-Community</h2>
-          <p className="text-lg text-[var(--vf-neutral-600)] mb-6">
-            Über 1.000 Vermieter nutzen bereits Vermitify
-          </p>
-          <Button variant="gradient" size="lg">
-            Jetzt kostenlos starten
-          </Button>
+            {/* Testimonials */}
+            <div className="max-w-6xl mx-auto px-6 py-20">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {testimonials.map((testimonial, idx) => (
+                        <div key={idx} className="vf-testimonial-card">
+                            <div className="flex gap-1 mb-4">
+                                {[...Array(testimonial.rating)].map((_, i) => (
+                                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                                ))}
+                            </div>
+                            <p className="vf-testimonial-quote">"{testimonial.text}"</p>
+                            <div className="vf-testimonial-author">
+                                <div className="vf-testimonial-avatar bg-gradient-to-br from-blue-900 to-orange-600 flex items-center justify-center text-white font-semibold">
+                                    {testimonial.name.charAt(0)}
+                                </div>
+                                <div>
+                                    <div className="vf-testimonial-author-name">{testimonial.name}</div>
+                                    <div className="vf-testimonial-author-role">{testimonial.role}</div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* CTA */}
+            <div className="bg-gradient-to-r from-blue-900 to-orange-600 py-20">
+                <div className="max-w-4xl mx-auto px-6 text-center text-white">
+                    <h2 className="text-4xl font-bold mb-6">Werden Sie Teil unserer Community</h2>
+                    <p className="text-xl mb-8 opacity-90">
+                        Starten Sie jetzt und überzeugen Sie sich selbst
+                    </p>
+                    <Link to={createPageUrl('VermitifySignup')}>
+                        <Button className="vf-btn-lg" style={{ background: 'white', color: '#1E3A8A' }}>
+                            Kostenlos testen
+                        </Button>
+                    </Link>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }

@@ -1,91 +1,155 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+
+const faqs = [
+    {
+        category: 'Allgemein',
+        questions: [
+            {
+                q: 'Was ist Vermitify?',
+                a: 'Vermitify ist eine All-in-One Plattform für professionelle Immobilienverwaltung. Sie vereint Mieterverwaltung, Finanzen, Dokumente, Steuern und mehr in einer einfachen Software.'
+            },
+            {
+                q: 'Für wen ist Vermitify geeignet?',
+                a: 'Vermitify richtet sich an private Vermieter, professionelle Immobilienverwalter, Steuerberater und Immobilieninvestoren - von Einzelobjekten bis zu großen Portfolios.'
+            },
+            {
+                q: 'Benötige ich technische Kenntnisse?',
+                a: 'Nein, Vermitify ist intuitiv gestaltet und ohne technische Vorkenntnisse nutzbar. Unsere Wizards führen Sie Schritt für Schritt durch komplexe Prozesse.'
+            }
+        ]
+    },
+    {
+        category: 'Preise & Abonnement',
+        questions: [
+            {
+                q: 'Was kostet Vermitify?',
+                a: 'Vermitify bietet Pläne ab 19 €/Monat. Alle Pläne können 14 Tage kostenlos getestet werden. Jährliche Zahlung spart 20%.'
+            },
+            {
+                q: 'Kann ich jederzeit kündigen?',
+                a: 'Ja, alle Pläne sind monatlich kündbar. Es gibt keine Mindestvertragslaufzeit. Bei jährlicher Zahlung erhalten Sie 2 Monate gratis.'
+            },
+            {
+                q: 'Welche Zahlungsmethoden werden akzeptiert?',
+                a: 'Wir akzeptieren alle gängigen Kreditkarten sowie SEPA-Lastschrift. Die Abrechnung erfolgt über unseren Partner Stripe.'
+            }
+        ]
+    },
+    {
+        category: 'Funktionen',
+        questions: [
+            {
+                q: 'Kann ich Betriebskostenabrechnungen erstellen?',
+                a: 'Ja, unser BK-Wizard führt Sie durch den gesamten Prozess nach BetrKV. Inklusive automatischer Berechnung, Verteilung und PDF-Export.'
+            },
+            {
+                q: 'Unterstützt Vermitify die Anlage V?',
+                a: 'Ja, wir generieren automatisch die Anlage V für Ihre Steuererklärung basierend auf Ihren Einnahmen und Ausgaben.'
+            },
+            {
+                q: 'Gibt es eine Mobile App?',
+                a: 'Vermitify ist vollständig responsive und funktioniert perfekt auf allen Geräten - Desktop, Tablet und Smartphone.'
+            }
+        ]
+    },
+    {
+        category: 'Datenschutz & Sicherheit',
+        questions: [
+            {
+                q: 'Wo werden meine Daten gespeichert?',
+                a: 'Alle Daten werden in ISO-27001 zertifizierten Rechenzentren in Deutschland gespeichert und sind DSGVO-konform verschlüsselt.'
+            },
+            {
+                q: 'Wer hat Zugriff auf meine Daten?',
+                a: 'Nur Sie haben Zugriff auf Ihre Daten. Wir verkaufen keine Daten und geben diese nicht an Dritte weiter.'
+            },
+            {
+                q: 'Wie sicher sind meine Daten?',
+                a: 'Wir verwenden moderne Verschlüsselung (SSL/TLS), regelmäßige Backups und mehrstufige Sicherheitsprotokolle.'
+            }
+        ]
+    },
+    {
+        category: 'Support',
+        questions: [
+            {
+                q: 'Welchen Support bietet Vermitify?',
+                a: 'Alle Nutzer erhalten E-Mail-Support. Professional und Enterprise Kunden erhalten Prioritäts-Support und persönliche Beratung.'
+            },
+            {
+                q: 'Gibt es Schulungen oder Tutorials?',
+                a: 'Ja, wir bieten Video-Tutorials, eine umfangreiche Wissensdatenbank und persönliche Onboarding-Sessions für Enterprise-Kunden.'
+            }
+        ]
+    }
+];
+
+function FAQItem({ question, answer }) {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <div className="vf-card">
+            <button
+                onClick={() => setOpen(!open)}
+                className="w-full vf-card-body flex justify-between items-center text-left"
+            >
+                <h3 className="font-semibold pr-4">{question}</h3>
+                <ChevronDown className={cn("w-5 h-5 flex-shrink-0 transition-transform", open && "rotate-180")} />
+            </button>
+            {open && (
+                <div className="vf-card-body border-t border-gray-200 text-gray-600">
+                    {answer}
+                </div>
+            )}
+        </div>
+    );
+}
 
 export default function VermitifyFAQ() {
-  const [openIndex, setOpenIndex] = useState(null);
-
-  const faqs = [
-    {
-      question: 'Wie funktioniert die kostenlose Testphase?',
-      answer: 'Sie können Vermitify 14 Tage lang kostenlos und ohne Angabe von Zahlungsdaten testen. Nach Ablauf der Testphase können Sie einen Plan wählen oder Ihr Konto wird automatisch deaktiviert.'
-    },
-    {
-      question: 'Kann ich jederzeit kündigen?',
-      answer: 'Ja, Sie können Ihr Abonnement jederzeit mit einem Klick kündigen. Es gibt keine Mindestlaufzeit und keine Kündigungsfrist.'
-    },
-    {
-      question: 'Sind meine Daten sicher?',
-      answer: 'Absolut. Wir nutzen Bank-Level-Verschlüsselung (SSL/TLS), tägliche Backups und Server ausschließlich in Deutschland. Vermitify ist vollständig DSGVO-konform.'
-    },
-    {
-      question: 'Funktioniert die ELSTER-Integration wirklich?',
-      answer: 'Ja! Wir generieren die Anlage V automatisch aus Ihren Daten und exportieren sie als XML-Datei, die Sie direkt in ELSTER importieren können. Eine direkte API-Übertragung zu ELSTER ist in Arbeit.'
-    },
-    {
-      question: 'Kann ich mehrere Objekte verwalten?',
-      answer: 'Ja. Je nach Plan können Sie 3 Objekte (Starter), unbegrenzte Objekte (Professional) oder Objekte mit Multi-Mandanten-Verwaltung (Business) anlegen.'
-    },
-    {
-      question: 'Brauche ich technische Kenntnisse?',
-      answer: 'Nein. Vermitify ist bewusst einfach und intuitiv gestaltet. Alle Funktionen werden Schritt-für-Schritt durch Assistenten begleitet.'
-    },
-    {
-      question: 'Was passiert mit meinen Daten bei Kündigung?',
-      answer: 'Sie können jederzeit alle Ihre Daten als PDF oder Excel exportieren. Nach Kündigung haben Sie 30 Tage Zeit, Ihre Daten zu sichern, bevor sie gelöscht werden.'
-    },
-    {
-      question: 'Gibt es eine API?',
-      answer: 'Ja, ab dem Professional Plan erhalten Sie vollen API-Zugang für Integrationen mit anderen Systemen.'
-    }
-  ];
-
-  return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto px-6 py-20">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold mb-4">Häufig gestellte Fragen</h1>
-          <p className="text-xl text-[var(--vf-neutral-600)]">
-            Alles, was Sie über Vermitify wissen müssen
-          </p>
-        </div>
-
-        <div className="space-y-4">
-          {faqs.map((faq, index) => (
-            <div 
-              key={index}
-              className="border border-[var(--vf-neutral-200)] rounded-xl overflow-hidden"
-            >
-              <button
-                className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-[var(--vf-neutral-50)] transition-colors"
-                onClick={() => setOpenIndex(openIndex === index ? null : index)}
-              >
-                <span className="font-semibold text-lg">{faq.question}</span>
-                <ChevronDown 
-                  className={`h-5 w-5 text-[var(--vf-neutral-500)] transition-transform ${
-                    openIndex === index ? 'rotate-180' : ''
-                  }`}
-                />
-              </button>
-              {openIndex === index && (
-                <div className="px-6 py-4 bg-[var(--vf-neutral-50)] border-t border-[var(--vf-neutral-200)]">
-                  <p className="text-[var(--vf-neutral-700)]">{faq.answer}</p>
+    return (
+        <div className="min-h-screen bg-white">
+            {/* Hero */}
+            <div className="bg-gradient-to-br from-blue-50 to-orange-50 py-20">
+                <div className="max-w-4xl mx-auto px-6 text-center">
+                    <h1 className="text-5xl font-bold mb-6 vf-gradient-text">
+                        Häufige Fragen
+                    </h1>
+                    <p className="text-xl text-gray-600">
+                        Antworten auf die wichtigsten Fragen zu Vermitify
+                    </p>
                 </div>
-              )}
             </div>
-          ))}
-        </div>
 
-        <div className="text-center mt-16 p-8 bg-gradient-to-br from-[var(--vf-primary-50)] to-[var(--vf-accent-50)] rounded-2xl">
-          <h2 className="text-2xl font-bold mb-3">Noch Fragen?</h2>
-          <p className="text-[var(--vf-neutral-600)] mb-6">
-            Unser Support-Team hilft Ihnen gerne weiter
-          </p>
-          <Button variant="gradient" size="lg">
-            Kontakt aufnehmen
-          </Button>
+            {/* FAQ Categories */}
+            <div className="max-w-4xl mx-auto px-6 py-20">
+                {faqs.map((category, idx) => (
+                    <div key={idx} className="mb-12">
+                        <h2 className="text-2xl font-bold mb-6">{category.category}</h2>
+                        <div className="space-y-3">
+                            {category.questions.map((faq, i) => (
+                                <FAQItem key={i} question={faq.q} answer={faq.a} />
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Contact CTA */}
+            <div className="bg-gray-50 py-20">
+                <div className="max-w-4xl mx-auto px-6 text-center">
+                    <h2 className="text-3xl font-bold mb-4">Weitere Fragen?</h2>
+                    <p className="text-xl text-gray-600 mb-8">
+                        Unser Support-Team hilft Ihnen gerne weiter
+                    </p>
+                    <Link to={createPageUrl('VermitifyContact')}>
+                        <Button className="vf-btn-gradient vf-btn-lg">
+                            Kontakt aufnehmen
+                        </Button>
+                    </Link>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }

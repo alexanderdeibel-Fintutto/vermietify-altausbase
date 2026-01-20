@@ -1,85 +1,87 @@
 import React from 'react';
-import { Target, Users, Zap, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+import { Building2, Heart, Target, Users } from 'lucide-react';
 
 export default function VermitifyAboutUs() {
-  const values = [
-    {
-      icon: Target,
-      title: 'Mission',
-      description: 'Wir digitalisieren die Immobilienverwaltung und machen sie einfach, transparent und effizient.'
-    },
-    {
-      icon: Users,
-      title: 'Team',
-      description: 'Ein Team aus Immobilien-Experten, Steuerberatern und Software-Entwicklern.'
-    },
-    {
-      icon: Zap,
-      title: 'Innovation',
-      description: 'Wir nutzen neueste KI-Technologie, um Prozesse zu automatisieren und Zeit zu sparen.'
-    },
-    {
-      icon: Shield,
-      title: 'Vertrauen',
-      description: 'DSGVO-konform, sicher und transparent. Ihre Daten sind bei uns in besten Händen.'
-    }
-  ];
-
-  return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-6xl mx-auto px-6 py-20">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold mb-4">Über Vermitify</h1>
-          <p className="text-xl text-[var(--vf-neutral-600)] max-w-3xl mx-auto">
-            Wir haben Vermitify gegründet, weil wir selbst frustriert waren von komplizierter Software 
-            und ineffizienten Prozessen in der Immobilienverwaltung.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-12 mb-20">
-          <div>
-            <img 
-              src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600&h=400&fit=crop"
-              alt="Team"
-              className="rounded-2xl shadow-lg w-full"
-            />
-          </div>
-          <div className="flex flex-col justify-center">
-            <h2 className="text-3xl font-bold mb-4">Unsere Geschichte</h2>
-            <p className="text-[var(--vf-neutral-700)] mb-4">
-              Gegründet 2024 in Berlin, haben wir es uns zur Aufgabe gemacht, die Immobilienverwaltung 
-              zu revolutionieren. Was als kleines Tool für die eigene Vermietung begann, ist heute eine 
-              vollumfängliche Plattform für professionelle Vermieter und Hausverwaltungen.
-            </p>
-            <p className="text-[var(--vf-neutral-700)]">
-              Heute vertrauen über 1.000 Vermieter in Deutschland, Österreich und der Schweiz auf Vermitify.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
-          {values.map((value, index) => (
-            <div key={index} className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-[var(--vf-primary-600)] to-[var(--vf-accent-500)] rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <value.icon className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">{value.title}</h3>
-              <p className="text-[var(--vf-neutral-600)]">{value.description}</p>
+    return (
+        <div className="min-h-screen bg-white">
+            {/* Hero */}
+            <div className="bg-gradient-to-br from-blue-50 to-orange-50 py-20">
+                <div className="max-w-4xl mx-auto px-6 text-center">
+                    <h1 className="text-5xl font-bold mb-6 vf-gradient-text">
+                        Über Vermitify
+                    </h1>
+                    <p className="text-xl text-gray-600">
+                        Wir machen Immobilienverwaltung einfach, effizient und rechtssicher
+                    </p>
+                </div>
             </div>
-          ))}
-        </div>
 
-        <div className="text-center p-12 bg-gradient-to-br from-[var(--vf-primary-50)] to-[var(--vf-accent-50)] rounded-2xl">
-          <h2 className="text-3xl font-bold mb-4">Werden Sie Teil unserer Mission</h2>
-          <p className="text-lg text-[var(--vf-neutral-600)] mb-8 max-w-2xl mx-auto">
-            Wir suchen talentierte Menschen, die mit uns die Immobilienverwaltung neu erfinden wollen.
-          </p>
-          <Button variant="gradient" size="lg">
-            Karriere bei Vermitify
-          </Button>
+            {/* Story */}
+            <div className="max-w-4xl mx-auto px-6 py-20">
+                <div className="prose prose-lg max-w-none">
+                    <h2 className="text-3xl font-bold mb-6">Unsere Geschichte</h2>
+                    <p className="text-gray-600 text-lg leading-relaxed mb-6">
+                        Vermitify wurde 2024 gegründet, weil wir selbst die Herausforderungen der Immobilienverwaltung 
+                        kennengelernt haben. Als Vermieter mehrerer Objekte stießen wir immer wieder auf dieselben Probleme: 
+                        verstreute Daten, komplizierte Betriebskostenabrechnungen, undurchsichtige Steuerformulare.
+                    </p>
+                    <p className="text-gray-600 text-lg leading-relaxed mb-6">
+                        Wir dachten: Das muss einfacher gehen! Also haben wir Vermitify entwickelt - eine All-in-One 
+                        Plattform, die alle Aspekte der Immobilienverwaltung vereint und dabei einfach zu bedienen bleibt.
+                    </p>
+                </div>
+
+                {/* Values */}
+                <div className="grid md:grid-cols-3 gap-8 mt-16">
+                    <div className="text-center">
+                        <div className="w-16 h-16 bg-gradient-to-br from-blue-900 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <Target className="w-8 h-8 text-white" />
+                        </div>
+                        <h3 className="text-xl font-semibold mb-3">Mission</h3>
+                        <p className="text-gray-600">
+                            Immobilienverwaltung für jeden zugänglich und professionell machen
+                        </p>
+                    </div>
+
+                    <div className="text-center">
+                        <div className="w-16 h-16 bg-gradient-to-br from-blue-900 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <Heart className="w-8 h-8 text-white" />
+                        </div>
+                        <h3 className="text-xl font-semibold mb-3">Werte</h3>
+                        <p className="text-gray-600">
+                            Transparenz, Einfachheit und Kundenzufriedenheit stehen bei uns an erster Stelle
+                        </p>
+                    </div>
+
+                    <div className="text-center">
+                        <div className="w-16 h-16 bg-gradient-to-br from-blue-900 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <Users className="w-8 h-8 text-white" />
+                        </div>
+                        <h3 className="text-xl font-semibold mb-3">Team</h3>
+                        <p className="text-gray-600">
+                            Ein erfahrenes Team aus Entwicklern, Steuerberatern und Immobilienexperten
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* CTA */}
+            <div className="bg-gray-50 py-20">
+                <div className="max-w-4xl mx-auto px-6 text-center">
+                    <h2 className="text-3xl font-bold mb-6">Bereit, Vermitify auszuprobieren?</h2>
+                    <p className="text-xl text-gray-600 mb-8">
+                        Schließen Sie sich hunderten zufriedenen Vermietern an
+                    </p>
+                    <Link to={createPageUrl('VermitifySignup')}>
+                        <Button className="vf-btn-gradient vf-btn-lg">
+                            Jetzt kostenlos testen
+                        </Button>
+                    </Link>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }
