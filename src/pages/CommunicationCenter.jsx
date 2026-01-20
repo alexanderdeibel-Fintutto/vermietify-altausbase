@@ -1,28 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { VfInput } from '@/components/shared/VfInput';
-import { VfTextarea } from '@/components/shared/VfTextarea';
-import { VfSelect } from '@/components/shared/VfSelect';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { MessageSquare, Plus, Send, Mail, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MessageSquare, Send, Mail, Phone, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { showSuccess } from '@/components/notifications/ToastNotification';
 
 export default function CommunicationCenter() {
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [formData, setFormData] = useState({
-        tenant_id: '',
-        subject: '',
-        category: 'general',
-        message: ''
-    });
-
-    const queryClient = useQueryClient();
-
-    const { data: messages = [], isLoading } = useQuery({
+    const { data: messages = [] } = useQuery({
         queryKey: ['tenantMessages'],
         queryFn: () => base44.entities.TenantMessage.list('-created_date')
     });
@@ -32,142 +17,105 @@ export default function CommunicationCenter() {
         queryFn: () => base44.entities.Tenant.list()
     });
 
-    const createMessageMutation = useMutation({
-        mutationFn: (data) => base44.entities.TenantMessage.create(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['tenantMessages'] });
-            setDialogOpen(false);
-            setFormData({ tenant_id: '', subject: '', category: 'general', message: '' });
-            showSuccess('Nachricht gesendet');
-        }
-    });
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        createMessageMutation.mutate(formData);
-    };
-
-    if (isLoading) {
-        return <div className="flex items-center justify-center h-96"><div className="vf-spinner vf-spinner-lg" /></div>;
-    }
+    const openMessages = messages.filter(m => m.status === 'open');
+    const inProgressMessages = messages.filter(m => m.status === 'in_progress');
+    const resolvedMessages = messages.filter(m => m.status === 'resolved');
 
     return (
         <div className="space-y-6">
             <div className="vf-page-header">
                 <div>
-                    <h1 className="vf-page-title">Kommunikation</h1>
+                    <h1 className="vf-page-title">Kommunikationszentrale</h1>
                     <p className="vf-page-subtitle">{messages.length} Nachrichten</p>
                 </div>
                 <div className="vf-page-actions">
-                    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button className="vf-btn-gradient">
-                                <Plus className="w-4 h-4" />
-                                Neue Nachricht
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Neue Nachricht an Mieter</DialogTitle>
-                            </DialogHeader>
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <VfSelect
-                                    label="Empfänger"
-                                    value={formData.tenant_id}
-                                    onChange={(value) => setFormData(prev => ({ ...prev, tenant_id: value }))}
-                                    options={tenants.map(t => ({ value: t.id, label: `${t.vorname} ${t.nachname}` }))}
-                                    required
-                                />
-                                <VfInput
-                                    label="Betreff"
-                                    value={formData.subject}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
-                                    required
-                                />
-                                <VfSelect
-                                    label="Kategorie"
-                                    value={formData.category}
-                                    onChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
-                                    options={[
-                                        { value: 'general', label: 'Allgemein' },
-                                        { value: 'repair', label: 'Reparatur' },
-                                        { value: 'billing', label: 'Abrechnung' },
-                                        { value: 'other', label: 'Sonstiges' }
-                                    ]}
-                                />
-                                <VfTextarea
-                                    label="Nachricht"
-                                    value={formData.message}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
-                                    rows={6}
-                                    required
-                                />
-                                <div className="flex justify-end gap-3 pt-4">
-                                    <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                                        Abbrechen
-                                    </Button>
-                                    <Button type="submit" className="vf-btn-gradient">
-                                        <Send className="w-4 h-4" />
-                                        Senden
-                                    </Button>
-                                </div>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
+                    <Button className="vf-btn-gradient">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Neue Nachricht
+                    </Button>
                 </div>
             </div>
 
-            {messages.length === 0 ? (
+            <div className="grid md:grid-cols-4 gap-4">
                 <Card>
-                    <CardContent className="py-16">
-                        <div className="text-center">
-                            <MessageSquare className="w-20 h-20 mx-auto mb-6 text-gray-300" />
-                            <h3 className="text-xl font-semibold mb-2">Keine Nachrichten</h3>
-                            <p className="text-gray-600 mb-6">Starten Sie die Kommunikation mit Ihren Mietern</p>
-                            <Button className="vf-btn-gradient" onClick={() => setDialogOpen(true)}>
-                                <Plus className="w-4 h-4" />
-                                Erste Nachricht senden
-                            </Button>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <MessageSquare className="w-8 h-8 text-blue-600" />
+                        </div>
+                        <div className="text-3xl font-bold">{messages.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Nachrichten</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <Mail className="w-8 h-8 text-orange-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-orange-700">{openMessages.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Offen</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <Send className="w-8 h-8 text-purple-600" />
+                        </div>
+                        <div className="text-3xl font-bold">{inProgressMessages.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">In Bearbeitung</div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-blue-900 to-orange-600 text-white border-none">
+                    <CardContent className="p-6">
+                        <div className="text-3xl font-bold">{resolvedMessages.length}</div>
+                        <div className="text-sm opacity-90 mt-1">Gelöst</div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+                <Card className="border-orange-300 bg-orange-50">
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4 text-orange-700">Offene Anfragen ({openMessages.length})</h3>
+                        <div className="space-y-2">
+                            {openMessages.slice(0, 5).map((msg) => {
+                                const tenant = tenants.find(t => t.id === msg.tenant_id);
+                                return (
+                                    <div key={msg.id} className="p-3 bg-white rounded-lg border border-orange-200">
+                                        <div className="font-semibold text-sm">{msg.subject}</div>
+                                        <div className="text-xs text-gray-600 mt-1">
+                                            von {tenant?.vorname} {tenant?.nachname}
+                                        </div>
+                                        <Badge className="mt-2 vf-badge-warning text-xs">{msg.category}</Badge>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </CardContent>
                 </Card>
-            ) : (
-                <div className="space-y-3">
-                    {messages.map((message) => {
-                        const tenant = tenants.find(t => t.id === message.tenant_id);
-                        return (
-                            <Card key={message.id}>
-                                <CardContent className="p-4">
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex items-start gap-4">
-                                            <MessageSquare className="w-8 h-8 text-blue-600 mt-1" />
-                                            <div>
-                                                <h3 className="font-semibold mb-1">{message.subject}</h3>
-                                                <div className="text-sm text-gray-600 mb-2">
-                                                    {tenant ? `${tenant.vorname} ${tenant.nachname}` : 'Unbekannt'}
-                                                </div>
-                                                <p className="text-sm text-gray-700">{message.message}</p>
-                                                <div className="flex items-center gap-2 mt-2">
-                                                    <Badge className={
-                                                        message.status === 'resolved' ? 'vf-badge-success' :
-                                                        message.status === 'in_progress' ? 'vf-badge-info' :
-                                                        'vf-badge-warning'
-                                                    }>
-                                                        {message.status}
-                                                    </Badge>
-                                                    <span className="text-xs text-gray-500">
-                                                        {new Date(message.created_date).toLocaleDateString('de-DE')}
-                                                    </span>
-                                                </div>
-                                            </div>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4">In Bearbeitung ({inProgressMessages.length})</h3>
+                        <div className="space-y-2">
+                            {inProgressMessages.slice(0, 5).map((msg) => {
+                                const tenant = tenants.find(t => t.id === msg.tenant_id);
+                                return (
+                                    <div key={msg.id} className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <div className="font-semibold text-sm">{msg.subject}</div>
+                                        <div className="text-xs text-gray-600 mt-1">
+                                            von {tenant?.vorname} {tenant?.nachname}
                                         </div>
+                                        <Badge className="mt-2 vf-badge-primary text-xs">{msg.category}</Badge>
                                     </div>
-                                </CardContent>
-                            </Card>
-                        );
-                    })}
-                </div>
-            )}
+                                );
+                            })}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 }

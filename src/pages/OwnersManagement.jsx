@@ -1,161 +1,115 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { VfInput } from '@/components/shared/VfInput';
-import { VfSelect } from '@/components/shared/VfSelect';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { UserCircle, Plus, Building2, Percent } from 'lucide-react';
-import { showSuccess } from '@/components/notifications/ToastNotification';
-
-const typeOptions = [
-    { value: 'Einzelperson', label: 'Einzelperson' },
-    { value: 'GmbH', label: 'GmbH' },
-    { value: 'GbR', label: 'GbR' },
-    { value: 'Sonstige', label: 'Sonstige' }
-];
+import { Button } from '@/components/ui/button';
+import { UserCheck, Mail, Phone, Plus, Building2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 export default function OwnersManagement() {
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [formData, setFormData] = useState({
-        name: '',
-        typ: 'Einzelperson',
-        email: '',
-        telefon: '',
-        anteil: '100'
-    });
-
-    const queryClient = useQueryClient();
-
-    const { data: owners = [], isLoading } = useQuery({
+    const { data: owners = [] } = useQuery({
         queryKey: ['owners'],
         queryFn: () => base44.entities.Owner.list('-created_date')
     });
 
-    const createOwnerMutation = useMutation({
-        mutationFn: (data) => base44.entities.Owner.create(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['owners'] });
-            setDialogOpen(false);
-            setFormData({ name: '', typ: 'Einzelperson', email: '', telefon: '', anteil: '100' });
-            showSuccess('Eigentümer erstellt');
-        }
+    const { data: ownerships = [] } = useQuery({
+        queryKey: ['buildingOwnerships'],
+        queryFn: () => base44.entities.BuildingOwnership.list()
     });
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        createOwnerMutation.mutate(formData);
-    };
-
-    if (isLoading) {
-        return <div className="flex items-center justify-center h-96"><div className="vf-spinner vf-spinner-lg" /></div>;
-    }
+    const { data: buildings = [] } = useQuery({
+        queryKey: ['buildings'],
+        queryFn: () => base44.entities.Building.list()
+    });
 
     return (
         <div className="space-y-6">
             <div className="vf-page-header">
                 <div>
-                    <h1 className="vf-page-title">Eigentümer</h1>
-                    <p className="vf-page-subtitle">{owners.length} Eigentümer verwaltet</p>
+                    <h1 className="vf-page-title">Eigentümerverwaltung</h1>
+                    <p className="vf-page-subtitle">{owners.length} Eigentümer</p>
                 </div>
                 <div className="vf-page-actions">
-                    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button className="vf-btn-gradient">
-                                <Plus className="w-4 h-4" />
-                                Eigentümer hinzufügen
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Neuer Eigentümer</DialogTitle>
-                            </DialogHeader>
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <VfInput
-                                    label="Name"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                                    placeholder="Max Mustermann oder Firma GmbH"
-                                    required
-                                />
-                                <VfSelect
-                                    label="Typ"
-                                    value={formData.typ}
-                                    onChange={(value) => setFormData(prev => ({ ...prev, typ: value }))}
-                                    options={typeOptions}
-                                />
-                                <VfInput
-                                    label="E-Mail"
-                                    type="email"
-                                    value={formData.email}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                                />
-                                <VfInput
-                                    label="Telefon"
-                                    value={formData.telefon}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, telefon: e.target.value }))}
-                                />
-                                <VfInput
-                                    label="Anteil"
-                                    type="number"
-                                    value={formData.anteil}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, anteil: e.target.value }))}
-                                    rightAddon="%"
-                                />
-                                <div className="flex justify-end gap-3 pt-4">
-                                    <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                                        Abbrechen
-                                    </Button>
-                                    <Button type="submit" className="vf-btn-gradient">
-                                        Erstellen
-                                    </Button>
-                                </div>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
+                    <Button className="vf-btn-gradient">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Neuer Eigentümer
+                    </Button>
                 </div>
             </div>
 
-            {owners.length === 0 ? (
+            <div className="grid md:grid-cols-4 gap-4">
                 <Card>
-                    <CardContent className="py-16">
-                        <div className="text-center">
-                            <UserCircle className="w-20 h-20 mx-auto mb-6 text-gray-300" />
-                            <h3 className="text-xl font-semibold mb-2">Noch keine Eigentümer</h3>
-                            <p className="text-gray-600 mb-6">Fügen Sie Ihren ersten Eigentümer hinzu</p>
-                            <Button className="vf-btn-gradient" onClick={() => setDialogOpen(true)}>
-                                <Plus className="w-4 h-4" />
-                                Ersten Eigentümer hinzufügen
-                            </Button>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <UserCheck className="w-8 h-8 text-blue-600" />
                         </div>
+                        <div className="text-3xl font-bold">{owners.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Eigentümer</div>
                     </CardContent>
                 </Card>
-            ) : (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {owners.map((owner) => (
-                        <Card key={owner.id}>
-                            <CardContent className="p-6">
-                                <div className="flex items-start gap-4">
-                                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                                        {owner.name?.charAt(0)}
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <Building2 className="w-8 h-8 text-green-600" />
+                        </div>
+                        <div className="text-3xl font-bold">{ownerships.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Beteiligungen</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="text-3xl font-bold">
+                            {owners.filter(o => o.typ === 'Natürliche Person').length}
+                        </div>
+                        <div className="text-sm text-gray-600 mt-1">Privatpersonen</div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-blue-900 to-orange-600 text-white border-none">
+                    <CardContent className="p-6">
+                        <div className="text-3xl font-bold">
+                            {owners.filter(o => o.typ === 'Juristische Person').length}
+                        </div>
+                        <div className="text-sm opacity-90 mt-1">Unternehmen</div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <Card>
+                <CardContent className="p-6">
+                    <h3 className="font-semibold text-lg mb-4">Alle Eigentümer</h3>
+                    <div className="space-y-2">
+                        {owners.map((owner) => {
+                            const ownerBuildings = ownerships.filter(o => o.owner_id === owner.id);
+                            return (
+                                <div key={owner.id} className="p-4 bg-gray-50 rounded-lg border">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div>
+                                            <div className="font-semibold">{owner.name}</div>
+                                            <Badge className="mt-1 vf-badge-primary text-xs">{owner.typ}</Badge>
+                                        </div>
+                                        <div className="text-sm text-gray-600">
+                                            {ownerBuildings.length} {ownerBuildings.length === 1 ? 'Gebäude' : 'Gebäude'}
+                                        </div>
                                     </div>
-                                    <div className="flex-1">
-                                        <h3 className="font-semibold mb-1">{owner.name}</h3>
-                                        <div className="text-sm text-gray-600 mb-2">{owner.typ}</div>
-                                        {owner.anteil && (
-                                            <div className="flex items-center gap-1 text-sm">
-                                                <Percent className="w-3 h-3 text-blue-600" />
-                                                <span className="font-semibold text-blue-900">{owner.anteil}% Anteil</span>
-                                            </div>
-                                        )}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="flex items-center gap-2 text-sm">
+                                            <Mail className="w-4 h-4 text-gray-500" />
+                                            <span className="text-gray-700">{owner.email || '-'}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm">
+                                            <Phone className="w-4 h-4 text-gray-500" />
+                                            <span className="text-gray-700">{owner.telefon || '-'}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            )}
+                            );
+                        })}
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }
