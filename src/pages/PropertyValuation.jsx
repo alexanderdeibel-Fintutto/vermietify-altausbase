@@ -1,83 +1,113 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Home } from 'lucide-react';
-import QuickStats from '@/components/shared/QuickStats';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent } from '@/components/ui/card';
+import { Building2, TrendingUp, Calculator, Euro } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-export default function PropertyValuationPage() {
-  const valuationData = [
-    { year: 2020, value: 850000, market: 820000 },
-    { year: 2021, value: 895000, market: 880000 },
-    { year: 2022, value: 945000, market: 930000 },
-    { year: 2023, value: 1020000, market: 1010000 },
-    { year: 2024, value: 1125000, market: 1115000 },
-    { year: 2025, value: 1245000, market: 1240000 },
-  ];
+export default function PropertyValuation() {
+    const { data: buildings = [] } = useQuery({
+        queryKey: ['buildings'],
+        queryFn: () => base44.entities.Building.list()
+    });
 
-  const properties = [
-    { id: 1, name: 'Hauptgebäude', valuation: '€1.245.000', change: '+12.5%', units: 12 },
-    { id: 2, name: 'Nebengebäude', valuation: '€245.000', change: '+8.2%', units: 3 },
-  ];
+    const { data: contracts = [] } = useQuery({
+        queryKey: ['contracts'],
+        queryFn: () => base44.entities.LeaseContract.list()
+    });
 
-  const stats = [
-    { label: 'Gesamtwert', value: '€1.490.000' },
-    { label: 'YoY Wachstum', value: '+10.8%' },
-    { label: 'Marktvergleich', value: '+0.4%' },
-    { label: 'Letzte Bewertung', value: '08.01.2026' },
-  ];
+    const totalRent = contracts.reduce((sum, c) => sum + (parseFloat(c.kaltmiete) || 0) * 12, 0);
+    const estimatedValue = totalRent * 18;
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">🏠 Immobilienbewertung</h1>
-        <p className="text-slate-600 mt-1">Aktuelle Marktbewertung und Wertentwicklung</p>
-      </div>
-
-      <QuickStats stats={stats} accentColor="blue" />
-
-      <Card className="border border-slate-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><TrendingUp className="w-5 h-5" /> Wertentwicklung</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={valuationData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="year" />
-              <YAxis />
-              <Tooltip formatter={(value) => `€${value.toLocaleString('de-DE')}`} />
-              <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} name="Bewertung" />
-              <Line type="monotone" dataKey="market" stroke="#10b981" strokeWidth={2} name="Marktpreis" />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      <div>
-        <h3 className="font-semibold text-slate-900 mb-3">Objekte im Portfolio</h3>
-        <div className="space-y-3">
-          {properties.map((prop) => (
-            <Card key={prop.id} className="border border-slate-200">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 flex-1">
-                    <Home className="w-5 h-5 text-blue-600" />
-                    <div>
-                      <p className="font-semibold text-slate-900">{prop.name}</p>
-                      <p className="text-xs text-slate-600">{prop.units} Einheiten</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-slate-900">{prop.valuation}</p>
-                    <Badge className="bg-green-600 text-xs">{prop.change}</Badge>
-                  </div>
+    return (
+        <div className="space-y-6">
+            <div className="vf-page-header">
+                <div>
+                    <h1 className="vf-page-title">Immobilienbewertung</h1>
+                    <p className="vf-page-subtitle">Wertermittlung Ihres Portfolios</p>
                 </div>
-              </CardContent>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-4">
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <Building2 className="w-8 h-8 text-blue-600" />
+                        </div>
+                        <div className="text-3xl font-bold">{buildings.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Objekte</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <Euro className="w-8 h-8 text-green-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-green-700">{totalRent.toLocaleString('de-DE')}€</div>
+                        <div className="text-sm text-gray-600 mt-1">Jahresmiete</div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-blue-900 to-orange-600 text-white border-none">
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <TrendingUp className="w-8 h-8" />
+                        </div>
+                        <div className="text-3xl font-bold">{estimatedValue.toLocaleString('de-DE')}€</div>
+                        <div className="text-sm opacity-90 mt-1">Geschätzter Wert</div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <Card>
+                <CardContent className="p-8">
+                    <div className="text-center">
+                        <Calculator className="w-20 h-20 mx-auto mb-6 text-blue-600" />
+                        <h3 className="text-2xl font-bold mb-4">Ertragswertverfahren</h3>
+                        <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+                            Die Bewertung basiert auf dem 18-fachen der Jahresmiete. 
+                            Dies ist eine vereinfachte Schätzung und keine professionelle Bewertung.
+                        </p>
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+                            <div className="text-sm text-gray-700 mb-2">Berechnungsformel:</div>
+                            <div className="text-xl font-mono">
+                                Jahresmiete ({totalRent.toLocaleString('de-DE')}€) × 18 = {estimatedValue.toLocaleString('de-DE')}€
+                            </div>
+                        </div>
+                        <Button className="vf-btn-gradient">
+                            Detaillierte Bewertung anfordern
+                        </Button>
+                    </div>
+                </CardContent>
             </Card>
-          ))}
+
+            <div className="space-y-3">
+                {buildings.map((building) => {
+                    const buildingValue = estimatedValue / buildings.length;
+                    return (
+                        <Card key={building.id}>
+                            <CardContent className="p-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <Building2 className="w-8 h-8 text-blue-600" />
+                                        <div>
+                                            <h3 className="font-semibold">{building.name}</h3>
+                                            <div className="text-sm text-gray-600">{building.strasse}, {building.ort}</div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-2xl font-bold text-blue-700">
+                                            {buildingValue.toLocaleString('de-DE')}€
+                                        </div>
+                                        <div className="text-sm text-gray-600">Geschätzter Wert</div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }

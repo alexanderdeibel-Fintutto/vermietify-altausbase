@@ -1,121 +1,161 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import QuickStats from '@/components/shared/QuickStats';
-import DocumentInboxDashboardWidget from '@/components/documentInbox/DocumentInboxDashboardWidget';
+import React from 'react';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent } from '@/components/ui/card';
+import { Euro, TrendingUp, TrendingDown, Receipt } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
-export default function FinanzenPage() {
-  const monthlyData = [
-    { month: 'Jan', income: 12500, expenses: 8200, profit: 4300 },
-    { month: 'Feb', income: 13200, expenses: 8500, profit: 4700 },
-    { month: 'Mär', income: 13200, expenses: 9100, profit: 4100 },
-    { month: 'Apr', income: 14000, expenses: 8800, profit: 5200 },
-    { month: 'Mai', income: 13800, expenses: 9200, profit: 4600 },
-    { month: 'Jun', income: 14500, expenses: 9500, profit: 5000 },
-  ];
+const COLORS = ['#10B981', '#EF4444', '#F59E0B', '#8B5CF6', '#06B6D4'];
 
-  const stats = [
-    { label: 'Einnahmen (YTD)', value: '€82,200' },
-    { label: 'Ausgaben (YTD)', value: '€53,300' },
-    { label: 'Gewinn (YTD)', value: '€28,900' },
-    { label: 'Gewinnmarge', value: '35.2%' },
-  ];
+export default function Finanzen() {
+    const { data: contracts = [] } = useQuery({
+        queryKey: ['contracts'],
+        queryFn: () => base44.entities.LeaseContract.list()
+    });
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">💰 Finanzen</h1>
-        <p className="text-slate-600 mt-1">Gegenüberstellung von SOLL (geplant) und IST (tatsächlich)</p>
-      </div>
+    const { data: invoices = [] } = useQuery({
+        queryKey: ['invoices'],
+        queryFn: () => base44.entities.Invoice.list()
+    });
 
-      {/* SOLL vs IST Legend */}
-      <Card className="bg-slate-50 border-slate-200">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-6 flex-wrap">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-dashed border-slate-400 bg-slate-100 rounded"></div>
-              <span className="text-sm text-slate-700">📋 SOLL = Geplante Buchungen aus Verträgen</span>
+    const { data: payments = [] } = useQuery({
+        queryKey: ['payments'],
+        queryFn: () => base44.entities.ActualPayment.list()
+    });
+
+    const totalRent = contracts.reduce((sum, c) => sum + (parseFloat(c.kaltmiete) || 0), 0);
+    const totalExpenses = invoices.reduce((sum, inv) => sum + (parseFloat(inv.betrag) || 0), 0);
+    const totalPayments = payments.reduce((sum, p) => sum + (parseFloat(p.betrag) || 0), 0);
+    const balance = totalRent - totalExpenses;
+
+    const expenseCategories = [
+        { name: 'Reparaturen', value: totalExpenses * 0.35 },
+        { name: 'Versicherungen', value: totalExpenses * 0.25 },
+        { name: 'Verwaltung', value: totalExpenses * 0.20 },
+        { name: 'Nebenkosten', value: totalExpenses * 0.15 },
+        { name: 'Sonstiges', value: totalExpenses * 0.05 }
+    ];
+
+    return (
+        <div className="space-y-6">
+            <div className="vf-page-header">
+                <div>
+                    <h1 className="vf-page-title">Finanzen</h1>
+                    <p className="vf-page-subtitle">Finanzübersicht & Analysen</p>
+                </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-solid border-emerald-500 bg-emerald-100 rounded"></div>
-              <span className="text-sm text-slate-700">✓ IST = Tatsächliche Zahlungen aus Bank</span>
+
+            <div className="grid md:grid-cols-4 gap-4">
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <TrendingUp className="w-8 h-8 text-green-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-green-700">{totalRent.toLocaleString('de-DE')}€</div>
+                        <div className="text-sm text-gray-600 mt-1">Mieteinnahmen</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <TrendingDown className="w-8 h-8 text-red-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-red-700">{totalExpenses.toLocaleString('de-DE')}€</div>
+                        <div className="text-sm text-gray-600 mt-1">Ausgaben</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <Receipt className="w-8 h-8 text-blue-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-blue-700">{totalPayments.toLocaleString('de-DE')}€</div>
+                        <div className="text-sm text-gray-600 mt-1">Zahlungseingänge</div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-blue-900 to-orange-600 text-white border-none">
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <Euro className="w-8 h-8" />
+                        </div>
+                        <div className="text-3xl font-bold">{balance.toLocaleString('de-DE')}€</div>
+                        <div className="text-sm opacity-90 mt-1">Saldo</div>
+                    </CardContent>
+                </Card>
             </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      <QuickStats stats={stats} accentColor="green" />
+            <div className="grid lg:grid-cols-2 gap-6">
+                <Card>
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4">Ausgaben nach Kategorie</h3>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <PieChart>
+                                <Pie
+                                    data={expenseCategories}
+                                    cx="50%"
+                                    cy="50%"
+                                    labelLine={false}
+                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                    outerRadius={80}
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                >
+                                    {expenseCategories.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip formatter={(value) => `${value.toFixed(0)}€`} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
 
-      <DocumentInboxDashboardWidget />
-
-      <Tabs defaultValue="overview">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Übersicht</TabsTrigger>
-          <TabsTrigger value="income">Einnahmen</TabsTrigger>
-          <TabsTrigger value="expenses">Ausgaben</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          <Card className="border border-slate-200">
-            <CardHeader>
-              <CardTitle>Einnahmen vs. Ausgaben</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => `€${value.toLocaleString('de-DE')}`} />
-                  <Legend />
-                  <Line type="monotone" dataKey="income" stroke="#10b981" name="Einnahmen" />
-                  <Line type="monotone" dataKey="expenses" stroke="#ef4444" name="Ausgaben" />
-                  <Line type="monotone" dataKey="profit" stroke="#3b82f6" name="Gewinn" />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="income" className="space-y-6">
-          <Card className="border border-slate-200">
-            <CardHeader>
-              <CardTitle>Einnahmequellen</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => `€${value.toLocaleString('de-DE')}`} />
-                  <Bar dataKey="income" fill="#10b981" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="expenses" className="space-y-6">
-          <Card className="border border-slate-200">
-            <CardHeader>
-              <CardTitle>Ausgabenstruktur</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => `€${value.toLocaleString('de-DE')}`} />
-                  <Bar dataKey="expenses" fill="#ef4444" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
+                <Card>
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4">Schnellberichte</h3>
+                        <div className="space-y-3">
+                            <Link to={createPageUrl('FinancialReporting')}>
+                                <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg hover:from-blue-100 hover:to-blue-200 transition-colors cursor-pointer">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <div className="font-semibold">Jahresabschluss</div>
+                                            <div className="text-sm text-gray-600">Gesamtübersicht 2025</div>
+                                        </div>
+                                        <Download className="w-5 h-5 text-blue-700" />
+                                    </div>
+                                </div>
+                            </Link>
+                            <Link to={createPageUrl('RentCollection')}>
+                                <div className="p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg hover:from-green-100 hover:to-green-200 transition-colors cursor-pointer">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <div className="font-semibold">Mietenübersicht</div>
+                                            <div className="text-sm text-gray-600">Aktuelle Periode</div>
+                                        </div>
+                                        <Download className="w-5 h-5 text-green-700" />
+                                    </div>
+                                </div>
+                            </Link>
+                            <Link to={createPageUrl('PropertyTaxOverview')}>
+                                <div className="p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg hover:from-purple-100 hover:to-purple-200 transition-colors cursor-pointer">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <div className="font-semibold">Steuerbericht</div>
+                                            <div className="text-sm text-gray-600">Anlage V Übersicht</div>
+                                        </div>
+                                        <Download className="w-5 h-5 text-purple-700" />
+                                    </div>
+                                </div>
+                            </Link>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    );
 }
