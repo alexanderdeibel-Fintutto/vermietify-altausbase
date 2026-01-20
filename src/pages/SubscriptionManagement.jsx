@@ -1,181 +1,159 @@
 import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertCircle } from 'lucide-react';
-import { createPageUrl } from '@/utils';
-import { useNavigate } from 'react-router-dom';
+import { CreditCard, Check, AlertCircle, TrendingUp } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 export default function SubscriptionManagement() {
-    const navigate = useNavigate();
-
-    const { data: user } = useQuery({
-        queryKey: ['currentUser'],
-        queryFn: () => base44.auth.me(),
-        initialData: null
-    });
-
     const { data: subscription } = useQuery({
-        queryKey: ['userSubscription', user?.email],
-        queryFn: () => {
-            if (!user?.email) return null;
-            return base44.entities.UserSubscription.filter({
-                user_email: user.email,
-                status: { $in: ['ACTIVE', 'TRIAL'] }
-            }).then(subs => subs[0] || null);
-        },
-        enabled: !!user?.email,
-        initialData: null
+        queryKey: ['userSubscription'],
+        queryFn: async () => {
+            const user = await base44.auth.me();
+            const subs = await base44.entities.UserSubscription.filter({ user_email: user.email });
+            return subs[0];
+        }
     });
 
     const { data: plan } = useQuery({
         queryKey: ['subscriptionPlan', subscription?.plan_id],
-        queryFn: () => subscription ? base44.entities.SubscriptionPlan.get(subscription.plan_id) : null,
-        enabled: !!subscription?.plan_id,
-        initialData: null
+        queryFn: () => subscription ? base44.entities.SubscriptionPlan.read(subscription.plan_id) : null,
+        enabled: !!subscription
     });
 
-    const { data: buildings } = useQuery({
-        queryKey: ['userBuildings', user?.email],
-        queryFn: () => {
-            if (!user?.email) return [];
-            return base44.entities.Building.filter({ created_by: user.email });
-        },
-        enabled: !!user?.email,
-        initialData: []
-    });
-
-    const { data: units } = useQuery({
-        queryKey: ['userUnits', user?.email],
-        queryFn: () => {
-            if (!user?.email) return [];
-            return base44.entities.Unit.filter({ created_by: user.email });
-        },
-        enabled: !!user?.email,
-        initialData: []
-    });
-
-    if (!user || !subscription || !plan) {
+    if (!subscription || !plan) {
         return (
-            <div className="min-h-screen bg-gray-50 p-6">
-                <div className="max-w-3xl mx-auto">
-                    <Card className="text-center p-12">
-                        <CardTitle className="mb-4">Kein aktives Abo</CardTitle>
-                        <p className="text-gray-600 mb-6">Du hast noch keinen Tarif gewählt.</p>
-                        <Button onClick={() => navigate(createPageUrl('Pricing'))}>
-                            Tarif wählen
-                        </Button>
-                    </Card>
+            <div className="space-y-6">
+                <div className="vf-page-header">
+                    <h1 className="vf-page-title">Abonnement</h1>
                 </div>
+                <Card className="text-center p-12">
+                    <AlertCircle className="w-20 h-20 mx-auto text-gray-300 mb-4" />
+                    <p className="text-gray-600">Kein aktives Abonnement gefunden</p>
+                </Card>
             </div>
         );
     }
 
-    const buildingUsage = (buildings.length / (plan.max_buildings === -1 ? 999 : plan.max_buildings)) * 100;
-    const unitUsage = (units.length / (plan.max_units === -1 ? 999 : plan.max_units)) * 100;
+    const daysLeft = subscription.end_date 
+        ? Math.ceil((new Date(subscription.end_date) - new Date()) / (24 * 60 * 60 * 1000))
+        : null;
+
+    const features = plan.features ? JSON.parse(plan.features) : [];
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
-            <div className="max-w-3xl mx-auto space-y-6">
-                {/* Current Plan */}
+        <div className="space-y-6">
+            <div className="vf-page-header">
+                <div>
+                    <h1 className="vf-page-title">Abonnement</h1>
+                    <p className="vf-page-subtitle">{plan.name}</p>
+                </div>
+            </div>
+
+            <Card className="bg-gradient-to-br from-blue-900 to-orange-600 text-white border-none">
+                <CardContent className="p-8">
+                    <div className="grid md:grid-cols-3 gap-8">
+                        <div>
+                            <div className="text-lg opacity-90 mb-2">Aktueller Plan</div>
+                            <div className="text-4xl font-bold">{plan.name}</div>
+                            <div className="text-lg opacity-90 mt-2">
+                                {subscription.billing_cycle === 'MONTHLY' ? plan.price_monthly : plan.price_yearly}€/{subscription.billing_cycle === 'MONTHLY' ? 'Monat' : 'Jahr'}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="text-lg opacity-90 mb-2">Status</div>
+                            <Badge className="bg-green-500 text-white text-lg px-4 py-2 mb-4">
+                                {subscription.status === 'ACTIVE' ? 'Aktiv' : subscription.status}
+                            </Badge>
+                            {daysLeft && daysLeft > 0 && (
+                                <div className="text-sm opacity-90">
+                                    Erneuert am: {new Date(subscription.next_billing_date).toLocaleDateString('de-DE')}
+                                </div>
+                            )}
+                        </div>
+                        <div>
+                            <div className="text-lg opacity-90 mb-2">Abrechnungszyklus</div>
+                            <div className="text-3xl font-bold">
+                                {subscription.billing_cycle === 'MONTHLY' ? 'Monatlich' : 'Jährlich'}
+                            </div>
+                            {subscription.billing_cycle === 'YEARLY' && (
+                                <div className="text-sm opacity-90 mt-2">Du sparst {(plan.price_monthly * 12 - plan.price_yearly).toFixed(2)}€/Jahr</div>
+                            )}
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <div className="grid md:grid-cols-3 gap-6">
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Dein aktueller Plan</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <h3 className="text-2xl font-bold text-blue-600">{plan.name}</h3>
-                                <p className="text-gray-600">
-                                    €{plan.price_monthly.toFixed(2)}/Monat {subscription.billing_cycle === 'YEARLY' ? '(jährlich)' : ''}
-                                </p>
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4">Limits</h3>
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                <span className="text-sm">Gebäude</span>
+                                <span className="font-semibold">{plan.max_buildings === -1 ? 'Unbegrenzt' : plan.max_buildings}</span>
                             </div>
-                            <div className="text-right text-sm text-gray-600">
-                                Nächste Abrechnung: <br />
-                                {new Date(subscription.next_billing_date).toLocaleDateString('de-DE')}
+                            <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                <span className="text-sm">Einheiten</span>
+                                <span className="font-semibold">{plan.max_units === -1 ? 'Unbegrenzt' : plan.max_units}</span>
                             </div>
                         </div>
+                    </CardContent>
+                </Card>
 
-                        {/* Usage Bars */}
-                        <div className="space-y-4 pt-4 border-t">
-                            <div>
-                                <div className="flex justify-between text-sm mb-2">
-                                    <span>Gebäude</span>
-                                    <span>{buildings.length}/{plan.max_buildings === -1 ? '∞' : plan.max_buildings}</span>
+                <Card>
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4">Features</h3>
+                        <div className="space-y-2">
+                            {features.slice(0, 5).map((feature, idx) => (
+                                <div key={idx} className="flex items-center gap-2 text-sm">
+                                    <Check className="w-4 h-4 text-green-600" />
+                                    <span>{feature}</span>
                                 </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                    <div
-                                        className={`h-2 rounded-full transition ${
-                                            buildingUsage > 80 ? 'bg-red-500' : buildingUsage > 50 ? 'bg-yellow-500' : 'bg-green-500'
-                                        }`}
-                                        style={{ width: `${Math.min(buildingUsage, 100)}%` }}
-                                    />
+                            ))}
+                            {features.length > 5 && (
+                                <div className="text-xs text-gray-600 mt-2">
+                                    +{features.length - 5} weitere Features
                                 </div>
-                            </div>
-
-                            <div>
-                                <div className="flex justify-between text-sm mb-2">
-                                    <span>Einheiten</span>
-                                    <span>{units.length}/{plan.max_units === -1 ? '∞' : plan.max_units}</span>
-                                </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                    <div
-                                        className={`h-2 rounded-full transition ${
-                                            unitUsage > 80 ? 'bg-red-500' : unitUsage > 50 ? 'bg-yellow-500' : 'bg-green-500'
-                                        }`}
-                                        style={{ width: `${Math.min(unitUsage, 100)}%` }}
-                                    />
-                                </div>
-                            </div>
+                            )}
                         </div>
+                    </CardContent>
+                </Card>
 
-                        {/* Warning if near limit */}
-                        {(buildingUsage > 80 || unitUsage > 80) && (
-                            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex gap-3">
-                                <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
-                                <div className="text-sm text-yellow-800">
-                                    Du näherst dich deinem Limit. <Button variant="link" className="p-0 h-auto">Jetzt upgraden</Button>
-                                </div>
+                <Card>
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4">Zahlungsmethode</h3>
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                                <CreditCard className="w-5 h-5 text-blue-600" />
+                                <span className="text-sm capitalize">{subscription.payment_method}</span>
                             </div>
-                        )}
-
-                        <div className="flex gap-3 pt-4">
-                            <Button variant="outline">Plan ändern</Button>
-                            <Button variant="outline" className="text-red-600 hover:bg-red-50">
-                                Kündigen
+                            <Button variant="outline" className="w-full">
+                                Zahlungsmethode ändern
                             </Button>
                         </div>
                     </CardContent>
                 </Card>
-
-                {/* Add-ons */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Add-ons</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-gray-600 mb-4">Erweitere deinen Plan mit zusätzlichen Funktionen.</p>
-                        <Button>+ Add-on hinzufügen</Button>
-                    </CardContent>
-                </Card>
-
-                {/* Invoices */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Rechnungshistorie</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-3 text-sm">
-                            <div className="flex justify-between py-2 border-b">
-                                <span>15.01.2026</span>
-                                <span>€{plan.price_monthly.toFixed(2)}</span>
-                                <span className="text-green-600">✓ Bezahlt</span>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
             </div>
+
+            <Card>
+                <CardContent className="p-6">
+                    <h3 className="font-semibold text-lg mb-4">Plan verwalten</h3>
+                    <div className="flex gap-3 flex-wrap">
+                        <Button className="vf-btn-primary">
+                            <TrendingUp className="w-4 h-4 mr-2" />
+                            Upgrade Plan
+                        </Button>
+                        <Button variant="outline">
+                            Abonnement pausieren
+                        </Button>
+                        <Button variant="outline">
+                            Kontakt Support
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }

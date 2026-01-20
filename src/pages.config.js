@@ -604,6 +604,7 @@ import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
 import PaymentManagement from './pages/PaymentManagement';
+import OperatingCostsAbrechnug from './pages/OperatingCostsAbrechnug';
 import __Layout from './Layout.jsx';
 
 
@@ -1214,6 +1215,7 @@ export const PAGES = {
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
     "PaymentManagement": PaymentManagement,
+    "OperatingCostsAbrechnug": OperatingCostsAbrechnug,
 }
 
 export const pagesConfig = {
