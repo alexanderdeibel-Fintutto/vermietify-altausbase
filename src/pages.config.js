@@ -567,6 +567,10 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
+import MeterReadings from './pages/MeterReadings';
+import OwnersManagement from './pages/OwnersManagement';
+import PropertyTaxOverview from './pages/PropertyTaxOverview';
+import PaymentTracking from './pages/PaymentTracking';
 import __Layout from './Layout.jsx';
 
 
@@ -1140,6 +1144,10 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
+    "MeterReadings": MeterReadings,
+    "OwnersManagement": OwnersManagement,
+    "PropertyTaxOverview": PropertyTaxOverview,
+    "PaymentTracking": PaymentTracking,
 }
 
 export const pagesConfig = {
