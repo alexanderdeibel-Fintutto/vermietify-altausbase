@@ -1,200 +1,183 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Plus, BarChart3 } from 'lucide-react';
-import FinancialReportBuilder from '@/components/reporting/FinancialReportBuilder';
-import FinancialReportViewer from '@/components/reporting/FinancialReportViewer';
+import { VfInput } from '@/components/shared/VfInput';
+import { TrendingUp, TrendingDown, Euro, FileText, Download, Calendar } from 'lucide-react';
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+const COLORS = ['#1E3A8A', '#F97316', '#10B981', '#8B5CF6', '#EF4444'];
 
 export default function FinancialReporting() {
-  const [showBuilder, setShowBuilder] = useState(false);
-  const [selectedReport, setSelectedReport] = useState(null);
-  const [generatedReport, setGeneratedReport] = useState(null);
+    const [startDate, setStartDate] = useState('2024-01-01');
+    const [endDate, setEndDate] = useState('2024-12-31');
 
-  const { data: reports, isLoading, refetch } = useQuery({
-    queryKey: ['financialReports'],
-    queryFn: async () => {
-      try {
-        return await base44.entities.FinancialReport.list('-generated_at', 10);
-      } catch {
-        return [];
-      }
-    }
-  });
+    const { data: invoices = [] } = useQuery({
+        queryKey: ['invoices'],
+        queryFn: () => base44.entities.Invoice.list()
+    });
 
-  const { data: templates, isLoading: templatesLoading } = useQuery({
-    queryKey: ['reportTemplates'],
-    queryFn: async () => {
-      try {
-        return await base44.entities.ReportConfig.list('-created_at', 10);
-      } catch {
-        return [];
-      }
-    }
-  });
+    const { data: contracts = [] } = useQuery({
+        queryKey: ['contracts'],
+        queryFn: () => base44.entities.LeaseContract.list()
+    });
 
-  const handleReportGenerated = (report) => {
-    setGeneratedReport(report);
-    refetch();
-  };
+    // Calculate metrics
+    const totalExpenses = invoices.reduce((sum, inv) => sum + (parseFloat(inv.betrag) || 0), 0);
+    const monthlyRent = contracts.reduce((sum, c) => sum + (parseFloat(c.kaltmiete) || 0), 0);
+    const annualRent = monthlyRent * 12;
+    const netIncome = annualRent - totalExpenses;
 
-  if (showBuilder) {
+    // Monthly data
+    const monthlyData = [
+        { month: 'Jan', einnahmen: monthlyRent, ausgaben: totalExpenses / 12 },
+        { month: 'Feb', einnahmen: monthlyRent, ausgaben: totalExpenses / 12 },
+        { month: 'Mär', einnahmen: monthlyRent, ausgaben: totalExpenses / 12 },
+        { month: 'Apr', einnahmen: monthlyRent, ausgaben: totalExpenses / 12 },
+        { month: 'Mai', einnahmen: monthlyRent, ausgaben: totalExpenses / 12 },
+        { month: 'Jun', einnahmen: monthlyRent, ausgaben: totalExpenses / 12 },
+    ];
+
+    // Expense categories
+    const expenseData = [
+        { name: 'Reparaturen', value: totalExpenses * 0.4 },
+        { name: 'Versicherung', value: totalExpenses * 0.25 },
+        { name: 'Verwaltung', value: totalExpenses * 0.2 },
+        { name: 'Sonstiges', value: totalExpenses * 0.15 }
+    ];
+
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="mb-4">
-          <Button
-            onClick={() => setShowBuilder(false)}
-            variant="outline"
-            className="mb-4"
-          >
-            ← Zurück
-          </Button>
-        </div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Neuen Report erstellen</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FinancialReportBuilder
-              onReportGenerated={handleReportGenerated}
-              onClose={() => setShowBuilder(false)}
-            />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (generatedReport) {
-    return (
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="mb-4">
-          <Button
-            onClick={() => setGeneratedReport(null)}
-            variant="outline"
-            className="mb-4"
-          >
-            ← Zurück
-          </Button>
-        </div>
-        <FinancialReportViewer report={generatedReport} />
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-light">Finanzielle Berichterstattung</h1>
-          <p className="text-slate-600 text-sm mt-1">
-            KI-gestützte Berichte mit Insights, Trends und Empfehlungen
-          </p>
-        </div>
-        <Button
-          onClick={() => setShowBuilder(true)}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Neuer Report
-        </Button>
-      </div>
-
-      <Tabs defaultValue="reports" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="reports">Reports ({reports?.length || 0})</TabsTrigger>
-          <TabsTrigger value="templates">Vorlagen ({templates?.length || 0})</TabsTrigger>
-        </TabsList>
-
-        {/* Reports Tab */}
-        <TabsContent value="reports" className="space-y-3">
-          {isLoading ? (
-            <Card className="flex items-center justify-center h-40">
-              <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
-            </Card>
-          ) : reports && reports.length > 0 ? (
-            reports.map(report => (
-              <Card
-                key={report.id}
-                className="cursor-pointer hover:border-slate-400 transition-colors"
-                onClick={() => setGeneratedReport(report)}
-              >
-                <CardContent className="pt-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm">{report.report_type} Bericht</p>
-                      <p className="text-xs text-slate-600 mt-1">
-                        {report.period_start} bis {report.period_end}
-                      </p>
-                      <div className="flex gap-2 mt-2">
-                        {report.sections_included?.slice(0, 3).map(sec => (
-                          <span key={sec} className="text-xs bg-slate-100 rounded px-2 py-1">{sec}</span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-slate-600">
-                        {new Date(report.generated_at).toLocaleDateString('de-DE')}
-                      </p>
-                      <p className="text-xs text-slate-500 mt-2">{report.status}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <Card className="text-center py-12">
-              <BarChart3 className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-              <p className="text-slate-600 text-sm">Keine Reports vorhanden</p>
-              <Button
-                onClick={() => setShowBuilder(true)}
-                variant="outline"
-                size="sm"
-                className="mt-3"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Ersten Report erstellen
-              </Button>
-            </Card>
-          )}
-        </TabsContent>
-
-        {/* Templates Tab */}
-        <TabsContent value="templates" className="space-y-3">
-          {templatesLoading ? (
-            <Card className="flex items-center justify-center h-40">
-              <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
-            </Card>
-          ) : templates && templates.length > 0 ? (
-            templates.map(template => (
-              <Card key={template.id} className="hover:border-slate-400 transition-colors">
-                <CardContent className="pt-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm">{template.report_name}</p>
-                      <p className="text-xs text-slate-600 mt-1">
-                        {template.frequency} | {template.sections_included?.length} Abschnitte
-                      </p>
-                    </div>
-                    <Button size="sm" variant="outline">
-                      Nutzen
+        <div className="space-y-6">
+            <div className="vf-page-header">
+                <div>
+                    <h1 className="vf-page-title">Finanzberichte</h1>
+                    <p className="vf-page-subtitle">Übersicht Ihrer Einnahmen und Ausgaben</p>
+                </div>
+                <div className="vf-page-actions">
+                    <Button variant="outline">
+                        <Download className="w-4 h-4" />
+                        PDF exportieren
                     </Button>
-                  </div>
+                </div>
+            </div>
+
+            {/* Date Filter */}
+            <Card>
+                <CardContent className="p-4">
+                    <div className="flex items-center gap-4">
+                        <Calendar className="w-5 h-5 text-gray-500" />
+                        <VfInput
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="max-w-xs"
+                        />
+                        <span className="text-gray-500">bis</span>
+                        <VfInput
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="max-w-xs"
+                        />
+                        <Button>Aktualisieren</Button>
+                    </div>
                 </CardContent>
-              </Card>
-            ))
-          ) : (
-            <Card className="text-center py-12">
-              <p className="text-slate-600 text-sm">Keine Vorlagen vorhanden</p>
-              <p className="text-xs text-slate-500 mt-1">
-                Speichern Sie Report-Konfigurationen als Vorlagen für schnelle Wiederverwendung
-              </p>
             </Card>
-          )}
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
+
+            {/* KPI Cards */}
+            <div className="grid md:grid-cols-4 gap-4">
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <TrendingUp className="w-8 h-8 text-green-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-green-700">{annualRent.toLocaleString('de-DE')}€</div>
+                        <div className="text-sm text-gray-600 mt-1">Jahres-Einnahmen</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <TrendingDown className="w-8 h-8 text-red-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-red-700">{totalExpenses.toLocaleString('de-DE')}€</div>
+                        <div className="text-sm text-gray-600 mt-1">Jahres-Ausgaben</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <Euro className="w-8 h-8 text-blue-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-blue-900">{netIncome.toLocaleString('de-DE')}€</div>
+                        <div className="text-sm text-gray-600 mt-1">Netto-Ertrag</div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-blue-900 to-orange-600 text-white border-none">
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <TrendingUp className="w-8 h-8" />
+                        </div>
+                        <div className="text-3xl font-bold">
+                            {totalExpenses > 0 ? ((netIncome / annualRent) * 100).toFixed(1) : 0}%
+                        </div>
+                        <div className="text-sm opacity-90 mt-1">Rendite</div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Charts */}
+            <div className="grid lg:grid-cols-2 gap-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Einnahmen vs. Ausgaben</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart data={monthlyData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="month" />
+                                <YAxis />
+                                <Tooltip />
+                                <Legend />
+                                <Bar dataKey="einnahmen" fill="#1E3A8A" name="Einnahmen" />
+                                <Bar dataKey="ausgaben" fill="#F97316" name="Ausgaben" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Ausgaben nach Kategorie</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <PieChart>
+                                <Pie
+                                    data={expenseData}
+                                    cx="50%"
+                                    cy="50%"
+                                    labelLine={false}
+                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                    outerRadius={80}
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                >
+                                    {expenseData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    );
 }
