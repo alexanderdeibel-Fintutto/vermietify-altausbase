@@ -121,6 +121,7 @@ import BankingOverview from './pages/BankingOverview';
 import BudgetAnalysis from './pages/BudgetAnalysis';
 import BudgetPlanning from './pages/BudgetPlanning';
 import BuildingBoard from './pages/BuildingBoard';
+import BuildingComparison from './pages/BuildingComparison';
 import BuildingDetail from './pages/BuildingDetail';
 import BuildingDetailEnhanced from './pages/BuildingDetailEnhanced';
 import BuildingDetailTemplate from './pages/BuildingDetailTemplate';
@@ -234,6 +235,7 @@ import FinanceManagementHub from './pages/FinanceManagementHub';
 import FinancialDashboard from './pages/FinancialDashboard';
 import FinancialForecasting from './pages/FinancialForecasting';
 import FinancialItems from './pages/FinancialItems';
+import FinancialOverview from './pages/FinancialOverview';
 import FinancialPlanning from './pages/FinancialPlanning';
 import FinancialReporting from './pages/FinancialReporting';
 import FinancialReports from './pages/FinancialReports';
@@ -281,6 +283,7 @@ import KommunikationDashboard from './pages/KommunikationDashboard';
 import LeadManagement from './pages/LeadManagement';
 import LeaseContracts from './pages/LeaseContracts';
 import LeaseManagement from './pages/LeaseManagement';
+import LegalDocuments from './pages/LegalDocuments';
 import LetterShipmentManagement from './pages/LetterShipmentManagement';
 import LetterXpressManagement from './pages/LetterXpressManagement';
 import ListPageExample from './pages/ListPageExample';
@@ -320,6 +323,7 @@ import OfflineError from './pages/OfflineError';
 import Onboarding from './pages/Onboarding';
 import OnboardingEnhanced from './pages/OnboardingEnhanced';
 import OnboardingWizard from './pages/OnboardingWizard';
+import Payments from './pages/Payments';
 import OnboardingWizardNew from './pages/OnboardingWizardNew';
 import OperatingCostAutomationHub from './pages/OperatingCostAutomationHub';
 import OperatingCostWizard from './pages/OperatingCostWizard';
@@ -333,7 +337,6 @@ import PackageTestPage from './pages/PackageTestPage';
 import PartnerOnboarding from './pages/PartnerOnboarding';
 import PaymentHistory from './pages/PaymentHistory';
 import PaymentTracking from './pages/PaymentTracking';
-import Payments from './pages/Payments';
 import PerformanceMonitor from './pages/PerformanceMonitor';
 import PermissionDashboard from './pages/PermissionDashboard';
 import PermissionManagement from './pages/PermissionManagement';
@@ -349,6 +352,7 @@ import PropertyComparison from './pages/PropertyComparison';
 import PropertyManagementDashboard from './pages/PropertyManagementDashboard';
 import PropertyManagementHub from './pages/PropertyManagementHub';
 import PropertyManagerDashboard from './pages/PropertyManagerDashboard';
+import PropertyPerformance from './pages/PropertyPerformance';
 import PropertyPortfolio from './pages/PropertyPortfolio';
 import PropertyTaxOverview from './pages/PropertyTaxOverview';
 import PropertyValuation from './pages/PropertyValuation';
@@ -429,9 +433,9 @@ import TaxBracketCalculator from './pages/TaxBracketCalculator';
 import TaxCalendarAndTimeline from './pages/TaxCalendarAndTimeline';
 import TaxComplianceChecker from './pages/TaxComplianceChecker';
 import TaxComplianceDashboard from './pages/TaxComplianceDashboard';
+import TaxDashboard from './pages/TaxDashboard';
 import TaxComplianceTracker from './pages/TaxComplianceTracker';
 import TaxCreditsAndIncentives from './pages/TaxCreditsAndIncentives';
-import TaxDashboard from './pages/TaxDashboard';
 import TaxDashboardAT from './pages/TaxDashboardAT';
 import TaxDashboardCH from './pages/TaxDashboardCH';
 import TaxDashboardDE from './pages/TaxDashboardDE';
@@ -442,6 +446,7 @@ import TaxDeadlines from './pages/TaxDeadlines';
 import TaxDeductionOptimizer from './pages/TaxDeductionOptimizer';
 import TaxDocumentManager from './pages/TaxDocumentManager';
 import TaxDocumentProcessor from './pages/TaxDocumentProcessor';
+import TaxDocuments from './pages/TaxDocuments';
 import TaxEvents from './pages/TaxEvents';
 import TaxExportHub from './pages/TaxExportHub';
 import TaxFilingTimeline from './pages/TaxFilingTimeline';
@@ -508,6 +513,7 @@ import TenantPortal from './pages/TenantPortal';
 import TenantPortalAdminDashboard from './pages/TenantPortalAdminDashboard';
 import TenantPortalDashboard from './pages/TenantPortalDashboard';
 import TenantPortalPage from './pages/TenantPortalPage';
+import TenantSatisfaction from './pages/TenantSatisfaction';
 import TenantVettingSystem from './pages/TenantVettingSystem';
 import Tenants from './pages/Tenants';
 import TerminationManagement from './pages/TerminationManagement';
@@ -597,12 +603,7 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import BuildingComparison from './pages/BuildingComparison';
-import FinancialOverview from './pages/FinancialOverview';
-import TenantSatisfaction from './pages/TenantSatisfaction';
-import LegalDocuments from './pages/LegalDocuments';
-import PropertyPerformance from './pages/PropertyPerformance';
-import TaxDocuments from './pages/TaxDocuments';
+import PaymentManagement from './pages/PaymentManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -730,6 +731,7 @@ export const PAGES = {
     "BudgetAnalysis": BudgetAnalysis,
     "BudgetPlanning": BudgetPlanning,
     "BuildingBoard": BuildingBoard,
+    "BuildingComparison": BuildingComparison,
     "BuildingDetail": BuildingDetail,
     "BuildingDetailEnhanced": BuildingDetailEnhanced,
     "BuildingDetailTemplate": BuildingDetailTemplate,
@@ -843,6 +845,7 @@ export const PAGES = {
     "FinancialDashboard": FinancialDashboard,
     "FinancialForecasting": FinancialForecasting,
     "FinancialItems": FinancialItems,
+    "FinancialOverview": FinancialOverview,
     "FinancialPlanning": FinancialPlanning,
     "FinancialReporting": FinancialReporting,
     "FinancialReports": FinancialReports,
@@ -890,6 +893,7 @@ export const PAGES = {
     "LeadManagement": LeadManagement,
     "LeaseContracts": LeaseContracts,
     "LeaseManagement": LeaseManagement,
+    "LegalDocuments": LegalDocuments,
     "LetterShipmentManagement": LetterShipmentManagement,
     "LetterXpressManagement": LetterXpressManagement,
     "ListPageExample": ListPageExample,
@@ -929,6 +933,7 @@ export const PAGES = {
     "Onboarding": Onboarding,
     "OnboardingEnhanced": OnboardingEnhanced,
     "OnboardingWizard": OnboardingWizard,
+    "Payments": Payments,
     "OnboardingWizardNew": OnboardingWizardNew,
     "OperatingCostAutomationHub": OperatingCostAutomationHub,
     "OperatingCostWizard": OperatingCostWizard,
@@ -942,7 +947,6 @@ export const PAGES = {
     "PartnerOnboarding": PartnerOnboarding,
     "PaymentHistory": PaymentHistory,
     "PaymentTracking": PaymentTracking,
-    "Payments": Payments,
     "PerformanceMonitor": PerformanceMonitor,
     "PermissionDashboard": PermissionDashboard,
     "PermissionManagement": PermissionManagement,
@@ -958,6 +962,7 @@ export const PAGES = {
     "PropertyManagementDashboard": PropertyManagementDashboard,
     "PropertyManagementHub": PropertyManagementHub,
     "PropertyManagerDashboard": PropertyManagerDashboard,
+    "PropertyPerformance": PropertyPerformance,
     "PropertyPortfolio": PropertyPortfolio,
     "PropertyTaxOverview": PropertyTaxOverview,
     "PropertyValuation": PropertyValuation,
@@ -1038,9 +1043,9 @@ export const PAGES = {
     "TaxCalendarAndTimeline": TaxCalendarAndTimeline,
     "TaxComplianceChecker": TaxComplianceChecker,
     "TaxComplianceDashboard": TaxComplianceDashboard,
+    "TaxDashboard": TaxDashboard,
     "TaxComplianceTracker": TaxComplianceTracker,
     "TaxCreditsAndIncentives": TaxCreditsAndIncentives,
-    "TaxDashboard": TaxDashboard,
     "TaxDashboardAT": TaxDashboardAT,
     "TaxDashboardCH": TaxDashboardCH,
     "TaxDashboardDE": TaxDashboardDE,
@@ -1051,6 +1056,7 @@ export const PAGES = {
     "TaxDeductionOptimizer": TaxDeductionOptimizer,
     "TaxDocumentManager": TaxDocumentManager,
     "TaxDocumentProcessor": TaxDocumentProcessor,
+    "TaxDocuments": TaxDocuments,
     "TaxEvents": TaxEvents,
     "TaxExportHub": TaxExportHub,
     "TaxFilingTimeline": TaxFilingTimeline,
@@ -1117,6 +1123,7 @@ export const PAGES = {
     "TenantPortalAdminDashboard": TenantPortalAdminDashboard,
     "TenantPortalDashboard": TenantPortalDashboard,
     "TenantPortalPage": TenantPortalPage,
+    "TenantSatisfaction": TenantSatisfaction,
     "TenantVettingSystem": TenantVettingSystem,
     "Tenants": Tenants,
     "TerminationManagement": TerminationManagement,
@@ -1206,12 +1213,7 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "BuildingComparison": BuildingComparison,
-    "FinancialOverview": FinancialOverview,
-    "TenantSatisfaction": TenantSatisfaction,
-    "LegalDocuments": LegalDocuments,
-    "PropertyPerformance": PropertyPerformance,
-    "TaxDocuments": TaxDocuments,
+    "PaymentManagement": PaymentManagement,
 }
 
 export const pagesConfig = {

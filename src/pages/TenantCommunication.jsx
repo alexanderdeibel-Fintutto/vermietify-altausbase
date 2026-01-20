@@ -1,117 +1,192 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { VfInput } from '@/components/shared/VfInput';
-import { VfTextarea } from '@/components/shared/VfTextarea';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
-import { MessageSquare, Send, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MessageSquare, Send, FileText, Phone } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { showSuccess } from '@/components/notifications/ToastNotification';
 
 export default function TenantCommunication() {
-    const params = new URLSearchParams(window.location.search);
-    const tenantId = params.get('tenant_id');
-
-    const [message, setMessage] = useState('');
-    const queryClient = useQueryClient();
+    const [selectedTenant, setSelectedTenant] = useState(null);
 
     const { data: messages = [] } = useQuery({
-        queryKey: ['tenantMessages', tenantId],
-        queryFn: () => base44.entities.TenantMessage.filter({ tenant_id: tenantId }),
-        enabled: !!tenantId
+        queryKey: ['tenantMessages'],
+        queryFn: () => base44.entities.TenantMessage.list('-created_date')
     });
 
-    const { data: tenant } = useQuery({
-        queryKey: ['tenant', tenantId],
-        queryFn: async () => {
-            const tenants = await base44.entities.Tenant.filter({ id: tenantId });
-            return tenants[0];
-        },
-        enabled: !!tenantId
+    const { data: tenants = [] } = useQuery({
+        queryKey: ['tenants'],
+        queryFn: () => base44.entities.Tenant.list()
     });
 
-    const sendMessageMutation = useMutation({
-        mutationFn: (data) => base44.entities.TenantMessage.create(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['tenantMessages', tenantId] });
-            setMessage('');
-            showSuccess('Nachricht gesendet');
-        }
-    });
+    const openMessages = messages.filter(m => m.status === 'open');
+    const inProgressMessages = messages.filter(m => m.status === 'in_progress');
+    const resolvedMessages = messages.filter(m => m.status === 'resolved');
 
-    const handleSend = () => {
-        if (!message.trim()) return;
-        sendMessageMutation.mutate({
-            tenant_id: tenantId,
-            subject: 'Neue Nachricht',
-            category: 'general',
-            message: message,
-            status: 'open'
-        });
+    const messagesByCategory = {
+        repair: messages.filter(m => m.category === 'repair').length,
+        billing: messages.filter(m => m.category === 'billing').length,
+        general: messages.filter(m => m.category === 'general').length,
+        other: messages.filter(m => m.category === 'other').length
     };
 
     return (
-        <div className="max-w-4xl space-y-6">
+        <div className="space-y-6">
             <div className="vf-page-header">
                 <div>
-                    <h1 className="vf-page-title">Chat mit {tenant?.vorname} {tenant?.nachname}</h1>
-                    <p className="vf-page-subtitle">Nachrichten & Anfragen</p>
+                    <h1 className="vf-page-title">Mieter-Kommunikation</h1>
+                    <p className="vf-page-subtitle">{messages.length} Anfragen</p>
                 </div>
             </div>
 
-            <Card>
-                <CardContent className="p-6">
-                    <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
-                        {messages.length === 0 ? (
-                            <div className="text-center py-12 text-gray-500">
-                                <MessageSquare className="w-16 h-16 mx-auto mb-3 text-gray-300" />
-                                <p>Noch keine Nachrichten</p>
-                            </div>
-                        ) : (
-                            messages.map((msg) => (
-                                <div key={msg.id} className="p-4 bg-gray-50 rounded-lg">
-                                    <div className="flex items-start justify-between mb-2">
-                                        <div className="font-semibold">{msg.subject}</div>
-                                        <Badge className={
-                                            msg.status === 'resolved' ? 'vf-badge-success' :
-                                            msg.status === 'in_progress' ? 'vf-badge-info' :
-                                            'vf-badge-warning'
-                                        }>
-                                            {msg.status}
-                                        </Badge>
-                                    </div>
-                                    <p className="text-sm text-gray-700 mb-2">{msg.message}</p>
-                                    {msg.response && (
-                                        <div className="mt-3 p-3 bg-blue-50 rounded border-l-4 border-blue-600">
-                                            <div className="text-xs text-blue-600 font-semibold mb-1">Antwort:</div>
-                                            <p className="text-sm text-gray-700">{msg.response}</p>
-                                        </div>
-                                    )}
-                                    <div className="text-xs text-gray-500 mt-2">
-                                        {new Date(msg.created_date).toLocaleDateString('de-DE')}
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-
-                    <div className="border-t pt-4">
-                        <VfTextarea
-                            placeholder="Nachricht eingeben..."
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            rows={3}
-                        />
-                        <div className="flex justify-end mt-3">
-                            <Button onClick={handleSend} className="vf-btn-gradient">
-                                <Send className="w-4 h-4" />
-                                Senden
-                            </Button>
+            <div className="grid md:grid-cols-5 gap-4">
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <MessageSquare className="w-8 h-8 text-red-600" />
                         </div>
-                    </div>
-                </CardContent>
-            </Card>
+                        <div className="text-3xl font-bold text-red-700">{openMessages.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Neu</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <MessageSquare className="w-8 h-8 text-orange-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-orange-700">{inProgressMessages.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">In Bearbeitung</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <MessageSquare className="w-8 h-8 text-green-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-green-700">{resolvedMessages.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Gelöst</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <FileText className="w-8 h-8 text-blue-600" />
+                        </div>
+                        <div className="text-3xl font-bold">{messagesByCategory.repair}</div>
+                        <div className="text-sm text-gray-600 mt-1">Reparaturen</div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-blue-900 to-orange-600 text-white border-none">
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <MessageSquare className="w-8 h-8" />
+                        </div>
+                        <div className="text-3xl font-bold">{messages.length}</div>
+                        <div className="text-sm opacity-90 mt-1">Gesamt</div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6">
+                <Card>
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4">Neue Anfragen</h3>
+                        <div className="space-y-2">
+                            {openMessages.slice(0, 5).map((msg) => {
+                                const tenant = tenants.find(t => t.id === msg.tenant_id);
+                                return (
+                                    <button
+                                        key={msg.id}
+                                        onClick={() => setSelectedTenant(msg)}
+                                        className="w-full p-3 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition text-left"
+                                    >
+                                        <div className="font-semibold text-sm">{tenant?.vorname} {tenant?.nachname}</div>
+                                        <div className="text-xs text-gray-600 mt-1 truncate">{msg.subject}</div>
+                                        <Badge className="mt-2 vf-badge-default text-xs">{msg.category}</Badge>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4">In Bearbeitung</h3>
+                        <div className="space-y-2">
+                            {inProgressMessages.slice(0, 5).map((msg) => {
+                                const tenant = tenants.find(t => t.id === msg.tenant_id);
+                                return (
+                                    <button
+                                        key={msg.id}
+                                        onClick={() => setSelectedTenant(msg)}
+                                        className="w-full p-3 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition text-left"
+                                    >
+                                        <div className="font-semibold text-sm">{tenant?.vorname} {tenant?.nachname}</div>
+                                        <div className="text-xs text-gray-600 mt-1 truncate">{msg.subject}</div>
+                                        <Badge className="mt-2 vf-badge-warning text-xs">{msg.category}</Badge>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4">Kategorien</h3>
+                        <div className="space-y-3">
+                            {Object.entries(messagesByCategory).map(([cat, count]) => (
+                                <div key={cat} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                    <span className="text-sm font-semibold capitalize">{cat}</span>
+                                    <Badge>{count}</Badge>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {selectedTenant && (
+                <Card className="border-blue-300 bg-blue-50/50">
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-semibold text-lg">Anfrage Details</h3>
+                            <Button size="sm" variant="ghost" onClick={() => setSelectedTenant(null)}>✕</Button>
+                        </div>
+                        <div className="space-y-4">
+                            <div className="p-4 bg-white rounded-lg border">
+                                <div className="font-semibold mb-2">{selectedTenant.subject}</div>
+                                <p className="text-gray-700 text-sm mb-4">{selectedTenant.message}</p>
+                                <div className="flex items-center justify-between">
+                                    <Badge>{selectedTenant.category}</Badge>
+                                    <Badge className={
+                                        selectedTenant.status === 'resolved' ? 'vf-badge-success' :
+                                        selectedTenant.status === 'in_progress' ? 'vf-badge-info' :
+                                        'vf-badge-warning'
+                                    }>
+                                        {selectedTenant.status}
+                                    </Badge>
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button className="flex-1 vf-btn-primary">
+                                    <Send className="w-4 h-4 mr-2" />
+                                    Antwort schreiben
+                                </Button>
+                                <Button variant="outline" className="flex-1">
+                                    <Phone className="w-4 h-4 mr-2" />
+                                    Anrufen
+                                </Button>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
         </div>
     );
 }
