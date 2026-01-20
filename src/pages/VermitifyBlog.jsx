@@ -1,95 +1,135 @@
 import React from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Calendar, User, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export default function VermitifyBlog() {
-  const posts = [
+const blogPosts = [
     {
-      title: 'Betriebskostenabrechnung 2025: Das müssen Sie beachten',
-      excerpt: 'Neue Regelungen und wichtige Fristen für die BK-Abrechnung 2025. Ein Leitfaden für Vermieter.',
-      date: '2025-01-15',
-      author: 'Sarah Müller',
-      image: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&h=400&fit=crop',
-      category: 'Recht'
+        title: '10 Tipps für erfolgreiche Immobilienverwaltung',
+        excerpt: 'Entdecken Sie bewährte Strategien, um Ihre Immobilien effizienter zu verwalten und Kosten zu sparen.',
+        category: 'Verwaltung',
+        author: 'Max Mustermann',
+        date: '15.01.2024',
+        readTime: '5 min'
     },
     {
-      title: '5 Tipps zur Steueroptimierung bei Vermietung',
-      excerpt: 'So holen Sie das Maximum aus Ihrer Steuererklärung heraus. Von AfA bis Werbungskosten.',
-      date: '2025-01-10',
-      author: 'Dr. Thomas Klein',
-      image: 'https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=600&h=400&fit=crop',
-      category: 'Steuern'
+        title: 'Betriebskostenabrechnung 2024: Das müssen Sie wissen',
+        excerpt: 'Alle wichtigen Änderungen und Fristen für die Betriebskostenabrechnung im neuen Jahr.',
+        category: 'Finanzen',
+        author: 'Anna Schmidt',
+        date: '10.01.2024',
+        readTime: '8 min'
     },
     {
-      title: 'Indexmiete: Wann und wie Sie die Miete anpassen können',
-      excerpt: 'Alles zur VPI-Indexanpassung: Rechtliche Grundlagen, Berechnung und Umsetzung.',
-      date: '2025-01-05',
-      author: 'Michael Schmidt',
-      image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&h=400&fit=crop',
-      category: 'Verwaltung'
+        title: 'Anlage V richtig ausfüllen - Schritt für Schritt',
+        excerpt: 'Ein praktischer Leitfaden zur korrekten Erstellung der Anlage V für Vermieter.',
+        category: 'Steuern',
+        author: 'Thomas Berger',
+        date: '05.01.2024',
+        readTime: '10 min'
     },
     {
-      title: 'Digitalisierung in der Immobilienverwaltung',
-      excerpt: 'Warum digitale Tools die Zukunft sind und wie Sie den Einstieg schaffen.',
-      date: '2025-01-01',
-      author: 'Anna Hoffmann',
-      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop',
-      category: 'Digital'
+        title: 'Digitalisierung in der Hausverwaltung',
+        excerpt: 'Wie moderne Software-Lösungen die Immobilienverwaltung revolutionieren.',
+        category: 'Technologie',
+        author: 'Lisa Huber',
+        date: '28.12.2023',
+        readTime: '6 min'
+    },
+    {
+        title: 'Mieterhöhung rechtssicher durchführen',
+        excerpt: 'Rechtliche Grundlagen und praktische Tipps für Mietanpassungen nach Kappungsgrenze.',
+        category: 'Recht',
+        author: 'Dr. Peter Wagner',
+        date: '20.12.2023',
+        readTime: '7 min'
+    },
+    {
+        title: 'Energieausweis: Pflichten für Vermieter 2024',
+        excerpt: 'Alle wichtigen Informationen zu Energieausweisen und gesetzlichen Anforderungen.',
+        category: 'Compliance',
+        author: 'Sarah Moser',
+        date: '15.12.2023',
+        readTime: '5 min'
     }
-  ];
+];
 
-  return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-6xl mx-auto px-6 py-20">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold mb-4">Blog</h1>
-          <p className="text-xl text-[var(--vf-neutral-600)]">
-            Wissen, Tipps und News rund um Immobilienverwaltung
-          </p>
-        </div>
+const categories = ['Alle', 'Verwaltung', 'Finanzen', 'Steuern', 'Recht', 'Technologie', 'Compliance'];
 
-        <div className="grid md:grid-cols-2 gap-8">
-          {posts.map((post, index) => (
-            <article 
-              key={index}
-              className="bg-white border border-[var(--vf-neutral-200)] rounded-2xl overflow-hidden hover:shadow-xl transition-shadow group"
-            >
-              <div className="overflow-hidden">
-                <img 
-                  src={post.image} 
-                  alt={post.title}
-                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-              <div className="p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="vf-badge vf-badge-gradient text-xs">{post.category}</span>
-                  <div className="flex items-center gap-1 text-xs text-[var(--vf-neutral-500)]">
-                    <Calendar className="h-3 w-3" />
-                    {new Date(post.date).toLocaleDateString('de-DE')}
-                  </div>
+export default function VermitifyBlog() {
+    const [selectedCategory, setSelectedCategory] = React.useState('Alle');
+
+    const filteredPosts = selectedCategory === 'Alle' 
+        ? blogPosts 
+        : blogPosts.filter(post => post.category === selectedCategory);
+
+    return (
+        <div className="min-h-screen bg-white">
+            {/* Hero */}
+            <div className="bg-gradient-to-br from-blue-50 to-orange-50 py-20">
+                <div className="max-w-4xl mx-auto px-6 text-center">
+                    <h1 className="text-5xl font-bold mb-6 vf-gradient-text">
+                        Vermitify Blog
+                    </h1>
+                    <p className="text-xl text-gray-600">
+                        Tipps, Neuigkeiten und Best Practices rund um Immobilienverwaltung
+                    </p>
                 </div>
-                <h2 className="text-xl font-bold mb-3 group-hover:text-[var(--theme-primary)] transition-colors">
-                  {post.title}
-                </h2>
-                <p className="text-[var(--vf-neutral-600)] mb-4">
-                  {post.excerpt}
-                </p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm">
-                    <User className="h-4 w-4 text-[var(--vf-neutral-400)]" />
-                    <span className="text-[var(--vf-neutral-600)]">{post.author}</span>
-                  </div>
-                  <Button variant="link" className="text-[var(--theme-primary)] p-0">
-                    Weiterlesen
-                    <ArrowRight className="h-4 w-4 ml-1" />
-                  </Button>
+            </div>
+
+            {/* Categories */}
+            <div className="max-w-6xl mx-auto px-6 py-8">
+                <div className="flex flex-wrap gap-3 justify-center">
+                    {categories.map((cat, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => setSelectedCategory(cat)}
+                            className={`px-4 py-2 rounded-full transition-all ${
+                                selectedCategory === cat
+                                    ? 'bg-gradient-to-r from-blue-900 to-orange-600 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            {cat}
+                        </button>
+                    ))}
                 </div>
-              </div>
-            </article>
-          ))}
+            </div>
+
+            {/* Blog Posts */}
+            <div className="max-w-6xl mx-auto px-6 pb-20">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredPosts.map((post, idx) => (
+                        <Card key={idx} className="vf-card-clickable">
+                            <CardHeader>
+                                <Badge className="vf-badge-primary w-fit mb-3">{post.category}</Badge>
+                                <CardTitle className="text-xl mb-2">{post.title}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-gray-600 text-sm mb-4">{post.excerpt}</p>
+                                
+                                <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
+                                    <div className="flex items-center gap-1">
+                                        <Calendar className="w-3 h-3" />
+                                        {post.date}
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <User className="w-3 h-3" />
+                                        {post.author}
+                                    </div>
+                                    <span>{post.readTime}</span>
+                                </div>
+
+                                <Button variant="ghost" className="w-full">
+                                    Weiterlesen
+                                    <ArrowRight className="w-4 h-4 ml-2" />
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }

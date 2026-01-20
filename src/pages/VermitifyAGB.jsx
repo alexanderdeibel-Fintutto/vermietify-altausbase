@@ -1,105 +1,130 @@
 import React from 'react';
 
 export default function VermitifyAGB() {
-  return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto px-6 py-20">
-        <h1 className="text-4xl font-bold mb-8">Allgemeine Geschäftsbedingungen</h1>
+    return (
+        <div className="min-h-screen bg-white">
+            <div className="max-w-4xl mx-auto px-6 py-20">
+                <h1 className="text-4xl font-bold mb-8">Allgemeine Geschäftsbedingungen</h1>
 
-        <div className="space-y-8 text-[var(--vf-neutral-700)]">
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">§ 1 Geltungsbereich</h2>
-            <p>
-              Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für alle Verträge zwischen der 
-              Vermitify GmbH (nachfolgend "Anbieter") und dem Kunden über die Nutzung der 
-              Software-as-a-Service-Plattform "Vermitify".
-            </p>
-          </section>
+                <div className="prose prose-lg max-w-none space-y-8 text-gray-700">
+                    <div>
+                        <h2 className="text-2xl font-semibold mb-4">§ 1 Geltungsbereich</h2>
+                        <p>
+                            Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für die Nutzung der Software-as-a-Service 
+                            (SaaS) Plattform Vermitify, bereitgestellt von der Vermitify GmbH.
+                        </p>
+                    </div>
 
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">§ 2 Vertragsgegenstand</h2>
-            <p>
-              Der Anbieter stellt dem Kunden eine cloudbasierte Software zur Immobilienverwaltung 
-              zur Verfügung. Der Funktionsumfang richtet sich nach dem gewählten Tarif.
-            </p>
-          </section>
+                    <div>
+                        <h2 className="text-2xl font-semibold mb-4">§ 2 Vertragsgegenstand</h2>
+                        <p>
+                            Vermitify bietet eine cloudbasierte Softwarelösung zur Verwaltung von Immobilien, einschließlich 
+                            Mieterverwaltung, Finanzverwaltung, Dokumentenmanagement und steuerlichen Funktionen.
+                        </p>
+                    </div>
 
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">§ 3 Vertragsschluss</h2>
-            <p>
-              Der Vertrag kommt durch die Registrierung des Kunden und die anschließende Bestätigung 
-              durch den Anbieter zustande. Bei kostenpflichtigen Tarifen erfolgt der Vertragsschluss 
-              mit dem Abschluss des Bestellvorgangs.
-            </p>
-          </section>
+                    <div>
+                        <h2 className="text-2xl font-semibold mb-4">§ 3 Vertragsschluss</h2>
+                        <p>
+                            Der Vertrag kommt durch Ihre Registrierung und unsere Bestätigung per E-Mail zustande. 
+                            Mit der Registrierung erkennen Sie diese AGB an.
+                        </p>
+                    </div>
 
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">§ 4 Leistungsumfang</h2>
-            <p className="mb-4">
-              Der Anbieter stellt die Software über das Internet zur Verfügung. Die Verfügbarkeit 
-              beträgt 99% im Jahresdurchschnitt, ausgenommen geplante Wartungsarbeiten.
-            </p>
-            <p>
-              Der Anbieter behält sich vor, die Software weiterzuentwickeln und Funktionen zu ändern, 
-              sofern dies dem Kunden zumutbar ist.
-            </p>
-          </section>
+                    <div>
+                        <h2 className="text-2xl font-semibold mb-4">§ 4 Nutzungsrechte</h2>
+                        <p>
+                            Sie erhalten ein nicht-exklusives, nicht übertragbares Recht zur Nutzung der Software 
+                            während der Laufzeit Ihres Abonnements. Die Software darf nur für eigene Zwecke genutzt werden.
+                        </p>
+                    </div>
 
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">§ 5 Preise und Zahlung</h2>
-            <p>
-              Die aktuellen Preise sind auf der Preisseite einsehbar. Die Abrechnung erfolgt monatlich 
-              oder jährlich im Voraus per Kreditkarte oder SEPA-Lastschrift.
-            </p>
-          </section>
+                    <div>
+                        <h2 className="text-2xl font-semibold mb-4">§ 5 Preise und Zahlung</h2>
+                        <p>
+                            Die jeweils gültigen Preise sind auf unserer Pricing-Seite einsehbar. Die Abrechnung erfolgt 
+                            monatlich oder jährlich im Voraus, je nach gewähltem Abrechnungszyklus.
+                        </p>
+                    </div>
 
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">§ 6 Testphase</h2>
-            <p>
-              Neukunden erhalten eine 14-tägige kostenlose Testphase. Nach Ablauf der Testphase ist 
-              die Buchung eines kostenpflichtigen Tarifs erforderlich.
-            </p>
-          </section>
+                    <div>
+                        <h2 className="text-2xl font-semibold mb-4">§ 6 Kostenlose Testphase</h2>
+                        <p>
+                            Neue Nutzer erhalten eine 14-tägige kostenlose Testphase. Während dieser Zeit haben Sie 
+                            vollen Zugriff auf alle Funktionen Ihres gewählten Plans.
+                        </p>
+                    </div>
 
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">§ 7 Kündigung</h2>
-            <p>
-              Der Vertrag kann von beiden Seiten jederzeit mit einer Frist von 30 Tagen zum Monatsende 
-              gekündigt werden. Die Kündigung bedarf der Textform.
-            </p>
-          </section>
+                    <div>
+                        <h2 className="text-2xl font-semibold mb-4">§ 7 Vertragslaufzeit und Kündigung</h2>
+                        <p>
+                            Der Vertrag läuft auf unbestimmte Zeit. Er kann von beiden Parteien mit einer Frist von 
+                            einem Monat zum Monatsende gekündigt werden. Bei jährlicher Zahlung beträgt die Kündigungsfrist 
+                            einen Monat zum Ende der Jahreslaufzeit.
+                        </p>
+                    </div>
 
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">§ 8 Datenschutz und Datensicherheit</h2>
-            <p>
-              Der Anbieter verpflichtet sich, alle geltenden Datenschutzbestimmungen einzuhalten. 
-              Details regelt die separate Datenschutzerklärung.
-            </p>
-          </section>
+                    <div>
+                        <h2 className="text-2xl font-semibold mb-4">§ 8 Pflichten des Nutzers</h2>
+                        <p>Der Nutzer verpflichtet sich:</p>
+                        <ul className="list-disc pl-6 mt-2 space-y-1">
+                            <li>Die Software nur rechtmäßig zu nutzen</li>
+                            <li>Zugangsdaten vertraulich zu behandeln</li>
+                            <li>Keine schädlichen Inhalte hochzuladen</li>
+                            <li>Regelmäßig Backups seiner Daten zu erstellen</li>
+                        </ul>
+                    </div>
 
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">§ 9 Haftung</h2>
-            <p>
-              Der Anbieter haftet unbeschränkt für Vorsatz und grobe Fahrlässigkeit. Bei leichter 
-              Fahrlässigkeit haftet der Anbieter nur bei Verletzung wesentlicher Vertragspflichten.
-            </p>
-          </section>
+                    <div>
+                        <h2 className="text-2xl font-semibold mb-4">§ 9 Verfügbarkeit und Wartung</h2>
+                        <p>
+                            Wir streben eine Verfügbarkeit von 99,5% im Jahresmittel an. Geplante Wartungsarbeiten werden 
+                            rechtzeitig angekündigt und erfolgen in der Regel nachts.
+                        </p>
+                    </div>
 
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">§ 10 Schlussbestimmungen</h2>
-            <p>
-              Es gilt das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts. 
-              Gerichtsstand ist Berlin.
-            </p>
-          </section>
+                    <div>
+                        <h2 className="text-2xl font-semibold mb-4">§ 10 Datenschutz</h2>
+                        <p>
+                            Wir verarbeiten Ihre personenbezogenen Daten gemäß der DSGVO. Details entnehmen Sie bitte 
+                            unserer Datenschutzerklärung.
+                        </p>
+                    </div>
 
-          <div className="pt-8 border-t border-[var(--vf-neutral-200)]">
-            <p className="text-sm text-[var(--vf-neutral-500)]">
-              Stand: Januar 2025
-            </p>
-          </div>
+                    <div>
+                        <h2 className="text-2xl font-semibold mb-4">§ 11 Haftung</h2>
+                        <p>
+                            Wir haften unbeschränkt für Schäden aus der Verletzung des Lebens, des Körpers oder der 
+                            Gesundheit sowie für Vorsatz und grobe Fahrlässigkeit. Für leichte Fahrlässigkeit haften 
+                            wir nur bei Verletzung wesentlicher Vertragspflichten.
+                        </p>
+                    </div>
+
+                    <div>
+                        <h2 className="text-2xl font-semibold mb-4">§ 12 Änderungen der AGB</h2>
+                        <p>
+                            Wir behalten uns vor, diese AGB mit einer Frist von vier Wochen zu ändern. Sie werden über 
+                            Änderungen per E-Mail informiert. Widersprechen Sie nicht innerhalb der Frist, gelten die 
+                            neuen AGB als akzeptiert.
+                        </p>
+                    </div>
+
+                    <div>
+                        <h2 className="text-2xl font-semibold mb-4">§ 13 Schlussbestimmungen</h2>
+                        <p>
+                            Es gilt das Recht der Republik Österreich. Gerichtsstand ist Wien. Sollten einzelne 
+                            Bestimmungen unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.
+                        </p>
+                    </div>
+
+                    <div className="bg-blue-50 border-l-4 border-blue-600 p-4">
+                        <p className="text-sm">
+                            <strong>Stand:</strong> Januar 2024<br />
+                            <strong>Bei Fragen:</strong> legal@vermitify.com
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }
