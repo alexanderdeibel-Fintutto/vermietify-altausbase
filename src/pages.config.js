@@ -591,6 +591,9 @@ import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
 import RentOptimization from './pages/RentOptimization';
 import TenantHistory from './pages/TenantHistory';
+import RentIncreaseWizard from './pages/RentIncreaseWizard';
+import RentIndexTracking from './pages/RentIndexTracking';
+import CommunityPortal from './pages/CommunityPortal';
 import __Layout from './Layout.jsx';
 
 
@@ -1188,6 +1191,9 @@ export const PAGES = {
     "WorkflowTemplates": WorkflowTemplates,
     "RentOptimization": RentOptimization,
     "TenantHistory": TenantHistory,
+    "RentIncreaseWizard": RentIncreaseWizard,
+    "RentIndexTracking": RentIndexTracking,
+    "CommunityPortal": CommunityPortal,
 }
 
 export const pagesConfig = {

@@ -1,143 +1,142 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { CheckCircle2, Loader2 } from 'lucide-react';
-import OnboardingSetupWizard from '@/components/onboarding/OnboardingSetupWizard';
-import OnboardingChecklist from '@/components/onboarding/OnboardingChecklist';
-import PersonalizedGuide from '@/components/onboarding/PersonalizedGuide';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { VfInput } from '@/components/shared/VfInput';
+import { CheckCircle, User, Mail, Phone, Calendar } from 'lucide-react';
+import { showSuccess } from '@/components/notifications/ToastNotification';
 
 export default function TenantOnboarding() {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [completedSteps, setCompletedSteps] = useState(new Set());
-  const queryClient = useQueryClient();
+    const [step, setStep] = useState(1);
+    const [formData, setFormData] = useState({
+        vorname: '',
+        nachname: '',
+        email: '',
+        telefon: '',
+        geburtsdatum: ''
+    });
 
-  const { data: user } = useQuery({
-    queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me()
-  });
+    const queryClient = useQueryClient();
 
-  const { data: tenantData } = useQuery({
-    queryKey: ['tenantOnboardingData', user?.email],
-    queryFn: async () => {
-      if (!user?.email) return null;
-      const results = await base44.entities.Tenant.filter({ email: user.email }, null, 1);
-      return results[0];
-    },
-    enabled: !!user?.email
-  });
+    const createTenantMutation = useMutation({
+        mutationFn: (data) => base44.entities.Tenant.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tenants'] });
+            setStep(3);
+            showSuccess('Mieter erfolgreich angelegt');
+        }
+    });
 
-  const createOnboardingMutation = useMutation({
-    mutationFn: async (data) => {
-      return await base44.entities.Tenant.update(tenantData.id, {
-        phone: data.primary_contact_phone,
-        emergency_contact: data.emergency_contact,
-        notification_method: data.notification_method,
-        preferred_contact_time: data.preferred_contact_time
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tenantData'] });
-      setCompletedSteps(new Set([...completedSteps, 'setup']));
-    }
-  });
+    const handleNext = () => {
+        if (step === 2) {
+            createTenantMutation.mutate(formData);
+        } else {
+            setStep(step + 1);
+        }
+    };
 
-  const handleWizardComplete = (data) => {
-    createOnboardingMutation.mutate(data);
-  };
-
-  const progressSteps = ['Setup Wizard', 'Checkliste', 'Guides'];
-  const completionPercentage = (completedSteps.size / progressSteps.length) * 100;
-
-  if (!tenantData) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-slate-600" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-light text-slate-900">Willkommen zum Mieterportal</h1>
-        <p className="text-slate-600 mt-1">Hallo {tenantData.full_name}! Lassen Sie uns Ihr Portal einrichten.</p>
-      </div>
-
-      {/* Progress Bar */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <p className="text-sm font-semibold text-slate-900">Onboarding Fortschritt</p>
-              <span className="text-sm text-slate-600">{Math.round(completionPercentage)}%</span>
+        <div className="max-w-2xl mx-auto space-y-6">
+            <div className="text-center py-6">
+                <h1 className="text-3xl font-bold mb-2">Mieter-Onboarding</h1>
+                <p className="text-gray-600">Schritt {step} von 3</p>
             </div>
-            <Progress value={completionPercentage} className="h-2" />
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Steps */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {progressSteps.map((step, index) => (
-          <Card
-            key={index}
-            className={`cursor-pointer transition-all ${
-              completedSteps.has(step.toLowerCase().replace(/\s+/g, ''))
-                ? 'bg-green-50 border-green-200'
-                : ''
-            }`}
-            onClick={() => setCurrentStep(index)}
-          >
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-2">
-                {completedSteps.has(step.toLowerCase().replace(/\s+/g, '')) ? (
-                  <CheckCircle2 className="w-5 h-5 text-green-600" />
-                ) : (
-                  <div className="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center text-xs font-semibold text-slate-600">
-                    {index + 1}
-                  </div>
-                )}
-                <span className="font-medium text-slate-900">{step}</span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            <div className="flex justify-center gap-2 mb-8">
+                {[1, 2, 3].map(i => (
+                    <div key={i} className={`h-2 w-24 rounded-full ${i <= step ? 'bg-blue-600' : 'bg-gray-200'}`} />
+                ))}
+            </div>
 
-      {/* Content */}
-      <Tabs value={`step-${currentStep}`} onValueChange={(val) => setCurrentStep(parseInt(val.split('-')[1]))}>
-        <TabsList className="hidden">
-          {progressSteps.map((_, idx) => (
-            <TabsTrigger key={idx} value={`step-${idx}`} />
-          ))}
-        </TabsList>
+            {step === 1 && (
+                <Card>
+                    <CardContent className="p-8">
+                        <h2 className="text-xl font-semibold mb-6">Persönliche Daten</h2>
+                        <div className="space-y-4">
+                            <VfInput
+                                label="Vorname"
+                                value={formData.vorname}
+                                onChange={(e) => setFormData(prev => ({ ...prev, vorname: e.target.value }))}
+                                leftIcon={User}
+                                required
+                            />
+                            <VfInput
+                                label="Nachname"
+                                value={formData.nachname}
+                                onChange={(e) => setFormData(prev => ({ ...prev, nachname: e.target.value }))}
+                                leftIcon={User}
+                                required
+                            />
+                            <VfInput
+                                label="Geburtsdatum"
+                                type="date"
+                                value={formData.geburtsdatum}
+                                onChange={(e) => setFormData(prev => ({ ...prev, geburtsdatum: e.target.value }))}
+                                leftIcon={Calendar}
+                            />
+                        </div>
+                        <Button className="vf-btn-gradient w-full mt-6" onClick={handleNext}>
+                            Weiter
+                        </Button>
+                    </CardContent>
+                </Card>
+            )}
 
-        <TabsContent value="step-0">
-          <OnboardingSetupWizard
-            tenantData={tenantData}
-            onComplete={handleWizardComplete}
-            isLoading={createOnboardingMutation.isPending}
-          />
-        </TabsContent>
+            {step === 2 && (
+                <Card>
+                    <CardContent className="p-8">
+                        <h2 className="text-xl font-semibold mb-6">Kontaktdaten</h2>
+                        <div className="space-y-4">
+                            <VfInput
+                                label="E-Mail"
+                                type="email"
+                                value={formData.email}
+                                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                                leftIcon={Mail}
+                                required
+                            />
+                            <VfInput
+                                label="Telefon"
+                                type="tel"
+                                value={formData.telefon}
+                                onChange={(e) => setFormData(prev => ({ ...prev, telefon: e.target.value }))}
+                                leftIcon={Phone}
+                            />
+                        </div>
+                        <div className="flex gap-3 mt-6">
+                            <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
+                                Zurück
+                            </Button>
+                            <Button className="vf-btn-gradient flex-1" onClick={handleNext}>
+                                Mieter anlegen
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
-        <TabsContent value="step-1">
-          <OnboardingChecklist
-            tenantId={tenantData.id}
-            onStepComplete={() => setCompletedSteps(new Set([...completedSteps, 'checklist']))}
-          />
-        </TabsContent>
-
-        <TabsContent value="step-2">
-          <PersonalizedGuide
-            tenantData={tenantData}
-            onGuideComplete={() => setCompletedSteps(new Set([...completedSteps, 'guides']))}
-          />
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
+            {step === 3 && (
+                <Card>
+                    <CardContent className="p-8 text-center">
+                        <div className="w-20 h-20 mx-auto mb-6 bg-green-100 rounded-full flex items-center justify-center">
+                            <CheckCircle className="w-12 h-12 text-green-600" />
+                        </div>
+                        <h2 className="text-2xl font-bold mb-4">Mieter erfolgreich angelegt!</h2>
+                        <p className="text-gray-600 mb-8">
+                            {formData.vorname} {formData.nachname} wurde erfolgreich als Mieter hinzugefügt.
+                        </p>
+                        <div className="flex gap-3">
+                            <Button variant="outline" className="flex-1" onClick={() => { setStep(1); setFormData({ vorname: '', nachname: '', email: '', telefon: '', geburtsdatum: '' }); }}>
+                                Weiteren Mieter anlegen
+                            </Button>
+                            <Button className="vf-btn-gradient flex-1">
+                                Zur Übersicht
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+        </div>
+    );
 }
