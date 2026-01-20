@@ -1,203 +1,171 @@
-import React, { useState, useMemo } from 'react';
-import { useBuildingStats } from '@/components/buildings/useBuildingStats';
-import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
-import BuildingFilterBar from '@/components/buildings/BuildingFilterBar';
-import BuildingTable from '@/components/buildings/BuildingTable';
-import BuildingSummary from '@/components/buildings/BuildingSummary';
-import BuildingEditDialog from '@/components/buildings/BuildingEditDialog';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import DeleteConfirmDialog from '@/components/buildings/DeleteConfirmDialog';
-import { useLimitCheck } from '@/components/subscription/LimitChecker';
-import { Plus } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import BuildingCreationWizard from '@/components/buildings/BuildingCreationWizard';
-import { FeatureGateInline } from '@/components/subscription/FeatureGateInline';
+import { VfInput } from '@/components/shared/VfInput';
+import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Building2, Plus, MapPin, Home } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+import { showSuccess } from '@/components/notifications/ToastNotification';
 
-export default function BuildingsPage() {
-  const [filters, setFilters] = useState({ status: 'all', city: 'all', search: '' });
-  const [editingBuilding, setEditingBuilding] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [wizardOpen, setWizardOpen] = useState(false);
-  const queryClient = useQueryClient();
-
-  const { data: currentUser } = useQuery({ queryKey: ['currentUser'], queryFn: () => base44.auth.me() });
-  const { data: buildingStats, isLoading: isLoadingStats } = useBuildingStats();
-
-  const { data: permissions, isLoading: isLoadingPermissions } = useQuery({
-      queryKey: ['buildingPermissions', currentUser?.email],
-      queryFn: () => base44.entities.BuildingPermission.filter({ user_email: currentUser.email }),
-      enabled: !!currentUser && currentUser.role !== 'admin',
-  });
-
-  const permittedBuildingStats = useMemo(() => {
-      if (isLoadingStats || (currentUser && currentUser.role !== 'admin' && isLoadingPermissions)) {
-        return [];
-      }
-      if (!currentUser || !buildingStats) return [];
-
-      if (currentUser.role === 'admin') {
-          return buildingStats;
-      }
-
-      if (!permissions) {
-          return [];
-      }
-      
-      const permittedBuildingIds = new Set(permissions.map(p => p.building_id));
-      return buildingStats.filter(stat => permittedBuildingIds.has(stat.building.id));
-  }, [buildingStats, currentUser, permissions, isLoadingStats, isLoadingPermissions]);
-
-  const { totalBuildings, totalUnitsCount, totalRentedUnits, totalRevenue } = useMemo(() => {
-      const stats = permittedBuildingStats || [];
-      return {
-          totalBuildings: stats.length,
-          totalUnitsCount: stats.reduce((sum, s) => sum + s.totalUnits, 0),
-          totalRentedUnits: stats.reduce((sum, s) => sum + s.rentedUnits, 0),
-          totalRevenue: stats.reduce((sum, s) => sum + s.totalRent, 0),
-      }
-  }, [permittedBuildingStats]);
-
-  // Filter-Logik
-  const filteredStats = useMemo(() => {
-    return permittedBuildingStats.filter(stat => {
-      // Status-Filter
-      if (filters.status !== 'all') {
-        const occupancy = stat.occupancy;
-        if (filters.status === 'full' && occupancy !== 100) return false;
-        if (filters.status === 'partial' && (occupancy === 100 || occupancy <= 50)) return false;
-        if (filters.status === 'empty' && occupancy > 0) return false;
-      }
-
-      // City-Filter
-      if (filters.city !== 'all' && stat.building.city !== filters.city) return false;
-
-      // Search-Filter
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        return (
-          stat.building.name.toLowerCase().includes(searchLower) ||
-          (stat.building.address && stat.building.address.toLowerCase().includes(searchLower))
-        );
-      }
-
-      return true;
+export default function Buildings() {
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
+        strasse: '',
+        hausnummer: '',
+        plz: '',
+        ort: '',
+        land: 'Österreich'
     });
-  }, [buildingStats, filters]);
 
-  const deleteMutation = useMutation({
-    mutationFn: async (buildingId) => {
-      await base44.entities.Building.delete(buildingId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['buildings'] });
-      toast.success('Gebäude gelöscht');
-      setDeleteConfirm(null);
-    },
-    onError: () => toast.error('Fehler beim Löschen')
-  });
+    const queryClient = useQueryClient();
 
-  const handleDelete = (building) => {
-    setDeleteConfirm(building);
-  };
+    const { data: buildings = [], isLoading } = useQuery({
+        queryKey: ['buildings'],
+        queryFn: () => base44.entities.Building.list('-created_date')
+    });
 
-  const handleConfirmDelete = async () => {
-    if (deleteConfirm) {
-      deleteMutation.mutate(deleteConfirm.id);
+    const createBuildingMutation = useMutation({
+        mutationFn: (data) => base44.entities.Building.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['buildings'] });
+            setDialogOpen(false);
+            setFormData({ name: '', strasse: '', hausnummer: '', plz: '', ort: '', land: 'Österreich' });
+            showSuccess('Gebäude erstellt');
+        }
+    });
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        createBuildingMutation.mutate(formData);
+    };
+
+    if (isLoading) {
+        return <div className="flex items-center justify-center h-96"><div className="vf-spinner vf-spinner-lg" /></div>;
     }
-  };
 
-  const handleNewBuilding = () => {
-    setWizardOpen(true);
-  };
+    return (
+        <div className="space-y-6">
+            <div className="vf-page-header">
+                <div>
+                    <h1 className="vf-page-title">Gebäude</h1>
+                    <p className="vf-page-subtitle">{buildings.length} Gebäude verwaltet</p>
+                </div>
+                <div className="vf-page-actions">
+                    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button className="vf-btn-gradient">
+                                <Plus className="w-4 h-4" />
+                                Gebäude hinzufügen
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Neues Gebäude</DialogTitle>
+                            </DialogHeader>
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <VfInput
+                                    label="Gebäudename"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                    placeholder="z.B. Musterstraße 10"
+                                    required
+                                />
+                                <div className="grid grid-cols-3 gap-3">
+                                    <div className="col-span-2">
+                                        <VfInput
+                                            label="Straße"
+                                            value={formData.strasse}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, strasse: e.target.value }))}
+                                            required
+                                        />
+                                    </div>
+                                    <VfInput
+                                        label="Nr."
+                                        value={formData.hausnummer}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, hausnummer: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-3 gap-3">
+                                    <VfInput
+                                        label="PLZ"
+                                        value={formData.plz}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, plz: e.target.value }))}
+                                        required
+                                    />
+                                    <div className="col-span-2">
+                                        <VfInput
+                                            label="Ort"
+                                            value={formData.ort}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, ort: e.target.value }))}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <VfInput
+                                    label="Land"
+                                    value={formData.land}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, land: e.target.value }))}
+                                    required
+                                />
+                                <div className="flex justify-end gap-3 pt-4">
+                                    <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                                        Abbrechen
+                                    </Button>
+                                    <Button type="submit" className="vf-btn-gradient">
+                                        Erstellen
+                                    </Button>
+                                </div>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+                </div>
+            </div>
 
-  const handleQuickAction = (building) => {
-    toast.info('⚡ Quick-Status wird noch implementiert');
-  };
-
-  return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Gebäude</h1>
-        <p className="text-sm font-extralight text-slate-400 mt-1">{filteredStats.length} von {totalBuildings} Gebäuden</p>
-      </div>
-
-      {/* Filter-Bar */}
-      <BuildingFilterBar
-        buildings={permittedBuildingStats.map(s => s.building)}
-        filters={filters}
-        onStatusChange={(status) => setFilters({ ...filters, status })}
-        onCityChange={(city) => setFilters({ ...filters, city })}
-        onSearchChange={(search) => setFilters({ ...filters, search })}
-        onNewBuilding={handleNewBuilding}
-        renderNewButton={() => {
-          const { allowed } = useLimitCheck('MAX_OBJECTS');
-          return (
-            <Button
-              onClick={handleNewBuilding}
-              size="sm"
-              className="bg-slate-700 hover:bg-slate-800 font-extralight h-9 whitespace-nowrap"
-              disabled={!allowed}
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Neu
-            </Button>
-          );
-        }}
-      />
-
-      {/* Content */}
-      <div className="bg-white rounded-lg border border-slate-100 shadow-none">
-        {filteredStats.length > 0 ? (
-          <>
-            <BuildingTable
-              stats={filteredStats}
-              onEdit={setEditingBuilding}
-              onDelete={handleDelete}
-              onQuickAction={handleQuickAction}
-            />
-            <BuildingSummary
-              totalBuildings={filteredStats.length}
-              totalUnitsCount={filteredStats.reduce((sum, s) => sum + s.totalUnits, 0)}
-              totalRentedUnits={filteredStats.reduce((sum, s) => sum + s.rentedUnits, 0)}
-              totalRevenue={filteredStats.reduce((sum, s) => sum + s.totalRent, 0)}
-            />
-          </>
-        ) : (
-          <div className="p-12 text-center">
-            <p className="text-sm font-extralight text-slate-400">Keine Gebäude gefunden</p>
-          </div>
-        )}
-      </div>
-
-      {/* Edit Dialog */}
-      <BuildingEditDialog
-        building={editingBuilding}
-        open={!!editingBuilding}
-        onOpenChange={(open) => !open && setEditingBuilding(null)}
-      />
-
-      {/* Delete Confirm */}
-      <DeleteConfirmDialog
-        building={deleteConfirm}
-        open={!!deleteConfirm}
-        onConfirm={handleConfirmDelete}
-        onCancel={() => setDeleteConfirm(null)}
-        loading={deleteMutation.isPending}
-      />
-
-      {/* Creation Wizard */}
-      <BuildingCreationWizard
-        open={wizardOpen}
-        onClose={() => setWizardOpen(false)}
-        onBuildingCreated={(id) => {
-          queryClient.invalidateQueries(['buildings']);
-          setWizardOpen(false);
-        }}
-      />
-    </div>
-  );
+            {buildings.length === 0 ? (
+                <Card>
+                    <CardContent className="py-16">
+                        <div className="text-center">
+                            <Building2 className="w-20 h-20 mx-auto mb-6 text-gray-300" />
+                            <h3 className="text-xl font-semibold mb-2">Noch keine Gebäude</h3>
+                            <p className="text-gray-600 mb-6">Fügen Sie Ihr erstes Gebäude hinzu, um zu starten</p>
+                            <Button className="vf-btn-gradient" onClick={() => setDialogOpen(true)}>
+                                <Plus className="w-4 h-4" />
+                                Erstes Gebäude hinzufügen
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {buildings.map((building) => (
+                        <Link key={building.id} to={createPageUrl('BuildingDetail') + `?id=${building.id}`}>
+                            <Card className="vf-card-clickable h-full">
+                                <CardContent className="p-6">
+                                    <div className="flex items-start gap-4">
+                                        <div className="w-12 h-12 bg-gradient-to-br from-blue-900 to-orange-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <Building2 className="w-6 h-6 text-white" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-semibold text-lg mb-2">{building.name}</h3>
+                                            <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
+                                                <MapPin className="w-3 h-3" />
+                                                {building.strasse} {building.hausnummer}
+                                            </div>
+                                            <div className="text-sm text-gray-600">
+                                                {building.plz} {building.ort}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </Link>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
 }
