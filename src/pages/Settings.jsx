@@ -1,158 +1,148 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings as SettingsIcon, Bell, Lock, Users, Palette, HelpCircle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Settings, Bell, Lock, Palette, LogOut } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 export default function Settings() {
-    const [activeTab, setActiveTab] = useState('general');
+    const [activeTab, setActiveTab] = React.useState('general');
 
     return (
         <div className="space-y-6">
             <div className="vf-page-header">
                 <div>
                     <h1 className="vf-page-title">Einstellungen</h1>
-                    <p className="vf-page-subtitle">Verwalte deine Kontoeinstellungen</p>
+                    <p className="vf-page-subtitle">Verwalte dein Konto & Präferenzen</p>
                 </div>
             </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
-                    <TabsTrigger value="general" className="flex items-center gap-2">
-                        <SettingsIcon className="w-4 h-4" />
-                        <span className="hidden sm:inline">Allgemein</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="notifications" className="flex items-center gap-2">
-                        <Bell className="w-4 h-4" />
-                        <span className="hidden sm:inline">Benachrichtigungen</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="security" className="flex items-center gap-2">
-                        <Lock className="w-4 h-4" />
-                        <span className="hidden sm:inline">Sicherheit</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="team" className="flex items-center gap-2">
-                        <Users className="w-4 h-4" />
-                        <span className="hidden sm:inline">Team</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="appearance" className="flex items-center gap-2">
-                        <Palette className="w-4 h-4" />
-                        <span className="hidden sm:inline">Aussehen</span>
-                    </TabsTrigger>
-                </TabsList>
+            <div className="grid md:grid-cols-4 gap-4">
+                {[
+                    { icon: Settings, label: 'Allgemein', id: 'general' },
+                    { icon: Bell, label: 'Benachrichtigungen', id: 'notifications' },
+                    { icon: Palette, label: 'Erscheinungsbild', id: 'appearance' },
+                    { icon: Lock, label: 'Sicherheit', id: 'security' }
+                ].map((tab) => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                            activeTab === tab.id
+                                ? 'border-blue-600 bg-blue-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                    >
+                        <tab.icon className="w-6 h-6 mb-2 mx-auto" />
+                        <div className="text-sm font-semibold">{tab.label}</div>
+                    </button>
+                ))}
+            </div>
 
-                <TabsContent value="general" className="space-y-6">
-                    <Card>
-                        <CardContent className="p-6">
-                            <h3 className="font-semibold text-lg mb-4">Profilinformation</h3>
-                            <div className="space-y-4">
+            <Card>
+                <CardContent className="p-6">
+                    {activeTab === 'general' && (
+                        <div className="space-y-4">
+                            <h3 className="font-semibold text-lg">Allgemeine Einstellungen</h3>
+                            <div className="space-y-3">
                                 <div>
-                                    <label className="text-sm text-gray-600">Name</label>
-                                    <input type="text" className="vf-input mt-1" defaultValue="Max Mustermann" />
+                                    <label className="text-sm font-semibold text-gray-600">Firmenname</label>
+                                    <Input placeholder="Dein Firmenname" className="mt-1" />
                                 </div>
                                 <div>
-                                    <label className="text-sm text-gray-600">Email</label>
-                                    <input type="email" className="vf-input mt-1" defaultValue="max@example.com" />
+                                    <label className="text-sm font-semibold text-gray-600">E-Mail</label>
+                                    <Input placeholder="email@example.com" className="mt-1" />
                                 </div>
                                 <div>
-                                    <label className="text-sm text-gray-600">Telefon</label>
-                                    <input type="tel" className="vf-input mt-1" defaultValue="+49 123 456789" />
+                                    <label className="text-sm font-semibold text-gray-600">Telefon</label>
+                                    <Input placeholder="+49 1234567890" className="mt-1" />
                                 </div>
-                                <Button className="vf-btn-primary">Speichern</Button>
+                                <div className="pt-4">
+                                    <Button className="bg-blue-600 hover:bg-blue-700">Speichern</Button>
+                                </div>
                             </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+                        </div>
+                    )}
 
-                <TabsContent value="notifications" className="space-y-6">
-                    <Card>
-                        <CardContent className="p-6">
-                            <h3 className="font-semibold text-lg mb-4">Benachrichtigungseinstellungen</h3>
-                            <div className="space-y-4">
-                                {[
-                                    { label: 'Neue Mieter', enabled: true },
-                                    { label: 'Zahlungsreminder', enabled: true },
-                                    { label: 'Wartungsanfragen', enabled: false },
-                                    { label: 'Vertragsverlängerungen', enabled: true }
-                                ].map((notif, idx) => (
-                                    <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                        <span className="font-semibold">{notif.label}</span>
-                                        <input type="checkbox" defaultChecked={notif.enabled} className="w-4 h-4" />
+                    {activeTab === 'notifications' && (
+                        <div className="space-y-4">
+                            <h3 className="font-semibold text-lg">Benachrichtigungen</h3>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div>
+                                        <div className="font-semibold">Zahlungserinnerungen</div>
+                                        <div className="text-sm text-gray-600">Erhalte Benachrichtigungen bei ausstehenden Zahlungen</div>
                                     </div>
-                                ))}
-                            </div>
-                            <Button className="vf-btn-primary mt-4">Speichern</Button>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="security" className="space-y-6">
-                    <Card>
-                        <CardContent className="p-6">
-                            <h3 className="font-semibold text-lg mb-4">Sicherheitseinstellungen</h3>
-                            <div className="space-y-4">
-                                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                    <div className="font-semibold text-sm mb-2">Passwort ändern</div>
-                                    <Button variant="outline" className="w-full">Passwort aktualisieren</Button>
+                                    <input type="checkbox" defaultChecked className="w-5 h-5" />
                                 </div>
-                                <div className="p-3 bg-gray-50 border rounded-lg">
-                                    <div className="font-semibold text-sm mb-2">Zwei-Faktor-Authentifizierung</div>
-                                    <div className="text-sm text-gray-600 mb-2">Erhöhe die Sicherheit deines Kontos</div>
-                                    <Button variant="outline" className="w-full">2FA aktivieren</Button>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="team" className="space-y-6">
-                    <Card>
-                        <CardContent className="p-6">
-                            <h3 className="font-semibold text-lg mb-4">Team-Mitglieder</h3>
-                            <div className="space-y-2 mb-4">
-                                {[
-                                    { name: 'Anna Schmidt', role: 'Admin', email: 'anna@example.com' },
-                                    { name: 'Bob Meyer', role: 'Manager', email: 'bob@example.com' }
-                                ].map((member, idx) => (
-                                    <div key={idx} className="p-3 bg-gray-50 rounded-lg border flex items-center justify-between">
-                                        <div>
-                                            <div className="font-semibold text-sm">{member.name}</div>
-                                            <div className="text-xs text-gray-600">{member.email}</div>
-                                        </div>
-                                        <Badge className="vf-badge-primary">{member.role}</Badge>
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div>
+                                        <div className="font-semibold">Wartungsmitteilungen</div>
+                                        <div className="text-sm text-gray-600">Benachrichtigungen bei Wartungsaufträgen</div>
                                     </div>
-                                ))}
+                                    <input type="checkbox" defaultChecked className="w-5 h-5" />
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div>
+                                        <div className="font-semibold">Dokumentupdates</div>
+                                        <div className="text-sm text-gray-600">Informationen über neue Dokumente</div>
+                                    </div>
+                                    <input type="checkbox" className="w-5 h-5" />
+                                </div>
                             </div>
-                            <Button className="vf-btn-primary w-full">Team-Mitglied hinzufügen</Button>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+                        </div>
+                    )}
 
-                <TabsContent value="appearance" className="space-y-6">
-                    <Card>
-                        <CardContent className="p-6">
-                            <h3 className="font-semibold text-lg mb-4">Design-Optionen</h3>
-                            <div className="space-y-4">
+                    {activeTab === 'appearance' && (
+                        <div className="space-y-4">
+                            <h3 className="font-semibold text-lg">Erscheinungsbild</h3>
+                            <div className="space-y-3">
                                 <div>
-                                    <label className="text-sm text-gray-600 block mb-2">Farbschema</label>
-                                    <div className="flex gap-2">
-                                        <button className="w-12 h-12 rounded-lg bg-blue-600 border-2 border-blue-900" />
-                                        <button className="w-12 h-12 rounded-lg bg-purple-600 border-2 border-gray-200" />
-                                        <button className="w-12 h-12 rounded-lg bg-green-600 border-2 border-gray-200" />
+                                    <label className="text-sm font-semibold text-gray-600">Farbschema</label>
+                                    <div className="flex gap-2 mt-2">
+                                        {['Blau', 'Grün', 'Orange', 'Violett'].map((color) => (
+                                            <button
+                                                key={color}
+                                                className="px-4 py-2 rounded-lg border-2 border-gray-200 hover:border-gray-300"
+                                            >
+                                                {color}
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="text-sm text-gray-600 block mb-2">Dunkelheit</label>
-                                    <div className="flex gap-2">
-                                        <Button variant="outline" className="flex-1">Hell</Button>
-                                        <Button variant="outline" className="flex-1">Dunkel</Button>
+                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div>
+                                        <div className="font-semibold">Dunkler Modus</div>
                                     </div>
+                                    <input type="checkbox" className="w-5 h-5" />
                                 </div>
                             </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-            </Tabs>
+                        </div>
+                    )}
+
+                    {activeTab === 'security' && (
+                        <div className="space-y-4">
+                            <h3 className="font-semibold text-lg">Sicherheit</h3>
+                            <div className="space-y-3">
+                                <Button variant="outline" className="w-full justify-start">
+                                    <Lock className="w-4 h-4 mr-2" />
+                                    Passwort ändern
+                                </Button>
+                                <Button variant="outline" className="w-full justify-start">
+                                    <Lock className="w-4 h-4 mr-2" />
+                                    Zwei-Faktor-Authentifizierung aktivieren
+                                </Button>
+                                <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                                    <h4 className="font-semibold text-red-700 mb-2">Gefahrenzone</h4>
+                                    <Button variant="destructive" className="w-full">
+                                        <LogOut className="w-4 h-4 mr-2" />
+                                        Konto löschen
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 }

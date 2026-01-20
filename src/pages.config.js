@@ -618,6 +618,7 @@ import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
 import TaxOverview from './pages/TaxOverview';
 import FinancialSummary from './pages/FinancialSummary';
+import Reports from './pages/Reports';
 import __Layout from './Layout.jsx';
 
 
@@ -1242,6 +1243,7 @@ export const PAGES = {
     "WorkflowTemplates": WorkflowTemplates,
     "TaxOverview": TaxOverview,
     "FinancialSummary": FinancialSummary,
+    "Reports": Reports,
 }
 
 export const pagesConfig = {
