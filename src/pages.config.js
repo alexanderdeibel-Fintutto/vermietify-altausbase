@@ -69,6 +69,7 @@ import AdvancedSearch from './pages/AdvancedSearch';
 import AdvancedTaxReporting from './pages/AdvancedTaxReporting';
 import AdvancedWorkflowAnalytics from './pages/AdvancedWorkflowAnalytics';
 import AfACalculator from './pages/AfACalculator';
+import AfAManagement from './pages/AfAManagement';
 import AfaAssetDetail from './pages/AfaAssetDetail';
 import AfaAssetForm from './pages/AfaAssetForm';
 import AfaOverview from './pages/AfaOverview';
@@ -105,6 +106,7 @@ import AutomatedTaxFormGenerator from './pages/AutomatedTaxFormGenerator';
 import AutomationCenter from './pages/AutomationCenter';
 import AutomationRules from './pages/AutomationRules';
 import BKAbrechnungWizard from './pages/BKAbrechnungWizard';
+import Error404 from './pages/Error404';
 import BKAbrechnungWizardEnhanced from './pages/BKAbrechnungWizardEnhanced';
 import BKChecker from './pages/BKChecker';
 import BackupRecovery from './pages/BackupRecovery';
@@ -115,6 +117,7 @@ import BankTransactions from './pages/BankTransactions';
 import BankTransfers from './pages/BankTransfers';
 import BankingAutomationHub from './pages/BankingAutomationHub';
 import BankingManagement from './pages/BankingManagement';
+import BankingOverview from './pages/BankingOverview';
 import BudgetAnalysis from './pages/BudgetAnalysis';
 import BudgetPlanning from './pages/BudgetPlanning';
 import BuildingBoard from './pages/BuildingBoard';
@@ -213,7 +216,6 @@ import EnergyPassportManager from './pages/EnergyPassportManager';
 import EnhancedTenantPortal from './pages/EnhancedTenantPortal';
 import EntityTaxPlanning from './pages/EntityTaxPlanning';
 import Equipment from './pages/Equipment';
-import Error404 from './pages/Error404';
 import Error500 from './pages/Error500';
 import EstateTaxPlanning from './pages/EstateTaxPlanning';
 import EstimatedTaxScheduler from './pages/EstimatedTaxScheduler';
@@ -260,6 +262,7 @@ import InvestmentsCH from './pages/InvestmentsCH';
 import investorprofilQuiz from './pages/InvestorProfil Quiz';
 import InvestorProfilQuiz from './pages/InvestorProfilQuiz';
 import InvestorProfilQuizV2 from './pages/InvestorProfilQuizV2';
+import InvoiceDetail from './pages/InvoiceDetail';
 import InvoiceManagement from './pages/InvoiceManagement';
 import InvoiceManagementNew from './pages/InvoiceManagementNew';
 import Invoices from './pages/Invoices';
@@ -344,6 +347,7 @@ import PropertyTaxOverview from './pages/PropertyTaxOverview';
 import PropertyValuation from './pages/PropertyValuation';
 import PropertyValuationEngine from './pages/PropertyValuationEngine';
 import QuarterlyTaxEstimator from './pages/QuarterlyTaxEstimator';
+import QuickActions from './pages/QuickActions';
 import QuickStartGuide from './pages/QuickStartGuide';
 import QuizExample from './pages/QuizExample';
 import ROIDashboard from './pages/ROIDashboard';
@@ -356,6 +360,7 @@ import RentCollection from './pages/RentCollection';
 import RentCollectionDashboard from './pages/RentCollectionDashboard';
 import RentIncreaseOptimizer from './pages/RentIncreaseOptimizer';
 import RentIndexManagement from './pages/RentIndexManagement';
+import RentPaymentDashboard from './pages/RentPaymentDashboard';
 import ReportBuilder from './pages/ReportBuilder';
 import ReportGenerator from './pages/ReportGenerator';
 import ReportManagementCenter from './pages/ReportManagementCenter';
@@ -368,6 +373,7 @@ import RetirementTaxPlanning from './pages/RetirementTaxPlanning';
 import RoleManagement from './pages/RoleManagement';
 import RoleManagementPage from './pages/RoleManagementPage';
 import ScheduledTasks from './pages/ScheduledTasks';
+import SearchResults from './pages/SearchResults';
 import SelfEmploymentTaxPlanner from './pages/SelfEmploymentTaxPlanner';
 import SelfEmploymentTaxPlanning from './pages/SelfEmploymentTaxPlanning';
 import SettingsAppearance from './pages/SettingsAppearance';
@@ -395,6 +401,7 @@ import SyncManagement from './pages/SyncManagement';
 import SystemConfiguration from './pages/SystemConfiguration';
 import SystemHealth from './pages/SystemHealth';
 import SystemSettings from './pages/SystemSettings';
+import TaskDetail from './pages/TaskDetail';
 import TaskManagement from './pages/TaskManagement';
 import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
@@ -576,13 +583,7 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import InvoiceDetail from './pages/InvoiceDetail';
-import TaskDetail from './pages/TaskDetail';
-import AfAManagement from './pages/AfAManagement';
-import RentPaymentDashboard from './pages/RentPaymentDashboard';
-import BankingOverview from './pages/BankingOverview';
-import QuickActions from './pages/QuickActions';
-import SearchResults from './pages/SearchResults';
+import TerminationManagement from './pages/TerminationManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -658,6 +659,7 @@ export const PAGES = {
     "AdvancedTaxReporting": AdvancedTaxReporting,
     "AdvancedWorkflowAnalytics": AdvancedWorkflowAnalytics,
     "AfACalculator": AfACalculator,
+    "AfAManagement": AfAManagement,
     "AfaAssetDetail": AfaAssetDetail,
     "AfaAssetForm": AfaAssetForm,
     "AfaOverview": AfaOverview,
@@ -694,6 +696,7 @@ export const PAGES = {
     "AutomationCenter": AutomationCenter,
     "AutomationRules": AutomationRules,
     "BKAbrechnungWizard": BKAbrechnungWizard,
+    "Error404": Error404,
     "BKAbrechnungWizardEnhanced": BKAbrechnungWizardEnhanced,
     "BKChecker": BKChecker,
     "BackupRecovery": BackupRecovery,
@@ -704,6 +707,7 @@ export const PAGES = {
     "BankTransfers": BankTransfers,
     "BankingAutomationHub": BankingAutomationHub,
     "BankingManagement": BankingManagement,
+    "BankingOverview": BankingOverview,
     "BudgetAnalysis": BudgetAnalysis,
     "BudgetPlanning": BudgetPlanning,
     "BuildingBoard": BuildingBoard,
@@ -802,7 +806,6 @@ export const PAGES = {
     "EnhancedTenantPortal": EnhancedTenantPortal,
     "EntityTaxPlanning": EntityTaxPlanning,
     "Equipment": Equipment,
-    "Error404": Error404,
     "Error500": Error500,
     "EstateTaxPlanning": EstateTaxPlanning,
     "EstimatedTaxScheduler": EstimatedTaxScheduler,
@@ -849,6 +852,7 @@ export const PAGES = {
     "InvestorProfil Quiz": investorprofilQuiz,
     "InvestorProfilQuiz": InvestorProfilQuiz,
     "InvestorProfilQuizV2": InvestorProfilQuizV2,
+    "InvoiceDetail": InvoiceDetail,
     "InvoiceManagement": InvoiceManagement,
     "InvoiceManagementNew": InvoiceManagementNew,
     "Invoices": Invoices,
@@ -933,6 +937,7 @@ export const PAGES = {
     "PropertyValuation": PropertyValuation,
     "PropertyValuationEngine": PropertyValuationEngine,
     "QuarterlyTaxEstimator": QuarterlyTaxEstimator,
+    "QuickActions": QuickActions,
     "QuickStartGuide": QuickStartGuide,
     "QuizExample": QuizExample,
     "ROIDashboard": ROIDashboard,
@@ -945,6 +950,7 @@ export const PAGES = {
     "RentCollectionDashboard": RentCollectionDashboard,
     "RentIncreaseOptimizer": RentIncreaseOptimizer,
     "RentIndexManagement": RentIndexManagement,
+    "RentPaymentDashboard": RentPaymentDashboard,
     "ReportBuilder": ReportBuilder,
     "ReportGenerator": ReportGenerator,
     "ReportManagementCenter": ReportManagementCenter,
@@ -957,6 +963,7 @@ export const PAGES = {
     "RoleManagement": RoleManagement,
     "RoleManagementPage": RoleManagementPage,
     "ScheduledTasks": ScheduledTasks,
+    "SearchResults": SearchResults,
     "SelfEmploymentTaxPlanner": SelfEmploymentTaxPlanner,
     "SelfEmploymentTaxPlanning": SelfEmploymentTaxPlanning,
     "SettingsAppearance": SettingsAppearance,
@@ -984,6 +991,7 @@ export const PAGES = {
     "SystemConfiguration": SystemConfiguration,
     "SystemHealth": SystemHealth,
     "SystemSettings": SystemSettings,
+    "TaskDetail": TaskDetail,
     "TaskManagement": TaskManagement,
     "Tasks": Tasks,
     "Tax": Tax,
@@ -1165,13 +1173,7 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "InvoiceDetail": InvoiceDetail,
-    "TaskDetail": TaskDetail,
-    "AfAManagement": AfAManagement,
-    "RentPaymentDashboard": RentPaymentDashboard,
-    "BankingOverview": BankingOverview,
-    "QuickActions": QuickActions,
-    "SearchResults": SearchResults,
+    "TerminationManagement": TerminationManagement,
 }
 
 export const pagesConfig = {

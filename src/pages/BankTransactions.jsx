@@ -1,110 +1,107 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Download, Send, AlertCircle, Link as LinkIcon, CheckCircle2 } from "lucide-react";
-import CreateTransferDialog from "@/components/banking/CreateTransferDialog";
-import ApproveTransferDialog from "@/components/banking/ApproveTransferDialog";
-import TanInputDialog from "@/components/banking/TanInputDialog";
-import TransferStatusBadge from "@/components/banking/TransferStatusBadge";
-import { toast } from "sonner";
-import BankTransactionMatches from "@/components/banking/BankTransactionMatches";
-import ISTBookingCard from "@/components/shared/ISTBookingCard";
-import AIMatchSuggestions from "@/components/banking/AIMatchSuggestions";
-import BankTransactionMatchSuggestions from "@/components/banking/BankTransactionMatchSuggestions";
-import BatchMatchButton from "@/components/banking/BatchMatchButton";
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent } from '@/components/ui/card';
+import { VfInput } from '@/components/shared/VfInput';
+import { Badge } from '@/components/ui/badge';
+import { Search, TrendingUp, TrendingDown, Euro } from 'lucide-react';
 
-export default function BankTransactionsPage() {
-  const [createOpen, setCreateOpen] = useState(false);
-  const [approveOpen, setApproveOpen] = useState(false);
-  const [tanOpen, setTanOpen] = useState(false);
-  const [selectedTransfer, setSelectedTransfer] = useState(null);
-  const [filterStatus, setFilterStatus] = useState("all");
-  const queryClient = useQueryClient();
+export default function BankTransactions() {
+    const [searchTerm, setSearchTerm] = useState('');
 
-  const { data: transfers = [] } = useQuery({
-    queryKey: ["bank_transfers"],
-    queryFn: () => base44.entities.BankTransfer.list('-created_date', 100)
-  });
+    const { data: transactions = [], isLoading } = useQuery({
+        queryKey: ['bankTransactions'],
+        queryFn: () => base44.entities.BankTransaction.list('-buchungsdatum', 100)
+    });
 
-  const { data: invoices = [] } = useQuery({
-    queryKey: ["invoices"],
-    queryFn: () => base44.entities.Invoice?.list?.() || []
-  });
+    const filteredTransactions = transactions.filter(t =>
+        t.verwendungszweck?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.empfaenger_zahler?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-  const { data: contracts = [] } = useQuery({
-    queryKey: ["contracts"],
-    queryFn: () => base44.entities.LeaseContract?.list?.() || []
-  });
+    const income = transactions.filter(t => parseFloat(t.betrag) > 0).reduce((sum, t) => sum + parseFloat(t.betrag), 0);
+    const expenses = Math.abs(transactions.filter(t => parseFloat(t.betrag) < 0).reduce((sum, t) => sum + parseFloat(t.betrag), 0));
 
-  const filteredTransfers = transfers.filter(t => 
-    filterStatus === "all" || t.status === filterStatus
-  );
+    if (isLoading) {
+        return <div className="flex items-center justify-center h-96"><div className="vf-spinner vf-spinner-lg" /></div>;
+    }
 
-  const handleInitiateTransfer = async (transfer) => {
-    // ... (existing logic)
-  };
-
-  const handleMatch = (invoiceId) => {
-    console.log(`Matching transaction ${selectedTransfer.id} with invoice ${invoiceId}`);
-    // Add mutation logic here
-    setSelectedTransfer(null);
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Tatsächliche Zahlungen (IST)</h1>
-          <p className="text-gray-600 mt-1">Importierte Banktransaktionen und manuelle Zahlungen</p>
-        </div>
-        <Button onClick={() => setCreateOpen(true)} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Neue Transaktion
-        </Button>
-      </div>
-
-      <Card className="bg-yellow-50 border-yellow-200">
-        <CardContent className="p-4 flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-yellow-600" />
-          <p className="text-sm text-yellow-800">
-            Für jede Transaktion muss eine Verknüpfung zu einer Rechnung erstellt werden, damit sie in der EÜR korrekt berücksichtigt wird.
-          </p>
-        </CardContent>
-      </Card>
-
-      <div className="flex gap-2">
-        {/* ... (filter badges) ... */}
-      </div>
-
-      {/* Batch Accept Button */}
-      <BatchMatchButton 
-        transactions={filteredTransfers}
-        invoices={invoices}
-      />
-
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredTransfers.map(transfer => (
-          <ISTBookingCard 
-            key={transfer.id}
-            title={transfer.recipient_name || 'Unbekannt'}
-            amount={transfer.amount}
-            date={new Date(transfer.created_date).toLocaleDateString('de-DE')}
-            description={transfer.description || 'Keine Beschreibung'}
-          >
-            <div className="mt-4 pt-4 border-t space-y-3">
-              <AIMatchSuggestions transaction={transfer} />
-              <BankTransactionMatches transaction={transfer} invoices={invoices} onMatch={handleMatch} onIgnore={() => {}} />
+    return (
+        <div className="space-y-6">
+            <div className="vf-page-header">
+                <div>
+                    <h1 className="vf-page-title">Banktransaktionen</h1>
+                    <p className="vf-page-subtitle">{transactions.length} Transaktionen</p>
+                </div>
             </div>
-          </ISTBookingCard>
-        ))}
-      </div>
 
-      <CreateTransferDialog open={createOpen} onOpenChange={setCreateOpen} />
-      <ApproveTransferDialog open={approveOpen} onOpenChange={setApproveOpen} transfer={selectedTransfer} />
-      <TanInputDialog open={tanOpen} onOpenChange={setTanOpen} transfer={selectedTransfer} />
-    </div>
-  );
+            <div className="grid md:grid-cols-2 gap-4">
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <TrendingUp className="w-8 h-8 text-green-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-green-700">{income.toLocaleString('de-DE')}€</div>
+                        <div className="text-sm text-gray-600 mt-1">Eingänge</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <TrendingDown className="w-8 h-8 text-red-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-red-700">{expenses.toLocaleString('de-DE')}€</div>
+                        <div className="text-sm text-gray-600 mt-1">Ausgänge</div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <Card>
+                <CardContent className="p-4">
+                    <VfInput
+                        leftIcon={Search}
+                        placeholder="Transaktionen durchsuchen..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </CardContent>
+            </Card>
+
+            <div className="space-y-2">
+                {filteredTransactions.map((transaction) => {
+                    const amount = parseFloat(transaction.betrag);
+                    const isIncome = amount > 0;
+
+                    return (
+                        <Card key={transaction.id}>
+                            <CardContent className="p-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        {isIncome ? (
+                                            <TrendingUp className="w-8 h-8 text-green-600" />
+                                        ) : (
+                                            <TrendingDown className="w-8 h-8 text-red-600" />
+                                        )}
+                                        <div>
+                                            <div className="font-semibold">{transaction.empfaenger_zahler || 'Unbekannt'}</div>
+                                            <div className="text-sm text-gray-600">{transaction.verwendungszweck}</div>
+                                            <div className="text-xs text-gray-500 mt-1">
+                                                {new Date(transaction.buchungsdatum).toLocaleDateString('de-DE')}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className={`text-2xl font-bold ${isIncome ? 'text-green-700' : 'text-red-700'}`}>
+                                            {isIncome ? '+' : ''}{amount.toLocaleString('de-DE')}€
+                                        </div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
+            </div>
+        </div>
+    );
 }
