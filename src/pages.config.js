@@ -164,6 +164,7 @@ import ContractDetail from './pages/ContractDetail';
 import ContractDetailEnhanced from './pages/ContractDetailEnhanced';
 import ContractDetailTemplate from './pages/ContractDetailTemplate';
 import ContractRenewals from './pages/ContractRenewals';
+import ContractTemplates from './pages/ContractTemplates';
 import ContractorMarketplace from './pages/ContractorMarketplace';
 import Contracts from './pages/Contracts';
 import CostTypes from './pages/CostTypes';
@@ -178,6 +179,7 @@ import DataImportExport from './pages/DataImportExport';
 import DataImportExportHub from './pages/DataImportExportHub';
 import DataManagementHub from './pages/DataManagementHub';
 import DeductionMaximizationTool from './pages/DeductionMaximizationTool';
+import DepositManagement from './pages/DepositManagement';
 import DesignSystem from './pages/DesignSystem';
 import DesignSystemShowcase from './pages/DesignSystemShowcase';
 import DeveloperDocumentation from './pages/DeveloperDocumentation';
@@ -320,8 +322,8 @@ import OperatingCostAutomationHub from './pages/OperatingCostAutomationHub';
 import OperatingCostWizard from './pages/OperatingCostWizard';
 import OperatingCosts from './pages/OperatingCosts';
 import OperatingCostsManagement from './pages/OperatingCostsManagement';
-import OperatingCostsSimplified from './pages/OperatingCostsSimplified';
 import OtherIncomeCH from './pages/OtherIncomeCH';
+import OperatingCostsSimplified from './pages/OperatingCostsSimplified';
 import OwnersManagement from './pages/OwnersManagement';
 import PackageManager from './pages/PackageManager';
 import PackageTestPage from './pages/PackageTestPage';
@@ -339,6 +341,7 @@ import PortfolioOptimizer from './pages/PortfolioOptimizer';
 import PreciousMetals from './pages/PreciousMetals';
 import Pricing from './pages/Pricing';
 import ProjectManagement from './pages/ProjectManagement';
+import PropertyComparison from './pages/PropertyComparison';
 import PropertyManagementDashboard from './pages/PropertyManagementDashboard';
 import PropertyManagementHub from './pages/PropertyManagementHub';
 import PropertyManagerDashboard from './pages/PropertyManagerDashboard';
@@ -430,9 +433,9 @@ import TaxDashboardMultiCountry from './pages/TaxDashboardMultiCountry';
 import TaxDataImportHub from './pages/TaxDataImportHub';
 import TaxDeadlines from './pages/TaxDeadlines';
 import TaxDeductionOptimizer from './pages/TaxDeductionOptimizer';
+import TaxEvents from './pages/TaxEvents';
 import TaxDocumentManager from './pages/TaxDocumentManager';
 import TaxDocumentProcessor from './pages/TaxDocumentProcessor';
-import TaxEvents from './pages/TaxEvents';
 import TaxExportHub from './pages/TaxExportHub';
 import TaxFilingTimeline from './pages/TaxFilingTimeline';
 import TaxFilingWizard from './pages/TaxFilingWizard';
@@ -499,6 +502,7 @@ import TenantPortalDashboard from './pages/TenantPortalDashboard';
 import TenantPortalPage from './pages/TenantPortalPage';
 import TenantVettingSystem from './pages/TenantVettingSystem';
 import Tenants from './pages/Tenants';
+import TerminationManagement from './pages/TerminationManagement';
 import TesterAcceptInvitation from './pages/TesterAcceptInvitation';
 import TesterActivityAnalytics from './pages/TesterActivityAnalytics';
 import TesterDashboard from './pages/TesterDashboard';
@@ -518,6 +522,8 @@ import UserAudit from './pages/UserAudit';
 import UserDetail from './pages/UserDetail';
 import UserManagement from './pages/UserManagement';
 import UserSettings from './pages/UserSettings';
+import UtilityBilling from './pages/UtilityBilling';
+import VacancyManagement from './pages/VacancyManagement';
 import VendorManagement from './pages/VendorManagement';
 import VermieterApp from './pages/VermieterApp';
 import VermieterDashboard from './pages/VermieterDashboard';
@@ -583,12 +589,8 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import TerminationManagement from './pages/TerminationManagement';
-import VacancyManagement from './pages/VacancyManagement';
-import DepositManagement from './pages/DepositManagement';
-import UtilityBilling from './pages/UtilityBilling';
-import ContractTemplates from './pages/ContractTemplates';
-import PropertyComparison from './pages/PropertyComparison';
+import RentOptimization from './pages/RentOptimization';
+import TenantHistory from './pages/TenantHistory';
 import __Layout from './Layout.jsx';
 
 
@@ -759,6 +761,7 @@ export const PAGES = {
     "ContractDetailEnhanced": ContractDetailEnhanced,
     "ContractDetailTemplate": ContractDetailTemplate,
     "ContractRenewals": ContractRenewals,
+    "ContractTemplates": ContractTemplates,
     "ContractorMarketplace": ContractorMarketplace,
     "Contracts": Contracts,
     "CostTypes": CostTypes,
@@ -773,6 +776,7 @@ export const PAGES = {
     "DataImportExportHub": DataImportExportHub,
     "DataManagementHub": DataManagementHub,
     "DeductionMaximizationTool": DeductionMaximizationTool,
+    "DepositManagement": DepositManagement,
     "DesignSystem": DesignSystem,
     "DesignSystemShowcase": DesignSystemShowcase,
     "DeveloperDocumentation": DeveloperDocumentation,
@@ -915,8 +919,8 @@ export const PAGES = {
     "OperatingCostWizard": OperatingCostWizard,
     "OperatingCosts": OperatingCosts,
     "OperatingCostsManagement": OperatingCostsManagement,
-    "OperatingCostsSimplified": OperatingCostsSimplified,
     "OtherIncomeCH": OtherIncomeCH,
+    "OperatingCostsSimplified": OperatingCostsSimplified,
     "OwnersManagement": OwnersManagement,
     "PackageManager": PackageManager,
     "PackageTestPage": PackageTestPage,
@@ -934,6 +938,7 @@ export const PAGES = {
     "PreciousMetals": PreciousMetals,
     "Pricing": Pricing,
     "ProjectManagement": ProjectManagement,
+    "PropertyComparison": PropertyComparison,
     "PropertyManagementDashboard": PropertyManagementDashboard,
     "PropertyManagementHub": PropertyManagementHub,
     "PropertyManagerDashboard": PropertyManagerDashboard,
@@ -1025,9 +1030,9 @@ export const PAGES = {
     "TaxDataImportHub": TaxDataImportHub,
     "TaxDeadlines": TaxDeadlines,
     "TaxDeductionOptimizer": TaxDeductionOptimizer,
+    "TaxEvents": TaxEvents,
     "TaxDocumentManager": TaxDocumentManager,
     "TaxDocumentProcessor": TaxDocumentProcessor,
-    "TaxEvents": TaxEvents,
     "TaxExportHub": TaxExportHub,
     "TaxFilingTimeline": TaxFilingTimeline,
     "TaxFilingWizard": TaxFilingWizard,
@@ -1094,6 +1099,7 @@ export const PAGES = {
     "TenantPortalPage": TenantPortalPage,
     "TenantVettingSystem": TenantVettingSystem,
     "Tenants": Tenants,
+    "TerminationManagement": TerminationManagement,
     "TesterAcceptInvitation": TesterAcceptInvitation,
     "TesterActivityAnalytics": TesterActivityAnalytics,
     "TesterDashboard": TesterDashboard,
@@ -1113,6 +1119,8 @@ export const PAGES = {
     "UserDetail": UserDetail,
     "UserManagement": UserManagement,
     "UserSettings": UserSettings,
+    "UtilityBilling": UtilityBilling,
+    "VacancyManagement": VacancyManagement,
     "VendorManagement": VendorManagement,
     "VermieterApp": VermieterApp,
     "VermieterDashboard": VermieterDashboard,
@@ -1178,12 +1186,8 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "TerminationManagement": TerminationManagement,
-    "VacancyManagement": VacancyManagement,
-    "DepositManagement": DepositManagement,
-    "UtilityBilling": UtilityBilling,
-    "ContractTemplates": ContractTemplates,
-    "PropertyComparison": PropertyComparison,
+    "RentOptimization": RentOptimization,
+    "TenantHistory": TenantHistory,
 }
 
 export const pagesConfig = {
