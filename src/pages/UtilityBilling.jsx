@@ -3,29 +3,33 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Zap, Droplet, Flame, FileText, Plus } from 'lucide-react';
+import { Droplet, Zap, FileText, Plus } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 export default function UtilityBilling() {
-    const { data: meterReadings = [] } = useQuery({
-        queryKey: ['meterReadings'],
-        queryFn: () => base44.entities.MeterReading.list('-ablesedatum', 50)
-    });
-
     const { data: statements = [] } = useQuery({
         queryKey: ['operatingCostStatements'],
-        queryFn: () => base44.entities.OperatingCostStatement.list()
+        queryFn: () => base44.entities.OperatingCostStatement.list('-abrechnungsjahr')
     });
+
+    const { data: buildings = [] } = useQuery({
+        queryKey: ['buildings'],
+        queryFn: () => base44.entities.Building.list()
+    });
+
+    const draftStatements = statements.filter(s => s.status === 'Entwurf');
+    const sentStatements = statements.filter(s => s.status === 'Versendet');
 
     return (
         <div className="space-y-6">
             <div className="vf-page-header">
                 <div>
-                    <h1 className="vf-page-title">Nebenkostenabrechnung</h1>
-                    <p className="vf-page-subtitle">Verbrauch & Abrechnungen</p>
+                    <h1 className="vf-page-title">Nebenkostenabrechnungen</h1>
+                    <p className="vf-page-subtitle">{statements.length} Abrechnungen</p>
                 </div>
                 <div className="vf-page-actions">
                     <Button className="vf-btn-gradient">
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-4 h-4 mr-2" />
                         Neue Abrechnung
                     </Button>
                 </div>
@@ -35,64 +39,81 @@ export default function UtilityBilling() {
                 <Card>
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-2">
-                            <Zap className="w-8 h-8 text-yellow-600" />
+                            <FileText className="w-8 h-8 text-blue-600" />
                         </div>
-                        <div className="text-3xl font-bold">{Math.floor(Math.random() * 50 + 100)}</div>
-                        <div className="text-sm text-gray-600 mt-1">Strom (kWh)</div>
+                        <div className="text-3xl font-bold">{statements.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Abrechnungen</div>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-2">
-                            <Droplet className="w-8 h-8 text-blue-600" />
+                            <FileText className="w-8 h-8 text-orange-600" />
                         </div>
-                        <div className="text-3xl font-bold">{Math.floor(Math.random() * 30 + 50)}</div>
-                        <div className="text-sm text-gray-600 mt-1">Wasser (m³)</div>
+                        <div className="text-3xl font-bold text-orange-700">{draftStatements.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Entwürfe</div>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-2">
-                            <Flame className="w-8 h-8 text-red-600" />
+                            <FileText className="w-8 h-8 text-green-600" />
                         </div>
-                        <div className="text-3xl font-bold">{Math.floor(Math.random() * 200 + 400)}</div>
-                        <div className="text-sm text-gray-600 mt-1">Heizung (kWh)</div>
+                        <div className="text-3xl font-bold text-green-700">{sentStatements.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Versendet</div>
                     </CardContent>
                 </Card>
 
                 <Card className="bg-gradient-to-br from-blue-900 to-orange-600 text-white border-none">
                     <CardContent className="p-6">
-                        <div className="text-3xl font-bold">{statements.length}</div>
-                        <div className="text-sm opacity-90 mt-1">Abrechnungen</div>
+                        <div className="text-3xl font-bold">2025</div>
+                        <div className="text-sm opacity-90 mt-1">Aktuelles Jahr</div>
                     </CardContent>
                 </Card>
             </div>
 
             <Card>
                 <CardContent className="p-6">
-                    <h3 className="font-semibold text-lg mb-4">Letzte Zählerstände</h3>
-                    <div className="space-y-3">
-                        {meterReadings.slice(0, 10).map((reading) => (
-                            <div key={reading.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                <div className="flex items-center gap-3">
-                                    {reading.zaehlertyp === 'Strom' && <Zap className="w-5 h-5 text-yellow-600" />}
-                                    {reading.zaehlertyp === 'Wasser' && <Droplet className="w-5 h-5 text-blue-600" />}
-                                    {reading.zaehlertyp === 'Heizung' && <Flame className="w-5 h-5 text-red-600" />}
-                                    <div>
-                                        <div className="font-medium">{reading.zaehlertyp || 'Unbekannt'}</div>
-                                        <div className="text-sm text-gray-600">
-                                            {new Date(reading.ablesedatum).toLocaleDateString('de-DE')}
+                    <h3 className="font-semibold text-lg mb-4">Abrechnungen nach Jahr</h3>
+                    <div className="space-y-2">
+                        {statements.map((statement) => {
+                            const building = buildings.find(b => b.id === statement.building_id);
+                            return (
+                                <div key={statement.id} className="p-4 bg-gray-50 rounded-lg border">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div>
+                                            <div className="font-semibold">{building?.name || 'Unbekannt'}</div>
+                                            <div className="text-sm text-gray-600">Jahr {statement.abrechnungsjahr}</div>
+                                        </div>
+                                        <Badge className={
+                                            statement.status === 'Versendet' ? 'vf-badge-success' : 
+                                            statement.status === 'Berechnet' ? 'vf-badge-primary' : 
+                                            'vf-badge-default'
+                                        }>
+                                            {statement.status}
+                                        </Badge>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-3 mt-3 text-xs">
+                                        <div>
+                                            <div className="text-gray-600">Gesamtkosten</div>
+                                            <div className="font-semibold">{statement.gesamtkosten?.toLocaleString('de-DE')}€</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-gray-600">Vorauszahlungen</div>
+                                            <div className="font-semibold">{statement.gesamtvorauszahlungen?.toLocaleString('de-DE')}€</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-gray-600">Ergebnis</div>
+                                            <div className={`font-semibold ${statement.gesamtergebnis > 0 ? 'text-red-700' : 'text-green-700'}`}>
+                                                {statement.gesamtergebnis?.toLocaleString('de-DE')}€
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <div className="font-bold">{reading.zaehlerstand}</div>
-                                    <div className="text-sm text-gray-600">Zählerstand</div>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </CardContent>
             </Card>

@@ -1,28 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { VfInput } from '@/components/shared/VfInput';
-import { VfSelect } from '@/components/shared/VfSelect';
-import { VfTextarea } from '@/components/shared/VfTextarea';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { FileX, Plus, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { FileX, Plus, Calendar, CheckCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { showSuccess } from '@/components/notifications/ToastNotification';
 
 export default function TerminationManagement() {
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [formData, setFormData] = useState({
-        contract_id: '',
-        kuendigungsgrund: '',
-        kuendigungsdatum: new Date().toISOString().split('T')[0],
-        auszugsdatum: ''
-    });
-
-    const queryClient = useQueryClient();
-
-    const { data: terminations = [], isLoading } = useQuery({
+    const { data: terminations = [] } = useQuery({
         queryKey: ['terminations'],
         queryFn: () => base44.entities.ContractTermination.list('-kuendigungsdatum')
     });
@@ -32,135 +17,93 @@ export default function TerminationManagement() {
         queryFn: () => base44.entities.LeaseContract.list()
     });
 
-    const { data: tenants = [] } = useQuery({
-        queryKey: ['tenants'],
-        queryFn: () => base44.entities.Tenant.list()
-    });
-
-    const createTerminationMutation = useMutation({
-        mutationFn: (data) => base44.entities.ContractTermination.create(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['terminations'] });
-            setDialogOpen(false);
-            setFormData({ contract_id: '', kuendigungsgrund: '', kuendigungsdatum: new Date().toISOString().split('T')[0], auszugsdatum: '' });
-            showSuccess('Kündigung erfasst');
-        }
-    });
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        createTerminationMutation.mutate(formData);
-    };
-
-    if (isLoading) {
-        return <div className="flex items-center justify-center h-96"><div className="vf-spinner vf-spinner-lg" /></div>;
-    }
+    const pendingTerminations = terminations.filter(t => t.status === 'pending');
+    const confirmedTerminations = terminations.filter(t => t.status === 'confirmed');
 
     return (
         <div className="space-y-6">
             <div className="vf-page-header">
                 <div>
-                    <h1 className="vf-page-title">Kündigungen</h1>
+                    <h1 className="vf-page-title">Kündigungsverwaltung</h1>
                     <p className="vf-page-subtitle">{terminations.length} Kündigungen</p>
                 </div>
                 <div className="vf-page-actions">
-                    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button className="vf-btn-gradient">
-                                <Plus className="w-4 h-4" />
-                                Kündigung erfassen
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Neue Kündigung</DialogTitle>
-                            </DialogHeader>
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <VfSelect
-                                    label="Vertrag"
-                                    value={formData.contract_id}
-                                    onChange={(value) => setFormData(prev => ({ ...prev, contract_id: value }))}
-                                    options={contracts.map(c => ({ value: c.id, label: `Vertrag #${c.id.slice(0, 8)}` }))}
-                                    required
-                                />
-                                <VfTextarea
-                                    label="Kündigungsgrund"
-                                    value={formData.kuendigungsgrund}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, kuendigungsgrund: e.target.value }))}
-                                    rows={3}
-                                />
-                                <VfInput
-                                    label="Kündigungsdatum"
-                                    type="date"
-                                    value={formData.kuendigungsdatum}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, kuendigungsdatum: e.target.value }))}
-                                    required
-                                />
-                                <VfInput
-                                    label="Auszugsdatum"
-                                    type="date"
-                                    value={formData.auszugsdatum}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, auszugsdatum: e.target.value }))}
-                                    required
-                                />
-                                <div className="flex justify-end gap-3 pt-4">
-                                    <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                                        Abbrechen
-                                    </Button>
-                                    <Button type="submit" className="vf-btn-gradient">
-                                        Erfassen
-                                    </Button>
-                                </div>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
+                    <Button className="vf-btn-gradient">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Neue Kündigung
+                    </Button>
                 </div>
             </div>
 
-            {terminations.length === 0 ? (
+            <div className="grid md:grid-cols-4 gap-4">
                 <Card>
-                    <CardContent className="py-16">
-                        <div className="text-center">
-                            <FileX className="w-20 h-20 mx-auto mb-6 text-gray-300" />
-                            <h3 className="text-xl font-semibold mb-2">Keine Kündigungen</h3>
-                            <p className="text-gray-600">Noch keine Vertragskündigungen erfasst</p>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <FileX className="w-8 h-8 text-blue-600" />
                         </div>
+                        <div className="text-3xl font-bold">{terminations.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Kündigungen</div>
                     </CardContent>
                 </Card>
-            ) : (
-                <div className="space-y-3">
-                    {terminations.map((termination) => {
-                        const contract = contracts.find(c => c.id === termination.contract_id);
-                        const tenant = contract ? tenants.find(t => t.id === contract.tenant_id) : null;
 
-                        return (
-                            <Card key={termination.id}>
-                                <CardContent className="p-4">
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex items-start gap-4">
-                                            <FileX className="w-8 h-8 text-red-600" />
-                                            <div>
-                                                <h3 className="font-semibold mb-1">
-                                                    {tenant ? `${tenant.vorname} ${tenant.nachname}` : 'Unbekannt'}
-                                                </h3>
-                                                {termination.kuendigungsgrund && (
-                                                    <p className="text-sm text-gray-700 mb-2">{termination.kuendigungsgrund}</p>
-                                                )}
-                                                <div className="flex items-center gap-3 text-xs text-gray-500">
-                                                    <span>Gekündigt: {new Date(termination.kuendigungsdatum).toLocaleDateString('de-DE')}</span>
-                                                    <span>•</span>
-                                                    <span>Auszug: {new Date(termination.auszugsdatum).toLocaleDateString('de-DE')}</span>
-                                                </div>
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <Calendar className="w-8 h-8 text-orange-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-orange-700">{pendingTerminations.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Ausstehend</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <CheckCircle className="w-8 h-8 text-green-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-green-700">{confirmedTerminations.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Bestätigt</div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-blue-900 to-orange-600 text-white border-none">
+                    <CardContent className="p-6">
+                        <div className="text-3xl font-bold">
+                            {terminations.filter(t => t.reason === 'tenant').length}
+                        </div>
+                        <div className="text-sm opacity-90 mt-1">Mieter-Kündigung</div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <Card>
+                <CardContent className="p-6">
+                    <h3 className="font-semibold text-lg mb-4">Kündigungen im Detail</h3>
+                    <div className="space-y-2">
+                        {terminations.map((termination) => {
+                            const contract = contracts.find(c => c.id === termination.contract_id);
+                            return (
+                                <div key={termination.id} className="p-4 bg-gray-50 rounded-lg border">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div>
+                                            <div className="font-semibold">{contract?.einheit || 'Unbekannt'}</div>
+                                            <div className="text-sm text-gray-600 mt-1">
+                                                Kündigungsdatum: {new Date(termination.kuendigungsdatum).toLocaleDateString('de-DE')}
                                             </div>
                                         </div>
-                                        <Badge className="vf-badge-error">Gekündigt</Badge>
+                                        <Badge className={termination.status === 'confirmed' ? 'vf-badge-success' : 'vf-badge-warning'}>
+                                            {termination.status === 'confirmed' ? 'Bestätigt' : 'Ausstehend'}
+                                        </Badge>
                                     </div>
-                                </CardContent>
-                            </Card>
-                        );
-                    })}
-                </div>
-            )}
+                                    <div className="text-xs text-gray-600 mt-2">
+                                        Grund: {termination.reason === 'tenant' ? 'Mieter' : 'Vermieter'}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }
