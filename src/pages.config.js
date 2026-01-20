@@ -607,6 +607,9 @@ import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
 import BuildingAnalytics from './pages/BuildingAnalytics';
 import TenantAnalytics from './pages/TenantAnalytics';
+import ContractAnalytics from './pages/ContractAnalytics';
+import RentDevelopment from './pages/RentDevelopment';
+import CostAnalysis from './pages/CostAnalysis';
 import __Layout from './Layout.jsx';
 
 
@@ -1220,6 +1223,9 @@ export const PAGES = {
     "WorkflowTemplates": WorkflowTemplates,
     "BuildingAnalytics": BuildingAnalytics,
     "TenantAnalytics": TenantAnalytics,
+    "ContractAnalytics": ContractAnalytics,
+    "RentDevelopment": RentDevelopment,
+    "CostAnalysis": CostAnalysis,
 }
 
 export const pagesConfig = {
