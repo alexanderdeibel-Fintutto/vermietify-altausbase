@@ -574,6 +574,8 @@ import PaymentTracking from './pages/PaymentTracking';
 import RentCollection from './pages/RentCollection';
 import FinancialDashboard from './pages/FinancialDashboard';
 import ContractRenewals from './pages/ContractRenewals';
+import CalendarView from './pages/CalendarView';
+import SystemSettings from './pages/SystemSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -1154,6 +1156,8 @@ export const PAGES = {
     "RentCollection": RentCollection,
     "FinancialDashboard": FinancialDashboard,
     "ContractRenewals": ContractRenewals,
+    "CalendarView": CalendarView,
+    "SystemSettings": SystemSettings,
 }
 
 export const pagesConfig = {
