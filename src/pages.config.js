@@ -245,6 +245,7 @@ import FinancialOverview from './pages/FinancialOverview';
 import FinancialPlanning from './pages/FinancialPlanning';
 import FinancialReporting from './pages/FinancialReporting';
 import FinancialReports from './pages/FinancialReports';
+import FinancialSummary from './pages/FinancialSummary';
 import FinancingManagement from './pages/FinancingManagement';
 import Finanzen from './pages/Finanzen';
 import FullFeatureHub from './pages/FullFeatureHub';
@@ -391,6 +392,7 @@ import ReportManagementCenter from './pages/ReportManagementCenter';
 import ReportScheduling from './pages/ReportScheduling';
 import ReportingDashboard from './pages/ReportingDashboard';
 import ReportingHub from './pages/ReportingHub';
+import Reports from './pages/Reports';
 import ReportsPage from './pages/ReportsPage';
 import ResidentsManagement from './pages/ResidentsManagement';
 import RetirementIncomeTaxOptimizer from './pages/RetirementIncomeTaxOptimizer';
@@ -476,6 +478,7 @@ import TaxManagement from './pages/TaxManagement';
 import TaxMonitoringDashboard from './pages/TaxMonitoringDashboard';
 import TaxOptimizationAnalyzer from './pages/TaxOptimizationAnalyzer';
 import TaxOptimizationStrategy from './pages/TaxOptimizationStrategy';
+import TaxOverview from './pages/TaxOverview';
 import TaxPerformanceDashboard from './pages/TaxPerformanceDashboard';
 import TaxPlanningAdvisor from './pages/TaxPlanningAdvisor';
 import TaxPropertyDashboard from './pages/TaxPropertyDashboard';
@@ -616,9 +619,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import TaxOverview from './pages/TaxOverview';
-import FinancialSummary from './pages/FinancialSummary';
-import Reports from './pages/Reports';
 import __Layout from './Layout.jsx';
 
 
@@ -870,6 +870,7 @@ export const PAGES = {
     "FinancialPlanning": FinancialPlanning,
     "FinancialReporting": FinancialReporting,
     "FinancialReports": FinancialReports,
+    "FinancialSummary": FinancialSummary,
     "FinancingManagement": FinancingManagement,
     "Finanzen": Finanzen,
     "FullFeatureHub": FullFeatureHub,
@@ -1016,6 +1017,7 @@ export const PAGES = {
     "ReportScheduling": ReportScheduling,
     "ReportingDashboard": ReportingDashboard,
     "ReportingHub": ReportingHub,
+    "Reports": Reports,
     "ReportsPage": ReportsPage,
     "ResidentsManagement": ResidentsManagement,
     "RetirementIncomeTaxOptimizer": RetirementIncomeTaxOptimizer,
@@ -1101,6 +1103,7 @@ export const PAGES = {
     "TaxMonitoringDashboard": TaxMonitoringDashboard,
     "TaxOptimizationAnalyzer": TaxOptimizationAnalyzer,
     "TaxOptimizationStrategy": TaxOptimizationStrategy,
+    "TaxOverview": TaxOverview,
     "TaxPerformanceDashboard": TaxPerformanceDashboard,
     "TaxPlanningAdvisor": TaxPlanningAdvisor,
     "TaxPropertyDashboard": TaxPropertyDashboard,
@@ -1241,9 +1244,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "TaxOverview": TaxOverview,
-    "FinancialSummary": FinancialSummary,
-    "Reports": Reports,
 }
 
 export const pagesConfig = {
