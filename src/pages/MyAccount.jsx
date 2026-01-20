@@ -1,105 +1,144 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, Plus, Zap, CreditCard, Users } from 'lucide-react';
-import { toast } from 'sonner';
-import LimitWarningBanner from '@/components/package/LimitWarningBanner';
-import AddOnManager from '@/components/package/AddOnManager';
-import PackageSwitcher from '@/components/package/PackageSwitcher';
-import UsageAnalyticsDashboard from '@/components/package/UsageAnalyticsDashboard';
-import BillingHistory from '@/components/package/BillingHistory';
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { User, Mail, Building2, Calendar, Crown, LogOut } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
 export default function MyAccount() {
-  const queryClient = useQueryClient();
-  const [selectedAddon, setSelectedAddon] = useState(null);
+    const { data: user } = useQuery({
+        queryKey: ['currentUser'],
+        queryFn: () => base44.auth.me()
+    });
 
-  const { data: packageConfig } = useQuery({
-    queryKey: ['my-package'],
-    queryFn: async () => {
-      const user = await base44.auth.me();
-      const configs = await base44.entities.UserPackageConfiguration.filter({
-        user_id: user.id,
-        is_active: true
-      });
-      return configs[0];
-    }
-  });
+    const { data: buildings = [] } = useQuery({
+        queryKey: ['buildings'],
+        queryFn: () => base44.entities.Building.list()
+    });
 
-  const { data: packageTemplate } = useQuery({
-    queryKey: ['my-package-template', packageConfig?.package_type],
-    queryFn: () => {
-      if (!packageConfig) return null;
-      return base44.asServiceRole.entities.PackageTemplate.filter({
-        package_type: packageConfig.package_type
-      }).then(t => t[0]);
-    },
-    enabled: !!packageConfig
-  });
+    const handleLogout = () => {
+        base44.auth.logout();
+    };
 
-  const addAddonMutation = useMutation({
-    mutationFn: async (addonName) => {
-      const updated = {
-        ...packageConfig,
-        additional_modules: [...(packageConfig.additional_modules || []), addonName]
-      };
-      await base44.entities.UserPackageConfiguration.update(packageConfig.id, updated);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['my-package'] });
-      toast.success('Add-on hinzugefügt');
-      setSelectedAddon(null);
-    }
-  });
+    return (
+        <div className="max-w-4xl space-y-6">
+            <div className="vf-page-header">
+                <div>
+                    <h1 className="vf-page-title">Mein Account</h1>
+                    <p className="vf-page-subtitle">Verwalten Sie Ihr Profil und Ihre Einstellungen</p>
+                </div>
+                <div className="vf-page-actions">
+                    <Button variant="outline" onClick={handleLogout}>
+                        <LogOut className="w-4 h-4" />
+                        Abmelden
+                    </Button>
+                </div>
+            </div>
 
-  const ADDON_PRICES = {
-    'dokumentation': 10,
-    'kommunikation': 15,
-    'aufgaben': 20
-  };
+            {/* Profile Card */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Profil</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-start gap-6">
+                        <div className="w-20 h-20 bg-gradient-to-br from-blue-900 to-orange-600 rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
+                            {user?.full_name?.charAt(0) || 'U'}
+                        </div>
+                        <div className="flex-1 space-y-3">
+                            <div className="flex items-center gap-2">
+                                <User className="w-4 h-4 text-gray-500" />
+                                <span className="font-semibold">{user?.full_name}</span>
+                                {user?.role === 'admin' && (
+                                    <Badge className="vf-badge-gradient">
+                                        <Crown className="w-3 h-3 mr-1" />
+                                        Admin
+                                    </Badge>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-2 text-gray-600">
+                                <Mail className="w-4 h-4" />
+                                {user?.email}
+                            </div>
+                            {user?.company && (
+                                <div className="flex items-center gap-2 text-gray-600">
+                                    <Building2 className="w-4 h-4" />
+                                    {user.company}
+                                </div>
+                            )}
+                            <div className="flex items-center gap-2 text-gray-600">
+                                <Calendar className="w-4 h-4" />
+                                Mitglied seit {new Date(user?.created_date).toLocaleDateString('de-DE')}
+                            </div>
+                        </div>
+                        <Link to={createPageUrl('SettingsProfile')}>
+                            <Button variant="outline">Bearbeiten</Button>
+                        </Link>
+                    </div>
+                </CardContent>
+            </Card>
 
-  const ADDON_NAMES = {
-    'dokumentation': '📄 Dokumentenverwaltung',
-    'kommunikation': '📧 Kommunikation',
-    'aufgaben': '✅ Aufgaben & Workflows'
-  };
+            {/* Stats */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Ihre Statistiken</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        <div className="text-center">
+                            <div className="text-3xl font-bold text-blue-900">{buildings.length}</div>
+                            <div className="text-sm text-gray-600 mt-1">Gebäude</div>
+                        </div>
+                        <div className="text-center">
+                            <div className="text-3xl font-bold text-green-600">-</div>
+                            <div className="text-sm text-gray-600 mt-1">Mieter</div>
+                        </div>
+                        <div className="text-center">
+                            <div className="text-3xl font-bold text-purple-600">-</div>
+                            <div className="text-sm text-gray-600 mt-1">Verträge</div>
+                        </div>
+                        <div className="text-center">
+                            <div className="text-3xl font-bold text-orange-600">-</div>
+                            <div className="text-sm text-gray-600 mt-1">Dokumente</div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
 
-  return (
-    <div className="space-y-6">
-      <LimitWarningBanner />
-      
-      <div>
-        <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Mein Account</h1>
-        <p className="text-sm font-extralight text-slate-400 mt-1">Verwalten Sie Ihr Paket und Zusatzmodule</p>
-      </div>
-
-      <Tabs defaultValue="package">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="package">Paket & Nutzung</TabsTrigger>
-          <TabsTrigger value="addons">Add-ons</TabsTrigger>
-          <TabsTrigger value="billing">Rechnungen</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="package" className="space-y-6">
-          <UsageAnalyticsDashboard />
-          {packageConfig && (
-            <PackageSwitcher currentPackage={packageConfig.package_type} />
-          )}
-        </TabsContent>
-
-        <TabsContent value="addons">
-          {packageConfig && (
-            <AddOnManager packageConfig={packageConfig} />
-          )}
-        </TabsContent>
-
-        <TabsContent value="billing">
-          <BillingHistory />
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
+            {/* Quick Links */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Schnellzugriff</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid md:grid-cols-2 gap-3">
+                        <Link to={createPageUrl('SettingsProfile')}>
+                            <Button variant="outline" className="w-full justify-start">
+                                <User className="w-4 h-4" />
+                                Profil bearbeiten
+                            </Button>
+                        </Link>
+                        <Link to={createPageUrl('SettingsAppearance')}>
+                            <Button variant="outline" className="w-full justify-start">
+                                Darstellung anpassen
+                            </Button>
+                        </Link>
+                        <Link to={createPageUrl('SettingsIntegrations')}>
+                            <Button variant="outline" className="w-full justify-start">
+                                Integrationen
+                            </Button>
+                        </Link>
+                        <Link to={createPageUrl('MySubscription')}>
+                            <Button variant="outline" className="w-full justify-start">
+                                Abonnement verwalten
+                            </Button>
+                        </Link>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+    );
 }
