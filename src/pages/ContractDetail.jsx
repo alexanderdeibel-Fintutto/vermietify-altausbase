@@ -1,209 +1,190 @@
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Edit, Download, FileText, Zap } from 'lucide-react';
-import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
-import { toast } from 'sonner';
-import { regenerateContractFinancialItems } from '@/components/contracts/generateFinancialItems';
-import BuchungenGenerierenTooltip from '@/components/shared/BuchungenGenerierenTooltip';
-import LeaseContractAnalyzer from '@/components/contracts/LeaseContractAnalyzer';
-import ContractDocumentManager from '@/components/contracts/ContractDocumentManager';
-import ContractRenewalTracker from '@/components/contracts/ContractRenewalTracker';
-import RentIncreaseCalculator from '@/components/contracts/RentIncreaseCalculator';
-import ContractQuickActionBar from '@/components/contracts/ContractQuickActionBar';
-import TenantChangeWizard from '@/components/contracts/TenantChangeWizard';
-import ContractTermCalculator from '@/components/contracts/ContractTermCalculator';
-import RentIncreaseAutomation from '@/components/contracts/RentIncreaseAutomation';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { FileText, Calendar, Euro, User, Home, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
-export default function ContractDetailPage() {
-  const { id } = useParams();
-  const [editMode, setEditMode] = useState(false);
-  const [tenantChangeOpen, setTenantChangeOpen] = useState(false);
-  const [generatingBookings, setGeneratingBookings] = useState(false);
+export default function ContractDetail() {
+    const params = new URLSearchParams(window.location.search);
+    const contractId = params.get('id');
 
-  const { data: contract } = useQuery({
-    queryKey: ['contract', id],
-    queryFn: () => base44.entities.LeaseContract?.read?.(id) || {}
-  });
+    const { data: contract, isLoading } = useQuery({
+        queryKey: ['contract', contractId],
+        queryFn: async () => {
+            const contracts = await base44.entities.LeaseContract.filter({ id: contractId });
+            return contracts[0];
+        },
+        enabled: !!contractId
+    });
 
-  const { data: unit } = useQuery({
-    queryKey: ['unit', contract?.unit_id],
-    queryFn: async () => {
-      const units = await base44.entities.Unit.filter({ id: contract.unit_id });
-      return units[0];
-    },
-    enabled: !!contract?.unit_id
-  });
+    const { data: tenant } = useQuery({
+        queryKey: ['tenant', contract?.tenant_id],
+        queryFn: async () => {
+            const tenants = await base44.entities.Tenant.filter({ id: contract.tenant_id });
+            return tenants[0];
+        },
+        enabled: !!contract?.tenant_id
+    });
 
-  const { data: building } = useQuery({
-    queryKey: ['building', unit?.gebaeude_id],
-    queryFn: async () => {
-      const buildings = await base44.entities.Building.filter({ id: unit.gebaeude_id });
-      return buildings[0];
-    },
-    enabled: !!unit?.gebaeude_id
-  });
+    const { data: unit } = useQuery({
+        queryKey: ['unit', contract?.unit_id],
+        queryFn: async () => {
+            const units = await base44.entities.Unit.filter({ id: contract.unit_id });
+            return units[0];
+        },
+        enabled: !!contract?.unit_id
+    });
 
-  const handleGenerateBookings = async () => {
-    setGeneratingBookings(true);
-    try {
-      await regenerateContractFinancialItems(contract.id);
-      toast.success('Buchungen erfolgreich generiert');
-    } catch (error) {
-      toast.error('Fehler beim Generieren der Buchungen');
-    } finally {
-      setGeneratingBookings(false);
+    if (isLoading) {
+        return <div className="flex items-center justify-center h-96"><div className="vf-spinner vf-spinner-lg" /></div>;
     }
-  };
 
-  if (!contract?.id) {
+    if (!contract) {
+        return <div className="text-center py-20">Vertrag nicht gefunden</div>;
+    }
+
+    const warmmiete = (parseFloat(contract.kaltmiete) || 0) + (parseFloat(contract.betriebskosten_vorauszahlung) || 0);
+
     return (
-      <div className="flex items-center justify-center h-96">
-        <p className="text-slate-600">Vertrag wird geladen...</p>
-      </div>
+        <div className="space-y-6">
+            <Link to={createPageUrl('Contracts')} className="vf-page-back">
+                <ArrowLeft className="w-4 h-4" />
+                Zurück zu Verträge
+            </Link>
+
+            {/* Header */}
+            <div className="vf-detail-header">
+                <div className="vf-detail-header__top">
+                    <div className="flex items-center gap-4">
+                        <div className="vf-detail-header__icon">
+                            <FileText className="w-7 h-7" />
+                        </div>
+                        <div className="vf-detail-header__info">
+                            <h1 className="vf-detail-header__title">Mietvertrag #{contract.id?.slice(0, 8)}</h1>
+                            <p className="vf-detail-header__subtitle">
+                                ab {new Date(contract.mietbeginn).toLocaleDateString('de-DE')}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="vf-detail-header__actions">
+                        <Button variant="outline">Bearbeiten</Button>
+                        <Button className="vf-btn-gradient">PDF generieren</Button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Content */}
+            <div className="grid lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Mietdetails</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <div className="text-sm text-gray-500 mb-1">Kaltmiete</div>
+                                    <div className="text-2xl font-bold text-blue-900">{contract.kaltmiete}€</div>
+                                </div>
+                                <div>
+                                    <div className="text-sm text-gray-500 mb-1">Betriebskosten</div>
+                                    <div className="text-2xl font-bold text-gray-700">{contract.betriebskosten_vorauszahlung || 0}€</div>
+                                </div>
+                                <div>
+                                    <div className="text-sm text-gray-500 mb-1">Warmmiete</div>
+                                    <div className="text-2xl font-bold text-green-700">{warmmiete.toFixed(2)}€</div>
+                                </div>
+                                <div>
+                                    <div className="text-sm text-gray-500 mb-1">Kaution</div>
+                                    <div className="text-2xl font-bold text-gray-700">{contract.kaution || 0}€</div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Vertragslaufzeit</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <Calendar className="w-5 h-5 text-gray-500" />
+                                    <div>
+                                        <div className="text-sm text-gray-500">Mietbeginn</div>
+                                        <div className="font-medium">{new Date(contract.mietbeginn).toLocaleDateString('de-DE')}</div>
+                                    </div>
+                                </div>
+                                {contract.mietende && (
+                                    <div className="flex items-center gap-3">
+                                        <Calendar className="w-5 h-5 text-gray-500" />
+                                        <div>
+                                            <div className="text-sm text-gray-500">Mietende</div>
+                                            <div className="font-medium">{new Date(contract.mietende).toLocaleDateString('de-DE')}</div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <div className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Mieter</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {tenant ? (
+                                <Link to={createPageUrl('TenantDetail') + `?id=${tenant.id}`}>
+                                    <div className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                        <div className="font-semibold mb-2">{tenant.vorname} {tenant.nachname}</div>
+                                        {tenant.email && (
+                                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                <Mail className="w-3 h-3" />
+                                                {tenant.email}
+                                            </div>
+                                        )}
+                                        {tenant.telefon && (
+                                            <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+                                                <Phone className="w-3 h-3" />
+                                                {tenant.telefon}
+                                            </div>
+                                        )}
+                                    </div>
+                                </Link>
+                            ) : (
+                                <div className="text-gray-500">Keine Daten</div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Wohneinheit</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {unit ? (
+                                <div className="p-3 bg-gray-50 rounded-lg">
+                                    <div className="font-semibold mb-2">{unit.nummer}</div>
+                                    {unit.flaeche && (
+                                        <div className="text-sm text-gray-600">{unit.flaeche} m²</div>
+                                    )}
+                                    {unit.zimmer && (
+                                        <div className="text-sm text-gray-600">{unit.zimmer} Zimmer</div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="text-gray-500">Keine Daten</div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        </div>
     );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon"><ArrowLeft className="w-4 h-4" /></Button>
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">📋 Mietvertrag</h1>
-          <p className="text-slate-600 mt-1">{contract.tenant_name || 'Vertrag'} - {contract.unit_name || 'Einheit'}</p>
-        </div>
-        <div className="ml-auto flex gap-2">
-          <Button 
-            onClick={handleGenerateBookings} 
-            disabled={generatingBookings}
-            className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
-          >
-            {generatingBookings ? (
-              <>Generiere...</>
-            ) : (
-              <>
-                <Zap className="w-4 h-4" />
-                Buchungen generieren
-              </>
-            )}
-            <BuchungenGenerierenTooltip />
-          </Button>
-          <Button variant="outline"><Download className="w-4 h-4 mr-2" />PDF</Button>
-          <Button onClick={() => setEditMode(!editMode)}><Edit className="w-4 h-4 mr-2" />{editMode ? 'Fertig' : 'Bearbeiten'}</Button>
-        </div>
-      </div>
-
-      <ContractQuickActionBar
-        contract={contract}
-        onGenerateBookings={() => console.log('Generate bookings for', contract.id)}
-        onGenerateDocument={() => console.log('Generate document for', contract.id)}
-        onTenantChange={() => setTenantChangeOpen(true)}
-        onRecordPayment={() => console.log('Record payment for', contract.id)}
-      />
-
-      <div className="grid grid-cols-3 gap-6">
-        <Card className="border border-blue-200 bg-blue-50">
-          <CardHeader>
-            <CardTitle className="text-sm text-blue-900">Mieter</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-blue-700">{contract.tenant_name || '—'}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-green-200 bg-green-50">
-          <CardHeader>
-            <CardTitle className="text-sm text-green-900">Monatliche Miete</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-green-700">€{(contract.rent || 0).toFixed(2)}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-purple-200 bg-purple-50">
-          <CardHeader>
-            <CardTitle className="text-sm text-purple-900">Vertragsstatus</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Badge className="bg-green-600">{contract.status === 'active' ? 'Aktiv' : 'Beendet'}</Badge>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Vertragsdetails</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <p className="text-sm text-slate-600">Wohneinheit</p>
-              <p className="text-lg font-semibold text-slate-900">{contract.unit_name || '—'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Gebäude</p>
-              <p className="text-lg font-semibold text-slate-900">{contract.building_name || '—'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Vertragsbeginn</p>
-              <p className="text-lg font-semibold text-slate-900">{contract.start_date ? format(new Date(contract.start_date), 'dd.MM.yyyy', { locale: de }) : '—'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Vertragsende</p>
-              <p className="text-lg font-semibold text-slate-900">{contract.end_date ? format(new Date(contract.end_date), 'dd.MM.yyyy', { locale: de }) : '—'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Kaution</p>
-              <p className="text-lg font-semibold text-slate-900">€{(contract.deposit || 0).toFixed(2)}</p>
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Nebenkosten</p>
-              <p className="text-lg font-semibold text-slate-900">€{(contract.utilities || 0).toFixed(2)}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Kündigungsfrist Calculator */}
-      <ContractTermCalculator contract={contract} />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ContractRenewalTracker contractId={contract.id} />
-        <ContractDocumentManager contractId={contract.id} />
-      </div>
-
-      {building && unit && (
-        <>
-          <RentIncreaseCalculator contract={contract} building={building} unit={unit} />
-          <RentIncreaseAutomation contract={contract} building={building} unit={unit} />
-        </>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Notizen</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-slate-700">{contract.notes || 'Keine Notizen vorhanden'}</p>
-        </CardContent>
-      </Card>
-
-      <LeaseContractAnalyzer 
-        contractId={contract.id} 
-        contractText={contract.contract_text || contract.notes}
-      />
-
-      <TenantChangeWizard
-        open={tenantChangeOpen}
-        onOpenChange={setTenantChangeOpen}
-        currentContract={contract}
-        unit={unit}
-      />
-    </div>
-  );
 }

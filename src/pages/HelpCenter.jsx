@@ -1,72 +1,159 @@
-import React from 'react';
-import PageHeader from '@/components/shared/PageHeader';
-import FAQAccordion from '@/components/help/FAQAccordion';
-import VideoTutorialCard from '@/components/help/VideoTutorialCard';
+import React, { useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, BookOpen, Video } from 'lucide-react';
+import { VfInput } from '@/components/shared/VfInput';
+import { 
+    HelpCircle, 
+    Search, 
+    BookOpen, 
+    Video, 
+    MessageCircle, 
+    FileText,
+    Building2,
+    Users,
+    Euro
+} from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+
+const faqs = [
+    {
+        question: 'Wie erstelle ich ein neues Gebäude?',
+        answer: 'Navigieren Sie zu "Gebäude" und klicken Sie auf "Gebäude hinzufügen". Geben Sie die Adresse und weitere Details ein.'
+    },
+    {
+        question: 'Wie füge ich einen Mieter hinzu?',
+        answer: 'Gehen Sie zu "Mieter" und klicken Sie auf "Mieter hinzufügen". Füllen Sie die Kontaktdaten aus.'
+    },
+    {
+        question: 'Wie erstelle ich einen Mietvertrag?',
+        answer: 'Unter "Verträge" können Sie einen neuen Vertrag erstellen, indem Sie Mieter und Wohneinheit verknüpfen.'
+    },
+    {
+        question: 'Wie lade ich Dokumente hoch?',
+        answer: 'Im Bereich "Dokumente" können Sie per Drag & Drop oder über den Upload-Button Dateien hochladen.'
+    },
+    {
+        question: 'Wie erstelle ich eine Nebenkostenabrechnung?',
+        answer: 'Nutzen Sie den BK-Abrechnungs-Wizard unter "Betriebskosten", der Sie Schritt für Schritt durch den Prozess führt.'
+    }
+];
+
+const resources = [
+    {
+        icon: BookOpen,
+        title: 'Dokumentation',
+        description: 'Vollständige Anleitung zu allen Funktionen',
+        color: 'text-blue-600',
+        bg: 'bg-blue-50'
+    },
+    {
+        icon: Video,
+        title: 'Video-Tutorials',
+        description: 'Schritt-für-Schritt Anleitungen als Video',
+        color: 'text-purple-600',
+        bg: 'bg-purple-50'
+    },
+    {
+        icon: MessageCircle,
+        title: 'Community Forum',
+        description: 'Austausch mit anderen Vermietern',
+        color: 'text-green-600',
+        bg: 'bg-green-50'
+    },
+    {
+        icon: HelpCircle,
+        title: 'Support kontaktieren',
+        description: 'Direkter Kontakt zu unserem Team',
+        color: 'text-orange-600',
+        bg: 'bg-orange-50'
+    }
+];
 
 export default function HelpCenter() {
-  const tutorials = [
-    { title: 'Erste Schritte', duration: '3:45', thumbnail: '' },
-    { title: 'Objekte verwalten', duration: '5:20', thumbnail: '' },
-    { title: 'Verträge erstellen', duration: '4:15', thumbnail: '' }
-  ];
+    const [searchTerm, setSearchTerm] = useState('');
 
-  return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <PageHeader
-        title="Hilfe-Center"
-        subtitle="Anleitungen und Unterstützung"
-      />
+    const filteredFaqs = faqs.filter(faq => 
+        faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-      <div className="grid md:grid-cols-3 gap-6 mb-8">
-        <Card className="text-center p-6">
-          <BookOpen className="h-12 w-12 mx-auto mb-4 text-[var(--theme-primary)]" />
-          <h3 className="font-semibold mb-2">Dokumentation</h3>
-          <p className="text-sm text-[var(--theme-text-secondary)] mb-4">
-            Ausführliche Anleitungen
-          </p>
-          <Button variant="outline" size="sm">Öffnen</Button>
-        </Card>
+    return (
+        <div className="max-w-4xl space-y-8">
+            <div className="text-center py-8">
+                <HelpCircle className="w-16 h-16 mx-auto mb-4 text-blue-600" />
+                <h1 className="text-4xl font-bold mb-3">Wie können wir helfen?</h1>
+                <p className="text-xl text-gray-600">Finden Sie Antworten und lernen Sie Vermitify kennen</p>
+            </div>
 
-        <Card className="text-center p-6">
-          <Video className="h-12 w-12 mx-auto mb-4 text-[var(--theme-primary)]" />
-          <h3 className="font-semibold mb-2">Video-Tutorials</h3>
-          <p className="text-sm text-[var(--theme-text-secondary)] mb-4">
-            Schritt-für-Schritt Videos
-          </p>
-          <Button variant="outline" size="sm">Ansehen</Button>
-        </Card>
+            {/* Search */}
+            <Card>
+                <CardContent className="p-6">
+                    <VfInput
+                        leftIcon={Search}
+                        placeholder="Suchen Sie nach Hilfe..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </CardContent>
+            </Card>
 
-        <Card className="text-center p-6">
-          <MessageCircle className="h-12 w-12 mx-auto mb-4 text-[var(--theme-primary)]" />
-          <h3 className="font-semibold mb-2">Live-Support</h3>
-          <p className="text-sm text-[var(--theme-text-secondary)] mb-4">
-            Direkter Chat-Support
-          </p>
-          <Button variant="gradient" size="sm">Chat starten</Button>
-        </Card>
-      </div>
+            {/* Resources */}
+            <div className="grid md:grid-cols-2 gap-6">
+                {resources.map((resource, idx) => {
+                    const Icon = resource.icon;
+                    return (
+                        <Card key={idx} className="vf-card-clickable cursor-pointer">
+                            <CardContent className="p-6">
+                                <div className="flex items-start gap-4">
+                                    <div className={`w-12 h-12 rounded-lg ${resource.bg} flex items-center justify-center flex-shrink-0`}>
+                                        <Icon className={`w-6 h-6 ${resource.color}`} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold text-lg mb-1">{resource.title}</h3>
+                                        <p className="text-sm text-gray-600">{resource.description}</p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
+            </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Beliebte Tutorials</h2>
-          <div className="space-y-4">
-            {tutorials.map((tutorial, index) => (
-              <VideoTutorialCard key={index} {...tutorial} />
-            ))}
-          </div>
+            {/* FAQs */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Häufig gestellte Fragen</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Accordion type="single" collapsible>
+                        {filteredFaqs.map((faq, idx) => (
+                            <AccordionItem key={idx} value={`item-${idx}`}>
+                                <AccordionTrigger className="text-left">
+                                    {faq.question}
+                                </AccordionTrigger>
+                                <AccordionContent className="text-gray-700">
+                                    {faq.answer}
+                                </AccordionContent>
+                            </AccordionItem>
+                        ))}
+                    </Accordion>
+                </CardContent>
+            </Card>
+
+            {/* Contact Support */}
+            <Card className="bg-gradient-to-br from-blue-900 to-orange-600 text-white border-none">
+                <CardContent className="p-8 text-center">
+                    <h3 className="text-2xl font-bold mb-2">Nicht gefunden, was Sie suchen?</h3>
+                    <p className="mb-6 opacity-90">Unser Support-Team hilft Ihnen gerne weiter</p>
+                    <Link to={createPageUrl('VermitifyContact')}>
+                        <Button style={{ background: 'white', color: '#1E3A8A' }}>
+                            Support kontaktieren
+                        </Button>
+                    </Link>
+                </CardContent>
+            </Card>
         </div>
-
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Häufige Fragen</h2>
-          <FAQAccordion />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Card({ children, className = '' }) {
-  return <div className={`bg-white border border-[var(--theme-border)] rounded-lg ${className}`}>{children}</div>;
+    );
 }
