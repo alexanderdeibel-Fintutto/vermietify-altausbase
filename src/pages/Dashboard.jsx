@@ -1,26 +1,21 @@
 import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Home, Users, DollarSign, AlertCircle, TrendingUp, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Building2, Users, FileText, Euro, TrendingUp, AlertCircle, Plus } from 'lucide-react';
 
 export default function Dashboard() {
-    const { data: user } = useQuery({
-        queryKey: ['currentUser'],
-        queryFn: () => base44.auth.me()
-    });
-
     const { data: buildings = [] } = useQuery({
         queryKey: ['buildings'],
         queryFn: () => base44.entities.Building.list()
     });
 
-    const { data: tenants = [] } = useQuery({
-        queryKey: ['tenants'],
-        queryFn: () => base44.entities.Tenant.list()
+    const { data: units = [] } = useQuery({
+        queryKey: ['units'],
+        queryFn: () => base44.entities.Unit.list()
     });
 
     const { data: contracts = [] } = useQuery({
@@ -28,30 +23,40 @@ export default function Dashboard() {
         queryFn: () => base44.entities.LeaseContract.list()
     });
 
-    const { data: tasks = [] } = useQuery({
-        queryKey: ['tasks'],
-        queryFn: () => base44.entities.Task.filter({ status: 'Offen' })
+    const { data: payments = [] } = useQuery({
+        queryKey: ['payments'],
+        queryFn: () => base44.entities.Payment.list()
     });
+
+    const occupiedUnits = contracts.map(c => c.unit_id);
+    const totalRent = contracts.reduce((sum, c) => sum + (parseFloat(c.kaltmiete) || 0), 0);
+    const completedPayments = payments.filter(p => p.status === 'completed').length;
+    const paymentRate = (completedPayments / (payments.length || 1)) * 100;
+
+    const quickActions = [
+        { title: 'Neue Miete', icon: Users, color: 'bg-blue-100 text-blue-600', link: 'TenantAnalytics' },
+        { title: 'Zahlung tracking', icon: DollarSign, color: 'bg-green-100 text-green-600', link: 'PaymentManagement' },
+        { title: 'Dokument', icon: FileText, color: 'bg-purple-100 text-purple-600', link: 'DocumentManagement' },
+        { title: 'Bericht', icon: TrendingUp, color: 'bg-orange-100 text-orange-600', link: 'ReportBuilder' }
+    ];
 
     return (
         <div className="space-y-6">
             <div className="vf-page-header">
                 <div>
-                    <h1 className="vf-page-title">Willkommen zurück, {user?.full_name}!</h1>
-                    <p className="vf-page-subtitle">Hier ist Ihre Übersicht</p>
+                    <h1 className="vf-page-title">Dashboard</h1>
+                    <p className="vf-page-subtitle">Willkommen zu deiner Immobilienverwaltung</p>
                 </div>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid md:grid-cols-4 gap-4">
                 <Card>
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-2">
-                            <Building2 className="w-8 h-8 text-blue-600" />
-                            <TrendingUp className="w-4 h-4 text-green-600" />
+                            <Home className="w-8 h-8 text-blue-600" />
                         </div>
-                        <div className="vf-stat-card__value">{buildings.length}</div>
-                        <div className="vf-stat-card__label">Gebäude</div>
+                        <div className="text-3xl font-bold">{buildings.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Gebäude</div>
                     </CardContent>
                 </Card>
 
@@ -60,133 +65,86 @@ export default function Dashboard() {
                         <div className="flex items-center justify-between mb-2">
                             <Users className="w-8 h-8 text-green-600" />
                         </div>
-                        <div className="vf-stat-card__value">{tenants.length}</div>
-                        <div className="vf-stat-card__label">Mieter</div>
+                        <div className="text-3xl font-bold">{contracts.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Mieter</div>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-2">
-                            <FileText className="w-8 h-8 text-purple-600" />
+                            <DollarSign className="w-8 h-8 text-purple-600" />
                         </div>
-                        <div className="vf-stat-card__value">{contracts.length}</div>
-                        <div className="vf-stat-card__label">Verträge</div>
+                        <div className="text-3xl font-bold">{totalRent.toLocaleString('de-DE')}€</div>
+                        <div className="text-sm text-gray-600 mt-1">Monatliche Miete</div>
                     </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="bg-gradient-to-br from-blue-900 to-orange-600 text-white border-none">
                     <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-2">
-                            <AlertCircle className="w-8 h-8 text-orange-600" />
-                        </div>
-                        <div className="vf-stat-card__value">{tasks.length}</div>
-                        <div className="vf-stat-card__label">Offene Aufgaben</div>
+                        <div className="text-3xl font-bold">{paymentRate.toFixed(0)}%</div>
+                        <div className="text-sm opacity-90 mt-1">Zahlungsquote</div>
                     </CardContent>
                 </Card>
             </div>
 
-            {/* Quick Actions */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Schnellzugriff</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <Link to={createPageUrl('Buildings')}>
-                            <Button variant="outline" className="w-full h-20 flex-col gap-2">
-                                <Building2 className="w-6 h-6" />
-                                <span>Gebäude</span>
-                            </Button>
-                        </Link>
-                        <Link to={createPageUrl('Tenants')}>
-                            <Button variant="outline" className="w-full h-20 flex-col gap-2">
-                                <Users className="w-6 h-6" />
-                                <span>Mieter</span>
-                            </Button>
-                        </Link>
-                        <Link to={createPageUrl('Contracts')}>
-                            <Button variant="outline" className="w-full h-20 flex-col gap-2">
-                                <FileText className="w-6 h-6" />
-                                <span>Verträge</span>
-                            </Button>
-                        </Link>
-                        <Link to={createPageUrl('Invoices')}>
-                            <Button variant="outline" className="w-full h-20 flex-col gap-2">
-                                <Euro className="w-6 h-6" />
-                                <span>Rechnungen</span>
-                            </Button>
-                        </Link>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Recent Buildings */}
-            <Card>
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <CardTitle>Ihre Gebäude</CardTitle>
-                        <Link to={createPageUrl('Buildings')}>
-                            <Button variant="outline" size="sm">
-                                <Plus className="w-4 h-4" />
-                                Hinzufügen
-                            </Button>
-                        </Link>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    {buildings.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
-                            <Building2 className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                            <p>Noch keine Gebäude erfasst</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {buildings.slice(0, 5).map((building) => (
-                                <Link key={building.id} to={createPageUrl('BuildingDetail') + `?id=${building.id}`}>
-                                    <div className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                                        <div className="flex items-center gap-3">
-                                            <Building2 className="w-5 h-5 text-blue-600" />
-                                            <div>
-                                                <div className="font-medium">{building.name}</div>
-                                                <div className="text-sm text-gray-500">{building.strasse}, {building.ort}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-
-            {/* Open Tasks */}
-            {tasks.length > 0 && (
+            <div className="grid md:grid-cols-2 gap-6">
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Offene Aufgaben</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-2">
-                            {tasks.slice(0, 5).map((task) => (
-                                <div key={task.id} className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <AlertCircle className="w-5 h-5 text-orange-600" />
-                                        <div>
-                                            <div className="font-medium">{task.titel}</div>
-                                            {task.faelligkeitsdatum && (
-                                                <div className="text-sm text-gray-500">
-                                                    Fällig: {new Date(task.faelligkeitsdatum).toLocaleDateString('de-DE')}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4">Schnellaktionen</h3>
+                        <div className="grid grid-cols-2 gap-3">
+                            {quickActions.map((action, idx) => {
+                                const Icon = action.icon;
+                                return (
+                                    <Link key={idx} to={createPageUrl(action.link)}>
+                                        <button className={`w-full p-4 rounded-lg ${action.color} flex flex-col items-center gap-2 hover:shadow-md transition`}>
+                                            <Icon className="w-6 h-6" />
+                                            <span className="text-xs font-semibold text-center">{action.title}</span>
+                                        </button>
+                                    </Link>
+                                );
+                            })}
                         </div>
                     </CardContent>
                 </Card>
-            )}
+
+                <Card>
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4">Übersicht</h3>
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                <span className="text-sm">Einheiten</span>
+                                <span className="font-semibold">{units.length} (davon {occupiedUnits.length} vermietet)</span>
+                            </div>
+                            <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                <span className="text-sm">Auslastung</span>
+                                <span className="font-semibold">{((occupiedUnits.length / units.length) * 100).toFixed(0)}%</span>
+                            </div>
+                            <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                <span className="text-sm">Eingegangene Zahlungen</span>
+                                <span className="font-semibold">{completedPayments}/{payments.length}</span>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <Card className="border-orange-200 bg-orange-50">
+                <CardContent className="p-6">
+                    <div className="flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-1" />
+                        <div>
+                            <h3 className="font-semibold text-orange-900">Überfällige Zahlungen</h3>
+                            <p className="text-sm text-orange-800 mt-1">Es gibt {payments.filter(p => p.status === 'pending').length} ausstehende Zahlungen</p>
+                            <Link to={createPageUrl('PaymentManagement')}>
+                                <Button size="sm" className="mt-3 bg-orange-600 hover:bg-orange-700 text-white">
+                                    Alle Zahlungen anzeigen
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }

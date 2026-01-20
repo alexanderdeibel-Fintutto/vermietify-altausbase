@@ -120,6 +120,7 @@ import BankingManagement from './pages/BankingManagement';
 import BankingOverview from './pages/BankingOverview';
 import BudgetAnalysis from './pages/BudgetAnalysis';
 import BudgetPlanning from './pages/BudgetPlanning';
+import BuildingAnalytics from './pages/BuildingAnalytics';
 import BuildingBoard from './pages/BuildingBoard';
 import BuildingComparison from './pages/BuildingComparison';
 import BuildingDetail from './pages/BuildingDetail';
@@ -161,6 +162,7 @@ import ComplianceReportingHub from './pages/ComplianceReportingHub';
 import ComprehensiveDashboard from './pages/ComprehensiveDashboard';
 import ComprehensiveTaxDashboard from './pages/ComprehensiveTaxDashboard';
 import ConsolidatedTaxSummary from './pages/ConsolidatedTaxSummary';
+import ContractAnalytics from './pages/ContractAnalytics';
 import ContractAutomationHub from './pages/ContractAutomationHub';
 import ContractDetail from './pages/ContractDetail';
 import ContractDetailEnhanced from './pages/ContractDetailEnhanced';
@@ -170,6 +172,7 @@ import ContractRenewals from './pages/ContractRenewals';
 import ContractTemplates from './pages/ContractTemplates';
 import ContractorMarketplace from './pages/ContractorMarketplace';
 import Contracts from './pages/Contracts';
+import CostAnalysis from './pages/CostAnalysis';
 import CostTypes from './pages/CostTypes';
 import CrossBorderTaxDashboard from './pages/CrossBorderTaxDashboard';
 import Cryptocurrencies from './pages/Cryptocurrencies';
@@ -210,6 +213,7 @@ import Documents from './pages/Documents';
 import ElsterAutomationHub from './pages/ElsterAutomationHub';
 import ElsterCertificates from './pages/ElsterCertificates';
 import ElsterIntegration from './pages/ElsterIntegration';
+import Error500 from './pages/Error500';
 import ElsterOverview from './pages/ElsterOverview';
 import ElsterResponses from './pages/ElsterResponses';
 import ElsterSettings from './pages/ElsterSettings';
@@ -221,7 +225,6 @@ import EnergyPassportManager from './pages/EnergyPassportManager';
 import EnhancedTenantPortal from './pages/EnhancedTenantPortal';
 import EntityTaxPlanning from './pages/EntityTaxPlanning';
 import Equipment from './pages/Equipment';
-import Error500 from './pages/Error500';
 import EstateTaxPlanning from './pages/EstateTaxPlanning';
 import EstimatedTaxScheduler from './pages/EstimatedTaxScheduler';
 import ExpenseTracking from './pages/ExpenseTracking';
@@ -320,10 +323,10 @@ import NotificationHub from './pages/NotificationHub';
 import NotificationManagement from './pages/NotificationManagement';
 import NotificationPreferences from './pages/NotificationPreferences';
 import OfflineError from './pages/OfflineError';
+import Payments from './pages/Payments';
 import Onboarding from './pages/Onboarding';
 import OnboardingEnhanced from './pages/OnboardingEnhanced';
 import OnboardingWizard from './pages/OnboardingWizard';
-import Payments from './pages/Payments';
 import OnboardingWizardNew from './pages/OnboardingWizardNew';
 import OperatingCostAutomationHub from './pages/OperatingCostAutomationHub';
 import OperatingCostWizard from './pages/OperatingCostWizard';
@@ -371,6 +374,7 @@ import RenditeRechner from './pages/RenditeRechner';
 import RenditeRechnerEnhanced from './pages/RenditeRechnerEnhanced';
 import RentCollection from './pages/RentCollection';
 import RentCollectionDashboard from './pages/RentCollectionDashboard';
+import RentDevelopment from './pages/RentDevelopment';
 import RentIncreaseOptimizer from './pages/RentIncreaseOptimizer';
 import RentIncreaseWizard from './pages/RentIncreaseWizard';
 import RentIndexManagement from './pages/RentIndexManagement';
@@ -433,11 +437,11 @@ import TaxAuthoritySubmissions from './pages/TaxAuthoritySubmissions';
 import TaxAutomationCenter from './pages/TaxAutomationCenter';
 import TaxBracketCalculator from './pages/TaxBracketCalculator';
 import TaxCalendarAndTimeline from './pages/TaxCalendarAndTimeline';
-import TaxDashboard from './pages/TaxDashboard';
 import TaxComplianceChecker from './pages/TaxComplianceChecker';
 import TaxComplianceDashboard from './pages/TaxComplianceDashboard';
 import TaxComplianceTracker from './pages/TaxComplianceTracker';
 import TaxCreditsAndIncentives from './pages/TaxCreditsAndIncentives';
+import TaxDashboard from './pages/TaxDashboard';
 import TaxDashboardAT from './pages/TaxDashboardAT';
 import TaxDashboardCH from './pages/TaxDashboardCH';
 import TaxDashboardDE from './pages/TaxDashboardDE';
@@ -494,6 +498,7 @@ import TaxYearClosingChecklist from './pages/TaxYearClosingChecklist';
 import TaxYearPlannerPage from './pages/TaxYearPlannerPage';
 import TechnicianManagement from './pages/TechnicianManagement';
 import TenantAISupport from './pages/TenantAISupport';
+import TenantAnalytics from './pages/TenantAnalytics';
 import TenantChatbotPage from './pages/TenantChatbotPage';
 import TenantCommunication from './pages/TenantCommunication';
 import TenantCommunicationCenter from './pages/TenantCommunicationCenter';
@@ -605,11 +610,8 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import BuildingAnalytics from './pages/BuildingAnalytics';
-import TenantAnalytics from './pages/TenantAnalytics';
-import ContractAnalytics from './pages/ContractAnalytics';
-import RentDevelopment from './pages/RentDevelopment';
-import CostAnalysis from './pages/CostAnalysis';
+import Settings from './pages/Settings';
+import Help from './pages/Help';
 import __Layout from './Layout.jsx';
 
 
@@ -736,6 +738,7 @@ export const PAGES = {
     "BankingOverview": BankingOverview,
     "BudgetAnalysis": BudgetAnalysis,
     "BudgetPlanning": BudgetPlanning,
+    "BuildingAnalytics": BuildingAnalytics,
     "BuildingBoard": BuildingBoard,
     "BuildingComparison": BuildingComparison,
     "BuildingDetail": BuildingDetail,
@@ -777,6 +780,7 @@ export const PAGES = {
     "ComprehensiveDashboard": ComprehensiveDashboard,
     "ComprehensiveTaxDashboard": ComprehensiveTaxDashboard,
     "ConsolidatedTaxSummary": ConsolidatedTaxSummary,
+    "ContractAnalytics": ContractAnalytics,
     "ContractAutomationHub": ContractAutomationHub,
     "ContractDetail": ContractDetail,
     "ContractDetailEnhanced": ContractDetailEnhanced,
@@ -786,6 +790,7 @@ export const PAGES = {
     "ContractTemplates": ContractTemplates,
     "ContractorMarketplace": ContractorMarketplace,
     "Contracts": Contracts,
+    "CostAnalysis": CostAnalysis,
     "CostTypes": CostTypes,
     "CrossBorderTaxDashboard": CrossBorderTaxDashboard,
     "Cryptocurrencies": Cryptocurrencies,
@@ -826,6 +831,7 @@ export const PAGES = {
     "ElsterAutomationHub": ElsterAutomationHub,
     "ElsterCertificates": ElsterCertificates,
     "ElsterIntegration": ElsterIntegration,
+    "Error500": Error500,
     "ElsterOverview": ElsterOverview,
     "ElsterResponses": ElsterResponses,
     "ElsterSettings": ElsterSettings,
@@ -837,7 +843,6 @@ export const PAGES = {
     "EnhancedTenantPortal": EnhancedTenantPortal,
     "EntityTaxPlanning": EntityTaxPlanning,
     "Equipment": Equipment,
-    "Error500": Error500,
     "EstateTaxPlanning": EstateTaxPlanning,
     "EstimatedTaxScheduler": EstimatedTaxScheduler,
     "ExpenseTracking": ExpenseTracking,
@@ -936,10 +941,10 @@ export const PAGES = {
     "NotificationManagement": NotificationManagement,
     "NotificationPreferences": NotificationPreferences,
     "OfflineError": OfflineError,
+    "Payments": Payments,
     "Onboarding": Onboarding,
     "OnboardingEnhanced": OnboardingEnhanced,
     "OnboardingWizard": OnboardingWizard,
-    "Payments": Payments,
     "OnboardingWizardNew": OnboardingWizardNew,
     "OperatingCostAutomationHub": OperatingCostAutomationHub,
     "OperatingCostWizard": OperatingCostWizard,
@@ -987,6 +992,7 @@ export const PAGES = {
     "RenditeRechnerEnhanced": RenditeRechnerEnhanced,
     "RentCollection": RentCollection,
     "RentCollectionDashboard": RentCollectionDashboard,
+    "RentDevelopment": RentDevelopment,
     "RentIncreaseOptimizer": RentIncreaseOptimizer,
     "RentIncreaseWizard": RentIncreaseWizard,
     "RentIndexManagement": RentIndexManagement,
@@ -1049,11 +1055,11 @@ export const PAGES = {
     "TaxAutomationCenter": TaxAutomationCenter,
     "TaxBracketCalculator": TaxBracketCalculator,
     "TaxCalendarAndTimeline": TaxCalendarAndTimeline,
-    "TaxDashboard": TaxDashboard,
     "TaxComplianceChecker": TaxComplianceChecker,
     "TaxComplianceDashboard": TaxComplianceDashboard,
     "TaxComplianceTracker": TaxComplianceTracker,
     "TaxCreditsAndIncentives": TaxCreditsAndIncentives,
+    "TaxDashboard": TaxDashboard,
     "TaxDashboardAT": TaxDashboardAT,
     "TaxDashboardCH": TaxDashboardCH,
     "TaxDashboardDE": TaxDashboardDE,
@@ -1110,6 +1116,7 @@ export const PAGES = {
     "TaxYearPlannerPage": TaxYearPlannerPage,
     "TechnicianManagement": TechnicianManagement,
     "TenantAISupport": TenantAISupport,
+    "TenantAnalytics": TenantAnalytics,
     "TenantChatbotPage": TenantChatbotPage,
     "TenantCommunication": TenantCommunication,
     "TenantCommunicationCenter": TenantCommunicationCenter,
@@ -1221,11 +1228,8 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "BuildingAnalytics": BuildingAnalytics,
-    "TenantAnalytics": TenantAnalytics,
-    "ContractAnalytics": ContractAnalytics,
-    "RentDevelopment": RentDevelopment,
-    "CostAnalysis": CostAnalysis,
+    "Settings": Settings,
+    "Help": Help,
 }
 
 export const pagesConfig = {
