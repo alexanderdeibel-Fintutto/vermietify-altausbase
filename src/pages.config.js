@@ -328,6 +328,7 @@ import OnboardingWizardNew from './pages/OnboardingWizardNew';
 import OperatingCostAutomationHub from './pages/OperatingCostAutomationHub';
 import OperatingCostWizard from './pages/OperatingCostWizard';
 import OperatingCosts from './pages/OperatingCosts';
+import OperatingCostsAbrechnug from './pages/OperatingCostsAbrechnug';
 import OperatingCostsManagement from './pages/OperatingCostsManagement';
 import OperatingCostsSimplified from './pages/OperatingCostsSimplified';
 import OtherIncomeCH from './pages/OtherIncomeCH';
@@ -336,6 +337,7 @@ import PackageManager from './pages/PackageManager';
 import PackageTestPage from './pages/PackageTestPage';
 import PartnerOnboarding from './pages/PartnerOnboarding';
 import PaymentHistory from './pages/PaymentHistory';
+import PaymentManagement from './pages/PaymentManagement';
 import PaymentTracking from './pages/PaymentTracking';
 import PerformanceMonitor from './pages/PerformanceMonitor';
 import PermissionDashboard from './pages/PermissionDashboard';
@@ -431,9 +433,9 @@ import TaxAuthoritySubmissions from './pages/TaxAuthoritySubmissions';
 import TaxAutomationCenter from './pages/TaxAutomationCenter';
 import TaxBracketCalculator from './pages/TaxBracketCalculator';
 import TaxCalendarAndTimeline from './pages/TaxCalendarAndTimeline';
+import TaxDashboard from './pages/TaxDashboard';
 import TaxComplianceChecker from './pages/TaxComplianceChecker';
 import TaxComplianceDashboard from './pages/TaxComplianceDashboard';
-import TaxDashboard from './pages/TaxDashboard';
 import TaxComplianceTracker from './pages/TaxComplianceTracker';
 import TaxCreditsAndIncentives from './pages/TaxCreditsAndIncentives';
 import TaxDashboardAT from './pages/TaxDashboardAT';
@@ -603,8 +605,8 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import PaymentManagement from './pages/PaymentManagement';
-import OperatingCostsAbrechnug from './pages/OperatingCostsAbrechnug';
+import BuildingAnalytics from './pages/BuildingAnalytics';
+import TenantAnalytics from './pages/TenantAnalytics';
 import __Layout from './Layout.jsx';
 
 
@@ -939,6 +941,7 @@ export const PAGES = {
     "OperatingCostAutomationHub": OperatingCostAutomationHub,
     "OperatingCostWizard": OperatingCostWizard,
     "OperatingCosts": OperatingCosts,
+    "OperatingCostsAbrechnug": OperatingCostsAbrechnug,
     "OperatingCostsManagement": OperatingCostsManagement,
     "OperatingCostsSimplified": OperatingCostsSimplified,
     "OtherIncomeCH": OtherIncomeCH,
@@ -947,6 +950,7 @@ export const PAGES = {
     "PackageTestPage": PackageTestPage,
     "PartnerOnboarding": PartnerOnboarding,
     "PaymentHistory": PaymentHistory,
+    "PaymentManagement": PaymentManagement,
     "PaymentTracking": PaymentTracking,
     "PerformanceMonitor": PerformanceMonitor,
     "PermissionDashboard": PermissionDashboard,
@@ -1042,9 +1046,9 @@ export const PAGES = {
     "TaxAutomationCenter": TaxAutomationCenter,
     "TaxBracketCalculator": TaxBracketCalculator,
     "TaxCalendarAndTimeline": TaxCalendarAndTimeline,
+    "TaxDashboard": TaxDashboard,
     "TaxComplianceChecker": TaxComplianceChecker,
     "TaxComplianceDashboard": TaxComplianceDashboard,
-    "TaxDashboard": TaxDashboard,
     "TaxComplianceTracker": TaxComplianceTracker,
     "TaxCreditsAndIncentives": TaxCreditsAndIncentives,
     "TaxDashboardAT": TaxDashboardAT,
@@ -1214,8 +1218,8 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "PaymentManagement": PaymentManagement,
-    "OperatingCostsAbrechnug": OperatingCostsAbrechnug,
+    "BuildingAnalytics": BuildingAnalytics,
+    "TenantAnalytics": TenantAnalytics,
 }
 
 export const pagesConfig = {
