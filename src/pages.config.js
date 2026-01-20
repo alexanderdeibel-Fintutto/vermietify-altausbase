@@ -584,6 +584,11 @@ import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
 import TerminationManagement from './pages/TerminationManagement';
+import VacancyManagement from './pages/VacancyManagement';
+import DepositManagement from './pages/DepositManagement';
+import UtilityBilling from './pages/UtilityBilling';
+import ContractTemplates from './pages/ContractTemplates';
+import PropertyComparison from './pages/PropertyComparison';
 import __Layout from './Layout.jsx';
 
 
@@ -1174,6 +1179,11 @@ export const PAGES = {
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
     "TerminationManagement": TerminationManagement,
+    "VacancyManagement": VacancyManagement,
+    "DepositManagement": DepositManagement,
+    "UtilityBilling": UtilityBilling,
+    "ContractTemplates": ContractTemplates,
+    "PropertyComparison": PropertyComparison,
 }
 
 export const pagesConfig = {
