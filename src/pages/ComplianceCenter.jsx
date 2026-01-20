@@ -1,89 +1,100 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { CheckCircle, AlertCircle, Shield, AlertTriangle } from 'lucide-react';
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import QuickStats from '@/components/shared/QuickStats';
+import React from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Shield, CheckCircle, AlertTriangle, FileText, Scale, Clock } from 'lucide-react';
 
-export default function ComplianceCenterPage() {
-  const complianceItems = [
-    { name: 'DSGVO Datenschutz', status: 'compliant', completeness: 95, lastCheck: '2026-01-07' },
-    { name: 'Steuerliche Aufzeichnungspflicht', status: 'compliant', completeness: 100, lastCheck: '2026-01-07' },
-    { name: 'BetrKV Betriebskostenverordnung', status: 'warning', completeness: 78, lastCheck: '2026-01-05' },
-    { name: 'Mietrecht Rechtlichkeit', status: 'compliant', completeness: 92, lastCheck: '2026-01-06' },
-    { name: 'GoBD Buchhaltung Standards', status: 'warning', completeness: 85, lastCheck: '2026-01-04' },
-  ];
+const complianceItems = [
+    { title: 'Grundsteuer', status: 'ok', dueDate: '2026-02-15', description: 'Frist eingehalten' },
+    { title: 'Betriebskostenabrechnung', status: 'warning', dueDate: '2026-03-31', description: 'In 70 Tagen fällig' },
+    { title: 'Rauchmelder-Wartung', status: 'ok', dueDate: '2026-06-01', description: 'Alle gewartet' },
+    { title: 'Energieausweis', status: 'error', dueDate: '2026-01-31', description: 'Läuft bald ab!' }
+];
 
-  const stats = [
-    { label: 'Compliant', value: complianceItems.filter(c => c.status === 'compliant').length },
-    { label: 'Warnungen', value: complianceItems.filter(c => c.status === 'warning').length },
-    { label: 'Durchschn. Vollständigkeit', value: Math.round(complianceItems.reduce((sum, c) => sum + c.completeness, 0) / complianceItems.length) + '%' },
-    { label: 'Letzte Prüfung', value: 'Vor 2 Tg.' },
-  ];
-
-  const getStatusBadge = (status) => {
-    switch(status) {
-      case 'compliant': return <Badge className="bg-green-600">✓ Konform</Badge>;
-      case 'warning': return <Badge className="bg-yellow-600">⚠ Warnung</Badge>;
-      case 'error': return <Badge className="bg-red-600">✗ Fehler</Badge>;
-      default: return <Badge>Unbekannt</Badge>;
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">🛡️ Compliance Center</h1>
-        <p className="text-slate-600 mt-1">Überwachen Sie Ihre Compliance und rechtliche Anforderungen</p>
-      </div>
-
-      <Alert className="bg-blue-50 border-blue-200">
-        <Shield className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-800">
-          Compliance-Prüfungen werden täglich automatisch durchgeführt. Letzte Prüfung: Heute um 02:00 Uhr.
-        </AlertDescription>
-      </Alert>
-
-      <QuickStats stats={stats} accentColor="yellow" />
-
-      <div className="space-y-3">
-        {complianceItems.map((item, idx) => (
-          <Card key={idx} className="border border-slate-200">
-            <CardContent className="pt-6">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <h3 className="font-semibold text-slate-900">{item.name}</h3>
-                    {getStatusBadge(item.status)}
-                  </div>
-                  <span className="text-sm text-slate-600">{item.completeness}%</span>
+export default function ComplianceCenter() {
+    return (
+        <div className="space-y-6">
+            <div className="vf-page-header">
+                <div>
+                    <h1 className="vf-page-title">Compliance Center</h1>
+                    <p className="vf-page-subtitle">Gesetzliche Pflichten & Fristen</p>
                 </div>
-                <Progress value={item.completeness} className="h-2" />
-                <p className="text-xs text-slate-500">Letzte Prüfung: {item.lastCheck}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            </div>
 
-      <Card className="border border-yellow-200 bg-yellow-50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-yellow-900"><AlertTriangle className="w-5 h-5" /> Offene Punkte</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="p-3 bg-white border border-yellow-200 rounded-lg">
-            <p className="font-semibold text-slate-900">BetrKV: Abrechnungserstellung</p>
-            <p className="text-sm text-slate-700 mt-1">Folgende Betriebskostenabrechnungen sind überfällig:</p>
-            <ul className="text-sm text-slate-700 mt-2 ml-4 list-disc">
-              <li>Gebäude A - 2025 Abrechnung (Fällig: 31.01.26)</li>
-              <li>Gebäude B - Q4 2025 Abrechnung (Fällig: 28.02.26)</li>
-            </ul>
-          </div>
-          <Button className="w-full bg-yellow-600 hover:bg-yellow-700">Zu Betriebskostenabrechnungen</Button>
-        </CardContent>
-      </Card>
-    </div>
-  );
+            {/* Summary Cards */}
+            <div className="grid md:grid-cols-3 gap-4">
+                <Card className="border-green-300 bg-green-50">
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <CheckCircle className="w-8 h-8 text-green-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-green-700">2</div>
+                        <div className="text-sm text-gray-700 mt-1">In Ordnung</div>
+                    </CardContent>
+                </Card>
+
+                <Card className="border-orange-300 bg-orange-50">
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <Clock className="w-8 h-8 text-orange-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-orange-700">1</div>
+                        <div className="text-sm text-gray-700 mt-1">Bald fällig</div>
+                    </CardContent>
+                </Card>
+
+                <Card className="border-red-300 bg-red-50">
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <AlertTriangle className="w-8 h-8 text-red-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-red-700">1</div>
+                        <div className="text-sm text-gray-700 mt-1">Dringend</div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Compliance Items */}
+            <div className="space-y-3">
+                {complianceItems.map((item, idx) => (
+                    <Card key={idx} className={
+                        item.status === 'error' ? 'border-red-300 bg-red-50/50' :
+                        item.status === 'warning' ? 'border-orange-300 bg-orange-50/50' :
+                        'border-green-300 bg-green-50/50'
+                    }>
+                        <CardContent className="p-4">
+                            <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-4">
+                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white ${
+                                        item.status === 'error' ? 'bg-red-600' :
+                                        item.status === 'warning' ? 'bg-orange-600' :
+                                        'bg-green-600'
+                                    }`}>
+                                        {item.status === 'ok' ? <CheckCircle className="w-5 h-5" /> :
+                                         item.status === 'warning' ? <Clock className="w-5 h-5" /> :
+                                         <AlertTriangle className="w-5 h-5" />}
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold mb-1">{item.title}</h3>
+                                        <p className="text-sm text-gray-700">{item.description}</p>
+                                        <div className="text-xs text-gray-500 mt-1">
+                                            Frist: {new Date(item.dueDate).toLocaleDateString('de-DE')}
+                                        </div>
+                                    </div>
+                                </div>
+                                <Badge className={
+                                    item.status === 'error' ? 'vf-badge-error' :
+                                    item.status === 'warning' ? 'vf-badge-warning' :
+                                    'vf-badge-success'
+                                }>
+                                    {item.status === 'ok' ? 'OK' :
+                                     item.status === 'warning' ? 'Warnung' :
+                                     'Dringend'}
+                                </Badge>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+        </div>
+    );
 }

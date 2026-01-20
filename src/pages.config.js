@@ -131,6 +131,7 @@ import BusinessStructureOptimizer from './pages/BusinessStructureOptimizer';
 import CalculationHistory from './pages/CalculationHistory';
 import CalculationHistoryEnhanced from './pages/CalculationHistoryEnhanced';
 import CalculatorExample from './pages/CalculatorExample';
+import CalendarView from './pages/CalendarView';
 import CapitalGainCH from './pages/CapitalGainCH';
 import CapitalGainsManagement from './pages/CapitalGainsManagement';
 import CapitalGainsOptimizer from './pages/CapitalGainsOptimizer';
@@ -159,6 +160,7 @@ import ContractAutomationHub from './pages/ContractAutomationHub';
 import ContractDetail from './pages/ContractDetail';
 import ContractDetailEnhanced from './pages/ContractDetailEnhanced';
 import ContractDetailTemplate from './pages/ContractDetailTemplate';
+import ContractRenewals from './pages/ContractRenewals';
 import ContractorMarketplace from './pages/ContractorMarketplace';
 import Contracts from './pages/Contracts';
 import CostTypes from './pages/CostTypes';
@@ -222,6 +224,7 @@ import FinAPICallback from './pages/FinAPICallback';
 import FinanceDashboard from './pages/FinanceDashboard';
 import FinanceManagement from './pages/FinanceManagement';
 import FinanceManagementHub from './pages/FinanceManagementHub';
+import FinancialDashboard from './pages/FinancialDashboard';
 import FinancialForecasting from './pages/FinancialForecasting';
 import FinancialItems from './pages/FinancialItems';
 import FinancialPlanning from './pages/FinancialPlanning';
@@ -285,6 +288,7 @@ import MarketingPageExample from './pages/MarketingPageExample';
 import MarketplaceAdmin from './pages/MarketplaceAdmin';
 import MeterApp from './pages/MeterApp';
 import MeterDashboard from './pages/MeterDashboard';
+import MeterReadings from './pages/MeterReadings';
 import MieterDashboard from './pages/MieterDashboard';
 import MieterSelfServicePortal from './pages/MieterSelfServicePortal';
 import MietvertragGenerator from './pages/MietvertragGenerator';
@@ -315,16 +319,18 @@ import OperatingCosts from './pages/OperatingCosts';
 import OperatingCostsManagement from './pages/OperatingCostsManagement';
 import OperatingCostsSimplified from './pages/OperatingCostsSimplified';
 import OtherIncomeCH from './pages/OtherIncomeCH';
+import OwnersManagement from './pages/OwnersManagement';
 import PackageManager from './pages/PackageManager';
 import PackageTestPage from './pages/PackageTestPage';
 import PartnerOnboarding from './pages/PartnerOnboarding';
+import PaymentTracking from './pages/PaymentTracking';
 import Payments from './pages/Payments';
 import PerformanceMonitor from './pages/PerformanceMonitor';
 import PermissionDashboard from './pages/PermissionDashboard';
 import PermissionManagement from './pages/PermissionManagement';
-import PortfolioDetail from './pages/PortfolioDetail';
 import PersonalizedTaxCockpit from './pages/PersonalizedTaxCockpit';
 import PortfolioDashboard from './pages/PortfolioDashboard';
+import PortfolioDetail from './pages/PortfolioDetail';
 import PortfolioManagement from './pages/PortfolioManagement';
 import PortfolioOptimizer from './pages/PortfolioOptimizer';
 import PreciousMetals from './pages/PreciousMetals';
@@ -334,6 +340,7 @@ import PropertyManagementDashboard from './pages/PropertyManagementDashboard';
 import PropertyManagementHub from './pages/PropertyManagementHub';
 import PropertyManagerDashboard from './pages/PropertyManagerDashboard';
 import PropertyPortfolio from './pages/PropertyPortfolio';
+import PropertyTaxOverview from './pages/PropertyTaxOverview';
 import PropertyValuation from './pages/PropertyValuation';
 import PropertyValuationEngine from './pages/PropertyValuationEngine';
 import QuarterlyTaxEstimator from './pages/QuarterlyTaxEstimator';
@@ -345,6 +352,7 @@ import RealEstateTaxPlanning from './pages/RealEstateTaxPlanning';
 import RealTimeTaxCalculator from './pages/RealTimeTaxCalculator';
 import RenditeRechner from './pages/RenditeRechner';
 import RenditeRechnerEnhanced from './pages/RenditeRechnerEnhanced';
+import RentCollection from './pages/RentCollection';
 import RentCollectionDashboard from './pages/RentCollectionDashboard';
 import RentIncreaseOptimizer from './pages/RentIncreaseOptimizer';
 import RentIndexManagement from './pages/RentIndexManagement';
@@ -386,6 +394,7 @@ import SupportCenter from './pages/SupportCenter';
 import SyncManagement from './pages/SyncManagement';
 import SystemConfiguration from './pages/SystemConfiguration';
 import SystemHealth from './pages/SystemHealth';
+import SystemSettings from './pages/SystemSettings';
 import TaskManagement from './pages/TaskManagement';
 import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
@@ -567,15 +576,10 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import MeterReadings from './pages/MeterReadings';
-import OwnersManagement from './pages/OwnersManagement';
-import PropertyTaxOverview from './pages/PropertyTaxOverview';
-import PaymentTracking from './pages/PaymentTracking';
-import RentCollection from './pages/RentCollection';
-import FinancialDashboard from './pages/FinancialDashboard';
-import ContractRenewals from './pages/ContractRenewals';
-import CalendarView from './pages/CalendarView';
-import SystemSettings from './pages/SystemSettings';
+import InvoiceDetail from './pages/InvoiceDetail';
+import TaskDetail from './pages/TaskDetail';
+import AfAManagement from './pages/AfAManagement';
+import RentPaymentDashboard from './pages/RentPaymentDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -713,6 +717,7 @@ export const PAGES = {
     "CalculationHistory": CalculationHistory,
     "CalculationHistoryEnhanced": CalculationHistoryEnhanced,
     "CalculatorExample": CalculatorExample,
+    "CalendarView": CalendarView,
     "CapitalGainCH": CapitalGainCH,
     "CapitalGainsManagement": CapitalGainsManagement,
     "CapitalGainsOptimizer": CapitalGainsOptimizer,
@@ -741,6 +746,7 @@ export const PAGES = {
     "ContractDetail": ContractDetail,
     "ContractDetailEnhanced": ContractDetailEnhanced,
     "ContractDetailTemplate": ContractDetailTemplate,
+    "ContractRenewals": ContractRenewals,
     "ContractorMarketplace": ContractorMarketplace,
     "Contracts": Contracts,
     "CostTypes": CostTypes,
@@ -804,6 +810,7 @@ export const PAGES = {
     "FinanceDashboard": FinanceDashboard,
     "FinanceManagement": FinanceManagement,
     "FinanceManagementHub": FinanceManagementHub,
+    "FinancialDashboard": FinancialDashboard,
     "FinancialForecasting": FinancialForecasting,
     "FinancialItems": FinancialItems,
     "FinancialPlanning": FinancialPlanning,
@@ -867,6 +874,7 @@ export const PAGES = {
     "MarketplaceAdmin": MarketplaceAdmin,
     "MeterApp": MeterApp,
     "MeterDashboard": MeterDashboard,
+    "MeterReadings": MeterReadings,
     "MieterDashboard": MieterDashboard,
     "MieterSelfServicePortal": MieterSelfServicePortal,
     "MietvertragGenerator": MietvertragGenerator,
@@ -897,16 +905,18 @@ export const PAGES = {
     "OperatingCostsManagement": OperatingCostsManagement,
     "OperatingCostsSimplified": OperatingCostsSimplified,
     "OtherIncomeCH": OtherIncomeCH,
+    "OwnersManagement": OwnersManagement,
     "PackageManager": PackageManager,
     "PackageTestPage": PackageTestPage,
     "PartnerOnboarding": PartnerOnboarding,
+    "PaymentTracking": PaymentTracking,
     "Payments": Payments,
     "PerformanceMonitor": PerformanceMonitor,
     "PermissionDashboard": PermissionDashboard,
     "PermissionManagement": PermissionManagement,
-    "PortfolioDetail": PortfolioDetail,
     "PersonalizedTaxCockpit": PersonalizedTaxCockpit,
     "PortfolioDashboard": PortfolioDashboard,
+    "PortfolioDetail": PortfolioDetail,
     "PortfolioManagement": PortfolioManagement,
     "PortfolioOptimizer": PortfolioOptimizer,
     "PreciousMetals": PreciousMetals,
@@ -916,6 +926,7 @@ export const PAGES = {
     "PropertyManagementHub": PropertyManagementHub,
     "PropertyManagerDashboard": PropertyManagerDashboard,
     "PropertyPortfolio": PropertyPortfolio,
+    "PropertyTaxOverview": PropertyTaxOverview,
     "PropertyValuation": PropertyValuation,
     "PropertyValuationEngine": PropertyValuationEngine,
     "QuarterlyTaxEstimator": QuarterlyTaxEstimator,
@@ -927,6 +938,7 @@ export const PAGES = {
     "RealTimeTaxCalculator": RealTimeTaxCalculator,
     "RenditeRechner": RenditeRechner,
     "RenditeRechnerEnhanced": RenditeRechnerEnhanced,
+    "RentCollection": RentCollection,
     "RentCollectionDashboard": RentCollectionDashboard,
     "RentIncreaseOptimizer": RentIncreaseOptimizer,
     "RentIndexManagement": RentIndexManagement,
@@ -968,6 +980,7 @@ export const PAGES = {
     "SyncManagement": SyncManagement,
     "SystemConfiguration": SystemConfiguration,
     "SystemHealth": SystemHealth,
+    "SystemSettings": SystemSettings,
     "TaskManagement": TaskManagement,
     "Tasks": Tasks,
     "Tax": Tax,
@@ -1149,15 +1162,10 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "MeterReadings": MeterReadings,
-    "OwnersManagement": OwnersManagement,
-    "PropertyTaxOverview": PropertyTaxOverview,
-    "PaymentTracking": PaymentTracking,
-    "RentCollection": RentCollection,
-    "FinancialDashboard": FinancialDashboard,
-    "ContractRenewals": ContractRenewals,
-    "CalendarView": CalendarView,
-    "SystemSettings": SystemSettings,
+    "InvoiceDetail": InvoiceDetail,
+    "TaskDetail": TaskDetail,
+    "AfAManagement": AfAManagement,
+    "RentPaymentDashboard": RentPaymentDashboard,
 }
 
 export const pagesConfig = {
