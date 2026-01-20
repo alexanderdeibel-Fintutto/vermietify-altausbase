@@ -1,95 +1,173 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mail, MessageSquare, Phone, Send } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { VfInput } from '@/components/shared/VfInput';
+import { VfTextarea } from '@/components/shared/VfTextarea';
+import { VfSelect } from '@/components/shared/VfSelect';
+import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { MessageSquare, Plus, Send, Mail, CheckCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { showSuccess } from '@/components/notifications/ToastNotification';
 
-export default function CommunicationCenterPage() {
-  const messages = [
-    { id: 1, from: 'Klaus Meyer', type: 'email', subject: 'Reparaturanfrage', date: 'Heute 10:30', unread: true },
-    { id: 2, from: 'Jane Smith', type: 'sms', subject: 'Zahlungsbestätigung', date: 'Heute 09:15', unread: false },
-    { id: 3, from: 'Bob Wilson', type: 'email', subject: 'Mietvertragsfrage', date: 'Gestern 16:45', unread: false },
-  ];
+export default function CommunicationCenter() {
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [formData, setFormData] = useState({
+        tenant_id: '',
+        subject: '',
+        category: 'general',
+        message: ''
+    });
 
-  const templates = [
-    { name: 'Mieterhöhung Ankündigung', type: 'Email' },
-    { name: 'Reparaturauftrag', type: 'SMS' },
-    { name: 'Zahlung überfällig', type: 'Email' },
-  ];
+    const queryClient = useQueryClient();
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">💬 Communication Center</h1>
-        <p className="text-slate-600 mt-1">Verwaltung aller Kommunikationen mit Mietern</p>
-      </div>
+    const { data: messages = [], isLoading } = useQuery({
+        queryKey: ['tenantMessages'],
+        queryFn: () => base44.entities.TenantMessage.list('-created_date')
+    });
 
-      <Tabs defaultValue="inbox">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="inbox" className="flex items-center gap-2"><Mail className="w-4 h-4" /> Posteingang</TabsTrigger>
-          <TabsTrigger value="compose" className="flex items-center gap-2"><Send className="w-4 h-4" /> Schreiben</TabsTrigger>
-          <TabsTrigger value="templates" className="flex items-center gap-2"><FileText className="w-4 h-4" /> Vorlagen</TabsTrigger>
-        </TabsList>
+    const { data: tenants = [] } = useQuery({
+        queryKey: ['tenants'],
+        queryFn: () => base44.entities.Tenant.list()
+    });
 
-        <TabsContent value="inbox" className="space-y-3">
-          {messages.map((msg) => (
-            <Card key={msg.id} className={msg.unread ? 'border-blue-300 bg-blue-50' : 'border-slate-200'}>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 flex-1">
-                    {msg.type === 'email' ? <Mail className="w-5 h-5" /> : <Phone className="w-5 h-5" />}
-                    <div className="flex-1">
-                      <p className="font-semibold text-slate-900">{msg.subject}</p>
-                      <p className="text-sm text-slate-600">{msg.from} • {msg.date}</p>
-                    </div>
-                  </div>
-                  {msg.unread && <Badge className="bg-blue-600">Neu</Badge>}
+    const createMessageMutation = useMutation({
+        mutationFn: (data) => base44.entities.TenantMessage.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tenantMessages'] });
+            setDialogOpen(false);
+            setFormData({ tenant_id: '', subject: '', category: 'general', message: '' });
+            showSuccess('Nachricht gesendet');
+        }
+    });
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        createMessageMutation.mutate(formData);
+    };
+
+    if (isLoading) {
+        return <div className="flex items-center justify-center h-96"><div className="vf-spinner vf-spinner-lg" /></div>;
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="vf-page-header">
+                <div>
+                    <h1 className="vf-page-title">Kommunikation</h1>
+                    <p className="vf-page-subtitle">{messages.length} Nachrichten</p>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="compose">
-          <Card className="border border-slate-200">
-            <CardContent className="pt-6 space-y-4">
-              <div>
-                <label className="block text-sm font-semibold mb-2">An</label>
-                <input type="text" placeholder="Empfänger" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-2">Betreff</label>
-                <input type="text" placeholder="Betreff" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-2">Nachricht</label>
-                <textarea placeholder="Nachricht" rows="6" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"></textarea>
-              </div>
-              <div className="flex gap-2">
-                <Button className="bg-blue-600 hover:bg-blue-700"><Send className="w-4 h-4 mr-2" />Senden</Button>
-                <Button variant="outline">Speichern</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="templates" className="space-y-3">
-          {templates.map((template, idx) => (
-            <Card key={idx} className="border border-slate-200">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-slate-900">{template.name}</p>
-                    <p className="text-sm text-slate-600">{template.type}</p>
-                  </div>
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700">Nutzen</Button>
+                <div className="vf-page-actions">
+                    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button className="vf-btn-gradient">
+                                <Plus className="w-4 h-4" />
+                                Neue Nachricht
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Neue Nachricht an Mieter</DialogTitle>
+                            </DialogHeader>
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <VfSelect
+                                    label="Empfänger"
+                                    value={formData.tenant_id}
+                                    onChange={(value) => setFormData(prev => ({ ...prev, tenant_id: value }))}
+                                    options={tenants.map(t => ({ value: t.id, label: `${t.vorname} ${t.nachname}` }))}
+                                    required
+                                />
+                                <VfInput
+                                    label="Betreff"
+                                    value={formData.subject}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                                    required
+                                />
+                                <VfSelect
+                                    label="Kategorie"
+                                    value={formData.category}
+                                    onChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                                    options={[
+                                        { value: 'general', label: 'Allgemein' },
+                                        { value: 'repair', label: 'Reparatur' },
+                                        { value: 'billing', label: 'Abrechnung' },
+                                        { value: 'other', label: 'Sonstiges' }
+                                    ]}
+                                />
+                                <VfTextarea
+                                    label="Nachricht"
+                                    value={formData.message}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+                                    rows={6}
+                                    required
+                                />
+                                <div className="flex justify-end gap-3 pt-4">
+                                    <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                                        Abbrechen
+                                    </Button>
+                                    <Button type="submit" className="vf-btn-gradient">
+                                        <Send className="w-4 h-4" />
+                                        Senden
+                                    </Button>
+                                </div>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
+            </div>
+
+            {messages.length === 0 ? (
+                <Card>
+                    <CardContent className="py-16">
+                        <div className="text-center">
+                            <MessageSquare className="w-20 h-20 mx-auto mb-6 text-gray-300" />
+                            <h3 className="text-xl font-semibold mb-2">Keine Nachrichten</h3>
+                            <p className="text-gray-600 mb-6">Starten Sie die Kommunikation mit Ihren Mietern</p>
+                            <Button className="vf-btn-gradient" onClick={() => setDialogOpen(true)}>
+                                <Plus className="w-4 h-4" />
+                                Erste Nachricht senden
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            ) : (
+                <div className="space-y-3">
+                    {messages.map((message) => {
+                        const tenant = tenants.find(t => t.id === message.tenant_id);
+                        return (
+                            <Card key={message.id}>
+                                <CardContent className="p-4">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex items-start gap-4">
+                                            <MessageSquare className="w-8 h-8 text-blue-600 mt-1" />
+                                            <div>
+                                                <h3 className="font-semibold mb-1">{message.subject}</h3>
+                                                <div className="text-sm text-gray-600 mb-2">
+                                                    {tenant ? `${tenant.vorname} ${tenant.nachname}` : 'Unbekannt'}
+                                                </div>
+                                                <p className="text-sm text-gray-700">{message.message}</p>
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    <Badge className={
+                                                        message.status === 'resolved' ? 'vf-badge-success' :
+                                                        message.status === 'in_progress' ? 'vf-badge-info' :
+                                                        'vf-badge-warning'
+                                                    }>
+                                                        {message.status}
+                                                    </Badge>
+                                                    <span className="text-xs text-gray-500">
+                                                        {new Date(message.created_date).toLocaleDateString('de-DE')}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
 }

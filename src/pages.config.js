@@ -571,6 +571,9 @@ import MeterReadings from './pages/MeterReadings';
 import OwnersManagement from './pages/OwnersManagement';
 import PropertyTaxOverview from './pages/PropertyTaxOverview';
 import PaymentTracking from './pages/PaymentTracking';
+import RentCollection from './pages/RentCollection';
+import FinancialDashboard from './pages/FinancialDashboard';
+import ContractRenewals from './pages/ContractRenewals';
 import __Layout from './Layout.jsx';
 
 
@@ -1148,6 +1151,9 @@ export const PAGES = {
     "OwnersManagement": OwnersManagement,
     "PropertyTaxOverview": PropertyTaxOverview,
     "PaymentTracking": PaymentTracking,
+    "RentCollection": RentCollection,
+    "FinancialDashboard": FinancialDashboard,
+    "ContractRenewals": ContractRenewals,
 }
 
 export const pagesConfig = {

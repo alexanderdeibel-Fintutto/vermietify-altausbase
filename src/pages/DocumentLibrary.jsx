@@ -1,61 +1,99 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { FileText, Download, Share2, Trash2, Search, Plus } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { VfInput } from '@/components/shared/VfInput';
+import { Card, CardContent } from '@/components/ui/card';
+import { FileText, Search, Download, Eye, Upload } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
-export default function DocumentLibraryPage() {
-  const documents = [
-    { id: 1, name: 'Mietvertrag Template', type: 'Template', date: '2026-01-05', size: '245 KB', downloads: 24 },
-    { id: 2, name: 'Nebenkostenabrechnung', type: 'Form', date: '2026-01-04', size: '156 KB', downloads: 18 },
-    { id: 3, name: 'Hausordnung', type: 'Policy', date: '2025-12-15', size: '89 KB', downloads: 12 },
-    { id: 4, name: 'Kaution-Vereinbarung', type: 'Template', date: '2025-11-30', size: '134 KB', downloads: 8 },
-    { id: 5, name: 'Wartungs-Checkliste', type: 'Form', date: '2025-10-20', size: '112 KB', downloads: 5 },
-  ];
+export default function DocumentLibrary() {
+    const [searchTerm, setSearchTerm] = useState('');
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">📚 Dokumentenbibliothek</h1>
-          <p className="text-slate-600 mt-1">Zentrale Verwaltung aller Dokumente und Templates</p>
+    const { data: documents = [], isLoading } = useQuery({
+        queryKey: ['documents'],
+        queryFn: () => base44.entities.Document.list('-created_date', 100)
+    });
+
+    const filteredDocs = documents.filter(doc => 
+        doc.titel?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        doc.dokumenttyp?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const totalSize = documents.reduce((sum, doc) => sum + (doc.seitenanzahl || 0), 0);
+
+    if (isLoading) {
+        return <div className="flex items-center justify-center h-96"><div className="vf-spinner vf-spinner-lg" /></div>;
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="vf-page-header">
+                <div>
+                    <h1 className="vf-page-title">Dokumentenbibliothek</h1>
+                    <p className="vf-page-subtitle">{documents.length} Dokumente • {totalSize} Seiten</p>
+                </div>
+                <div className="vf-page-actions">
+                    <Button className="vf-btn-gradient">
+                        <Upload className="w-4 h-4" />
+                        Hochladen
+                    </Button>
+                </div>
+            </div>
+
+            {/* Search */}
+            <Card>
+                <CardContent className="p-4">
+                    <VfInput
+                        leftIcon={Search}
+                        placeholder="Dokumente durchsuchen..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </CardContent>
+            </Card>
+
+            {filteredDocs.length === 0 ? (
+                <Card>
+                    <CardContent className="py-16">
+                        <div className="text-center">
+                            <FileText className="w-20 h-20 mx-auto mb-6 text-gray-300" />
+                            <h3 className="text-xl font-semibold mb-2">Keine Dokumente gefunden</h3>
+                            <p className="text-gray-600">Laden Sie Ihr erstes Dokument hoch</p>
+                        </div>
+                    </CardContent>
+                </Card>
+            ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredDocs.map((doc) => (
+                        <Card key={doc.id} className="vf-card-clickable">
+                            <CardContent className="p-4">
+                                <div className="flex items-start gap-3">
+                                    <FileText className="w-8 h-8 text-blue-600 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-semibold mb-1 truncate">{doc.titel}</h3>
+                                        <Badge className="vf-badge-default text-xs mb-2">{doc.dokumenttyp}</Badge>
+                                        <div className="text-xs text-gray-500">
+                                            {new Date(doc.created_date).toLocaleDateString('de-DE')}
+                                        </div>
+                                        {doc.seitenanzahl && (
+                                            <div className="text-xs text-gray-500">{doc.seitenanzahl} Seiten</div>
+                                        )}
+                                        <div className="flex gap-2 mt-3">
+                                            <Button variant="outline" size="sm">
+                                                <Eye className="w-3 h-3" />
+                                            </Button>
+                                            <Button variant="outline" size="sm">
+                                                <Download className="w-3 h-3" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            )}
         </div>
-        <Button className="bg-indigo-600 hover:bg-indigo-700"><Plus className="w-4 h-4 mr-2" />Upload</Button>
-      </div>
-
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-        <Input placeholder="Dokumente suchen..." className="pl-10" />
-      </div>
-
-      <div className="space-y-3">
-        {documents.map((doc) => (
-          <Card key={doc.id} className="border border-slate-200 hover:border-indigo-300 cursor-pointer transition-colors">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4 flex-1">
-                  <FileText className="w-6 h-6 text-indigo-600 flex-shrink-0" />
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-slate-900">{doc.name}</h3>
-                    <div className="flex gap-3 text-xs text-slate-600 mt-1">
-                      <span>📅 {doc.date}</span>
-                      <span>📦 {doc.size}</span>
-                      <Badge variant="outline">{doc.type}</Badge>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-600">{doc.downloads} Downloads</span>
-                  <Button size="icon" variant="ghost"><Download className="w-4 h-4 text-blue-600" /></Button>
-                  <Button size="icon" variant="ghost"><Share2 className="w-4 h-4 text-green-600" /></Button>
-                  <Button size="icon" variant="ghost"><Trash2 className="w-4 h-4 text-red-600" /></Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
+    );
 }
