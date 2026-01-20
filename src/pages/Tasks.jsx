@@ -1,45 +1,39 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-    CheckCircle2, 
-    Clock, 
-    AlertTriangle, 
-    Plus,
-    Filter,
-    Calendar,
-    ListTodo,
-    Mail,
-    Settings,
-    Activity
-} from 'lucide-react';
-import TaskForm from '@/components/tasks/TaskForm';
-import TaskList from '@/components/tasks/TaskList';
-import TaskStats from '@/components/tasks/TaskStats';
-import WorkflowManager from '@/components/tasks/WorkflowManager';
-import AutomationManager from '@/components/tasks/AutomationManager';
-import EmailAccountManager from '@/components/tasks/EmailAccountManager';
-import EmailList from '@/components/tasks/EmailList';
-import TaskDashboard from '@/components/tasks/TaskDashboard';
-import TaskKanban from '@/components/tasks/TaskKanban';
-import TaskCalendar from '@/components/tasks/TaskCalendar';
-import ActivityLogViewer from '@/components/tasks/ActivityLogViewer';
-import PerformanceMonitor from '@/components/tasks/PerformanceMonitor';
-import SetupWizard from '@/components/tasks/SetupWizard';
-import TestingPanel from '@/components/tasks/TestingPanel';
-import ModuleGuard from '@/components/package/ModuleGuard';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { VfInput } from '@/components/shared/VfInput';
+import { VfSelect } from '@/components/shared/VfSelect';
+import { VfTextarea } from '@/components/shared/VfTextarea';
+import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { CheckCircle2, Plus, Calendar, Circle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { showSuccess } from '@/components/notifications/ToastNotification';
+
+const statusOptions = [
+    { value: 'Offen', label: 'Offen' },
+    { value: 'In Bearbeitung', label: 'In Bearbeitung' },
+    { value: 'Erledigt', label: 'Erledigt' }
+];
+
+const priorityOptions = [
+    { value: 'Niedrig', label: 'Niedrig' },
+    { value: 'Mittel', label: 'Mittel' },
+    { value: 'Hoch', label: 'Hoch' },
+    { value: 'Dringend', label: 'Dringend' }
+];
 
 export default function Tasks() {
-    const [formOpen, setFormOpen] = useState(false);
-    const [editingTask, setEditingTask] = useState(null);
-    const [activeTab, setActiveTab] = useState('overview');
-    const [setupWizardOpen, setSetupWizardOpen] = useState(false);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [formData, setFormData] = useState({
+        titel: '',
+        beschreibung: '',
+        prioritaet: 'Mittel',
+        status: 'Offen',
+        faelligkeitsdatum: ''
+    });
+
     const queryClient = useQueryClient();
 
     const { data: tasks = [], isLoading } = useQuery({
@@ -47,211 +41,151 @@ export default function Tasks() {
         queryFn: () => base44.entities.Task.list('-created_date')
     });
 
-    const { data: priorities = [] } = useQuery({
-        queryKey: ['taskPriorities'],
-        queryFn: () => base44.entities.TaskPriority.list('sort_order')
-    });
-
-    // Setup-Wizard beim ersten Start anzeigen
-    React.useEffect(() => {
-        const checkSetup = async () => {
-            const workflows = await base44.entities.Workflow.list();
-            if (workflows.length === 0) {
-                setSetupWizardOpen(true);
-            }
-        };
-        checkSetup();
-    }, []);
-
-    const createMutation = useMutation({
+    const createTaskMutation = useMutation({
         mutationFn: (data) => base44.entities.Task.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            setFormOpen(false);
-            setEditingTask(null);
+            setDialogOpen(false);
+            setFormData({ titel: '', beschreibung: '', prioritaet: 'Mittel', status: 'Offen', faelligkeitsdatum: '' });
+            showSuccess('Aufgabe erstellt');
         }
     });
 
-    const updateMutation = useMutation({
+    const updateTaskMutation = useMutation({
         mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            setFormOpen(false);
-            setEditingTask(null);
         }
     });
 
-    const deleteMutation = useMutation({
-        mutationFn: (id) => base44.entities.Task.delete(id),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['tasks'] });
-        }
-    });
-
-    const handleSubmit = (data) => {
-        if (editingTask) {
-            updateMutation.mutate({ id: editingTask.id, data });
-        } else {
-            createMutation.mutate(data);
-        }
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        createTaskMutation.mutate(formData);
     };
 
-    const handleEdit = (task) => {
-        setEditingTask(task);
-        setFormOpen(true);
+    const toggleStatus = (task) => {
+        const newStatus = task.status === 'Erledigt' ? 'Offen' : 'Erledigt';
+        updateTaskMutation.mutate({ id: task.id, data: { status: newStatus } });
     };
 
-    const handleDelete = (id) => {
-        if (confirm('Möchten Sie diesen Task wirklich löschen?')) {
-            deleteMutation.mutate(id);
-        }
-    };
-
-    const handleAddNew = () => {
-        setEditingTask(null);
-        setFormOpen(true);
-    };
+    if (isLoading) {
+        return <div className="flex items-center justify-center h-96"><div className="vf-spinner vf-spinner-lg" /></div>;
+    }
 
     return (
-        <ModuleGuard moduleName="aufgaben">
         <div className="space-y-6">
-            {/* Header */}
-            <motion.div 
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-between"
-            >
+            <div className="vf-page-header">
                 <div>
-                    <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Aufgaben</h1>
-                    <p className="text-sm font-extralight text-slate-400 mt-1">Verwalten Sie alle Tasks und Workflows</p>
+                    <h1 className="vf-page-title">Aufgaben</h1>
+                    <p className="vf-page-subtitle">{tasks.filter(t => t.status !== 'Erledigt').length} offene Aufgaben</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Button 
-                        onClick={handleAddNew}
-                        className="bg-slate-700 hover:bg-slate-800 font-extralight"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Neuer Task
-                    </Button>
+                <div className="vf-page-actions">
+                    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button className="vf-btn-gradient">
+                                <Plus className="w-4 h-4" />
+                                Aufgabe hinzufügen
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Neue Aufgabe</DialogTitle>
+                            </DialogHeader>
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <VfInput
+                                    label="Titel"
+                                    value={formData.titel}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, titel: e.target.value }))}
+                                    required
+                                />
+                                <VfTextarea
+                                    label="Beschreibung"
+                                    value={formData.beschreibung}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, beschreibung: e.target.value }))}
+                                    rows={3}
+                                />
+                                <VfSelect
+                                    label="Priorität"
+                                    value={formData.prioritaet}
+                                    onChange={(value) => setFormData(prev => ({ ...prev, prioritaet: value }))}
+                                    options={priorityOptions}
+                                />
+                                <VfInput
+                                    label="Fälligkeitsdatum"
+                                    type="date"
+                                    value={formData.faelligkeitsdatum}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, faelligkeitsdatum: e.target.value }))}
+                                />
+                                <div className="flex justify-end gap-3 pt-4">
+                                    <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                                        Abbrechen
+                                    </Button>
+                                    <Button type="submit" className="vf-btn-gradient">
+                                        Erstellen
+                                    </Button>
+                                </div>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
                 </div>
-            </motion.div>
+            </div>
 
-            {/* Statistics */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-            >
-            <TaskStats tasks={tasks} />
-            </motion.div>
-
-            {/* Performance Monitor */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-            >
-            <PerformanceMonitor />
-            </motion.div>
-
-            {/* Tabs */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-            >
-            <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="grid w-full grid-cols-9">
-                    <TabsTrigger value="overview">Übersicht</TabsTrigger>
-                    <TabsTrigger value="tasks">Liste</TabsTrigger>
-                    <TabsTrigger value="kanban">Kanban</TabsTrigger>
-                    <TabsTrigger value="calendar">Kalender</TabsTrigger>
-                    <TabsTrigger value="workflows">Workflows</TabsTrigger>
-                    <TabsTrigger value="emails">Emails</TabsTrigger>
-                    <TabsTrigger value="rules">Regeln</TabsTrigger>
-                    <TabsTrigger value="logs">Protokoll</TabsTrigger>
-                    <TabsTrigger value="testing">Testing</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="overview" className="mt-6">
-                    <TaskDashboard />
-                </TabsContent>
-
-                <TabsContent value="tasks" className="mt-6">
-                    <TaskList 
-                        tasks={tasks}
-                        priorities={priorities}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                        isLoading={isLoading}
-                    />
-                </TabsContent>
-
-                <TabsContent value="kanban" className="mt-6">
-                    <TaskKanban 
-                        tasks={tasks}
-                        priorities={priorities}
-                        onEdit={handleEdit}
-                    />
-                </TabsContent>
-
-                <TabsContent value="calendar" className="mt-6">
-                    <TaskCalendar 
-                        tasks={tasks}
-                        priorities={priorities}
-                        onTaskClick={handleEdit}
-                    />
-                </TabsContent>
-
-                <TabsContent value="workflows" className="mt-6">
-                    <WorkflowManager />
-                </TabsContent>
-
-                <TabsContent value="emails" className="mt-6">
-                    <div className="space-y-6">
-                        <EmailAccountManager />
-                        <div>
-                            <h2 className="text-xl font-semibold text-slate-800 mb-4">Empfangene Emails</h2>
-                            <EmailList onCreateTask={(data) => {
-                                setFormOpen(true);
-                            }} />
+            {tasks.length === 0 ? (
+                <Card>
+                    <CardContent className="py-16">
+                        <div className="text-center">
+                            <CheckCircle2 className="w-20 h-20 mx-auto mb-6 text-gray-300" />
+                            <h3 className="text-xl font-semibold mb-2">Keine Aufgaben</h3>
+                            <p className="text-gray-600 mb-6">Erstellen Sie Ihre erste Aufgabe</p>
+                            <Button className="vf-btn-gradient" onClick={() => setDialogOpen(true)}>
+                                <Plus className="w-4 h-4" />
+                                Erste Aufgabe erstellen
+                            </Button>
                         </div>
-                    </div>
-                </TabsContent>
-
-                <TabsContent value="rules" className="mt-6">
-                    <AutomationManager />
-                </TabsContent>
-
-                <TabsContent value="logs" className="mt-6">
-                    <ActivityLogViewer entityType="task" />
-                </TabsContent>
-
-                <TabsContent value="testing" className="mt-6">
-                    <TestingPanel />
-                </TabsContent>
-                </Tabs>
-                </motion.div>
-
-            {/* Task Form Dialog */}
-            <TaskForm
-                open={formOpen}
-                onOpenChange={setFormOpen}
-                onSubmit={handleSubmit}
-                initialData={editingTask}
-                priorities={priorities}
-                isLoading={createMutation.isPending || updateMutation.isPending}
-                />
-
-                {/* Setup Wizard */}
-                <SetupWizard
-                open={setupWizardOpen}
-                onComplete={() => {
-                    setSetupWizardOpen(false);
-                    queryClient.invalidateQueries();
-                }}
-                />
+                    </CardContent>
+                </Card>
+            ) : (
+                <div className="space-y-3">
+                    {tasks.map((task) => (
+                        <Card key={task.id} className={task.status === 'Erledigt' ? 'opacity-60' : ''}>
+                            <CardContent className="p-4">
+                                <div className="flex items-center gap-4">
+                                    <button onClick={() => toggleStatus(task)} className="flex-shrink-0">
+                                        {task.status === 'Erledigt' ? (
+                                            <CheckCircle2 className="w-6 h-6 text-green-600" />
+                                        ) : (
+                                            <Circle className="w-6 h-6 text-gray-400" />
+                                        )}
+                                    </button>
+                                    <div className="flex-1">
+                                        <h3 className={`font-semibold ${task.status === 'Erledigt' ? 'line-through' : ''}`}>
+                                            {task.titel}
+                                        </h3>
+                                        {task.beschreibung && (
+                                            <p className="text-sm text-gray-600 mt-1">{task.beschreibung}</p>
+                                        )}
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <Badge className={
+                                                task.prioritaet === 'Dringend' ? 'vf-badge-error' :
+                                                task.prioritaet === 'Hoch' ? 'vf-badge-warning' :
+                                                'vf-badge-default'
+                                            }>
+                                                {task.prioritaet}
+                                            </Badge>
+                                            {task.faelligkeitsdatum && (
+                                                <div className="flex items-center gap-1 text-xs text-gray-500">
+                                                    <Calendar className="w-3 h-3" />
+                                                    {new Date(task.faelligkeitsdatum).toLocaleDateString('de-DE')}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
                 </div>
-                </ModuleGuard>
-                );
-                }
+            )}
+        </div>
+    );
+}
