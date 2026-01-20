@@ -1,43 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { VfInput } from '@/components/shared/VfInput';
-import { VfSelect } from '@/components/shared/VfSelect';
-import { VfTextarea } from '@/components/shared/VfTextarea';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Wrench, Plus, Calendar, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Wrench, AlertCircle, CheckCircle, Clock, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { showSuccess } from '@/components/notifications/ToastNotification';
-
-const statusOptions = [
-    { value: 'Offen', label: 'Offen' },
-    { value: 'In Bearbeitung', label: 'In Bearbeitung' },
-    { value: 'Erledigt', label: 'Erledigt' }
-];
-
-const priorityOptions = [
-    { value: 'Niedrig', label: 'Niedrig' },
-    { value: 'Normal', label: 'Normal' },
-    { value: 'Hoch', label: 'Hoch' },
-    { value: 'Notfall', label: 'Notfall' }
-];
 
 export default function MaintenanceManager() {
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [formData, setFormData] = useState({
-        building_id: '',
-        titel: '',
-        beschreibung: '',
-        prioritaet: 'Normal',
-        status: 'Offen',
-        faelligkeit: ''
-    });
-
-    const queryClient = useQueryClient();
-
-    const { data: tasks = [], isLoading } = useQuery({
+    const { data: tasks = [] } = useQuery({
         queryKey: ['maintenanceTasks'],
         queryFn: () => base44.entities.MaintenanceTask.list('-created_date')
     });
@@ -47,151 +17,131 @@ export default function MaintenanceManager() {
         queryFn: () => base44.entities.Building.list()
     });
 
-    const createTaskMutation = useMutation({
-        mutationFn: (data) => base44.entities.MaintenanceTask.create(data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['maintenanceTasks'] });
-            setDialogOpen(false);
-            setFormData({ building_id: '', titel: '', beschreibung: '', prioritaet: 'Normal', status: 'Offen', faelligkeit: '' });
-            showSuccess('Wartungsaufgabe erstellt');
-        }
-    });
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        createTaskMutation.mutate(formData);
-    };
-
-    if (isLoading) {
-        return <div className="flex items-center justify-center h-96"><div className="vf-spinner vf-spinner-lg" /></div>;
-    }
-
-    const openTasks = tasks.filter(t => t.status !== 'Erledigt').length;
+    const openTasks = tasks.filter(t => t.status === 'open' || t.status === 'Offen');
+    const inProgressTasks = tasks.filter(t => t.status === 'in_progress' || t.status === 'In Bearbeitung');
+    const completedTasks = tasks.filter(t => t.status === 'completed' || t.status === 'Erledigt');
+    const urgentTasks = tasks.filter(t => (t.priority === 'high' || t.prioritaet === 'Hoch') && (t.status === 'open' || t.status === 'Offen'));
 
     return (
         <div className="space-y-6">
             <div className="vf-page-header">
                 <div>
-                    <h1 className="vf-page-title">Wartung & Instandhaltung</h1>
-                    <p className="vf-page-subtitle">{openTasks} offene Aufgaben</p>
+                    <h1 className="vf-page-title">Wartungsmanagement</h1>
+                    <p className="vf-page-subtitle">{tasks.length} Aufgaben</p>
                 </div>
                 <div className="vf-page-actions">
-                    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button className="vf-btn-gradient">
-                                <Plus className="w-4 h-4" />
-                                Wartung hinzufügen
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Neue Wartungsaufgabe</DialogTitle>
-                            </DialogHeader>
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <VfSelect
-                                    label="Gebäude"
-                                    value={formData.building_id}
-                                    onChange={(value) => setFormData(prev => ({ ...prev, building_id: value }))}
-                                    options={buildings.map(b => ({ value: b.id, label: b.name }))}
-                                    required
-                                />
-                                <VfInput
-                                    label="Titel"
-                                    value={formData.titel}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, titel: e.target.value }))}
-                                    placeholder="z.B. Heizungswartung"
-                                    required
-                                />
-                                <VfTextarea
-                                    label="Beschreibung"
-                                    value={formData.beschreibung}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, beschreibung: e.target.value }))}
-                                    rows={3}
-                                />
-                                <VfSelect
-                                    label="Priorität"
-                                    value={formData.prioritaet}
-                                    onChange={(value) => setFormData(prev => ({ ...prev, prioritaet: value }))}
-                                    options={priorityOptions}
-                                />
-                                <VfInput
-                                    label="Fälligkeit"
-                                    type="date"
-                                    value={formData.faelligkeit}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, faelligkeit: e.target.value }))}
-                                />
-                                <div className="flex justify-end gap-3 pt-4">
-                                    <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                                        Abbrechen
-                                    </Button>
-                                    <Button type="submit" className="vf-btn-gradient">
-                                        Erstellen
-                                    </Button>
-                                </div>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
+                    <Button className="vf-btn-gradient">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Neue Aufgabe
+                    </Button>
                 </div>
             </div>
 
-            {tasks.length === 0 ? (
+            <div className="grid md:grid-cols-4 gap-4">
                 <Card>
-                    <CardContent className="py-16">
-                        <div className="text-center">
-                            <Wrench className="w-20 h-20 mx-auto mb-6 text-gray-300" />
-                            <h3 className="text-xl font-semibold mb-2">Noch keine Wartungsaufgaben</h3>
-                            <p className="text-gray-600 mb-6">Erstellen Sie Ihre erste Wartungsaufgabe</p>
-                            <Button className="vf-btn-gradient" onClick={() => setDialogOpen(true)}>
-                                <Plus className="w-4 h-4" />
-                                Erste Aufgabe erstellen
-                            </Button>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <Wrench className="w-8 h-8 text-blue-600" />
+                        </div>
+                        <div className="text-3xl font-bold">{tasks.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Aufgaben gesamt</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <Clock className="w-8 h-8 text-orange-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-orange-700">{openTasks.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Offen</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <AlertCircle className="w-8 h-8 text-red-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-red-700">{urgentTasks.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Dringend</div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-blue-900 to-orange-600 text-white border-none">
+                    <CardContent className="p-6">
+                        <div className="text-3xl font-bold">{completedTasks.length}</div>
+                        <div className="text-sm opacity-90 mt-1">Abgeschlossen</div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {urgentTasks.length > 0 && (
+                <Card className="border-red-300 bg-red-50">
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4 flex items-center gap-2 text-red-700">
+                            <AlertCircle className="w-5 h-5" />
+                            Dringende Aufgaben ({urgentTasks.length})
+                        </h3>
+                        <div className="space-y-2">
+                            {urgentTasks.slice(0, 5).map((task) => {
+                                const building = buildings.find(b => b.id === task.building_id);
+                                return (
+                                    <div key={task.id} className="p-3 bg-white rounded-lg border border-red-200">
+                                        <div className="font-semibold text-sm">{task.titel}</div>
+                                        <div className="text-xs text-gray-600 mt-1">{building?.name}</div>
+                                        <Badge className="mt-2 vf-badge-error text-xs">Dringend</Badge>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </CardContent>
                 </Card>
-            ) : (
-                <div className="space-y-3">
-                    {tasks.map((task) => (
-                        <Card key={task.id} className={task.status === 'Erledigt' ? 'opacity-60' : ''}>
-                            <CardContent className="p-4">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex items-start gap-4">
-                                        <Wrench className="w-8 h-8 text-orange-600 mt-1" />
-                                        <div>
-                                            <h3 className="font-semibold mb-1">{task.titel}</h3>
-                                            {task.beschreibung && (
-                                                <p className="text-sm text-gray-600 mb-2">{task.beschreibung}</p>
-                                            )}
-                                            <div className="flex items-center gap-2">
-                                                <Badge className={
-                                                    task.prioritaet === 'Notfall' ? 'vf-badge-error' :
-                                                    task.prioritaet === 'Hoch' ? 'vf-badge-warning' :
-                                                    'vf-badge-default'
-                                                }>
-                                                    {task.prioritaet === 'Notfall' && <AlertTriangle className="w-3 h-3 mr-1" />}
-                                                    {task.prioritaet}
-                                                </Badge>
-                                                <Badge className={
-                                                    task.status === 'Erledigt' ? 'vf-badge-success' :
-                                                    task.status === 'In Bearbeitung' ? 'vf-badge-info' :
-                                                    'vf-badge-default'
-                                                }>
-                                                    {task.status}
-                                                </Badge>
-                                                {task.faelligkeit && (
-                                                    <span className="text-xs text-gray-500 flex items-center gap-1">
-                                                        <Calendar className="w-3 h-3" />
-                                                        {new Date(task.faelligkeit).toLocaleDateString('de-DE')}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
             )}
+
+            <div className="grid md:grid-cols-3 gap-6">
+                <Card>
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4">Offene Aufgaben ({openTasks.length})</h3>
+                        <div className="space-y-2">
+                            {openTasks.slice(0, 5).map((task) => (
+                                <div key={task.id} className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                    <div className="font-semibold text-sm">{task.titel}</div>
+                                    <Badge className="mt-2 vf-badge-warning text-xs">Offen</Badge>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4">In Bearbeitung ({inProgressTasks.length})</h3>
+                        <div className="space-y-2">
+                            {inProgressTasks.slice(0, 5).map((task) => (
+                                <div key={task.id} className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                    <div className="font-semibold text-sm">{task.titel}</div>
+                                    <Badge className="mt-2 vf-badge-primary text-xs">In Bearbeitung</Badge>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4">Abgeschlossen ({completedTasks.length})</h3>
+                        <div className="space-y-2">
+                            {completedTasks.slice(0, 5).map((task) => (
+                                <div key={task.id} className="p-3 bg-green-50 rounded-lg border border-green-200">
+                                    <div className="font-semibold text-sm">{task.titel}</div>
+                                    <Badge className="mt-2 vf-badge-success text-xs">Erledigt</Badge>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 }

@@ -120,6 +120,7 @@ import BankingManagement from './pages/BankingManagement';
 import BankingOverview from './pages/BankingOverview';
 import BudgetAnalysis from './pages/BudgetAnalysis';
 import BudgetPlanning from './pages/BudgetPlanning';
+import BudgetTracking from './pages/BudgetTracking';
 import BuildingAnalytics from './pages/BuildingAnalytics';
 import BuildingBoard from './pages/BuildingBoard';
 import BuildingComparison from './pages/BuildingComparison';
@@ -167,6 +168,7 @@ import ContractAutomationHub from './pages/ContractAutomationHub';
 import ContractDetail from './pages/ContractDetail';
 import ContractDetailEnhanced from './pages/ContractDetailEnhanced';
 import ContractDetailTemplate from './pages/ContractDetailTemplate';
+import ContractManagement from './pages/ContractManagement';
 import ContractRenewalTracking from './pages/ContractRenewalTracking';
 import ContractRenewals from './pages/ContractRenewals';
 import ContractTemplates from './pages/ContractTemplates';
@@ -183,6 +185,7 @@ import Dashboard from './pages/Dashboard';
 import DashboardHome from './pages/DashboardHome';
 import DataImportExport from './pages/DataImportExport';
 import DataImportExportHub from './pages/DataImportExportHub';
+import DataManagement from './pages/DataManagement';
 import DataManagementHub from './pages/DataManagementHub';
 import DeductionMaximizationTool from './pages/DeductionMaximizationTool';
 import DepositManagement from './pages/DepositManagement';
@@ -213,7 +216,6 @@ import Documents from './pages/Documents';
 import ElsterAutomationHub from './pages/ElsterAutomationHub';
 import ElsterCertificates from './pages/ElsterCertificates';
 import ElsterIntegration from './pages/ElsterIntegration';
-import Error500 from './pages/Error500';
 import ElsterOverview from './pages/ElsterOverview';
 import ElsterResponses from './pages/ElsterResponses';
 import ElsterSettings from './pages/ElsterSettings';
@@ -225,6 +227,7 @@ import EnergyPassportManager from './pages/EnergyPassportManager';
 import EnhancedTenantPortal from './pages/EnhancedTenantPortal';
 import EntityTaxPlanning from './pages/EntityTaxPlanning';
 import Equipment from './pages/Equipment';
+import Error500 from './pages/Error500';
 import EstateTaxPlanning from './pages/EstateTaxPlanning';
 import EstimatedTaxScheduler from './pages/EstimatedTaxScheduler';
 import ExpenseTracking from './pages/ExpenseTracking';
@@ -389,6 +392,7 @@ import ReportScheduling from './pages/ReportScheduling';
 import ReportingDashboard from './pages/ReportingDashboard';
 import ReportingHub from './pages/ReportingHub';
 import ReportsPage from './pages/ReportsPage';
+import ResidentsManagement from './pages/ResidentsManagement';
 import RetirementIncomeTaxOptimizer from './pages/RetirementIncomeTaxOptimizer';
 import RetirementTaxPlanning from './pages/RetirementTaxPlanning';
 import RoleManagement from './pages/RoleManagement';
@@ -612,10 +616,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import DataManagement from './pages/DataManagement';
-import BudgetTracking from './pages/BudgetTracking';
-import ContractManagement from './pages/ContractManagement';
-import ResidentsManagement from './pages/ResidentsManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -742,6 +742,7 @@ export const PAGES = {
     "BankingOverview": BankingOverview,
     "BudgetAnalysis": BudgetAnalysis,
     "BudgetPlanning": BudgetPlanning,
+    "BudgetTracking": BudgetTracking,
     "BuildingAnalytics": BuildingAnalytics,
     "BuildingBoard": BuildingBoard,
     "BuildingComparison": BuildingComparison,
@@ -789,6 +790,7 @@ export const PAGES = {
     "ContractDetail": ContractDetail,
     "ContractDetailEnhanced": ContractDetailEnhanced,
     "ContractDetailTemplate": ContractDetailTemplate,
+    "ContractManagement": ContractManagement,
     "ContractRenewalTracking": ContractRenewalTracking,
     "ContractRenewals": ContractRenewals,
     "ContractTemplates": ContractTemplates,
@@ -805,6 +807,7 @@ export const PAGES = {
     "DashboardHome": DashboardHome,
     "DataImportExport": DataImportExport,
     "DataImportExportHub": DataImportExportHub,
+    "DataManagement": DataManagement,
     "DataManagementHub": DataManagementHub,
     "DeductionMaximizationTool": DeductionMaximizationTool,
     "DepositManagement": DepositManagement,
@@ -835,7 +838,6 @@ export const PAGES = {
     "ElsterAutomationHub": ElsterAutomationHub,
     "ElsterCertificates": ElsterCertificates,
     "ElsterIntegration": ElsterIntegration,
-    "Error500": Error500,
     "ElsterOverview": ElsterOverview,
     "ElsterResponses": ElsterResponses,
     "ElsterSettings": ElsterSettings,
@@ -847,6 +849,7 @@ export const PAGES = {
     "EnhancedTenantPortal": EnhancedTenantPortal,
     "EntityTaxPlanning": EntityTaxPlanning,
     "Equipment": Equipment,
+    "Error500": Error500,
     "EstateTaxPlanning": EstateTaxPlanning,
     "EstimatedTaxScheduler": EstimatedTaxScheduler,
     "ExpenseTracking": ExpenseTracking,
@@ -1011,6 +1014,7 @@ export const PAGES = {
     "ReportingDashboard": ReportingDashboard,
     "ReportingHub": ReportingHub,
     "ReportsPage": ReportsPage,
+    "ResidentsManagement": ResidentsManagement,
     "RetirementIncomeTaxOptimizer": RetirementIncomeTaxOptimizer,
     "RetirementTaxPlanning": RetirementTaxPlanning,
     "RoleManagement": RoleManagement,
@@ -1234,10 +1238,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "DataManagement": DataManagement,
-    "BudgetTracking": BudgetTracking,
-    "ContractManagement": ContractManagement,
-    "ResidentsManagement": ResidentsManagement,
 }
 
 export const pagesConfig = {

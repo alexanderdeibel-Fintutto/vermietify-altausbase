@@ -1,100 +1,138 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { CheckCircle, AlertTriangle, FileText, Calendar, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Shield, CheckCircle, AlertTriangle, FileText, Scale, Clock } from 'lucide-react';
-
-const complianceItems = [
-    { title: 'Grundsteuer', status: 'ok', dueDate: '2026-02-15', description: 'Frist eingehalten' },
-    { title: 'Betriebskostenabrechnung', status: 'warning', dueDate: '2026-03-31', description: 'In 70 Tagen fällig' },
-    { title: 'Rauchmelder-Wartung', status: 'ok', dueDate: '2026-06-01', description: 'Alle gewartet' },
-    { title: 'Energieausweis', status: 'error', dueDate: '2026-01-31', description: 'Läuft bald ab!' }
-];
 
 export default function ComplianceCenter() {
+    const { data: documents = [] } = useQuery({
+        queryKey: ['documents'],
+        queryFn: () => base44.entities.GeneratedDocument.list('-created_date')
+    });
+
+    const { data: tasks = [] } = useQuery({
+        queryKey: ['tasks'],
+        queryFn: () => base44.entities.Task.list()
+    });
+
+    const complianceTasks = tasks.filter(t => t.kategorie === 'Steuer' || t.kategorie === 'Frist' || t.kategorie === 'Verwaltung');
+    const overdueTasks = complianceTasks.filter(t => {
+        const dueDate = new Date(t.faelligkeitsdatum);
+        return dueDate < new Date() && (t.status === 'Offen' || t.status === 'open');
+    });
+    const upcomingTasks = complianceTasks.filter(t => {
+        const dueDate = new Date(t.faelligkeitsdatum);
+        const today = new Date();
+        const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+        return dueDate >= today && dueDate <= thirtyDaysFromNow && (t.status === 'Offen' || t.status === 'open');
+    });
+
     return (
         <div className="space-y-6">
             <div className="vf-page-header">
                 <div>
-                    <h1 className="vf-page-title">Compliance Center</h1>
-                    <p className="vf-page-subtitle">Gesetzliche Pflichten & Fristen</p>
+                    <h1 className="vf-page-title">Compliance-Zentrum</h1>
+                    <p className="vf-page-subtitle">Regulatorische Anforderungen & Fristen</p>
+                </div>
+                <div className="vf-page-actions">
+                    <Button className="vf-btn-gradient">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Neue Compliance-Aufgabe
+                    </Button>
                 </div>
             </div>
 
-            {/* Summary Cards */}
-            <div className="grid md:grid-cols-3 gap-4">
-                <Card className="border-green-300 bg-green-50">
+            <div className="grid md:grid-cols-4 gap-4">
+                <Card>
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-2">
-                            <CheckCircle className="w-8 h-8 text-green-600" />
+                            <CheckCircle className="w-8 h-8 text-blue-600" />
                         </div>
-                        <div className="text-3xl font-bold text-green-700">2</div>
-                        <div className="text-sm text-gray-700 mt-1">In Ordnung</div>
+                        <div className="text-3xl font-bold">{complianceTasks.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Compliance-Aufgaben</div>
                     </CardContent>
                 </Card>
 
-                <Card className="border-orange-300 bg-orange-50">
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-2">
-                            <Clock className="w-8 h-8 text-orange-600" />
-                        </div>
-                        <div className="text-3xl font-bold text-orange-700">1</div>
-                        <div className="text-sm text-gray-700 mt-1">Bald fällig</div>
-                    </CardContent>
-                </Card>
-
-                <Card className="border-red-300 bg-red-50">
+                <Card>
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-2">
                             <AlertTriangle className="w-8 h-8 text-red-600" />
                         </div>
-                        <div className="text-3xl font-bold text-red-700">1</div>
-                        <div className="text-sm text-gray-700 mt-1">Dringend</div>
+                        <div className="text-3xl font-bold text-red-700">{overdueTasks.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Überfällig</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <Calendar className="w-8 h-8 text-orange-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-orange-700">{upcomingTasks.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Bald fällig</div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-blue-900 to-orange-600 text-white border-none">
+                    <CardContent className="p-6">
+                        <div className="text-3xl font-bold">
+                            {(((complianceTasks.filter(t => t.status === 'Erledigt' || t.status === 'completed').length) / complianceTasks.length) * 100).toFixed(0)}%
+                        </div>
+                        <div className="text-sm opacity-90 mt-1">Erfüllt</div>
                     </CardContent>
                 </Card>
             </div>
 
-            {/* Compliance Items */}
-            <div className="space-y-3">
-                {complianceItems.map((item, idx) => (
-                    <Card key={idx} className={
-                        item.status === 'error' ? 'border-red-300 bg-red-50/50' :
-                        item.status === 'warning' ? 'border-orange-300 bg-orange-50/50' :
-                        'border-green-300 bg-green-50/50'
-                    }>
-                        <CardContent className="p-4">
-                            <div className="flex items-start justify-between">
-                                <div className="flex items-start gap-4">
-                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white ${
-                                        item.status === 'error' ? 'bg-red-600' :
-                                        item.status === 'warning' ? 'bg-orange-600' :
-                                        'bg-green-600'
-                                    }`}>
-                                        {item.status === 'ok' ? <CheckCircle className="w-5 h-5" /> :
-                                         item.status === 'warning' ? <Clock className="w-5 h-5" /> :
-                                         <AlertTriangle className="w-5 h-5" />}
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold mb-1">{item.title}</h3>
-                                        <p className="text-sm text-gray-700">{item.description}</p>
-                                        <div className="text-xs text-gray-500 mt-1">
-                                            Frist: {new Date(item.dueDate).toLocaleDateString('de-DE')}
+            {overdueTasks.length > 0 && (
+                <Card className="border-red-300 bg-red-50">
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4 flex items-center gap-2 text-red-700">
+                            <AlertTriangle className="w-5 h-5" />
+                            Überfällige Aufgaben ({overdueTasks.length})
+                        </h3>
+                        <div className="space-y-2">
+                            {overdueTasks.map((task) => (
+                                <div key={task.id} className="p-3 bg-white rounded-lg border border-red-200">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <div className="font-semibold text-sm">{task.titel}</div>
+                                            <div className="text-xs text-gray-600 mt-1">
+                                                Fällig: {new Date(task.faelligkeitsdatum).toLocaleDateString('de-DE')}
+                                            </div>
                                         </div>
+                                        <Badge className="vf-badge-error">Überfällig</Badge>
                                     </div>
                                 </div>
-                                <Badge className={
-                                    item.status === 'error' ? 'vf-badge-error' :
-                                    item.status === 'warning' ? 'vf-badge-warning' :
-                                    'vf-badge-success'
-                                }>
-                                    {item.status === 'ok' ? 'OK' :
-                                     item.status === 'warning' ? 'Warnung' :
-                                     'Dringend'}
-                                </Badge>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            <Card>
+                <CardContent className="p-6">
+                    <h3 className="font-semibold text-lg mb-4">Bald fällige Aufgaben ({upcomingTasks.length})</h3>
+                    <div className="space-y-2">
+                        {upcomingTasks.map((task) => (
+                            <div key={task.id} className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <div className="font-semibold text-sm">{task.titel}</div>
+                                        <div className="text-xs text-gray-600 mt-1">
+                                            Fällig: {new Date(task.faelligkeitsdatum).toLocaleDateString('de-DE')}
+                                        </div>
+                                    </div>
+                                    <Badge className="vf-badge-warning">
+                                        {Math.ceil((new Date(task.faelligkeitsdatum) - new Date()) / (24 * 60 * 60 * 1000))} Tage
+                                    </Badge>
+                                </div>
                             </div>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }
