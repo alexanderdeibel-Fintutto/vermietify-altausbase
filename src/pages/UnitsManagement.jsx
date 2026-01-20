@@ -1,188 +1,165 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Search } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import UnitFilterBar from '@/components/units/UnitFilterBar';
-import UnitTable from '@/components/units/UnitTable';
-import QuickStats from '@/components/shared/QuickStats';
+import { Button } from '@/components/ui/button';
+import { VfInput } from '@/components/shared/VfInput';
+import { VfSelect } from '@/components/shared/VfSelect';
+import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Home, Plus, Building2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { showSuccess } from '@/components/notifications/ToastNotification';
 
-export default function UnitsManagementPage() {
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [showDialog, setShowDialog] = useState(false);
-  const [editingUnit, setEditingUnit] = useState(null);
-  const [formData, setFormData] = useState({});
-  const queryClient = useQueryClient();
-
-  const { data: units = [] } = useQuery({
-    queryKey: ['units'],
-    queryFn: () => base44.entities.Unit?.list?.() || []
-  });
-
-  const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Unit.create(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['units'] }); setShowDialog(false); setFormData({}); }
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: (data) => base44.entities.Unit.update(editingUnit.id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['units'] }); setShowDialog(false); setEditingUnit(null); }
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Unit.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['units'] })
-  });
-
-  const filteredUnits = useMemo(() => {
-    return units.filter(u => {
-      const matchesSearch = (u.name || '').toLowerCase().includes(search.toLowerCase()) ||
-                           (u.unit_number || '').toLowerCase().includes(search.toLowerCase()) ||
-                           (u.building_name || '').toLowerCase().includes(search.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || u.status === statusFilter;
-      return matchesSearch && matchesStatus;
+export default function UnitsManagement() {
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [formData, setFormData] = useState({
+        building_id: '',
+        nummer: '',
+        flaeche: '',
+        zimmer: '',
+        stock: ''
     });
-  }, [units, search, statusFilter]);
 
-  const occupiedCount = units.filter(u => u.status === 'occupied').length;
-  const vacantCount = units.filter(u => u.status === 'vacant').length;
-  const totalRent = units.reduce((sum, u) => sum + (u.rent || u.base_rent || 0), 0);
+    const queryClient = useQueryClient();
 
-  const stats = [
-    { label: 'Gesamt-Einheiten', value: units.length },
-    { label: 'Vermietet', value: occupiedCount },
-    { label: 'Verfügbar', value: vacantCount },
-    { label: 'Monats-Ertrag', value: `€${totalRent.toFixed(0)}` },
-  ];
+    const { data: units = [], isLoading } = useQuery({
+        queryKey: ['units'],
+        queryFn: () => base44.entities.Unit.list('-created_date')
+    });
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extralight text-slate-700 tracking-wide">Wohneinheiten</h1>
-        <p className="text-sm font-extralight text-slate-400 mt-1">Verwalten Sie alle Ihre Wohneinheiten</p>
-      </div>
-      <QuickStats stats={stats} accentColor="sky" />
+    const { data: buildings = [] } = useQuery({
+        queryKey: ['buildings'],
+        queryFn: () => base44.entities.Building.list()
+    });
 
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between bg-white p-4 rounded-lg border border-slate-200">
-        <div className="flex-1 flex gap-2 w-full sm:w-auto">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input
-              placeholder="Nach Nummer, Name oder Gebäude suchen..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 font-light text-sm"
-            />
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alle Status</SelectItem>
-              <SelectItem value="vacant">Verfügbar</SelectItem>
-              <SelectItem value="occupied">Vermietet</SelectItem>
-              <SelectItem value="renovation">Renovierung</SelectItem>
-            </SelectContent>
-          </Select>
+    const createUnitMutation = useMutation({
+        mutationFn: (data) => base44.entities.Unit.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['units'] });
+            setDialogOpen(false);
+            setFormData({ building_id: '', nummer: '', flaeche: '', zimmer: '', stock: '' });
+            showSuccess('Einheit erstellt');
+        }
+    });
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        createUnitMutation.mutate(formData);
+    };
+
+    if (isLoading) {
+        return <div className="flex items-center justify-center h-96"><div className="vf-spinner vf-spinner-lg" /></div>;
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="vf-page-header">
+                <div>
+                    <h1 className="vf-page-title">Wohneinheiten</h1>
+                    <p className="vf-page-subtitle">{units.length} Einheiten verwaltet</p>
+                </div>
+                <div className="vf-page-actions">
+                    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button className="vf-btn-gradient">
+                                <Plus className="w-4 h-4" />
+                                Einheit hinzufügen
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Neue Wohneinheit</DialogTitle>
+                            </DialogHeader>
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <VfSelect
+                                    label="Gebäude"
+                                    value={formData.building_id}
+                                    onChange={(value) => setFormData(prev => ({ ...prev, building_id: value }))}
+                                    options={buildings.map(b => ({ value: b.id, label: b.name }))}
+                                    required
+                                />
+                                <VfInput
+                                    label="Wohnungsnummer"
+                                    value={formData.nummer}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, nummer: e.target.value }))}
+                                    placeholder="z.B. Top 1"
+                                    required
+                                />
+                                <VfInput
+                                    label="Wohnfläche"
+                                    type="number"
+                                    value={formData.flaeche}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, flaeche: e.target.value }))}
+                                    rightAddon="m²"
+                                    required
+                                />
+                                <VfInput
+                                    label="Anzahl Zimmer"
+                                    type="number"
+                                    value={formData.zimmer}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, zimmer: e.target.value }))}
+                                />
+                                <VfInput
+                                    label="Stockwerk"
+                                    type="number"
+                                    value={formData.stock}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, stock: e.target.value }))}
+                                />
+                                <div className="flex justify-end gap-3 pt-4">
+                                    <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                                        Abbrechen
+                                    </Button>
+                                    <Button type="submit" className="vf-btn-gradient">
+                                        Erstellen
+                                    </Button>
+                                </div>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+                </div>
+            </div>
+
+            {units.length === 0 ? (
+                <Card>
+                    <CardContent className="py-16">
+                        <div className="text-center">
+                            <Home className="w-20 h-20 mx-auto mb-6 text-gray-300" />
+                            <h3 className="text-xl font-semibold mb-2">Noch keine Wohneinheiten</h3>
+                            <p className="text-gray-600 mb-6">Fügen Sie Ihre erste Wohneinheit hinzu</p>
+                            <Button className="vf-btn-gradient" onClick={() => setDialogOpen(true)}>
+                                <Plus className="w-4 h-4" />
+                                Erste Einheit hinzufügen
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {units.map((unit) => (
+                        <Card key={unit.id}>
+                            <CardContent className="p-6">
+                                <div className="flex items-start gap-4">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center text-white flex-shrink-0">
+                                        <Home className="w-6 h-6" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-semibold text-lg mb-2">{unit.nummer}</h3>
+                                        {unit.flaeche && (
+                                            <div className="text-sm text-gray-600">{unit.flaeche} m²</div>
+                                        )}
+                                        {unit.zimmer && (
+                                            <div className="text-sm text-gray-600">{unit.zimmer} Zimmer</div>
+                                        )}
+                                        {unit.stock && (
+                                            <div className="text-sm text-gray-600">Stock {unit.stock}</div>
+                                        )}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            )}
         </div>
-        <Button 
-          onClick={() => { setEditingUnit(null); setFormData({}); setShowDialog(true); }}
-          className="bg-slate-900 hover:bg-slate-800 font-light gap-2 w-full sm:w-auto"
-        >
-          <Plus className="w-4 h-4" />
-          Neue Einheit
-        </Button>
-      </div>
-
-      {filteredUnits.length > 0 ? (
-        <UnitTable units={filteredUnits} onEdit={(u) => { setEditingUnit(u); setFormData(u); setShowDialog(true); }} onDelete={(u) => deleteMutation.mutate(u.id)} />
-      ) : (
-        <div className="text-center py-12 bg-slate-50 rounded-lg border border-slate-200">
-          <p className="text-sm font-light text-slate-600">Keine Einheiten gefunden</p>
-        </div>
-      )}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingUnit ? 'Einheit bearbeiten' : 'Neue Einheit'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <Input 
-                placeholder="Einheitennummer" 
-                value={formData.unit_number || ''} 
-                onChange={(e) => setFormData({...formData, unit_number: e.target.value})} 
-                className="font-light"
-              />
-              <Input 
-                placeholder="Gebäude" 
-                value={formData.building_name || ''} 
-                onChange={(e) => setFormData({...formData, building_name: e.target.value})} 
-                className="font-light"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <Input 
-                placeholder="Fläche (m²)" 
-                type="number" 
-                step="0.01"
-                value={formData.sqm || ''} 
-                onChange={(e) => setFormData({...formData, sqm: parseFloat(e.target.value)})} 
-                className="font-light"
-              />
-              <Input 
-                placeholder="Zimmer" 
-                type="number" 
-                step="0.5"
-                value={formData.rooms || ''} 
-                onChange={(e) => setFormData({...formData, rooms: parseFloat(e.target.value)})} 
-                className="font-light"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <Input 
-                placeholder="Kaltmiete (€)" 
-                type="number" 
-                step="0.01"
-                value={formData.base_rent || ''} 
-                onChange={(e) => setFormData({...formData, base_rent: parseFloat(e.target.value)})} 
-                className="font-light"
-              />
-              <Select value={formData.status || 'vacant'} onValueChange={(value) => setFormData({...formData, status: value})}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="vacant">Verfügbar</SelectItem>
-                  <SelectItem value="occupied">Vermietet</SelectItem>
-                  <SelectItem value="renovation">Renovierung</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex gap-2 justify-end pt-4">
-              <Button variant="outline" onClick={() => setShowDialog(false)} className="font-light">Abbrechen</Button>
-              <Button 
-                onClick={() => editingUnit ? updateMutation.mutate(formData) : createMutation.mutate(formData)} 
-                className="bg-slate-900 hover:bg-slate-800 font-light"
-                disabled={createMutation.isPending || updateMutation.isPending}
-              >
-                Speichern
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
+    );
 }

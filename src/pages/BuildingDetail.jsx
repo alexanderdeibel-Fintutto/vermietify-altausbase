@@ -1,374 +1,148 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import React from 'react';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  ArrowLeft, MapPin, Users, FileText, ClipboardList, 
-  Building2, MessageSquare, Home, Wrench 
-} from 'lucide-react';
+import { Building2, MapPin, Home, Users, FileText, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import BuildingUnitsManager from '@/components/building-detail/BuildingUnitsManager';
-import BuildingTenantsOverview from '@/components/building-detail/BuildingTenantsOverview';
-import BuildingContractsOverview from '@/components/building-detail/BuildingContractsOverview';
-import BuildingDocumentsOverview from '@/components/building-detail/BuildingDocumentsOverview';
-import BuildingBoardOverview from '@/components/building-detail/BuildingBoardOverview';
-import BuildingTasksManager from '@/components/building-detail/BuildingTasksManager';
-import BuildingInfoPanel from '@/components/building-detail/BuildingInfoPanel';
-import IoTSensorsPanel from '@/components/building-detail/IoTSensorsPanel';
-import InteractiveBuildingMap from '@/components/building-detail/InteractiveBuildingMap';
-import MaintenanceCalendarView from '@/components/maintenance/MaintenanceCalendarView';
-import BuildingDocumentsManager from '@/components/building-detail/BuildingDocumentsManager';
-import BuildingMaintenanceOverview from '@/components/building-detail/BuildingMaintenanceOverview';
-import BuildingOwnershipManager from '@/components/buildings/BuildingOwnershipManager';
-import BuildingFinanceTab from '@/components/buildings/BuildingFinanceTab';
-import BuildingStammdatenTab from '@/components/buildings/BuildingStammdatenTab';
-import BuildingTechnicalTab from '@/components/buildings/BuildingTechnicalTab';
-import BuildingTaxTab from '@/components/buildings/BuildingTaxTab';
-import ErrorBoundaryWithRetry from '@/components/shared/ErrorBoundaryWithRetry';
-import EnergyPassportPanel from '@/components/building-detail/EnergyPassportPanel';
-import BuildingTransfersOverview from '@/components/building-detail/BuildingTransfersOverview';
-import QuickContractCreator from '@/components/contracts/QuickContractCreator';
-import AutoCreateUnitsDialog from '@/components/units/AutoCreateUnitsDialog';
-import BreadcrumbNavigation from '@/components/navigation/BreadcrumbNavigation';
-import AutoCreateUnitsHint from '@/components/units/AutoCreateUnitsHint';
-import BulkRentIncreaseDialog from '@/components/bulk/BulkRentIncreaseDialog';
-import BulkBookingsGeneratorDialog from '@/components/bulk/BulkBookingsGeneratorDialog';
-import ContextualQuickActions from '@/components/help/ContextualQuickActions';
 
-export default function BuildingDetailPage() {
+export default function BuildingDetail() {
+    const params = new URLSearchParams(window.location.search);
+    const buildingId = params.get('id');
 
-  const [contractCreatorOpen, setContractCreatorOpen] = React.useState(false);
-  const [autoCreateUnitsOpen, setAutoCreateUnitsOpen] = React.useState(false);
-  const [bulkRentIncreaseOpen, setBulkRentIncreaseOpen] = React.useState(false);
-  const [bulkBookingsOpen, setBulkBookingsOpen] = React.useState(false);
-  const buildingId = new URLSearchParams(window.location.search).get('id');
+    const { data: building, isLoading } = useQuery({
+        queryKey: ['building', buildingId],
+        queryFn: async () => {
+            const buildings = await base44.entities.Building.filter({ id: buildingId });
+            return buildings[0];
+        },
+        enabled: !!buildingId
+    });
 
-  const { data: currentUser } = useQuery({ 
-      queryKey: ['currentUser'], 
-      queryFn: () => base44.auth.me() 
-  });
+    const { data: units = [] } = useQuery({
+        queryKey: ['units', buildingId],
+        queryFn: () => base44.entities.Unit.filter({ building_id: buildingId }),
+        enabled: !!buildingId
+    });
 
-  const { data: building, isLoading: isLoadingBuilding } = useQuery({
-    queryKey: ['building', buildingId],
-    queryFn: async () => {
-      const buildings = await base44.entities.Building.filter({ id: buildingId }, null, 1);
-      return buildings[0];
-    },
-    enabled: !!buildingId
-  });
+    if (isLoading) {
+        return <div className="flex items-center justify-center h-96"><div className="vf-spinner vf-spinner-lg" /></div>;
+    }
 
-  const { data: permissions, isLoading: isLoadingPermissions } = useQuery({
-      queryKey: ['buildingPermission', buildingId, currentUser?.email],
-      queryFn: () => base44.entities.BuildingPermission.filter({ building_id: buildingId, user_email: currentUser.email }),
-      enabled: !!buildingId && !!currentUser && currentUser.role !== 'admin'
-  });
+    if (!building) {
+        return <div className="text-center py-20">Gebäude nicht gefunden</div>;
+    }
 
-  const permissionLevel = useMemo(() => {
-      if (!currentUser) return 'none';
-      if (currentUser.role === 'admin') return 'write';
-      if (!permissions?.length) return 'none';
-      return permissions[0].permission_level;
-  }, [currentUser, permissions]);
-
-  const hasReadAccess = permissionLevel === 'read' || permissionLevel === 'write';
-
-  const { data: units = [] } = useQuery({
-    queryKey: ['buildingUnits', buildingId],
-    queryFn: () => base44.entities.Unit.filter({ gebaeude_id: buildingId }, null, 100),
-    enabled: !!buildingId
-  });
-
-  const { data: contracts = [] } = useQuery({
-    queryKey: ['buildingContracts', buildingId],
-    queryFn: () => base44.entities.LeaseContract.filter({ building_id: buildingId }, '-start_date', 100),
-    enabled: !!buildingId
-  });
-
-  const { data: tenants = [] } = useQuery({
-    queryKey: ['buildingTenants', buildingId],
-    queryFn: async () => {
-      const tenantIds = [...new Set(contracts.map(c => c.tenant_id))];
-      if (tenantIds.length === 0) return [];
-      const allTenants = await base44.entities.Tenant.list(null, 200);
-      return allTenants.filter(t => tenantIds.includes(t.id));
-    },
-    enabled: contracts.length > 0
-  });
-
-  const isLoading = isLoadingBuilding || (!!currentUser && currentUser.role !== 'admin' && isLoadingPermissions);
-
-  if (isLoading) {
-    return <div className="flex justify-center items-center min-h-screen">Wird geladen...</div>;
-  }
-
-  if (!building) {
-    return <div className="text-center p-6">Gebäude nicht gefunden</div>;
-  }
-
-  if (!hasReadAccess) {
     return (
-        <div className="text-center p-6">
-            <h1 className="text-xl font-semibold">Zugriff verweigert</h1>
-            <p className="text-slate-600">Sie haben keine Berechtigung, auf dieses Gebäude zuzugreifen.</p>
-            <Link to={createPageUrl('Buildings')}>
-                <Button variant="outline" className="mt-4">Zurück zur Übersicht</Button>
+        <div className="space-y-6">
+            <Link to={createPageUrl('Buildings')} className="vf-page-back">
+                <ArrowLeft className="w-4 h-4" />
+                Zurück zu Gebäude
             </Link>
+
+            {/* Header */}
+            <div className="vf-detail-header">
+                <div className="vf-detail-header__top">
+                    <div className="flex items-center gap-4">
+                        <div className="vf-detail-header__icon">
+                            <Building2 className="w-7 h-7" />
+                        </div>
+                        <div className="vf-detail-header__info">
+                            <h1 className="vf-detail-header__title">{building.name}</h1>
+                            <p className="vf-detail-header__subtitle">
+                                <MapPin className="w-4 h-4 inline mr-1" />
+                                {building.strasse} {building.hausnummer}, {building.plz} {building.ort}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="vf-detail-header__actions">
+                        <Button variant="outline">Bearbeiten</Button>
+                    </div>
+                </div>
+
+                {/* Stats */}
+                <div className="vf-detail-header__stats">
+                    <div className="vf-detail-stat">
+                        <div className="vf-detail-stat__value">{units.length}</div>
+                        <div className="vf-detail-stat__label">Einheiten</div>
+                    </div>
+                    <div className="vf-detail-stat">
+                        <div className="vf-detail-stat__value">-</div>
+                        <div className="vf-detail-stat__label">Mieter</div>
+                    </div>
+                    <div className="vf-detail-stat">
+                        <div className="vf-detail-stat__value">-</div>
+                        <div className="vf-detail-stat__label">Verträge</div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Content */}
+            <div className="grid lg:grid-cols-2 gap-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Gebäudeinformationen</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-3">
+                            <div>
+                                <div className="text-sm text-gray-500">Adresse</div>
+                                <div className="font-medium">{building.strasse} {building.hausnummer}</div>
+                                <div className="font-medium">{building.plz} {building.ort}</div>
+                            </div>
+                            {building.land && (
+                                <div>
+                                    <div className="text-sm text-gray-500">Land</div>
+                                    <div className="font-medium">{building.land}</div>
+                                </div>
+                            )}
+                            {building.baujahr && (
+                                <div>
+                                    <div className="text-sm text-gray-500">Baujahr</div>
+                                    <div className="font-medium">{building.baujahr}</div>
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <CardTitle>Wohneinheiten ({units.length})</CardTitle>
+                            <Button variant="outline" size="sm">
+                                <Home className="w-4 h-4" />
+                                Hinzufügen
+                            </Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        {units.length === 0 ? (
+                            <div className="text-center py-8 text-gray-500">
+                                <Home className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                                <p>Noch keine Einheiten</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {units.map((unit) => (
+                                    <div key={unit.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <div className="flex items-center gap-3">
+                                            <Home className="w-5 h-5 text-blue-600" />
+                                            <div>
+                                                <div className="font-medium">{unit.nummer}</div>
+                                                {unit.flaeche && (
+                                                    <div className="text-sm text-gray-500">{unit.flaeche} m²</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
         </div>
-    )
-  }
-
-  const occupiedUnits = units.filter(u => u.status === 'occupied').length;
-  const vacantUnits = units.filter(u => u.status === 'vacant').length;
-  const activeContracts = contracts.filter(c => c.status === 'active').length;
-
-  return (
-    <ErrorBoundaryWithRetry>
-    <div className="space-y-6">
-      <BreadcrumbNavigation items={[
-          { label: 'Gebäude', href: createPageUrl('Buildings') },
-          { label: building.name }
-      ]} />
-
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <div className="flex-1">
-          <h1 className="text-3xl font-light text-slate-900">{building.name}</h1>
-          <p className="text-slate-600 flex items-center gap-2 mt-1">
-            <MapPin className="w-4 h-4" />
-            {building.address}, {building.postal_code} {building.city}
-          </p>
-        </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Home className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-slate-900">{units.length}</p>
-                <p className="text-sm text-slate-600">Einheiten</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Users className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-slate-900">{occupiedUnits}</p>
-                <p className="text-sm text-slate-600">Belegt</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-100 rounded-lg">
-                <Building2 className="w-5 h-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-slate-900">{vacantUnits}</p>
-                <p className="text-sm text-slate-600">Frei</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <FileText className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-slate-900">{activeContracts}</p>
-                <p className="text-sm text-slate-600">Verträge</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content Tabs */}
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid grid-cols-6 lg:grid-cols-12 w-full">
-          <TabsTrigger value="overview">Übersicht</TabsTrigger>
-          <TabsTrigger value="stammdaten">Stammdaten</TabsTrigger>
-          <TabsTrigger value="technical">Technik</TabsTrigger>
-          <TabsTrigger value="tax">Steuer</TabsTrigger>
-          <TabsTrigger value="finance">Finanzen</TabsTrigger>
-          <TabsTrigger value="units">Einheiten</TabsTrigger>
-          <TabsTrigger value="owners">Eigentümer</TabsTrigger>
-          <TabsTrigger value="tenants">Mieter</TabsTrigger>
-          <TabsTrigger value="contracts">Verträge</TabsTrigger>
-          <TabsTrigger value="board">Pinnwand</TabsTrigger>
-          <TabsTrigger value="documents">Dokumente</TabsTrigger>
-          <TabsTrigger value="tasks">Aufgaben</TabsTrigger>
-          <TabsTrigger value="transfers">Überweisungen</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <BuildingInfoPanel building={building} permissionLevel={permissionLevel} />
-            <BuildingMaintenanceOverview buildingId={buildingId} />
-            <EnergyPassportPanel buildingId={buildingId} />
-          </div>
-          <BuildingDocumentsManager buildingId={buildingId} />
-          <IoTSensorsPanel buildingId={buildingId} permissionLevel={permissionLevel} />
-        </TabsContent>
-
-        <TabsContent value="stammdaten">
-          <BuildingStammdatenTab building={building} />
-        </TabsContent>
-
-        <TabsContent value="technical">
-          <BuildingTechnicalTab building={building} />
-        </TabsContent>
-
-        <TabsContent value="tax">
-          <BuildingTaxTab building={building} />
-        </TabsContent>
-
-        <TabsContent value="finance">
-          <BuildingFinanceTab buildingId={buildingId} building={building} />
-        </TabsContent>
-
-        <TabsContent value="owners">
-          <BuildingOwnershipManager buildingId={buildingId} />
-        </TabsContent>
-
-        <TabsContent value="units">
-          <div className="space-y-4">
-            {units.length === 0 && (
-              <AutoCreateUnitsHint 
-                buildingId={buildingId}
-                onAutoCreate={() => setAutoCreateUnitsOpen(true)}
-              />
-            )}
-            <BuildingUnitsManager buildingId={buildingId} units={units} permissionLevel={permissionLevel} />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="tenants">
-          <BuildingTenantsOverview buildingId={buildingId} tenants={tenants} contracts={contracts} />
-        </TabsContent>
-
-        <TabsContent value="contracts">
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <Button onClick={() => setContractCreatorOpen(true)} className="bg-emerald-600">
-                + Neuer Mietvertrag
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => setBulkRentIncreaseOpen(true)}
-                disabled={contracts.filter(c => c.status === 'active').length === 0}
-              >
-                📈 Batch-Mieterhöhung
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => setBulkBookingsOpen(true)}
-                disabled={contracts.filter(c => c.status === 'active').length === 0}
-              >
-                ⚡ Buchungen generieren (alle)
-              </Button>
-            </div>
-            <BuildingContractsOverview buildingId={buildingId} contracts={contracts} />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="board">
-          <BuildingBoardOverview buildingId={buildingId} />
-        </TabsContent>
-
-        <TabsContent value="documents">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <BuildingDocumentsManager buildingId={buildingId} permissionLevel={permissionLevel} />
-            <BuildingDocumentsOverview buildingId={buildingId} />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="tasks">
-          <div className="space-y-6">
-            <MaintenanceCalendarView buildingId={buildingId} />
-            <BuildingTasksManager buildingId={buildingId} permissionLevel={permissionLevel} />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="transfers" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Überweisungen für dieses Gebäude</CardTitle>
-                <Button onClick={() => window.location.href = createPageUrl('BankTransfers')} className="gap-2">
-                  <FileText className="w-4 h-4" />
-                  Alle Überweisungen
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <BuildingTransfersOverview buildingId={buildingId} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      <QuickContractCreator 
-        open={contractCreatorOpen}
-        onOpenChange={setContractCreatorOpen}
-      />
-      
-      <AutoCreateUnitsDialog
-        buildingId={buildingId}
-        open={autoCreateUnitsOpen}
-        onOpenChange={setAutoCreateUnitsOpen}
-      />
-
-      <BulkRentIncreaseDialog
-        open={bulkRentIncreaseOpen}
-        onOpenChange={setBulkRentIncreaseOpen}
-        buildingId={buildingId}
-        onSuccess={() => {
-          window.location.reload();
-        }}
-      />
-
-      <BulkBookingsGeneratorDialog
-        open={bulkBookingsOpen}
-        onOpenChange={setBulkBookingsOpen}
-        selectedContracts={contracts.filter(c => c.status === 'active')}
-        onSuccess={() => {
-          toast.success('Buchungen generiert');
-        }}
-      />
-
-      <ContextualQuickActions
-        context={{
-          type: 'building_detail',
-          buildingId: buildingId,
-          onBulkCategorize: () => {
-            // Will be triggered from context
-          },
-          onBulkBookings: () => setBulkBookingsOpen(true)
-        }}
-      />
-    </div>
-    </ErrorBoundaryWithRetry>
-  );
+    );
 }
