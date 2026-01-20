@@ -594,6 +594,9 @@ import TenantHistory from './pages/TenantHistory';
 import RentIncreaseWizard from './pages/RentIncreaseWizard';
 import RentIndexTracking from './pages/RentIndexTracking';
 import CommunityPortal from './pages/CommunityPortal';
+import ExpenseTracking from './pages/ExpenseTracking';
+import PaymentHistory from './pages/PaymentHistory';
+import ContractRenewalTracking from './pages/ContractRenewalTracking';
 import __Layout from './Layout.jsx';
 
 
@@ -1194,6 +1197,9 @@ export const PAGES = {
     "RentIncreaseWizard": RentIncreaseWizard,
     "RentIndexTracking": RentIndexTracking,
     "CommunityPortal": CommunityPortal,
+    "ExpenseTracking": ExpenseTracking,
+    "PaymentHistory": PaymentHistory,
+    "ContractRenewalTracking": ContractRenewalTracking,
 }
 
 export const pagesConfig = {
