@@ -580,6 +580,9 @@ import InvoiceDetail from './pages/InvoiceDetail';
 import TaskDetail from './pages/TaskDetail';
 import AfAManagement from './pages/AfAManagement';
 import RentPaymentDashboard from './pages/RentPaymentDashboard';
+import BankingOverview from './pages/BankingOverview';
+import QuickActions from './pages/QuickActions';
+import SearchResults from './pages/SearchResults';
 import __Layout from './Layout.jsx';
 
 
@@ -1166,6 +1169,9 @@ export const PAGES = {
     "TaskDetail": TaskDetail,
     "AfAManagement": AfAManagement,
     "RentPaymentDashboard": RentPaymentDashboard,
+    "BankingOverview": BankingOverview,
+    "QuickActions": QuickActions,
+    "SearchResults": SearchResults,
 }
 
 export const pagesConfig = {
