@@ -1,82 +1,107 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, MapPin } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { TrendingUp, MapPin, BarChart3, Target } from 'lucide-react';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
-export default function MarketAnalyticsPage() {
-  const marketData = [
-    { city: 'Berlin', avgPrice: 5200, growth: '+4.2%', units: 24 },
-    { city: 'Munich', avgPrice: 7800, growth: '+6.1%', units: 12 },
-    { city: 'Hamburg', avgPrice: 5100, growth: '+2.8%', units: 6 },
-  ];
+export default function MarketAnalytics() {
+    const regionalData = [
+        { region: 'Mitte', durchschnitt: 12.5, ihre: 11.8 },
+        { region: 'Nord', durchschnitt: 10.2, ihre: 10.5 },
+        { region: 'Süd', durchschnitt: 11.8, ihre: 11.2 },
+        { region: 'Ost', durchschnitt: 9.5, ihre: 9.8 },
+        { region: 'West', durchschnitt: 13.2, ihre: 12.9 }
+    ];
 
-  const demandData = [
-    { type: '1-Zimmer', value: 28, color: '#3b82f6' },
-    { type: '2-Zimmer', value: 34, color: '#10b981' },
-    { type: '3-Zimmer', value: 24, color: '#f59e0b' },
-    { type: '4+ Zimmer', value: 14, color: '#8b5cf6' },
-  ];
+    const trendData = Array.from({ length: 12 }, (_, i) => ({
+        monat: new Date(2025, i).toLocaleDateString('de-DE', { month: 'short' }),
+        markt: 11.5 + (i * 0.3) + (Math.random() * 0.5 - 0.25),
+        ihre: 11.0 + (i * 0.25) + (Math.random() * 0.4 - 0.2)
+    }));
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">📊 Marktanalyse</h1>
-        <p className="text-slate-600 mt-1">Markttrends und Wettbewerbsanalyse</p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-6">
-        <Card className="border border-slate-200">
-          <CardHeader>
-            <CardTitle>Marktpreise nach Stadt</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {marketData.map((data, idx) => (
-              <div key={idx} className="p-3 border border-slate-200 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-slate-900 flex items-center gap-2"><MapPin className="w-4 h-4" /> {data.city}</h3>
-                  <Badge className="bg-green-600">{data.growth}</Badge>
+    return (
+        <div className="space-y-6">
+            <div className="vf-page-header">
+                <div>
+                    <h1 className="vf-page-title">Marktanalyse</h1>
+                    <p className="vf-page-subtitle">Regionale Mietpreisentwicklung</p>
                 </div>
-                <p className="text-sm text-slate-600">Durchschnitts-Miete: €{data.avgPrice} • {data.units} Einheiten</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+            </div>
 
-        <Card className="border border-slate-200">
-          <CardHeader>
-            <CardTitle>Nachfrage nach Größe</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie data={demandData} cx="50%" cy="50%" labelLine={false} label={({ type, value }) => `${type} ${value}%`} outerRadius={80} fill="#8884d8" dataKey="value">
-                  {demandData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+            <div className="grid md:grid-cols-4 gap-4">
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <MapPin className="w-8 h-8 text-blue-600" />
+                        </div>
+                        <div className="text-3xl font-bold">11,30€</div>
+                        <div className="text-sm text-gray-600 mt-1">Ø Marktmiete/m²</div>
+                    </CardContent>
+                </Card>
 
-      <Card className="border border-slate-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><TrendingUp className="w-5 h-5" /> Markt Trends</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={marketData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="city" />
-              <YAxis />
-              <Tooltip formatter={(value) => `€${value}`} />
-              <Bar dataKey="avgPrice" fill="#3b82f6" name="Durchschnittspreis" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-    </div>
-  );
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <Target className="w-8 h-8 text-purple-600" />
+                        </div>
+                        <div className="text-3xl font-bold">10,90€</div>
+                        <div className="text-sm text-gray-600 mt-1">Ihre Ø Miete/m²</div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <BarChart3 className="w-8 h-8 text-green-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-green-700">+3,2%</div>
+                        <div className="text-sm text-gray-600 mt-1">Marktentwicklung</div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-blue-900 to-orange-600 text-white border-none">
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <TrendingUp className="w-8 h-8" />
+                        </div>
+                        <div className="text-3xl font-bold">96%</div>
+                        <div className="text-sm opacity-90 mt-1">Marktposition</div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <Card>
+                <CardContent className="p-6">
+                    <h3 className="font-semibold text-lg mb-4">Regionaler Mietvergleich (€/m²)</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={regionalData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="region" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Bar dataKey="durchschnitt" fill="#94A3B8" name="Marktdurchschnitt" />
+                            <Bar dataKey="ihre" fill="#1E3A8A" name="Ihre Mieten" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardContent className="p-6">
+                    <h3 className="font-semibold text-lg mb-4">Mietpreisentwicklung 2025</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <LineChart data={trendData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="monat" />
+                            <YAxis domain={[9, 14]} />
+                            <Tooltip />
+                            <Legend />
+                            <Line type="monotone" dataKey="markt" stroke="#94A3B8" strokeWidth={2} name="Marktdurchschnitt" strokeDasharray="5 5" />
+                            <Line type="monotone" dataKey="ihre" stroke="#1E3A8A" strokeWidth={3} name="Ihre Mieten" />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            </Card>
+        </div>
+    );
 }
