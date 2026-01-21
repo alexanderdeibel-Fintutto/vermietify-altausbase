@@ -5,6 +5,12 @@ import { base44 } from '@/api/base44Client';
  * Hook to check user permissions
  */
 export function usePermissions() {
+  const { data: user } = useQuery({
+    queryKey: ['current-user-permissions'],
+    queryFn: () => base44.auth.me(),
+    staleTime: 10 * 60 * 1000
+  });
+
   const { data, isLoading } = useQuery({
     queryKey: ['userPermissions'],
     queryFn: async () => {
@@ -15,14 +21,16 @@ export function usePermissions() {
         return {
           user_role: response.data?.user_role || 'User',
           permissions: response.data?.user_permissions || [],
-          isAdmin: response.data?.user_role === 'Admin'
+          isAdmin: response.data?.user_role === 'Admin',
+          isTester: response.data?.is_tester || false
         };
       } catch (error) {
         console.error('Error fetching permissions:', error);
         return {
           user_role: 'User',
           permissions: [],
-          isAdmin: false
+          isAdmin: false,
+          isTester: false
         };
       }
     },
@@ -36,8 +44,10 @@ export function usePermissions() {
   };
 
   return {
+    user,
     ...data,
     isLoading,
-    hasPermission
+    hasPermission,
+    isTester: data?.isTester || false
   };
 }
