@@ -274,8 +274,101 @@ Deno.serve(async (req) => {
       }
     };
 
+    // Format Markdown Content
+    const markdownContent = `# MODUL-ARCHITEKTUR
+
+Generiert am: ${new Date().toISOString()}
+
+## ÜBERSICHT
+
+**Projekt:** ${documentation.project}  
+**Version:** ${documentation.version}  
+**Beschreibung:** ${documentation.description}
+
+---
+
+## MODULE
+
+${Object.entries(modules).map(([key, module]) => `
+### ${module.name}
+
+**Beschreibung:** ${module.description}
+
+**Entities:**
+${module.entities.map(e => `- ${e}`).join('\n')}
+
+**Features:**
+${module.features.map(f => `- ${f}`).join('\n')}
+`).join('\n')}
+
+---
+
+## BACKEND FUNCTIONS
+
+**Gesamt:** ${documentation.backend.total_functions} Funktionen
+
+${Object.entries(backendFunctions).map(([category, functions]) => `
+### ${category}
+${functions.map(f => `- ${f}`).join('\n')}
+`).join('\n')}
+
+---
+
+## FRONTEND STRUKTUR
+
+### Pages
+${Object.entries(frontend.pages).map(([category, pages]) => `
+**${category}:**
+${pages.map(p => `- ${p}`).join('\n')}
+`).join('\n')}
+
+### Components
+${Object.entries(frontend.components).map(([category, components]) => `
+**${category}:**
+${components.map(c => `- ${c}`).join('\n')}
+`).join('\n')}
+
+---
+
+## DESIGN SYSTEM
+
+**Themes:** ${designSystem.themes.join(', ')}
+
+**Komponenten:** ${designSystem.components.join(', ')}
+
+**Layouts:** ${designSystem.layouts.join(', ')}
+
+---
+
+## TECHNISCHER STACK
+
+**Frontend:** ${documentation.technicalStack.frontend.join(', ')}
+
+**Backend:** ${documentation.technicalStack.backend.join(', ')}
+
+**Integrationen:** ${documentation.technicalStack.integrations.join(', ')}
+
+**KI:** ${documentation.technicalStack.ai.join(', ')}
+
+---
+
+## KEY FEATURES
+
+${documentation.keyFeatures.map(f => `- ${f}`).join('\n')}
+
+---
+
+## COMPLIANCE
+
+- DSGVO: ✅
+- BetrKV: ✅
+- Mietrecht: ✅
+- Steuerrecht: ✅
+`;
+
     return Response.json({ 
-      success: true, 
+      success: true,
+      markdownContent,
       documentation 
     });
 
