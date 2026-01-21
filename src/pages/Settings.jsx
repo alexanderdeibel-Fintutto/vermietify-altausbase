@@ -1,10 +1,10 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Settings, Bell, Lock, Palette, LogOut } from 'lucide-react';
+import { Settings as SettingsIcon, Bell, Lock, Palette, LogOut } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
-export default function Settings() {
+export default function SettingsPage() {
     const [activeTab, setActiveTab] = React.useState('general');
 
     return (
@@ -18,7 +18,7 @@ export default function Settings() {
 
             <div className="grid md:grid-cols-4 gap-4">
                 {[
-                    { icon: Settings, label: 'Allgemein', id: 'general' },
+                    { icon: SettingsIcon, label: 'Allgemein', id: 'general' },
                     { icon: Bell, label: 'Benachrichtigungen', id: 'notifications' },
                     { icon: Palette, label: 'Erscheinungsbild', id: 'appearance' },
                     { icon: Lock, label: 'Sicherheit', id: 'security' }
