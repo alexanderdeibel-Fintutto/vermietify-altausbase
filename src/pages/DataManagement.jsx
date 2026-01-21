@@ -1,132 +1,63 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Upload, Database, RotateCcw } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Database, Download, Upload, RefreshCw } from 'lucide-react';
 
 export default function DataManagement() {
-    const [backups, setBackups] = useState([
-        { id: 1, date: '2026-01-20', size: '2.5 MB', status: 'completed' },
-        { id: 2, date: '2026-01-19', size: '2.4 MB', status: 'completed' },
-        { id: 3, date: '2026-01-18', size: '2.3 MB', status: 'completed' }
-    ]);
-
     return (
         <div className="space-y-6">
             <div className="vf-page-header">
                 <div>
                     <h1 className="vf-page-title">Datenverwaltung</h1>
-                    <p className="vf-page-subtitle">Import, Export & Sicherungen</p>
+                    <p className="vf-page-subtitle">Import, Export & Backup</p>
                 </div>
             </div>
 
-            <div className="grid md:grid-cols-4 gap-4">
+            <div className="grid md:grid-cols-3 gap-6">
                 <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-2">
-                            <Download className="w-8 h-8 text-blue-600" />
-                        </div>
-                        <div className="text-3xl font-bold">{backups.length}</div>
-                        <div className="text-sm text-gray-600 mt-1">Sicherungen</div>
+                    <CardContent className="p-6 text-center">
+                        <Download className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+                        <h3 className="font-semibold text-lg mb-2">Daten exportieren</h3>
+                        <p className="text-sm text-gray-600 mb-4">Exportieren Sie Ihre Daten als CSV oder Excel</p>
+                        <Button className="vf-btn-primary w-full">Export starten</Button>
                     </CardContent>
                 </Card>
 
                 <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-2">
-                            <Database className="w-8 h-8 text-green-600" />
-                        </div>
-                        <div className="text-3xl font-bold">15.2</div>
-                        <div className="text-sm text-gray-600 mt-1">Datengröße (MB)</div>
+                    <CardContent className="p-6 text-center">
+                        <Upload className="w-12 h-12 text-green-600 mx-auto mb-4" />
+                        <h3 className="font-semibold text-lg mb-2">Daten importieren</h3>
+                        <p className="text-sm text-gray-600 mb-4">Importieren Sie Daten aus externen Quellen</p>
+                        <Button className="vf-btn-primary w-full">Import starten</Button>
                     </CardContent>
                 </Card>
 
                 <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-2">
-                            <RotateCcw className="w-8 h-8 text-purple-600" />
-                        </div>
-                        <div className="text-3xl font-bold">Täglich</div>
-                        <div className="text-sm text-gray-600 mt-1">Backup-Plan</div>
-                    </CardContent>
-                </Card>
-
-                <Card className="bg-gradient-to-br from-blue-900 to-orange-600 text-white border-none">
-                    <CardContent className="p-6">
-                        <div className="text-3xl font-bold">Aktiv</div>
-                        <div className="text-sm opacity-90 mt-1">Status</div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-                <Card>
-                    <CardContent className="p-6">
-                        <h3 className="font-semibold text-lg mb-4">Daten exportieren</h3>
-                        <div className="space-y-3">
-                            <Button variant="outline" className="w-full justify-start">
-                                <Download className="w-4 h-4 mr-2" />
-                                Gebäude exportieren
-                            </Button>
-                            <Button variant="outline" className="w-full justify-start">
-                                <Download className="w-4 h-4 mr-2" />
-                                Mieter exportieren
-                            </Button>
-                            <Button variant="outline" className="w-full justify-start">
-                                <Download className="w-4 h-4 mr-2" />
-                                Verträge exportieren
-                            </Button>
-                            <Button variant="outline" className="w-full justify-start">
-                                <Download className="w-4 h-4 mr-2" />
-                                Rechnungen exportieren
-                            </Button>
-                            <Button className="vf-btn-primary w-full">
-                                <Download className="w-4 h-4 mr-2" />
-                                Alle Daten exportieren
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="p-6">
-                        <h3 className="font-semibold text-lg mb-4">Daten importieren</h3>
-                        <div className="space-y-3">
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                                <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                                <p className="text-sm text-gray-600">
-                                    CSV oder Excel-Datei hier ablegen
-                                </p>
-                                <Button variant="outline" className="mt-3">
-                                    Datei wählen
-                                </Button>
-                            </div>
-                            <div className="text-xs text-gray-500">
-                                Unterstützte Formate: CSV, XLSX
-                            </div>
-                        </div>
+                    <CardContent className="p-6 text-center">
+                        <RefreshCw className="w-12 h-12 text-orange-600 mx-auto mb-4" />
+                        <h3 className="font-semibold text-lg mb-2">Backup erstellen</h3>
+                        <p className="text-sm text-gray-600 mb-4">Sichern Sie Ihre Daten regelmäßig</p>
+                        <Button className="vf-btn-primary w-full">Backup erstellen</Button>
                     </CardContent>
                 </Card>
             </div>
 
             <Card>
                 <CardContent className="p-6">
-                    <h3 className="font-semibold text-lg mb-4">Sicherungsverlauf</h3>
+                    <h3 className="font-semibold text-lg mb-4">Letzte Aktivitäten</h3>
                     <div className="space-y-2">
-                        {backups.map((backup) => (
-                            <div key={backup.id} className="p-4 bg-gray-50 rounded-lg border flex items-center justify-between">
-                                <div>
-                                    <div className="font-semibold text-sm">{backup.date}</div>
-                                    <div className="text-xs text-gray-600 mt-1">{backup.size}</div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Badge className="vf-badge-success">{backup.status}</Badge>
-                                    <Button size="sm" variant="outline">
-                                        <Download className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                            </div>
-                        ))}
+                        <div className="p-3 bg-gray-50 rounded-lg flex justify-between">
+                            <span>Automatisches Backup</span>
+                            <span className="text-gray-600 text-sm">Heute, 03:00</span>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg flex justify-between">
+                            <span>Mieterdaten exportiert</span>
+                            <span className="text-gray-600 text-sm">Gestern, 14:30</span>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg flex justify-between">
+                            <span>Rechnungen importiert</span>
+                            <span className="text-gray-600 text-sm">20.01.2026, 10:15</span>
+                        </div>
                     </div>
                 </CardContent>
             </Card>

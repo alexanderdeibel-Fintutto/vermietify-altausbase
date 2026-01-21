@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Gauge, Plus, Upload, TrendingUp } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Gauge, Calendar, TrendingUp, Plus } from 'lucide-react';
 
 export default function MeterReadings() {
     const { data: readings = [] } = useQuery({
         queryKey: ['meterReadings'],
-        queryFn: () => base44.entities.MeterReading.list('-ablesedatum')
+        queryFn: () => base44.entities.MeterReading.list('-created_date')
     });
 
     const { data: meters = [] } = useQuery({
@@ -17,26 +16,17 @@ export default function MeterReadings() {
         queryFn: () => base44.entities.Meter.list()
     });
 
-    const recentReadings = readings.slice(0, 20);
-    const overallConsumption = readings.reduce((sum, r) => sum + (parseFloat(r.zaehlerstand) || 0), 0);
-
     return (
         <div className="space-y-6">
             <div className="vf-page-header">
                 <div>
-                    <h1 className="vf-page-title">Zählerablesungen</h1>
+                    <h1 className="vf-page-title">Zählerablesung</h1>
                     <p className="vf-page-subtitle">{readings.length} Ablesungen erfasst</p>
                 </div>
-                <div className="vf-page-actions">
-                    <Button variant="outline">
-                        <Upload className="w-4 h-4 mr-2" />
-                        Importieren
-                    </Button>
-                    <Button className="vf-btn-gradient">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Neue Ablesung
-                    </Button>
-                </div>
+                <Button className="vf-btn-gradient">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Neue Ablesung
+                </Button>
             </div>
 
             <div className="grid md:grid-cols-4 gap-4">
@@ -45,66 +35,51 @@ export default function MeterReadings() {
                         <div className="flex items-center justify-between mb-2">
                             <Gauge className="w-8 h-8 text-blue-600" />
                         </div>
-                        <div className="text-3xl font-bold">{readings.length}</div>
-                        <div className="text-sm text-gray-600 mt-1">Ablesungen</div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-2">
-                            <Gauge className="w-8 h-8 text-green-600" />
-                        </div>
                         <div className="text-3xl font-bold">{meters.length}</div>
                         <div className="text-sm text-gray-600 mt-1">Zähler</div>
                     </CardContent>
                 </Card>
-
                 <Card>
                     <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-2">
-                            <TrendingUp className="w-8 h-8 text-purple-600" />
-                        </div>
-                        <div className="text-3xl font-bold">{overallConsumption.toFixed(0)}</div>
-                        <div className="text-sm text-gray-600 mt-1">Ø Verbrauch</div>
+                        <div className="text-3xl font-bold">{readings.length}</div>
+                        <div className="text-sm text-gray-600 mt-1">Ablesungen</div>
                     </CardContent>
                 </Card>
-
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="text-3xl font-bold text-green-700">
+                            {readings.filter(r => new Date(r.created_date) > new Date(Date.now() - 30*24*60*60*1000)).length}
+                        </div>
+                        <div className="text-sm text-gray-600 mt-1">Letzte 30 Tage</div>
+                    </CardContent>
+                </Card>
                 <Card className="bg-gradient-to-br from-blue-900 to-orange-600 text-white border-none">
                     <CardContent className="p-6">
                         <div className="text-3xl font-bold">
-                            {readings.length > 0 
-                                ? new Date(readings[0].ablesedatum).toLocaleDateString('de-DE') 
-                                : '-'}
+                            {meters.filter(m => m.type === 'electricity' || m.typ === 'Strom').length}
                         </div>
-                        <div className="text-sm opacity-90 mt-1">Letzte Ablesung</div>
+                        <div className="text-sm opacity-90 mt-1">Stromzähler</div>
                     </CardContent>
                 </Card>
             </div>
 
             <Card>
                 <CardContent className="p-6">
-                    <h3 className="font-semibold text-lg mb-4">Aktuelle Ablesungen</h3>
-                    <div className="space-y-2 max-h-96 overflow-y-auto">
-                        {recentReadings.map((reading) => {
-                            const meter = meters.find(m => m.id === reading.meter_id);
-                            return (
-                                <div key={reading.id} className="p-3 bg-gray-50 rounded-lg border">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <div className="font-semibold text-sm">{meter?.zaehlernummer || 'Unbekannt'}</div>
-                                            <div className="text-xs text-gray-600 mt-1">
-                                                {new Date(reading.ablesedatum).toLocaleDateString('de-DE')}
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-lg font-bold">{reading.zaehlerstand}</div>
-                                            <div className="text-xs text-gray-600">{meter?.einheit || 'Einheit'}</div>
-                                        </div>
+                    <h3 className="font-semibold text-lg mb-4">Letzte Ablesungen</h3>
+                    <div className="space-y-2">
+                        {readings.slice(0, 10).map(reading => (
+                            <div key={reading.id} className="p-4 bg-gray-50 rounded-lg border">
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <div className="font-semibold">Zähler {reading.meter_id?.slice(-6)}</div>
+                                        <div className="text-sm text-gray-600">{new Date(reading.created_date).toLocaleDateString('de-DE')}</div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="font-bold">{reading.value} {reading.unit || 'kWh'}</div>
                                     </div>
                                 </div>
-                            );
-                        })}
+                            </div>
+                        ))}
                     </div>
                 </CardContent>
             </Card>

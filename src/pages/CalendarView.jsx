@@ -8,33 +8,33 @@ import { Badge } from '@/components/ui/badge';
 
 export default function CalendarView() {
     const [currentDate, setCurrentDate] = useState(new Date());
-    
+
     const { data: tasks = [] } = useQuery({
         queryKey: ['tasks'],
         queryFn: () => base44.entities.Task.list()
     });
 
-    const { data: payments = [] } = useQuery({
-        queryKey: ['payments'],
-        queryFn: () => base44.entities.Payment.list()
+    const { data: contracts = [] } = useQuery({
+        queryKey: ['contracts'],
+        queryFn: () => base44.entities.LeaseContract.list()
     });
 
-    const upcomingEvents = [
-        ...tasks.filter(t => t.faelligkeitsdatum).map(t => ({
-            type: 'task',
-            date: t.faelligkeitsdatum,
-            title: t.titel,
-            category: t.kategorie
-        })),
-        ...payments.filter(p => p.due_date).map(p => ({
-            type: 'payment',
-            date: p.due_date,
-            title: `Zahlung fällig`,
-            amount: p.amount
-        }))
-    ].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 10);
+    const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    const getFirstDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
 
-    const monthName = currentDate.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+    const daysInMonth = getDaysInMonth(currentDate);
+    const firstDay = getFirstDayOfMonth(currentDate);
+
+    const navigate = (direction) => {
+        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + direction, 1));
+    };
+
+    const getEventsForDay = (day) => {
+        const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayTasks = tasks.filter(t => t.faelligkeitsdatum === dateStr);
+        const endingContracts = contracts.filter(c => c.mietende?.startsWith(dateStr));
+        return [...dayTasks.map(t => ({ type: 'task', ...t })), ...endingContracts.map(c => ({ type: 'contract', ...c }))];
+    };
 
     return (
         <div className="space-y-6">
@@ -48,66 +48,42 @@ export default function CalendarView() {
             <Card>
                 <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-2xl font-bold">{monthName}</h2>
-                        <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)))}>
-                                <ChevronLeft className="w-4 h-4" />
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => setCurrentDate(new Date())}>
-                                Heute
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)))}>
-                                <ChevronRight className="w-4 h-4" />
-                            </Button>
-                        </div>
+                        <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+                            <ChevronLeft className="w-4 h-4" />
+                        </Button>
+                        <h3 className="font-semibold text-lg">
+                            {currentDate.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}
+                        </h3>
+                        <Button variant="outline" size="sm" onClick={() => navigate(1)}>
+                            <ChevronRight className="w-4 h-4" />
+                        </Button>
                     </div>
 
-                    <div className="grid grid-cols-7 gap-2 mb-2">
-                        {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day) => (
-                            <div key={day} className="text-center text-sm font-semibold text-gray-600 p-2">
-                                {day}
-                            </div>
+                    <div className="grid grid-cols-7 gap-1 mb-2">
+                        {['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'].map(d => (
+                            <div key={d} className="text-center text-sm font-semibold text-gray-600 py-2">{d}</div>
                         ))}
                     </div>
 
-                    <div className="grid grid-cols-7 gap-2">
-                        {Array.from({ length: 35 }, (_, i) => {
-                            const day = i - 5;
-                            const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-                            const isToday = date.toDateString() === new Date().toDateString();
-                            
+                    <div className="grid grid-cols-7 gap-1">
+                        {Array.from({ length: firstDay }).map((_, i) => (
+                            <div key={`empty-${i}`} className="h-20"></div>
+                        ))}
+                        {Array.from({ length: daysInMonth }).map((_, i) => {
+                            const day = i + 1;
+                            const events = getEventsForDay(day);
+                            const isToday = new Date().toDateString() === new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toDateString();
                             return (
-                                <div 
-                                    key={i} 
-                                    className={`aspect-square p-2 border rounded-lg text-center ${isToday ? 'bg-blue-100 border-blue-400' : 'bg-gray-50'}`}
-                                >
-                                    <div className="text-sm">{date.getDate()}</div>
+                                <div key={day} className={`h-20 p-1 border rounded ${isToday ? 'bg-blue-50 border-blue-300' : 'border-gray-200'}`}>
+                                    <div className={`text-sm font-semibold ${isToday ? 'text-blue-700' : ''}`}>{day}</div>
+                                    {events.slice(0, 2).map((e, idx) => (
+                                        <Badge key={idx} className={`text-xs mt-1 block truncate ${e.type === 'task' ? 'vf-badge-warning' : 'vf-badge-info'}`}>
+                                            {e.titel || e.einheit}
+                                        </Badge>
+                                    ))}
                                 </div>
                             );
                         })}
-                    </div>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardContent className="p-6">
-                    <h3 className="font-semibold text-lg mb-4">Anstehende Termine</h3>
-                    <div className="space-y-2">
-                        {upcomingEvents.map((event, idx) => (
-                            <div key={idx} className="p-3 bg-gray-50 rounded-lg border">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <div className="font-semibold text-sm">{event.title}</div>
-                                        <div className="text-xs text-gray-600 mt-1">
-                                            {new Date(event.date).toLocaleDateString('de-DE')}
-                                        </div>
-                                    </div>
-                                    <Badge className={event.type === 'task' ? 'vf-badge-primary' : 'vf-badge-warning'}>
-                                        {event.type === 'task' ? 'Aufgabe' : 'Zahlung'}
-                                    </Badge>
-                                </div>
-                            </div>
-                        ))}
                     </div>
                 </CardContent>
             </Card>
