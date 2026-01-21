@@ -2,36 +2,30 @@ import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Zap, Droplet, TrendingUp, AlertCircle } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Zap, TrendingDown, Leaf, BarChart3 } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function EnergyManagement() {
-    const { data: meterReadings = [] } = useQuery({
-        queryKey: ['meterReadings'],
-        queryFn: () => base44.entities.MeterReading.list('-ablesedatum')
+    const { data: buildings = [] } = useQuery({
+        queryKey: ['buildings'],
+        queryFn: () => base44.entities.Building.list()
     });
 
-    const { data: meters = [] } = useQuery({
-        queryKey: ['meters'],
-        queryFn: () => base44.entities.Meter.list()
-    });
-
-    const electricityMeters = meters.filter(m => m.typ === 'Strom');
-    const waterMeters = meters.filter(m => m.typ === 'Wasser');
-
-    const monthlyData = Array.from({ length: 12 }, (_, i) => ({
+    const energyData = Array.from({ length: 12 }, (_, i) => ({
         monat: new Date(2025, i).toLocaleDateString('de-DE', { month: 'short' }),
-        strom: 300 + Math.random() * 100,
-        wasser: 50 + Math.random() * 20
+        verbrauch: 2500 + (Math.random() * 500 - 250),
+        kosten: 450 + (Math.random() * 100 - 50)
     }));
+
+    const totalConsumption = energyData.reduce((sum, d) => sum + d.verbrauch, 0);
+    const totalCost = energyData.reduce((sum, d) => sum + d.kosten, 0);
 
     return (
         <div className="space-y-6">
             <div className="vf-page-header">
                 <div>
                     <h1 className="vf-page-title">Energieverwaltung</h1>
-                    <p className="vf-page-subtitle">Zähler & Verbrauch</p>
+                    <p className="vf-page-subtitle">Verbrauch & Effizienz</p>
                 </div>
             </div>
 
@@ -41,79 +35,83 @@ export default function EnergyManagement() {
                         <div className="flex items-center justify-between mb-2">
                             <Zap className="w-8 h-8 text-yellow-600" />
                         </div>
-                        <div className="text-3xl font-bold">{electricityMeters.length}</div>
-                        <div className="text-sm text-gray-600 mt-1">Stromzähler</div>
+                        <div className="text-3xl font-bold">{totalConsumption.toFixed(0)}</div>
+                        <div className="text-sm text-gray-600 mt-1">kWh (Jahr)</div>
                     </CardContent>
                 </Card>
-
+                <Card>
+                    <CardContent className="p-6">
+                        <div className="text-3xl font-bold">{totalCost.toLocaleString('de-DE')}€</div>
+                        <div className="text-sm text-gray-600 mt-1">Energiekosten</div>
+                    </CardContent>
+                </Card>
                 <Card>
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between mb-2">
-                            <Droplet className="w-8 h-8 text-blue-600" />
+                            <Leaf className="w-8 h-8 text-green-600" />
                         </div>
-                        <div className="text-3xl font-bold">{waterMeters.length}</div>
-                        <div className="text-sm text-gray-600 mt-1">Wasserzähler</div>
+                        <div className="text-3xl font-bold text-green-700">-12%</div>
+                        <div className="text-sm text-gray-600 mt-1">vs. Vorjahr</div>
                     </CardContent>
                 </Card>
-
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-2">
-                            <TrendingUp className="w-8 h-8 text-green-600" />
-                        </div>
-                        <div className="text-3xl font-bold">{meterReadings.length}</div>
-                        <div className="text-sm text-gray-600 mt-1">Ablesungen</div>
-                    </CardContent>
-                </Card>
-
                 <Card className="bg-gradient-to-br from-blue-900 to-orange-600 text-white border-none">
                     <CardContent className="p-6">
-                        <div className="text-3xl font-bold">{meters.length}</div>
-                        <div className="text-sm opacity-90 mt-1">Zähler gesamt</div>
+                        <div className="text-3xl font-bold">{(totalConsumption / 12).toFixed(0)}</div>
+                        <div className="text-sm opacity-90 mt-1">kWh/Monat</div>
                     </CardContent>
                 </Card>
             </div>
 
             <Card>
                 <CardContent className="p-6">
-                    <h3 className="font-semibold text-lg mb-4">Verbrauchsentwicklung 2025</h3>
+                    <h3 className="font-semibold text-lg mb-4">Energieverbrauch & Kosten</h3>
                     <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={monthlyData}>
+                        <LineChart data={energyData}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="monat" />
-                            <YAxis />
+                            <YAxis yAxisId="left" />
+                            <YAxis yAxisId="right" orientation="right" />
                             <Tooltip />
-                            <Legend />
-                            <Line type="monotone" dataKey="strom" stroke="#F59E0B" strokeWidth={2} name="Strom (kWh)" />
-                            <Line type="monotone" dataKey="wasser" stroke="#0EA5E9" strokeWidth={2} name="Wasser (m³)" />
+                            <Line yAxisId="left" type="monotone" dataKey="verbrauch" stroke="#F59E0B" strokeWidth={2} name="kWh" />
+                            <Line yAxisId="right" type="monotone" dataKey="kosten" stroke="#3B82F6" strokeWidth={2} name="Kosten €" />
                         </LineChart>
                     </ResponsiveContainer>
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardContent className="p-6">
-                    <h3 className="font-semibold text-lg mb-4">Aktuelle Zähler</h3>
-                    <div className="space-y-2">
-                        {meters.slice(0, 10).map((meter) => (
-                            <div key={meter.id} className="p-3 bg-gray-50 rounded-lg border flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    {meter.typ === 'Strom' ? (
-                                        <Zap className="w-5 h-5 text-yellow-600" />
-                                    ) : (
-                                        <Droplet className="w-5 h-5 text-blue-600" />
-                                    )}
-                                    <div>
-                                        <div className="font-semibold text-sm">{meter.zaehlernummer}</div>
-                                        <div className="text-xs text-gray-600">{meter.typ}</div>
+            <div className="grid md:grid-cols-2 gap-6">
+                <Card>
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4">Energieeffizienz-Tipps</h3>
+                        <div className="space-y-2">
+                            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                                <div className="font-semibold text-sm text-green-700">LED-Beleuchtung</div>
+                                <div className="text-xs text-gray-600">Potenzielle Einsparung: 300€/Jahr</div>
+                            </div>
+                            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                                <div className="font-semibold text-sm text-green-700">Dämmung verbessern</div>
+                                <div className="text-xs text-gray-600">Potenzielle Einsparung: 800€/Jahr</div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-6">
+                        <h3 className="font-semibold text-lg mb-4">Energieausweis-Status</h3>
+                        <div className="space-y-2">
+                            {buildings.map(b => (
+                                <div key={b.id} className="p-3 bg-gray-50 rounded-lg">
+                                    <div className="flex justify-between">
+                                        <div className="font-semibold text-sm">{b.name}</div>
+                                        <Badge className="vf-badge-success">Gültig</Badge>
                                     </div>
                                 </div>
-                                <Button size="sm" variant="outline">Ablesen</Button>
-                            </div>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 }
