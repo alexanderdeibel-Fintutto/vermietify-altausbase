@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, Mail, Phone, Plus, FileText } from 'lucide-react';
+import { Users, Mail, Phone, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export default function ResidentsManagement() {
@@ -60,6 +60,9 @@ export default function ResidentsManagement() {
 
                 <Card>
                     <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <Phone className="w-8 h-8 text-purple-600" />
+                        </div>
                         <div className="text-3xl font-bold">
                             {tenants.filter(t => t.telefon).length}
                         </div>
@@ -79,10 +82,45 @@ export default function ResidentsManagement() {
                 <CardContent className="p-6">
                     <h3 className="font-semibold text-lg mb-4">Alle Mieter</h3>
                     <div className="space-y-2 max-h-96 overflow-y-auto">
-                        {tenants.map((tenant) => {
-                            const contract = contracts.find(c => c.tenant_id === tenant.id);
-                            return (
-                                <div key={tenant.id} className="p-4 bg-gray-50 rounded-lg border">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div>
-                                            <div className="font-sem
+                        {tenants.length === 0 ? (
+                            <p className="text-gray-500 text-center py-8">Keine Mieter vorhanden</p>
+                        ) : (
+                            tenants.map((tenant) => {
+                                const contract = contracts.find(c => c.tenant_id === tenant.id);
+                                const isActive = contract && new Date(contract.mietende) > new Date();
+                                return (
+                                    <div key={tenant.id} className="p-4 bg-gray-50 rounded-lg border">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <div className="font-semibold">
+                                                    {tenant.vorname} {tenant.nachname}
+                                                </div>
+                                                <div className="text-sm text-gray-600 flex items-center gap-4 mt-1">
+                                                    {tenant.email && (
+                                                        <span className="flex items-center gap-1">
+                                                            <Mail className="w-3 h-3" />
+                                                            {tenant.email}
+                                                        </span>
+                                                    )}
+                                                    {tenant.telefon && (
+                                                        <span className="flex items-center gap-1">
+                                                            <Phone className="w-3 h-3" />
+                                                            {tenant.telefon}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <Badge variant={isActive ? "success" : "default"}>
+                                                {isActive ? "Aktiv" : "Inaktiv"}
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+    );
+}
