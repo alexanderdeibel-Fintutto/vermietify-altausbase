@@ -45,6 +45,7 @@ import VermitifyLogo from '@/components/branding/VermitifyLogo';
 import OfflineModeInitializer from '@/components/offline/OfflineModeInitializer';
 import { FloatingFeedbackButton } from '@/components/feedback/UserFeedbackCollector';
 import ErrorBoundaryWithLogging from '@/components/errors/ErrorBoundaryWithLogging';
+import UserJourneyTracker from '@/components/analytics/UserJourneyTracker';
 
 // Lazy load heavy components
 const TesterTracker = lazy(() => import('@/components/testing/TesterTracker'));
@@ -207,7 +208,7 @@ export default function Layout({ children, currentPageName }) {
                 <SmartActionButton />
 
                 {/* PWA Install Prompt */}
-                <InstallPWAPrompt />
+                <PWAInstallPrompt />
 
                 {/* Offline Indicator */}
                                 <OfflineIndicator />
