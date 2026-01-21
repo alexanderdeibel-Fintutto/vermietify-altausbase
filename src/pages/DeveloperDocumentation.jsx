@@ -49,6 +49,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import ReactMarkdown from 'react-markdown';
 import { cn } from "@/lib/utils";
+import AIInsightsPanel from '@/components/documentation/AIInsightsPanel';
+import DocumentationSummary from '@/components/documentation/DocumentationSummary';
+import SmartRecommendations from '@/components/documentation/SmartRecommendations';
 
 
 const PRIORITY_TYPES = [
@@ -228,6 +231,7 @@ export default function DeveloperDocumentation() {
     const [progress, setProgress] = useState(0);
     const [searchQuery, setSearchQuery] = useState('');
     const [documentations, setDocumentations] = useState([]);
+    const [showAIPanel, setShowAIPanel] = useState(false);
 
     const lastUpdate = documentations.length > 0 
         ? documentations.reduce((max, doc) => {
@@ -528,16 +532,41 @@ export default function DeveloperDocumentation() {
                 <CardContent className="p-4">
                     <div className="flex items-start gap-3">
                         <Code className="w-5 h-5 text-blue-600 mt-0.5" />
-                        <div>
+                        <div className="flex-1">
                             <p className="text-blue-900 font-medium">KI-Assistent Integration</p>
                             <p className="text-blue-700 text-sm mt-1">
                                 Diese Dokumentationen können direkt an KI-Assistenten wie Claude übergeben werden, 
                                 um vollständiges Verständnis der App-Architektur zu ermöglichen.
                             </p>
                         </div>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setShowAIPanel(!showAIPanel)}
+                            className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                        >
+                            <Highlighter className="w-4 h-4 mr-1" />
+                            {showAIPanel ? 'KI-Features ausblenden' : 'KI-Features anzeigen'}
+                        </Button>
                     </div>
                 </CardContent>
             </Card>
+
+            {/* AI Features Panel */}
+            {showAIPanel && (
+                <div className="grid md:grid-cols-2 gap-4">
+                    <SmartRecommendations 
+                        generatedTypes={documentations.filter(d => d.status === 'completed').map(d => d.documentation_type)}
+                        onGenerate={(type) => generateMutation.mutate(type)}
+                    />
+                    {previewDoc && (
+                        <div className="space-y-4">
+                            <AIInsightsPanel documentation={previewDoc} />
+                            <DocumentationSummary documentation={previewDoc} />
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Auswahl-Aktionen */}
             {selectedTypes.length > 0 && (
