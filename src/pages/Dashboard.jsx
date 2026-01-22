@@ -1,11 +1,47 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { Card, CardContent } from '@/components/ui/card';
-import { Building2, Users, DollarSign, AlertCircle, FileText, Wrench } from 'lucide-react';
+import { Building2, Users, DollarSign, AlertCircle, FileText, Wrench, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export default function Dashboard() {
+    const { user: supabaseUser, loading: authLoading } = useAuth();
+    const navigate = useNavigate();
+
+    // Check authentication
+    useEffect(() => {
+        if (!authLoading && !supabaseUser) {
+            navigate(createPageUrl('Login'));
+        }
+    }, [authLoading, supabaseUser, navigate]);
+
+    // Check subscription status
+    const { data: subscription } = useQuery({
+        queryKey: ['user-subscription', supabaseUser?.email],
+        queryFn: async () => {
+            const subs = await base44.entities.UserSubscription.filter({ user_email: supabaseUser.email });
+            return subs[0];
+        },
+        enabled: !!supabaseUser
+    });
+
+    useEffect(() => {
+        if (supabaseUser && subscription && subscription.status !== 'ACTIVE' && subscription.status !== 'TRIAL') {
+            navigate(createPageUrl('Billing'));
+        }
+    }, [supabaseUser, subscription, navigate]);
+
+    if (authLoading) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            </div>
+        );
+    }
     const { data: buildings = [] } = useQuery({
         queryKey: ['buildings'],
         queryFn: () => base44.entities.Building.list()

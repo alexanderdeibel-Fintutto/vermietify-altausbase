@@ -34,7 +34,6 @@ export default function Onboarding() {
   const [currentComponent, setCurrentComponent] = useState(null);
   const messagesEndRef = useRef(null);
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
   const { data: user } = useQuery({
     queryKey: ['current-user'],

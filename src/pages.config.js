@@ -106,7 +106,7 @@ import AutomatedTaxFormGenerator from './pages/AutomatedTaxFormGenerator';
 import AutomationCenter from './pages/AutomationCenter';
 import AutomationRules from './pages/AutomationRules';
 import BKAbrechnungWizard from './pages/BKAbrechnungWizard';
-import Error404 from './pages/Error404';
+import Billing from './pages/Billing';
 import BKAbrechnungWizardEnhanced from './pages/BKAbrechnungWizardEnhanced';
 import BKChecker from './pages/BKChecker';
 import BackupRecovery from './pages/BackupRecovery';
@@ -118,6 +118,7 @@ import BankTransfers from './pages/BankTransfers';
 import BankingAutomationHub from './pages/BankingAutomationHub';
 import BankingManagement from './pages/BankingManagement';
 import BankingOverview from './pages/BankingOverview';
+import BillingSuccess from './pages/BillingSuccess';
 import BudgetAnalysis from './pages/BudgetAnalysis';
 import BudgetPlanning from './pages/BudgetPlanning';
 import BudgetTracking from './pages/BudgetTracking';
@@ -227,6 +228,7 @@ import EnergyPassportManager from './pages/EnergyPassportManager';
 import EnhancedTenantPortal from './pages/EnhancedTenantPortal';
 import EntityTaxPlanning from './pages/EntityTaxPlanning';
 import Equipment from './pages/Equipment';
+import Error404 from './pages/Error404';
 import Error500 from './pages/Error500';
 import EstateTaxPlanning from './pages/EstateTaxPlanning';
 import EstimatedTaxScheduler from './pages/EstimatedTaxScheduler';
@@ -322,9 +324,9 @@ import MyAccount from './pages/MyAccount';
 import MySubscription from './pages/MySubscription';
 import NavigationDemo from './pages/NavigationDemo';
 import NotificationCenter from './pages/NotificationCenter';
+import NotificationHub from './pages/NotificationHub';
 import NotificationCenterEnhanced from './pages/NotificationCenterEnhanced';
 import NotificationHistory from './pages/NotificationHistory';
-import NotificationHub from './pages/NotificationHub';
 import NotificationManagement from './pages/NotificationManagement';
 import NotificationPreferences from './pages/NotificationPreferences';
 import OfflineError from './pages/OfflineError';
@@ -375,6 +377,7 @@ import ROIDashboard from './pages/ROIDashboard';
 import RealEstateCH from './pages/RealEstateCH';
 import RealEstateTaxPlanning from './pages/RealEstateTaxPlanning';
 import RealTimeTaxCalculator from './pages/RealTimeTaxCalculator';
+import Register from './pages/Register';
 import RenditeRechner from './pages/RenditeRechner';
 import RenditeRechnerEnhanced from './pages/RenditeRechnerEnhanced';
 import RentCollection from './pages/RentCollection';
@@ -433,6 +436,7 @@ import TaskDetail from './pages/TaskDetail';
 import TaskManagement from './pages/TaskManagement';
 import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
+import TaxForms from './pages/TaxForms';
 import TaxAIChatbot from './pages/TaxAIChatbot';
 import TaxAdminDashboard from './pages/TaxAdminDashboard';
 import TaxAdminPanel from './pages/TaxAdminPanel';
@@ -468,7 +472,6 @@ import TaxFilingWizard from './pages/TaxFilingWizard';
 import TaxForecastPlanner from './pages/TaxForecastPlanner';
 import TaxFormGuide from './pages/TaxFormGuide';
 import TaxFormLibrary from './pages/TaxFormLibrary';
-import TaxForms from './pages/TaxForms';
 import TaxHarvesting from './pages/TaxHarvesting';
 import TaxLawUpdates from './pages/TaxLawUpdates';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
@@ -600,6 +603,7 @@ import WealthMobile from './pages/WealthMobile';
 import WealthTaxCalculator from './pages/WealthTaxCalculator';
 import WealthTaxIntegration from './pages/WealthTaxIntegration';
 import WealthTeam from './pages/WealthTeam';
+import Welcome from './pages/Welcome';
 import WelcomeDashboard from './pages/WelcomeDashboard';
 import WertentwicklungsRechner from './pages/WertentwicklungsRechner';
 import WhatsAppCommunication from './pages/WhatsAppCommunication';
@@ -619,10 +623,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import Register from './pages/Register';
-import Welcome from './pages/Welcome';
-import Billing from './pages/Billing';
-import BillingSuccess from './pages/BillingSuccess';
 import __Layout from './Layout.jsx';
 
 
@@ -735,7 +735,7 @@ export const PAGES = {
     "AutomationCenter": AutomationCenter,
     "AutomationRules": AutomationRules,
     "BKAbrechnungWizard": BKAbrechnungWizard,
-    "Error404": Error404,
+    "Billing": Billing,
     "BKAbrechnungWizardEnhanced": BKAbrechnungWizardEnhanced,
     "BKChecker": BKChecker,
     "BackupRecovery": BackupRecovery,
@@ -747,6 +747,7 @@ export const PAGES = {
     "BankingAutomationHub": BankingAutomationHub,
     "BankingManagement": BankingManagement,
     "BankingOverview": BankingOverview,
+    "BillingSuccess": BillingSuccess,
     "BudgetAnalysis": BudgetAnalysis,
     "BudgetPlanning": BudgetPlanning,
     "BudgetTracking": BudgetTracking,
@@ -856,6 +857,7 @@ export const PAGES = {
     "EnhancedTenantPortal": EnhancedTenantPortal,
     "EntityTaxPlanning": EntityTaxPlanning,
     "Equipment": Equipment,
+    "Error404": Error404,
     "Error500": Error500,
     "EstateTaxPlanning": EstateTaxPlanning,
     "EstimatedTaxScheduler": EstimatedTaxScheduler,
@@ -951,9 +953,9 @@ export const PAGES = {
     "MySubscription": MySubscription,
     "NavigationDemo": NavigationDemo,
     "NotificationCenter": NotificationCenter,
+    "NotificationHub": NotificationHub,
     "NotificationCenterEnhanced": NotificationCenterEnhanced,
     "NotificationHistory": NotificationHistory,
-    "NotificationHub": NotificationHub,
     "NotificationManagement": NotificationManagement,
     "NotificationPreferences": NotificationPreferences,
     "OfflineError": OfflineError,
@@ -1004,6 +1006,7 @@ export const PAGES = {
     "RealEstateCH": RealEstateCH,
     "RealEstateTaxPlanning": RealEstateTaxPlanning,
     "RealTimeTaxCalculator": RealTimeTaxCalculator,
+    "Register": Register,
     "RenditeRechner": RenditeRechner,
     "RenditeRechnerEnhanced": RenditeRechnerEnhanced,
     "RentCollection": RentCollection,
@@ -1062,6 +1065,7 @@ export const PAGES = {
     "TaskManagement": TaskManagement,
     "Tasks": Tasks,
     "Tax": Tax,
+    "TaxForms": TaxForms,
     "TaxAIChatbot": TaxAIChatbot,
     "TaxAdminDashboard": TaxAdminDashboard,
     "TaxAdminPanel": TaxAdminPanel,
@@ -1097,7 +1101,6 @@ export const PAGES = {
     "TaxForecastPlanner": TaxForecastPlanner,
     "TaxFormGuide": TaxFormGuide,
     "TaxFormLibrary": TaxFormLibrary,
-    "TaxForms": TaxForms,
     "TaxHarvesting": TaxHarvesting,
     "TaxLawUpdates": TaxLawUpdates,
     "TaxLibraryManagement": TaxLibraryManagement,
@@ -1229,6 +1232,7 @@ export const PAGES = {
     "WealthTaxCalculator": WealthTaxCalculator,
     "WealthTaxIntegration": WealthTaxIntegration,
     "WealthTeam": WealthTeam,
+    "Welcome": Welcome,
     "WelcomeDashboard": WelcomeDashboard,
     "WertentwicklungsRechner": WertentwicklungsRechner,
     "WhatsAppCommunication": WhatsAppCommunication,
@@ -1248,10 +1252,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "Register": Register,
-    "Welcome": Welcome,
-    "Billing": Billing,
-    "BillingSuccess": BillingSuccess,
 }
 
 export const pagesConfig = {
