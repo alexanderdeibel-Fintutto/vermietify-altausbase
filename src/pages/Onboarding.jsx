@@ -10,6 +10,7 @@ import { Send, Loader2, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import { useAuth } from '@/hooks/useAuth';
 import ChatMessage from '@/components/onboarding/ChatMessage';
 import SimpleObjectForm from '@/components/onboarding/SimpleObjectForm';
 import QuickTenantSetup from '@/components/onboarding/QuickTenantSetup';
@@ -18,6 +19,15 @@ import CompletionScreen from '@/components/onboarding/CompletionScreen';
 import ProgressIndicator from '@/components/onboarding/ProgressIndicator';
 
 export default function Onboarding() {
+  const { user: supabaseUser, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !supabaseUser) {
+      navigate(createPageUrl('Login'));
+    }
+  }, [authLoading, supabaseUser, navigate]);
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -311,7 +321,7 @@ Antworte kurz und freundlich. Stelle Fragen um den User-Typ zu erkennen (${packa
     navigate(createPageUrl('Dashboard'));
   };
 
-  if (loadingPackage) {
+  if (authLoading || loadingPackage) {
     return (
       <div className="flex items-center justify-center h-screen">
         <motion.div
@@ -322,7 +332,7 @@ Antworte kurz und freundlich. Stelle Fragen um den User-Typ zu erkennen (${packa
         </motion.div>
       </div>
     );
-    }
+  }
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-emerald-50 to-white">
