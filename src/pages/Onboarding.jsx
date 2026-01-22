@@ -10,7 +10,7 @@ import { Send, Loader2, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/components/hooks/useAuth';
 import ChatMessage from '@/components/onboarding/ChatMessage';
 import SimpleObjectForm from '@/components/onboarding/SimpleObjectForm';
 import QuickTenantSetup from '@/components/onboarding/QuickTenantSetup';
