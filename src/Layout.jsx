@@ -46,6 +46,7 @@ import OfflineModeInitializer from '@/components/offline/OfflineModeInitializer'
 import { FloatingFeedbackButton } from '@/components/feedback/UserFeedbackCollector';
 import ErrorBoundaryWithLogging from '@/components/errors/ErrorBoundaryWithLogging';
 import UserJourneyTracker from '@/components/analytics/UserJourneyTracker';
+import AuthProvider from '@/components/auth/AuthProvider';
 
 // Lazy load heavy components
 const TesterTracker = lazy(() => import('@/components/testing/TesterTracker'));
@@ -134,6 +135,7 @@ export default function Layout({ children, currentPageName }) {
 
     return (
                                             <ErrorBoundaryWithLogging componentName="Layout">
+                                            <AuthProvider>
                                             <ThemeProvider>
                                             <SubscriptionInitializer>
                                             <OnboardingRedirect>
@@ -233,6 +235,7 @@ export default function Layout({ children, currentPageName }) {
                       </OnboardingRedirect>
                       </SubscriptionInitializer>
                       </ThemeProvider>
+                      </AuthProvider>
                       </ErrorBoundaryWithLogging>
                       );
                 }

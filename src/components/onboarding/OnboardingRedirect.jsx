@@ -7,7 +7,18 @@ import { createPageUrl } from '@/utils';
 import { Loader2 } from 'lucide-react';
 
 export default function OnboardingRedirect({ children }) {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
+    const { user: supabaseUser, loading: authLoading } = useAuth();
+
+    // Redirect to login if not authenticated
+    useEffect(() => {
+        const publicPages = ['Login', 'Register', 'VermitifyHomepage', 'VermitifyPricing', 'VermitifyFeatures', 'VermitifyContact'];
+        const currentPage = window.location.pathname.split('/').pop();
+
+        if (!authLoading && !supabaseUser && !publicPages.includes(currentPage)) {
+            navigate(createPageUrl('Login'));
+        }
+    }, [authLoading, supabaseUser, navigate]);
 
   const { data: user } = useQuery({
     queryKey: ['current-user'],
