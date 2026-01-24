@@ -1,49 +1,57 @@
-
 import * as React from "react"
-import { DayPicker } from "react-day-picker"
 import { cn } from "@/lib/utils"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
-const Calendar = React.forwardRef(({ className, classNames, showOutsideDays = true, ...props }, ref) => (
-  <div ref={ref} className={cn("p-3", className)}>
-    <DayPicker
-      showOutsideDays={showOutsideDays}
-      className={cn("", classNames?.root)}
-      classNames={{
-        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-        month: "space-y-4",
-        caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium",
-        nav: "space-x-1 flex items-center",
-        nav_button: cn(
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center"
-        ),
-        nav_button_previous: "absolute left-1",
-        nav_button_next: "absolute right-1",
-        table: "w-full border-collapse space-y-1",
-        head_row: "flex",
-        head_cell: "text-slate-500 rounded-md w-9 font-normal text-[0.8rem]",
-        row: "flex w-full mt-2",
-        cell: "h-9 w-9 text-center text-sm p-0 relative",
-        day: cn("h-9 w-9 p-0 font-normal"),
-        day_selected:
-          "bg-slate-900 text-white hover:bg-slate-900 hover:text-white focus:bg-slate-900 focus:text-white",
-        day_today: "bg-slate-100 text-slate-900",
-        day_outside: "text-slate-500 opacity-50",
-        day_disabled: "text-slate-500 opacity-50",
-        day_range_middle:
-          "aria-selected:bg-slate-100 aria-selected:text-slate-900",
-        day_hidden: "invisible",
-        ...classNames,
-      }}
-      components={{
-        IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
-        IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
-      }}
-      {...props}
-    />
-  </div>
-))
+const Calendar = React.forwardRef(({ className, ...props }, ref) => {
+  const [month, setMonth] = React.useState(new Date())
+  
+  const daysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
+  const firstDay = new Date(month.getFullYear(), month.getMonth(), 1).getDay()
+  
+  const days = Array.from({ length: daysInMonth(month) }, (_, i) => i + 1)
+  const emptyDays = Array.from({ length: firstDay }, () => null)
+  
+  return (
+    <div ref={ref} className={cn("p-3", className)}>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1))}
+            className="p-1 hover:bg-slate-100 rounded"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <div className="text-sm font-medium">
+            {month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+          </div>
+          <button
+            onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1))}
+            className="p-1 hover:bg-slate-100 rounded"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+        
+        <div className="grid grid-cols-7 gap-1">
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+            <div key={day} className="text-xs font-medium text-center text-slate-500 h-8 flex items-center justify-center">
+              {day}
+            </div>
+          ))}
+          {emptyDays.map((_, i) => <div key={`empty-${i}`} />)}
+          {days.map(day => (
+            <button
+              key={day}
+              className="h-8 rounded text-sm hover:bg-slate-100 flex items-center justify-center"
+            >
+              {day}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+})
 Calendar.displayName = "Calendar"
 
 export { Calendar }
