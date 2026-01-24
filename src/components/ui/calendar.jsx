@@ -1,9 +1,8 @@
 
 import * as React from "react"
-import DayPicker from "react-day-picker"
+import { DayPicker } from "react-day-picker"
 import { cn } from "@/lib/utils"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import "react-day-picker/dist/style.css"
 
 const Calendar = React.forwardRef(({ className, classNames, showOutsideDays = true, ...props }, ref) => (
   <div ref={ref} className={cn("p-3", className)}>
@@ -35,7 +34,7 @@ const Calendar = React.forwardRef(({ className, classNames, showOutsideDays = tr
         day_range_middle:
           "aria-selected:bg-slate-100 aria-selected:text-slate-900",
         day_hidden: "invisible",
-        ...classNames?.body,
+        ...classNames,
       }}
       components={{
         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
