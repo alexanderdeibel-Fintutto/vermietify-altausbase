@@ -1,57 +1,61 @@
 import * as React from "react"
+import { DayPicker } from "react-day-picker"
 import { cn } from "@/lib/utils"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { buttonVariants } from "@/components/ui/button"
 
-const Calendar = React.forwardRef(({ className, ...props }, ref) => {
-  const [month, setMonth] = React.useState(new Date())
-  
-  const daysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
-  const firstDay = new Date(month.getFullYear(), month.getMonth(), 1).getDay()
-  
-  const days = Array.from({ length: daysInMonth(month) }, (_, i) => i + 1)
-  const emptyDays = Array.from({ length: firstDay }, () => null)
-  
+function Calendar({
+  className,
+  classNames,
+  showOutsideDays = true,
+  ...props
+}) {
   return (
-    <div ref={ref} className={cn("p-3", className)}>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1))}
-            className="p-1 hover:bg-slate-100 rounded"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <div className="text-sm font-medium">
-            {month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-          </div>
-          <button
-            onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1))}
-            className="p-1 hover:bg-slate-100 rounded"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-        
-        <div className="grid grid-cols-7 gap-1">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <div key={day} className="text-xs font-medium text-center text-slate-500 h-8 flex items-center justify-center">
-              {day}
-            </div>
-          ))}
-          {emptyDays.map((_, i) => <div key={`empty-${i}`} />)}
-          {days.map(day => (
-            <button
-              key={day}
-              className="h-8 rounded text-sm hover:bg-slate-100 flex items-center justify-center"
-            >
-              {day}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
+    <DayPicker
+      showOutsideDays={showOutsideDays}
+      className={cn("p-3", className)}
+      classNames={{
+        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+        month: "space-y-4",
+        caption: "flex justify-center pt-1 relative items-center",
+        caption_label: "text-sm font-medium",
+        nav: "space-x-1 flex items-center",
+        nav_button: cn(
+          buttonVariants({ variant: "outline" }),
+          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+        ),
+        nav_button_previous: "absolute left-1",
+        nav_button_next: "absolute right-1",
+        table: "w-full border-collapse space-y-1",
+        head_row: "flex",
+        head_cell:
+          "text-slate-500 rounded-md w-9 font-normal text-[0.8rem]",
+        row: "flex w-full mt-2",
+        cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-slate-100/50 [&:has([aria-selected])]:bg-slate-100 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+        day: cn(
+          buttonVariants({ variant: "ghost" }),
+          "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
+        ),
+        day_range_end: "day-range-end",
+        day_selected:
+          "bg-slate-900 text-slate-50 hover:bg-slate-900 hover:text-slate-50 focus:bg-slate-900 focus:text-slate-50",
+        day_today: "bg-slate-100 text-slate-900",
+        day_outside:
+          "day-outside text-slate-500 opacity-50 aria-selected:bg-slate-100/50 aria-selected:text-slate-500 aria-selected:opacity-30",
+        day_disabled: "text-slate-500 opacity-50",
+        day_range_middle:
+          "aria-selected:bg-slate-100 aria-selected:text-slate-900",
+        day_hidden: "invisible",
+        ...classNames,
+      }}
+      components={{
+        IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
+        IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+      }}
+      {...props}
+    />
   )
-})
+}
 Calendar.displayName = "Calendar"
 
 export { Calendar }
