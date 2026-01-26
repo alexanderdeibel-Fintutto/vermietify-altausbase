@@ -1,165 +1,213 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { ChevronLeft, CheckCircle2 } from "lucide-react";
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { createPageUrl } from '../utils';
 import { base44 } from '@/api/base44Client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import OperatingCostWizardStep1 from '@/components/operating-costs/OperatingCostWizardStep1';
-import OperatingCostWizardStep2 from '@/components/operating-costs/OperatingCostWizardStep2';
-import OperatingCostWizardStep3 from '@/components/operating-costs/OperatingCostWizardStep3';
-import OperatingCostWizardStep4 from '@/components/operating-costs/OperatingCostWizardStep4';
-
-const STEPS = [
-  { id: 1, label: 'Gebäude', description: 'Welches Gebäude?' },
-  { id: 2, label: 'Verträge', description: 'Welche Mieter?' },
-  { id: 3, label: 'Kostenarten', description: 'Welche Kosten?' },
-  { id: 4, label: 'Kostenpositionen', description: 'Einzelne Kosten' },
-];
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Check } from 'lucide-react';
+import Step1BuildingSelection from '@/components/operating-costs/Step1BuildingSelection';
+import Step2ContractSelection from '@/components/operating-costs/Step2ContractSelection';
+import Step3CostSelection from '@/components/operating-costs/Step3CostSelection';
+import Step4DirectCosts from '@/components/operating-costs/Step4DirectCosts';
+import Step5Summary from '@/components/operating-costs/Step5Summary';
 
 export default function OperatingCostWizard() {
-  const [step, setStep] = useState(1);
-  const [building, setBuilding] = useState(null);
-  const [contracts, setContracts] = useState([]);
-  const [costTypes, setCostTypes] = useState([]);
-  const [costs, setCosts] = useState([]);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const draftId = searchParams.get('id');
   const queryClient = useQueryClient();
 
-  const createStatementMutation = useMutation({
-    mutationFn: async () => {
-      return await base44.entities.OperatingCostStatement.create({
-        building_id: building.id,
-        contract_ids: contracts.map(c => c.id),
-        cost_type_ids: costTypes,
-        costs: costs,
-        status: 'draft'
-      });
+  // Draft laden falls vorhanden
+  const { data: draft } = useQuery({
+    queryKey: ['operatingCostDraft', draftId],
+    queryFn: async () => {
+      if (!draftId) return null;
+      return await base44.entities.OperatingCostStatement.get(draftId);
     },
-    onSuccess: () => {
-      toast.success('Betriebskostenabrechnung erstellt!');
-      queryClient.invalidateQueries({ queryKey: ['operating-costs'] });
-      setStep(5); // Completion screen
+    enabled: !!draftId
+  });
+
+  const initialData = draft?.draft_details ? JSON.parse(draft.draft_details) : {};
+
+  const [currentStep, setCurrentStep] = useState(draft?.current_step || 0);
+  const [formData, setFormData] = useState({
+    building_id: initialData.building_id || '',
+    period_start: initialData.period_start || `${new Date().getFullYear() - 1}-01-01`,
+    period_end: initialData.period_end || `${new Date().getFullYear() - 1}-12-31`,
+    selected_units: initialData.selected_units || [],
+    contracts: initialData.contracts || [],
+    vacancies: initialData.vacancies || [],
+    costs: initialData.costs || {},
+    directCosts: initialData.directCosts || {},
+    manualCosts: initialData.manualCosts || []
+  });
+
+  const steps = [
+    { id: 'building', label: 'Objekt & Einheiten' },
+    { id: 'contracts', label: 'Verträge & Leerstände' },
+    { id: 'costs', label: 'Kosten erfassen' },
+    { id: 'directCosts', label: 'Direkte Zuordnung' },
+    { id: 'summary', label: 'Zusammenfassung' }
+  ];
+
+  // Draft speichern
+  const saveDraftMutation = useMutation({
+    mutationFn: async (data) => {
+      if (draftId) {
+        return await base44.entities.OperatingCostStatement.update(draftId, {
+          draft_details: JSON.stringify(data),
+          current_step: currentStep,
+          status: 'Entwurf',
+          updated_date: new Date().toISOString()
+        });
+      } else {
+        return await base44.entities.OperatingCostStatement.create({
+          building_id: data.building_id,
+          abrechnungsjahr: new Date(data.period_start).getFullYear(),
+          zeitraum_von: data.period_start,
+          zeitraum_bis: data.period_end,
+          erstellungsdatum: new Date().toISOString().split('T')[0],
+          status: 'Entwurf',
+          draft_details: JSON.stringify(data),
+          current_step: currentStep
+        });
+      }
+    },
+    onSuccess: (data) => {
+      toast.success('Entwurf gespeichert');
+      queryClient.invalidateQueries({ queryKey: ['operatingCostStatements'] });
+      if (!draftId) {
+        navigate(createPageUrl('OperatingCostWizard') + `?id=${data.id}`);
+      }
     },
     onError: (error) => {
-      toast.error('Fehler beim Erstellen');
-      console.error(error);
+      toast.error('Fehler beim Speichern: ' + error.message);
     }
   });
 
-  const progress = (step / STEPS.length) * 100;
+  const handleDataChange = (stepData) => {
+    setFormData(prev => ({ ...prev, ...stepData }));
+  };
+
+  const handleNext = () => setCurrentStep(prev => prev + 1);
+  const handleBack = () => setCurrentStep(prev => prev - 1);
+
+  const handleSaveDraft = () => {
+    saveDraftMutation.mutate(formData);
+  };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">🏠 Betriebskostenabrechnung</h1>
-        <p className="text-slate-600 mt-1">Schritt {step} von {STEPS.length}</p>
-      </div>
-
-      {/* Progress */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex gap-2 mb-4">
-            {STEPS.map((s, idx) => (
-              <div key={s.id} className="flex-1">
-                <div className={`text-xs text-center font-medium mb-1 ${step >= s.id ? 'text-blue-600' : 'text-slate-400'}`}>
-                  {s.label}
-                </div>
-                <div className={`h-1 rounded ${step > s.id ? 'bg-blue-600' : step === s.id ? 'bg-blue-400' : 'bg-slate-200'}`} />
-              </div>
-            ))}
-          </div>
-          <Progress value={progress} className="h-1" />
-        </CardContent>
-      </Card>
-
-      {/* Content */}
-      <Card>
-        <CardContent className="p-8">
-          {step === 1 && (
-            <OperatingCostWizardStep1 
-              onNext={(b) => { setBuilding(b); setStep(2); }} 
-              selected={building}
-            />
-          )}
-          
-          {step === 2 && (
-            <OperatingCostWizardStep2 
-              buildingId={building?.id}
-              onNext={(c) => { setContracts(c); setStep(3); }}
-              selected={contracts}
-            />
-          )}
-          
-          {step === 3 && (
-            <OperatingCostWizardStep3 
-              onNext={(ct) => { setCostTypes(ct); setStep(4); }}
-              selected={costTypes}
-            />
-          )}
-          
-          {step === 4 && (
-            <OperatingCostWizardStep4 
-              onNext={(c) => setCosts(c)}
-              selected={costs}
-            />
-          )}
-
-          {step === 5 && (
-            <div className="text-center space-y-4">
-              <CheckCircle2 className="w-16 h-16 text-emerald-600 mx-auto" />
-              <h2 className="text-2xl font-bold">✅ Fertig!</h2>
-              <p className="text-slate-600">Ihre Betriebskostenabrechnung wurde erstellt.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Navigation */}
-      {step < 5 && (
-        <div className="flex gap-3">
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-5xl mx-auto px-6">
+        {/* Header */}
+        <div className="mb-8">
           <Button 
-            variant="outline" 
-            onClick={() => setStep(Math.max(1, step - 1))}
-            disabled={step === 1}
-            className="flex-1"
+            variant="ghost" 
+            onClick={() => navigate(createPageUrl('Dashboard'))}
+            className="mb-4"
           >
-            <ChevronLeft className="w-4 h-4 mr-2" /> Zurück
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Zurück zum Dashboard
           </Button>
-          
-          {step < 4 && (
-            <Button 
-              onClick={() => setStep(step + 1)}
-              disabled={
-                (step === 1 && !building) ||
-                (step === 2 && contracts.length === 0) ||
-                (step === 3 && costTypes.length === 0)
-              }
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
-            >
-              Weiter
-            </Button>
-          )}
-          
-          {step === 4 && (
-            <Button 
-              onClick={() => createStatementMutation.mutate()}
-              disabled={costs.some(c => !c.category || !c.amount)}
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-              isLoading={createStatementMutation.isPending}
-            >
-              ✓ Abrechnung erstellen
-            </Button>
-          )}
+          <h1 className="text-3xl font-bold">Nebenkostenabrechnung erstellen</h1>
         </div>
-      )}
 
-      {step === 5 && (
-        <Button className="w-full bg-blue-600 hover:bg-blue-700">
-          → Zur Abrechnung
-        </Button>
-      )}
+        {/* Progress Stepper */}
+        <Card className="mb-8">
+          <div className="p-6">
+            <div className="flex items-center justify-between relative">
+              {/* Progress Line */}
+              <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200 -z-10">
+                <div 
+                  className="h-full bg-blue-900 transition-all duration-300"
+                  style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
+                />
+              </div>
+
+              {steps.map((step, idx) => (
+                <div key={step.id} className="flex flex-col items-center">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 bg-white transition-colors ${
+                    idx < currentStep ? 'border-blue-900 bg-blue-900' :
+                    idx === currentStep ? 'border-blue-900' :
+                    'border-gray-300'
+                  }`}>
+                    {idx < currentStep ? (
+                      <Check className="w-5 h-5 text-white" />
+                    ) : (
+                      <span className={idx === currentStep ? 'text-blue-900 font-semibold' : 'text-gray-400'}>
+                        {idx + 1}
+                      </span>
+                    )}
+                  </div>
+                  <span className={`text-xs mt-2 max-w-[80px] text-center ${
+                    idx === currentStep ? 'font-semibold text-gray-900' : 'text-gray-600'
+                  }`}>
+                    {step.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+
+        {/* Step Content */}
+        <Card>
+          <div className="p-8">
+            {currentStep === 0 && (
+              <Step1BuildingSelection
+                data={formData}
+                onNext={handleNext}
+                onDataChange={handleDataChange}
+                onSaveDraft={handleSaveDraft}
+                isSaving={saveDraftMutation.isPending}
+              />
+            )}
+            {currentStep === 1 && (
+              <Step2ContractSelection
+                data={formData}
+                onNext={handleNext}
+                onBack={handleBack}
+                onDataChange={handleDataChange}
+                onSaveDraft={handleSaveDraft}
+                isSaving={saveDraftMutation.isPending}
+              />
+            )}
+            {currentStep === 2 && (
+              <Step3CostSelection
+                data={formData}
+                onNext={handleNext}
+                onBack={handleBack}
+                onDataChange={handleDataChange}
+                onSaveDraft={handleSaveDraft}
+                isSaving={saveDraftMutation.isPending}
+              />
+            )}
+            {currentStep === 3 && (
+              <Step4DirectCosts
+                data={formData}
+                onNext={handleNext}
+                onBack={handleBack}
+                onDataChange={handleDataChange}
+                onSaveDraft={handleSaveDraft}
+                isSaving={saveDraftMutation.isPending}
+              />
+            )}
+            {currentStep === 4 && (
+              <Step5Summary
+                data={formData}
+                onBack={handleBack}
+                draftId={draftId}
+                onSuccess={() => {
+                  toast.success('Abrechnung erfolgreich erstellt!');
+                  navigate(createPageUrl('OperatingCosts'));
+                }}
+              />
+            )}
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }
