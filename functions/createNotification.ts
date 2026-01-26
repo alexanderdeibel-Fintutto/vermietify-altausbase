@@ -1,34 +1,29 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
-  
   try {
-    const body = await req.json();
-    const { title, message, type, recipient_email, action_url } = body;
+    const base44 = createClientFromRequest(req);
+    
+    const { user_id, title, message, type = 'info', entity_type, entity_id, action_url } = await req.json();
 
-    await base44.asServiceRole.entities.Notification.create({
-      title,
-      message,
-      type: type || 'info',
-      recipient_email,
-      action_url,
-      is_read: false,
-      channels: JSON.stringify(['in-app'])
-    });
-
-    // Send email if specified
-    if (recipient_email) {
-      await base44.integrations.Core.SendEmail({
-        to: recipient_email,
-        subject: title,
-        body: message
-      });
+    if (!user_id || !title || !message) {
+      return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    return Response.json({ success: true });
-    
+    const notification = await base44.asServiceRole.entities.Notification.create({
+      user_id,
+      title,
+      message,
+      type,
+      entity_type,
+      entity_id,
+      action_url,
+      is_read: false
+    });
+
+    return Response.json({ success: true, notification });
   } catch (error) {
+    console.error('Error creating notification:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

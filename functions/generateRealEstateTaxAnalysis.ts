@@ -9,51 +9,69 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { tax_year, country } = await req.json();
+    const { country, taxYear } = await req.json();
 
-    // Immobilien-Steuern analysieren
+    if (!country || !taxYear) {
+      return Response.json({ error: 'Missing parameters' }, { status: 400 });
+    }
+
+    // Fetch real estate and tax data
+    const [properties, calculations, income] = await Promise.all([
+      base44.entities.RealEstate?.filter({ user_email: user.email, country }).catch(() => []) || [],
+      base44.entities.TaxCalculation.filter({ user_email: user.email, country, tax_year: taxYear }).catch(() => []),
+      base44.entities.OtherIncome.filter({ user_email: user.email, income_type: 'rental' }).catch(() => [])
+    ]);
+
+    const totalRentalIncome = income.reduce((sum, i) => sum + (i.amount || 0), 0);
+    const totalTax = calculations.reduce((sum, c) => sum + (c.total_tax || 0), 0);
+
     const analysis = await base44.integrations.Core.InvokeLLM({
-      prompt: `Analysiere Immobilien-Steuern für ${user.email} in ${country} (${tax_year}):
+      prompt: `Generate comprehensive real estate tax analysis for ${country}, year ${taxYear}.
 
-LÄNDER-SPEZIFISCHE RULES:
-${country === 'DE' ? 'Anlage V (Einkünfte aus Vermietung), Grundsteuer, Grunderwerbsteuer, AfA-Abschreibungen' :
-country === 'CH' ? 'Kantonal unterschiedliche Steuern, Liegenschaftsgewinne, Mieteinnahmen, Unterhaltskosten' :
-'Einkommenssteuer auf Mieten, Grundsteuer, Vorkehrungskosten'}
+Properties: ${properties.length}
+Rental Income: €${Math.round(totalRentalIncome)}
+Total Tax: €${Math.round(totalTax)}
 
-ANALYSIERE:
-1. Mieteinnahmen vs. Abzugskosten
-2. AfA-Möglichkeiten & Strategien
-3. Grundsteuer-Optimierung
-4. Eigennutz vs. Vermietung
-5. Verkaufsgewinne (Holding-Periode)
-6. Leverage/Hypotheken-Abzüge
-7. Grenzüberschreitende Immobilien
-8. Entity-Struktur für Ownership
-
-GEBE KONKRETE EMPFEHLUNGEN PRO IMMOBILIE:`,
+Provide analysis:
+1. Rental income optimization
+2. Deductible expenses (mortgage, maintenance, insurance, property tax)
+3. Depreciation strategy (Abschreibung)
+4. Capital gains planning if selling
+5. 1031 exchange opportunities
+6. Passive loss limitation rules
+7. Vacation rental vs long-term rental tax differences
+8. Entity structure optimization (LLC, S-Corp, individual)
+9. Estimated tax savings opportunity`,
       response_json_schema: {
-        type: "object",
+        type: 'object',
         properties: {
-          country: { type: "string" },
-          total_rental_income: { type: "number" },
-          deductible_expenses: { type: "number" },
-          afa_potential: { type: "number" },
-          optimal_entity_structure: { type: "string" },
-          estimated_tax_liability: { type: "number" },
-          optimization_strategies: { type: "array", items: { type: "string" } },
-          holding_period_strategy: { type: "string" }
+          rental_income_analysis: { type: 'object', additionalProperties: true },
+          deductible_expenses: { type: 'array', items: { type: 'object', additionalProperties: true } },
+          depreciation_strategy: { type: 'object', additionalProperties: true },
+          capital_gains_considerations: { type: 'array', items: { type: 'string' } },
+          entity_structure_recommendation: { type: 'string' },
+          estimated_annual_savings: { type: 'number' },
+          action_items: { type: 'array', items: { type: 'string' } }
         }
       }
     });
 
     return Response.json({
-      user_email: user.email,
-      country,
-      tax_year,
-      real_estate_analysis: analysis
+      status: 'success',
+      analysis: {
+        country,
+        tax_year: taxYear,
+        generated_at: new Date().toISOString(),
+        metrics: {
+          property_count: properties.length,
+          rental_income: totalRentalIncome,
+          tax_amount: totalTax
+        },
+        content: analysis
+      }
     });
-
   } catch (error) {
+    console.error('Generate real estate tax analysis error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

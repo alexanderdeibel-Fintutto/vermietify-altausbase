@@ -1,378 +1,226 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
+    try {
+        const base44 = createClientFromRequest(req);
+        const user = await base44.auth.me();
 
-  try {
-    const user = await base44.auth.me();
-    
-    if (user?.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
+        if (!user) {
+            return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        }
 
-    // Get all entity schemas
-    const entitySchemas = {};
-    const entityNames = [
-      'Building', 'Unit', 'Tenant', 'LeaseContract', 'Invoice', 'Task',
-      'BankAccount', 'BankTransaction', 'Payment', 'Document', 'Notification',
-      'OperatingCostStatement', 'OperatingCostItem', 'AnlageV', 'AnlageVEinnahmen', 
-      'AnlageVWerbungskosten', 'GeneratedDocument', 'SubscriptionPlan', 'UserSubscription',
-      'Lead', 'CalculationHistory', 'QuizResult', 'VPIIndex', 'InsurancePolicy',
-      'TenantMessage', 'HandoverProtocol', 'RentIncreaseProposal', 'AuditLog',
-      'ElsterSubmission', 'AIHelpContent', 'AITipRule', 'AIConversation', 'AIDocTemplate'
-    ];
+        const markdown = `# Modul-Architektur
 
-    for (const entityName of entityNames) {
-      try {
-        const schema = await base44.asServiceRole.entities[entityName].schema();
-        entitySchemas[entityName] = schema;
-      } catch (error) {
-        entitySchemas[entityName] = { error: 'Schema nicht verfügbar' };
-      }
-    }
+## Systemübersicht
 
-    // Module structure
-    const modules = {
-      core: {
-        name: 'Core Modul',
-        description: 'Grundlegende Verwaltungsfunktionen',
-        entities: ['Building', 'Unit', 'Tenant', 'LeaseContract'],
-        features: [
-          'Objektverwaltung',
-          'Einheiten-Management',
-          'Mieterverwaltung',
-          'Vertragsverwaltung'
-        ]
-      },
-      financial: {
-        name: 'Finanzmodul',
-        description: 'Finanzielle Verwaltung und Banking',
-        entities: ['Invoice', 'Payment', 'BankAccount', 'BankTransaction'],
-        features: [
-          'Rechnungsverwaltung',
-          'Zahlungsverfolgung',
-          'Banking-Integration',
-          'Cashflow-Übersicht'
-        ]
-      },
-      operatingCosts: {
-        name: 'Betriebskosten-Modul',
-        description: 'Nebenkostenabrechnungen nach BetrKV',
-        entities: ['OperatingCostStatement', 'OperatingCostItem'],
-        features: [
-          'BK-Abrechnung erstellen',
-          'Verteilerschlüssel',
-          'Automatische Berechnung',
-          'PDF-Export'
-        ]
-      },
-      tax: {
-        name: 'Steuer-Modul',
-        description: 'Anlage V und ELSTER-Integration',
-        entities: ['AnlageV', 'AnlageVEinnahmen', 'AnlageVWerbungskosten', 'ElsterSubmission'],
-        features: [
-          'Anlage V Generierung',
-          'ELSTER-Export',
-          'AfA-Kalkulation',
-          'Werbungskosten-Tracking'
-        ]
-      },
-      documents: {
-        name: 'Dokumenten-Modul',
-        description: 'Dokumentenverwaltung und -generierung',
-        entities: ['Document', 'GeneratedDocument', 'DocumentTemplate'],
-        features: [
-          'Dokumenten-Bibliothek',
-          'Automatische Generierung',
-          'Vorlagen-System',
-          'Versionshistorie'
-        ]
-      },
-      communication: {
-        name: 'Kommunikations-Modul',
-        description: 'Mieter-Kommunikation',
-        entities: ['TenantMessage', 'Notification'],
-        features: [
-          'Mieter-Portal',
-          'Nachrichten-System',
-          'E-Mail-Automation',
-          'Benachrichtigungen'
-        ]
-      },
-      tasks: {
-        name: 'Aufgaben-Modul',
-        description: 'Aufgaben- und Workflow-Management',
-        entities: ['Task'],
-        features: [
-          'Aufgabenverwaltung',
-          'Erinnerungen',
-          'Workflows',
-          'Kalender-Integration'
-        ]
-      },
-      insurance: {
-        name: 'Versicherungs-Modul',
-        description: 'Versicherungsverwaltung',
-        entities: ['InsurancePolicy'],
-        features: [
-          'Policen-Verwaltung',
-          'Fristenüberwachung',
-          'Umlagefähigkeit'
-        ]
-      },
-      tenantPortal: {
-        name: 'Mieter-Portal',
-        description: 'Self-Service für Mieter',
-        entities: ['TenantMessage', 'HandoverProtocol'],
-        features: [
-          'Dokumentenzugriff',
-          'Schadensmeldung',
-          'Zahlungsübersicht',
-          'Kommunikation'
-        ]
-      },
-      ai: {
-        name: 'KI-Modul',
-        description: 'KI-gestützte Funktionen',
-        entities: ['AIHelpContent', 'AITipRule', 'AIConversation', 'AIDocTemplate'],
-        features: [
-          'Kontextuelle Hilfe',
-          'Intelligente Tipps',
-          'KI-Chat',
-          'Dokumenten-Vorschläge'
-        ]
-      },
-      leadManagement: {
-        name: 'Lead-Management',
-        description: 'Marketing und Lead-Erfassung',
-        entities: ['Lead', 'CalculationHistory', 'QuizResult'],
-        features: [
-          'Lead-Capture',
-          'Scoring',
-          'Rechner-Historie',
-          'Quiz-Auswertung'
-        ]
-      },
-      subscription: {
-        name: 'Subscription-Modul',
-        description: 'Abonnement-Verwaltung',
-        entities: ['SubscriptionPlan', 'UserSubscription'],
-        features: [
-          'Plan-Management',
-          'Billing',
-          'Limits',
-          'Upgrades'
-        ]
-      }
-    };
+\`\`\`
+┌─────────────────────────────────────┐
+│         Frontend (React)              │
+│  Pages, Components, Layout            │
+└──────────────┬──────────────────────┘
+               │ HTTP/REST
+┌──────────────▼──────────────────────┐
+│      Backend (Deno/Base44)           │
+│  Functions, Entities, Integrations   │
+└──────────────┬──────────────────────┘
+               │
+   ┌───────────┼───────────┐
+   │           │           │
+   ▼           ▼           ▼
+Database    External     Cache
+(Entities)  Services
+\`\`\`
 
-    // Backend Functions Overview
-    const backendFunctions = {
-      core: ['generateDashboardStats', 'globalSearch', 'logActivity'],
-      financial: ['sendPaymentReminder'],
-      lead: ['captureLead', 'convertLeadToUser', 'updateLeadScore', 'trackCalculation'],
-      calculators: ['calculateRendite', 'calculateIndexmiete', 'fetchVpiIndex'],
-      documents: ['generatePdf', 'sendLetterXpress'],
-      quiz: ['processQuizResult'],
-      tax: ['seedVPIData'],
-      tasks: ['createTaskFromEntity'],
-      communication: ['sendWelcomeEmail']
-    };
+## Kern-Module
 
-    // Frontend Structure
-    const frontend = {
-      pages: {
-        dashboards: ['VermieterDashboard', 'MieterDashboard', 'StBDashboard', 'Dashboard'],
-        buildings: ['Buildings', 'BuildingDetail', 'BuildingDetailEnhanced'],
-        tenants: ['Tenants', 'TenantDetail', 'TenantDetailEnhanced'],
-        contracts: ['Contracts', 'ContractDetail', 'ContractDetailEnhanced'],
-        units: ['UnitsManagement', 'UnitDetail', 'UnitDetailEnhanced'],
-        documents: ['Documents', 'DocumentManagement'],
-        financial: ['Payments', 'Invoices', 'BankAccounts', 'BankTransactions'],
-        tasks: ['Tasks', 'TaskManagement'],
-        calculators: ['RenditeRechner', 'IndexmietenRechner', 'AfACalculator', 'CashflowRechner'],
-        wizards: ['BKAbrechnungWizard', 'AnlageVWizard', 'MietvertragGenerator', 'OnboardingWizard'],
-        settings: ['SettingsPage', 'SettingsProfile', 'SettingsIntegrations', 'SettingsAppearance'],
-        marketing: ['VermitifyHomepage', 'VermitifyPricing', 'VermitifyFeatures', 'VermitifyContact'],
-        errors: ['Error404', 'Error500', 'OfflineError', 'MaintenanceMode'],
-        admin: ['AdminDashboard', 'AdminLeadDashboard', 'AdminUserManagement']
-      },
-      components: {
-        shared: ['VfInput', 'VfSelect', 'VfButton', 'VfModal', 'VfDatePicker', 'VfTextarea', 'VfCheckbox'],
-        dashboard: ['StatCard', 'QuickActionsWidget', 'RevenueWidget'],
-        buildings: ['BuildingCard', 'BuildingForm', 'BuildingSummary', 'BuildingPhotoGallery'],
-        tenants: ['TenantForm', 'TenantScoring', 'DepositManager'],
-        contracts: ['ContractForm', 'RentChangeHistory', 'ContractRenewalTracker'],
-        notifications: ['NotificationBell', 'NotificationBadge', 'AlertPreferences'],
-        activity: ['ActivityTimeline', 'VfActivityFeed']
-      }
-    };
+### 1. Real Estate Management
+**Komponenten:**
+- Buildings (Gebäude)
+- Units (Wohneinheiten)
+- Properties (Grundstücke)
+- Inspections (Inspektionen)
 
-    // Design System
-    const designSystem = {
-      themes: ['vermieter', 'mieter', 'b2b', 'komfort', 'invest'],
-      colorTokens: ['primary', 'accent', 'secondary', 'neutral', 'success', 'warning', 'error', 'info'],
-      components: [
-        'vf-btn', 'vf-card', 'vf-input', 'vf-select', 'vf-table', 
-        'vf-badge', 'vf-alert', 'vf-toast', 'vf-sidebar', 'vf-navbar'
-      ],
-      layouts: ['vf-detail-page', 'vf-list-page', 'vf-dashboard', 'vf-wizard', 'vf-settings']
-    };
+**Entitäten:**
+- Building, Unit, Property, BuildingInspection
 
-    // Architecture documentation
-    const documentation = {
-      generated_at: new Date().toISOString(),
-      project: 'Vermitify',
-      version: '1.0',
-      description: 'Intelligente Immobilienverwaltungs-Plattform mit Steueroptimierung',
-      
-      modules,
-      
-      entities: {
-        total: Object.keys(entitySchemas).length,
-        schemas: entitySchemas,
-        byModule: Object.keys(modules).reduce((acc, key) => {
-          acc[key] = modules[key].entities;
-          return acc;
-        }, {})
-      },
-      
-      backend: {
-        total_functions: Object.values(backendFunctions).reduce((sum, arr) => sum + arr.length, 0),
-        functions_by_category: backendFunctions,
-        integrations: ['Core', 'Stripe', 'finAPI', 'LetterXpress', 'ELSTER', 'Slack']
-      },
-      
-      frontend,
-      
-      designSystem,
-      
-      technicalStack: {
-        frontend: ['React', 'Tailwind CSS', 'TypeScript', 'Base44 SDK'],
-        backend: ['Deno', 'Base44 Backend-as-a-Service'],
-        integrations: ['finAPI', 'LetterXpress', 'Stripe', 'ELSTER', 'Slack'],
-        ai: ['Anthropic Claude API']
-      },
-      
-      keyFeatures: [
-        'Multi-Objekt-Verwaltung',
-        'Automatische Betriebskostenabrechnungen',
-        'Anlage V & ELSTER-Integration',
-        'Mieter-Portal',
-        'Banking-Integration (finAPI)',
-        'Dokumenten-Automatisierung',
-        'KI-Assistenten',
-        'Lead-Management',
-        'Multi-Mandanten-Fähigkeit'
-      ],
-      
-      compliance: {
-        dsgvo: true,
-        betrKV: true,
-        mietrecht: true,
-        steuerrecht: true
-      }
-    };
+**Abhängigkeiten:**
+- → Tenant Management (für Mietverträge)
+- → Finance (für Betriebskosten)
 
-    // Format Markdown Content
-    const markdownContent = `# MODUL-ARCHITEKTUR
+### 2. Tenant Management
+**Komponenten:**
+- Tenants (Mieter)
+- LeaseContracts (Mietverträge)
+- Communications (Kommunikation)
+- Portal (Mieter-Portal)
 
-Generiert am: ${new Date().toISOString()}
+**Entitäten:**
+- Tenant, LeaseContract, TenantCommunication, CoTenant
 
-## ÜBERSICHT
+**Abhängigkeiten:**
+- ← Real Estate Management
+- → Finance (Zahlungen)
+- → Documents (Verträge)
 
-**Projekt:** ${documentation.project}  
-**Version:** ${documentation.version}  
-**Beschreibung:** ${documentation.description}
+### 3. Finance
+**Komponenten:**
+- Invoices (Rechnungen)
+- Payments (Zahlungen)
+- BankAccounts (Bankkonten)
+- OperatingCosts (Betriebskosten)
+- Budget (Budgetierung)
 
----
+**Entitäten:**
+- Invoice, Payment, BankAccount, OperatingCost, Budget
 
-## MODULE
+**Abhängigkeiten:**
+- ← Tenant Management
+- ← Real Estate Management
+- → Banking Integration (FinAPI)
 
-${Object.entries(modules).map(([key, module]) => `
-### ${module.name}
+### 4. Document Management
+**Komponenten:**
+- DocumentGeneration (Dokumentgenerierung)
+- DocumentStorage (Speicherung)
+- DocumentPermissions (Berechtigungen)
+- eSignature (E-Signatur)
 
-**Beschreibung:** ${module.description}
+**Entitäten:**
+- Document, DocumentTemplate, DocumentTask
 
-**Entities:**
-${module.entities.map(e => `- ${e}`).join('\n')}
+**Abhängigkeiten:**
+- ← Real Estate, Tenant, Finance
+- → External Services
 
-**Features:**
-${module.features.map(f => `- ${f}`).join('\n')}
-`).join('\n')}
+### 5. Tasks & Workflows
+**Komponenten:**
+- Tasks (Aufgaben)
+- Workflows (Arbeitsabläufe)
+- Automations (Automatisierungen)
+- Notifications (Benachrichtigungen)
 
----
+**Entitäten:**
+- Task, Workflow, Automation, Notification
 
-## BACKEND FUNCTIONS
+**Abhängigkeiten:**
+- ← All other modules
+- → Communication Services (Email, Slack)
 
-**Gesamt:** ${documentation.backend.total_functions} Funktionen
+### 6. Administration
+**Komponenten:**
+- UserManagement (Benutzerverwaltung)
+- RolePermissions (Rollen & Berechtigungen)
+- AuditLog (Audit-Protokoll)
+- Settings (Einstellungen)
 
-${Object.entries(backendFunctions).map(([category, functions]) => `
-### ${category}
-${functions.map(f => `- ${f}`).join('\n')}
-`).join('\n')}
+**Entitäten:**
+- User, Role, Permission, AuditLog
 
----
+**Abhängigkeiten:**
+- → All other modules (für Zugriffskontrolle)
 
-## FRONTEND STRUKTUR
+## Datenflüsse
 
-### Pages
-${Object.entries(frontend.pages).map(([category, pages]) => `
-**${category}:**
-${pages.map(p => `- ${p}`).join('\n')}
-`).join('\n')}
+### Szenario 1: Neue Miete erstellen
+\`\`\`
+User Input (Page)
+  ↓
+API Call (base44.functions.invoke)
+  ↓
+Backend Function (validateAndCreateLease)
+  ├─ Validate Input
+  ├─ Create LeaseContract Entity
+  ├─ Generate Document (if enabled)
+  └─ Trigger Notification
+      ↓
+      Database Update
+      ↓
+      Frontend Refresh (via useQuery)
+\`\`\`
 
-### Components
-${Object.entries(frontend.components).map(([category, components]) => `
-**${category}:**
-${components.map(c => `- ${c}`).join('\n')}
-`).join('\n')}
+### Szenario 2: Zahlungabgleich
+\`\`\`
+BankAccount Sync (daily)
+  ↓
+FinAPI Integration
+  ├─ Fetch transactions
+  └─ Create BankTransaction entities
+      ↓
+      Auto-Matching Algorithm
+      ├─ Match with Invoices
+      ├─ Match with Payments
+      └─ Create Payment records
+          ↓
+          Notification (if overpayment)
+\`\`\`
 
----
+## Kommunikationsmuster
 
-## DESIGN SYSTEM
+### Synchrone Calls
+- CRUD-Operationen auf Entitäten
+- Datenabfragen
+- Validierungen
 
-**Themes:** ${designSystem.themes.join(', ')}
+### Asynchrone Calls
+- Dokumentgenerierung
+- E-Mail-Versand
+- Externe API-Calls (FinAPI)
+- PDF-Generierung
 
-**Komponenten:** ${designSystem.components.join(', ')}
+### Echtzeit-Updates
+- Webhooks (externe Services)
+- WebSockets (zukünftig für Live-Daten)
+- Query-Invalidation (React Query)
 
-**Layouts:** ${designSystem.layouts.join(', ')}
+## Integrationen
 
----
+### Interne
+- Base44 SDK (Entities, Auth, Functions)
+- React Query (Datenverwaltung)
 
-## TECHNISCHER STACK
+### Externe
+- **FinAPI:** Banking-Integration
+- **Slack:** Benachrichtigungen
+- **Document Services:** PDF-Generierung
 
-**Frontend:** ${documentation.technicalStack.frontend.join(', ')}
+## Skalierungsüberlegungen
 
-**Backend:** ${documentation.technicalStack.backend.join(', ')}
+### Caching
+- Entity-Daten werden mit React Query gecacht
+- TTL: 5 Minuten (konfigurierbar)
 
-**Integrationen:** ${documentation.technicalStack.integrations.join(', ')}
+### Pagination
+- Große Datenlisten werden pagiert
+- Standard: 20 Items pro Seite
 
-**KI:** ${documentation.technicalStack.ai.join(', ')}
+### Lazy Loading
+- Komponenten werden on-demand geladen
+- Reduziert Initial Bundle Size
 
----
+## Fehlerbehandlung
 
-## KEY FEATURES
+```
+User Action
+  ↓
+Try-Catch Block
+  ├─ Success → State Update → UI Update
+  └─ Error → Log → User Notification
+```
 
-${documentation.keyFeatures.map(f => `- ${f}`).join('\n')}
-
----
-
-## COMPLIANCE
-
-- DSGVO: ✅
-- BetrKV: ✅
-- Mietrecht: ✅
-- Steuerrecht: ✅
+Fehlertypen:
+- Validation Errors: 400
+- Auth Errors: 401/403
+- Not Found: 404
+- Server Errors: 500
 `;
 
-    return Response.json({ 
-      success: true,
-      markdownContent,
-      documentation 
-    });
-
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
-  }
+        return Response.json({ 
+            markdownContent: markdown,
+            status: 'success',
+            generatedAt: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Error in generateModuleArchitectureDocumentation:', error);
+        return Response.json({ error: error.message }, { status: 500 });
+    }
 });

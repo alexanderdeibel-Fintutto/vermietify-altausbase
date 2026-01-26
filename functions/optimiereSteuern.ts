@@ -11,20 +11,17 @@ FOKUS auf Immobilien/Vermietung:
 - AfA richtig nutzen
 - Erhaltungsaufwand vs. Herstellungskosten
 - Finanzierungskosten
-- Fahrten zum Objekt
 
 ANTWORTE IM JSON-FORMAT:
 {
   "situation": {
     "immobilien_anzahl": 0,
-    "vermietungsart": "privat|gewerblich|gemischt",
-    "eigennutzung_anteil": 0,
-    "finanziert": true|false
+    "vermietungsart": "privat|gewerblich"
   },
   "aktuelle_abzuege": [
     {
-      "kategorie": "AfA|Zinsen|Erhaltung|Nebenkosten|Fahrtkosten|...",
-      "geschaetzter_betrag": 0,
+      "kategorie": "AfA|Zinsen|Erhaltung|...",
+      "betrag": 0,
       "voll_ausgeschoepft": true|false
     }
   ],
@@ -32,82 +29,81 @@ ANTWORTE IM JSON-FORMAT:
     {
       "bereich": "...",
       "beschreibung": "...",
-      "ersparnis_geschaetzt": "X € pro Jahr",
+      "ersparnis_geschaetzt": "X€ pro Jahr",
       "aufwand": "gering|mittel|hoch",
-      "umsetzung": "sofort|zum_jahresende|naechstes_jahr",
-      "tipp": "Konkreter Umsetzungstipp"
+      "tipp": "..."
     }
   ],
   "checkliste_jahresende": [
-    {"aktion": "...", "frist": "31.12.", "potenzial": "..."}
+    {"aktion": "...", "frist": "31.12."}
   ],
-  "anlage_v_tipps": [
-    {"zeile": "...", "tipp": "..."}
-  ],
-  "wichtige_fristen": [
-    {"was": "...", "wann": "..."}
-  ],
-  "empfehlung_steuerberater": true|false,
-  "begruendung_steuerberater": "...",
   "disclaimer": "Dies ersetzt keine individuelle Steuerberatung."
 }`;
 
 Deno.serve(async (req) => {
+  try {
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
     
-    try {
-        const user = await base44.auth.me();
-        if (!user) {
-            return Response.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const { situation } = await req.json();
-
-        if (!situation) {
-            return Response.json({ error: 'situation is required' }, { status: 400 });
-        }
-
-        const prompt = `Analysiere meine Steuersituation und zeige Optimierungspotenzial auf:
-
-${situation.immobilien_anzahl ? `Anzahl Immobilien: ${situation.immobilien_anzahl}` : ''}
-${situation.jahreseinkommen ? `Jahreseinkommen aus Vermietung: ${situation.jahreseinkommen}€` : ''}
-${situation.finanziert ? 'Finanziert: Ja' : 'Finanziert: Nein'}
-${situation.zusatzinfo ? `\n${situation.zusatzinfo}` : ''}`;
-
-        const result = await base44.functions.invoke('callAI', {
-            featureKey: 'steuer_optimierer',
-            messages: [{ role: 'user', content: prompt }],
-            systemPrompt: STEUER_OPTIMIERER_PROMPT
-        });
-
-        if (!result.data.success) {
-            throw new Error(result.data.error || 'AI-Aufruf fehlgeschlagen');
-        }
-
-        let data;
-        try {
-            data = JSON.parse(result.data.content);
-        } catch {
-            const jsonMatch = result.data.content.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                data = JSON.parse(jsonMatch[0]);
-            } else {
-                throw new Error('Konnte JSON nicht extrahieren');
-            }
-        }
-
-        return Response.json({
-            success: true,
-            data,
-            meta: {
-                provider: result.data.provider,
-                model: result.data.model,
-                costEur: result.data.costEur
-            }
-        });
-
-    } catch (error) {
-        console.error('Steuer-Optimierer error:', error);
-        return Response.json({ error: error.message }, { status: 500 });
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const { immobilien_info } = await req.json();
+
+    const prompt = `Analysiere folgende Steuersituation für Vermieter und zeige Optimierungsmöglichkeiten:
+
+${immobilien_info}
+
+Gib konkrete, legale Steuerspar-Tipps für Vermieter.`;
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": Deno.env.get("ANTHROPIC_API_KEY"),
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 2500,
+        system: STEUER_OPTIMIERER_PROMPT,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const result = await response.json();
+    
+    if (!response.ok) {
+      return Response.json({ error: result.error?.message || "API error" }, { status: 400 });
+    }
+
+    const content_text = result.content[0]?.text || "";
+    const jsonMatch = content_text.match(/\{[\s\S]*\}/);
+    const data = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+
+    if (!data) {
+      return Response.json({ error: "Konnte Steuertipps nicht generieren" }, { status: 400 });
+    }
+
+    await base44.asServiceRole.entities.AIUsageLog.create({
+      user_id: user.id,
+      feature_key: "steuer_optimierer",
+      model: "claude-3-5-sonnet-20241022",
+      tokens_used: result.usage.output_tokens + result.usage.input_tokens,
+      cost_eur: ((result.usage.input_tokens * 0.003 + result.usage.output_tokens * 0.015) / 1000).toFixed(4)
+    });
+
+    return Response.json({
+      ...data,
+      _meta: {
+        model: "claude-3-5-sonnet-20241022",
+        tokens: result.usage.output_tokens + result.usage.input_tokens,
+        costEur: ((result.usage.input_tokens * 0.003 + result.usage.output_tokens * 0.015) / 1000).toFixed(4)
+      }
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    return Response.json({ error: error.message }, { status: 500 });
+  }
 });

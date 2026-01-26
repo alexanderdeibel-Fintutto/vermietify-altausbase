@@ -4,74 +4,33 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-
+    
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if user already has subscription
-    const existing = await base44.asServiceRole.entities.UserSubscription.filter({ 
-      user_email: user.email 
-    });
-
-    if (existing.length > 0) {
-      return Response.json({ 
-        success: false,
-        message: 'User already has subscription',
-        subscription: existing[0]
-      });
+    // Check if user already has extended fields
+    if (user.subscription_plan) {
+      return Response.json({ message: 'User already initialized', user });
     }
 
-    // Get default tier
-    const defaultTiers = await base44.asServiceRole.entities.PricingTier.filter({ 
-      is_default: true,
-      is_active: true
-    });
+    // Initialize with default values
+    const updates = {
+      subscription_plan: 'easyVermieter',
+      subscription_addons: [],
+      subscription_expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      role_in_company: 'verwalter',
+      enabled_features: ['dashboard', 'finanzen', 'immobilien', 'mieter', 'steuer'],
+      last_feature_check: new Date().toISOString()
+    };
 
-    if (defaultTiers.length === 0) {
-      return Response.json({ error: 'No default tier found' }, { status: 404 });
-    }
-
-    const defaultTier = defaultTiers[0];
-    const today = new Date();
-    const trialEnd = new Date(today);
-    trialEnd.setDate(trialEnd.getDate() + (defaultTier.trial_days || 14));
-
-    // Create subscription
-    const subscription = await base44.asServiceRole.entities.UserSubscription.create({
-      user_email: user.email,
-      tier_id: defaultTier.id,
-      status: 'TRIAL',
-      billing_cycle: 'MONTHLY',
-      trial_start_date: today.toISOString().split('T')[0],
-      trial_end_date: trialEnd.toISOString().split('T')[0],
-      auto_renew: true
-    });
-
-    // Initialize UserLimits
-    const tierLimits = await base44.asServiceRole.entities.TierLimit.filter({ 
-      tier_id: defaultTier.id 
-    });
-
-    const userLimitsToCreate = tierLimits.map(tl => ({
-      user_email: user.email,
-      limit_id: tl.limit_id,
-      current_usage: 0,
-      limit_value: tl.limit_value,
-      last_checked: new Date().toISOString(),
-      warning_sent: false
-    }));
-
-    if (userLimitsToCreate.length > 0) {
-      await base44.asServiceRole.entities.UserLimit.bulkCreate(userLimitsToCreate);
-    }
+    await base44.auth.updateMe(updates);
 
     return Response.json({ 
-      success: true,
-      subscription,
-      limits_initialized: userLimitsToCreate.length
+      success: true, 
+      message: 'User subscription initialized',
+      subscription: updates 
     });
-
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

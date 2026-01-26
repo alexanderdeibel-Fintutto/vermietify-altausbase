@@ -51,7 +51,7 @@ WICHTIGE SKR03-KONTEN:
 - 4946: Fremdleistungen
 - 4210: Miete Geschäftsräume
 - 4260: Energie/Wasser
-- 4500: Fahrzeugkosten allgemein
+- 4500: Fahrzeugkosten
 - 4600: Werbekosten
 - 4660: Reisekosten
 - 4670: Übernachtung
@@ -59,59 +59,90 @@ WICHTIGE SKR03-KONTEN:
 - 1800: Privatentnahmen (nicht absetzbar)`;
 
 Deno.serve(async (req) => {
+  try {
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
     
-    try {
-        const user = await base44.auth.me();
-        if (!user) {
-            return Response.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const { imageBase64, imageMediaType } = await req.json();
-
-        if (!imageBase64) {
-            return Response.json({ error: 'imageBase64 is required' }, { status: 400 });
-        }
-
-        const result = await base44.functions.invoke('callAI', {
-            featureKey: 'beleg_scanner',
-            messages: [{
-                role: 'user',
-                content: 'Analysiere diesen Beleg und extrahiere alle Daten im JSON-Format.'
-            }],
-            systemPrompt: BELEG_SCANNER_PROMPT,
-            imageBase64,
-            imageMediaType: imageMediaType || 'image/jpeg'
-        });
-
-        if (!result.data.success) {
-            throw new Error(result.data.error || 'AI-Aufruf fehlgeschlagen');
-        }
-
-        let data;
-        try {
-            data = JSON.parse(result.data.content);
-        } catch {
-            const jsonMatch = result.data.content.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                data = JSON.parse(jsonMatch[0]);
-            } else {
-                throw new Error('Konnte JSON nicht extrahieren');
-            }
-        }
-
-        return Response.json({
-            success: true,
-            data,
-            meta: {
-                provider: result.data.provider,
-                model: result.data.model,
-                costEur: result.data.costEur
-            }
-        });
-
-    } catch (error) {
-        console.error('Beleg-Scanner error:', error);
-        return Response.json({ error: error.message }, { status: 500 });
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const { imageBase64, imageMediaType = "image/jpeg" } = await req.json();
+
+    if (!imageBase64) {
+      return Response.json({ error: 'imageBase64 erforderlich' }, { status: 400 });
+    }
+
+    const content = [
+      {
+        type: "image",
+        source: {
+          type: "base64",
+          media_type: imageMediaType,
+          data: imageBase64
+        }
+      },
+      {
+        type: "text",
+        text: "Analysiere diesen Beleg und extrahiere alle Daten im JSON-Format."
+      }
+    ];
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": Deno.env.get("ANTHROPIC_API_KEY"),
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 2048,
+        system: BELEG_SCANNER_PROMPT,
+        messages: [
+          {
+            role: "user",
+            content
+          }
+        ]
+      })
+    });
+
+    const result = await response.json();
+    
+    if (!response.ok) {
+      return Response.json({ error: result.error?.message || "API error" }, { status: 400 });
+    }
+
+    const content_text = result.content[0]?.text || "";
+    
+    // Extract JSON from response
+    const jsonMatch = content_text.match(/\{[\s\S]*\}/);
+    const data = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+
+    if (!data) {
+      return Response.json({ error: "Konnte Belegdaten nicht extrahieren" }, { status: 400 });
+    }
+
+    // Log usage
+    await base44.asServiceRole.entities.AIUsageLog.create({
+      user_id: user.id,
+      feature_key: "beleg_scanner",
+      model: "claude-3-5-sonnet-20241022",
+      tokens_used: result.usage.output_tokens + result.usage.input_tokens,
+      cost_eur: ((result.usage.input_tokens * 0.003 + result.usage.output_tokens * 0.015) / 1000).toFixed(4)
+    });
+
+    return Response.json({
+      ...data,
+      _meta: {
+        model: "claude-3-5-sonnet-20241022",
+        tokens: result.usage.output_tokens + result.usage.input_tokens,
+        costEur: ((result.usage.input_tokens * 0.003 + result.usage.output_tokens * 0.015) / 1000).toFixed(4)
+      }
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    return Response.json({ error: error.message }, { status: 500 });
+  }
 });

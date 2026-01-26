@@ -25,18 +25,10 @@ ANTWORTE IM FOLGENDEN JSON-FORMAT:
   "klauseln": [
     {
       "thema": "Name der Klausel",
-      "originaltext": "Zitat aus dem Vertrag (gekürzt)",
+      "originaltext": "Zitat aus dem Vertrag",
       "bewertung": "ok|achtung|unwirksam",
       "erklaerung": "Was bedeutet das für den Mieter?",
-      "rechtlicher_hintergrund": "Relevante Gesetze/Urteile (kurz)",
       "handlungsempfehlung": "Was sollte der Mieter tun?"
-    }
-  ],
-  "fehlende_regelungen": [
-    {
-      "thema": "Was fehlt",
-      "warum_wichtig": "Erklärung",
-      "empfehlung": "Was nachverhandeln?"
     }
   ],
   "tipps": [
@@ -50,85 +42,94 @@ ACHTE BESONDERS AUF:
 - Mieterhöhungsklauseln
 - Tierhaltung
 - Untervermietung
-- Kleinreparaturklausel (Obergrenze max. ca. 100€ pro Reparatur, 200€/Jahr)
+- Kleinreparaturklausel (Obergrenze max. ca. 100€ pro Reparatur)
 - Betriebskostenabrechnung
-- Kaution (max. 3 Monats-Kaltmieten!)
-- Renovierungsklauseln (unwirksam wenn "beim Auszug unabhängig vom Zustand")
-
-WICHTIGE URTEILE:
-- BGH VIII ZR 352/04: Starre Fristenregelung bei Schönheitsreparaturen unwirksam
-- BGH VIII ZR 181/12: Quotenabgeltungsklauseln unwirksam
-- BGH VIII ZR 289/13: Tierhaltung kann nicht pauschal verboten werden`;
+- Kaution (max. 3 Monats-Kaltmieten!)`;
 
 Deno.serve(async (req) => {
+  try {
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
     
-    try {
-        const user = await base44.auth.me();
-        if (!user) {
-            return Response.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const { imagesBase64, imagesMediaTypes } = await req.json();
-
-        if (!imagesBase64 || !Array.isArray(imagesBase64) || imagesBase64.length === 0) {
-            return Response.json({ error: 'imagesBase64 array is required' }, { status: 400 });
-        }
-
-        const content = [];
-        
-        imagesBase64.forEach((img, idx) => {
-            content.push({
-                type: 'image',
-                source: {
-                    type: 'base64',
-                    media_type: (imagesMediaTypes && imagesMediaTypes[idx]) || 'image/jpeg',
-                    data: img
-                }
-            });
-        });
-
-        content.push({
-            type: 'text',
-            text: 'Analysiere diesen Mietvertrag und prüfe alle Klauseln. Antworte im JSON-Format.'
-        });
-
-        const result = await base44.functions.invoke('callAI', {
-            featureKey: 'mietvertrag_pruefer',
-            messages: [{ role: 'user', content: 'Analysiere diesen Mietvertrag und prüfe alle Klauseln. Antworte im JSON-Format.' }],
-            systemPrompt: MIETVERTRAG_PROMPT,
-            imageBase64: imagesBase64[0],
-            imageMediaType: (imagesMediaTypes && imagesMediaTypes[0]) || 'image/jpeg'
-        });
-
-        if (!result.data.success) {
-            throw new Error(result.data.error || 'AI-Aufruf fehlgeschlagen');
-        }
-
-        let data;
-        try {
-            data = JSON.parse(result.data.content);
-        } catch {
-            const jsonMatch = result.data.content.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                data = JSON.parse(jsonMatch[0]);
-            } else {
-                throw new Error('Konnte JSON nicht extrahieren');
-            }
-        }
-
-        return Response.json({
-            success: true,
-            data,
-            meta: {
-                provider: result.data.provider,
-                model: result.data.model,
-                costEur: result.data.costEur
-            }
-        });
-
-    } catch (error) {
-        console.error('Mietvertrag-Prüfer error:', error);
-        return Response.json({ error: error.message }, { status: 500 });
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const { imagesBase64 = [], imagesMediaTypes = [] } = await req.json();
+
+    if (!imagesBase64 || imagesBase64.length === 0) {
+      return Response.json({ error: 'imageBase64 erforderlich' }, { status: 400 });
+    }
+
+    const content = [];
+    imagesBase64.forEach((img, idx) => {
+      content.push({
+        type: "image",
+        source: {
+          type: "base64",
+          media_type: imagesMediaTypes[idx] || "image/jpeg",
+          data: img
+        }
+      });
+    });
+    
+    content.push({
+      type: "text",
+      text: "Analysiere diesen Mietvertrag und prüfe alle Klauseln. Antworte im JSON-Format."
+    });
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": Deno.env.get("ANTHROPIC_API_KEY"),
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 4000,
+        system: MIETVERTRAG_PROMPT,
+        messages: [
+          {
+            role: "user",
+            content
+          }
+        ]
+      })
+    });
+
+    const result = await response.json();
+    
+    if (!response.ok) {
+      return Response.json({ error: result.error?.message || "API error" }, { status: 400 });
+    }
+
+    const content_text = result.content[0]?.text || "";
+    const jsonMatch = content_text.match(/\{[\s\S]*\}/);
+    const data = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+
+    if (!data) {
+      return Response.json({ error: "Konnte Vertragsdaten nicht extrahieren" }, { status: 400 });
+    }
+
+    await base44.asServiceRole.entities.AIUsageLog.create({
+      user_id: user.id,
+      feature_key: "mietvertrag_pruefer",
+      model: "claude-3-5-sonnet-20241022",
+      tokens_used: result.usage.output_tokens + result.usage.input_tokens,
+      cost_eur: ((result.usage.input_tokens * 0.003 + result.usage.output_tokens * 0.015) / 1000).toFixed(4)
+    });
+
+    return Response.json({
+      ...data,
+      _meta: {
+        model: "claude-3-5-sonnet-20241022",
+        tokens: result.usage.output_tokens + result.usage.input_tokens,
+        costEur: ((result.usage.input_tokens * 0.003 + result.usage.output_tokens * 0.015) / 1000).toFixed(4)
+      }
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    return Response.json({ error: error.message }, { status: 500 });
+  }
 });

@@ -1,42 +1,63 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
-  
-  try {
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    const base44 = createClientFromRequest(req);
+    const { userEmail, featureCode } = await req.json();
+
+    try {
+        // Nutzer-Subscription laden
+        const subscription = await base44.entities.UserSubscription.filter({
+            user_email: userEmail,
+            status: { $in: ['ACTIVE', 'TRIAL'] }
+        });
+
+        if (!subscription || subscription.length === 0) {
+            return new Response(JSON.stringify({
+                allowed: false,
+                reason: 'NO_SUBSCRIPTION',
+                message: 'Bitte wähle einen Tarif'
+            }), { status: 200 });
+        }
+
+        const sub = subscription[0];
+        const plan = await base44.entities.SubscriptionPlan.get(sub.plan_id);
+
+        // Features aus JSON-String parsen
+        const features = JSON.parse(plan.features || '[]');
+
+        // Feature prüfen
+        if (!features.includes(featureCode)) {
+            const minPlan = getMinPlanForFeature(featureCode);
+            return new Response(JSON.stringify({
+                allowed: false,
+                reason: 'FEATURE_NOT_INCLUDED',
+                message: `Dieses Feature ist ab dem ${minPlan}-Tarif verfügbar`,
+                upgrade_cta: true
+            }), { status: 200 });
+        }
+
+        return new Response(JSON.stringify({ allowed: true }), { status: 200 });
+
+    } catch (error) {
+        console.error('Error in checkFeatureAccess:', error);
+        return new Response(JSON.stringify({ 
+            allowed: false, 
+            reason: 'ERROR',
+            message: error.message 
+        }), { status: 500 });
     }
-
-    const body = await req.json();
-    const { feature_code } = body;
-
-    // Get user subscription
-    const subscriptions = await base44.entities.UserSubscription.filter({ 
-      user_email: user.email 
-    });
-    
-    if (subscriptions.length === 0) {
-      return Response.json({ hasAccess: false, reason: 'No subscription found' });
-    }
-
-    const subscription = subscriptions[0];
-    const plan = await base44.entities.SubscriptionPlan.get(subscription.plan_id);
-    
-    const planFeatures = typeof plan.features === 'string' 
-      ? JSON.parse(plan.features) 
-      : plan.features;
-
-    const hasAccess = planFeatures.includes(feature_code);
-
-    return Response.json({ 
-      hasAccess,
-      currentPlan: plan.name,
-      requiredFeature: feature_code
-    });
-    
-  } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
-  }
 });
+
+function getMinPlanForFeature(featureCode) {
+    const featurePlans = {
+        'basic_management': 'Starter',
+        'document_upload': 'Starter',
+        'invoice_generation': 'Basic',
+        'bank_sync': 'Pro',
+        'ocr_basic': 'Pro',
+        'ocr_pro': 'Business',
+        'datev_export': 'Business',
+        'api_access': 'Business'
+    };
+    return featurePlans[featureCode] || 'Business';
+}

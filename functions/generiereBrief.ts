@@ -13,27 +13,14 @@ VERFÜGBARE BRIEFTYPEN:
 - maengelanzeige: Mängelanzeige mit Fristsetzung
 - modernisierungsankuendigung: Ankündigung nach §555c BGB
 - betriebskostenabrechnung_anschreiben: Begleitschreiben zur Abrechnung
-- mietbestaetigung: Mietbestätigung für Behörden
-- eigenbedarfskuendigung: Kündigung wegen Eigenbedarf
 
 ANTWORTE IM JSON-FORMAT:
 {
   "brieftyp": "...",
   "betreff": "...",
   "brief_vollstaendig": "Der komplette Brief mit Formatierung",
-  "brief_bausteine": {
-    "absender": "...",
-    "empfaenger": "...",
-    "datum": "...",
-    "betreffzeile": "...",
-    "anrede": "...",
-    "inhalt": "...",
-    "grussformel": "...",
-    "unterschrift": "..."
-  },
-  "anlagen": ["Liste benötigter Anlagen"],
   "versandhinweise": {
-    "empfohlen": "normal|einschreiben|einschreiben_rueckschein|bote",
+    "empfohlen": "normal|einschreiben|einschreiben_rueckschein",
     "begruendung": "..."
   },
   "fristen": [
@@ -44,91 +31,100 @@ ANTWORTE IM JSON-FORMAT:
     }
   ],
   "rechtliche_hinweise": ["..."],
-  "platzhalter": {
-    "MIETERNAME": "Name einsetzen",
-    "ADRESSE": "Adresse einsetzen"
-  }
+  "anlagen": ["Liste benötigter Anlagen"]
 }
 
 WICHTIGE RECHTSGRUNDLAGEN:
 - Kündigungsfrist Vermieter: §573c BGB (3-9 Monate je nach Mietdauer)
 - Mieterhöhung: §558 BGB (Kappungsgrenze 15-20%, Begründung erforderlich)
 - Mahnung: §286 BGB (Verzug nach Mahnung oder 30 Tage)
-- Betriebskosten: §556 BGB, BetrKV
 - Modernisierung: §555c BGB (3 Monate vorher ankündigen)
 
 STIL:
 - Professionell aber klar
 - Rechtssicher formuliert
 - Angemessene Fristen setzen
-- Bei Mahnungen: Eskalationsstufen beachten`;
+- Perfekte Formatierung`;
 
 Deno.serve(async (req) => {
+  try {
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
     
-    try {
-        const user = await base44.auth.me();
-        if (!user) {
-            return Response.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-        const { brieftyp, daten } = await req.json();
+    const { brieftyp, vermieter_name, vermieter_adresse, mieter_name, mieter_adresse, objekt_adresse, zusatzinfo, betrag, frist } = await req.json();
 
-        if (!brieftyp || !daten) {
-            return Response.json({ error: 'brieftyp and daten are required' }, { status: 400 });
-        }
-
-        const prompt = `Erstelle einen Brief vom Typ "${brieftyp}".
+    const prompt = `Erstelle einen Brief vom Typ "${brieftyp}".
 
 Absender (Vermieter):
-${daten.vermieter_name || ''}
-${daten.vermieter_adresse || ''}
+${vermieter_name}
+${vermieter_adresse}
 
 Empfänger (Mieter):
-${daten.mieter_name || ''}
-${daten.mieter_adresse || ''}
+${mieter_name}
+${mieter_adresse}
 
-Mietobjekt: ${daten.objekt_adresse || ''}
+Mietobjekt: ${objekt_adresse}
 
-${daten.zusatzinfo ? `Zusätzliche Informationen:\n${daten.zusatzinfo}` : ''}
+${zusatzinfo ? `Zusätzliche Informationen:\n${zusatzinfo}` : ''}
+${betrag ? `Betrag: ${betrag}€` : ''}
+${frist ? `Gewünschte Frist: ${frist}` : ''}`;
 
-${daten.betrag ? `Betrag: ${daten.betrag}€` : ''}
-${daten.frist ? `Gewünschte Frist: ${daten.frist}` : ''}`;
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": Deno.env.get("ANTHROPIC_API_KEY"),
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 3000,
+        system: BRIEF_GENERATOR_PROMPT,
+        messages: [
+          {
+            role: "user",
+            content: prompt
+          }
+        ]
+      })
+    });
 
-        const result = await base44.functions.invoke('callAI', {
-            featureKey: 'brief_generator',
-            messages: [{ role: 'user', content: prompt }],
-            systemPrompt: BRIEF_GENERATOR_PROMPT
-        });
-
-        if (!result.data.success) {
-            throw new Error(result.data.error || 'AI-Aufruf fehlgeschlagen');
-        }
-
-        let data;
-        try {
-            data = JSON.parse(result.data.content);
-        } catch {
-            const jsonMatch = result.data.content.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                data = JSON.parse(jsonMatch[0]);
-            } else {
-                throw new Error('Konnte JSON nicht extrahieren');
-            }
-        }
-
-        return Response.json({
-            success: true,
-            data,
-            meta: {
-                provider: result.data.provider,
-                model: result.data.model,
-                costEur: result.data.costEur
-            }
-        });
-
-    } catch (error) {
-        console.error('Brief-Generator error:', error);
-        return Response.json({ error: error.message }, { status: 500 });
+    const result = await response.json();
+    
+    if (!response.ok) {
+      return Response.json({ error: result.error?.message || "API error" }, { status: 400 });
     }
+
+    const content_text = result.content[0]?.text || "";
+    const jsonMatch = content_text.match(/\{[\s\S]*\}/);
+    const data = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+
+    if (!data) {
+      return Response.json({ error: "Konnte Brief nicht generieren" }, { status: 400 });
+    }
+
+    await base44.asServiceRole.entities.AIUsageLog.create({
+      user_id: user.id,
+      feature_key: "brief_generator",
+      model: "claude-3-5-sonnet-20241022",
+      tokens_used: result.usage.output_tokens + result.usage.input_tokens,
+      cost_eur: ((result.usage.input_tokens * 0.003 + result.usage.output_tokens * 0.015) / 1000).toFixed(4)
+    });
+
+    return Response.json({
+      ...data,
+      _meta: {
+        model: "claude-3-5-sonnet-20241022",
+        tokens: result.usage.output_tokens + result.usage.input_tokens,
+        costEur: ((result.usage.input_tokens * 0.003 + result.usage.output_tokens * 0.015) / 1000).toFixed(4)
+      }
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    return Response.json({ error: error.message }, { status: 500 });
+  }
 });
