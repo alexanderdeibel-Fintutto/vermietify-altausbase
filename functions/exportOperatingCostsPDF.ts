@@ -164,14 +164,94 @@ Deno.serve(async (req) => {
 </html>
     `;
 
-    // PDF generieren
-    const pdfResult = await base44.integrations.Core.GeneratePDF({
-      html_content: htmlContent
+    // PDF mit jsPDF generieren
+    const { jsPDF } = await import('npm:jspdf@2.5.2');
+    const doc = new jsPDF();
+
+    // Header
+    doc.setFontSize(18);
+    doc.setFont(undefined, 'bold');
+    doc.text(`Betriebskostenabrechnung ${statement.abrechnungsjahr}`, 20, 20);
+    
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(building.name, 20, 30);
+
+    // Empfänger
+    let y = 45;
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.text('Empfänger:', 20, y);
+    y += 6;
+    doc.setFont(undefined, 'normal');
+    if (tenant) {
+      doc.text(`${tenant.anrede || ''} ${tenant.first_name} ${tenant.last_name}`, 20, y);
+      y += 5;
+    }
+    doc.text(`${unit.unit_number} • ${unit.wohnflaeche_qm} m²`, 20, y);
+
+    // Zeitraum
+    y += 15;
+    doc.setFont(undefined, 'bold');
+    doc.text('Abrechnungszeitraum:', 20, y);
+    y += 6;
+    doc.setFont(undefined, 'normal');
+    doc.text(`${new Date(statement.zeitraum_von).toLocaleDateString('de-DE')} - ${new Date(statement.zeitraum_bis).toLocaleDateString('de-DE')}`, 20, y);
+
+    // Kostenaufstellung
+    y += 15;
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text('Kostenaufstellung', 20, y);
+    y += 8;
+
+    // Tabelle
+    doc.setFontSize(9);
+    costDetails.forEach(detail => {
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.setFont(undefined, 'normal');
+      doc.text(detail.category || 'Position', 20, y);
+      doc.text(`${detail.betrag_anteil?.toFixed(2) || '0.00'} €`, 180, y, { align: 'right' });
+      y += 6;
     });
 
-    return Response.json({
-      success: true,
-      pdf_url: pdfResult.file_url
+    // Summe
+    y += 5;
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(11);
+    doc.text('Summe Betriebskosten:', 20, y);
+    doc.text(`${unitResult.kosten_anteil_gesamt?.toFixed(2) || '0.00'} €`, 180, y, { align: 'right' });
+    
+    y += 10;
+    doc.setFont(undefined, 'normal');
+    doc.text('Gezahlte Vorauszahlungen:', 20, y);
+    doc.text(`${unitResult.vorauszahlungen_gesamt?.toFixed(2) || '0.00'} €`, 180, y, { align: 'right' });
+
+    // Ergebnis
+    y += 15;
+    doc.setFillColor(unitResult.ergebnis >= 0 ? 254, 242, 242 : 240, 253, 244);
+    doc.rect(15, y - 5, 180, 20, 'F');
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(14);
+    doc.text(unitResult.ergebnis >= 0 ? 'Nachzahlung:' : 'Guthaben:', 20, y + 5);
+    doc.text(`${Math.abs(unitResult.ergebnis).toFixed(2)} €`, 180, y + 5, { align: 'right' });
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Erstellt am ${new Date().toLocaleDateString('de-DE')} mit FinTuttO Nebenkostenabrechnung`, 105, 285, { align: 'center' });
+
+    const pdfBytes = doc.output('arraybuffer');
+
+    return new Response(pdfBytes, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename=NK-Abrechnung-${statement.abrechnungsjahr}-${unit.unit_number}.pdf`
+      }
     });
 
   } catch (error) {
