@@ -1,202 +1,177 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '../utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/components/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
-import { Card, CardContent } from '@/components/ui/card';
-import { Building2, Users, DollarSign, AlertCircle, FileText, Wrench, Loader2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { FileText, Plus, Calendar, TrendingUp, Building2, Users } from 'lucide-react';
 
 export default function Dashboard() {
-    const { user: supabaseUser, loading: authLoading } = useAuth();
-    const navigate = useNavigate();
+  const { data: statements = [] } = useQuery({
+    queryKey: ['operatingCostStatements'],
+    queryFn: () => base44.entities.OperatingCostStatement.list('-created_date', 10)
+  });
 
-    // Check authentication
-    useEffect(() => {
-        if (!authLoading && !supabaseUser) {
-            navigate(createPageUrl('Login'));
-        }
-    }, [authLoading, supabaseUser, navigate]);
+  const { data: buildings = [] } = useQuery({
+    queryKey: ['buildings'],
+    queryFn: () => base44.entities.Building.list()
+  });
 
-    // Check subscription status
-    const { data: subscription } = useQuery({
-        queryKey: ['user-subscription', supabaseUser?.email],
-        queryFn: async () => {
-            const subs = await base44.entities.UserSubscription.filter({ user_email: supabaseUser.email });
-            return subs[0];
-        },
-        enabled: !!supabaseUser
-    });
+  const drafts = statements.filter(s => s.status === 'Entwurf');
+  const completed = statements.filter(s => s.status === 'Versendet');
+  const thisYear = new Date().getFullYear();
+  const thisYearStatements = statements.filter(s => s.abrechnungsjahr === thisYear);
 
-    useEffect(() => {
-        if (supabaseUser && subscription && subscription.status !== 'ACTIVE' && subscription.status !== 'TRIAL') {
-            navigate(createPageUrl('Billing'));
-        }
-    }, [supabaseUser, subscription, navigate]);
-
-    if (authLoading) {
-        return (
-            <div className="flex items-center justify-center h-screen">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-            </div>
-        );
-    }
-    const { data: buildings = [] } = useQuery({
-        queryKey: ['buildings'],
-        queryFn: () => base44.entities.Building.list()
-    });
-
-    const { data: tenants = [] } = useQuery({
-        queryKey: ['tenants'],
-        queryFn: () => base44.entities.Tenant.list()
-    });
-
-    const { data: contracts = [] } = useQuery({
-        queryKey: ['contracts'],
-        queryFn: () => base44.entities.LeaseContract.list()
-    });
-
-    const { data: tasks = [] } = useQuery({
-        queryKey: ['tasks'],
-        queryFn: () => base44.entities.Task.list()
-    });
-
-    const { data: invoices = [] } = useQuery({
-        queryKey: ['invoices'],
-        queryFn: () => base44.entities.Invoice.list()
-    });
-
-    const { data: documents = [] } = useQuery({
-        queryKey: ['documents'],
-        queryFn: () => base44.entities.GeneratedDocument.list()
-    });
-
-    const monthlyRent = contracts.reduce((sum, c) => sum + (parseFloat(c.kaltmiete) || 0), 0);
-    const totalExpenses = invoices.reduce((sum, i) => sum + (parseFloat(i.betrag) || 0), 0);
-    const openTasks = tasks.filter(t => t.status === 'Offen' || t.status === 'open').length;
-
-    return (
-        <div className="space-y-6">
-            <div className="vf-page-header">
-                <div>
-                    <h1 className="vf-page-title">Übersicht</h1>
-                    <p className="vf-page-subtitle">Willkommen zurück</p>
-                </div>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-4">
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-2">
-                            <Building2 className="w-8 h-8 text-blue-600" />
-                        </div>
-                        <div className="text-3xl font-bold">{buildings.length}</div>
-                        <div className="text-sm text-gray-600 mt-1">Immobilien</div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-2">
-                            <Users className="w-8 h-8 text-green-600" />
-                        </div>
-                        <div className="text-3xl font-bold text-green-700">{tenants.length}</div>
-                        <div className="text-sm text-gray-600 mt-1">Mieter</div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-2">
-                            <DollarSign className="w-8 h-8 text-blue-600" />
-                        </div>
-                        <div className="text-3xl font-bold">{monthlyRent.toLocaleString('de-DE')}€</div>
-                        <div className="text-sm text-gray-600 mt-1">Monatliche Miete</div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-                <Card>
-                    <CardContent className="p-6">
-                        <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                            <AlertCircle className="w-5 h-5" />
-                            Ausstehende Aufgaben ({openTasks})
-                        </h3>
-                        <div className="space-y-2">
-                            {tasks.filter(t => t.status === 'Offen' || t.status === 'open').slice(0, 5).map((task) => (
-                                <div key={task.id} className="p-3 bg-orange-50 rounded-lg border border-orange-200">
-                                    <div className="font-semibold text-sm">{task.titel}</div>
-                                    <div className="text-xs text-gray-600 mt-1">
-                                        Fällig: {new Date(task.faelligkeitsdatum).toLocaleDateString('de-DE')}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="p-6">
-                        <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                            <Wrench className="w-5 h-5" />
-                            Wartungsaufträge
-                        </h3>
-                        <div className="space-y-2">
-                            {tasks.filter(t => t.kategorie === 'Reparatur').slice(0, 5).map((task) => (
-                                <div key={task.id} className="p-3 bg-red-50 rounded-lg border border-red-200">
-                                    <div className="font-semibold text-sm">{task.titel}</div>
-                                    <Badge className="mt-2 vf-badge-error text-xs">{task.prioritaet}</Badge>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-4">
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="text-3xl font-bold">{contracts.length}</div>
-                        <div className="text-sm text-gray-600 mt-1">Mietverträge</div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="p-6">
-                        <div className="text-3xl font-bold text-red-700">{totalExpenses.toLocaleString('de-DE')}€</div>
-                        <div className="text-sm text-gray-600 mt-1">Gesamtausgaben</div>
-                    </CardContent>
-                </Card>
-
-                <Card className="bg-gradient-to-br from-blue-900 to-orange-600 text-white border-none">
-                    <CardContent className="p-6">
-                        <div className="text-3xl font-bold">{documents.length}</div>
-                        <div className="text-sm opacity-90 mt-1">Dokumente</div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            <Card>
-                <CardContent className="p-6">
-                    <h3 className="font-semibold text-lg mb-4">Finanz-Übersicht</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                            <div className="text-sm text-gray-600">Monatliche Einnahmen</div>
-                            <div className="text-2xl font-bold text-green-700 mt-2">
-                                {(monthlyRent).toLocaleString('de-DE')}€
-                            </div>
-                        </div>
-                        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                            <div className="text-sm text-gray-600">Jahresbudget</div>
-                            <div className="text-2xl font-bold text-blue-700 mt-2">
-                                {(monthlyRent * 12).toLocaleString('de-DE')}€
-                            </div>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+  return (
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
+      {/* Page Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600 mt-1">Übersicht Ihrer Nebenkostenabrechnungen</p>
         </div>
-    );
+        <Link to={createPageUrl('OperatingCostWizard')}>
+          <Button size="lg" className="bg-gradient-to-r from-blue-900 to-blue-700">
+            <Plus className="w-5 h-5 mr-2" />
+            Neue Abrechnung
+          </Button>
+        </Link>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-2">
+              <FileText className="w-5 h-5 text-blue-600" />
+              <span className="text-2xl font-bold">{statements.length}</span>
+            </div>
+            <p className="text-sm text-gray-600">Abrechnungen gesamt</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-2">
+              <Calendar className="w-5 h-5 text-orange-600" />
+              <span className="text-2xl font-bold">{thisYearStatements.length}</span>
+            </div>
+            <p className="text-sm text-gray-600">Abrechnungen {thisYear}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-2">
+              <TrendingUp className="w-5 h-5 text-green-600" />
+              <span className="text-2xl font-bold">{completed.length}</span>
+            </div>
+            <p className="text-sm text-gray-600">Versendet</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-2">
+              <Building2 className="w-5 h-5 text-purple-600" />
+              <span className="text-2xl font-bold">{buildings.length}</span>
+            </div>
+            <p className="text-sm text-gray-600">Objekte</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Statements */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>Letzte Abrechnungen</CardTitle>
+            <Link to={createPageUrl('OperatingCosts')}>
+              <Button variant="outline" size="sm">Alle anzeigen</Button>
+            </Link>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {statements.length === 0 ? (
+            <div className="text-center py-12">
+              <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-600 mb-4">Noch keine Abrechnungen erstellt</p>
+              <Link to={createPageUrl('OperatingCostWizard')}>
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Erste Abrechnung erstellen
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {statements.slice(0, 5).map(statement => (
+                <Link 
+                  key={statement.id} 
+                  to={createPageUrl('OperatingCosts')}
+                  className="block p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-5 h-5 text-blue-600" />
+                      <div>
+                        <p className="font-medium">Abrechnung {statement.abrechnungsjahr}</p>
+                        <p className="text-sm text-gray-600">
+                          {new Date(statement.zeitraum_von).toLocaleDateString('de-DE')} - 
+                          {new Date(statement.zeitraum_bis).toLocaleDateString('de-DE')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        statement.status === 'Entwurf' ? 'bg-yellow-100 text-yellow-700' :
+                        statement.status === 'Versendet' ? 'bg-green-100 text-green-700' :
+                        'bg-blue-100 text-blue-700'
+                      }`}>
+                        {statement.status}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Drafts Section */}
+      {drafts.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-yellow-600" />
+              Entwürfe fortsetzen
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {drafts.map(draft => (
+                <Link
+                  key={draft.id}
+                  to={createPageUrl('OperatingCostWizard', { id: draft.id })}
+                  className="block p-4 border border-yellow-200 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Entwurf {draft.abrechnungsjahr}</p>
+                      <p className="text-sm text-gray-600">
+                        Zuletzt bearbeitet: {new Date(draft.updated_date).toLocaleDateString('de-DE')}
+                      </p>
+                    </div>
+                    <Button variant="outline" size="sm">Fortsetzen</Button>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
 }
