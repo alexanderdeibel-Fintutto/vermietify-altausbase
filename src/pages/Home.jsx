@@ -111,6 +111,23 @@ export default function Home() {
           </CardContent>
         </Card>
 
+        {/* Cross-Sell to FinTuttO */}
+        <Card className="mb-16">
+          <div className="p-8 text-center">
+            <h3 className="text-xl font-bold mb-4">Teil der FinTuttO Suite</h3>
+            <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+              Diese App ist Teil der FinTuttO Immobilienverwaltungs-Suite. 
+              Für die komplette Verwaltung mit Finanzen, Dokumenten, Steuern und mehr nutzen Sie die Hauptapplikation.
+            </p>
+            <a href="https://vermietify.app" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="lg">
+                FinTuttO Hauptapp ansehen
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </a>
+          </div>
+        </Card>
+
         {/* CTA */}
         <div className="text-center bg-gradient-to-r from-blue-900 to-orange-600 rounded-2xl p-12 text-white">
           <h2 className="text-3xl font-bold mb-4">

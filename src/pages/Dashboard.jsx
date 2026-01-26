@@ -6,6 +6,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileText, Plus, Calendar, TrendingUp, Building2, Users } from 'lucide-react';
+import QuickActionsMenu from '@/components/operating-costs/QuickActionsMenu';
+import RecentStatementsWidget from '@/components/operating-costs/RecentStatementsWidget';
+import CrossSellBanner from '@/components/shared/CrossSellBanner';
 
 export default function Dashboard() {
   const { data: statements = [] } = useQuery({
@@ -139,6 +142,14 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Quick Actions & Cross-Sell */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <QuickActionsMenu />
+        <RecentStatementsWidget limit={5} />
+      </div>
+
+      <CrossSellBanner />
 
       {/* Drafts Section */}
       {drafts.length > 0 && (
