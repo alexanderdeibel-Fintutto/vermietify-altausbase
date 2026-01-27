@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Check, Zap } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 import { getPricing, formatPrice, calculateYearlySavings } from '@/components/services/pricing';
 
 export default function Pricing() {
@@ -18,7 +19,7 @@ export default function Pricing() {
 
   const startCheckout = async (priceId) => {
     if (!priceId) {
-      console.error('No price ID provided');
+      toast.error('Preis-ID nicht verfügbar');
       return;
     }
     
@@ -32,9 +33,12 @@ export default function Pricing() {
       
       if (response.data?.url) {
         window.location.href = response.data.url;
+      } else {
+        toast.error('Checkout konnte nicht gestartet werden');
       }
     } catch (error) {
       console.error('Checkout error:', error);
+      toast.error('Ein Fehler ist aufgetreten');
     } finally {
       setCheckoutLoading(false);
     }

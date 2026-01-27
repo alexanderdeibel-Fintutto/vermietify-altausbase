@@ -1,5 +1,10 @@
 import { supabase } from './supabaseClient';
-import { APP_CONFIG } from '@/config/appConfig';
+
+// App-Konfiguration
+const APP_CONFIG = {
+  id: 'nk-abrechnung',
+  name: 'NK-Abrechnung'
+};
 
 export async function getPricing() {
   try {

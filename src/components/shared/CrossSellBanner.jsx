@@ -4,7 +4,8 @@ import { supabase } from '@/components/services/supabaseClient';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Sparkles } from 'lucide-react';
-import { APP_CONFIG } from '@/config/appConfig';
+
+const APP_ID = 'nk-abrechnung';
 
 export default function CrossSellBanner() {
   const { data: apps = [] } = useQuery({
@@ -13,7 +14,7 @@ export default function CrossSellBanner() {
       const { data, error } = await supabase
         .from('v_fintutto_ecosystem')
         .select('*')
-        .neq('app_id', APP_CONFIG.id)
+        .neq('app_id', APP_ID)
         .eq('is_active', true)
         .order('sort_order')
         .limit(3);
