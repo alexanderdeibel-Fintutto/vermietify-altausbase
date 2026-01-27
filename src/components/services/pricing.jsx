@@ -1,26 +1,35 @@
-import { base44 } from '@/api/base44Client';
+import { supabase } from './supabaseClient';
+
+const APP_ID = 'nk-abrechnung'; // FinTuttO NK-Abrechnung App ID
 
 export async function getPricing() {
   try {
-    const pricing = await base44.entities.SubscriptionPlan.list();
+    const { data, error } = await supabase
+      .from('v_app_pricing')
+      .select('*')
+      .eq('app_id', APP_ID)
+      .eq('livemode', true)
+      .order('sort_order');
     
-    // Transform to pricing format
-    return pricing.map(plan => ({
-      tier: plan.internal_code,
-      product_name: plan.name,
-      monthly_price: plan.price_monthly,
-      yearly_price: plan.price_yearly,
-      monthly_price_id: plan.stripe_price_id_monthly,
-      yearly_price_id: plan.stripe_price_id_yearly,
-      features: plan.features ? JSON.parse(plan.features) : [],
+    if (error) throw error;
+    
+    // Transform to expected format
+    return (data || []).map(item => ({
+      tier: item.tier_name,
+      product_name: item.product_name,
+      monthly_price: item.monthly_price,
+      yearly_price: item.yearly_price,
+      monthly_price_id: item.monthly_price_id,
+      yearly_price_id: item.yearly_price_id,
+      features: item.features || [],
       limits: {
-        maxBuildings: plan.max_buildings === -1 ? null : plan.max_buildings,
-        maxUnits: plan.max_units === -1 ? null : plan.max_units
+        maxBuildings: item.max_buildings,
+        maxUnits: item.max_units
       },
-      is_popular: plan.display_order === 2
-    })).sort((a, b) => a.display_order - b.display_order);
+      is_popular: item.is_popular || false
+    }));
   } catch (error) {
-    console.error('Error loading pricing:', error);
+    console.error('Error loading pricing from v_app_pricing:', error);
     return [];
   }
 }
