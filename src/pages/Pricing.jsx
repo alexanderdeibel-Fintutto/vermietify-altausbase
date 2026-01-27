@@ -3,8 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Check, Zap } from 'lucide-react';
-import { getPricing, formatPrice, calculateYearlySavings } from '../services/pricing';
-import { APP_CONFIG } from '../config/appConfig';
+import { getPricing, formatPrice, calculateYearlySavings } from '@/components/services/pricing';
 
 export default function Pricing() {
   const [billingCycle, setBillingCycle] = useState('monthly');

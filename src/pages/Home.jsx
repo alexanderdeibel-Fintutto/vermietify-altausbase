@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calculator, FileText, Zap, Check, ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { getPricing } from '../services/pricing';
+import { getPricing } from '@/components/services/pricing';
 
 export default function Home() {
   const { data: pricing } = useQuery({
