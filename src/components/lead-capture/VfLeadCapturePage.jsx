@@ -16,4 +16,5 @@ const VfLeadCapturePage = React.forwardRef(({
 })
 VfLeadCapturePage.displayName = "VfLeadCapturePage"
 
+export default VfLeadCapturePage
 export { VfLeadCapturePage }
