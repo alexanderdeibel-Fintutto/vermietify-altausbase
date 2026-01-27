@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import UpgradePrompt from './UpgradePrompt';
 
-export default function FeatureGate({ 
+export function FeatureGate({ 
   featureCode, 
   requiredPlan = 'Professional',
   children,
@@ -41,3 +41,5 @@ export default function FeatureGate({
 
   return <>{children}</>;
 }
+
+export default FeatureGate;

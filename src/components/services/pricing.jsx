@@ -1,17 +1,13 @@
 import { supabase } from './supabaseClient';
 
-// App-Konfiguration
-const APP_CONFIG = {
-  id: 'nk-abrechnung',
-  name: 'NK-Abrechnung'
-};
+const APP_ID = 'nk-abrechnung';
 
 export async function getPricing() {
   try {
     const { data, error } = await supabase
       .from('v_app_pricing')
       .select('*')
-      .eq('app_id', APP_CONFIG.id)
+      .eq('app_id', APP_ID)
       .eq('livemode', true)
       .order('sort_order');
     
