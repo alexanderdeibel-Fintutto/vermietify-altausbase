@@ -1,13 +1,12 @@
 import { supabase } from './supabaseClient';
-
-const APP_ID = 'nk-abrechnung'; // FinTuttO NK-Abrechnung App ID
+import { APP_CONFIG } from '@/config/appConfig';
 
 export async function getPricing() {
   try {
     const { data, error } = await supabase
       .from('v_app_pricing')
       .select('*')
-      .eq('app_id', APP_ID)
+      .eq('app_id', APP_CONFIG.id)
       .eq('livemode', true)
       .order('sort_order');
     

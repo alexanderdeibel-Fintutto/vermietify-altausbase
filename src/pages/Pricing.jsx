@@ -3,16 +3,42 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Check, Zap } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 import { getPricing, formatPrice, calculateYearlySavings } from '@/components/services/pricing';
 
 export default function Pricing() {
   const [billingCycle, setBillingCycle] = useState('monthly');
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   
   const { data: pricing, isLoading } = useQuery({
     queryKey: ['pricing'],
     queryFn: getPricing,
     staleTime: 5 * 60 * 1000
   });
+
+  const startCheckout = async (priceId) => {
+    if (!priceId) {
+      console.error('No price ID provided');
+      return;
+    }
+    
+    try {
+      setCheckoutLoading(true);
+      const response = await base44.functions.invoke('createStripeCheckoutSession', {
+        price_id: priceId,
+        success_url: window.location.origin + '/success',
+        cancel_url: window.location.origin + '/pricing'
+      });
+      
+      if (response.data?.url) {
+        window.location.href = response.data.url;
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
 
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">Preise werden geladen...</div>;
@@ -105,8 +131,10 @@ export default function Pricing() {
                   <Button 
                     className="w-full"
                     variant={tier.is_popular ? 'default' : 'outline'}
+                    onClick={() => startCheckout(priceId)}
+                    disabled={checkoutLoading || !priceId}
                   >
-                    Jetzt starten
+                    {checkoutLoading ? 'Wird geladen...' : 'Jetzt starten'}
                   </Button>
                 </CardContent>
               </Card>
