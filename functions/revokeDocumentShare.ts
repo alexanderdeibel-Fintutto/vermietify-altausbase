@@ -15,8 +15,28 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'share_id required' }, { status: 400 });
     }
 
+    // Load share info before deletion
+    const shares = await base44.entities.DocumentPermission.filter({ id: share_id });
+    const share = shares[0];
+
+    if (!share) {
+      return Response.json({ error: 'Share not found' }, { status: 404 });
+    }
+
     // Delete the share
     await base44.entities.DocumentPermission.delete(share_id);
+
+    // Send notifications
+    try {
+      await base44.functions.invoke('sendRevokeNotifications', {
+        shared_with_email: share.shared_with_email,
+        shared_by_email: share.shared_by_email,
+        document_id: share.document_id,
+        revoker_email: user.email
+      });
+    } catch (notifError) {
+      console.error('Failed to send revoke notifications:', notifError);
+    }
 
     return Response.json({
       success: true,

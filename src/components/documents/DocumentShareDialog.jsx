@@ -15,6 +15,7 @@ const ACCESS_LEVELS = {
 export default function DocumentShareDialog({ document, onClose, onSuccess }) {
   const [email, setEmail] = useState('');
   const [accessLevel, setAccessLevel] = useState('view');
+  const [expiresAt, setExpiresAt] = useState('');
   const queryClient = useQueryClient();
 
   // Load users in org
@@ -58,7 +59,8 @@ export default function DocumentShareDialog({ document, onClose, onSuccess }) {
     shareMutation.mutate({
       document_id: document.id,
       shared_with_email: email,
-      access_level: accessLevel
+      access_level: accessLevel,
+      expires_at: expiresAt || null
     });
   };
 
@@ -77,6 +79,11 @@ export default function DocumentShareDialog({ document, onClose, onSuccess }) {
                   <div>
                     <p className="text-sm font-medium">{share.shared_with_email}</p>
                     <p className="text-xs text-gray-500">{ACCESS_LEVELS[share.access_level]}</p>
+                    {share.expires_at && (
+                      <p className="text-xs text-orange-600 mt-1">
+                        Läuft ab: {new Date(share.expires_at).toLocaleDateString('de-DE')}
+                      </p>
+                    )}
                   </div>
                   <Button
                     variant="ghost"
@@ -115,6 +122,19 @@ export default function DocumentShareDialog({ document, onClose, onSuccess }) {
                 <option key={key} value={key}>{label}</option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Verfallsdatum (optional):</label>
+            <Input
+              type="date"
+              value={expiresAt}
+              onChange={(e) => setExpiresAt(e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Freigabe wird automatisch am gewählten Datum widerrufen
+            </p>
           </div>
 
           <div className="flex gap-3 pt-4">
