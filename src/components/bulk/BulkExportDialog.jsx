@@ -6,7 +6,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Download, FileText, Table, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { trackFeatureUsage } from '@/components/analytics/FeatureUsageTracker';
 
 export default function BulkExportDialog({ open, onOpenChange, data, entityType, filename }) {
   const [format, setFormat] = useState('csv');
@@ -24,7 +23,6 @@ export default function BulkExportDialog({ open, onOpenChange, data, entityType,
         exportAsJSON();
       }
       
-      trackFeatureUsage.dataExported(entityType, format, data?.length || 0);
       toast.success('Export erfolgreich');
       onOpenChange(false);
     } catch (error) {
