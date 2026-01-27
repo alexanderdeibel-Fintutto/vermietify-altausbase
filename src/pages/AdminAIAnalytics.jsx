@@ -19,7 +19,7 @@ export default function AdminAIAnalytics() {
         min_frequency: 2
       });
     },
-    staleTime: 5 * 60 * 1000, // 5min cache
+    staleTime: 5 * 60 * 1000, // 5min cache.
     gcTime: 15 * 60 * 1000 // 15min garbage collection
   });
 
