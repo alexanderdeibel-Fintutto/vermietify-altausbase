@@ -13,24 +13,12 @@ export const supabase = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
-// Fallback: Nutze base44 SDK statt direktem Supabase-Zugriff
+// Zentrale Hilfsfunktionen für sichere Queries
 export async function safeQuery(queryFn) {
   if (!supabase) {
     console.error('Supabase client not initialized. Use base44.entities instead.');
     return null;
   }
-  try {
-    const { data, error } = await queryFn();
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('Query error:', error);
-    return null;
-  }
-}
-
-// Zentrale Hilfsfunktionen für sichere Queries
-export async function safeQuery(queryFn) {
   try {
     const { data, error } = await queryFn();
     if (error) throw error;
