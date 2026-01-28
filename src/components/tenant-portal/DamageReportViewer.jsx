@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/services/supabaseClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,21 +16,34 @@ export default function DamageReportViewer({ buildingId }) {
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ['maintenance-tasks', buildingId, statusFilter],
     queryFn: async () => {
-      let filter = { kategorie: 'Reparatur' };
+      let query = supabase
+        .from('v_maintenance_tasks')
+        .select('*')
+        .eq('kategorie', 'Reparatur');
+      
       if (buildingId && buildingId !== 'all') {
-        filter.building_id = buildingId;
+        query = query.eq('building_id', buildingId);
       }
       if (statusFilter !== 'all') {
-        filter.status = statusFilter;
+        query = query.eq('status', statusFilter);
       }
-      return base44.entities.MaintenanceTask.filter(filter);
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
     },
   });
   
   // Status ändern
   const updateStatusMutation = useMutation({
-    mutationFn: ({ taskId, newStatus }) => {
-      return base44.entities.MaintenanceTask.update(taskId, { status: newStatus });
+    mutationFn: async ({ taskId, newStatus }) => {
+      const { data, error } = await supabase
+        .from('MaintenanceTask')
+        .update({ status: newStatus })
+        .eq('id', taskId)
+        .select();
+      if (error) throw error;
+      return data[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['maintenance-tasks'] });

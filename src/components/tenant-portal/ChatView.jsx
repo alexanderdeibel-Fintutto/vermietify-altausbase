@@ -3,7 +3,7 @@ import { getMessages, sendMessage, sendImageMessage, subscribeToConversation } f
 import { Button } from '@/components/ui/button';
 import { Send, Image as ImageIcon, Paperclip, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { base44 } from '@/api/base44Client';
+import { base44 } from '@/api/base44Client'; // Keep for auth
 
 export default function ChatView({ conversationId, conversation }) {
   const [messages, setMessages] = useState([]);

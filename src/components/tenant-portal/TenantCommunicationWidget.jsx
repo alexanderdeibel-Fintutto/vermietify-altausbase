@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/services/supabaseClient';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,19 +13,26 @@ export default function TenantCommunicationWidget({ tenantId, unitId }) {
   const { data: conversations = [] } = useQuery({
     queryKey: ['tenant-conversations', tenantId],
     queryFn: async () => {
-      // Hier müssten wir via Supabase filtern, für jetzt verwenden wir Base44 als Fallback
-      return base44.entities.TenantConversation.filter({ 
-        tenant_id: tenantId 
-      });
+      const { data, error } = await supabase
+        .from('TenantConversation')
+        .select('*')
+        .eq('tenant_id', tenantId);
+      if (error) throw error;
+      return data;
     },
   });
   
   // Schadenmeldungen
   const { data: damageReports = [] } = useQuery({
     queryKey: ['tenant-damage-reports', unitId],
-    queryFn: () => base44.entities.TenantDamageReport.filter({ 
-      unit_id: unitId 
-    }),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('TenantDamageReport')
+        .select('*')
+        .eq('unit_id', unitId);
+      if (error) throw error;
+      return data;
+    },
   });
   
   const openConversations = conversations.filter(c => c.status === 'open').length;

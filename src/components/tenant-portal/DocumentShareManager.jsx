@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/components/services/supabaseClient';
 import { base44 } from '@/api/base44Client';
 import { shareDocumentWithTenant } from '../services/messaging';
 import { Button } from '@/components/ui/button';
@@ -21,9 +22,17 @@ export default function DocumentShareManager({ unitId, buildingId }) {
   // Dokumente laden
   const { data: documents = [] } = useQuery({
     queryKey: ['tenant-portal-documents', unitId],
-    queryFn: () => unitId
-      ? base44.entities.TenantPortalDocument.filter({ unit_id: unitId })
-      : base44.entities.TenantPortalDocument.filter({ building_id: buildingId }),
+    queryFn: async () => {
+      let query = supabase.from('TenantPortalDocument').select('*');
+      if (unitId) {
+        query = query.eq('unit_id', unitId);
+      } else if (buildingId) {
+        query = query.eq('building_id', buildingId);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
   });
   
   // Dokument hochladen
@@ -31,16 +40,21 @@ export default function DocumentShareManager({ unitId, buildingId }) {
     mutationFn: async () => {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       
-      return base44.entities.TenantPortalDocument.create({
-        unit_id: unitId,
-        building_id: buildingId,
-        document_type: docType,
-        title,
-        file_url,
-        file_size: file.size,
-        document_date: new Date().toISOString().split('T')[0],
-        is_visible: true
-      });
+      const { data, error } = await supabase
+        .from('TenantPortalDocument')
+        .insert([{
+          unit_id: unitId,
+          building_id: buildingId,
+          document_type: docType,
+          title,
+          file_url,
+          file_size: file.size,
+          document_date: new Date().toISOString().split('T')[0],
+          is_visible: true
+        }])
+        .select();
+      if (error) throw error;
+      return data[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tenant-portal-documents'] });
@@ -54,9 +68,13 @@ export default function DocumentShareManager({ unitId, buildingId }) {
   // Sichtbarkeit togglen
   const toggleVisibilityMutation = useMutation({
     mutationFn: async (doc) => {
-      return base44.entities.TenantPortalDocument.update(doc.id, {
-        is_visible: !doc.is_visible
-      });
+      const { data, error } = await supabase
+        .from('TenantPortalDocument')
+        .update({ is_visible: !doc.is_visible })
+        .eq('id', doc.id)
+        .select();
+      if (error) throw error;
+      return data[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tenant-portal-documents'] });
@@ -66,7 +84,13 @@ export default function DocumentShareManager({ unitId, buildingId }) {
   
   // Dokument löschen
   const deleteMutation = useMutation({
-    mutationFn: (docId) => base44.entities.TenantPortalDocument.delete(docId),
+    mutationFn: async (docId) => {
+      const { error } = await supabase
+        .from('TenantPortalDocument')
+        .delete()
+        .eq('id', docId);
+      if (error) throw error;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tenant-portal-documents'] });
       toast.success('Dokument gelöscht');

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/services/supabaseClient';
 import { getMyConversations } from '../services/messaging';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,14 @@ export default function TenantOverviewWidget() {
   // Aktive Mietverträge
   const { data: activeContracts = [] } = useQuery({
     queryKey: ['active-contracts'],
-    queryFn: () => base44.entities.LeaseContract.filter({ vertragsstatus: 'Aktiv' }),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('v_active_leases')
+        .select('*')
+        .eq('vertragsstatus', 'Aktiv');
+      if (error) throw error;
+      return data;
+    },
   });
   
   // Ungelesene Conversations
@@ -25,16 +32,28 @@ export default function TenantOverviewWidget() {
   // Offene Schadenmeldungen
   const { data: damageReports = [] } = useQuery({
     queryKey: ['damage-reports-open'],
-    queryFn: () => base44.entities.MaintenanceTask.filter({ 
-      kategorie: 'Reparatur',
-      status: 'Offen'
-    }),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('v_maintenance_tasks')
+        .select('*')
+        .eq('kategorie', 'Reparatur')
+        .eq('status', 'Offen');
+      if (error) throw error;
+      return data;
+    },
   });
   
   // Freigegebene Dokumente
   const { data: sharedDocs = [] } = useQuery({
     queryKey: ['shared-docs'],
-    queryFn: () => base44.entities.TenantPortalDocument.filter({ is_visible: true }),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('TenantPortalDocument')
+        .select('*')
+        .eq('is_visible', true);
+      if (error) throw error;
+      return data;
+    },
   });
   
   const unreadCount = conversations.reduce((sum, c) => 

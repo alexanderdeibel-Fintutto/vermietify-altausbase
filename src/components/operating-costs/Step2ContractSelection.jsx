@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/services/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,17 +16,35 @@ export default function Step2ContractSelection({ data, onNext, onBack, onDataCha
 
   const { data: allContracts = [] } = useQuery({
     queryKey: ['leaseContracts'],
-    queryFn: () => base44.entities.LeaseContract.list()
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('v_active_leases')
+        .select('*');
+      if (error) throw error;
+      return data;
+    }
   });
 
   const { data: tenants = [] } = useQuery({
     queryKey: ['tenants'],
-    queryFn: () => base44.entities.Tenant.list()
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('v_tenant_list')
+        .select('*');
+      if (error) throw error;
+      return data;
+    }
   });
 
   const { data: units = [] } = useQuery({
     queryKey: ['units'],
-    queryFn: () => base44.entities.Unit.list()
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('v_units_with_lease')
+        .select('*');
+      if (error) throw error;
+      return data;
+    }
   });
 
   useEffect(() => {

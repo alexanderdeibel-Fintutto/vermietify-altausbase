@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/services/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,12 +18,24 @@ export default function Step1BuildingSelection({ data, onNext, onDataChange, onS
 
   const { data: buildings = [] } = useQuery({
     queryKey: ['buildings'],
-    queryFn: () => base44.entities.Building.list()
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('v_buildings_summary')
+        .select('*');
+      if (error) throw error;
+      return data;
+    }
   });
 
   const { data: allUnits = [] } = useQuery({
     queryKey: ['units'],
-    queryFn: () => base44.entities.Unit.list()
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('v_units_with_lease')
+        .select('*');
+      if (error) throw error;
+      return data;
+    }
   });
 
   const filteredUnits = allUnits.filter(u => u.gebaeude_id === selectedBuilding);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/services/supabaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,15 +17,27 @@ export default function TenantDetail() {
     const { data: tenant, isLoading } = useQuery({
         queryKey: ['tenant', tenantId],
         queryFn: async () => {
-            const tenants = await base44.entities.Tenant.filter({ id: tenantId });
-            return tenants[0];
+            const { data, error } = await supabase
+                .from('v_tenant_list')
+                .select('*')
+                .eq('id', tenantId)
+                .single();
+            if (error) throw error;
+            return data;
         },
         enabled: !!tenantId
     });
 
     const { data: contracts = [] } = useQuery({
         queryKey: ['contracts', tenantId],
-        queryFn: () => base44.entities.LeaseContract.filter({ tenant_id: tenantId }),
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('v_active_leases')
+                .select('*')
+                .eq('tenant_id', tenantId);
+            if (error) throw error;
+            return data;
+        },
         enabled: !!tenantId
     });
 

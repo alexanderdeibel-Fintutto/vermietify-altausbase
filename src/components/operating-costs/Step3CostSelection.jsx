@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/services/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,12 +17,24 @@ export default function Step3CostSelection({ data, onNext, onBack, onDataChange,
 
   const { data: costTypes = [] } = useQuery({
     queryKey: ['costTypes'],
-    queryFn: () => base44.entities.CostType.list()
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('CostType')
+        .select('*');
+      if (error) throw error;
+      return data;
+    }
   });
 
   const { data: invoices = [] } = useQuery({
     queryKey: ['invoices'],
-    queryFn: () => base44.entities.Invoice.list()
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('Invoice')
+        .select('*');
+      if (error) throw error;
+      return data;
+    }
   });
 
   // Nur umlagefähige Kostenarten

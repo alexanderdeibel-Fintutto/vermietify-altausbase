@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/services/supabaseClient';
 import { generateTenantInvitation, sendInvitationEmail } from '../services/messaging';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -22,17 +22,30 @@ export default function TenantInvitationManager({ buildingId }) {
   // Units laden
   const { data: units = [] } = useQuery({
     queryKey: ['units', buildingId],
-    queryFn: () => buildingId 
-      ? base44.entities.Unit.filter({ gebaeude_id: buildingId })
-      : base44.entities.Unit.list(),
+    queryFn: async () => {
+      let query = supabase.from('v_units_with_lease').select('*');
+      if (buildingId) {
+        query = query.eq('gebaeude_id', buildingId);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
   });
   
   // Invitations laden
   const { data: invitations = [] } = useQuery({
     queryKey: ['tenant-invitations', buildingId],
-    queryFn: () => buildingId
-      ? base44.entities.TenantInvitation.filter({ building_id: buildingId })
-      : base44.entities.TenantInvitation.list('-created_date'),
+    queryFn: async () => {
+      let query = supabase.from('TenantInvitation').select('*');
+      if (buildingId) {
+        query = query.eq('building_id', buildingId);
+      }
+      query = query.order('created_date', { ascending: false });
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
   });
   
   // Invitation erstellen
