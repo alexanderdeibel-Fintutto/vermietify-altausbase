@@ -9,6 +9,7 @@ import { FileText, Plus, Calendar, TrendingUp, Building2, Users } from 'lucide-r
 import QuickActionsMenu from '@/components/operating-costs/QuickActionsMenu';
 import RecentStatementsWidget from '@/components/operating-costs/RecentStatementsWidget';
 import CrossSellBanner from '@/components/shared/CrossSellBanner';
+import TenantOverviewWidget from '@/components/tenant-portal/TenantOverviewWidget';
 
 export default function Dashboard() {
   const { data: statements = [] } = useQuery({
@@ -148,6 +149,9 @@ export default function Dashboard() {
         <QuickActionsMenu />
         <RecentStatementsWidget limit={5} />
       </div>
+
+      {/* Mieterportal Widget */}
+      <TenantOverviewWidget />
 
       <CrossSellBanner />
 
