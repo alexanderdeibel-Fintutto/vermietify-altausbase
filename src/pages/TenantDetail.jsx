@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { User, Mail, Phone, MapPin, FileText, Euro, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import TenantQuickChat from '@/components/tenant-portal/TenantQuickChat';
+import TenantCommunicationWidget from '@/components/tenant-portal/TenantCommunicationWidget';
+import SendDocumentToTenantDialog from '@/components/tenant-portal/SendDocumentToTenantDialog';
 
 export default function TenantDetail() {
     const params = new URLSearchParams(window.location.search);
@@ -55,10 +58,14 @@ export default function TenantDetail() {
                     </div>
                     <div className="vf-detail-header__actions">
                         <Button variant="outline">Bearbeiten</Button>
-                        <Button variant="outline">
-                            <Mail className="w-4 h-4" />
-                            Nachricht senden
-                        </Button>
+                        {tenant.email && contracts.length > 0 && (
+                            <SendDocumentToTenantDialog
+                                unitId={contracts[0]?.unit_id}
+                                buildingId={contracts[0]?.unit_id}
+                                tenantId={tenant.id}
+                                tenantEmail={tenant.email}
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -78,8 +85,25 @@ export default function TenantDetail() {
                 </div>
             </div>
 
+            {/* Quick Chat */}
+            {tenant.email && contracts.length > 0 && (
+                <TenantQuickChat
+                    tenantEmail={tenant.email}
+                    unitId={contracts[0]?.unit_id}
+                    buildingId={contracts[0]?.unit_id}
+                    tenantName={`${tenant.vorname} ${tenant.nachname}`}
+                />
+            )}
+
             {/* Content */}
             <div className="grid lg:grid-cols-2 gap-6">
+                {tenant.email && contracts.length > 0 && (
+                    <TenantCommunicationWidget
+                        tenantId={tenant.id}
+                        unitId={contracts[0]?.unit_id}
+                    />
+                )}
+                
                 <Card>
                     <CardHeader>
                         <CardTitle>Kontaktinformationen</CardTitle>

@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Home, ArrowLeft, Users, FileText, Euro } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import DocumentShareManager from '@/components/tenant-portal/DocumentShareManager';
+import TenantCommunicationWidget from '@/components/tenant-portal/TenantCommunicationWidget';
 
 export default function UnitDetail() {
     const params = new URLSearchParams(window.location.search);
@@ -157,6 +159,28 @@ export default function UnitDetail() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Tenant Communication */}
+            {activeContract && (
+                <div className="grid lg:grid-cols-2 gap-6">
+                    <TenantCommunicationWidget
+                        tenantId={activeContract.tenant_id}
+                        unitId={unit.id}
+                    />
+                    
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Dokumente mit Mieter teilen</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <DocumentShareManager
+                                unitId={unit.id}
+                                buildingId={unit.building_id}
+                            />
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
 
             {/* All Contracts History */}
             <Card>
