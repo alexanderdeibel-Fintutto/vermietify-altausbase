@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/services/supabaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { VfInput } from '@/components/shared/VfInput';
@@ -25,11 +25,25 @@ export default function Buildings() {
 
     const { data: buildings = [], isLoading } = useQuery({
         queryKey: ['buildings'],
-        queryFn: () => base44.entities.Building.list('-created_date')
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('v_buildings_summary')
+                .select('*')
+                .order('created_date', { ascending: false });
+            if (error) throw error;
+            return data;
+        }
     });
 
     const createBuildingMutation = useMutation({
-        mutationFn: (data) => base44.entities.Building.create(data),
+        mutationFn: async (data) => {
+            const { data: result, error } = await supabase
+                .from('Building')
+                .insert([data])
+                .select();
+            if (error) throw error;
+            return result[0];
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['buildings'] });
             setDialogOpen(false);

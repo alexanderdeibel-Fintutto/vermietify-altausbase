@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/services/supabaseClient';
 import { getMyConversations } from '../components/services/messaging';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,7 +20,13 @@ export default function TenantPortalManagement() {
   // Gebäude laden
   const { data: buildings = [] } = useQuery({
     queryKey: ['buildings'],
-    queryFn: () => base44.entities.Building.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('v_buildings_summary')
+        .select('*');
+      if (error) throw error;
+      return data;
+    },
   });
   
   // Conversations laden
@@ -35,10 +41,18 @@ export default function TenantPortalManagement() {
   const { data: damageReports = [] } = useQuery({
     queryKey: ['damage-reports', selectedBuilding],
     queryFn: async () => {
-      const filter = selectedBuilding === 'all' 
-        ? { kategorie: 'Reparatur' }
-        : { kategorie: 'Reparatur', building_id: selectedBuilding };
-      return base44.entities.MaintenanceTask.filter(filter);
+      let query = supabase
+        .from('v_open_tasks')
+        .select('*')
+        .eq('category', 'Reparatur');
+      
+      if (selectedBuilding !== 'all') {
+        query = query.eq('building_id', selectedBuilding);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
     },
   });
   

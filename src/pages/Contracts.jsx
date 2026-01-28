@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/services/supabaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { VfInput } from '@/components/shared/VfInput';
@@ -27,21 +27,47 @@ export default function Contracts() {
 
     const { data: contracts = [], isLoading } = useQuery({
         queryKey: ['contracts'],
-        queryFn: () => base44.entities.LeaseContract.list('-created_date')
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('v_active_leases')
+                .select('*')
+                .order('created_date', { ascending: false });
+            if (error) throw error;
+            return data;
+        }
     });
 
     const { data: units = [] } = useQuery({
         queryKey: ['units'],
-        queryFn: () => base44.entities.Unit.list()
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('v_units_with_lease')
+                .select('*');
+            if (error) throw error;
+            return data;
+        }
     });
 
     const { data: tenants = [] } = useQuery({
         queryKey: ['tenants'],
-        queryFn: () => base44.entities.Tenant.list()
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('v_tenant_list')
+                .select('*');
+            if (error) throw error;
+            return data;
+        }
     });
 
     const createContractMutation = useMutation({
-        mutationFn: (data) => base44.entities.LeaseContract.create(data),
+        mutationFn: async (data) => {
+            const { data: result, error } = await supabase
+                .from('LeaseContract')
+                .insert([data])
+                .select();
+            if (error) throw error;
+            return result[0];
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['contracts'] });
             setDialogOpen(false);

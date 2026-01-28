@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/services/supabaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { VfInput } from '@/components/shared/VfInput';
@@ -24,16 +24,36 @@ export default function UnitsManagement() {
 
     const { data: units = [], isLoading } = useQuery({
         queryKey: ['units'],
-        queryFn: () => base44.entities.Unit.list('-created_date')
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('v_units_with_lease')
+                .select('*')
+                .order('created_date', { ascending: false });
+            if (error) throw error;
+            return data;
+        }
     });
 
     const { data: buildings = [] } = useQuery({
         queryKey: ['buildings'],
-        queryFn: () => base44.entities.Building.list()
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('v_buildings_summary')
+                .select('*');
+            if (error) throw error;
+            return data;
+        }
     });
 
     const createUnitMutation = useMutation({
-        mutationFn: (data) => base44.entities.Unit.create(data),
+        mutationFn: async (data) => {
+            const { data: result, error } = await supabase
+                .from('Unit')
+                .insert([data])
+                .select();
+            if (error) throw error;
+            return result[0];
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['units'] });
             setDialogOpen(false);
