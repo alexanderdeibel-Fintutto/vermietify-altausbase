@@ -10,6 +10,8 @@ import ChatView from '../components/tenant-portal/ChatView';
 import ConversationList from '../components/tenant-portal/ConversationList';
 import TenantInvitationManager from '../components/tenant-portal/TenantInvitationManager';
 import DocumentShareManager from '../components/tenant-portal/DocumentShareManager';
+import BulkDocumentShareDialog from '../components/tenant-portal/BulkDocumentShareDialog';
+import DamageReportViewer from '../components/tenant-portal/DamageReportViewer';
 
 export default function TenantPortalManagement() {
   const [selectedBuilding, setSelectedBuilding] = useState('all');
@@ -192,10 +194,15 @@ export default function TenantPortalManagement() {
           
           {/* Documents Tab */}
           <TabsContent value="documents">
-            <DocumentShareManager
-              buildingId={selectedBuilding === 'all' ? null : selectedBuilding}
-              unitId={null}
-            />
+            <div className="space-y-6">
+              <div className="flex justify-end">
+                <BulkDocumentShareDialog buildingId={selectedBuilding} />
+              </div>
+              <DocumentShareManager
+                buildingId={selectedBuilding === 'all' ? null : selectedBuilding}
+                unitId={null}
+              />
+            </div>
           </TabsContent>
           
           {/* Invitations Tab */}

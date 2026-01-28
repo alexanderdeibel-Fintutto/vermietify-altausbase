@@ -9,6 +9,7 @@ import { Users, Plus, Mail, Phone, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { showSuccess } from '@/components/notifications/ToastNotification';
+import TenantPortalAccessButton from '@/components/tenant-portal/TenantPortalAccessButton';
 
 export default function Tenants() {
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -146,6 +147,13 @@ export default function Tenants() {
                                                     {tenant.telefon}
                                                 </div>
                                             )}
+                                            <div className="mt-3 pt-3 border-t">
+                                                <TenantPortalAccessButton 
+                                                    tenant={tenant}
+                                                    unitId={null}
+                                                    buildingId={null}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </CardContent>
