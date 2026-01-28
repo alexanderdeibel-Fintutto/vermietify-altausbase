@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/components/services/supabaseClient';
 import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sparkles, MessageSquare, Send, TrendingUp } from 'lucide-react';
@@ -42,7 +43,12 @@ export default function AICommunicationHub() {
     queryKey: ['buildings', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      return await base44.entities.Building.filter({ created_by: user.email });
+      const { data, error } = await supabase
+        .from('v_buildings_summary')
+        .select('*')
+        .eq('created_by', user.email);
+      if (error) throw error;
+      return data;
     },
     enabled: !!user?.email
   });
