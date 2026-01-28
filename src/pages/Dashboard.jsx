@@ -144,11 +144,14 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* Quick Actions & Cross-Sell */}
+      {/* Quick Actions & Tenant Portal */}
       <div className="grid md:grid-cols-2 gap-6">
         <QuickActionsMenu />
-        <RecentStatementsWidget limit={5} />
+        <TenantPortalDashboardWidget />
       </div>
+
+      {/* Recent Statements Widget */}
+      <RecentStatementsWidget limit={5} />
 
       {/* Mieterportal Widget */}
       <TenantOverviewWidget />
