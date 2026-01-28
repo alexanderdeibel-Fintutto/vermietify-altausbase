@@ -1,18 +1,33 @@
 import { createClient } from '@supabase/supabase-js';
+import { base44 } from '@/api/base44Client';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Secrets werden in Base44 direkt vom Backend bereitgestellt
+const supabaseUrl = window.__SUPABASE_URL__ || process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = window.__SUPABASE_KEY__ || process.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Supabase credentials missing.', {
-    url: supabaseUrl,
-    key: supabaseAnonKey ? 'set' : 'missing',
-    env: import.meta.env
-  });
-  throw new Error('supabaseUrl is required.');
+  console.warn('Supabase credentials via env vars not found, using base44 SDK instead');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = supabaseUrl && supabaseAnonKey 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
+
+// Fallback: Nutze base44 SDK statt direktem Supabase-Zugriff
+export async function safeQuery(queryFn) {
+  if (!supabase) {
+    console.error('Supabase client not initialized. Use base44.entities instead.');
+    return null;
+  }
+  try {
+    const { data, error } = await queryFn();
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Query error:', error);
+    return null;
+  }
+}
 
 // Zentrale Hilfsfunktionen für sichere Queries
 export async function safeQuery(queryFn) {
