@@ -1,13 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from './utils';
-import { Calculator, FileText, Settings, CreditCard, Home as HomeIcon } from 'lucide-react';
+import { Calculator, FileText, Settings, CreditCard, Home as HomeIcon, Users } from 'lucide-react';
+import NotificationBell from './components/tenant-portal/NotificationBell';
 
 export default function Layout({ children, currentPageName }) {
   const navItems = [
     { name: 'Home', icon: HomeIcon, path: 'Home' },
     { name: 'Dashboard', icon: Calculator, path: 'Dashboard' },
     { name: 'Abrechnungen', icon: FileText, path: 'OperatingCosts' },
+    { name: 'Mieterportal', icon: Users, path: 'TenantPortalManagement' },
     { name: 'Preise', icon: CreditCard, path: 'Pricing' }
   ];
 
@@ -46,6 +48,7 @@ export default function Layout({ children, currentPageName }) {
                   </Link>
                 );
               })}
+              <NotificationBell />
             </div>
           </div>
         </div>
