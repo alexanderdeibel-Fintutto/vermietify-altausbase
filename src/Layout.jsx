@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { Calculator, FileText, Settings, CreditCard, Home as HomeIcon, Users } from 'lucide-react';
 import NotificationBell from './components/tenant-portal/NotificationBell';
+import RealtimeChatIndicator from './components/tenant-portal/RealtimeChatIndicator';
 
 export default function Layout({ children, currentPageName }) {
   const navItems = [
@@ -58,6 +59,9 @@ export default function Layout({ children, currentPageName }) {
       <main className="min-h-[calc(100vh-64px)]">
         {children}
       </main>
+      
+      {/* Realtime Chat Indicator */}
+      <RealtimeChatIndicator />
     </div>
   );
 }

@@ -531,6 +531,7 @@ import TenantOnboardingManager from './pages/TenantOnboardingManager';
 import TenantPortal from './pages/TenantPortal';
 import TenantPortalAdminDashboard from './pages/TenantPortalAdminDashboard';
 import TenantPortalDashboard from './pages/TenantPortalDashboard';
+import TenantPortalManagement from './pages/TenantPortalManagement';
 import TenantPortalPage from './pages/TenantPortalPage';
 import TenantSatisfaction from './pages/TenantSatisfaction';
 import TenantVettingSystem from './pages/TenantVettingSystem';
@@ -623,7 +624,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import TenantPortalManagement from './pages/TenantPortalManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -1161,6 +1161,7 @@ export const PAGES = {
     "TenantPortal": TenantPortal,
     "TenantPortalAdminDashboard": TenantPortalAdminDashboard,
     "TenantPortalDashboard": TenantPortalDashboard,
+    "TenantPortalManagement": TenantPortalManagement,
     "TenantPortalPage": TenantPortalPage,
     "TenantSatisfaction": TenantSatisfaction,
     "TenantVettingSystem": TenantVettingSystem,
@@ -1253,7 +1254,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "TenantPortalManagement": TenantPortalManagement,
 }
 
 export const pagesConfig = {
