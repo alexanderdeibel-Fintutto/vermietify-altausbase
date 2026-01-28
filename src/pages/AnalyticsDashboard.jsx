@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/components/services/supabaseClient";
 import VisualizationFilters from "@/components/analytics/VisualizationFilters";
 import OccupancyChart from "@/components/analytics/OccupancyChart";
 import OperatingCostsChart from "@/components/analytics/OperatingCostsChart";
@@ -19,17 +19,36 @@ export default function AnalyticsDashboard() {
 
   const { data: buildings = [] } = useQuery({
     queryKey: ["buildings"],
-    queryFn: () => base44.entities.Building.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('v_buildings_summary')
+        .select('*')
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
   });
 
   const { data: units = [] } = useQuery({
     queryKey: ["units"],
-    queryFn: () => base44.entities.Unit.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('v_units_with_lease')
+        .select('*');
+      if (error) throw error;
+      return data;
+    },
   });
 
   const { data: contracts = [] } = useQuery({
     queryKey: ["contracts"],
-    queryFn: () => base44.entities.LeaseContract.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('v_active_leases')
+        .select('*');
+      if (error) throw error;
+      return data;
+    },
   });
 
   const filteredBuildings = useMemo(() => {
