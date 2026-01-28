@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/services/supabaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
@@ -24,7 +24,13 @@ export default function OperatingCostWizard() {
     queryKey: ['operatingCostDraft', draftId],
     queryFn: async () => {
       if (!draftId) return null;
-      return await base44.entities.OperatingCostStatement.get(draftId);
+      const { data, error } = await supabase
+        .from('v_operating_cost_summary')
+        .select('*')
+        .eq('id', draftId)
+        .single();
+      if (error) throw error;
+      return data;
     },
     enabled: !!draftId
   });
@@ -56,23 +62,36 @@ export default function OperatingCostWizard() {
   const saveDraftMutation = useMutation({
     mutationFn: async (data) => {
       if (draftId) {
-        return await base44.entities.OperatingCostStatement.update(draftId, {
-          draft_details: JSON.stringify(data),
-          current_step: currentStep,
-          status: 'Entwurf',
-          updated_date: new Date().toISOString()
-        });
+        const { data: result, error } = await supabase
+          .from('OperatingCostStatement')
+          .update({
+            draft_details: JSON.stringify(data),
+            current_step: currentStep,
+            status: 'Entwurf',
+            updated_date: new Date().toISOString()
+          })
+          .eq('id', draftId)
+          .select()
+          .single();
+        if (error) throw error;
+        return result;
       } else {
-        return await base44.entities.OperatingCostStatement.create({
-          building_id: data.building_id,
-          abrechnungsjahr: new Date(data.period_start).getFullYear(),
-          zeitraum_von: data.period_start,
-          zeitraum_bis: data.period_end,
-          erstellungsdatum: new Date().toISOString().split('T')[0],
-          status: 'Entwurf',
-          draft_details: JSON.stringify(data),
-          current_step: currentStep
-        });
+        const { data: result, error } = await supabase
+          .from('OperatingCostStatement')
+          .insert([{
+            building_id: data.building_id,
+            abrechnungsjahr: new Date(data.period_start).getFullYear(),
+            zeitraum_von: data.period_start,
+            zeitraum_bis: data.period_end,
+            erstellungsdatum: new Date().toISOString().split('T')[0],
+            status: 'Entwurf',
+            draft_details: JSON.stringify(data),
+            current_step: currentStep
+          }])
+          .select()
+          .single();
+        if (error) throw error;
+        return result;
       }
     },
     onSuccess: (data) => {

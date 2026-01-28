@@ -1,5 +1,5 @@
 import React from 'react';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/services/supabaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,8 +15,13 @@ export default function ContractDetail() {
     const { data: contract, isLoading } = useQuery({
         queryKey: ['contract', contractId],
         queryFn: async () => {
-            const contracts = await base44.entities.LeaseContract.filter({ id: contractId });
-            return contracts[0];
+            const { data, error } = await supabase
+                .from('v_active_leases')
+                .select('*')
+                .eq('id', contractId)
+                .single();
+            if (error) throw error;
+            return data;
         },
         enabled: !!contractId
     });
@@ -24,8 +29,13 @@ export default function ContractDetail() {
     const { data: tenant } = useQuery({
         queryKey: ['tenant', contract?.tenant_id],
         queryFn: async () => {
-            const tenants = await base44.entities.Tenant.filter({ id: contract.tenant_id });
-            return tenants[0];
+            const { data, error } = await supabase
+                .from('v_tenant_list')
+                .select('*')
+                .eq('id', contract.tenant_id)
+                .single();
+            if (error) throw error;
+            return data;
         },
         enabled: !!contract?.tenant_id
     });
@@ -33,8 +43,13 @@ export default function ContractDetail() {
     const { data: unit } = useQuery({
         queryKey: ['unit', contract?.unit_id],
         queryFn: async () => {
-            const units = await base44.entities.Unit.filter({ id: contract.unit_id });
-            return units[0];
+            const { data, error } = await supabase
+                .from('v_units_with_lease')
+                .select('*')
+                .eq('id', contract.unit_id)
+                .single();
+            if (error) throw error;
+            return data;
         },
         enabled: !!contract?.unit_id
     });

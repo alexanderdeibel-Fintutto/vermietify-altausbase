@@ -1,5 +1,5 @@
 import React from 'react';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/components/services/supabaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,24 +17,41 @@ export default function UnitDetail() {
     const { data: unit, isLoading } = useQuery({
         queryKey: ['unit', unitId],
         queryFn: async () => {
-            const units = await base44.entities.Unit.filter({ id: unitId });
-            return units[0];
+            const { data, error } = await supabase
+                .from('v_units_with_lease')
+                .select('*')
+                .eq('id', unitId)
+                .single();
+            if (error) throw error;
+            return data;
         },
         enabled: !!unitId
     });
 
     const { data: building } = useQuery({
-        queryKey: ['building', unit?.building_id],
+        queryKey: ['building', unit?.gebaeude_id],
         queryFn: async () => {
-            const buildings = await base44.entities.Building.filter({ id: unit.building_id });
-            return buildings[0];
+            const { data, error } = await supabase
+                .from('v_buildings_summary')
+                .select('*')
+                .eq('id', unit.gebaeude_id)
+                .single();
+            if (error) throw error;
+            return data;
         },
-        enabled: !!unit?.building_id
+        enabled: !!unit?.gebaeude_id
     });
 
     const { data: contracts = [] } = useQuery({
         queryKey: ['contracts', unitId],
-        queryFn: () => base44.entities.LeaseContract.filter({ unit_id: unitId }),
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('v_active_leases')
+                .select('*')
+                .eq('unit_id', unitId);
+            if (error) throw error;
+            return data;
+        },
         enabled: !!unitId
     });
 
