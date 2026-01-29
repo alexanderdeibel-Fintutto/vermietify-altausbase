@@ -8,9 +8,14 @@ function getSupabase() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://aaefocdqgdgexkcrjhks.supabase.co';
   const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhZWZvY2RxZ2RnZXhrY3JqaGtzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc5OTc1MTgsImV4cCI6MjA1MzU3MzUxOH0.FFyDLN8lqPtFG0B5nQs0wHGVrMn3_wuR1XOlZCMvFe4';
   
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('Supabase credentials missing');
-    throw new Error('Supabase configuration is required');
+  if (!supabaseUrl) {
+    console.error('Supabase URL missing');
+    throw new Error('VITE_SUPABASE_URL is required');
+  }
+  
+  if (!supabaseAnonKey) {
+    console.error('Supabase Anon Key missing');
+    throw new Error('VITE_SUPABASE_ANON_KEY is required');
   }
   
   supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
