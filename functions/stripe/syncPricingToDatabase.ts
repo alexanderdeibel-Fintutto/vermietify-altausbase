@@ -1,12 +1,23 @@
 import Stripe from 'https://esm.sh/stripe@14.8.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 
-const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
-const supabaseUrl = Deno.env.get('SUPABASE_URL');
-const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+let stripe;
+let supabase;
 
-const stripe = new Stripe(stripeSecretKey);
-const supabase = createClient(supabaseUrl, serviceRoleKey);
+function initializeClients() {
+  if (!stripe) {
+    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
+    stripe = new Stripe(stripeSecretKey);
+  }
+  
+  if (!supabase) {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    supabase = createClient(supabaseUrl, serviceRoleKey);
+  }
+  
+  return { stripe, supabase };
+}
 
 /**
  * Syncs Stripe pricing to Supabase database
@@ -14,6 +25,8 @@ const supabase = createClient(supabaseUrl, serviceRoleKey);
  */
 Deno.serve(async (req) => {
   try {
+    const { stripe, supabase } = initializeClients();
+    
     // Get all active prices from Stripe
     const prices = await stripe.prices.list({
       active: true,
