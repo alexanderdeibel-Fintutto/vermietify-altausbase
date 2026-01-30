@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import AIBudgetOverview from '../components/ai/AIBudgetOverview';
+import AIUsageChart from '../components/ai/AIUsageChart';
 import { Bot, Save, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -142,6 +143,12 @@ export default function AISettings() {
         </Card>
       </div>
     );
+  }
+
+  function updateFeature(featureId, updates) {
+    setFeatures(features.map(f => 
+      f.id === featureId ? { ...f, ...updates } : f
+    ));
   }
 
   if (!settings) return null;
@@ -387,6 +394,9 @@ export default function AISettings() {
         </CardContent>
       </Card>
 
+      {/* Nutzungsverlauf */}
+      <AIUsageChart />
+
       {/* API-Konfiguration */}
       <Card>
         <CardHeader>
@@ -433,10 +443,4 @@ export default function AISettings() {
       </Card>
     </div>
   );
-
-  function updateFeature(featureId, updates) {
-    setFeatures(features.map(f => 
-      f.id === featureId ? { ...f, ...updates } : f
-    ));
-  }
 }

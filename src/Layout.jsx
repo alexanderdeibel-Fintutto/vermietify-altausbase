@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from './utils';
-import { Calculator, FileText, Settings, CreditCard, Home as HomeIcon, Users } from 'lucide-react';
+import { Calculator, FileText, Settings, CreditCard, Home as HomeIcon, Users, Bot } from 'lucide-react';
 import NotificationBell from './components/tenant-portal/NotificationBell';
 import RealtimeChatIndicator from './components/tenant-portal/RealtimeChatIndicator';
 
@@ -11,7 +11,8 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Dashboard', icon: Calculator, path: 'Dashboard' },
     { name: 'Abrechnungen', icon: FileText, path: 'OperatingCosts' },
     { name: 'Mieterportal', icon: Users, path: 'TenantPortalManagement' },
-    { name: 'Preise', icon: CreditCard, path: 'Pricing' }
+    { name: 'Preise', icon: CreditCard, path: 'Pricing' },
+    { name: 'KI-Settings', icon: Bot, path: 'AISettings' }
   ];
 
   return (
