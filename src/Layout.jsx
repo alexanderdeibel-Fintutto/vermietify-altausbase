@@ -4,6 +4,7 @@ import { createPageUrl } from './utils';
 import { Calculator, FileText, Settings, CreditCard, Home as HomeIcon, Users, Bot } from 'lucide-react';
 import NotificationBell from './components/tenant-portal/NotificationBell';
 import RealtimeChatIndicator from './components/tenant-portal/RealtimeChatIndicator';
+import AIBudgetWarningBanner from './components/ai/AIBudgetWarningBanner';
 
 export default function Layout({ children, currentPageName }) {
   const navItems = [
@@ -58,6 +59,9 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Main Content */}
       <main className="min-h-[calc(100vh-64px)]">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <AIBudgetWarningBanner />
+        </div>
         {children}
       </main>
       

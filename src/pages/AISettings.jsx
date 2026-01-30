@@ -9,7 +9,8 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import AIBudgetOverview from '../components/ai/AIBudgetOverview';
 import AIUsageChart from '../components/ai/AIUsageChart';
-import { Bot, Save, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import AITestPanel from '../components/ai/AITestPanel';
+import { Bot, Save, CheckCircle, AlertCircle, Loader2, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AISettings() {
@@ -20,6 +21,7 @@ export default function AISettings() {
   const [saving, setSaving] = useState(false);
   const [apiStatus, setApiStatus] = useState('unknown');
   const [testingApi, setTestingApi] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -143,6 +145,34 @@ export default function AISettings() {
         </Card>
       </div>
     );
+  }
+
+  async function exportUsageLogs() {
+    setExporting(true);
+    try {
+      const response = await base44.functions.invoke('exportAIUsage', {
+        format: 'csv',
+        startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
+        endDate: new Date().toISOString()
+      });
+
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ai-usage-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+      
+      toast.success('Export erfolgreich');
+    } catch (e) {
+      console.error('Export failed:', e);
+      toast.error('Export fehlgeschlagen');
+    } finally {
+      setExporting(false);
+    }
   }
 
   function updateFeature(featureId, updates) {
@@ -395,7 +425,26 @@ export default function AISettings() {
       </Card>
 
       {/* Nutzungsverlauf */}
-      <AIUsageChart />
+      <div className="relative">
+        <AIUsageChart />
+        <Button
+          variant="outline"
+          size="sm"
+          className="absolute top-4 right-4"
+          onClick={exportUsageLogs}
+          disabled={exporting}
+        >
+          {exporting ? (
+            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+          ) : (
+            <Download className="w-4 h-4 mr-2" />
+          )}
+          CSV Export
+        </Button>
+      </div>
+
+      {/* Test-Panel */}
+      <AITestPanel />
 
       {/* API-Konfiguration */}
       <Card>

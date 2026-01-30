@@ -1,29 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, TrendingUp, MessageSquare } from 'lucide-react';
+import AIUsageIndicator from '../ai/AIUsageIndicator';
+import AICostDisplay from '../ai/AICostDisplay';
 
 export default function AICommunicationInsights({ companyId }) {
   const [insights, setInsights] = useState(null);
+  const [user, setUser] = useState(null);
+  const [usageStats, setUsageStats] = useState(null);
+
+  useEffect(() => {
+    loadUser();
+  }, []);
+
+  async function loadUser() {
+    const currentUser = await base44.auth.me();
+    setUser(currentUser);
+  }
 
   const analyzeMutation = useMutation({
-    mutationFn: () =>
-      base44.functions.invoke('aiCommunicationAnalyzer', {
-        action: 'summarize_common_queries',
-        company_id: companyId
-      }),
-    onSuccess: (response) => setInsights(response.data.summary)
+    mutationFn: async () => {
+      const response = await base44.functions.invoke('aiCoreService', {
+        action: 'analysis',
+        prompt: `Analysiere die häufigsten Mieteranfragen und erstelle eine Zusammenfassung mit:
+1. Top 5 häufigste Anfragekategorien
+2. Muster und Trends
+3. Empfehlungen zur Kommunikationsverbesserung
+
+Gib die Antwort als JSON zurück: { "insights": "...", "common_queries": [{"category": "...", "frequency": number, "example_question": "...", "suggested_response": "..."}] }`,
+        userId: user?.email,
+        featureKey: 'analysis',
+        maxTokens: 4096
+      });
+      return response;
+    },
+    onSuccess: (response) => {
+      try {
+        const parsed = JSON.parse(response.data.content);
+        setInsights(parsed);
+        setUsageStats(response.data.usage);
+      } catch {
+        setInsights({ insights: response.data.content, common_queries: [] });
+        setUsageStats(response.data.usage);
+      }
+    }
   });
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-purple-600" />
-          KI-Kommunikationsanalyse
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-purple-600" />
+            KI-Kommunikationsanalyse
+          </div>
+          {user && <AIUsageIndicator userId={user.email} />}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -35,6 +70,8 @@ export default function AICommunicationInsights({ companyId }) {
           <TrendingUp className="w-4 h-4 mr-2" />
           Anfragen analysieren
         </Button>
+
+        {usageStats && <AICostDisplay usage={usageStats} />}
 
         {insights && (
           <div className="space-y-4">

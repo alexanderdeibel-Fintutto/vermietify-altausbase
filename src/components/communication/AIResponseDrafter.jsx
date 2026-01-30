@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,20 +6,46 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Copy, Wand2, CheckCircle } from 'lucide-react';
+import AIUsageIndicator from '../ai/AIUsageIndicator';
+import AICostDisplay from '../ai/AICostDisplay';
 
 export default function AIResponseDrafter({ companyId }) {
   const [topic, setTopic] = useState('');
   const [draftResponse, setDraftResponse] = useState('');
   const [copied, setCopied] = useState(false);
+  const [user, setUser] = useState(null);
+  const [usageStats, setUsageStats] = useState(null);
+
+  useEffect(() => {
+    loadUser();
+  }, []);
+
+  async function loadUser() {
+    const currentUser = await base44.auth.me();
+    setUser(currentUser);
+  }
 
   const draftMutation = useMutation({
-    mutationFn: () =>
-      base44.functions.invoke('aiCommunicationAnalyzer', {
-        action: 'draft_response',
-        company_id: companyId,
-        question_topic: topic
-      }),
-    onSuccess: (response) => setDraftResponse(response.data.draft_response)
+    mutationFn: async () => {
+      const response = await base44.functions.invoke('aiCoreService', {
+        action: 'chat',
+        prompt: `Generiere eine professionelle, freundliche Antwort auf folgende Mieteranfrage zum Thema: "${topic}". 
+Die Antwort sollte rechtlich korrekt, verständlich und lösungsorientiert sein.
+Berücksichtige deutsches Mietrecht (BGB §§ 535ff) und BetrKV.`,
+        systemPrompt: `Du bist ein erfahrener Immobilienverwalter in Deutschland. 
+Generiere professionelle Antworten für Mieteranfragen.
+Antworte freundlich, rechtlich korrekt und lösungsorientiert.
+Nutze deutsches Mietrecht (BGB, BetrKV) als Grundlage.`,
+        userId: user?.email,
+        featureKey: 'chat',
+        maxTokens: 2048
+      });
+      return response;
+    },
+    onSuccess: (response) => {
+      setDraftResponse(response.data.content);
+      setUsageStats(response.data.usage);
+    }
   });
 
   const copyResponse = () => {
@@ -40,9 +66,12 @@ export default function AIResponseDrafter({ companyId }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Wand2 className="w-5 h-5 text-purple-600" />
-          KI-Antwortgenerator
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Wand2 className="w-5 h-5 text-purple-600" />
+            KI-Antwortgenerator
+          </div>
+          {user && <AIUsageIndicator userId={user.email} />}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -86,6 +115,7 @@ export default function AIResponseDrafter({ companyId }) {
               rows={8}
               className="text-sm"
             />
+            {usageStats && <AICostDisplay usage={usageStats} />}
             <Button
               variant="outline"
               onClick={copyResponse}
