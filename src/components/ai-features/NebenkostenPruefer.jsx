@@ -1,15 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, Loader2, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import AIUsageIndicator from '../ai/AIUsageIndicator';
+import AICostDisplay from '../ai/AICostDisplay';
 
 export default function NebenkostenPruefer() {
     const [image, setImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
+    const [user, setUser] = useState(null);
+    const [usageStats, setUsageStats] = useState(null);
+
+    useEffect(() => {
+        loadUser();
+    }, []);
+
+    async function loadUser() {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+    }
 
     const handleFileSelect = (e) => {
         const file = e.target.files[0];
@@ -29,17 +42,21 @@ export default function NebenkostenPruefer() {
 
         setLoading(true);
         try {
-            const response = await base44.functions.invoke('callClaudeAPI', {
-                featureKey: 'nebenkosten',
+            const response = await base44.functions.invoke('aiCoreService', {
+                action: 'ocr',
+                prompt: 'Prüfe diese Nebenkostenabrechnung. Gib zurück: grunddaten{abrechnungszeitraum_von, abrechnungszeitraum_bis, vorauszahlungen_gesamt, abrechnungsergebnis, ist_nachzahlung}, nicht_umlagefaehige_kosten[{bezeichnung, betrag, grund}], ergebnis{empfehlung: "akzeptieren"|"pruefen_lassen"|"widerspruch_einlegen", begruendung, ersparnis}, widerspruch_vorlage',
                 systemPrompt: 'Du bist ein Mietrechtsexperte. Prüfe Nebenkostenabrechnungen auf Fehler und nicht umlagefähige Kosten.',
-                userPrompt: 'Prüfe diese Nebenkostenabrechnung. Gib zurück: grunddaten{abrechnungszeitraum_von, abrechnungszeitraum_bis, vorauszahlungen_gesamt, abrechnungsergebnis, ist_nachzahlung}, nicht_umlagefaehige_kosten[{bezeichnung, betrag, grund}], ergebnis{empfehlung: "akzeptieren"|"pruefen_lassen"|"widerspruch_einlegen", begruendung, ersparnis}, widerspruch_vorlage',
                 imageBase64: image.base64,
                 imageMediaType: image.type,
-                responseSchema: true
+                userId: user?.email,
+                featureKey: 'ocr',
+                maxTokens: 4096
             });
 
             if (response.data.success) {
-                setResult(response.data.data);
+                const parsed = JSON.parse(response.data.content);
+                setResult(parsed);
+                setUsageStats(response.data.usage);
                 toast.success('Nebenkostenabrechnung geprüft');
             } else {
                 toast.error(response.data.error || 'Fehler bei der Prüfung');
@@ -64,7 +81,10 @@ export default function NebenkostenPruefer() {
         <div className="max-w-5xl mx-auto space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>🏠 Nebenkostenabrechnung-Prüfer</CardTitle>
+                    <CardTitle className="flex items-center justify-between">
+                        <div>🏠 Nebenkostenabrechnung-Prüfer</div>
+                        {user && <AIUsageIndicator userId={user.email} />}
+                    </CardTitle>
                     <p className="text-sm text-slate-600">Prüfe deine Nebenkostenabrechnung auf Fehler und nicht umlagefähige Kosten</p>
                 </CardHeader>
                 <CardContent className="space-y-6">

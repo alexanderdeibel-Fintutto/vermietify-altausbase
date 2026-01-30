@@ -59,11 +59,34 @@ Maximal 3-4 Sätze.`,
     mutationFn: async () => {
       const results = [];
       for (const tenant of tenants.slice(0, 10)) {
-        const response = await base44.functions.invoke('generatePersonalizedTenantUpdates', {
-          tenant_id: tenant.id,
-          company_id: companyId
-        });
-        results.push({ tenant: tenant.first_name, sent: true });
+        try {
+          const response = await base44.functions.invoke('aiCoreService', {
+            action: 'chat',
+            prompt: `Erstelle ein personalisiertes Update für den Mieter ${tenant.first_name} ${tenant.last_name}.
+Berücksichtige:
+- Freundlicher, persönlicher Ton
+- Aktuelle Ereignisse im Gebäude
+- Anstehende Termine oder Änderungen
+- Wertschätzung für pünktliche Zahlung
+Maximal 3-4 Sätze.`,
+            userId: user?.email,
+            featureKey: 'chat',
+            maxTokens: 512
+          });
+          
+          if (response.data.success) {
+            // Notification erstellen
+            await base44.entities.Notification.create({
+              user_email: tenant.email,
+              title: 'Persönliches Update',
+              message: response.data.content,
+              type: 'info'
+            });
+            results.push({ tenant: tenant.first_name, sent: true });
+          }
+        } catch (e) {
+          results.push({ tenant: tenant.first_name, sent: false, error: e.message });
+        }
       }
       return results;
     }

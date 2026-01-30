@@ -1,4 +1,5 @@
 import { base44 } from '@/api/base44Client';
+import { showRateLimitWarning, showBudgetWarning } from './AIRateLimitToast';
 
 /**
  * Zentraler Wrapper für alle AI-Anfragen
@@ -33,6 +34,17 @@ export async function callAI({
 
     if (!response.data.success) {
       throw new Error(response.data.error || 'AI-Anfrage fehlgeschlagen');
+    }
+
+    // UI-Warnungen anzeigen
+    if (response.data.rate_limit_remaining !== undefined) {
+      showRateLimitWarning(response.data.rate_limit_remaining, 'hour');
+    }
+    if (response.data.budget_remaining !== undefined && response.data.usage?.cost_eur) {
+      const settings = await base44.entities.AISettings.list();
+      const budget = settings?.[0]?.monthly_budget_eur || 50;
+      const budgetPercent = ((budget - response.data.budget_remaining) / budget) * 100;
+      showBudgetWarning(budgetPercent);
     }
 
     return {

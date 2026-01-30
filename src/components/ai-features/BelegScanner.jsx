@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,12 +7,25 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Camera, Upload, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import AIUsageIndicator from '../ai/AIUsageIndicator';
+import AICostDisplay from '../ai/AICostDisplay';
 
 export default function BelegScanner() {
     const [image, setImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
+    const [user, setUser] = useState(null);
+    const [usageStats, setUsageStats] = useState(null);
+
+    useEffect(() => {
+        loadUser();
+    }, []);
+
+    async function loadUser() {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+    }
 
     const handleFileSelect = (e) => {
         const file = e.target.files[0];
@@ -32,17 +45,21 @@ export default function BelegScanner() {
 
         setLoading(true);
         try {
-            const response = await base44.functions.invoke('callClaudeAPI', {
-                featureKey: 'beleg_scanner',
+            const response = await base44.functions.invoke('aiCoreService', {
+                action: 'ocr',
+                prompt: 'Analysiere diesen Beleg und extrahiere: typ, haendler{name}, datum, betraege{brutto, netto, mwst_19}, kategorie_vorschlag, skr03_konto, steuerlich_absetzbar, notizen',
                 systemPrompt: 'Du bist ein Experte für Buchhaltung und Belegverarbeitung. Extrahiere alle relevanten Daten strukturiert aus dem Beleg.',
-                userPrompt: 'Analysiere diesen Beleg und extrahiere: typ, haendler{name}, datum, betraege{brutto, netto, mwst_19}, kategorie_vorschlag, skr03_konto, steuerlich_absetzbar, notizen',
                 imageBase64: image.base64,
                 imageMediaType: image.type,
-                responseSchema: true
+                userId: user?.email,
+                featureKey: 'ocr',
+                maxTokens: 2048
             });
 
             if (response.data.success) {
-                setResult(response.data.data);
+                const parsed = JSON.parse(response.data.content);
+                setResult(parsed);
+                setUsageStats(response.data.usage);
                 toast.success('Beleg erfolgreich analysiert');
             } else {
                 toast.error(response.data.error || 'Fehler beim Scannen');
@@ -79,9 +96,12 @@ export default function BelegScanner() {
         <div className="max-w-4xl mx-auto space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Camera className="w-5 h-5" />
-                        Beleg-Scanner
+                    <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Camera className="w-5 h-5" />
+                            Beleg-Scanner
+                        </div>
+                        {user && <AIUsageIndicator userId={user.email} />}
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -188,6 +208,8 @@ export default function BelegScanner() {
                                 </div>
                             )}
 
+                            {usageStats && <AICostDisplay usage={usageStats} />}
+
                             <div className="flex gap-2 pt-4">
                                 <Button onClick={handleSave} className="flex-1">
                                     Beleg speichern
@@ -196,13 +218,10 @@ export default function BelegScanner() {
                                     setResult(null);
                                     setImage(null);
                                     setImagePreview(null);
+                                    setUsageStats(null);
                                 }}>
                                     Neuer Scan
                                 </Button>
-                            </div>
-
-                            <div className="text-xs text-slate-500 text-center">
-                                AI-Nutzung protokolliert
                             </div>
                         </div>
                     )}
