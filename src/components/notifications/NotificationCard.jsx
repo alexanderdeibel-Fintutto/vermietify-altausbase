@@ -1,52 +1,69 @@
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import TimeAgo from '@/components/shared/TimeAgo';
-import { Bell, AlertCircle, CheckCircle, Info } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Bell, FileText, AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { formatDistanceToNow } from 'date-fns';
+import { de } from 'date-fns/locale';
+
+const NOTIFICATION_TYPES = {
+  info: { icon: Info, color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600' },
+  success: { icon: CheckCircle2, color: 'bg-green-100 dark:bg-green-900/30 text-green-600' },
+  warning: { icon: AlertCircle, color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600' },
+  error: { icon: AlertCircle, color: 'bg-red-100 dark:bg-red-900/30 text-red-600' },
+  document: { icon: FileText, color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600' }
+};
 
 export default function NotificationCard({ notification, onClick, onDismiss }) {
-  const icons = {
-    info: Info,
-    success: CheckCircle,
-    warning: AlertCircle,
-    error: AlertCircle
-  };
-
-  const Icon = icons[notification.type] || Bell;
+  const config = NOTIFICATION_TYPES[notification.type] || NOTIFICATION_TYPES.info;
+  const Icon = config.icon;
 
   return (
-    <Card 
-      className={cn(
-        "cursor-pointer transition-all hover:shadow-md",
-        !notification.is_read && "border-l-4 border-l-[var(--vf-primary-600)] bg-[var(--vf-primary-50)]"
-      )}
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
       onClick={onClick}
+      className={`relative p-4 rounded-lg border transition-all cursor-pointer ${
+        notification.is_read
+          ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+          : 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800'
+      } hover:shadow-md`}
     >
-      <CardContent className="p-4">
-        <div className="flex gap-3">
-          <div className={cn(
-            "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0",
-            notification.type === 'success' && "bg-[var(--vf-success-100)] text-[var(--vf-success-600)]",
-            notification.type === 'error' && "bg-[var(--vf-error-100)] text-[var(--vf-error-600)]",
-            notification.type === 'warning' && "bg-[var(--vf-warning-100)] text-[var(--vf-warning-600)]",
-            (!notification.type || notification.type === 'info') && "bg-[var(--vf-info-100)] text-[var(--vf-info-600)]"
-          )}>
-            <Icon className="h-5 w-5" />
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <div className="font-semibold text-sm mb-1">{notification.title}</div>
-            {notification.message && (
-              <div className="text-sm text-[var(--theme-text-secondary)] line-clamp-2">
-                {notification.message}
-              </div>
-            )}
-            <div className="text-xs text-[var(--theme-text-muted)] mt-2">
-              <TimeAgo date={notification.created_date} />
-            </div>
-          </div>
+      <div className="flex gap-3">
+        <div className={`p-2 rounded-lg ${config.color} flex-shrink-0`}>
+          <Icon className="w-4 h-4" />
         </div>
-      </CardContent>
-    </Card>
+        
+        <div className="flex-1 min-w-0">
+          <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100 mb-1">
+            {notification.title}
+          </h4>
+          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+            {notification.message}
+          </p>
+          <p className="text-xs text-gray-500 mt-2">
+            {formatDistanceToNow(new Date(notification.created_date), { 
+              addSuffix: true, 
+              locale: de 
+            })}
+          </p>
+        </div>
+
+        {onDismiss && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDismiss(notification.id);
+            }}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {!notification.is_read && (
+        <div className="absolute top-4 right-4 w-2 h-2 bg-blue-600 rounded-full" />
+      )}
+    </motion.div>
   );
 }

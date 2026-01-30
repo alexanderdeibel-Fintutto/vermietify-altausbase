@@ -1,15 +1,61 @@
-import React from 'react';
-import { VfSelect } from './VfSelect';
+import React, { useState } from 'react';
+import { Check, ChevronsUpDown, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
-export default function SearchableSelect({ options, value, onChange, label, placeholder }) {
+export default function SearchableSelect({ 
+  options = [], 
+  value, 
+  onChange, 
+  placeholder = 'Auswählen...',
+  searchPlaceholder = 'Suchen...',
+  emptyText = 'Nichts gefunden'
+}) {
+  const [open, setOpen] = useState(false);
+
+  const selectedOption = options.find(opt => opt.value === value);
+
   return (
-    <VfSelect
-      label={label}
-      options={options}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      searchable
-    />
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between"
+        >
+          {selectedOption ? selectedOption.label : placeholder}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-full p-0" align="start">
+        <Command>
+          <CommandInput placeholder={searchPlaceholder} />
+          <CommandEmpty>{emptyText}</CommandEmpty>
+          <CommandGroup className="max-h-64 overflow-y-auto">
+            {options.map((option) => (
+              <CommandItem
+                key={option.value}
+                value={option.value}
+                onSelect={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+              >
+                <Check
+                  className={cn(
+                    'mr-2 h-4 w-4',
+                    value === option.value ? 'opacity-100' : 'opacity-0'
+                  )}
+                />
+                {option.label}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

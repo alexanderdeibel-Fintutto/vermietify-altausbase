@@ -1,41 +1,50 @@
 import React from 'react';
-import { VfModal } from './VfModal';
-import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { AlertTriangle } from 'lucide-react';
 
-export default function ConfirmationDialog({ 
-  open, 
-  onClose, 
-  onConfirm, 
-  title = 'Bestätigung erforderlich',
-  message,
+export default function ConfirmationDialog({
+  open,
+  onOpenChange,
+  title = 'Sind Sie sicher?',
+  description,
   confirmLabel = 'Bestätigen',
+  cancelLabel = 'Abbrechen',
+  onConfirm,
   variant = 'default'
 }) {
+  const isDestructive = variant === 'destructive';
+
   return (
-    <VfModal
-      open={open}
-      onOpenChange={onClose}
-      title={title}
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>Abbrechen</Button>
-          <Button 
-            variant={variant === 'destructive' ? 'destructive' : 'gradient'}
-            onClick={() => { onConfirm(); onClose(); }}
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            {isDestructive && <AlertTriangle className="w-5 h-5 text-red-600" />}
+            {title}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {description}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{cancelLabel}</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            className={isDestructive ? 'bg-red-600 hover:bg-red-700' : ''}
           >
             {confirmLabel}
-          </Button>
-        </>
-      }
-    >
-      {variant === 'destructive' && (
-        <div className="flex items-center gap-3 p-3 bg-[var(--vf-error-50)] rounded-lg mb-4">
-          <AlertTriangle className="h-5 w-5 text-[var(--vf-error-600)]" />
-          <span className="text-sm font-medium text-[var(--vf-error-700)]">Diese Aktion kann nicht rückgängig gemacht werden</span>
-        </div>
-      )}
-      <p>{message}</p>
-    </VfModal>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

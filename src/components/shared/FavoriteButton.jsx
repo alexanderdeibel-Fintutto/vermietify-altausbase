@@ -1,29 +1,54 @@
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Star } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 
-export default function FavoriteButton({ isFavorite: initialFavorite, onToggle }) {
+export default function FavoriteButton({ 
+  isFavorite: initialFavorite = false, 
+  onToggle,
+  size = 'default' 
+}) {
   const [isFavorite, setIsFavorite] = useState(initialFavorite);
+  const [isAnimating, setIsAnimating] = useState(false);
 
-  const handleClick = () => {
-    setIsFavorite(!isFavorite);
-    if (onToggle) onToggle(!isFavorite);
+  const handleClick = async (e) => {
+    e.stopPropagation();
+    
+    setIsAnimating(true);
+    const newState = !isFavorite;
+    setIsFavorite(newState);
+
+    try {
+      await onToggle(newState);
+      toast.success(newState ? 'Zu Favoriten hinzugefügt' : 'Von Favoriten entfernt');
+    } catch (error) {
+      setIsFavorite(!newState);
+      toast.error('Fehler beim Speichern');
+    } finally {
+      setTimeout(() => setIsAnimating(false), 300);
+    }
   };
 
   return (
     <Button
       variant="ghost"
-      size="icon"
+      size={size === 'sm' ? 'sm' : 'default'}
       onClick={handleClick}
-      className="hover:text-[var(--vf-warning-500)]"
+      className="relative"
     >
-      <Star 
-        className={cn(
-          "h-5 w-5",
-          isFavorite && "fill-[var(--vf-warning-500)] text-[var(--vf-warning-500)]"
-        )} 
-      />
+      <motion.div
+        animate={isAnimating ? { scale: [1, 1.3, 1] } : {}}
+        transition={{ duration: 0.3 }}
+      >
+        <Star
+          className={`w-4 h-4 transition-all ${
+            isFavorite
+              ? 'fill-amber-400 text-amber-400'
+              : 'text-gray-400 hover:text-amber-400'
+          }`}
+        />
+      </motion.div>
     </Button>
   );
 }
