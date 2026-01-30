@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Wallet } from 'lucide-react';
-import CurrencyDisplay from '@/components/shared/CurrencyDisplay';
+import { CurrencyDisplay } from '@/components/shared/CurrencyDisplay';
 import StatusBadge from '@/components/shared/StatusBadge';
 
 export default function DepositManager({ contractId }) {
