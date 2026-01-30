@@ -14,6 +14,7 @@ import AIStatusWidget from '../components/ai/AIStatusWidget';
 import AISmartAlertManager from '../components/ai/AISmartAlertManager';
 import AIPersonalizedDashboard from '../components/ai/AIPersonalizedDashboard';
 import ProactiveRecommendationsWidget from '../components/ai/ProactiveRecommendationsWidget';
+import MarketTrendsWidget from '../components/market/MarketTrendsWidget';
 
 export default function Dashboard() {
   const { data: statements = [] } = useQuery({
@@ -172,9 +173,10 @@ export default function Dashboard() {
       </div>
 
       {/* AI Smart Alerts & Recommendations */}
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-3 gap-6">
         <AISmartAlertManager />
         <ProactiveRecommendationsWidget limit={3} />
+        <MarketTrendsWidget limit={4} />
       </div>
 
       {/* Recent Statements Widget */}

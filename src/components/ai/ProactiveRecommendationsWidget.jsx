@@ -129,6 +129,18 @@ export default function ProactiveRecommendationsWidget({ limit = 5 }) {
                                             <span>Konfidenz: {rec.ai_confidence}%</span>
                                         </div>
 
+                                        {/* Markttrend-Quellen anzeigen */}
+                                        {rec.data_sources && rec.data_sources.length > 0 && (
+                                            <div className="mt-3 pt-2 border-t text-xs">
+                                                <div className="text-gray-600 font-semibold mb-1">
+                                                    📊 Basiert auf Marktdaten von:
+                                                </div>
+                                                <div className="text-gray-500">
+                                                    {rec.data_sources.join(', ')}
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {rec.action_items?.length > 0 && (
                                             <div className="mt-3 p-2 bg-white rounded border">
                                                 <div className="text-xs font-semibold mb-1">Handlungsschritte:</div>
