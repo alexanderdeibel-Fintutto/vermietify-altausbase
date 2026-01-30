@@ -5,19 +5,17 @@ export function useLocalStorage(key, initialValue) {
     try {
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      console.error('Error loading from localStorage:', error);
+    } catch {
       return initialValue;
     }
   });
 
   const setValue = (value) => {
     try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
-      setStoredValue(valueToStore);
-      window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      setStoredValue(value);
+      window.localStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
-      console.error('Error saving to localStorage:', error);
+      console.error('Failed to store value:', error);
     }
   };
 
