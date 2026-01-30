@@ -20,4 +20,33 @@ export default function StreakTracker({ currentStreak = 0, longestStreak = 0, la
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-4">
-          <div className="
+          <div className="text-center">
+            <motion.div
+              animate={streakActive ? { scale: [1, 1.1, 1] } : {}}
+              transition={{ repeat: Infinity, duration: 2 }}
+              className="text-3xl font-bold text-orange-600"
+            >
+              {currentStreak} 🔥
+            </motion.div>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Aktuell</p>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-amber-600">
+              {longestStreak} 🏆
+            </div>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Rekord</p>
+          </div>
+        </div>
+
+        {lastAction && (
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+            <Calendar className="w-4 h-4" />
+            <span>
+              Letzte Aktivität: {daysAgo === 0 ? 'Heute' : daysAgo === 1 ? 'Gestern' : `vor ${daysAgo} Tagen`}
+            </span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
