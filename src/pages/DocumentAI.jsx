@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileSearch, GitCompare, Sparkles } from 'lucide-react';
+import { FileSearch, GitCompare, Sparkles, Upload } from 'lucide-react';
 import AdvancedDocumentAnalyzer from '../components/documents/AdvancedDocumentAnalyzer';
 import DocumentComparisonTool from '../components/documents/DocumentComparisonTool';
+import SmartDocumentUploader from '../components/documents/SmartDocumentUploader';
 
 export default function DocumentAI() {
     return (
@@ -50,17 +51,25 @@ export default function DocumentAI() {
             </div>
 
             {/* Main Tools */}
-            <Tabs defaultValue="analyze" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+            <Tabs defaultValue="smart" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="smart">
+                        <Upload className="w-4 h-4 mr-2" />
+                        Smart Upload
+                    </TabsTrigger>
                     <TabsTrigger value="analyze">
                         <FileSearch className="w-4 h-4 mr-2" />
-                        Dokument analysieren
+                        Erweiterte Analyse
                     </TabsTrigger>
                     <TabsTrigger value="compare">
                         <GitCompare className="w-4 h-4 mr-2" />
-                        Dokumente vergleichen
+                        Vergleichen
                     </TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="smart" className="mt-6">
+                    <SmartDocumentUploader />
+                </TabsContent>
 
                 <TabsContent value="analyze" className="mt-6">
                     <AdvancedDocumentAnalyzer />

@@ -57,6 +57,7 @@ import AIInsightsDashboard from './pages/AIInsightsDashboard';
 import AIMaintenanceDashboard from './pages/AIMaintenanceDashboard';
 import AIRuleApprovalDashboard from './pages/AIRuleApprovalDashboard';
 import AISettings from './pages/AISettings';
+import AISystemPromptAdmin from './pages/AISystemPromptAdmin';
 import AITaxAdvisor from './pages/AITaxAdvisor';
 import AITaxRecommendations from './pages/AITaxRecommendations';
 import AITemplateGenerator from './pages/AITemplateGenerator';
@@ -154,10 +155,11 @@ import AutomatedCommunication from './pages/AutomatedCommunication';
 import AutomatedReports from './pages/AutomatedReports';
 import AutomatedTaxFormGenerator from './pages/AutomatedTaxFormGenerator';
 import AutomationCenter from './pages/AutomationCenter';
+import Billing from './pages/Billing';
 import AutomationRules from './pages/AutomationRules';
-import BKChecker from './pages/BKChecker';
 import BKAbrechnungWizard from './pages/BKAbrechnungWizard';
 import BKAbrechnungWizardEnhanced from './pages/BKAbrechnungWizardEnhanced';
+import BKChecker from './pages/BKChecker';
 import BackupRecovery from './pages/BackupRecovery';
 import BankAccounts from './pages/BankAccounts';
 import BankReconciliation from './pages/BankReconciliation';
@@ -167,7 +169,6 @@ import BankTransfers from './pages/BankTransfers';
 import BankingAutomationHub from './pages/BankingAutomationHub';
 import BankingManagement from './pages/BankingManagement';
 import BankingOverview from './pages/BankingOverview';
-import Billing from './pages/Billing';
 import BillingSuccess from './pages/BillingSuccess';
 import BudgetAnalysis from './pages/BudgetAnalysis';
 import BudgetPlanning from './pages/BudgetPlanning';
@@ -214,6 +215,7 @@ import ComplianceReportingHub from './pages/ComplianceReportingHub';
 import ComprehensiveDashboard from './pages/ComprehensiveDashboard';
 import ComprehensiveTaxDashboard from './pages/ComprehensiveTaxDashboard';
 import ConsolidatedTaxSummary from './pages/ConsolidatedTaxSummary';
+import ContractAnalysis from './pages/ContractAnalysis';
 import ContractAnalytics from './pages/ContractAnalytics';
 import ContractAutomationHub from './pages/ContractAutomationHub';
 import ContractDetail from './pages/ContractDetail';
@@ -222,6 +224,7 @@ import ContractDetailTemplate from './pages/ContractDetailTemplate';
 import ContractManagement from './pages/ContractManagement';
 import ContractRenewalTracking from './pages/ContractRenewalTracking';
 import ContractRenewals from './pages/ContractRenewals';
+import ContractTasksView from './pages/ContractTasksView';
 import ContractTemplates from './pages/ContractTemplates';
 import ContractorMarketplace from './pages/ContractorMarketplace';
 import Contracts from './pages/Contracts';
@@ -244,6 +247,7 @@ import DesignSystem from './pages/DesignSystem';
 import DesignSystemShowcase from './pages/DesignSystemShowcase';
 import DeveloperDocumentation from './pages/DeveloperDocumentation';
 import DividendOptimization from './pages/DividendOptimization';
+import DocumentAI from './pages/DocumentAI';
 import DocumentAdvancedHub from './pages/DocumentAdvancedHub';
 import DocumentAnalysisDashboard from './pages/DocumentAnalysisDashboard';
 import DocumentAnalytics from './pages/DocumentAnalytics';
@@ -259,6 +263,7 @@ import DocumentManagement from './pages/DocumentManagement';
 import DocumentManagementCenter from './pages/DocumentManagementCenter';
 import DocumentManagementDashboard from './pages/DocumentManagementDashboard';
 import DocumentSearch from './pages/DocumentSearch';
+import Error404 from './pages/Error404';
 import DocumentSecurityHub from './pages/DocumentSecurityHub';
 import DocumentTemplateManager from './pages/DocumentTemplateManager';
 import DocumentUltimateHub from './pages/DocumentUltimateHub';
@@ -278,7 +283,6 @@ import EnergyPassportManager from './pages/EnergyPassportManager';
 import EnhancedTenantPortal from './pages/EnhancedTenantPortal';
 import EntityTaxPlanning from './pages/EntityTaxPlanning';
 import Equipment from './pages/Equipment';
-import Error404 from './pages/Error404';
 import Error500 from './pages/Error500';
 import EstateTaxPlanning from './pages/EstateTaxPlanning';
 import EstimatedTaxScheduler from './pages/EstimatedTaxScheduler';
@@ -674,10 +678,6 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import AISystemPromptAdmin from './pages/AISystemPromptAdmin';
-import ContractAnalysis from './pages/ContractAnalysis';
-import DocumentAI from './pages/DocumentAI';
-import ContractTasksView from './pages/ContractTasksView';
 import __Layout from './Layout.jsx';
 
 
@@ -692,6 +692,7 @@ export const PAGES = {
     "AIMaintenanceDashboard": AIMaintenanceDashboard,
     "AIRuleApprovalDashboard": AIRuleApprovalDashboard,
     "AISettings": AISettings,
+    "AISystemPromptAdmin": AISystemPromptAdmin,
     "AITaxAdvisor": AITaxAdvisor,
     "AITaxRecommendations": AITaxRecommendations,
     "AITemplateGenerator": AITemplateGenerator,
@@ -789,10 +790,11 @@ export const PAGES = {
     "AutomatedReports": AutomatedReports,
     "AutomatedTaxFormGenerator": AutomatedTaxFormGenerator,
     "AutomationCenter": AutomationCenter,
+    "Billing": Billing,
     "AutomationRules": AutomationRules,
-    "BKChecker": BKChecker,
     "BKAbrechnungWizard": BKAbrechnungWizard,
     "BKAbrechnungWizardEnhanced": BKAbrechnungWizardEnhanced,
+    "BKChecker": BKChecker,
     "BackupRecovery": BackupRecovery,
     "BankAccounts": BankAccounts,
     "BankReconciliation": BankReconciliation,
@@ -802,7 +804,6 @@ export const PAGES = {
     "BankingAutomationHub": BankingAutomationHub,
     "BankingManagement": BankingManagement,
     "BankingOverview": BankingOverview,
-    "Billing": Billing,
     "BillingSuccess": BillingSuccess,
     "BudgetAnalysis": BudgetAnalysis,
     "BudgetPlanning": BudgetPlanning,
@@ -849,6 +850,7 @@ export const PAGES = {
     "ComprehensiveDashboard": ComprehensiveDashboard,
     "ComprehensiveTaxDashboard": ComprehensiveTaxDashboard,
     "ConsolidatedTaxSummary": ConsolidatedTaxSummary,
+    "ContractAnalysis": ContractAnalysis,
     "ContractAnalytics": ContractAnalytics,
     "ContractAutomationHub": ContractAutomationHub,
     "ContractDetail": ContractDetail,
@@ -857,6 +859,7 @@ export const PAGES = {
     "ContractManagement": ContractManagement,
     "ContractRenewalTracking": ContractRenewalTracking,
     "ContractRenewals": ContractRenewals,
+    "ContractTasksView": ContractTasksView,
     "ContractTemplates": ContractTemplates,
     "ContractorMarketplace": ContractorMarketplace,
     "Contracts": Contracts,
@@ -879,6 +882,7 @@ export const PAGES = {
     "DesignSystemShowcase": DesignSystemShowcase,
     "DeveloperDocumentation": DeveloperDocumentation,
     "DividendOptimization": DividendOptimization,
+    "DocumentAI": DocumentAI,
     "DocumentAdvancedHub": DocumentAdvancedHub,
     "DocumentAnalysisDashboard": DocumentAnalysisDashboard,
     "DocumentAnalytics": DocumentAnalytics,
@@ -894,6 +898,7 @@ export const PAGES = {
     "DocumentManagementCenter": DocumentManagementCenter,
     "DocumentManagementDashboard": DocumentManagementDashboard,
     "DocumentSearch": DocumentSearch,
+    "Error404": Error404,
     "DocumentSecurityHub": DocumentSecurityHub,
     "DocumentTemplateManager": DocumentTemplateManager,
     "DocumentUltimateHub": DocumentUltimateHub,
@@ -913,7 +918,6 @@ export const PAGES = {
     "EnhancedTenantPortal": EnhancedTenantPortal,
     "EntityTaxPlanning": EntityTaxPlanning,
     "Equipment": Equipment,
-    "Error404": Error404,
     "Error500": Error500,
     "EstateTaxPlanning": EstateTaxPlanning,
     "EstimatedTaxScheduler": EstimatedTaxScheduler,
@@ -1309,10 +1313,6 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "AISystemPromptAdmin": AISystemPromptAdmin,
-    "ContractAnalysis": ContractAnalysis,
-    "DocumentAI": DocumentAI,
-    "ContractTasksView": ContractTasksView,
 }
 
 export const pagesConfig = {
