@@ -13,9 +13,10 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Abrechnungen', icon: FileText, path: 'OperatingCosts' },
     { name: 'Mieterportal', icon: Users, path: 'TenantPortalManagement' },
     { name: 'Vertragsanalyse', icon: FileText, path: 'ContractAnalysis' },
+    { name: 'Dokument-KI', icon: Bot, path: 'DocumentAI' },
+    { name: 'Vertrags-Tasks', icon: FileText, path: 'ContractTasksView' },
     { name: 'Preise', icon: CreditCard, path: 'Pricing' },
-    { name: 'KI-Settings', icon: Bot, path: 'AISettings' },
-    { name: 'KI-Prompts', icon: Bot, path: 'AISystemPromptAdmin' }
+    { name: 'KI-Settings', icon: Bot, path: 'AISettings' }
   ];
 
   return (

@@ -132,6 +132,16 @@ Analysiere das Dokument gründlich. Identifiziere alle kritischen und riskanten 
             analysis_status: 'completed'
         });
 
+        // Auto-generate tasks
+        try {
+            await base44.asServiceRole.functions.invoke('generateContractTasks', {
+                analysis_id: analysisId
+            });
+            console.log(`Tasks auto-generated for ${documentName}`);
+        } catch (error) {
+            console.error('Failed to auto-generate tasks:', error);
+        }
+
         console.log(`Analysis completed for ${documentName}`);
     } catch (error) {
         console.error('AI analysis failed:', error);

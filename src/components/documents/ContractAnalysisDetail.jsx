@@ -3,7 +3,9 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader, AlertTriangle, CheckCircle, Download, ExternalLink, Calendar, Users, DollarSign } from 'lucide-react';
+import { Loader, AlertTriangle, CheckCircle, Download, ExternalLink, Calendar, Users, DollarSign, Bell, Plus, Edit } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 
 const CONTRACT_TYPE_LABELS = {
     lease: 'Mietvertrag',
@@ -23,6 +25,11 @@ const RISK_COLORS = {
 export default function ContractAnalysisDetail({ analysisId }) {
     const [analysis, setAnalysis] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [notes, setNotes] = useState('');
+    const [savingNotes, setSavingNotes] = useState(false);
+    const [newReminder, setNewReminder] = useState({ reminder_date: '', reminder_text: '' });
+    const [addingReminder, setAddingReminder] = useState(false);
+    const [generatingTasks, setGeneratingTasks] = useState(false);
 
     useEffect(() => {
         loadAnalysis();
@@ -42,11 +49,62 @@ export default function ContractAnalysisDetail({ analysisId }) {
             const data = await base44.entities.ContractAnalysis.list(undefined, 1, { id: analysisId });
             if (data && data.length > 0) {
                 setAnalysis(data[0]);
+                setNotes(data[0].notes || '');
             }
         } catch (error) {
             console.error('Failed to load analysis:', error);
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function saveNotes() {
+        setSavingNotes(true);
+        try {
+            await base44.entities.ContractAnalysis.update(analysisId, { notes });
+            toast.success('Notizen gespeichert');
+        } catch (error) {
+            toast.error('Fehler beim Speichern');
+        } finally {
+            setSavingNotes(false);
+        }
+    }
+
+    async function addReminder() {
+        if (!newReminder.reminder_date || !newReminder.reminder_text) {
+            toast.error('Bitte Datum und Text eingeben');
+            return;
+        }
+
+        setAddingReminder(true);
+        try {
+            const currentReminders = analysis.custom_reminders || [];
+            await base44.entities.ContractAnalysis.update(analysisId, {
+                custom_reminders: [
+                    ...currentReminders,
+                    { ...newReminder, completed: false }
+                ]
+            });
+            setNewReminder({ reminder_date: '', reminder_text: '' });
+            toast.success('Erinnerung hinzugefügt');
+        } catch (error) {
+            toast.error('Fehler beim Hinzufügen');
+        } finally {
+            setAddingReminder(false);
+        }
+    }
+
+    async function generateTasks() {
+        setGeneratingTasks(true);
+        try {
+            const { tasks_created } = await base44.functions.invoke('generateContractTasks', {
+                analysis_id: analysisId
+            });
+            toast.success(`${tasks_created} Task(s) erstellt`);
+        } catch (error) {
+            toast.error('Fehler beim Generieren der Tasks');
+        } finally {
+            setGeneratingTasks(false);
         }
     }
 
@@ -116,12 +174,24 @@ export default function ContractAnalysisDetail({ analysisId }) {
                                 )}
                             </div>
                         </div>
-                        <a href={analysis.file_url} target="_blank" rel="noopener noreferrer">
-                            <Button variant="outline" size="sm">
-                                <Download className="w-4 h-4 mr-2" />
-                                Herunterladen
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={generateTasks}
+                                disabled={generatingTasks || analysis.auto_generated_tasks?.length > 0}
+                            >
+                                <Bell className="w-4 h-4 mr-2" />
+                                {generatingTasks ? 'Generiere...' : 
+                                 analysis.auto_generated_tasks?.length > 0 ? 'Tasks erstellt' : 'Tasks generieren'}
                             </Button>
-                        </a>
+                            <a href={analysis.file_url} target="_blank" rel="noopener noreferrer">
+                                <Button variant="outline" size="sm">
+                                    <Download className="w-4 h-4 mr-2" />
+                                    Herunterladen
+                                </Button>
+                            </a>
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -333,6 +403,123 @@ export default function ContractAnalysisDetail({ analysisId }) {
                     </CardContent>
                 </Card>
             )}
+
+            {/* Keywords & Sentiment */}
+            {(analysis.keywords || analysis.sentiment_label) && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-base">KI-Analyse</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        {analysis.keywords && analysis.keywords.length > 0 && (
+                            <div>
+                                <h5 className="text-xs font-semibold text-gray-600 mb-2">Schlüsselwörter:</h5>
+                                <div className="flex flex-wrap gap-2">
+                                    {analysis.keywords.map((keyword, i) => (
+                                        <Badge key={i} variant="outline">{keyword}</Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {analysis.sentiment_label && (
+                            <div>
+                                <h5 className="text-xs font-semibold text-gray-600 mb-2">Sentiment-Analyse:</h5>
+                                <Badge className={
+                                    analysis.sentiment_label === 'very_positive' || analysis.sentiment_label === 'positive' 
+                                        ? 'bg-green-100 text-green-800' :
+                                    analysis.sentiment_label === 'negative' || analysis.sentiment_label === 'very_negative'
+                                        ? 'bg-red-100 text-red-800' :
+                                        'bg-gray-100 text-gray-800'
+                                }>
+                                    {analysis.sentiment_label} {analysis.sentiment_score && `(${analysis.sentiment_score})`}
+                                </Badge>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Custom Reminders */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                        <Bell className="w-4 h-4" />
+                        Benutzerdefinierte Erinnerungen
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {/* Existing Reminders */}
+                    {analysis.custom_reminders && analysis.custom_reminders.length > 0 && (
+                        <div className="space-y-2 mb-4">
+                            {analysis.custom_reminders.map((reminder, i) => (
+                                <div key={i} className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <p className="text-sm font-medium">{reminder.reminder_text}</p>
+                                            <p className="text-xs text-gray-600 mt-1">
+                                                📅 {new Date(reminder.reminder_date).toLocaleDateString('de-DE')}
+                                            </p>
+                                        </div>
+                                        {reminder.completed && (
+                                            <CheckCircle className="w-4 h-4 text-green-600" />
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Add New Reminder */}
+                    <div className="space-y-3 pt-3 border-t">
+                        <input
+                            type="date"
+                            value={newReminder.reminder_date}
+                            onChange={(e) => setNewReminder({ ...newReminder, reminder_date: e.target.value })}
+                            className="w-full px-3 py-2 border rounded-md"
+                        />
+                        <Textarea
+                            placeholder="Erinnerungstext..."
+                            value={newReminder.reminder_text}
+                            onChange={(e) => setNewReminder({ ...newReminder, reminder_text: e.target.value })}
+                            rows={2}
+                        />
+                        <Button
+                            onClick={addReminder}
+                            disabled={addingReminder}
+                            size="sm"
+                            className="w-full"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Erinnerung hinzufügen
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Notes */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                        <Edit className="w-4 h-4" />
+                        Notizen
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    <Textarea
+                        placeholder="Ihre Notizen zu diesem Vertrag..."
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        rows={4}
+                    />
+                    <Button
+                        onClick={saveNotes}
+                        disabled={savingNotes}
+                        size="sm"
+                    >
+                        {savingNotes ? 'Speichert...' : 'Notizen speichern'}
+                    </Button>
+                </CardContent>
+            </Card>
         </div>
     );
 }

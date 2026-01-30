@@ -676,6 +676,8 @@ import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
 import AISystemPromptAdmin from './pages/AISystemPromptAdmin';
 import ContractAnalysis from './pages/ContractAnalysis';
+import DocumentAI from './pages/DocumentAI';
+import ContractTasksView from './pages/ContractTasksView';
 import __Layout from './Layout.jsx';
 
 
@@ -1309,6 +1311,8 @@ export const PAGES = {
     "WorkflowTemplates": WorkflowTemplates,
     "AISystemPromptAdmin": AISystemPromptAdmin,
     "ContractAnalysis": ContractAnalysis,
+    "DocumentAI": DocumentAI,
+    "ContractTasksView": ContractTasksView,
 }
 
 export const pagesConfig = {
