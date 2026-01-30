@@ -10,6 +10,9 @@ import QuickActionsMenu from '@/components/operating-costs/QuickActionsMenu';
 import RecentStatementsWidget from '@/components/operating-costs/RecentStatementsWidget';
 import CrossSellBanner from '@/components/shared/CrossSellBanner';
 import TenantOverviewWidget from '@/components/tenant-portal/TenantOverviewWidget';
+import AIStatusWidget from '../components/ai/AIStatusWidget';
+import AISmartAlertManager from '../components/ai/AISmartAlertManager';
+import AIPersonalizedDashboard from '../components/ai/AIPersonalizedDashboard';
 
 export default function Dashboard() {
   const { data: statements = [] } = useQuery({
@@ -56,6 +59,9 @@ export default function Dashboard() {
           </Button>
         </Link>
       </div>
+
+      {/* AI Personalized Dashboard */}
+      <AIPersonalizedDashboard />
 
       {/* Stats Grid */}
       <div className="grid md:grid-cols-4 gap-4">
@@ -163,6 +169,9 @@ export default function Dashboard() {
         <QuickActionsMenu />
         <AIStatusWidget />
       </div>
+
+      {/* AI Smart Alerts */}
+      <AISmartAlertManager />
 
       {/* Recent Statements Widget */}
       <RecentStatementsWidget limit={5} />

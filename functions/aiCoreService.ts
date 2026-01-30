@@ -99,6 +99,15 @@ Deno.serve(async (req) => {
     // 7. Kosten berechnen
     const costs = calculateCosts(response.usage, selectedModel);
 
+    // 7a. Smart Alerts generieren (bei Anomalien)
+    if (costs.totalEur > 1.0) {
+      await base44.asServiceRole.functions.invoke('generateAISmartAlert', {
+        alert_type: 'cost_spike',
+        data: { feature: featureKey, cost: costs.totalEur },
+        target_users: [userId]
+      }).catch(() => {}); // Silent fail
+    }
+
     // 8. Usage loggen
     await logUsage(base44, {
       userId,
