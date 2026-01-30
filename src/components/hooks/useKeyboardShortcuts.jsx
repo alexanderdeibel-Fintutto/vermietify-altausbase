@@ -3,12 +3,18 @@ import { useEffect } from 'react';
 export function useKeyboardShortcuts(shortcuts) {
   useEffect(() => {
     const handleKeyDown = (e) => {
-      const key = `${e.ctrlKey || e.metaKey ? 'ctrl+' : ''}${e.shiftKey ? 'shift+' : ''}${e.key.toLowerCase()}`;
-      
-      const shortcut = shortcuts[key];
-      if (shortcut) {
-        e.preventDefault();
-        shortcut();
+      for (const shortcut of shortcuts) {
+        const { keys, callback, ctrlKey = false, shiftKey = false, altKey = false } = shortcut;
+
+        if (
+          e.key.toLowerCase() === keys.toLowerCase() &&
+          e.ctrlKey === ctrlKey &&
+          e.shiftKey === shiftKey &&
+          e.altKey === altKey
+        ) {
+          e.preventDefault();
+          callback();
+        }
       }
     };
 
@@ -16,3 +22,11 @@ export function useKeyboardShortcuts(shortcuts) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [shortcuts]);
 }
+
+export const COMMON_SHORTCUTS = {
+  SAVE: { keys: 's', ctrlKey: true },
+  SEARCH: { keys: 'k', ctrlKey: true },
+  ESC: { keys: 'Escape' },
+  ENTER: { keys: 'Enter' },
+  DELETE: { keys: 'Delete' }
+};
