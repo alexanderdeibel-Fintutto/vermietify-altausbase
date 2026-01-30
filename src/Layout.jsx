@@ -1,12 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from './utils';
-import { Calculator, FileText, Settings, CreditCard, Home as HomeIcon, Users, Bot } from 'lucide-react';
+import { Calculator, FileText, Settings, CreditCard, Home as HomeIcon, Users, Bot, Moon, Sun } from 'lucide-react';
 import NotificationBell from './components/tenant-portal/NotificationBell';
 import RealtimeChatIndicator from './components/tenant-portal/RealtimeChatIndicator';
 import AIBudgetWarningBanner from './components/ai/AIBudgetWarningBanner';
+import NavigationEnhanced from './components/navigation/NavigationEnhanced';
+import BottomNav from './components/mobile/BottomNav';
+import { ThemeProvider, useTheme } from './components/theme/ThemeProvider';
 
-export default function Layout({ children, currentPageName }) {
+function LayoutInner({ children, currentPageName }) {
   const navItems = [
     { name: 'Home', icon: HomeIcon, path: 'Home' },
     { name: 'Dashboard', icon: Calculator, path: 'Dashboard' },
@@ -20,9 +23,9 @@ export default function Layout({ children, currentPageName }) {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Top Navigation */}
-      <nav className="bg-white border-b sticky top-0 z-50">
+      <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
@@ -30,10 +33,12 @@ export default function Layout({ children, currentPageName }) {
                 <Calculator className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="font-bold text-lg">NK-Abrechnung</h1>
-                <p className="text-xs text-gray-600">by FinTuttO</p>
+                <h1 className="font-bold text-lg dark:text-white">NK-Abrechnung</h1>
+                <p className="text-xs text-gray-600 dark:text-gray-400">by FinTuttO</p>
               </div>
             </div>
+
+            <NavigationEnhanced />
 
             <div className="flex items-center gap-6">
               {navItems.map(item => {
@@ -45,31 +50,43 @@ export default function Layout({ children, currentPageName }) {
                     to={createPageUrl(item.path)}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                       isActive 
-                        ? 'bg-blue-50 text-blue-900 font-semibold' 
-                        : 'text-gray-600 hover:bg-gray-50'
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-900 dark:text-blue-300 font-semibold' 
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
                     <span className="text-sm">{item.name}</span>
                   </Link>
                 );
-              })}
-              <NotificationBell />
+                })}
+                <DarkModeToggle />
+                <NotificationBell />
             </div>
           </div>
         </div>
       </nav>
 
       {/* Main Content */}
-      <main className="min-h-[calc(100vh-64px)]">
+      <main className="min-h-[calc(100vh-64px)] pb-20 md:pb-0">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <AIBudgetWarningBanner />
         </div>
         {children}
       </main>
-      
+
+      {/* Mobile Bottom Nav */}
+      <BottomNav />
+
       {/* Realtime Chat Indicator */}
       <RealtimeChatIndicator />
-    </div>
-  );
-}
+      </div>
+      );
+      }
+
+      export default function Layout({ children, currentPageName }) {
+      return (
+      <ThemeProvider>
+      <LayoutInner children={children} currentPageName={currentPageName} />
+      </ThemeProvider>
+      );
+      }
