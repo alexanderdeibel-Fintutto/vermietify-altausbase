@@ -13,6 +13,7 @@ import TenantOverviewWidget from '@/components/tenant-portal/TenantOverviewWidge
 import AIStatusWidget from '../components/ai/AIStatusWidget';
 import AISmartAlertManager from '../components/ai/AISmartAlertManager';
 import AIPersonalizedDashboard from '../components/ai/AIPersonalizedDashboard';
+import ProactiveRecommendationsWidget from '../components/ai/ProactiveRecommendationsWidget';
 
 export default function Dashboard() {
   const { data: statements = [] } = useQuery({
@@ -170,8 +171,11 @@ export default function Dashboard() {
         <AIStatusWidget />
       </div>
 
-      {/* AI Smart Alerts */}
-      <AISmartAlertManager />
+      {/* AI Smart Alerts & Recommendations */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <AISmartAlertManager />
+        <ProactiveRecommendationsWidget limit={3} />
+      </div>
 
       {/* Recent Statements Widget */}
       <RecentStatementsWidget limit={5} />

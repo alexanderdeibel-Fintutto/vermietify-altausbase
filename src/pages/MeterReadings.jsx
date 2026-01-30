@@ -1,12 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Gauge, Calendar, TrendingUp, Plus } from 'lucide-react';
+import { Gauge, Calendar, TrendingUp, Plus, FileText } from 'lucide-react';
 import AIMeterOCR from '../components/meters/AIMeterOCR';
+import InvoiceOCRDialog from '../components/meters/InvoiceOCRDialog';
+import MeterReplacementAlertsWidget from '../components/meters/MeterReplacementAlertsWidget';
+import ProactiveRecommendationsWidget from '../components/ai/ProactiveRecommendationsWidget';
 
 export default function MeterReadings() {
+    const [showInvoiceOCR, setShowInvoiceOCR] = useState(false);
+
     const { data: readings = [], refetch: refetchReadings } = useQuery({
         queryKey: ['meterReadings'],
         queryFn: () => base44.entities.MeterReading.list('-created_date')
@@ -17,6 +22,11 @@ export default function MeterReadings() {
         queryFn: () => base44.entities.Meter.list()
     });
 
+    const { data: buildings = [] } = useQuery({
+        queryKey: ['buildings'],
+        queryFn: () => base44.entities.Building.list()
+    });
+
     return (
         <div className="space-y-6">
             <div className="vf-page-header">
@@ -25,7 +35,11 @@ export default function MeterReadings() {
                     <p className="vf-page-subtitle">{readings.length} Ablesungen erfasst</p>
                 </div>
                 <div className="flex gap-2">
-                    <AIMeterOCR onMeterCreated={refetchMeters} />
+                    <AIMeterOCR building_id={buildings[0]?.id} onMeterCreated={refetchMeters} />
+                    <Button onClick={() => setShowInvoiceOCR(true)} variant="outline">
+                        <FileText className="w-4 h-4 mr-2" />
+                        Rechnung scannen
+                    </Button>
                     <Button className="vf-btn-gradient">
                         <Plus className="w-4 h-4 mr-2" />
                         Neue Ablesung
@@ -66,6 +80,19 @@ export default function MeterReadings() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* AI Widgets */}
+            <div className="grid md:grid-cols-2 gap-4">
+                <MeterReplacementAlertsWidget />
+                <ProactiveRecommendationsWidget limit={5} />
+            </div>
+
+            <InvoiceOCRDialog 
+                building_id={buildings[0]?.id}
+                open={showInvoiceOCR}
+                onOpenChange={setShowInvoiceOCR}
+                onSuccess={refetchMeters}
+            />
 
             <Card>
                 <CardContent className="p-6">
