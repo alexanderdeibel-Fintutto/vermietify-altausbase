@@ -5,7 +5,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { Building, Home, Users, FileText, Euro, CheckSquare, Settings, ArrowLeft } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import CurrencyDisplay from '@/components/shared/CurrencyDisplay';
+import { CurrencyDisplay } from '@/components/shared/CurrencyDisplay';
 import BuildingSummary from '@/components/buildings/BuildingSummary';
 import BuildingUnitsManager from '@/components/building-detail/BuildingUnitsManager';
 import BuildingTenantsOverview from '@/components/building-detail/BuildingTenantsOverview';
