@@ -47,6 +47,7 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import AIAdminReporting from './pages/AIAdminReporting';
 import AICommunicationHub from './pages/AICommunicationHub';
 import AIDocumentAnalysis from './pages/AIDocumentAnalysis';
 import AIDocumentAnalysisPage from './pages/AIDocumentAnalysisPage';
@@ -154,10 +155,9 @@ import AutomatedReports from './pages/AutomatedReports';
 import AutomatedTaxFormGenerator from './pages/AutomatedTaxFormGenerator';
 import AutomationCenter from './pages/AutomationCenter';
 import AutomationRules from './pages/AutomationRules';
-import BKAbrechnungWizard from './pages/BKAbrechnungWizard';
-import Billing from './pages/Billing';
-import BKAbrechnungWizardEnhanced from './pages/BKAbrechnungWizardEnhanced';
 import BKChecker from './pages/BKChecker';
+import BKAbrechnungWizard from './pages/BKAbrechnungWizard';
+import BKAbrechnungWizardEnhanced from './pages/BKAbrechnungWizardEnhanced';
 import BackupRecovery from './pages/BackupRecovery';
 import BankAccounts from './pages/BankAccounts';
 import BankReconciliation from './pages/BankReconciliation';
@@ -167,6 +167,7 @@ import BankTransfers from './pages/BankTransfers';
 import BankingAutomationHub from './pages/BankingAutomationHub';
 import BankingManagement from './pages/BankingManagement';
 import BankingOverview from './pages/BankingOverview';
+import Billing from './pages/Billing';
 import BillingSuccess from './pages/BillingSuccess';
 import BudgetAnalysis from './pages/BudgetAnalysis';
 import BudgetPlanning from './pages/BudgetPlanning';
@@ -373,9 +374,9 @@ import MyAccount from './pages/MyAccount';
 import MySubscription from './pages/MySubscription';
 import NavigationDemo from './pages/NavigationDemo';
 import NotificationCenter from './pages/NotificationCenter';
-import NotificationHub from './pages/NotificationHub';
 import NotificationCenterEnhanced from './pages/NotificationCenterEnhanced';
 import NotificationHistory from './pages/NotificationHistory';
+import NotificationHub from './pages/NotificationHub';
 import NotificationManagement from './pages/NotificationManagement';
 import NotificationPreferences from './pages/NotificationPreferences';
 import OfflineError from './pages/OfflineError';
@@ -485,7 +486,6 @@ import TaskDetail from './pages/TaskDetail';
 import TaskManagement from './pages/TaskManagement';
 import Tasks from './pages/Tasks';
 import Tax from './pages/Tax';
-import TaxForms from './pages/TaxForms';
 import TaxAIChatbot from './pages/TaxAIChatbot';
 import TaxAdminDashboard from './pages/TaxAdminDashboard';
 import TaxAdminPanel from './pages/TaxAdminPanel';
@@ -521,6 +521,7 @@ import TaxFilingWizard from './pages/TaxFilingWizard';
 import TaxForecastPlanner from './pages/TaxForecastPlanner';
 import TaxFormGuide from './pages/TaxFormGuide';
 import TaxFormLibrary from './pages/TaxFormLibrary';
+import TaxForms from './pages/TaxForms';
 import TaxHarvesting from './pages/TaxHarvesting';
 import TaxLawUpdates from './pages/TaxLawUpdates';
 import TaxLibraryManagement from './pages/TaxLibraryManagement';
@@ -673,11 +674,12 @@ import WorkflowExecutionCenter from './pages/WorkflowExecutionCenter';
 import WorkflowReporting from './pages/WorkflowReporting';
 import WorkflowTemplateCatalogPage from './pages/WorkflowTemplateCatalogPage';
 import WorkflowTemplates from './pages/WorkflowTemplates';
-import AIAdminReporting from './pages/AIAdminReporting';
+import AISystemPromptAdmin from './pages/AISystemPromptAdmin';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AIAdminReporting": AIAdminReporting,
     "AICommunicationHub": AICommunicationHub,
     "AIDocumentAnalysis": AIDocumentAnalysis,
     "AIDocumentAnalysisPage": AIDocumentAnalysisPage,
@@ -785,10 +787,9 @@ export const PAGES = {
     "AutomatedTaxFormGenerator": AutomatedTaxFormGenerator,
     "AutomationCenter": AutomationCenter,
     "AutomationRules": AutomationRules,
-    "BKAbrechnungWizard": BKAbrechnungWizard,
-    "Billing": Billing,
-    "BKAbrechnungWizardEnhanced": BKAbrechnungWizardEnhanced,
     "BKChecker": BKChecker,
+    "BKAbrechnungWizard": BKAbrechnungWizard,
+    "BKAbrechnungWizardEnhanced": BKAbrechnungWizardEnhanced,
     "BackupRecovery": BackupRecovery,
     "BankAccounts": BankAccounts,
     "BankReconciliation": BankReconciliation,
@@ -798,6 +799,7 @@ export const PAGES = {
     "BankingAutomationHub": BankingAutomationHub,
     "BankingManagement": BankingManagement,
     "BankingOverview": BankingOverview,
+    "Billing": Billing,
     "BillingSuccess": BillingSuccess,
     "BudgetAnalysis": BudgetAnalysis,
     "BudgetPlanning": BudgetPlanning,
@@ -1004,9 +1006,9 @@ export const PAGES = {
     "MySubscription": MySubscription,
     "NavigationDemo": NavigationDemo,
     "NotificationCenter": NotificationCenter,
-    "NotificationHub": NotificationHub,
     "NotificationCenterEnhanced": NotificationCenterEnhanced,
     "NotificationHistory": NotificationHistory,
+    "NotificationHub": NotificationHub,
     "NotificationManagement": NotificationManagement,
     "NotificationPreferences": NotificationPreferences,
     "OfflineError": OfflineError,
@@ -1116,7 +1118,6 @@ export const PAGES = {
     "TaskManagement": TaskManagement,
     "Tasks": Tasks,
     "Tax": Tax,
-    "TaxForms": TaxForms,
     "TaxAIChatbot": TaxAIChatbot,
     "TaxAdminDashboard": TaxAdminDashboard,
     "TaxAdminPanel": TaxAdminPanel,
@@ -1152,6 +1153,7 @@ export const PAGES = {
     "TaxForecastPlanner": TaxForecastPlanner,
     "TaxFormGuide": TaxFormGuide,
     "TaxFormLibrary": TaxFormLibrary,
+    "TaxForms": TaxForms,
     "TaxHarvesting": TaxHarvesting,
     "TaxLawUpdates": TaxLawUpdates,
     "TaxLibraryManagement": TaxLibraryManagement,
@@ -1304,7 +1306,7 @@ export const PAGES = {
     "WorkflowReporting": WorkflowReporting,
     "WorkflowTemplateCatalogPage": WorkflowTemplateCatalogPage,
     "WorkflowTemplates": WorkflowTemplates,
-    "AIAdminReporting": AIAdminReporting,
+    "AISystemPromptAdmin": AISystemPromptAdmin,
 }
 
 export const pagesConfig = {
