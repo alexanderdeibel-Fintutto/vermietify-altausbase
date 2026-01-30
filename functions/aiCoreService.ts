@@ -28,6 +28,22 @@ Deno.serve(async (req) => {
       conversationId,   // Optional: Für Chat-Historie
     } = await req.json();
 
+    // Custom System-Prompts laden
+    let finalSystemPrompt = systemPrompt;
+    if (featureKey) {
+      const customPrompts = await base44.asServiceRole.entities.AISystemPrompt.filter({
+        feature_key: featureKey,
+        is_active: true
+      }, '-created_date', 1);
+      
+      if (customPrompts.length > 0) {
+        finalSystemPrompt = customPrompts[0].system_prompt;
+        await base44.asServiceRole.entities.AISystemPrompt.update(customPrompts[0].id, {
+          usage_count: (customPrompts[0].usage_count || 0) + 1
+        });
+      }
+    }
+
     // 1. AISettings laden
     const settings = await getAISettings(base44);
     
@@ -69,7 +85,7 @@ Deno.serve(async (req) => {
     // 6. Claude API aufrufen MIT PROMPT CACHING
     const startTime = Date.now();
     const response = await callClaudeWithCaching({
-      systemPrompt: systemPrompt || featureConfig?.system_prompt || getDefaultSystemPrompt(action),
+      systemPrompt: finalSystemPrompt || featureConfig?.system_prompt || getDefaultSystemPrompt(action),
       userPrompt: prompt,
       context,
       imageBase64,

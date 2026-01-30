@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '../utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,7 +13,7 @@ import AIBudgetOverview from '../components/ai/AIBudgetOverview';
 import AIUsageChart from '../components/ai/AIUsageChart';
 import AITestPanel from '../components/ai/AITestPanel';
 import AIUserLimitSettings from '../components/ai/AIUserLimitSettings';
-import { Bot, Save, CheckCircle, AlertCircle, Loader2, Download } from 'lucide-react';
+import { Bot, Save, CheckCircle, AlertCircle, Loader2, Download, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AISettings() {
@@ -443,6 +445,26 @@ export default function AISettings() {
           CSV Export
         </Button>
       </div>
+
+      {/* User Limit Settings */}
+      <AIUserLimitSettings />
+
+      {/* Admin Link */}
+      {user?.role === 'admin' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>🔧 Admin-Funktionen</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Link to={createPageUrl('AIAdminReporting')}>
+              <Button className="w-full" variant="outline">
+                Erweitertes AI-Reporting Dashboard
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Test-Panel */}
       <AITestPanel />

@@ -6,6 +6,16 @@ Deno.serve(async (req) => {
   try {
     // Triggered by AIUsageLog entity automation
     const { event, data } = await req.json();
+
+    // Trigger AI Workflows
+    await base44.asServiceRole.functions.invoke('triggerAIWorkflow', {
+      trigger_type: 'budget_exceeded',
+      trigger_data: { 
+        log_id: data.id,
+        user_email: data.user_email,
+        cost: data.cost_eur
+      }
+    });
     
     if (!data || event.type !== 'create') {
       return Response.json({ skipped: true });

@@ -4,14 +4,15 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Gauge, Calendar, TrendingUp, Plus } from 'lucide-react';
+import AIMeterOCR from '../components/meters/AIMeterOCR';
 
 export default function MeterReadings() {
-    const { data: readings = [] } = useQuery({
+    const { data: readings = [], refetch: refetchReadings } = useQuery({
         queryKey: ['meterReadings'],
         queryFn: () => base44.entities.MeterReading.list('-created_date')
     });
 
-    const { data: meters = [] } = useQuery({
+    const { data: meters = [], refetch: refetchMeters } = useQuery({
         queryKey: ['meters'],
         queryFn: () => base44.entities.Meter.list()
     });
@@ -23,10 +24,13 @@ export default function MeterReadings() {
                     <h1 className="vf-page-title">Zählerablesung</h1>
                     <p className="vf-page-subtitle">{readings.length} Ablesungen erfasst</p>
                 </div>
-                <Button className="vf-btn-gradient">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Neue Ablesung
-                </Button>
+                <div className="flex gap-2">
+                    <AIMeterOCR onMeterCreated={refetchMeters} />
+                    <Button className="vf-btn-gradient">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Neue Ablesung
+                    </Button>
+                </div>
             </div>
 
             <div className="grid md:grid-cols-4 gap-4">
