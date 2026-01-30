@@ -8,6 +8,7 @@ import { Plus, Edit2, Trash2, Eye, EyeOff, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import AISystemPromptEditor from '../components/ai/AISystemPromptEditor';
 import AIPromptPreview from '../components/ai/AIPromptPreview';
+import AIFeatureConfigManager from '../components/ai/AIFeatureConfigManager';
 
 export default function AISystemPromptAdmin() {
     const [showEditor, setShowEditor] = useState(false);
@@ -283,6 +284,9 @@ export default function AISystemPromptAdmin() {
                                 </CardContent>
                             </Card>
                         )}
+
+                        {/* Feature Config Manager */}
+                        {!showEditor && <AIFeatureConfigManager />}
                     </div>
                 </div>
             </div>
