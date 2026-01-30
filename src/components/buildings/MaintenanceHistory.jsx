@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Wrench } from 'lucide-react';
 import TimeAgo from '@/components/shared/TimeAgo';
-import CurrencyDisplay from '@/components/shared/CurrencyDisplay';
+import { CurrencyDisplay } from '@/components/shared/CurrencyDisplay';
 
 export default function MaintenanceHistory({ buildingId }) {
   const history = [
