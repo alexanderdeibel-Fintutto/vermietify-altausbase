@@ -1,7 +1,7 @@
 import React from 'react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
-export default function CurrencyDisplay({ 
+export function CurrencyDisplay({ 
   amount, 
   currency = 'EUR',
   showTrend = false,
