@@ -12,6 +12,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Dashboard', icon: Calculator, path: 'Dashboard' },
     { name: 'Abrechnungen', icon: FileText, path: 'OperatingCosts' },
     { name: 'Mieterportal', icon: Users, path: 'TenantPortalManagement' },
+    { name: 'Vertragsanalyse', icon: FileText, path: 'ContractAnalysis' },
     { name: 'Preise', icon: CreditCard, path: 'Pricing' },
     { name: 'KI-Settings', icon: Bot, path: 'AISettings' },
     { name: 'KI-Prompts', icon: Bot, path: 'AISystemPromptAdmin' }
