@@ -11,8 +11,8 @@ import { ThemeProvider, useTheme } from './components/theme/ThemeProvider';
 
 function LayoutInner({ children, currentPageName }) {
   const navItems = [
-    { name: 'Home', icon: HomeIcon, path: 'Home' },
     { name: 'Dashboard', icon: Calculator, path: 'Dashboard' },
+    { name: 'Home', icon: HomeIcon, path: 'Home' },
     { name: 'Abrechnungen', icon: FileText, path: 'OperatingCosts' },
     { name: 'Mieterportal', icon: Users, path: 'TenantPortalManagement' },
     { name: 'Vertragsanalyse', icon: FileText, path: 'ContractAnalysis' },
