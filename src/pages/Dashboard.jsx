@@ -158,10 +158,10 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* Quick Actions & Tenant Portal */}
+      {/* Quick Actions & AI Status */}
       <div className="grid md:grid-cols-2 gap-6">
         <QuickActionsMenu />
-        <TenantPortalDashboardWidget />
+        <AIStatusWidget />
       </div>
 
       {/* Recent Statements Widget */}
