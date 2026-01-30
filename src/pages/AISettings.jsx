@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import AIBudgetOverview from '../components/ai/AIBudgetOverview';
 import AIUsageChart from '../components/ai/AIUsageChart';
 import AITestPanel from '../components/ai/AITestPanel';
+import AIUserLimitSettings from '../components/ai/AIUserLimitSettings';
 import { Bot, Save, CheckCircle, AlertCircle, Loader2, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
