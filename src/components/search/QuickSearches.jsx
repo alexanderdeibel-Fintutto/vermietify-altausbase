@@ -1,101 +1,55 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { Star, Trash2, Search } from 'lucide-react';
-import { toast } from 'sonner';
+import { Search, Star, Clock } from 'lucide-react';
+import { motion } from 'framer-motion';
 
-export default function QuickSearches({ entityName, onExecute }) {
-  const queryClient = useQueryClient();
-
-  const { data: savedSearches = [] } = useQuery({
-    queryKey: ['savedSearches', entityName],
-    queryFn: async () => {
-      const response = await base44.functions.invoke('getSavedSearches', { entity: entityName });
-      return response.data;
-    }
-  });
-
-  const executeMutation = useMutation({
-    mutationFn: async (search) => {
-      const response = await base44.functions.invoke('enhancedSearch', {
-        entity: search.entity,
-        conditions: search.conditions
-      });
-      return response.data;
-    },
-    onSuccess: (data, search) => {
-      onExecute?.(data);
-      toast.success(`"${search.name}" ausgeführt - ${data.length} Ergebnisse`);
-    }
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (searchId) => {
-      await base44.functions.invoke('deleteSavedSearch', { search_id: searchId });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['savedSearches'] });
-      toast.success('Suche gelöscht');
-    }
-  });
-
-  if (savedSearches.length === 0) {
-    return null;
-  }
-
+export default function QuickSearches({ savedSearches = [], recentSearches = [], onSelect }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Star className="w-5 h-5" />
-          Gespeicherte Suchen
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {savedSearches.map((search) => (
-          <div
-            key={search.id}
-            className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
-          >
-            <div className="flex-1">
-              <p className="font-semibold text-sm">{search.name}</p>
-              <div className="flex gap-1 mt-1 flex-wrap">
-                {search.conditions.slice(0, 3).map((cond, idx) => (
-                  <Badge key={idx} variant="outline" className="text-xs">
-                    {cond.field}
-                  </Badge>
-                ))}
-                {search.conditions.length > 3 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{search.conditions.length - 3}
-                  </Badge>
-                )}
-              </div>
-            </div>
-            
-            <div className="flex gap-1">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => executeMutation.mutate(search)}
-                disabled={executeMutation.isPending}
+    <div className="space-y-4">
+      {savedSearches.length > 0 && (
+        <div>
+          <h3 className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase mb-2 flex items-center gap-1">
+            <Star className="w-3 h-3" />
+            Gespeicherte Suchen
+          </h3>
+          <div className="space-y-1">
+            {savedSearches.map((search, idx) => (
+              <motion.button
+                key={search.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                onClick={() => onSelect(search)}
+                className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-sm flex items-center gap-2 transition-colors"
               >
-                <Search className="w-4 h-4" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => deleteMutation.mutate(search.id)}
-              >
-                <Trash2 className="w-4 h-4 text-red-600" />
-              </Button>
-            </div>
+                <Search className="w-4 h-4 text-gray-400" />
+                <span className="flex-1 text-gray-900 dark:text-gray-100">{search.name}</span>
+                <span className="text-xs text-gray-500">{search.resultCount} Ergebnisse</span>
+              </motion.button>
+            ))}
           </div>
-        ))}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+
+      {recentSearches.length > 0 && (
+        <div>
+          <h3 className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase mb-2 flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            Kürzlich
+          </h3>
+          <div className="space-y-1">
+            {recentSearches.map((search, idx) => (
+              <button
+                key={idx}
+                onClick={() => onSelect({ query: search })}
+                className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 transition-colors"
+              >
+                {search}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

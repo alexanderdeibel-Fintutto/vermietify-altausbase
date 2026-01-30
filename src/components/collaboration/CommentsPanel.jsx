@@ -1,60 +1,122 @@
 import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { VfTextarea } from '@/components/shared/VfTextarea';
+import { MessageCircle, Send, MoreVertical, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import TimeAgo from '@/components/shared/TimeAgo';
-import { MessageSquare, Send } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { motion, AnimatePresence } from 'framer-motion';
+import { formatDistanceToNow } from 'date-fns';
+import { de } from 'date-fns/locale';
 
-export default function CommentsPanel({ entityId, entityType }) {
+export default function CommentsPanel({ comments = [], onAdd, onDelete, currentUser }) {
   const [newComment, setNewComment] = useState('');
-  const [comments, setComments] = useState([
-    { id: 1, user: 'Max Mustermann', text: 'Bitte Vertrag bis Ende März verlängern', created_date: new Date() }
-  ]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (!newComment.trim()) return;
-    setComments([...comments, {
-      id: Date.now(),
-      user: 'Aktueller Nutzer',
-      text: newComment,
-      created_date: new Date()
-    }]);
-    setNewComment('');
+
+    setIsSubmitting(true);
+    try {
+      await onAdd(newComment);
+      setNewComment('');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5" />
-          Kommentare
-          <span className="vf-badge vf-badge-primary">{comments.length}</span>
+          <MessageCircle className="w-5 h-5" />
+          Kommentare ({comments.length})
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
-          {comments.map((comment) => (
-            <div key={comment.id} className="p-3 bg-[var(--theme-surface)] rounded-lg">
-              <div className="flex justify-between items-start mb-2">
-                <span className="font-medium text-sm">{comment.user}</span>
-                <TimeAgo date={comment.created_date} className="text-xs" />
-              </div>
-              <p className="text-sm text-[var(--theme-text-secondary)]">{comment.text}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex gap-2">
-          <VfTextarea
-            placeholder="Kommentar hinzufügen..."
+      <CardContent className="space-y-4">
+        {/* Comment Form */}
+        <form onSubmit={handleSubmit} className="space-y-2">
+          <Textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            rows={2}
-            className="flex-1"
+            placeholder="Kommentar hinzufügen..."
+            className="min-h-20"
           />
-          <Button variant="gradient" onClick={handleSubmit}>
-            <Send className="h-4 w-4" />
-          </Button>
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              disabled={!newComment.trim() || isSubmitting}
+              size="sm"
+              className="gap-2"
+            >
+              <Send className="w-3 h-3" />
+              Senden
+            </Button>
+          </div>
+        </form>
+
+        {/* Comments List */}
+        <div className="space-y-3 max-h-96 overflow-y-auto">
+          <AnimatePresence>
+            {comments.map((comment, idx) => (
+              <motion.div
+                key={comment.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ delay: idx * 0.05 }}
+                className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold">
+                      {comment.user?.charAt(0) || 'U'}
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm text-gray-900 dark:text-gray-100">
+                        {comment.user || 'Unbekannt'}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {formatDistanceToNow(new Date(comment.created_date), { 
+                          addSuffix: true, 
+                          locale: de 
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {onDelete && comment.created_by === currentUser && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                          <MoreVertical className="w-3 h-3" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem
+                          onClick={() => onDelete(comment.id)}
+                          className="text-red-600"
+                        >
+                          <Trash2 className="w-3 h-3 mr-2" />
+                          Löschen
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </div>
+                
+                <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                  {comment.content}
+                </p>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+
+          {comments.length === 0 && (
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8 text-sm">
+              Noch keine Kommentare vorhanden
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>
