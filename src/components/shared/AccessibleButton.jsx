@@ -1,17 +1,24 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
-export default function AccessibleButton({ 
-  children, 
-  ariaLabel, 
-  className,
-  ...props 
+export default function AccessibleButton({
+  children,
+  ariaLabel,
+  ariaPressed,
+  ariaDescribedBy,
+  disabled,
+  onClick,
+  variant = 'default',
+  ...props
 }) {
   return (
     <Button
       aria-label={ariaLabel}
-      className={cn("min-h-[44px] min-w-[44px]", className)}
+      aria-pressed={ariaPressed}
+      aria-describedby={ariaDescribedBy}
+      disabled={disabled}
+      onClick={onClick}
+      variant={variant}
       {...props}
     >
       {children}
