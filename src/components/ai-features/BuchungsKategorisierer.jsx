@@ -1,15 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
+import AIUsageIndicator from '../ai/AIUsageIndicator';
+import AICostDisplay from '../ai/AICostDisplay';
 
 export default function BuchungsKategorisierer() {
     const [image, setImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
+    const [user, setUser] = useState(null);
+    const [usageStats, setUsageStats] = useState(null);
+
+    useEffect(() => {
+        loadUser();
+    }, []);
+
+    async function loadUser() {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+    }
 
     const handleFileSelect = (e) => {
         const file = e.target.files[0];
@@ -29,17 +42,21 @@ export default function BuchungsKategorisierer() {
 
         setLoading(true);
         try {
-            const response = await base44.functions.invoke('callClaudeAPI', {
-                featureKey: 'buchungen',
+            const response = await base44.functions.invoke('aiCoreService', {
+                action: 'categorization',
+                prompt: 'Kategorisiere alle Buchungen in diesem Bild. Gib zurück: zusammenfassung{anzahl_buchungen, summe_einnahmen, summe_ausgaben}, buchungen[{beschreibung, betrag, typ: "einnahme"|"ausgabe", skr03_konto, konto_bezeichnung}]',
                 systemPrompt: 'Du bist ein Buchhaltungsexperte. Kategorisiere alle Buchungen nach SKR03.',
-                userPrompt: 'Kategorisiere alle Buchungen in diesem Bild. Gib zurück: zusammenfassung{anzahl_buchungen, summe_einnahmen, summe_ausgaben}, buchungen[{beschreibung, betrag, typ: "einnahme"|"ausgabe", skr03_konto, konto_bezeichnung}]',
                 imageBase64: image.base64,
                 imageMediaType: image.type,
-                responseSchema: true
+                userId: user?.email,
+                featureKey: 'categorization',
+                maxTokens: 4096
             });
 
             if (response.data.success) {
-                setResult(response.data.data);
+                const parsed = JSON.parse(response.data.content);
+                setResult(parsed);
+                setUsageStats(response.data.usage);
                 toast.success('Buchungen kategorisiert');
             } else {
                 toast.error(response.data.error || 'Fehler bei der Kategorisierung');
@@ -55,7 +72,10 @@ export default function BuchungsKategorisierer() {
         <div className="max-w-6xl mx-auto space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>📊 Buchungs-Kategorisierer (SKR03)</CardTitle>
+                    <CardTitle className="flex items-center justify-between">
+                        <div>📊 Buchungs-Kategorisierer (SKR03)</div>
+                        {user && <AIUsageIndicator userId={user.email} />}
+                    </CardTitle>
                     <p className="text-sm text-slate-600">Lade eine Liste von Buchungen - ich ordne sie automatisch SKR03-Konten zu</p>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -125,7 +145,9 @@ export default function BuchungsKategorisierer() {
                                 </div>
                             </div>
 
-                            <Button variant="outline" onClick={() => { setResult(null); setImage(null); setImagePreview(null); }}>
+                            {usageStats && <AICostDisplay usage={usageStats} />}
+
+                            <Button variant="outline" onClick={() => { setResult(null); setImage(null); setImagePreview(null); setUsageStats(null); }}>
                                 Neue Analyse
                             </Button>
                         </div>

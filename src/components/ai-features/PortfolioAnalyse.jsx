@@ -1,27 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Building2, Loader2, TrendingUp, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import AIUsageIndicator from '../ai/AIUsageIndicator';
+import AICostDisplay from '../ai/AICostDisplay';
 
 export default function PortfolioAnalyse() {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
+    const [user, setUser] = useState(null);
+    const [usageStats, setUsageStats] = useState(null);
+
+    useEffect(() => {
+        loadUser();
+    }, []);
+
+    async function loadUser() {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+    }
 
     const handleAnalyze = async () => {
         setLoading(true);
         try {
             const buildings = await base44.entities.Building.list();
-            const response = await base44.functions.invoke('callClaudeAPI', {
-                featureKey: 'portfolio',
+            const response = await base44.functions.invoke('aiCoreService', {
+                action: 'analysis',
+                prompt: `Analysiere dieses Immobilien-Portfolio: ${JSON.stringify(buildings)}. Gib zurück: portfolio_uebersicht{anzahl_objekte, gesamtwert_geschaetzt, durchschnittliche_rendite}, diversifikation{bewertung: "gut"|"mittel"|"schlecht", kommentar}, risiko_analyse{gesamtrisiko: "niedrig"|"mittel"|"hoch", klumpenrisiken[]}, empfehlungen[{bereich, empfehlung, begruendung, prioritaet}], disclaimer`,
                 systemPrompt: 'Du bist ein Portfolio-Manager für Immobilien. Analysiere das Portfolio strategisch.',
-                userPrompt: `Analysiere dieses Immobilien-Portfolio: ${JSON.stringify(buildings)}. Gib zurück: portfolio_uebersicht{anzahl_objekte, gesamtwert_geschaetzt, durchschnittliche_rendite}, diversifikation{bewertung: "gut"|"mittel"|"schlecht", kommentar}, risiko_analyse{gesamtrisiko: "niedrig"|"mittel"|"hoch", klumpenrisiken[]}, empfehlungen[{bereich, empfehlung, begruendung, prioritaet}], disclaimer`,
-                responseSchema: true
+                userId: user?.email,
+                featureKey: 'analysis',
+                maxTokens: 4096
             });
 
             if (response.data.success) {
-                setResult(response.data.data);
+                const parsed = JSON.parse(response.data.content);
+                setResult(parsed);
+                setUsageStats(response.data.usage);
                 toast.success('Portfolio analysiert');
             } else {
                 toast.error(response.data.error || 'Fehler bei der Analyse');
@@ -37,9 +54,12 @@ export default function PortfolioAnalyse() {
         <div className="max-w-5xl mx-auto space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Building2 className="w-5 h-5" />
-                        Portfolio-Analyse
+                    <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Building2 className="w-5 h-5" />
+                            Portfolio-Analyse
+                        </div>
+                        {user && <AIUsageIndicator userId={user.email} />}
                     </CardTitle>
                     <p className="text-sm text-slate-600">Analysiere dein gesamtes Immobilien-Portfolio strategisch</p>
                 </CardHeader>
@@ -137,7 +157,9 @@ export default function PortfolioAnalyse() {
                                 {result.disclaimer}
                             </div>
 
-                            <Button variant="outline" onClick={() => setResult(null)}>
+                            {usageStats && <AICostDisplay usage={usageStats} />}
+
+                            <Button variant="outline" onClick={() => { setResult(null); setUsageStats(null); }}>
                                 Neue Analyse
                             </Button>
                         </div>

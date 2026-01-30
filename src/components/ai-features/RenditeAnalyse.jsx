@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,10 +6,23 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { TrendingUp, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import AIUsageIndicator from '../ai/AIUsageIndicator';
+import AICostDisplay from '../ai/AICostDisplay';
 
 export default function RenditeAnalyse() {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
+    const [user, setUser] = useState(null);
+    const [usageStats, setUsageStats] = useState(null);
+
+    useEffect(() => {
+        loadUser();
+    }, []);
+
+    async function loadUser() {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+    }
 
     const handleAnalyze = async (e) => {
         e.preventDefault();
@@ -29,15 +42,19 @@ export default function RenditeAnalyse() {
 
         setLoading(true);
         try {
-            const response = await base44.functions.invoke('callClaudeAPI', {
-                featureKey: 'rendite',
+            const response = await base44.functions.invoke('aiCoreService', {
+                action: 'analysis',
+                prompt: `Analysiere diese Immobilie: ${JSON.stringify(daten)}. Berechne: renditen{bruttomietrendite, nettomietrendite, eigenkapitalrendite, cashflow_monatlich, cashflow_jaehrlich}, bewertung{gesamtnote: "sehr_gut"|"gut"|"mittel"|"schlecht", empfehlung: "kaufen"|"pruefen"|"ablehnen", begruendung, staerken[], risiken[]}`,
                 systemPrompt: 'Du bist ein Immobilieninvestment-Experte. Berechne alle wichtigen Renditekennzahlen.',
-                userPrompt: `Analysiere diese Immobilie: ${JSON.stringify(daten)}. Berechne: renditen{bruttomietrendite, nettomietrendite, eigenkapitalrendite, cashflow_monatlich, cashflow_jaehrlich}, bewertung{gesamtnote: "sehr_gut"|"gut"|"mittel"|"schlecht", empfehlung: "kaufen"|"pruefen"|"ablehnen", begruendung, staerken[], risiken[]}`,
-                responseSchema: true
+                userId: user?.email,
+                featureKey: 'analysis',
+                maxTokens: 3072
             });
 
             if (response.data.success) {
-                setResult(response.data.data);
+                const parsed = JSON.parse(response.data.content);
+                setResult(parsed);
+                setUsageStats(response.data.usage);
                 toast.success('Rendite-Analyse abgeschlossen');
             } else {
                 toast.error(response.data.error || 'Fehler bei der Analyse');
@@ -53,9 +70,12 @@ export default function RenditeAnalyse() {
         <div className="max-w-5xl mx-auto space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <TrendingUp className="w-5 h-5" />
-                        Immobilien-Rendite-Analyse
+                    <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <TrendingUp className="w-5 h-5" />
+                            Immobilien-Rendite-Analyse
+                        </div>
+                        {user && <AIUsageIndicator userId={user.email} />}
                     </CardTitle>
                     <p className="text-sm text-slate-600">Berechne alle Kennzahlen für deine Kaufentscheidung</p>
                 </CardHeader>
@@ -175,7 +195,9 @@ export default function RenditeAnalyse() {
                                 </div>
                             )}
 
-                            <Button variant="outline" onClick={() => setResult(null)}>
+                            {usageStats && <AICostDisplay usage={usageStats} />}
+
+                            <Button variant="outline" onClick={() => { setResult(null); setUsageStats(null); }}>
                                 Neue Analyse
                             </Button>
                         </div>

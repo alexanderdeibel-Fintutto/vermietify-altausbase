@@ -1,14 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileText, Upload, Loader2, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import AIUsageIndicator from '../ai/AIUsageIndicator';
+import AICostDisplay from '../ai/AICostDisplay';
 
 export default function MietvertragPruefer() {
     const [images, setImages] = useState([]);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
+    const [user, setUser] = useState(null);
+    const [usageStats, setUsageStats] = useState(null);
+
+    useEffect(() => {
+        loadUser();
+    }, []);
+
+    async function loadUser() {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+    }
 
     const handleFilesSelect = (e) => {
         const files = Array.from(e.target.files);
@@ -33,17 +46,21 @@ export default function MietvertragPruefer() {
 
         setLoading(true);
         try {
-            const response = await base44.functions.invoke('callClaudeAPI', {
-                featureKey: 'mietvertrag',
+            const response = await base44.functions.invoke('aiCoreService', {
+                action: 'analysis',
+                prompt: 'Prüfe diesen Mietvertrag. Gib zurück: zusammenfassung{kaltmiete, nebenkosten, kaution, mietbeginn}, klauseln[{thema, bewertung: "ok"|"achtung"|"unwirksam", erklaerung, handlungsempfehlung}], bewertung{gesamtnote: "gut"|"mittel"|"schlecht", kurzfassung}',
                 systemPrompt: 'Du bist ein Fachanwalt für Mietrecht. Prüfe alle Klauseln auf Rechtmäßigkeit.',
-                userPrompt: 'Prüfe diesen Mietvertrag. Gib zurück: zusammenfassung{kaltmiete, nebenkosten, kaution, mietbeginn}, klauseln[{thema, bewertung: "ok"|"achtung"|"unwirksam", erklaerung, handlungsempfehlung}], bewertung{gesamtnote: "gut"|"mittel"|"schlecht", kurzfassung}',
                 imageBase64: images[0].base64,
                 imageMediaType: images[0].type,
-                responseSchema: true
+                userId: user?.email,
+                featureKey: 'analysis',
+                maxTokens: 4096
             });
 
             if (response.data.success) {
-                setResult(response.data.data);
+                const parsed = JSON.parse(response.data.content);
+                setResult(parsed);
+                setUsageStats(response.data.usage);
                 toast.success('Mietvertrag geprüft');
             } else {
                 toast.error(response.data.error || 'Fehler bei der Prüfung');
@@ -68,9 +85,12 @@ export default function MietvertragPruefer() {
         <div className="max-w-5xl mx-auto space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <FileText className="w-5 h-5" />
-                        Mietvertrag-Prüfer
+                    <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <FileText className="w-5 h-5" />
+                            Mietvertrag-Prüfer
+                        </div>
+                        {user && <AIUsageIndicator userId={user.email} />}
                     </CardTitle>
                     <p className="text-sm text-slate-600">Lade alle Seiten hoch - ich prüfe jede Klausel</p>
                 </CardHeader>
@@ -168,16 +188,15 @@ export default function MietvertragPruefer() {
                                 </div>
                             </div>
 
+                            {usageStats && <AICostDisplay usage={usageStats} />}
+
                             <Button variant="outline" onClick={() => {
                                 setResult(null);
                                 setImages([]);
+                                setUsageStats(null);
                             }}>
                                 Neuen Vertrag prüfen
                             </Button>
-
-                            <div className="text-xs text-slate-500 text-center">
-                                AI-Nutzung protokolliert
-                            </div>
                         </div>
                     )}
                 </CardContent>

@@ -1,16 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Lightbulb, Loader2, TrendingUp, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
+import AIUsageIndicator from '../ai/AIUsageIndicator';
+import AICostDisplay from '../ai/AICostDisplay';
 
 export default function SteuerOptimier() {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
+    const [user, setUser] = useState(null);
+    const [usageStats, setUsageStats] = useState(null);
+
+    useEffect(() => {
+        loadUser();
+    }, []);
+
+    async function loadUser() {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+    }
 
     const handleOptimize = async (e) => {
         e.preventDefault();
@@ -25,15 +39,19 @@ export default function SteuerOptimier() {
 
         setLoading(true);
         try {
-            const response = await base44.functions.invoke('callClaudeAPI', {
-                featureKey: 'steuer_optimierung',
+            const response = await base44.functions.invoke('aiCoreService', {
+                action: 'recommendation',
+                prompt: `Optimiere die Steuersituation: ${JSON.stringify(situation)}. Gib zurück: optimierungspotenzial[{bereich, beschreibung, ersparnis_geschaetzt, aufwand, umsetzung, tipp}], checkliste_jahresende[{aktion, frist, potenzial}], disclaimer`,
                 systemPrompt: 'Du bist ein Steuerberater. Finde legale Optimierungsmöglichkeiten.',
-                userPrompt: `Optimiere die Steuersituation: ${JSON.stringify(situation)}. Gib zurück: optimierungspotenzial[{bereich, beschreibung, ersparnis_geschaetzt, aufwand, umsetzung, tipp}], checkliste_jahresende[{aktion, frist, potenzial}], disclaimer`,
-                responseSchema: true
+                userId: user?.email,
+                featureKey: 'recommendation',
+                maxTokens: 4096
             });
 
             if (response.data.success) {
-                setResult(response.data.data);
+                const parsed = JSON.parse(response.data.content);
+                setResult(parsed);
+                setUsageStats(response.data.usage);
                 toast.success('Optimierungsvorschläge erstellt');
             } else {
                 toast.error(response.data.error || 'Fehler bei der Analyse');
@@ -49,9 +67,12 @@ export default function SteuerOptimier() {
         <div className="max-w-5xl mx-auto space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Lightbulb className="w-5 h-5" />
-                        Steuer-Optimierer
+                    <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Lightbulb className="w-5 h-5" />
+                            Steuer-Optimierer
+                        </div>
+                        {user && <AIUsageIndicator userId={user.email} />}
                     </CardTitle>
                     <p className="text-sm text-slate-600">Entdecke legale Steuerspar-Möglichkeiten</p>
                 </CardHeader>
@@ -146,7 +167,9 @@ export default function SteuerOptimier() {
                                 {result.disclaimer}
                             </div>
 
-                            <Button variant="outline" onClick={() => setResult(null)}>
+                            {usageStats && <AICostDisplay usage={usageStats} />}
+
+                            <Button variant="outline" onClick={() => { setResult(null); setUsageStats(null); }}>
                                 Neue Analyse
                             </Button>
                         </div>

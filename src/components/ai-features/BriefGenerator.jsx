@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,10 +8,23 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Mail, Loader2, Copy } from 'lucide-react';
 import { toast } from 'sonner';
+import AIUsageIndicator from '../ai/AIUsageIndicator';
+import AICostDisplay from '../ai/AICostDisplay';
 
 export default function BriefGenerator() {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
+    const [user, setUser] = useState(null);
+    const [usageStats, setUsageStats] = useState(null);
+
+    useEffect(() => {
+        loadUser();
+    }, []);
+
+    async function loadUser() {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+    }
 
     const handleGenerate = async (e) => {
         e.preventDefault();
@@ -30,15 +43,19 @@ export default function BriefGenerator() {
 
         setLoading(true);
         try {
-            const response = await base44.functions.invoke('callClaudeAPI', {
-                featureKey: 'brief',
+            const response = await base44.functions.invoke('aiCoreService', {
+                action: 'document_gen',
+                prompt: `Erstelle einen Brief vom Typ "${formData.get('brieftyp')}" mit diesen Daten: ${JSON.stringify(daten)}. Gib zurück: brief_vollstaendig (formatierter Brief), versandhinweise{empfohlen: "normal"|"einschreiben"|"einschreiben_rueckschein", begruendung}`,
                 systemPrompt: 'Du bist ein Rechtsanwalt für Mietrecht. Erstelle rechtssichere Geschäftsbriefe.',
-                userPrompt: `Erstelle einen Brief vom Typ "${formData.get('brieftyp')}" mit diesen Daten: ${JSON.stringify(daten)}. Gib zurück: brief_vollstaendig (formatierter Brief), versandhinweise{empfohlen: "normal"|"einschreiben"|"einschreiben_rueckschein", begruendung}`,
-                responseSchema: true
+                userId: user?.email,
+                featureKey: 'document_gen',
+                maxTokens: 4096
             });
 
             if (response.data.success) {
-                setResult(response.data.data);
+                const parsed = JSON.parse(response.data.content);
+                setResult(parsed);
+                setUsageStats(response.data.usage);
                 toast.success('Brief generiert');
             } else {
                 toast.error(response.data.error || 'Fehler beim Generieren');
@@ -59,9 +76,12 @@ export default function BriefGenerator() {
         <div className="max-w-5xl mx-auto space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Mail className="w-5 h-5" />
-                        Brief-Generator
+                    <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Mail className="w-5 h-5" />
+                            Brief-Generator
+                        </div>
+                        {user && <AIUsageIndicator userId={user.email} />}
                     </CardTitle>
                     <p className="text-sm text-slate-600">Erstelle rechtssichere Geschäftsbriefe</p>
                 </CardHeader>

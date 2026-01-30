@@ -1,15 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, Loader2, FileText, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import AIUsageIndicator from '../ai/AIUsageIndicator';
+import AICostDisplay from '../ai/AICostDisplay';
 
 export default function DokumentZusammenfasser() {
     const [image, setImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
+    const [user, setUser] = useState(null);
+    const [usageStats, setUsageStats] = useState(null);
+
+    useEffect(() => {
+        loadUser();
+    }, []);
+
+    async function loadUser() {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+    }
 
     const handleFileSelect = (e) => {
         const file = e.target.files[0];
@@ -29,17 +42,21 @@ export default function DokumentZusammenfasser() {
 
         setLoading(true);
         try {
-            const response = await base44.functions.invoke('callClaudeAPI', {
-                featureKey: 'dokument_zusammenfasser',
+            const response = await base44.functions.invoke('aiCoreService', {
+                action: 'analysis',
+                prompt: 'Fasse dieses Dokument zusammen. Gib zurück: titel, dokument_typ, zusammenfassung{kurz}, kernpunkte[], handlungsbedarf{vorhanden: boolean, aktionen[{was, bis_wann}]}',
                 systemPrompt: 'Du bist ein Dokumentenanalyst. Fasse Dokumente strukturiert zusammen.',
-                userPrompt: 'Fasse dieses Dokument zusammen. Gib zurück: titel, dokument_typ, zusammenfassung{kurz}, kernpunkte[], handlungsbedarf{vorhanden: boolean, aktionen[{was, bis_wann}]}',
                 imageBase64: image.base64,
                 imageMediaType: image.type,
-                responseSchema: true
+                userId: user?.email,
+                featureKey: 'analysis',
+                maxTokens: 3072
             });
 
             if (response.data.success) {
-                setResult(response.data.data);
+                const parsed = JSON.parse(response.data.content);
+                setResult(parsed);
+                setUsageStats(response.data.usage);
                 toast.success('Dokument zusammengefasst');
             } else {
                 toast.error(response.data.error || 'Fehler beim Zusammenfassen');
@@ -55,9 +72,12 @@ export default function DokumentZusammenfasser() {
         <div className="max-w-4xl mx-auto space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <FileText className="w-5 h-5" />
-                        Dokument-Zusammenfasser
+                    <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <FileText className="w-5 h-5" />
+                            Dokument-Zusammenfasser
+                        </div>
+                        {user && <AIUsageIndicator userId={user.email} />}
                     </CardTitle>
                     <p className="text-sm text-slate-600">Lade ein Dokument - ich fasse es strukturiert zusammen</p>
                 </CardHeader>
@@ -124,7 +144,9 @@ export default function DokumentZusammenfasser() {
                                 </div>
                             )}
 
-                            <Button variant="outline" onClick={() => { setResult(null); setImage(null); setImagePreview(null); }}>
+                            {usageStats && <AICostDisplay usage={usageStats} />}
+
+                            <Button variant="outline" onClick={() => { setResult(null); setImage(null); setImagePreview(null); setUsageStats(null); }}>
                                 Neues Dokument
                             </Button>
                         </div>
