@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
+import { createPageUrl } from '../utils';
 import { ArrowRight, BarChart3, Users, FileText, Bot, Settings } from 'lucide-react';
 
 export default function Home() {
