@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TrendingUp } from 'lucide-react';
-import CurrencyDisplay from '@/components/shared/CurrencyDisplay';
+import { CurrencyDisplay } from '@/components/shared/CurrencyDisplay';
 
 export default function MarketPriceValuation({ buildingId }) {
   const valuation = {
